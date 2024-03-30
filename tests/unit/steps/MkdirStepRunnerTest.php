@@ -51,41 +51,41 @@ class MkdirStepRunnerTest extends PHPUnitTestCase {
 		$this->filesystem->remove( $this->document_root );
 	}
 
-    public function testCreateDirectoryWhenUsingRelativePath() {
-        $path = 'dir';
-        $step = new MkdirStep();
+	public function testCreateDirectoryWhenUsingRelativePath() {
+		$path = 'dir';
+		$step = new MkdirStep();
 		$step->setPath( $path );
 
-        $this->step_runner->run( $step );
+		$this->step_runner->run( $step );
+
 		$resolved_path = $this->runtime->resolvePath( $path );
-
 		self::assertDirectoryExists( $resolved_path );
-    }
+	}
 
-    public function testCreateDirectoryWhenUsingAbsoluteAbsolutePath() {
-        $relative_path = 'dir';
-        $resolved_path = $this->runtime->resolvePath( $relative_path );
+	public function testCreateDirectoryWhenUsingAbsolutePath() {
+		$relative_path = 'dir';
+		$absolute_path = $this->runtime->resolvePath( $relative_path );
 
-        $step = new MkdirStep();
-        $step->setPath( $resolved_path );
+		$step = new MkdirStep();
+		$step->setPath( $absolute_path );
 
-        $this->step_runner->run( $step );
-        
-        self::assertDirectoryExists( $resolved_path );
-    }
+		$this->step_runner->run( $step );
 
-    public function testCreateDirectoryRecursively() {
-        $path = 'dir/subdir';
-        $step = new MkdirStep();
-        $step->setPath( $path );
+		self::assertDirectoryExists( $absolute_path );
+	}
 
-        $this->step_runner->run( $step );
+	public function testCreateDirectoryRecursively() {
+		$path = 'dir/subdir';
+		$step = new MkdirStep();
+		$step->setPath( $path );
 
-        $resolved_path = $this->runtime->resolvePath( $path );
-        self::assertDirectoryExists( $resolved_path );
-    }
+		$this->step_runner->run( $step );
 
-	public function testCreateDirectoryWithProperMode() {
+		$resolved_path = $this->runtime->resolvePath( $path );
+		self::assertDirectoryExists( $resolved_path );
+	}
+
+	public function testCreateReadableAndWritableDirectory() {
 		$path = 'dir';
 		$step = new MkdirStep();
 		$step->setPath( $path );
@@ -97,10 +97,10 @@ class MkdirStepRunnerTest extends PHPUnitTestCase {
 		self::assertDirectoryIsWritable( $resolved_path );
 		self::assertDirectoryIsReadable( $resolved_path );
 	}
-    
-    public function testThrowExceptionWhenCreatingDirectoryWhenDirectoryAlreadyExists() {
-        $path = 'dir';
-        $resolved_path = $this->runtime->resolvePath( $path );
+
+	public function testThrowExceptionWhenCreatingDirectoryAndItAlreadyExists() {
+		$path = 'dir';
+		$resolved_path = $this->runtime->resolvePath( $path );
 		$this->filesystem->mkdir( $resolved_path );
 
 		$step = new MkdirStep();
@@ -108,6 +108,6 @@ class MkdirStepRunnerTest extends PHPUnitTestCase {
 
 		self::expectException( BlueprintException::class );
 		self::expectExceptionMessage( "Failed to create \"$resolved_path\": the directory exists." );
-        $this->step_runner->run( $step );
-    }
+		$this->step_runner->run( $step );
+	}
 }
