@@ -24,7 +24,7 @@ else that can be configured in WordPress. Here's what a Blueprint looks like:
   "steps": [
     {
       "step": "runPHP",
-      "content": "<?php require 'wp-load.php'; update_user_meta(1, 'test', 'value');"
+      "code": "<?php require 'wordpress/wp-load.php'; update_user_meta(1, 'test', 'value');"
     }
   ]
 }
