@@ -57,7 +57,8 @@ class Client {
 	private $requests;
 	private $connections = array();
 	private $events = array();
-	private $current_event;
+	private $event_name;
+	private $event_request;
 
 	public function __construct( $options = [] ) {
 		$this->concurrency   = $options['concurrency'] ?? 10;
@@ -115,8 +116,6 @@ class Client {
 	 * The $query parameter can be used to filter the events
 	 * that are returned. It can contain the following keys:
 	 *
-	 * * `events` – An array of events to consider in the order
-	 *   they should be considered.
 	 * * `request_id` – The ID of the request to consider.
 	 *
 	 * For example, to only consider the next `EVENT_GOT_HEADERS`
@@ -128,7 +127,6 @@ class Client {
 	 * $client = new AsyncHttpClient();
 	 * $client->enqueue( $request );
 	 * $event = $client->await_next_event( [
-	 *    'events' => [ ClientEvent::EVENT_GOT_HEADERS ],
 	 *    'request_id' => $request->id,
 	 * ] );
 	 * ```
@@ -144,14 +142,15 @@ class Client {
 	 * @return bool
 	 */
 	public function await_next_event( $query = [] ) {
-		$ordered_events      = $query['events'] ?? [
+		$ordered_events      = [
 			ClientEvent::EVENT_GOT_HEADERS,
 			ClientEvent::EVENT_BODY_CHUNK_AVAILABLE,
 			ClientEvent::EVENT_REDIRECT,
 			ClientEvent::EVENT_FAILED,
 			ClientEvent::EVENT_FINISHED,
 		];
-		$this->current_event = null;
+		$this->event_name    = null;
+		$this->event_request = null;
 		do {
 			if ( empty( $query['requests'] ) ) {
 				$events = array_keys( $this->events );
@@ -175,8 +174,8 @@ class Client {
 
 					$this->events[ $request_id ][ $considered_event ] = false;
 
-					$request             = $this->get_request_by_id( $request_id );
-					$this->current_event = new ClientEvent( $request, $considered_event );
+					$this->event_name    = $considered_event;
+					$this->event_request = $this->get_request_by_id( $request_id );
 
 					return true;
 				}
@@ -186,41 +185,20 @@ class Client {
 		return false;
 	}
 
-	public function get_event() {
-		if ( null === $this->current_event ) {
+	public function get_event_name() {
+		if ( null === $this->event_name ) {
 			return false;
 		}
 
-		return $this->current_event;
+		return $this->event_name;
 	}
 
-	/**
-	 * Consumes $length bytes received in response to a given request.
-	 *
-	 * @param  Request  $request
-	 * @param $length
-	 *
-	 * @return string
-	 */
-	public function next_response_body_bytes( Request $request, $length=null ) {
-		$request    = $request->latest_redirect();
-		$connection = $this->connections[ $request->id ];
-		if (
-			$request->state === Request::STATE_RECEIVING_BODY ||
-			$request->state === Request::STATE_FINISHED
-		) {
-			return $connection->consume_buffer( $length );
-		}
-
-		$end_of_data = $request->state === Request::STATE_FINISHED && (
-				! is_resource( $this->connections[ $request->id ]->http_socket ) ||
-				feof( $this->connections[ $request->id ]->decoded_response_stream )
-			);
-		if ( $end_of_data ) {
+	public function get_event_request() {
+		if ( null === $this->event_request ) {
 			return false;
 		}
 
-		return '';
+		return $this->event_request;
 	}
 
 	private function event_loop_tick() {
@@ -257,6 +235,38 @@ class Client {
 		);
 
 		return true;
+	}
+
+	/**
+	 * Consumes $length bytes received in response to a given request.
+	 *
+	 * @param  Request  $request
+	 * @param $length
+	 *
+	 * @return string
+	 */
+	public function next_response_body_bytes( $length = null ) {
+		if ( null === $this->event_request ) {
+			return false;
+		}
+		$request    = $this->event_request;
+		$connection = $this->connections[ $request->id ];
+		if (
+			$request->state === Request::STATE_RECEIVING_BODY ||
+			$request->state === Request::STATE_FINISHED
+		) {
+			return $connection->consume_buffer( $length );
+		}
+
+		$end_of_data = $request->state === Request::STATE_FINISHED && (
+				! is_resource( $this->connections[ $request->id ]->http_socket ) ||
+				feof( $this->connections[ $request->id ]->decoded_response_stream )
+			);
+		if ( $end_of_data ) {
+			return false;
+		}
+
+		return '';
 	}
 
 	private function mark_finished( Request $request ) {

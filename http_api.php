@@ -7,8 +7,8 @@ use WordPress\AsyncHttp\Request;
 require __DIR__ . '/vendor/autoload.php';
 
 $requests = [
-//	new Request( "https://w.org/latest-yo.zip" ),
-//	new Request( "https://adamadam.blog" ),
+//	new Request( "https://wordpress.org/latest.zip" ),
+	new Request( "https://adamadam.blog" ),
 	// new Request("https://anglesharp.azurewebsites.net/Chunked", [
 	// 	'http_version' => '1.1'
 	// ]),
@@ -32,15 +32,14 @@ $client = new Client( [
 
 $client->enqueue( $requests );
 
-while ( $client->await_next_event( [
-	'requests' => [ $requests[0] ],
-	'events'   => [
-		ClientEvent::EVENT_BODY_CHUNK_AVAILABLE,
-	],
-] ) ) {
-	$event = $client->get_event();
-	echo( "Request $event \n" );
-	echo $client->next_response_body_bytes( $requests[0] )."\n\n";
+$i = 0;
+while ( $client->await_next_event( ) ) {
+	echo "Request " . $client->get_event_request()->id . ": " . $client->get_event_name() . " \n";
+	switch ( $client->get_event_name() ) {
+		case ClientEvent::EVENT_BODY_CHUNK_AVAILABLE:
+//			echo $client->next_response_body_bytes() . "\n\n";
+			break;
+	}
 }
 
 //foreach ( $client->get_failed_requests() as $failed_request ) {
