@@ -4,18 +4,16 @@ namespace WordPress\AsyncHttp;
 
 class Response {
 
-	const STATE_ENQUEUED  = 'STATE_ENQUEUED';
-	const STATE_SOCKET_OPEN = 'STATE_SOCKET_OPEN';
-	const STATE_FAILED    = 'STATE_FAILED';
-	const STATE_FINISHED  = 'STATE_FINISHED';
-	public $state         = self::STATE_ENQUEUED;
 
 	public $protocol;
 	public $statusCode;
 	public $statusMessage;
-    public $headers;
-    public $body_stream;
-    public $internal_body_stream;
+    public $headers = [];
+
+    public $raw_response_stream;
+    public $decoded_response_stream;
+    public $event_loop_decoded_response_stream;
+
 	public $buffer = '';
 	private $request;
 
@@ -56,25 +54,11 @@ class Response {
 		return $this->headers;
 	}
 
-	public function get_body_stream()
+	public function consume_buffer($length)
 	{
-		return $this->body_stream;
-	}
-
-	public function is_enqueued() {
-		return $this->state === self::STATE_ENQUEUED;
-	}
-
-	public function is_socket_open() {
-		return $this->state === self::STATE_SOCKET_OPEN;
-	}
-
-	public function is_failed() {
-		return $this->state === self::STATE_FAILED;
-	}
-
-	public function is_finished() {
-		return $this->state === self::STATE_FINISHED;
+		$buffer = substr($this->buffer, 0, $length);
+		$this->buffer = substr($this->buffer, $length);
+		return $buffer;
 	}
 
 }

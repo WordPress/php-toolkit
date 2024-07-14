@@ -11,10 +11,10 @@ require_once __DIR__ . '/src/WordPress/AsyncHttp/InflateStreamWrapper.php';
 require_once __DIR__ . '/src/WordPress/AsyncHttp/InflateStreamWrapperData.php';
 
 $requests = [
-//	new Request("https://playground.internal"),
-	(new Request("https://anglesharp.azurewebsites.net/Chunked"))->set_http_version('1.1'),
-	(new Request("https://anglesharp.azurewebsites.net/Chunked"))->set_http_version('1.0'),
-	new Request("http://127.0.0.1:3000/"),
+	// new Request("https://playground.internal"),
+	// (new Request("https://anglesharp.azurewebsites.net/Chunked"))->set_http_version('1.1'),
+	// (new Request("https://anglesharp.azurewebsites.net/Chunked"))->set_http_version('1.0'),
+	(new Request("http://127.0.0.1:3000/")) //->set_http_version('1.0'),
 ];
 // list($streams, $headers, $errors) = streams_send_http_requests($requests);
 // print_r($streams);
@@ -24,9 +24,13 @@ $requests = [
 // Enqueuing another request here is instant and won't start the download yet.
 $client = new Client();
 $queue = $client->enqueue( $requests );
-var_dump($client->read_bytes($requests[0], 200, [
-	'mode' => 'wait_for_all_requested_bytes',
-]));
+var_dump($client->read_bytes($requests[0], 10, Client::READ_POLL_ANY));
+var_dump($client->read_bytes($requests[0], 1024, Client::READ_NON_BLOCKING));
+var_dump($client->read_bytes($requests[0], 1024, Client::READ_POLL_ANY));
+// var_dump($client->read_bytes($requests[0], 1024));
+
+die();
+
 // @TODO: handle wait_for_all_requested_bytes for more than content-length bytes
 var_dump(stream_get_contents($requests[1]->get_response()->body_stream));
 // var_dump($client->read_bytes($requests[1], 359, [

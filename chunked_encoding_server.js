@@ -4,6 +4,7 @@ const zlib = require('zlib');
 const server = http.createServer((req, res) => {
   // Check if the client is using HTTP/1.1
   const isHttp11 = req.httpVersion === '1.1';
+  res.useChunkedEncodingByDefault = false
 
   // Check if the client accepts gzip encoding
   const acceptEncoding = req.headers['accept-encoding'];
@@ -41,7 +42,6 @@ const server = http.createServer((req, res) => {
     res.setHeader('Content-Encoding', 'gzip');
     const gzip = zlib.createGzip();
     gzip.pipe(res);
-    
 
     if (isHttp11) {
         writeChunks({
