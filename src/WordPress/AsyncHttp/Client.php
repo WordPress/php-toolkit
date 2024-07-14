@@ -39,6 +39,12 @@ class Client {
 	const STREAM_SELECT_READ = 1;
 	const STREAM_SELECT_WRITE = 2;
 
+	const EVENT_GOT_HEADERS = 'EVENT_GOT_HEADERS';
+	const EVENT_BODY_CHUNK_AVAILABLE = 'EVENT_BODY_CHUNK_AVAILABLE';
+	const EVENT_REDIRECT = 'EVENT_REDIRECT';
+	const EVENT_FAILED = 'EVENT_FAILED';
+	const EVENT_FINISHED = 'EVENT_FINISHED';
+
 	/**
 	 * Microsecond is 1 millionth of a second.
 	 *
@@ -57,8 +63,8 @@ class Client {
 	private $requests;
 	private $connections = array();
 	private $events = array();
-	private $event_name;
-	private $event_request;
+	private $event;
+	private $request;
 
 	public function __construct( $options = [] ) {
 		$this->concurrency   = $options['concurrency'] ?? 10;
@@ -95,11 +101,11 @@ class Client {
 	 * The returned event is a ClientEvent with $event->name
 	 * being one of the following:
 	 *
-	 * * `ClientEvent::EVENT_GOT_HEADERS`
-	 * * `ClientEvent::EVENT_BODY_CHUNK_AVAILABLE`
-	 * * `ClientEvent::EVENT_REDIRECT`
-	 * * `ClientEvent::EVENT_FAILED`
-	 * * `ClientEvent::EVENT_FINISHED`
+	 * * `Client::EVENT_GOT_HEADERS`
+	 * * `Client::EVENT_BODY_CHUNK_AVAILABLE`
+	 * * `Client::EVENT_REDIRECT`
+	 * * `Client::EVENT_FAILED`
+	 * * `Client::EVENT_FINISHED`
 	 *
 	 * See the ClientEvent class for details on each event.
 	 *
@@ -142,15 +148,15 @@ class Client {
 	 * @return bool
 	 */
 	public function await_next_event( $query = [] ) {
-		$ordered_events      = [
-			ClientEvent::EVENT_GOT_HEADERS,
-			ClientEvent::EVENT_BODY_CHUNK_AVAILABLE,
-			ClientEvent::EVENT_REDIRECT,
-			ClientEvent::EVENT_FAILED,
-			ClientEvent::EVENT_FINISHED,
+		$ordered_events = [
+			Client::EVENT_GOT_HEADERS,
+			Client::EVENT_BODY_CHUNK_AVAILABLE,
+			Client::EVENT_REDIRECT,
+			Client::EVENT_FAILED,
+			Client::EVENT_FINISHED,
 		];
-		$this->event_name    = null;
-		$this->event_request = null;
+		$this->event    = null;
+		$this->request  = null;
 		do {
 			if ( empty( $query['requests'] ) ) {
 				$events = array_keys( $this->events );
@@ -174,8 +180,8 @@ class Client {
 
 					$this->events[ $request_id ][ $considered_event ] = false;
 
-					$this->event_name    = $considered_event;
-					$this->event_request = $this->get_request_by_id( $request_id );
+					$this->event   = $considered_event;
+					$this->request = $this->get_request_by_id( $request_id );
 
 					return true;
 				}
@@ -185,20 +191,20 @@ class Client {
 		return false;
 	}
 
-	public function get_event_name() {
-		if ( null === $this->event_name ) {
+	public function get_event() {
+		if ( null === $this->event ) {
 			return false;
 		}
 
-		return $this->event_name;
+		return $this->event;
 	}
 
-	public function get_event_request() {
-		if ( null === $this->event_request ) {
+	public function get_request() {
+		if ( null === $this->request ) {
 			return false;
 		}
 
-		return $this->event_request;
+		return $this->request;
 	}
 
 	private function event_loop_tick() {
@@ -240,16 +246,15 @@ class Client {
 	/**
 	 * Consumes $length bytes received in response to a given request.
 	 *
-	 * @param  Request  $request
 	 * @param $length
 	 *
 	 * @return string
 	 */
 	public function next_response_body_bytes( $length = null ) {
-		if ( null === $this->event_request ) {
+		if ( null === $this->request ) {
 			return false;
 		}
-		$request    = $this->event_request;
+		$request    = $this->request;
 		$connection = $this->connections[ $request->id ];
 		if (
 			$request->state === Request::STATE_RECEIVING_BODY ||
@@ -270,16 +275,16 @@ class Client {
 	}
 
 	private function mark_finished( Request $request ) {
-		$request->state                                              = Request::STATE_FINISHED;
-		$this->events[ $request->id ][ ClientEvent::EVENT_FINISHED ] = true;
+		$request->state                                         = Request::STATE_FINISHED;
+		$this->events[ $request->id ][ Client::EVENT_FINISHED ] = true;
 
 		$this->close_connection( $request );
 	}
 
 	private function set_error( Request $request, $error ) {
-		$request->error                                            = $error;
-		$request->state                                            = Request::STATE_FAILED;
-		$this->events[ $request->id ][ ClientEvent::EVENT_FAILED ] = true;
+		$request->error                                       = $error;
+		$request->state                                       = Request::STATE_FAILED;
+		$this->events[ $request->id ][ Client::EVENT_FAILED ] = true;
 
 		$this->close_connection( $request );
 	}
@@ -519,8 +524,8 @@ class Client {
 					break;
 				}
 
-				$request->state                                                 = Request::STATE_RECEIVING_BODY;
-				$this->events[ $request->id ][ ClientEvent::EVENT_GOT_HEADERS ] = true;
+				$request->state                                            = Request::STATE_RECEIVING_BODY;
+				$this->events[ $request->id ][ Client::EVENT_GOT_HEADERS ] = true;
 				break;
 			}
 		}
@@ -555,7 +560,7 @@ class Client {
 				$request->response->received_bytes                  += strlen( $body_bytes );
 				$this->connections[ $request->id ]->response_buffer .= $body_bytes;
 
-				$this->events[ $request->id ][ ClientEvent::EVENT_BODY_CHUNK_AVAILABLE ] = true;
+				$this->events[ $request->id ][ Client::EVENT_BODY_CHUNK_AVAILABLE ] = true;
 			}
 		}
 	}
@@ -607,7 +612,7 @@ class Client {
 				continue;
 			}
 
-			$this->events[ $request->id ][ ClientEvent::EVENT_REDIRECT ] = true;
+			$this->events[ $request->id ][ Client::EVENT_REDIRECT ] = true;
 			$this->enqueue( new Request( $redirect_url, [ 'redirected_from' => $request ] ) );
 		}
 	}

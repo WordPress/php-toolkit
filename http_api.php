@@ -34,9 +34,9 @@ $client->enqueue( $requests );
 
 $i = 0;
 while ( $client->await_next_event( ) ) {
-	echo "Request " . $client->get_event_request()->id . ": " . $client->get_event_name() . " \n";
-	switch ( $client->get_event_name() ) {
-		case ClientEvent::EVENT_BODY_CHUNK_AVAILABLE:
+	echo "Request " . $client->get_request()->id . ": " . $client->get_event() . " \n";
+	switch ( $client->get_event() ) {
+		case Client::EVENT_BODY_CHUNK_AVAILABLE:
 //			echo $client->next_response_body_bytes() . "\n\n";
 			break;
 	}
