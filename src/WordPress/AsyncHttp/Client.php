@@ -87,10 +87,13 @@ use WordPress\AsyncHttp\CountReadBytesStreamWrapper;
  * **Supports custom request headers and body**
  */
 class Client {
-	protected $concurrency = 2;
-	protected $requests;
-	protected $onProgress;
-	protected $is_processing_queue = false;
+
+	const STREAM_SELECT_READ = 1;
+	const STREAM_SELECT_WRITE = 2;
+
+	const READ_NON_BLOCKING = 'READ_NON_BLOCKING';
+	const READ_POLL_ANY = 'READ_POLL_ANY';
+	const READ_POLL_ALL = 'READ_POLL_ALL';
 
 	/**
 	 * Microsecond is 1 millionth of a second.
@@ -103,6 +106,11 @@ class Client {
 	 * 5/100th of a second
 	 */
 	const NONBLOCKING_TIMEOUT_MICROSECONDS = 0.05 * self::MICROSECONDS_TO_SECONDS;
+
+	protected $concurrency = 2;
+	protected $requests;
+	protected $onProgress;
+	protected $is_processing_queue = false;
 
 	public function __construct() {
 		$this->requests   = [];
@@ -137,57 +145,18 @@ class Client {
 	 * streams is read from.
 	 *
 	 * @param Request|Request[] $requests The HTTP request(s) to enqueue. Can be a single request or an array of requests.
-	 *
-	 * @return Response[]|Response|array The enqueued streams.
 	 */
 	public function enqueue( $requests ) {
 		if ( ! is_array( $requests ) ) {
-			return $this->enqueue_request( $requests );
+			$this->requests[] = $requests;
+			return;
 		}
 
-		$enqueued_streams = array();
 		foreach ( $requests as $request ) {
-			$enqueued_streams[] = $this->enqueue_request( $request );
+			$this->requests[] = $request;
 		}
-
-		return $enqueued_streams;
 	}
 
-	/**
-	 * Returns the response stream associated with the given Request object.
-	 * Reading from that stream also runs this Client's event loop.
-	 *
-	 * @param Request $request
-	 *
-	 * @return resource
-	 */
-	public function get_stream( $request ) {
-		throw new Exception('Not implemented yet');
-		// if ( ! isset( $this->requests[ $request ] ) ) {
-		// 	$this->enqueue_request( $request );
-		// }
-
-		// if ( $this->queue_needs_processing ) {
-		// 	$this->process_queue();
-		// }
-
-		// StreamWrapper::create_resource(
-		// 	new StreamData($request, $client)
-		// )
-	}
-
-	/**
-	 * @param \WordPress\AsyncHttp\Request $request
-	 */
-	protected function enqueue_request( $request ) {
-		$this->requests[]   = $request;
-		return $request->get_response();
-	}
-
-
-	const READ_NON_BLOCKING = 'READ_NON_BLOCKING';
-	const READ_POLL_ANY = 'READ_POLL_ANY';
-	const READ_POLL_ALL = 'READ_POLL_ALL';
 	/**
 	 * Reads $length bytes from the given request while also running
 	 * non-blocking event loop operations.
@@ -218,21 +187,87 @@ class Client {
 			) {
 				break;
 			}
-		} while ($this->event_loop_pass());
+		} while ($this->event_loop_tick());
 
 		return $buffered;
 	}
 
-	public function event_loop_pass()
+	public function next_response_chunk()
+	{
+		do {
+			foreach($this->requests as $request) {
+				if ( strlen($request->get_response()->buffer) > 0 ) {
+					return $request;
+				}
+			}
+		} while($this->event_loop_tick());
+
+		return false;
+	}
+
+	public function wait_for_headers( $request )
+	{
+		if(!in_array($request, $this->requests, true)) {
+			trigger_error('Request not found in the client', E_USER_WARNING);
+			return false;
+		}
+
+		do {
+			if ($request->get_response()->get_headers()) {
+				return true;
+			}
+		} while ($this->event_loop_tick() && $request->state !== Request::STATE_FAILED);
+		
+		return false;
+	}
+
+	public function wait_for_response_body_stream( $request )
+	{
+		if(!in_array($request, $this->requests, true)) {
+			trigger_error('Request not found in the client', E_USER_WARNING);
+			return false;
+		}
+
+		do {
+			if ($request->get_response()->decoded_response_stream) {
+				return true;
+			}
+		} while ($this->event_loop_tick() && $request->state !== Request::STATE_FAILED);
+		
+		return false;
+	}
+
+	/**
+	 * Returns the response stream associated with the given Request object.
+	 * Reading from that stream also runs this Client's event loop.
+	 *
+	 * @param Request $request
+	 *
+	 * @return resource|bool
+	 */
+	// public function get_response_stream( $request ) {
+	// 	if(!in_array($request, $this->requests, true)) {
+	// 		trigger_error('Request not found in the client', E_USER_WARNING);
+	// 		return false;
+	// 	}
+
+	// 	if(
+	// 		$request->state !== Request::STATE_RECEIVING_BODY &&
+	// 		$request->state !== Request::STATE_FINISHED
+	// 	) {
+	// 		trigger_error('Request is not in a state where the response stream is available', E_USER_WARNING);
+	// 		return false;
+	// 	}
+
+	// 	return $request->get_response()->event_loop_decoded_response_stream;
+	// }
+
+	public function event_loop_tick()
 	{
 		if(count($this->get_concurrent_requests()) === 0) {
 			return false;
 		}
-		echo "event_loop_pass\n";
-		foreach($this->requests as $request) {
-			echo "request state: $request->state\n";
-		}
-		sleep(1);
+		
 		static::open_nonblocking_http_sockets( 
 			$this->get_concurrent_requests( Request::STATE_ENQUEUED )
 		);
@@ -275,16 +310,14 @@ class Client {
 			Request::STATE_RECEIVING_BODY,
 			Request::STATE_RECEIVED,
 		]);
+		$available_slots = $this->concurrency - count($processed_requests);
 		$enqueued_requests = $this->get_requests(Request::STATE_ENQUEUED);
-		$backfill_enqueued_nb = min(
-			count($enqueued_requests),
-			$this->concurrency - count($processed_requests)
-		);
-
-		for($i = 0; $i < $backfill_enqueued_nb; $i++) {
+		for($i = 0; $i < $available_slots; $i++) {
+			if(!isset($enqueued_requests[$i])) {
+				break;
+			}
 			$processed_requests[] = $enqueued_requests[$i];
 		}
-
 		if($states !== null) {
 			$processed_requests = static::filter_requests($processed_requests, $states);
 		}
@@ -385,7 +418,7 @@ class Client {
 				// for now and try again on the next event loop pass.
 				continue;
 			}
-			// Headers sent! Let's promote the request to the next state.
+			// SSL connection established, let's send the headers.
 			$request->state = Request::STATE_WILL_SEND_HEADERS;
 		}
 	}
@@ -476,17 +509,13 @@ class Client {
 				$response->statusMessage = $parsed['status']['message'];
 				$response->protocol = $parsed['status']['protocol'];
 
-				$content_length = $response->get_header('content-length');
-				$transfer_encoding = $response->get_header('transfer-encoding');
-				// If we're expecting a body, let's start receiving it.
-				if(
-					$transfer_encoding === 'chunked' || 
-					($content_length !== null && (int) $content_length > 0)
-				) {
-					$request->state = Request::STATE_RECEIVING_BODY;
-				} else {
+				// If we're being redirected, we don't need to wait for the body.
+				if($response->statusCode >= 300 && $response->statusCode < 400) {
 					$request->state = Request::STATE_RECEIVED;
+					break;
 				}
+				
+				$request->state = Request::STATE_RECEIVING_BODY;
 				break;
 			}
 		}
@@ -498,6 +527,10 @@ class Client {
 	 * @param  array  $requests  An array of requests.
 	 */
 	private function receive_response_body( $requests ) {
+		// @TODO: Assume body is fully received when either
+		// * Content-Length is reached
+		// * The last chunk in Transfer-Encoding: chunked is received
+		// * The connection is closed
 		foreach (static::stream_select($requests, static::STREAM_SELECT_READ) as $request) {
 			$response = $request->get_response();
 			if (!$response->decoded_response_stream) {
@@ -700,17 +733,15 @@ class Client {
 			$states = [$states];
 		}
 		$results = [];
-		foreach($requests as $k => $request) {
+		foreach($requests as $request) {
 			if(in_array($request->state, $states)) {
-				$results[$k] = $request;
+				$results[] = $request;
 			}
 		}
 		return $results;
 	}
 
 
-	const STREAM_SELECT_READ = 1;
-	const STREAM_SELECT_WRITE = 2;
 	static private function stream_select( $requests, $mode ) {
 		if(empty($requests)) {
 			return [];

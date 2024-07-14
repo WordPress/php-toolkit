@@ -42,6 +42,7 @@ class StreamWrapper extends VanillaStreamWrapper {
 	public function stream_read( $count ) {
 		$this->initialize();
 
+		$this->client->event_loop_tick();
 		return $this->client->read_bytes( $this->wrapper_data->request, $count );
 	}
 
@@ -52,57 +53,26 @@ class StreamWrapper extends VanillaStreamWrapper {
 	}
 
 	public function stream_tell() {
-		if ( ! $this->stream ) {
-			return false;
-		}
+		$this->initialize();
 
 		return parent::stream_tell();
 	}
 
 	public function stream_close() {
-		if ( ! $this->stream ) {
-			return false;
-		}
-
-		if ( ! $this->has_valid_stream() ) {
-			return false;
-		}
+		$this->initialize();
 
 		return parent::stream_close();
 	}
 
 	public function stream_eof() {
-		if ( ! $this->stream ) {
-			return false;
-		}
-
-		if ( ! $this->has_valid_stream() ) {
-			return true;
-		}
+		$this->initialize();
 
 		return parent::stream_eof();
 	}
 
 	public function stream_seek( $offset, $whence ) {
-		if ( ! $this->stream ) {
-			return false;
-		}
+		$this->initialize();
 
 		return parent::stream_seek( $offset, $whence );
-	}
-
-	/*
-	 * This stream_close call could be initiated not by the developer,
-	 * but by the PHP internal request shutdown handler (written in C).
-	 *
-	 * The underlying resource ($this->stream) may have already been closed
-	 * and freed independently from the resource represented by $this stream
-	 * wrapper. In this case, the type of $this->stream will be "Unknown",
-	 * and the fclose() call will trigger a fatal error.
-	 *
-	 * Let's refuse to call fclose() in that scenario.
-	 */
-	protected function has_valid_stream() {
-		return get_resource_type( $this->stream ) !== 'Unknown';
 	}
 }

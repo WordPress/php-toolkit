@@ -42,7 +42,7 @@ class Response {
 	}
 
 	public function get_header( $name ) {
-		if($this->headers === null) {
+		if(false === $this->get_headers()) {
 			return false;
 		}
 
@@ -51,6 +51,10 @@ class Response {
 
 	public function get_headers()
 	{
+		if(!$this->headers) {
+			return false;
+		}
+
 		return $this->headers;
 	}
 

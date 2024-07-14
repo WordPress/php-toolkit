@@ -15,6 +15,10 @@ class Request {
 	const STATE_FAILED             = 'STATE_FAILED';
 	const STATE_FINISHED           = 'STATE_FINISHED';
 
+	static private $last_id;
+
+	public $id;
+
 	public $state         = self::STATE_ENQUEUED;
 
 	public $url;
@@ -33,6 +37,7 @@ class Request {
 	 * @param string $url
 	 */
 	public function __construct( string $url, $method='GET', $headers=[], $body_stream=null, $http_version='1.1' ) {
+		$this->id = ++self::$last_id;
 		$this->url = $url;
 		$this->is_ssl = strpos( $url, 'https://' ) === 0;
 
@@ -99,9 +104,6 @@ class Request {
 	{
 		$this->error = $error;
 		$this->state = self::STATE_FAILED;
-
-		$this->response->error = $error;
-		$this->response->state = self::STATE_FAILED;
 
 		if($this->http_socket) {
 			fclose($this->http_socket);
