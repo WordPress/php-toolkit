@@ -116,7 +116,7 @@ class Client {
 	protected $connections = array();
 
 	public function __construct( $options = [] ) {
-		$this->concurrency = $options['concurrency'] ?? 2;
+		$this->concurrency = $options['concurrency'] ?? 10;
 		$this->requests    = [];
 		$this->on_progress  = $options['on_progress'] ?? function () {
 		};
@@ -145,7 +145,7 @@ class Client {
 		}
 	}
 
-	public function await_response_bytes() {
+	public function await_incoming_bytes() {
 		do {
 			foreach ( $this->requests as $request ) {
 				$request = $request->latest_redirect();
@@ -222,7 +222,7 @@ class Client {
 				return false;
 			}
 		} while ( $this->event_loop_tick() );
-		
+
 		return false;
 	}
 
