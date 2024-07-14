@@ -32,11 +32,11 @@ $client = new Client( [
 ] );
 
 $client->enqueue( $requests );
-while ( $client->await_next_event( [ 'requests' => [ $requests[0] ] ] ) ) {
+while ( $client->await_next_event( [ 'requests' => [ $requests[2] ] ] ) ) {
 	echo "Request " . $client->get_request()->id . ": " . $client->get_event() . " \n";
 	switch ( $client->get_event() ) {
 		case Client::EVENT_BODY_CHUNK_AVAILABLE:
-			echo $client->next_response_body_bytes() . "\n\n";
+			echo $client->get_response_body_chunk() . "\n\n";
 			break;
 	}
 }

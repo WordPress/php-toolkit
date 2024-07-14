@@ -65,6 +65,7 @@ class Client {
 	private $events = array();
 	private $event;
 	private $request;
+	private $response_body_chunk;
 
 	public function __construct( $options = [] ) {
 		$this->concurrency   = $options['concurrency'] ?? 10;
@@ -157,6 +158,7 @@ class Client {
 		];
 		$this->event    = null;
 		$this->request  = null;
+		$this->response_body_chunk  = null;
 		do {
 			if ( empty( $query['requests'] ) ) {
 				$events = array_keys( $this->events );
@@ -182,6 +184,9 @@ class Client {
 
 					$this->event   = $considered_event;
 					$this->request = $this->get_request_by_id( $request_id );
+					if($this->event === Client::EVENT_BODY_CHUNK_AVAILABLE) {
+						$this->response_body_chunk = $this->next_response_body_bytes();
+					}
 
 					return true;
 				}
@@ -205,6 +210,14 @@ class Client {
 		}
 
 		return $this->request;
+	}
+
+	public function get_response_body_chunk() {
+		if ( null === $this->response_body_chunk ) {
+			return false;
+		}
+
+		return $this->response_body_chunk;
 	}
 
 	private function event_loop_tick() {
@@ -246,11 +259,9 @@ class Client {
 	/**
 	 * Consumes $length bytes received in response to a given request.
 	 *
-	 * @param $length
-	 *
 	 * @return string
 	 */
-	public function next_response_body_bytes( $length = null ) {
+	private function next_response_body_bytes() {
 		if ( null === $this->request ) {
 			return false;
 		}
@@ -260,7 +271,7 @@ class Client {
 			$request->state === Request::STATE_RECEIVING_BODY ||
 			$request->state === Request::STATE_FINISHED
 		) {
-			return $connection->consume_buffer( $length );
+			return $connection->consume_buffer();
 		}
 
 		$end_of_data = $request->state === Request::STATE_FINISHED && (
