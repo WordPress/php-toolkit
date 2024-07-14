@@ -222,6 +222,8 @@ class Client {
 				return false;
 			}
 		} while ( $this->event_loop_tick() );
+		
+		return false;
 	}
 
 	public function event_loop_tick() {
