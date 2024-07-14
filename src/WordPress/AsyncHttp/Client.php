@@ -190,15 +190,23 @@ class Client {
 				$buffered .= $connection->consume_buffer( $length - strlen( $buffered ) );
 			}
 
+			$end_of_data = $request->state === Request::STATE_FINISHED && (
+					! is_resource( $this->connections[ $request->id ]->http_socket ) ||
+					feof( $this->connections[ $request->id ]->decoded_response_stream )
+				);
+
+			if ( $end_of_data ) {
+				if ( $buffered !== '' ) {
+					return $buffered;
+				}
+
+				return false;
+			}
+
 			if (
 				( $mode === self::READ_NON_BLOCKING ) ||
 				( $mode === self::READ_POLL_ANY && strlen( $buffered ) ) ||
-				( $mode === self::READ_POLL_ALL && strlen( $buffered ) >= $length ) ||
-				// End of data
-				( $request->state === Request::STATE_FINISHED && (
-					! is_resource( $this->connections[ $request->id ]->http_socket ) ||
-					feof( $this->connections[ $request->id ]->http_socket )
-				) )
+				( $mode === self::READ_POLL_ALL && strlen( $buffered ) >= $length )
 			) {
 				break;
 			}
@@ -512,7 +520,7 @@ class Client {
 		// * The connection is closed
 		foreach ( $this->stream_select( $requests, static::STREAM_SELECT_READ ) as $request ) {
 			if ( ! $this->connections[ $request->id ]->decoded_response_stream ) {
-				$this->connections[ $request->id ]->decoded_response_stream            = $this->decode_and_monitor_response_body_stream( $request );
+				$this->connections[ $request->id ]->decoded_response_stream = $this->decode_and_monitor_response_body_stream( $request );
 			}
 
 			while ( true ) {
@@ -526,7 +534,7 @@ class Client {
 					break;
 				}
 
-				$request->response->received_bytes += strlen($body_bytes);
+				$request->response->received_bytes                  += strlen( $body_bytes );
 				$this->connections[ $request->id ]->response_buffer .= $body_bytes;
 
 				$this->events[ $request->id ][ ClientEvent::EVENT_BODY_CHUNK_AVAILABLE ] = true;

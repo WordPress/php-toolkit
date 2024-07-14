@@ -33,48 +33,42 @@ $client = new Client( [
 $client->enqueue( $requests );
 
 // Way 1: Consume events, get all progress information in the correct order
-while ( $event = $client->await_next_event() ) {
-	echo( "Request " . $event->request->id . ": $event->name " );
-	switch ( $event->name ) {
-		case ClientEvent::EVENT_GOT_HEADERS:
-			print_r( $event->request->response->get_headers() );
-			break;
-
-		case ClientEvent::EVENT_BODY_CHUNK_AVAILABLE:
-			//	$client->read_bytes( $event->request, 1024 );
-			echo " (".$event->request->response->received_bytes."/".$event->request->response->total_bytes.")\n";
-			break;
-
-		case ClientEvent::EVENT_FAILED:
-			echo "– Failed request to {$event->request->url} – {$event->request->error}\n";
-			break;
-
-		case ClientEvent::EVENT_REDIRECT:
-			echo "– Redirected from {$event->request->url} to {$event->request->redirected_to->url}\n";
-			break;
-
-		default:
-			echo "\n";
-			break;
-	}
-}
+//while ( $event = $client->await_next_event() ) {
+//	echo( "Request " . $event->request->id . ": $event->name " );
+//	switch ( $event->name ) {
+//		case ClientEvent::EVENT_GOT_HEADERS:
+//			print_r( $event->request->response->get_headers() );
+//			break;
+//
+//		case ClientEvent::EVENT_BODY_CHUNK_AVAILABLE:
+//			//	$client->read_bytes( $event->request, 1024 );
+//			echo " (".$event->request->response->received_bytes."/".$event->request->response->total_bytes.")\n";
+//			break;
+//
+//		case ClientEvent::EVENT_FAILED:
+//			echo "– Failed request to {$event->request->url} – {$event->request->error}\n";
+//			break;
+//
+//		case ClientEvent::EVENT_REDIRECT:
+//			echo "– Redirected from {$event->request->url} to {$event->request->redirected_to->url}\n";
+//			break;
+//
+//		default:
+//			echo "\n";
+//			break;
+//	}
+//}
 
 
 // Way 2: Consume specific requests
-$request = $requests[0];
+$request = $requests[1];
 while ( true ) {
-	$bytes = $client->read_bytes( $request, 1024, Client::READ_POLL_ALL );
+	$bytes = $client->read_bytes( $request, 1024, Client::READ_POLL_ANY );
 	if ( $bytes === false ) {
 		break;
 	}
-	if(!$bytes) {
-		break;
-//		var_dump($request->state);
-//		die();
-	}
 	echo "* ✅ Got " . strlen( $bytes ) . " bytes on request {$request->id} \n";
 }
-echo 'aa';
 
 foreach ( $client->get_failed_requests() as $failed_request ) {
 	echo "* ❌ Failed request to " . $failed_request->url . " – " . $failed_request->error . "\n";

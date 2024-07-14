@@ -17,6 +17,7 @@ class ChunkedEncodingWrapper extends StreamWrapper {
 	private $raw_buffer = '';
 	private $decoded_buffer = '';
 	private $chunk_remaining_bytes = 0;
+	private $is_feof = false;
 
 
 	static public function wrap( $response_stream ) {
@@ -28,6 +29,11 @@ class ChunkedEncodingWrapper extends StreamWrapper {
 	protected function do_initialize() {
 		$this->stream = $this->wrapper_data['response_stream'];
 	}
+
+	public function stream_eof() {
+		return $this->is_feof || parent::stream_eof();
+	}
+
 
 	/**
 	 * Assumptions:
@@ -86,9 +92,8 @@ class ChunkedEncodingWrapper extends StreamWrapper {
 
 				$chunk_size = hexdec( $chunk_bytes );
 				if(0 === $chunk_size) {
-					var_dump("@TODO: Reached chunk size 0, we should be done.");
-//					fclose($this->stream);
-//					break;
+					$this->is_feof = true;
+					break;
 				}
 
 				$this->chunk_remaining_bytes = $chunk_size;
