@@ -637,6 +637,7 @@ class Client {
 		$headers = array();
 		foreach ( $lines as $line ) {
 			if ( strpos( $line, ': ' ) === false ) {
+				// @TODO: Error, not a valid response
 				continue;
 			}
 			$line = explode( ': ', $line );
