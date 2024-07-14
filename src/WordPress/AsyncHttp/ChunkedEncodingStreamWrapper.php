@@ -18,6 +18,17 @@ class ChunkedEncodingStreamWrapper extends VanillaStreamWrapper {
 	private $decoded_buffer = '';
 	private $chunk_remaining_bytes = 0;
 
+	/**
+	 * Assumptions:
+	 * 
+	 * * $count is the maximum number of **decoded bytes** to return. To decode $count
+	 *   bytes, we may need to read more than $count bytes from the underlying stream.
+	 * * We can call parent::stream_read() without blocking. If the underlying stream
+	 *   has no more data to read, it will return an empty string.
+	 * 
+	 * @param mixed $count
+	 * @return bool|string
+	 */
 	public function stream_read( $count ) {
 		$bytes = parent::stream_read( $count );
 		if($bytes === false) {

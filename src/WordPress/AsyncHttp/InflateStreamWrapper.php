@@ -12,6 +12,13 @@ class InflateStreamWrapper extends VanillaStreamWrapper {
 	private $decoded_buffer = '';
 	private $inflate_handle;
 
+	/**
+	 * @param \WordPress\AsyncHttp\InflateStreamWrapperData $data
+	 */
+	public static function create_resource( $data ) {
+		return parent::create_resource( $data );
+	}
+
 	protected function init()
 	{
 		if($this->initialized) {

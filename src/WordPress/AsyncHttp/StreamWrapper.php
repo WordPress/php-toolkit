@@ -13,7 +13,7 @@ class StreamWrapper extends VanillaStreamWrapper {
 
 	protected function initialize() {
 		if ( ! $this->stream ) {
-			$this->stream = $this->client->get_stream( $this->wrapper_data->request );
+			$this->stream = $this->wrapper_data->request->http_socket;
 		}
 	}
 

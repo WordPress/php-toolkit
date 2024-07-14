@@ -85,7 +85,7 @@ class VanillaStreamWrapper implements StreamWrapperInterface {
 		if ( ! $this->stream ) {
 			return false;
 		}
-		
+
 		return fread( $this->stream, $count );
 	}
 

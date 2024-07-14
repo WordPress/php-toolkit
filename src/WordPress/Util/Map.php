@@ -12,6 +12,13 @@ class Map implements ArrayAccess, IteratorAggregate {
 	public function __construct() {
 	}
 
+	public function values()
+	{
+		return array_map(function($pair) {
+			return $pair[1];
+		}, $this->pairs);		
+	}
+
 	public function offsetExists( $offset ): bool {
 		foreach ( $this->pairs as $pair ) {
 			if ( $pair[0] === $offset ) {

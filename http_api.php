@@ -2,8 +2,6 @@
 
 use WordPress\AsyncHttp\Client;
 use WordPress\AsyncHttp\Request;
-use function WordPress\AsyncHttp\streams_http_response_await_bytes;
-use function WordPress\AsyncHttp\streams_send_http_requests;
 
 require __DIR__ . '/vendor/autoload.php';
 require_once __DIR__ . '/src/WordPress/Streams/StreamWrapperInterface.php';
@@ -14,19 +12,60 @@ require_once __DIR__ . '/src/WordPress/AsyncHttp/InflateStreamWrapperData.php';
 
 $requests = [
 //	new Request("https://playground.internal"),
-	// new Request("https://anglesharp.azurewebsites.net/Chunked"),
-	new Request("https://anglesharp.azurewebsites.net/Chunked"),
+	(new Request("https://anglesharp.azurewebsites.net/Chunked"))->set_http_version('1.1'),
+	(new Request("https://anglesharp.azurewebsites.net/Chunked"))->set_http_version('1.0'),
+	new Request("http://127.0.0.1:3000/"),
 ];
 // list($streams, $headers, $errors) = streams_send_http_requests($requests);
 // print_r($streams);
 // print_r($errors);
 
-// var_dump(streams_http_response_await_bytes($streams, 1024));
+// var_dump(streams_http_response_read_bytes($streams, 1024));
 // Enqueuing another request here is instant and won't start the download yet.
 $client = new Client();
-$streams = $client->enqueue( $requests );
-// var_dump($client->read_bytes($requests[0], 166));
-var_dump(stream_get_contents($streams[0]));
+$queue = $client->enqueue( $requests );
+var_dump($client->read_bytes($requests[0], 200, [
+	'mode' => 'wait_for_all_requested_bytes',
+]));
+// @TODO: handle wait_for_all_requested_bytes for more than content-length bytes
+var_dump(stream_get_contents($requests[1]->get_response()->body_stream));
+// var_dump($client->read_bytes($requests[1], 359, [
+// 	'mode' => 'poll_once',
+// ]));
+// var_dump($client->read_bytes($requests[1], 359, [
+// 	'mode' => 'poll_once',
+// ]));
+// var_dump($client->read_bytes($requests[1], 359, [
+// 	'mode' => 'poll_once',
+// ]));
+// @TODO: poll_once should eventully mark the request as finished
+var_dump("----");
+var_dump($client->read_bytes($requests[2], 1024, [
+	'mode' => 'return',
+]));
+var_dump($client->read_bytes($requests[2], 1024, [
+	'mode' => 'poll_once',
+]));
+// var_dump($queue);
+// var_dump($queue[0]);
+// var_dump($client->read_bytes($requests[0], 1024, [
+// 	'mode' => 'return',
+// ]));
+// var_dump(fread($queue[0]->get_body_stream(), 1));
+// var_dump(fread($queue[0]->get_body_stream(), 1));
+// var_dump(fread($queue[0]->get_body_stream(), 1));
+die();
+// var_dump($queue[0]);
+var_dump($client->read_bytes($requests[0], 186, [
+	'mode' => 'return',
+]));
+var_dump($client->read_bytes($requests[0], 186, [
+	'mode' => 'return',
+]));
+// var_dump($queue[0]->get_status_code());
+// var_dump($queue[0]->get_headers());
+
+// var_dump(stream_get_contents($queue[0]->response->body_stream));
 die();
 $client = new Client();
 $client->set_progress_callback( function ( Request $request, $downloaded, $total ) {
@@ -38,7 +77,9 @@ $requests = [
 	// new Request( "https://downloads.wordpress.org/plugin/gutenberg.17.7.0.zip" ),
 	// new Request( "https://downloads.wordpress.org/theme/pendant.zip" ),
 ];
-$streams1 = $client->enqueue( $requests );
+$queue = $client->enqueue( $requests );
+var_dump($queue[0]);
+die();
 // Enqueuing another request here is instant and won't start the download yet.
 //$streams2 = $client->enqueue( [
 //	new Request( "https://downloads.wordpress.org/plugin/hello-dolly.1.7.3.zip" ),
@@ -77,7 +118,7 @@ echo "Done! :)";
 // Previous explorations:
 
 // Non-blocking parallel processing – the fastest method.
-//while ( $results = sockets_http_response_await_bytes( $streams, 8096 ) ) {
+//while ( $results = sockets_http_response_read_bytes( $streams, 8096 ) ) {
 //	foreach ( $results as $k => $chunk ) {
 //		file_put_contents( 'output' . $k . '.zip', $chunk, FILE_APPEND );
 //	}
