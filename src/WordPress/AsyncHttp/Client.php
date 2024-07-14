@@ -3,10 +3,8 @@
 namespace WordPress\AsyncHttp;
 
 use WordPress\AsyncHttp\StreamWrapper\ChunkedEncodingWrapper;
-use WordPress\AsyncHttp\StreamWrapper\CountReadBytesWrapper;
 use WordPress\AsyncHttp\StreamWrapper\EventLoopWrapper;
 use WordPress\AsyncHttp\StreamWrapper\InflateStreamWrapper;
-use WordPress\Streams\StreamWrapperData;
 
 /**
  * An asynchronous HTTP client library designed for WordPress. Main features:
@@ -96,6 +94,7 @@ class Client {
 	const READ_POLL_ANY = 'READ_POLL_ANY';
 	const READ_POLL_ALL = 'READ_POLL_ALL';
 
+
 	/**
 	 * Microsecond is 1 millionth of a second.
 	 *
@@ -108,18 +107,16 @@ class Client {
 	 */
 	const NONBLOCKING_TIMEOUT_MICROSECONDS = 0.05 * self::MICROSECONDS_TO_SECONDS;
 
-	protected $concurrency;
-	protected $max_redirects = 3;
+	private $concurrency;
+	private $max_redirects = 3;
 
-	protected $requests;
-	protected $on_progress;
-	protected $connections = array();
+	private $requests;
+	private $connections = array();
+	private $events = array();
 
 	public function __construct( $options = [] ) {
-		$this->concurrency = $options['concurrency'] ?? 10;
-		$this->requests    = [];
-		$this->on_progress  = $options['on_progress'] ?? function () {
-		};
+		$this->concurrency   = $options['concurrency'] ?? 10;
+		$this->requests      = [];
 		$this->max_redirects = $options['max_redirects'] ?? 3;
 	}
 
@@ -133,29 +130,37 @@ class Client {
 	 */
 	public function enqueue( $requests ) {
 		if ( ! is_array( $requests ) ) {
-			$this->requests[]                   = $requests;
-			$this->connections[ $requests->id ] = new Connection( $requests );
-
-			return;
+			$requests = [ $requests ];
 		}
 
 		foreach ( $requests as $request ) {
 			$this->requests[]                  = $request;
+			$this->events[ $request->id ]      = [];
 			$this->connections[ $request->id ] = new Connection( $request );
 		}
 	}
 
-	public function await_incoming_bytes() {
+	public function await_next_event() {
+		$ordered_events = [
+			ClientEvent::EVENT_GOT_HEADERS,
+			ClientEvent::EVENT_BODY_CHUNK_AVAILABLE,
+			ClientEvent::EVENT_REDIRECT,
+			ClientEvent::EVENT_FAILED,
+			ClientEvent::EVENT_FINISHED,
+		];
 		do {
-			foreach ( $this->requests as $request ) {
-				$request = $request->latest_redirect();
-				$connection = $this->connections[ $request->id ];
-				if (
-					$request->state !== Request::STATE_FAILED &&
-					$request->response &&
-					strlen( $connection->response_buffer ) > 0
-				) {
-					return $request;
+			foreach ( $this->events as $request_id => $events ) {
+				foreach ( $ordered_events as $considered_event ) {
+					$needs_emitting = $this->events[ $request_id ][ $considered_event ] ?? false;
+					if ( ! $needs_emitting ) {
+						continue;
+					}
+
+					$this->events[ $request_id ][ $considered_event ] = false;
+
+					$request = $this->get_request_by_id( $request_id );
+
+					return new ClientEvent( $request, $considered_event );
 				}
 			}
 		} while ( $this->event_loop_tick() );
@@ -169,13 +174,14 @@ class Client {
 	 *
 	 * @param  Request  $request
 	 * @param $length
+	 * @param  string  $mode
 	 *
 	 * @return string
 	 */
 	public function read_bytes( Request $request, $length, $mode = self::READ_NON_BLOCKING ) {
-		$buffered   = '';
+		$buffered = '';
 		do {
-			$request = $request->latest_redirect();
+			$request    = $request->latest_redirect();
 			$connection = $this->connections[ $request->id ];
 			if (
 				$request->state === Request::STATE_RECEIVING_BODY ||
@@ -190,9 +196,9 @@ class Client {
 				( $mode === self::READ_POLL_ALL && strlen( $buffered ) >= $length ) ||
 				// End of data
 				( $request->state === Request::STATE_FINISHED && (
-					!is_resource($this->connections[ $request->id ]->http_socket) ||
+					! is_resource( $this->connections[ $request->id ]->http_socket ) ||
 					feof( $this->connections[ $request->id ]->http_socket )
-				 ) )
+				) )
 			) {
 				break;
 			}
@@ -201,93 +207,69 @@ class Client {
 		return $buffered;
 	}
 
-	/**
-	 * Returns the response stream associated with the given Request object.
-	 * Reading from that stream also runs this Client's event loop.
-	 *
-	 * @param  Request  $request
-	 *
-	 * @return resource|bool
-	 */
-	public function await_response_stream( Request $request ) {
-		do {
-			$request = $request->latest_redirect();
-			$connection = $this->connections[ $request->id ];
-			if ( $connection->event_loop_decoded_response_stream ) {
-				return $connection->event_loop_decoded_response_stream;
-			}
-			// If a request finished without opening a decoded response stream, it either failed
-			// or it's a redirect. Let's return false.
-			if ( $request->state === Request::STATE_FAILED || $request->state === Request::STATE_FINISHED ) {
-				return false;
-			}
-		} while ( $this->event_loop_tick() );
-
-		return false;
-	}
-
-	public function event_loop_tick() {
-		if ( count( $this->get_concurrent_requests() ) === 0 ) {
+	private function event_loop_tick() {
+		if ( count( $this->get_active_requests() ) === 0 ) {
 			return false;
 		}
 
 		$this->open_nonblocking_http_sockets(
-			$this->get_concurrent_requests( Request::STATE_ENQUEUED )
+			$this->get_active_requests( Request::STATE_ENQUEUED )
 		);
 
 		$this->enable_crypto(
-			$this->get_concurrent_requests( Request::STATE_WILL_ENABLE_CRYPTO )
+			$this->get_active_requests( Request::STATE_WILL_ENABLE_CRYPTO )
 		);
 
 		$this->send_request_headers(
-			$this->get_concurrent_requests( Request::STATE_WILL_SEND_HEADERS )
+			$this->get_active_requests( Request::STATE_WILL_SEND_HEADERS )
 		);
 
 		$this->send_request_body(
-			$this->get_concurrent_requests( Request::STATE_WILL_SEND_BODY )
+			$this->get_active_requests( Request::STATE_WILL_SEND_BODY )
 		);
 
 		$this->receive_response_headers(
-			$this->get_concurrent_requests( Request::STATE_RECEIVING_HEADERS )
+			$this->get_active_requests( Request::STATE_RECEIVING_HEADERS )
 		);
 
 		$this->receive_response_body(
-			$this->get_concurrent_requests( Request::STATE_RECEIVING_BODY )
+			$this->get_active_requests( Request::STATE_RECEIVING_BODY )
 		);
 
 		$this->handle_redirects(
-			$this->get_concurrent_requests( Request::STATE_RECEIVED )
-		);
-
-		$this->cleanup_finished_and_consumed_requests(
-			$this->get_requests( Request::STATE_FINISHED )
+			$this->get_active_requests( Request::STATE_RECEIVED )
 		);
 
 		return true;
 	}
 
-	protected function mark_finished( Request $request ) {
-		$request->state = Request::STATE_FINISHED;
+	private function mark_finished( Request $request ) {
+		$request->state                                              = Request::STATE_FINISHED;
+		$this->events[ $request->id ][ ClientEvent::EVENT_FINISHED ] = true;
+
 		$this->close_connection( $request );
 	}
 
-	protected function set_error( Request $request, $error ) {
-		$request->error = $error;
-		$request->state = Request::STATE_FAILED;
+	private function set_error( Request $request, $error ) {
+		$request->error                                            = $error;
+		$request->state                                            = Request::STATE_FAILED;
+		$this->events[ $request->id ][ ClientEvent::EVENT_FAILED ] = true;
 
 		$this->close_connection( $request );
 	}
 
 	private function close_connection( Request $request ) {
-		$socket = $this->connections[$request->id]->http_socket;
+		$socket = $this->connections[ $request->id ]->http_socket;
 		if ( $socket && is_resource( $socket ) ) {
+			// Close the TCP socket
 			@fclose( $socket );
+
 			// No need to close all the dependent stream wrappers – they are
 			// invalidated when the root resource is closed.
 		}
 	}
 
-	protected function get_concurrent_requests( $states = null ) {
+	private function get_active_requests( $states = null ) {
 		$processed_requests = $this->get_requests( [
 			Request::STATE_WILL_ENABLE_CRYPTO,
 			Request::STATE_WILL_SEND_HEADERS,
@@ -324,23 +306,23 @@ class Client {
 		return static::filter_requests( $this->requests, $states );
 	}
 
+	private function get_request_by_id( $request_id ) {
+		foreach ( $this->requests as $request ) {
+			if ( $request->id === $request_id ) {
+				return $request;
+			}
+		}
+	}
+
 	/**
 	 * Handle transfer encodings.
 	 *
-	 * @param  Request[]  $requests  An array of HTTP requests.
+	 * @param  Request  $request
+	 *
+	 * @return false|resource
 	 */
 	private function decode_and_monitor_response_body_stream( Request $request ) {
-		$wrapped_stream = CountReadBytesWrapper::wrap(
-			$this->connections[ $request->id ]->http_socket,
-			function ( $downloaded ) use ( $request ) {
-				$total = $request->response->get_header( 'content-length' ) ?: null;
-				if ( $total !== null ) {
-					$total = (int) $total;
-				}
-				$onProgress = $this->on_progress;
-				$onProgress( $request, $downloaded, $total );
-			}
-		);
+		$wrapped_stream = $this->connections[ $request->id ]->http_socket;
 
 		$transfer_encodings = array();
 
@@ -500,13 +482,19 @@ class Client {
 				$response->status_message = $parsed['status']['message'];
 				$response->protocol       = $parsed['status']['protocol'];
 
+				$total = $request->response->get_header( 'content-length' ) ?: null;
+				if ( $total !== null ) {
+					$response->total_bytes = (int) $total;
+				}
+
 				// If we're being redirected, we don't need to wait for the body.
 				if ( $response->status_code >= 300 && $response->status_code < 400 ) {
 					$request->state = Request::STATE_RECEIVED;
 					break;
 				}
 
-				$request->state = Request::STATE_RECEIVING_BODY;
+				$request->state                                                 = Request::STATE_RECEIVING_BODY;
+				$this->events[ $request->id ][ ClientEvent::EVENT_GOT_HEADERS ] = true;
 				break;
 			}
 		}
@@ -523,14 +511,8 @@ class Client {
 		// * The last chunk in Transfer-Encoding: chunked is received
 		// * The connection is closed
 		foreach ( $this->stream_select( $requests, static::STREAM_SELECT_READ ) as $request ) {
-			$response = $request->response;
 			if ( ! $this->connections[ $request->id ]->decoded_response_stream ) {
 				$this->connections[ $request->id ]->decoded_response_stream            = $this->decode_and_monitor_response_body_stream( $request );
-				$this->connections[ $request->id ]->event_loop_decoded_response_stream = EventLoopWrapper::wrap(
-					$request,
-					$this->connections[ $request->id ]->http_socket,
-					$this
-				);
 			}
 
 			while ( true ) {
@@ -544,7 +526,10 @@ class Client {
 					break;
 				}
 
+				$request->response->received_bytes += strlen($body_bytes);
 				$this->connections[ $request->id ]->response_buffer .= $body_bytes;
+
+				$this->events[ $request->id ][ ClientEvent::EVENT_BODY_CHUNK_AVAILABLE ] = true;
 			}
 		}
 	}
@@ -566,57 +551,38 @@ class Client {
 				continue;
 			}
 
-			
 			$redirects_so_far = 0;
-			$cause = $request;
-			while($cause->redirected_from) {
-				++$redirects_so_far;
+			$cause            = $request;
+			while ( $cause->redirected_from ) {
+				++ $redirects_so_far;
 				$cause = $cause->redirected_from;
 			}
 
-			if($redirects_so_far >= $this->max_redirects) {
-				$this->set_error($request, new HttpError('Too many redirects'));
+			if ( $redirects_so_far >= $this->max_redirects ) {
+				$this->set_error( $request, new HttpError( 'Too many redirects' ) );
 				continue;
 			}
 
 			$redirect_url = $location;
-			if(strpos($redirect_url, 'http://') !== 0 && strpos($redirect_url, 'https://') !== 0) {
-				$current_url_parts = parse_url($request->url);
-				$redirect_url = $current_url_parts['scheme'] . '://' . $current_url_parts['host'];
-				if($current_url_parts['port']){
+			if ( strpos( $redirect_url, 'http://' ) !== 0 && strpos( $redirect_url, 'https://' ) !== 0 ) {
+				$current_url_parts = parse_url( $request->url );
+				$redirect_url      = $current_url_parts['scheme'] . '://' . $current_url_parts['host'];
+				if ( $current_url_parts['port'] ) {
 					$redirect_url .= ':' . $current_url_parts['port'];
 				}
-				if(!str_starts_with($location, '/')) {
+				if ( strlen( $location ) === 0 || $location[0] !== '/' ) {
 					$redirect_url .= '/';
 				}
 				$redirect_url .= $location;
 			}
 
-			if (!filter_var($redirect_url, FILTER_VALIDATE_URL)) {
-				$this->set_error($request, new HttpError('Invalid redirect URL'));
+			if ( ! filter_var( $redirect_url, FILTER_VALIDATE_URL ) ) {
+				$this->set_error( $request, new HttpError( 'Invalid redirect URL' ) );
 				continue;
 			}
 
-			$this->enqueue(new Request($redirect_url, ['redirected_from' => $request]));
-		}
-	}
-
-	private function cleanup_finished_and_consumed_requests( $requests ) {
-		foreach ( $requests as $request ) {
-			// Interestingly, relying on foreach-provided $k => $request unsets
-			// the wrong request. Is it a case of a non-sparse array being re-indexed
-			// when iterating and unsetting?
-			$request_key = array_search($request, $this->requests, true);
-			if ( ! isset( $this->connections[ $request->id ] ) ) {
-				// unset( $this->requests[ $request_key ] );
-				continue;
-			}
-
-			$connection = $this->connections[ $request->id ];
-			if ( ! $connection || ! $connection->response_buffer ) {
-				// unset( $this->requests[ $request_key ] );
-				// unset( $this->connections[ $request->id ] );
-			}
+			$this->events[ $request->id ][ ClientEvent::EVENT_REDIRECT ] = true;
+			$this->enqueue( new Request( $redirect_url, [ 'redirected_from' => $request ] ) );
 		}
 	}
 
@@ -829,3 +795,4 @@ class Client {
 	}
 
 }
+

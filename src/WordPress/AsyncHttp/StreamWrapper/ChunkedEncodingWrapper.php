@@ -84,7 +84,14 @@ class ChunkedEncodingWrapper extends StreamWrapper {
 				$chunk_bytes = substr( $this->raw_buffer, $at, $chunk_bytes_nb );
 				$at = $clrf_at + 2;
 
-				$this->chunk_remaining_bytes = hexdec( $chunk_bytes );
+				$chunk_size = hexdec( $chunk_bytes );
+				if(0 === $chunk_size) {
+					var_dump("@TODO: Reached chunk size 0, we should be done.");
+//					fclose($this->stream);
+//					break;
+				}
+
+				$this->chunk_remaining_bytes = $chunk_size;
 				if(0 === $this->chunk_remaining_bytes) {
 					$this->state = self::SCAN_FINAL_CHUNK;
 					break;

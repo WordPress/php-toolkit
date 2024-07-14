@@ -8,7 +8,6 @@ class Connection {
 	public $http_socket;
 	public $response_buffer;
 	public $decoded_response_stream;
-	public $event_loop_decoded_response_stream;
 
 	public function __construct( Request $request ) {
 		$this->request = $request;

@@ -10,7 +10,8 @@ class Response {
     public $headers = [];
 	public $request;
 
-	public $buffer = '';
+	public $received_bytes = 0;
+	public $total_bytes = null;
 
     public function __construct(Request $request) {
         $this->request = $request;
@@ -32,6 +33,5 @@ class Response {
 
 		return $this->headers;
 	}
-
 
 }
