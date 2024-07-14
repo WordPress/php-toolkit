@@ -552,7 +552,7 @@ class Client {
 					break;
 				}
 
-				$body_bytes = fread( $this->connections[ $request->id ]->decoded_response_stream, 1024 );
+				$body_bytes = fread( $this->connections[ $request->id ]->decoded_response_stream, 8096 );
 				if ( false === $body_bytes || '' === $body_bytes ) {
 					break;
 				}

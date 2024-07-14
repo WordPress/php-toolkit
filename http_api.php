@@ -8,10 +8,11 @@ require __DIR__ . '/vendor/autoload.php';
 
 $requests = [
 //	new Request( "https://wordpress.org/latest.zip" ),
+	new Request( "https://raw.githubusercontent.com/wpaccessibility/a11y-theme-unit-test/master/a11y-theme-unit-test-data.xml" ),
 	new Request( "https://adamadam.blog" ),
-	// new Request("https://anglesharp.azurewebsites.net/Chunked", [
-	// 	'http_version' => '1.1'
-	// ]),
+	new Request( "https://anglesharp.azurewebsites.net/Chunked", [
+		'http_version' => '1.1',
+	] ),
 	new Request( "https://anglesharp.azurewebsites.net/Chunked", [
 		'http_version' => '1.0',
 	] ),
@@ -31,17 +32,15 @@ $client = new Client( [
 ] );
 
 $client->enqueue( $requests );
-
-$i = 0;
-while ( $client->await_next_event( ) ) {
+while ( $client->await_next_event( [ 'requests' => [ $requests[0] ] ] ) ) {
 	echo "Request " . $client->get_request()->id . ": " . $client->get_event() . " \n";
 	switch ( $client->get_event() ) {
 		case Client::EVENT_BODY_CHUNK_AVAILABLE:
-//			echo $client->next_response_body_bytes() . "\n\n";
+			echo $client->next_response_body_bytes() . "\n\n";
 			break;
 	}
 }
 
-//foreach ( $client->get_failed_requests() as $failed_request ) {
-//	echo "* ❌ Failed request to " . $failed_request->url . " – " . $failed_request->error . "\n";
-//}
+foreach ( $client->get_failed_requests() as $failed_request ) {
+	echo "* ❌ Failed request to " . $failed_request->url . " – " . $failed_request->error . "\n";
+}
