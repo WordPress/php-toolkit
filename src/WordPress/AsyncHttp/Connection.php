@@ -13,10 +13,13 @@ class Connection {
 		$this->request = $request;
 	}
 
-	public function consume_buffer($length)
-	{
-		$buffer = substr($this->response_buffer, 0, $length);
-		$this->response_buffer = substr($this->response_buffer, $length);
+	public function consume_buffer( $length = null ) {
+		if ( $length === null ) {
+			$length = strlen( $this->response_buffer );
+		}
+		$buffer                = substr( $this->response_buffer, 0, $length );
+		$this->response_buffer = substr( $this->response_buffer, $length );
+
 		return $buffer;
 	}
 

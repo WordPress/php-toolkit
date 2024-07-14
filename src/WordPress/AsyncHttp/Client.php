@@ -9,41 +9,8 @@ use WordPress\AsyncHttp\StreamWrapper\InflateStreamWrapper;
 /**
  * An asynchronous HTTP client library designed for WordPress. Main features:
  *
- * **Streaming support**
- * Enqueuing a request returns a PHP resource that can be read by PHP functions like `fopen()`
- * and `stream_get_contents()`
- *
- * ```php
- * $client = new AsyncHttpClient();
- * $fp = $client->enqueue(
- *      new Request( "https://downloads.wordpress.org/plugin/gutenberg.17.7.0.zip" ),
- * );
- * // Read some data
- * $first_4_kilobytes = fread($fp, 4096);
- * // We've only waited for the first four kilobytes. The download
- * // is still in progress at this point, and yet we're free to do
- * // other work.
- * ```
- *
- * **Delayed execution and concurrent downloads**
- * The actual socket are not open until the first time the stream is read from:
- *
- * ```php
- * $client = new AsyncHttpClient();
- * // Enqueuing the requests does not start the data transmission yet.
- * $batch = $client->enqueue( [
- *     new Request( "https://downloads.wordpress.org/plugin/gutenberg.17.7.0.zip" ),
- *     new Request( "https://downloads.wordpress.org/theme/pendant.zip" ),
- * ] );
- * // Even though stream_get_contents() will return just the response body for
- * // one request, it also opens the network sockets and starts streaming
- * // both enqueued requests. The response data for $batch[1] is buffered.
- * $gutenberg_zip = stream_get_contents( $batch[0] )
- *
- * // At least a chunk of the pendant.zip have already been downloaded, let's
- * // wait for the rest of the data:
- * $pendant_zip = stream_get_contents( $batch[1] )
- * ```
+ * * Streaming support
+ * * Progress monitoring
  *
  * **Concurrency limits**
  * The `AsyncHttpClient` will only keep up to `$concurrency` connections open. When one of the
@@ -56,22 +23,6 @@ use WordPress\AsyncHttp\StreamWrapper\InflateStreamWrapper;
  * $client->set_concurrency_limit( 10 );
  * ```
  *
- * **Progress monitoring**
- * A developer-provided callback (`AsyncHttpClient->set_progress_callback()`) receives progress
- * information about every HTTP request.
- *
- * ```php
- * $client = new AsyncHttpClient();
- * $client->set_progress_callback( function ( Request $request, $downloaded, $total ) {
- *      // $total is computed based on the Content-Length response header and
- *      // null if it's missing.
- *      echo "$request->url – Downloaded: $downloaded / $total\n";
- * } );
- * ```
- *
- * **HTTPS support**
- * TLS connections work out of the box.
- *
  * **Non-blocking sockets**
  * The act of opening each socket connection is non-blocking and happens nearly
  * instantly. The streams themselves are also set to non-blocking mode via `stream_set_blocking($fp, 0);`
@@ -79,21 +30,14 @@ use WordPress\AsyncHttp\StreamWrapper\InflateStreamWrapper;
  * **Asynchronous downloads**
  * Start downloading now, do other work in your code, only block once you need the data.
  *
- * **PHP 7.0 support and no dependencies**
+ * **PHP 7.2+ support and no dependencies**
  * `AsyncHttpClient` works on any WordPress installation with vanilla PHP only.
  * It does not require any PHP extensions, CURL, or any external PHP libraries.
- *
- * **Supports custom request headers and body**
  */
 class Client {
 
 	const STREAM_SELECT_READ = 1;
 	const STREAM_SELECT_WRITE = 2;
-
-	const READ_NON_BLOCKING = 'READ_NON_BLOCKING';
-	const READ_POLL_ANY = 'READ_POLL_ANY';
-	const READ_POLL_ALL = 'READ_POLL_ALL';
-
 
 	/**
 	 * Microsecond is 1 millionth of a second.
@@ -113,11 +57,12 @@ class Client {
 	private $requests;
 	private $connections = array();
 	private $events = array();
+	private $current_event;
 
 	public function __construct( $options = [] ) {
 		$this->concurrency   = $options['concurrency'] ?? 10;
-		$this->requests      = [];
 		$this->max_redirects = $options['max_redirects'] ?? 3;
+		$this->requests      = [];
 	}
 
 	/**
@@ -140,16 +85,88 @@ class Client {
 		}
 	}
 
-	public function await_next_event() {
-		$ordered_events = [
+	/**
+	 * Returns the next event related to any of the HTTP
+	 * requests enqueued in this client.
+	 *
+	 * ## Events
+	 *
+	 * The returned event is a ClientEvent with $event->name
+	 * being one of the following:
+	 *
+	 * * `ClientEvent::EVENT_GOT_HEADERS`
+	 * * `ClientEvent::EVENT_BODY_CHUNK_AVAILABLE`
+	 * * `ClientEvent::EVENT_REDIRECT`
+	 * * `ClientEvent::EVENT_FAILED`
+	 * * `ClientEvent::EVENT_FINISHED`
+	 *
+	 * See the ClientEvent class for details on each event.
+	 *
+	 * Once an event is consumed, it is removed from the
+	 * event queue and will not be returned again.
+	 *
+	 * When there are no events available, this function
+	 * blocks and waits for the next one. If all requests
+	 * have already finished, and we are not waiting for
+	 * any more events, it returns false.
+	 *
+	 * ## Filtering
+	 *
+	 * The $query parameter can be used to filter the events
+	 * that are returned. It can contain the following keys:
+	 *
+	 * * `events` – An array of events to consider in the order
+	 *   they should be considered.
+	 * * `request_id` – The ID of the request to consider.
+	 *
+	 * For example, to only consider the next `EVENT_GOT_HEADERS`
+	 * event for a specific request, you can use:
+	 *
+	 * ```php
+	 * $request = new Request( "https://w.org" );
+	 *
+	 * $client = new AsyncHttpClient();
+	 * $client->enqueue( $request );
+	 * $event = $client->await_next_event( [
+	 *    'events' => [ ClientEvent::EVENT_GOT_HEADERS ],
+	 *    'request_id' => $request->id,
+	 * ] );
+	 * ```
+	 *
+	 * Importantly, filtering does not consume unrelated events.
+	 * You can await all the events for a request #2, and
+	 * then await the next event for request #1 even if the
+	 * request #1 has finished before you started awaiting
+	 * events for request #2.
+	 *
+	 * @param $query
+	 *
+	 * @return bool
+	 */
+	public function await_next_event( $query = [] ) {
+		$ordered_events      = $query['events'] ?? [
 			ClientEvent::EVENT_GOT_HEADERS,
 			ClientEvent::EVENT_BODY_CHUNK_AVAILABLE,
 			ClientEvent::EVENT_REDIRECT,
 			ClientEvent::EVENT_FAILED,
 			ClientEvent::EVENT_FINISHED,
 		];
+		$this->current_event = null;
 		do {
-			foreach ( $this->events as $request_id => $events ) {
+			if ( empty( $query['requests'] ) ) {
+				$events = array_keys( $this->events );
+			} else {
+				$events = [];
+				foreach ( $query['requests'] as $query_request ) {
+					$events[] = $query_request->id;
+					while ( $query_request->redirected_to ) {
+						$query_request = $query_request->redirected_to;
+						$events[]      = $query_request->id;
+					}
+				}
+			}
+
+			foreach ( $events as $request_id ) {
 				foreach ( $ordered_events as $considered_event ) {
 					$needs_emitting = $this->events[ $request_id ][ $considered_event ] ?? false;
 					if ( ! $needs_emitting ) {
@@ -158,9 +175,10 @@ class Client {
 
 					$this->events[ $request_id ][ $considered_event ] = false;
 
-					$request = $this->get_request_by_id( $request_id );
+					$request             = $this->get_request_by_id( $request_id );
+					$this->current_event = new ClientEvent( $request, $considered_event );
 
-					return new ClientEvent( $request, $considered_event );
+					return true;
 				}
 			}
 		} while ( $this->event_loop_tick() );
@@ -168,51 +186,41 @@ class Client {
 		return false;
 	}
 
+	public function get_event() {
+		if ( null === $this->current_event ) {
+			return false;
+		}
+
+		return $this->current_event;
+	}
+
 	/**
-	 * Reads $length bytes from the given request while also running
-	 * non-blocking event loop operations.
+	 * Consumes $length bytes received in response to a given request.
 	 *
 	 * @param  Request  $request
 	 * @param $length
-	 * @param  string  $mode
 	 *
 	 * @return string
 	 */
-	public function read_bytes( Request $request, $length, $mode = self::READ_NON_BLOCKING ) {
-		$buffered = '';
-		do {
-			$request    = $request->latest_redirect();
-			$connection = $this->connections[ $request->id ];
-			if (
-				$request->state === Request::STATE_RECEIVING_BODY ||
-				$request->state === Request::STATE_FINISHED
-			) {
-				$buffered .= $connection->consume_buffer( $length - strlen( $buffered ) );
-			}
+	public function next_response_body_bytes( Request $request, $length=null ) {
+		$request    = $request->latest_redirect();
+		$connection = $this->connections[ $request->id ];
+		if (
+			$request->state === Request::STATE_RECEIVING_BODY ||
+			$request->state === Request::STATE_FINISHED
+		) {
+			return $connection->consume_buffer( $length );
+		}
 
-			$end_of_data = $request->state === Request::STATE_FINISHED && (
-					! is_resource( $this->connections[ $request->id ]->http_socket ) ||
-					feof( $this->connections[ $request->id ]->decoded_response_stream )
-				);
+		$end_of_data = $request->state === Request::STATE_FINISHED && (
+				! is_resource( $this->connections[ $request->id ]->http_socket ) ||
+				feof( $this->connections[ $request->id ]->decoded_response_stream )
+			);
+		if ( $end_of_data ) {
+			return false;
+		}
 
-			if ( $end_of_data ) {
-				if ( $buffered !== '' ) {
-					return $buffered;
-				}
-
-				return false;
-			}
-
-			if (
-				( $mode === self::READ_NON_BLOCKING ) ||
-				( $mode === self::READ_POLL_ANY && strlen( $buffered ) ) ||
-				( $mode === self::READ_POLL_ALL && strlen( $buffered ) >= $length )
-			) {
-				break;
-			}
-		} while ( $this->event_loop_tick() );
-
-		return $buffered;
+		return '';
 	}
 
 	private function event_loop_tick() {
