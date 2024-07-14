@@ -2,19 +2,17 @@
 
 namespace WordPress\Streams;
 
-class VanillaStreamWrapper implements StreamWrapperInterface {
+class StreamWrapper implements StreamWrapperInterface {
 	protected $stream;
 
 	protected $context;
 
 	protected $wrapper_data;
+	protected $initialized = false;
 
 	const SCHEME = 'vanilla';
 
-	/**
-	 * @param \WordPress\Streams\VanillaStreamWrapperData $data
-	 */
-	public static function create_resource( $data ) {
+	protected static function create_resource( $data ) {
 		static::register();
 
 		$context = stream_context_create(
@@ -42,6 +40,17 @@ class VanillaStreamWrapper implements StreamWrapperInterface {
 		stream_wrapper_unregister( 'async' );
 	}
 
+	protected function initialize() {
+		if ( $this->initialized ) {
+			return;
+		}
+		$this->initialized = true;
+		$this->do_initialize();
+	}
+
+	protected function do_initialize() {
+	}
+
 
 	/**
 	 * @param int      $option
@@ -49,6 +58,7 @@ class VanillaStreamWrapper implements StreamWrapperInterface {
 	 * @param int|null $arg2
 	 */
 	public function stream_set_option( $option, $arg1, $arg2 = null ): bool {
+		$this->initialize();
 		if ( \STREAM_OPTION_BLOCKING === $option ) {
 			return stream_set_blocking( $this->stream, (bool) $arg1 );
 		} elseif ( \STREAM_OPTION_READ_TIMEOUT === $option ) {
@@ -61,15 +71,12 @@ class VanillaStreamWrapper implements StreamWrapperInterface {
 	public function stream_open( $path, $mode, $options, &$opened_path ) {
 		$contextOptions = stream_context_get_options( $this->context );
 
-		if ( ! isset( $contextOptions[ static::SCHEME ]['wrapper_data'] ) || ! is_object( $contextOptions[ static::SCHEME ]['wrapper_data'] ) ) {
+		if ( ! isset( $contextOptions[ static::SCHEME ]['wrapper_data'] ) ) {
 			return false;
 		}
 
 		$this->wrapper_data = $contextOptions[ static::SCHEME ]['wrapper_data'];
-
-		if ( $this->wrapper_data->fp ) {
-			$this->stream = $this->wrapper_data->fp;
-		}
+		$this->initialize();
 
 		return true;
 	}
@@ -78,10 +85,12 @@ class VanillaStreamWrapper implements StreamWrapperInterface {
 	 * @param int $cast_as
 	 */
 	public function stream_cast( $cast_as ) {
+		$this->initialize();
 		return $this->stream;
 	}
 
 	public function stream_read( $count ) {
+		$this->initialize();
 		if ( ! $this->stream ) {
 			return false;
 		}
@@ -90,6 +99,7 @@ class VanillaStreamWrapper implements StreamWrapperInterface {
 	}
 
 	public function stream_write( $data ) {
+		$this->initialize();
 		if ( ! $this->stream ) {
 			return false;
 		}
@@ -98,6 +108,7 @@ class VanillaStreamWrapper implements StreamWrapperInterface {
 	}
 
 	public function stream_tell() {
+		$this->initialize();
 		if ( ! $this->stream ) {
 			return false;
 		}
@@ -106,6 +117,7 @@ class VanillaStreamWrapper implements StreamWrapperInterface {
 	}
 
 	public function stream_close() {
+		$this->initialize();
 		if ( ! $this->stream ) {
 			return false;
 		}
@@ -118,6 +130,7 @@ class VanillaStreamWrapper implements StreamWrapperInterface {
 	}
 
 	public function stream_eof() {
+		$this->initialize();
 		if ( ! $this->stream ) {
 			return false;
 		}
@@ -130,6 +143,7 @@ class VanillaStreamWrapper implements StreamWrapperInterface {
 	}
 
 	public function stream_seek( $offset, $whence ) {
+		$this->initialize();
 		if ( ! $this->stream ) {
 			return false;
 		}
@@ -138,9 +152,10 @@ class VanillaStreamWrapper implements StreamWrapperInterface {
 	}
 
 	public function stream_stat() {
+		$this->initialize();
 		return array();
 	}
-	
+
 	/*
 	 * This stream_close call could be initiated not by the developer,
 	 * but by the PHP internal request shutdown handler (written in C).

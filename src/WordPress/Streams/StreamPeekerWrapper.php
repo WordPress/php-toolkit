@@ -2,42 +2,26 @@
 
 namespace WordPress\Streams;
 
-class StreamPeekerWrapper extends VanillaStreamWrapper {
-	protected $onChunk;
-	protected $onClose;
+class StreamPeekerWrapper extends StreamWrapper {
+	protected $on_data;
+	protected $on_close;
 	protected $position;
 
 	const SCHEME = 'peek';
 
-	// Opens the stream
-	public function stream_open( $path, $mode, $options, &$opened_path ) {
-		parent::stream_open( $path, $mode, $options, $opened_path );
+	public static function wrap( $response_stream, $on_data, $on_close=null ) {
+		return parent::create_resource( [
+			'stream' => $response_stream,
+			'on_data' => $on_data,
+			'on_close' => $on_close
+		] );
+	}
 
-		if ( isset( $this->wrapper_data->fp ) ) {
-			$this->stream = $this->wrapper_data->fp;
-		} else {
-			return false;
-		}
-
-		if ( isset( $this->wrapper_data->onChunk ) && is_callable( $this->wrapper_data->onChunk ) ) {
-			$this->onChunk = $this->wrapper_data->onChunk;
-		} else {
-			// Default onChunk function if none provided
-			$this->onChunk = function ( $data ) {
-			};
-		}
-
-		if ( isset( $this->wrapper_data->onClose ) && is_callable( $this->wrapper_data->onClose ) ) {
-			$this->onClose = $this->wrapper_data->onClose;
-		} else {
-			// Default onClose function if none provided
-			$this->onClose = function () {
-			};
-		}
-
+	protected function do_initialize() {
+		$this->stream = $this->wrapper_data['stream'];
+		$this->on_data = $this->wrapper_data['on_data'] ?? function ( $data ) {};
+		$this->on_close = $this->wrapper_data['on_close'] ?? function () {};
 		$this->position = 0;
-
-		return true;
 	}
 
 	// Reads from the stream
@@ -45,7 +29,7 @@ class StreamPeekerWrapper extends VanillaStreamWrapper {
 		$ret             = fread( $this->stream, $count );
 		$this->position += strlen( $ret );
 
-		$onChunk = $this->onChunk;
+		$onChunk = $this->on_data;
 		$onChunk( $ret );
 
 		return $ret;
@@ -61,8 +45,11 @@ class StreamPeekerWrapper extends VanillaStreamWrapper {
 
 	// Closes the stream
 	public function stream_close() {
-		fclose( $this->stream );
-		$onClose = $this->onClose;
+		if(is_resource($this->stream)) {
+			fclose( $this->stream );
+		}
+		$this->stream = null;
+		$onClose = $this->on_close;
 		$onClose();
 	}
 

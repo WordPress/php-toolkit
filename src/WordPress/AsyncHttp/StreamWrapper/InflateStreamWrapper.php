@@ -1,44 +1,35 @@
 <?php
 
-namespace WordPress\AsyncHttp;
+namespace WordPress\AsyncHttp\StreamWrapper;
 
-use WordPress\Streams\VanillaStreamWrapper;
+use WordPress\Streams\StreamWrapper;
 
-class InflateStreamWrapper extends VanillaStreamWrapper {
+class InflateStreamWrapper extends StreamWrapper {
 
 	const SCHEME = 'inflate-http-response';
 
-	private $initialized = false;
 	private $decoded_buffer = '';
 	private $inflate_handle;
 
 	/**
 	 * @param \WordPress\AsyncHttp\InflateStreamWrapperData $data
 	 */
-	public static function create_resource( $data ) {
-		return parent::create_resource( $data );
+	public static function wrap( $response_stream, $encoding ) {
+		return parent::create_resource( [
+			'response_stream' => $response_stream,
+			'encoding' => $encoding,
+		] );
 	}
 
-	protected function init()
-	{
-		if($this->initialized) {
-			return;
-		}
-		$this->initialized = true;
-
-		if(!($this->wrapper_data instanceof InflateStreamWrapperData)) {
-			throw new \Exception('InflateStreamWrapper requires an instance of InflateStreamWrapperData');
-		}
-
-		$this->inflate_handle = inflate_init($this->wrapper_data->encoding);
+	protected function do_initialize() {
+		$this->stream = $this->wrapper_data['response_stream'];
+		$this->inflate_handle = inflate_init($this->wrapper_data['encoding']);
 		if(false === $this->inflate_handle) {
 			throw new \Exception('Failed to initialize inflate handle');
 		}
 	}
 
 	public function stream_read( $count ) {
-		$this->init();
-
 		$bytes = parent::stream_read( $count );
 		if($bytes === false) {
 			return false;

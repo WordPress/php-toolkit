@@ -10,6 +10,12 @@ const server = http.createServer((req, res) => {
   const acceptEncoding = req.headers['accept-encoding'];
   const useGzip = acceptEncoding && acceptEncoding.includes('gzip');
 
+  if (req.headers['please-redirect']) {
+    res.writeHead(301, { Location: req.url });
+    res.end();
+    return;
+  }
+
   // Set headers for chunked transfer encoding if HTTP/1.1
   if (isHttp11) {
     res.setHeader('Transfer-Encoding', 'chunked');

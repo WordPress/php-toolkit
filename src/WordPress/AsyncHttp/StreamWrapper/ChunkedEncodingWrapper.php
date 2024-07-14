@@ -1,10 +1,10 @@
 <?php
 
-namespace WordPress\AsyncHttp;
+namespace WordPress\AsyncHttp\StreamWrapper;
 
-use WordPress\Streams\VanillaStreamWrapper;
+use WordPress\Streams\StreamWrapper;
 
-class ChunkedEncodingStreamWrapper extends VanillaStreamWrapper {
+class ChunkedEncodingWrapper extends StreamWrapper {
 
 	const SCHEME = 'chunked-http-response';
 
@@ -18,14 +18,25 @@ class ChunkedEncodingStreamWrapper extends VanillaStreamWrapper {
 	private $decoded_buffer = '';
 	private $chunk_remaining_bytes = 0;
 
+
+	static public function wrap( $response_stream ) {
+		return static::create_resource( [
+			'response_stream' => $response_stream
+		] );
+	}
+
+	protected function do_initialize() {
+		$this->stream = $this->wrapper_data['response_stream'];
+	}
+
 	/**
 	 * Assumptions:
-	 * 
+	 *
 	 * * $count is the maximum number of **decoded bytes** to return. To decode $count
 	 *   bytes, we may need to read more than $count bytes from the underlying stream.
 	 * * We can call parent::stream_read() without blocking. If the underlying stream
 	 *   has no more data to read, it will return an empty string.
-	 * 
+	 *
 	 * @param mixed $count
 	 * @return bool|string
 	 */
@@ -47,7 +58,7 @@ class ChunkedEncodingStreamWrapper extends VanillaStreamWrapper {
 		if(self::SCAN_FINAL_CHUNK === $this->state) {
 			return '';
 		}
-		
+
 		$at = 0;
 		$chunks = [];
 		while($at < strlen($this->raw_buffer)) {
@@ -57,7 +68,7 @@ class ChunkedEncodingStreamWrapper extends VanillaStreamWrapper {
 				if($chunk_bytes_nb === 0 || strlen($this->raw_buffer) < $chunk_bytes_nb + 2 ) {
 					break;
 				}
-				
+
 				// Check if we received chunk extension and skip over it if yes.
 				if($this->raw_buffer[$chunk_bytes_nb] === ";") {
 					++$at;
@@ -81,8 +92,8 @@ class ChunkedEncodingStreamWrapper extends VanillaStreamWrapper {
 					$this->state = self::SCAN_CHUNK_DATA;
 				}
 			} else if ( $this->state === self::SCAN_CHUNK_DATA ) {
-				$bytes_to_read          = min( 
-					$this->chunk_remaining_bytes, 
+				$bytes_to_read          = min(
+					$this->chunk_remaining_bytes,
 					strlen($this->raw_buffer) - $at
 				);
 				$data = substr( $this->raw_buffer, $at, $bytes_to_read );

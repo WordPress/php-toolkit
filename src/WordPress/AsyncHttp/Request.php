@@ -19,7 +19,7 @@ class Request {
 
 	public $id;
 
-	public $state         = self::STATE_ENQUEUED;
+	public $state = self::STATE_ENQUEUED;
 
 	public $url;
 	public $is_ssl;
@@ -28,94 +28,44 @@ class Request {
 	public $http_version;
 	public $upload_body_stream;
 	public $redirected_from;
-	public $http_socket;
+	public $redirected_to;
 
 	public $error;
-	protected $response;
+	public $response;
 
 	/**
 	 * @param string $url
 	 */
-	public function __construct( string $url, $method='GET', $headers=[], $body_stream=null, $http_version='1.1' ) {
+	public function __construct( string $url, $request_info = array() ) {
+		$request_info = array_merge([
+			'http_version' => '1.1',
+			'method' => 'GET',
+			'headers' => [],
+			'body_stream' => null,
+			'redirected_from' => null,
+		], $request_info);
+
 		$this->id = ++self::$last_id;
 		$this->url = $url;
 		$this->is_ssl = strpos( $url, 'https://' ) === 0;
 
-		$this->method = $method;
-		$this->headers = $headers;
-		$this->upload_body_stream = $body_stream;
-		$this->http_version = $http_version;
-		$this->response = new Response( $this );
-	}
-
-	public function set_method(string $method)
-	{
-		if($this->state === self::STATE_ENQUEUED) {
-			$this->method = $method;
-		} else {
-			trigger_error('Cannot change method after the request has been sent', E_USER_WARNING);
-		}
-		return $this;
-	}
-
-	public function set_headers(array $headers)
-	{
-		if($this->state === self::STATE_ENQUEUED) {
-			$this->headers = $headers;
-		} else {
-			trigger_error('Cannot change headers after the request has been sent', E_USER_WARNING);
-		}
-		return $this;
-	}
-
-	public function set_http_version(string $http_version)
-	{
-		if($this->state === self::STATE_ENQUEUED) {
-			$this->http_version = $http_version;
-		} else {
-			trigger_error('Cannot change http_version after the request has been sent', E_USER_WARNING);
-		}
-
-		return $this;
-	}
-
-	public function set_upload_body_stream($upload_body_stream)
-	{
-		if($this->state === self::STATE_ENQUEUED) {
-			$this->upload_body_stream = $upload_body_stream;
-		} else {
-			trigger_error('Cannot change upload_body_stream after the request has been sent', E_USER_WARNING);
-		}
-
-		return $this;
-	}
-
-	public function set_redirected_from($request)
-	{
-		if($this->redirected_from === null) {
-			$this->redirected_from = $request;
-		} else {
-			trigger_error('Cannot change redirected_from after it was already set', E_USER_WARNING);
-		}
-		return $this;		
-	}
-
-	public function set_error($error)
-	{
-		$this->error = $error;
-		$this->state = self::STATE_FAILED;
-
-		if($this->http_socket) {
-			fclose($this->http_socket);
-			$this->http_socket = null;
+		$this->method = $request_info['method'];
+		$this->headers = $request_info['headers'];
+		$this->upload_body_stream = $request_info['body_stream'];
+		$this->http_version = $request_info['http_version'];
+		$this->redirected_from = $request_info['redirected_from'];
+		if($this->redirected_from) {
+			$this->redirected_from->redirected_to = $this;
 		}
 	}
 
-	/**
-	 * @return Response
-	 */
-	public function get_response() {
-		return $this->response;
+	public function latest_redirect()
+	{
+		$request = $this;
+		while ($request->redirected_to) {
+			$request = $request->redirected_to;
+		}
+		return $request;		
 	}
 
 }
