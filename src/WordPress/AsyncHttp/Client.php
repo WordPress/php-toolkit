@@ -607,6 +607,7 @@ class Client {
 				$redirect_url .= $location;
 			}
 
+			// @TODO: Use a WHATWG-compliant URL parser
 			if ( ! filter_var( $redirect_url, FILTER_VALIDATE_URL ) ) {
 				$this->set_error( $request, new HttpError( 'Invalid redirect URL' ) );
 				continue;
