@@ -163,16 +163,16 @@ class Client {
 	 * @return bool
 	 */
 	public function await_next_event( $query = [] ) {
-		$ordered_events = [
+		$ordered_events            = [
 			Client::EVENT_GOT_HEADERS,
 			Client::EVENT_BODY_CHUNK_AVAILABLE,
 			Client::EVENT_REDIRECT,
 			Client::EVENT_FAILED,
 			Client::EVENT_FINISHED,
 		];
-		$this->event    = null;
-		$this->request  = null;
-		$this->response_body_chunk  = null;
+		$this->event               = null;
+		$this->request             = null;
+		$this->response_body_chunk = null;
 		do {
 			if ( empty( $query['requests'] ) ) {
 				$events = array_keys( $this->events );
@@ -198,7 +198,7 @@ class Client {
 
 					$this->event   = $considered_event;
 					$this->request = $this->get_request_by_id( $request_id );
-					if($this->event === Client::EVENT_BODY_CHUNK_AVAILABLE) {
+					if ( $this->event === Client::EVENT_BODY_CHUNK_AVAILABLE ) {
 						$this->response_body_chunk = $this->next_response_body_bytes();
 					}
 
