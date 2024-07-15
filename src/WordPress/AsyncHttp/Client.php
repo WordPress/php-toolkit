@@ -7,7 +7,21 @@ use WordPress\AsyncHttp\StreamWrapper\EventLoopWrapper;
 use WordPress\AsyncHttp\StreamWrapper\InflateStreamWrapper;
 
 /**
- * An asynchronous HTTP client library designed for WordPress. Main features:
+ * An asynchronous HTTP client library.
+ *
+ * ## Usage example
+ *
+ * ```php
+ * $requests = [
+ *     new Request( "https://wordpress.org/latest.zip" ),
+ *     new Request( "https://raw.githubusercontent.com/wpaccessibility/a11y-theme-unit-test/master/a11y-theme-unit-test-data.xml" ),
+ * ];
+ *
+ * $client = new Client();
+ * $client->enqueue( $requests );
+ * ```
+ *
+ * Main features:
  *
  * * Streaming support
  * * Progress monitoring
@@ -204,6 +218,9 @@ class Client {
 		return $this->event;
 	}
 
+	/**
+	 * @return Request
+	 */
 	public function get_request() {
 		if ( null === $this->request ) {
 			return false;
