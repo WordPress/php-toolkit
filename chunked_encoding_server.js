@@ -1,3 +1,20 @@
+/**
+ * Use with `http_api.php` to test chunked transfer encoding:
+ *
+ * ```php
+ * $requests = [
+ * 	  new Request( "http://127.0.0.1:3000/", [
+ * 	  	'http_version' => '1.1'
+ * 	  ] ),
+ *   	new Request( "http://127.0.0.1:3000/", [
+ * 	  	'http_version' => '1.0',
+ *   		'headers'      => [
+ * 			  'please-redirect' => 'yes',
+ * 		  ],
+ * 	  ] ),
+ * ];
+ */
+
 const http = require('http');
 const zlib = require('zlib');
 
@@ -31,9 +48,9 @@ const server = http.createServer((req, res) => {
 <meta charset='utf-8'>
 <title>Chunked transfer encoding test</title>
 </head>\r\n`);
-        
+
     stream.write('<body><h1>Chunked transfer encoding test</h1>\r\n');
-    
+
     setTimeout(() => {
         stream.write('<h5>This is a chunked response after 100 ms.</h5>\n');
 
