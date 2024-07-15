@@ -40,6 +40,7 @@ $requests = [
 			'method' => $_SERVER['REQUEST_METHOD'],
 			'headers' => [
 				...getallheaders(),
+				'Accept-Encoding' => 'gzip, deflate',
 				'Host' => $host,
 			],
 			'body_stream' => $_SERVER['REQUEST_METHOD'] === 'POST' ? fopen('php://input', 'r') : null,
@@ -79,6 +80,7 @@ while ( $client->await_next_event() ) {
 			break;
 		case Client::EVENT_REDIRECT:
 		case Client::EVENT_FINISHED:
+			break;
 	}
 	echo "\n";
 }
