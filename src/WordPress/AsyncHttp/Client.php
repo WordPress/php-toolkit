@@ -6,75 +6,93 @@ use WordPress\AsyncHttp\StreamWrapper\ChunkedEncodingWrapper;
 use WordPress\AsyncHttp\StreamWrapper\EventLoopWrapper;
 use WordPress\AsyncHttp\StreamWrapper\InflateStreamWrapper;
 
+
 /**
  * An asynchronous HTTP client library.
  *
- * ## Usage example
+ * This class makes non-blocking HTTP requests using just native PHP streams.
+ * It uses an event-driven architecture.
+ *
+ * ### Key Features
+ *
+ * - **Streaming support:** Enables efficient handling of large response bodies.
+ * - **Progress monitoring:** Track the progress of requests and responses.
+ * - **Concurrency limits:** Control the number of simultaneous connections.
+ * - **PHP 7.2+ support and no dependencies:** Works on vanilla PHP without external libraries.
+ *
+ * ### Usage Example
  *
  * ```php
  * $requests = [
- *     new Request( "https://wordpress.org/latest.zip" ),
- *     new Request( "https://raw.githubusercontent.com/wpaccessibility/a11y-theme-unit-test/master/a11y-theme-unit-test-data.xml" ),
+ *     new Request("[https://wordpress.org/latest.zip](https://wordpress.org/latest.zip)"),
+ *     new Request("[https://raw.githubusercontent.com/wpaccessibility/a11y-theme-unit-test/master/a11y-theme-unit-test-data.xml](https://raw.githubusercontent.com/wpaccessibility/a11y-theme-unit-test/master/a11y-theme-unit-test-data.xml)"),
  * ];
  *
  * $client = new Client();
- * $client->enqueue( $requests );
+ * $client->enqueue($requests);
+ * 
+ * while ($client->await_next_event()) {
+ *     $event = $client->get_event();
+ *     $request = $client->get_request();
+ *     
+ *     if ($event === Client::EVENT_BODY_CHUNK_AVAILABLE) {
+ *         $chunk = $client->get_response_body_chunk();
+ *         // Process the chunk...
+ *     } 
+ *     // Handle other events...
+ * }
  * ```
- *
- * Main features:
- *
- * * Streaming support
- * * Progress monitoring
- *
- * **Concurrency limits**
- * The `AsyncHttpClient` will only keep up to `$concurrency` connections open. When one of the
- * requests finishes, it will automatically start the next one.
- *
- * For example:
- * ```php
- * $client = new AsyncHttpClient();
- * // Process at most 10 concurrent request at a time.
- * $client->set_concurrency_limit( 10 );
- * ```
- *
- * **Non-blocking sockets**
- * The act of opening each socket connection is non-blocking and happens nearly
- * instantly. The streams themselves are also set to non-blocking mode via `stream_set_blocking($fp, 0);`
- *
- * **Asynchronous downloads**
- * Start downloading now, do other work in your code, only block once you need the data.
- *
- * **PHP 7.2+ support and no dependencies**
- * `AsyncHttpClient` works on any WordPress installation with vanilla PHP only.
- * It does not require any PHP extensions, CURL, or any external PHP libraries.
+ * 
+ * @since    Next Release 
+ * @package  WordPress
+ * @subpackage Async_HTTP
  */
 class Client {
 
-	const STREAM_SELECT_READ = 1;
-	const STREAM_SELECT_WRITE = 2;
-
-	const EVENT_GOT_HEADERS = 'EVENT_GOT_HEADERS';
-	const EVENT_BODY_CHUNK_AVAILABLE = 'EVENT_BODY_CHUNK_AVAILABLE';
-	const EVENT_REDIRECT = 'EVENT_REDIRECT';
-	const EVENT_FAILED = 'EVENT_FAILED';
-	const EVENT_FINISHED = 'EVENT_FINISHED';
-
 	/**
-	 * Microsecond is 1 millionth of a second.
-	 *
-	 * @var int
-	 */
-	const MICROSECONDS_TO_SECONDS = 1000000;
-
-	/**
-	 * 5/100th of a second
-	 */
-	const NONBLOCKING_TIMEOUT_MICROSECONDS = 0.05 * self::MICROSECONDS_TO_SECONDS;
-
+     * The maximum number of concurrent connections allowed.
+     * 
+     * This is as a safeguard against:
+	 * * Spreading our network bandwidth too thin and not making any real progress on any
+	 *   request.
+	 * * Overwhelming the server with too many requests.
+	 * 
+     * @var int
+     */
 	private $concurrency;
+	
+	/**
+	* The maximum number of redirects to follow for a single request.
+	* 
+	* This prevents infinite redirect loops and provides a degree of control over the client's behavior. 
+	* Setting it too high might lead to unexpected navigation paths.
+	*
+	* @var int
+	*/
 	private $max_redirects = 3;
 
+	/**
+     * All the HTTP requests ever enqueued with this Client.
+	 * 
+	 * Each Request may have a different state, and this Client will manage them
+	 * asynchronously, moving them through the various states as the network
+	 * operations progress.
+     *
+     * @since Next Release
+     * @var Request[]
+     */
 	private $requests;
+
+	/**
+	 * Network connection details managed privately by this Client.
+	 * 
+	 * Each Request has a corresponding Connection object that contains
+	 * the network socket, response buffer, and other connection-specific details.
+	 *
+	 * These are internal, will change, and should not be exposed to the outside world.
+	 * 
+	 * @var array
+	 */
 	private $connections = array();
 	private $events = array();
 	private $event;
@@ -210,6 +228,11 @@ class Client {
 		return false;
 	}
 
+    /**
+     * Returns the next event found by await_next_event().
+     *
+     * @return string|bool The next event, or false if no event is set.
+     */
 	public function get_event() {
 		if ( null === $this->event ) {
 			return false;
@@ -219,6 +242,9 @@ class Client {
 	}
 
 	/**
+     * Returns the request associated with the last event found
+	 * by await_next_event().
+	 * 
 	 * @return Request
 	 */
 	public function get_request() {
@@ -229,6 +255,12 @@ class Client {
 		return $this->request;
 	}
 
+	/**
+     * Returns the response body chunk associated with the EVENT_BODY_CHUNK_AVAILABLE
+	 * event found by await_next_event().
+	 * 
+	 * @return Request
+	 */
 	public function get_response_body_chunk() {
 		if ( null === $this->response_body_chunk ) {
 			return false;
@@ -237,6 +269,12 @@ class Client {
 		return $this->response_body_chunk;
 	}
 
+	/**
+	 * Asynchronously moves the enqueued Request objects through the 
+	 * various states of the HTTP request-response lifecycle.
+	 * 
+	 * @return bool Whether any active requests were processed.
+	 */
 	private function event_loop_tick() {
 		if ( count( $this->get_active_requests() ) === 0 ) {
 			return false;
@@ -854,6 +892,27 @@ class Client {
 
 		return $selected_requests;
 	}
+
+	private const STREAM_SELECT_READ = 1;
+	private const STREAM_SELECT_WRITE = 2;
+
+	const EVENT_GOT_HEADERS = 'EVENT_GOT_HEADERS';
+	const EVENT_BODY_CHUNK_AVAILABLE = 'EVENT_BODY_CHUNK_AVAILABLE';
+	const EVENT_REDIRECT = 'EVENT_REDIRECT';
+	const EVENT_FAILED = 'EVENT_FAILED';
+	const EVENT_FINISHED = 'EVENT_FINISHED';
+
+	/**
+	 * Microsecond is 1 millionth of a second.
+	 *
+	 * @var int
+	 */
+	const MICROSECONDS_TO_SECONDS = 1000000;
+
+	/**
+	 * 5/100th of a second
+	 */
+	const NONBLOCKING_TIMEOUT_MICROSECONDS = 0.05 * self::MICROSECONDS_TO_SECONDS;
 
 }
 
