@@ -30,8 +30,7 @@
     "files": [
       "src/WordPress/Blueprints/functions.php",
       "src/WordPress/Zip/functions.php",
-      "src/WordPress/Streams/stream_str_replace.php",
-      "src/WordPress/AsyncHttp/async_http_streams.php"
+      "src/WordPress/Streams/stream_str_replace.php"
     ]
   },
   "autoload-dev": {
