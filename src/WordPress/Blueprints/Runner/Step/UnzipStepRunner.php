@@ -4,7 +4,6 @@ namespace WordPress\Blueprints\Runner\Step;
 
 use WordPress\Blueprints\Model\DataClass\UnzipStep;
 use WordPress\Blueprints\Progress\Tracker;
-use function WordPress\Zip\zip_extract_to;
 
 class UnzipStepRunner extends BaseStepRunner {
 
@@ -22,6 +21,6 @@ class UnzipStepRunner extends BaseStepRunner {
 		$progress_tracker->set( 10, 'Unzipping...' );
 
 		$resolved_to_path = $this->getRuntime()->resolvePath( $input->extractToPath );
-		zip_extract_to( $this->getResource( $input->zipFile ), $resolved_to_path );
+		throw new \Exception("Not implemented at the moment. Needs to be updated to use the new ZipStreamReader API.");
 	}
 }
