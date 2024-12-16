@@ -2,7 +2,7 @@
 
 namespace WordPress\ByteReader;
 
-class WP_File_Reader implements WP_Byte_Reader {
+class WP_File_Reader extends WP_Byte_Reader {
 
 	const STATE_STREAMING = '#streaming';
 	const STATE_FINISHED  = '#finished';
@@ -33,7 +33,7 @@ class WP_File_Reader implements WP_Byte_Reader {
 		$this->chunk_size = $chunk_size;
 	}
 
-	public function length(): int {
+	public function length(): ?int {
 		return filesize( $this->file_path );
 	}
 

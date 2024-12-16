@@ -62,6 +62,16 @@ class Request {
 		}
 	}
 
+	public function get_request_info() {
+		return [
+			'http_version' => $this->http_version,
+			'method' => $this->method,
+			'headers' => $this->headers,
+			'body_stream' => $this->upload_body_stream,
+			'redirected_from' => $this->redirected_from,
+		];
+	}
+
 	public function latest_redirect() {
 		$request = $this;
 		while ( $request->redirected_to ) {

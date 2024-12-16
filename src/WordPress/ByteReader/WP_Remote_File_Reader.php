@@ -5,27 +5,26 @@ namespace WordPress\ByteReader;
 /**
  * Streams bytes from a remote file.
  */
-class WP_Remote_File_Reader implements WP_Byte_Reader {
+class WP_Remote_File_Reader extends WP_Byte_Reader {
 
 	/**
 	 * @var WordPress\AsyncHttp\Client
 	 */
 	private $client;
 	private $url;
+	private $headers;
 	private $request;
 	private $current_chunk;
 	private $last_error;
 	private $is_finished = false;
 	private $bytes_already_read;
+	private $remote_file_length;
 	private $skip_bytes = 0;
 
-	public function __construct( $url ) {
+	public function __construct( $url, $headers = array() ) {
 		$this->client = new \WordPress\AsyncHttp\Client();
 		$this->url    = $url;
-	}
-
-	public function length(): int {
-		throw new \Exception( 'Not implemented yet.' );
+		$this->headers = $headers;
 	}
 
 	public function tell(): int {
@@ -34,7 +33,12 @@ class WP_Remote_File_Reader implements WP_Byte_Reader {
 
 	public function seek( $offset_in_file ): bool {
 		if ( $this->request ) {
-			_doing_it_wrong( __METHOD__, 'Cannot set a remote file reader cursor on a remote file reader that is already initialized.', '1.0.0' );
+			_doing_it_wrong( 
+				__METHOD__,
+				'Cannot seek() a WP_Remote_File_Reader instance once the request was initialized. ' .
+				'Use WP_Remote_File_Ranged_Reader to seek() using range requests instead.',
+				'1.0.0'
+			);
 			return false;
 		}
 		$this->skip_bytes = $offset_in_file;
@@ -44,7 +48,8 @@ class WP_Remote_File_Reader implements WP_Byte_Reader {
 	public function next_bytes(): bool {
 		if ( null === $this->request ) {
 			$this->request = new \WordPress\AsyncHttp\Request(
-				$this->url
+				$this->url,
+				array( 'headers' => $this->headers )
 			);
 			if ( false === $this->client->enqueue( $this->request ) ) {
 				// TODO: Think through error handling
@@ -55,7 +60,28 @@ class WP_Remote_File_Reader implements WP_Byte_Reader {
 		$this->after_chunk();
 
 		while ( $this->client->await_next_event() ) {
+			$request = $this->client->get_request();
+			if ( ! $request ) {
+				continue;
+			}
+			$response = $request->response;
+			if ( false === $response ) {
+				continue;
+			}
+			if ( $request->redirected_to ) {
+				continue;
+			}
+
 			switch ( $this->client->get_event() ) {
+				case \WordPress\AsyncHttp\Client::EVENT_GOT_HEADERS:
+					if(null !== $this->remote_file_length) {
+						continue 2;
+					}
+					$content_length = $response->get_header( 'Content-Length' );
+					if ( false !== $content_length ) {
+						$this->remote_file_length = (int) $content_length;
+					}
+					break;
 				case \WordPress\AsyncHttp\Client::EVENT_BODY_CHUNK_AVAILABLE:
 					$chunk = $this->client->get_response_body_chunk();
 					if ( ! is_string( $chunk ) ) {
@@ -92,6 +118,47 @@ class WP_Remote_File_Reader implements WP_Byte_Reader {
 					return false;
 			}
 		}
+	}
+
+	public function length(): ?int {
+		if ( null !== $this->remote_file_length ) {
+			return $this->remote_file_length;
+		}
+
+		$request = new \WordPress\AsyncHttp\Request(
+			$this->url,
+			array( 'method' => 'HEAD' )
+		);
+		if ( false === $this->client->enqueue( $request ) ) {
+			// TODO: Think through error handling
+			return false;
+		}
+		while ( $this->client->await_next_event() ) {
+			switch ( $this->client->get_event() ) {
+				case \WordPress\AsyncHttp\Client::EVENT_GOT_HEADERS:
+					$request = $this->client->get_request();
+					if ( ! $request ) {
+						return false;
+					}
+					if($request->redirected_to) {
+						continue 2;
+					}
+					$response = $request->response;
+					if ( false === $response ) {
+						return false;
+					}
+					$content_length = $response->get_header( 'Content-Length' );
+					if ( false === $content_length ) {
+						return false;
+					}
+					$this->remote_file_length = (int) $content_length;
+					break;
+			}
+		}
+		if(null === $this->remote_file_length) {
+			return false;
+		}
+		return $this->remote_file_length;
 	}
 
 	private function after_chunk() {

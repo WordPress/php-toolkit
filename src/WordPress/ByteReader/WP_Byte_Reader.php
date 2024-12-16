@@ -5,12 +5,19 @@ namespace WordPress\ByteReader;
 /**
  * Experimental interface for streaming, seekable byte readers.
  */
-interface WP_Byte_Reader {
-	public function length(): int;
-	public function tell(): int;
-	public function seek( int $offset ): bool;
-	public function is_finished(): bool;
-	public function next_bytes(): bool;
-	public function get_bytes(): ?string;
-	public function get_last_error(): ?string;
+abstract class WP_Byte_Reader {
+	abstract public function length();
+	abstract public function tell(): int;
+	abstract public function seek( int $offset ): bool;
+	abstract public function is_finished(): bool;
+	abstract public function next_bytes(): bool;
+	abstract public function get_bytes(): ?string;
+	abstract public function get_last_error(): ?string;
+	public function read_all(): string {
+		$buffer = '';
+		while( $this->next_bytes() ) {
+			$buffer .= $this->get_bytes();
+		}
+		return $buffer;
+	}
 }
