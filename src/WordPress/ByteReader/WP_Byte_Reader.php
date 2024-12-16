@@ -18,6 +18,9 @@ abstract class WP_Byte_Reader {
 		while( $this->next_bytes() ) {
 			$buffer .= $this->get_bytes();
 		}
+		if( $this->get_last_error() ) {
+			return false;
+		}
 		return $buffer;
 	}
 }
