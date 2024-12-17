@@ -5,7 +5,8 @@
     "php": ">=7.0"
   },
   "require-dev": {
-    "yoast/phpunit-polyfills": "2.0.0"
+    "yoast/phpunit-polyfills": "2.0.0",
+    "ext-zip": "*"
   },
   "config": {
     "optimize-autoloader": true,
