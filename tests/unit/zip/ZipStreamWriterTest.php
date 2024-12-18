@@ -96,7 +96,7 @@ class ZipStreamWriterTest extends TestCase {
         $this->assertTrue($zip->locateName($targetPathInZip) !== false, "The file was not found in the ZIP");
         $fileContent = $zip->getFromName($targetPathInZip);
         $this->assertEquals($sourceContent, $fileContent, "The file content does not match");
-        $zip->close();        
+        $zip->close();
     }
 
     static public function shouldDeflateProvider() {

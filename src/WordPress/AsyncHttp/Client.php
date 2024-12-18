@@ -29,20 +29,20 @@ use WordPress\AsyncHttp\StreamWrapper\InflateStreamWrapper;
  *
  * $client = new Client();
  * $client->enqueue($requests);
- * 
+ *
  * while ($client->await_next_event()) {
  *     $event = $client->get_event();
  *     $request = $client->get_request();
- *     
+ *
  *     if ($event === Client::EVENT_BODY_CHUNK_AVAILABLE) {
  *         $chunk = $client->get_response_body_chunk();
  *         // Process the chunk...
- *     } 
+ *     }
  *     // Handle other events...
  * }
  * ```
- * 
- * @since    Next Release 
+ *
+ * @since    Next Release
  * @package  WordPress
  * @subpackage Async_HTTP
  */
@@ -50,20 +50,20 @@ class Client {
 
 	/**
      * The maximum number of concurrent connections allowed.
-     * 
+     *
      * This is as a safeguard against:
 	 * * Spreading our network bandwidth too thin and not making any real progress on any
 	 *   request.
 	 * * Overwhelming the server with too many requests.
-	 * 
+	 *
      * @var int
      */
 	private $concurrency;
-	
+
 	/**
 	* The maximum number of redirects to follow for a single request.
-	* 
-	* This prevents infinite redirect loops and provides a degree of control over the client's behavior. 
+	*
+	* This prevents infinite redirect loops and provides a degree of control over the client's behavior.
 	* Setting it too high might lead to unexpected navigation paths.
 	*
 	* @var int
@@ -72,7 +72,7 @@ class Client {
 
 	/**
      * All the HTTP requests ever enqueued with this Client.
-	 * 
+	 *
 	 * Each Request may have a different state, and this Client will manage them
 	 * asynchronously, moving them through the various states as the network
 	 * operations progress.
@@ -84,12 +84,12 @@ class Client {
 
 	/**
 	 * Network connection details managed privately by this Client.
-	 * 
+	 *
 	 * Each Request has a corresponding Connection object that contains
 	 * the network socket, response buffer, and other connection-specific details.
 	 *
 	 * These are internal, will change, and should not be exposed to the outside world.
-	 * 
+	 *
 	 * @var array
 	 */
 	private $connections = array();
@@ -247,7 +247,7 @@ class Client {
 	/**
      * Returns the request associated with the last event found
 	 * by await_next_event().
-	 * 
+	 *
 	 * @return Request
 	 */
 	public function get_request() {
@@ -261,7 +261,7 @@ class Client {
 	/**
      * Returns the response body chunk associated with the EVENT_BODY_CHUNK_AVAILABLE
 	 * event found by await_next_event().
-	 * 
+	 *
 	 * @return Request
 	 */
 	public function get_response_body_chunk() {
@@ -273,9 +273,9 @@ class Client {
 	}
 
 	/**
-	 * Asynchronously moves the enqueued Request objects through the 
+	 * Asynchronously moves the enqueued Request objects through the
 	 * various states of the HTTP request-response lifecycle.
-	 * 
+	 *
 	 * @return bool Whether any active requests were processed.
 	 */
 	private function event_loop_tick() {
@@ -488,7 +488,8 @@ class Client {
 				STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT
 			);
 			if ( false === $enabled_crypto ) {
-				$this->set_error( $request, new HttpError( 'Failed to enable crypto: ' . error_get_last()['message'] ) );
+				$last_error = error_get_last();
+				$this->set_error( $request, new HttpError( 'Failed to enable crypto: ' . ( is_array( $last_error ) ? $last_error['message'] : 'unknown' ) ) );
 				continue;
 			} elseif ( 0 === $enabled_crypto ) {
 				// The SSL handshake isn't finished yet, let's skip it
@@ -510,7 +511,8 @@ class Client {
 			$header_bytes = static::prepare_request_headers( $request );
 
 			if ( false === @fwrite( $this->connections[ $request->id ]->http_socket, $header_bytes ) ) {
-				$this->set_error( $request, new HttpError( 'Failed to write request bytes – ' . error_get_last()['message'] ) );
+				$last_error = error_get_last();
+				$this->set_error( $request, new HttpError( 'Failed to write request bytes - ' . ( is_array( $last_error ) ? $last_error['message'] : 'unknown' ) ) );
 				continue;
 			}
 
@@ -699,7 +701,7 @@ class Client {
 			$this->enqueue(
 				new Request(
 					$redirect_url,
-					[ 
+					[
 						'method' => $request->method,
 						'redirected_from' => $request,
 					]
