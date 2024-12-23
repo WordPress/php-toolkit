@@ -45,4 +45,6 @@ jobs:
           composer-options: "--optimize-autoloader"
 
       - name: Run PHPUnit tests
+        # Explicitly use the composer-installed version of phpunit
+        # because there have been conflicts with other versions during CI.
         run: vendor/bin/phpunit tests --testdox
