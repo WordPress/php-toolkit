@@ -41,6 +41,7 @@ jobs:
       - name: Install Composer dependencies
         uses: ramsey/composer-install@v3
         with:
+          dependency-versions: "locked"
           ignore-cache: "yes"
           composer-options: "--optimize-autoloader"
 
