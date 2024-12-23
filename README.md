@@ -1,4 +1,4 @@
-# WordPress Blueprints : troubleshooting test failures
+# WordPress Blueprints
 
 Blueprints are JSON files used to create WordPress sites with specific settings, themes, plugins, content, and anything
 else that can be configured in WordPress. Here's what a Blueprint looks like:

@@ -31,29 +31,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: "Debug: List files before PHP setup"
-        run: ls -laR
-
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '${{ inputs.php }}'
-          tools: phpunit-polyfills, composer
+          tools: phpunit-polyfills
           extensions: zip
 
-      - name: "Debug: List files after PHP Setup"
-        run: ls -laR
- 
-
       - name: Install Composer dependencies
-        run: composer install --optimize-autoloader
-        # uses: ramsey/composer-install@v3
-        # with:
-        #   dependency-versions: "locked"
-        #   #TODO: Temporarily allow caching because it is blocking us finding composer.lock based on implementation of composer-install action.
-        #   #ignore-cache: "yes"
-        #   composer-options: "--optimize-autoloader"
-        #   require-lock-file: true
+        uses: ramsey/composer-install@v3
+        with:
+          ignore-cache: "yes"
+          composer-options: "--optimize-autoloader"
 
       - name: Run PHPUnit tests
         run: phpunit tests --testdox
