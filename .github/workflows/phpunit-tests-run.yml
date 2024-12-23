@@ -42,9 +42,7 @@ jobs:
         uses: ramsey/composer-install@v3
         with:
           ignore-cache: "yes"
-          #composer-options: "--optimize-autoloader"
-      - name: Show which phpunit path is being used
-        run: which phpunit
+          composer-options: "--optimize-autoloader"
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit tests --testdox
