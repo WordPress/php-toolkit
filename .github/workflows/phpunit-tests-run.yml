@@ -31,12 +31,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug: List files before PHP setup
+        run: ls -laR
+
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '${{ inputs.php }}'
           tools: phpunit-polyfills, composer
           extensions: zip
+
+      - name: Debug: List files after PHP Setup
+        run: ls -laR
+ 
 
       - name: Install Composer dependencies
         run: composer install --optimize-autoloader
