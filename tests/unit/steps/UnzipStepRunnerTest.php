@@ -76,9 +76,8 @@ class UnzipStepRunnerTest extends PHPUnitTestCase {
 		$extracted_file_path = $this->runtime->resolvePath( 'dir/test_zip.txt' );
 		$step->setExtractToPath( Path::getDirectory( $extracted_file_path ) );
 
-		$this->expectException(\Exception::class);
 		$this->step_runner->run( $step, new Tracker() );
-		// self::assertFileEquals( __DIR__ . '/resources/test_zip.txt', $extracted_file_path );
+		self::assertFileEquals( __DIR__ . '/resources/test_zip.txt', $extracted_file_path );
 	}
 
 	public function testUnzipFileWhenUsingRelativePath() {
@@ -93,10 +92,9 @@ class UnzipStepRunnerTest extends PHPUnitTestCase {
 		$step->setZipFile( $zip );
 		$step->setExtractToPath( 'dir' );
 
-		$this->expectException(\Exception::class);
 		$this->step_runner->run( $step, new Tracker() );
 
-		// $extracted_file_path = $this->runtime->resolvePath( 'dir/test_zip.txt' );
-		// self::assertFileEquals( __DIR__ . '/resources/test_zip.txt', $extracted_file_path );
+		$extracted_file_path = $this->runtime->resolvePath( 'dir/test_zip.txt' );
+		self::assertFileEquals( __DIR__ . '/resources/test_zip.txt', $extracted_file_path );
 	}
 }
