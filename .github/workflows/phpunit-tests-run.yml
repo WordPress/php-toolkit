@@ -42,7 +42,7 @@ jobs:
         uses: ramsey/composer-install@v3
         with:
           ignore-cache: "yes"
-          composer-options: "--optimize-autoloader"
+          #composer-options: "--optimize-autoloader"
 
       - name: Run PHPUnit tests
         run: phpunit tests --debug
