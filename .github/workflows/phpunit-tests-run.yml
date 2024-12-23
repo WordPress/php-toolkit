@@ -31,7 +31,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Debug: List files before PHP setup
+      - name: "Debug: List files before PHP setup"
         run: ls -laR
 
       - name: Set up PHP
@@ -41,7 +41,7 @@ jobs:
           tools: phpunit-polyfills, composer
           extensions: zip
 
-      - name: Debug: List files after PHP Setup
+      - name: "Debug: List files after PHP Setup"
         run: ls -laR
  
 
