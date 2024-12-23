@@ -38,6 +38,6 @@
     ]
   },
   "scripts": {
-    "test": "phpunit --testdox"
+    "test": "phpunit tests --testdox"
   }
 }
