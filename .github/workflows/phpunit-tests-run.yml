@@ -45,4 +45,4 @@ jobs:
           composer-options: "--optimize-autoloader"
 
       - name: Run PHPUnit tests
-        run: phpunit tests --testdox
+        run: phpunit tests --debug
