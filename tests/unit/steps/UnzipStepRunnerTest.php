@@ -77,7 +77,6 @@ class UnzipStepRunnerTest extends PHPUnitTestCase {
 		$step->setExtractToPath( Path::getDirectory( $extracted_file_path ) );
 
 		$this->step_runner->run( $step, new Tracker() );
-
 		self::assertFileEquals( __DIR__ . '/resources/test_zip.txt', $extracted_file_path );
 	}
 
