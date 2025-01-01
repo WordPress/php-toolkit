@@ -58,26 +58,40 @@ class WP_In_Memory_Filesystem extends WP_Abstract_Filesystem {
 	}
 
 	public function next_file_chunk() {
+		if(!$this->last_file_reader) {
+			return false;
+		}
 		return $this->last_file_reader->next_bytes();
 	}
 
 	public function get_file_chunk() {
+		if(!$this->last_file_reader) {
+			return false;
+		}
 		return $this->last_file_reader->get_bytes();
 	}
 
 	public function get_streamed_file_length() {
+		if(!$this->last_file_reader) {
+			return false;
+		}
 		return $this->last_file_reader->length();
 	}
 
 	public function get_error_message() {
+		if(!$this->last_file_reader) {
+			return false;
+		}
 		return $this->last_file_reader->get_last_error();
 	}
 
 	public function close_file_stream() {
-		if($this->last_file_reader) {
-			$this->last_file_reader->close();
-			$this->last_file_reader = null;
+		if(!$this->last_file_reader) {
+			return false;
 		}
+		$this->last_file_reader->close();
+		$this->last_file_reader = null;
+		return true;
 	}
 
 	public function rename($old_path, $new_path) {
