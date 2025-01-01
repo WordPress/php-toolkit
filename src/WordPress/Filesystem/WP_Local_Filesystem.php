@@ -8,6 +8,7 @@ namespace WordPress\Filesystem;
 class WP_Local_Filesystem extends WP_Abstract_Filesystem {
 
 	private $root = '/';
+    private $write_stream = null;
 
 	public function __construct( $root = '/' ) {
 		$this->root = rtrim($root, '/');
@@ -56,7 +57,7 @@ class WP_Local_Filesystem extends WP_Abstract_Filesystem {
 	//        but that could suggest that the reader is a separate object
 	//        and that we can have multiple readers open at the same time.
 	private $last_file_reader = null;
-	public function open_file_stream($path) {
+	public function open_read_stream($path) {
 		if($this->last_file_reader) {
 			$this->last_file_reader->close();
 		}
@@ -77,11 +78,11 @@ class WP_Local_Filesystem extends WP_Abstract_Filesystem {
         return $this->last_file_reader->length();
     }
 
-	public function get_error_message() {
+	public function get_last_error() {
 		return $this->last_file_reader->get_last_error();
 	}
 
-	public function close_file_stream() {
+	public function close_read_stream() {
 		if($this->last_file_reader) {
 			$this->last_file_reader->close();
 			$this->last_file_reader = null;
@@ -123,12 +124,39 @@ class WP_Local_Filesystem extends WP_Abstract_Filesystem {
 		);
 	}
 
-	public function put_contents($path, $data) {
+	public function put_contents($path, $data, $options = []) {
 		return false !== file_put_contents(
 			$this->get_full_path($path),
 			$data
 		);
 	}
+
+    public function open_write_stream($path) {
+        if($this->write_stream) {
+            _doing_it_wrong(__METHOD__, 'Cannot open a new write stream while another write stream is open.', '1.0.0');
+            return false;
+        }
+        $this->write_stream = fopen($this->get_full_path($path), 'wb');
+        return true;
+    }
+
+    public function append_bytes($data) {
+        if(!$this->write_stream) {
+            _doing_it_wrong(__METHOD__, 'Cannot append bytes to a write stream that is not open.', '1.0.0');
+            return false;
+        }
+        return fwrite($this->write_stream, $data);
+    }
+
+    public function close_write_stream() {
+        if(!$this->write_stream) {
+            _doing_it_wrong(__METHOD__, 'Cannot close a write stream that is not open.', '1.0.0');
+            return false;
+        }
+        fclose($this->write_stream);
+        $this->write_stream = null;
+        return true;
+    }
 
 	private function get_full_path($relative_path) {
 		return $this->root . '/' . ltrim($relative_path, '/');

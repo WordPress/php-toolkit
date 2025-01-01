@@ -33,7 +33,7 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 	}
 
 	public function ls($parent = '/') {
-		$parent = $this->normalize_path($parent);
+		$parent = wp_canonicalize_path($parent);
 		$parent = rtrim($parent, '/');
 		$stmt = $this->db->prepare('
 			SELECT name FROM directory_entries 
@@ -50,7 +50,7 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 	}
 
 	public function is_dir($path) {
-		$path = $this->normalize_path($path);
+		$path = wp_canonicalize_path($path);
 		$stmt = $this->db->prepare('
 			SELECT type FROM files 
 			WHERE path = ? AND type = ?
@@ -62,7 +62,7 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 	}
 
 	public function is_file($path) {
-		$path = $this->normalize_path($path);
+		$path = wp_canonicalize_path($path);
 		$stmt = $this->db->prepare('
 			SELECT type FROM files 
 			WHERE path = ? AND type = ?
@@ -74,7 +74,7 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 	}
 
 	public function exists($path) {
-		$path = $this->normalize_path($path);
+		$path = wp_canonicalize_path($path);
 		$stmt = $this->db->prepare('
 			SELECT 1 FROM files 
 			WHERE path = ?
@@ -84,36 +84,8 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 		return $result->fetchArray() !== false;
 	}
 
-	private function normalize_path($path) {
-		// Convert to absolute path
-		if (!str_starts_with($path, '/')) {
-			$path = '/' . $path;
-		}
-
-		// Resolve . and ..
-		$parts = explode('/', $path);
-		$normalized = [];
-		foreach ($parts as $part) {
-			if ($part === '.' || $part === '') {
-				continue;
-			}
-			if ($part === '..') {
-				array_pop($normalized);
-				continue;
-			}
-			$normalized[] = $part;
-		}
-
-		// Reconstruct path
-		$result = '/' . implode('/', $normalized);
-        if($result === '/.') {
-            $result = '/';
-        }
-		return $result === '' ? '/' : $result;
-	}
-
 	private function get_parent_dir($path) {
-		$path = $this->normalize_path($path);
+		$path = wp_canonicalize_path($path);
 		$path = rtrim($path, '/');
 		$parent = dirname($path);
 		if($parent === '.') {
@@ -122,8 +94,8 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 		return $parent;
 	}
 
-	public function open_file_stream($path) {
-		$path = $this->normalize_path($path);
+	public function open_read_stream($path) {
+		$path = wp_canonicalize_path($path);
 		if($this->last_file_reader) {
 			$this->last_file_reader->close();
 		}
@@ -159,14 +131,14 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 		return $this->last_file_reader->length();
 	}
 
-	public function get_error_message() {
+	public function get_last_error() {
 		if(!$this->last_file_reader) {
 			return false;
 		}
 		return $this->last_file_reader->get_last_error();
 	}
 
-	public function close_file_stream() {
+	public function close_read_stream() {
 		if(!$this->last_file_reader) {
 			return false;
 		}
@@ -176,8 +148,8 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 	}
 
 	public function rename($old_path, $new_path) {
-		$old_path = $this->normalize_path($old_path);
-		$new_path = $this->normalize_path($new_path);
+		$old_path = wp_canonicalize_path($old_path);
+		$new_path = wp_canonicalize_path($new_path);
 		if (!$this->exists($old_path)) {
 			return false;
 		}
@@ -222,7 +194,7 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 	}
 
 	public function mkdir($path) {
-		$path = $this->normalize_path($path);
+		$path = wp_canonicalize_path($path);
 		if ($this->exists($path)) {
 			return false;
 		}
@@ -259,7 +231,7 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 	}
 
 	public function rm($path) {
-		$path = $this->normalize_path($path);
+		$path = wp_canonicalize_path($path);
 		if (!$this->is_file($path)) {
 			return false;
 		}
@@ -289,7 +261,7 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 	}
 
 	public function rmdir($path, $options = []) {
-		$path = $this->normalize_path($path);
+		$path = wp_canonicalize_path($path);
 		$recursive = $options['recursive'] ?? false;
 		if (!$this->is_dir($path)) {
 			return false;
@@ -330,8 +302,8 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 		}
 	}
 
-	public function put_contents($path, $data) {
-		$path = $this->normalize_path($path);
+	public function put_contents($path, $data, $options = []) {
+		$path = wp_canonicalize_path($path);
 		$parent = $this->get_parent_dir($path);
 		if (!$this->is_dir($parent)) {
 			return false;

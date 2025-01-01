@@ -105,7 +105,7 @@ class WP_Zip_Filesystem extends WP_Abstract_Filesystem {
 		return isset($this->central_directory[$path]) && self::TYPE_FILE === $this->central_directory[$path]['type'];
 	}
 
-	public function open_file_stream($path) {
+	public function open_read_stream($path) {
 		$this->opened_file_finished = false;
 		$this->file_chunk = null;
 		if($this->state === self::STATE_ERROR) {
@@ -164,7 +164,7 @@ class WP_Zip_Filesystem extends WP_Abstract_Filesystem {
 		return $this->file_chunk ?? '';
 	}
 
-	public function get_error_message() {
+	public function get_last_error() {
 		return $this->error_message;
 	}
 
@@ -270,7 +270,7 @@ class WP_Zip_Filesystem extends WP_Abstract_Filesystem {
 		return true;
 	}
 
-	public function close_file_stream() {
+	public function close_read_stream() {
 		return true;
 	}
 
