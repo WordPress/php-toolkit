@@ -113,7 +113,7 @@ abstract class WP_Abstract_Filesystem {
             _doing_it_wrong(__METHOD__, 'Invalid $data argument provided. Expected a string or a WP_Byte_Reader instance. Received: ' . gettype($data), '1.0.0');
             return false;
         }
-        if(!$this->close_write_stream()) {
+        if(!$this->close_write_stream($options)) {
             return false;
         }
         return true;

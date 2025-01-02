@@ -99,7 +99,7 @@ class WP_Uploaded_Directory_Tree_Filesystem extends WP_Abstract_Filesystem {
             $file_key = substr($node['content'], 6);
             $uploaded_file = $this->request->get_file_params()[$file_key] ?? null;
             
-            if (! $uploaded_file || $uploaded_file['error'] !== UPLOAD_ERR_OK) {
+            if (!$uploaded_file || $uploaded_file['error'] !== UPLOAD_ERR_OK) {
                 return false;
             }
 

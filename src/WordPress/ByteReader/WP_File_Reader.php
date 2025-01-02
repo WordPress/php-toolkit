@@ -18,10 +18,12 @@ class WP_File_Reader extends WP_Byte_Reader {
 
 	static public function create( $file_path, $chunk_size = 8096 ) {
 		if(!file_exists($file_path)) {
+            throw new \Exception(sprintf( 'File %s does not exist', $file_path ));
 			_doing_it_wrong( __METHOD__, sprintf( 'File %s does not exist', $file_path ), '1.0.0' );
 			return false;
 		}
 		if(!is_file($file_path)) {
+            throw new \Exception(sprintf( '%s is not a file', $file_path ));
 			_doing_it_wrong( __METHOD__, sprintf( '%s is not a file', $file_path ), '1.0.0' );
 			return false;
 		}

@@ -63,6 +63,9 @@ class WP_Local_Filesystem extends WP_Abstract_Filesystem {
 		}
 		$fullPath = $this->get_full_path($path);
 		$this->last_file_reader = \WordPress\ByteReader\WP_File_Reader::create($fullPath);
+        if(false === $this->last_file_reader) {
+            return false;
+        }
 		return true;
 	}
 
