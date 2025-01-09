@@ -94,10 +94,6 @@ class WP_Remote_File_Ranged_Reader extends WP_Byte_Reader {
 			fwrite($file, $reader->get_bytes());
 		}
 		fclose($file);
-		if($reader->get_last_error()) {
-			// How should we log this error?
-			return false;
-		}
 		return WP_File_Reader::create( $file_path );
 	}
 
@@ -183,12 +179,6 @@ class WP_Remote_File_Ranged_Reader extends WP_Byte_Reader {
 
 	public function get_bytes(): ?string {
 		return $this->current_reader->get_bytes();
-	}
-
-	public function get_last_error(): ?string {
-		// @TODO: Preserve the error information when the current reader
-		//        is reset.
-		return $this->current_reader->get_last_error();
 	}
 
 	private function ensure_content_length() {

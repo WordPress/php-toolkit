@@ -5,6 +5,7 @@ namespace WordPress\Filesystem;
 use WordPress\AsyncHttp\Client;
 use WordPress\AsyncHttp\Request;
 use WordPress\ByteReader\WP_String_Reader;
+use WordPress\Error\WordPressException;
 
 /**
  * Represents a Google Drive filesystem implementation.
@@ -15,7 +16,6 @@ class WP_Google_Drive_Filesystem extends WP_Abstract_Filesystem {
     private $write_stream = null;
     private $last_file_reader = null;
     private $access_token;
-    private $last_error = null;
     private $path_id_cache = [];
     private $http_client;
 
@@ -76,8 +76,7 @@ class WP_Google_Drive_Filesystem extends WP_Abstract_Filesystem {
         }
         $response_json = json_decode($buffered_response, true);
         if(isset($response_json['error'])) {
-            $this->last_error = $response_json['error']['message'];
-            return false;
+            throw new WordPressException( $response_json['error']['message']);
         }
         return $response_json;
     }
@@ -290,8 +289,7 @@ BODY;
 
     public function open_write_stream($path) {
         if ($this->write_stream) {
-            _doing_it_wrong(__METHOD__, 'Cannot open a new write stream while another write stream is open.', '1.0.0');
-            return false;
+            throw new WordPressException( 'Cannot open a new write stream while another write stream is open.');
         }
         
         // Initialize upload session
@@ -301,16 +299,14 @@ BODY;
 
     public function append_bytes($data) {
         if (!$this->write_stream) {
-            _doing_it_wrong(__METHOD__, 'Cannot append bytes to a write stream that is not open.', '1.0.0');
-            return false;
+            throw new WordPressException( 'Cannot append bytes to a write stream that is not open.');
         }
         return fwrite($this->write_stream, $data);
     }
 
     public function close_write_stream() {
         if (!$this->write_stream) {
-            _doing_it_wrong(__METHOD__, 'Cannot close a write stream that is not open.', '1.0.0');
-            return false;
+            throw new WordPressException( 'Cannot close a write stream that is not open.');
         }
 
         fclose($this->write_stream);

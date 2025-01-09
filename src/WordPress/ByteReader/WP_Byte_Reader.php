@@ -12,15 +12,11 @@ abstract class WP_Byte_Reader {
 	abstract public function is_finished(): bool;
 	abstract public function next_bytes(): bool;
 	abstract public function get_bytes(): ?string;
-	abstract public function get_last_error(): ?string;
 	abstract public function close(): bool;
 	public function read_all(): string {
 		$buffer = '';
 		while( $this->next_bytes() ) {
 			$buffer .= $this->get_bytes();
-		}
-		if( $this->get_last_error() ) {
-			return false;
 		}
 		return $buffer;
 	}

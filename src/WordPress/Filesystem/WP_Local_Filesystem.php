@@ -2,6 +2,8 @@
 
 namespace WordPress\Filesystem;
 
+use WordPress\Error\WordPressException;
+
 /**
  * Represents the currently available filesystem.
  */
@@ -22,7 +24,7 @@ class WP_Local_Filesystem extends WP_Abstract_Filesystem {
 		$fullPath = $this->get_full_path($parent);
 		$dh = opendir( $fullPath );
 		if ( $dh === false ) {
-			return false;
+            throw new WordPressException('Failed to open directory: ' . $parent);
 		}
 
 		$children = array();
@@ -63,9 +65,6 @@ class WP_Local_Filesystem extends WP_Abstract_Filesystem {
 		}
 		$fullPath = $this->get_full_path($path);
 		$this->last_file_reader = \WordPress\ByteReader\WP_File_Reader::create($fullPath);
-        if(false === $this->last_file_reader) {
-            return false;
-        }
 		return true;
 	}
 
@@ -128,35 +127,38 @@ class WP_Local_Filesystem extends WP_Abstract_Filesystem {
 	}
 
 	public function put_contents($path, $data, $options = []) {
-		return false !== file_put_contents(
+		if(false === file_put_contents(
 			$this->get_full_path($path),
 			$data
-		);
+		)) {
+			throw new WordPressException('Failed to write to the file: ' . $path);
+		}
 	}
 
     public function open_write_stream($path) {
         if($this->write_stream) {
-            _doing_it_wrong(__METHOD__, 'Cannot open a new write stream while another write stream is open.', '1.0.0');
-            return false;
+            throw new WordPressException('Cannot open a new write stream while another write stream is open.');
         }
         $this->write_stream = fopen($this->get_full_path($path), 'wb');
-        return true;
+        if(false === $this->write_stream) {
+            throw new WordPressException('Failed to open the file: ' . $path);
+        }
     }
 
     public function append_bytes($data) {
         if(!$this->write_stream) {
-            _doing_it_wrong(__METHOD__, 'Cannot append bytes to a write stream that is not open.', '1.0.0');
-            return false;
+            throw new WordPressException('Cannot append bytes to a write stream that is not open.');
         }
         return fwrite($this->write_stream, $data);
     }
 
     public function close_write_stream() {
         if(!$this->write_stream) {
-            _doing_it_wrong(__METHOD__, 'Cannot close a write stream that is not open.', '1.0.0');
-            return false;
+            throw new WordPressException('Cannot close a write stream that is not open.');
         }
-        fclose($this->write_stream);
+        if(false === fclose($this->write_stream)) {
+            throw new WordPressException('Failed to close the write stream.');
+        }
         $this->write_stream = null;
         return true;
     }

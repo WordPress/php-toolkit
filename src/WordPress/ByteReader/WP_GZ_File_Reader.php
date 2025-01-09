@@ -6,7 +6,7 @@ class WP_GZ_File_Reader extends WP_File_Reader {
 
 	public function next_bytes(): bool {
 		$this->output_bytes = '';
-		if ( $this->last_error || $this->is_finished() ) {
+		if ( $this->is_finished() ) {
 			return false;
 		}
 		if ( ! $this->file_pointer ) {

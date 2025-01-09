@@ -2,6 +2,8 @@
 
 namespace WordPress\ByteReader;
 
+use WordPress\Error\WordPressException;
+
 /**
  * Streams bytes from a remote file.
  */
@@ -33,13 +35,10 @@ class WP_Remote_File_Reader extends WP_Byte_Reader {
 
 	public function seek( $offset_in_file ): bool {
 		if ( $this->request ) {
-			_doing_it_wrong( 
-				__METHOD__,
+			throw new WordPressException(
 				'Cannot seek() a WP_Remote_File_Reader instance once the request was initialized. ' .
-				'Use WP_Remote_File_Ranged_Reader to seek() using range requests instead.',
-				'1.0.0'
+				'Use WP_Remote_File_Ranged_Reader to seek() using range requests instead.'
 			);
-			return false;
 		}
 		$this->skip_bytes = $offset_in_file;
 		return true;
@@ -52,8 +51,7 @@ class WP_Remote_File_Reader extends WP_Byte_Reader {
 				array( 'headers' => $this->headers )
 			);
 			if ( false === $this->client->enqueue( $this->request ) ) {
-				// TODO: Think through error handling
-				return false;
+				throw new WordPressException(sprintf('Failed to enqueue the request to %s', $this->url));
 			}
 		}
 
@@ -85,8 +83,7 @@ class WP_Remote_File_Reader extends WP_Byte_Reader {
 				case \WordPress\AsyncHttp\Client::EVENT_BODY_CHUNK_AVAILABLE:
 					$chunk = $this->client->get_response_body_chunk();
 					if ( ! is_string( $chunk ) ) {
-						// TODO: Think through error handling
-						return false;
+						throw new WordPressException(sprintf('Failed to get the response body chunk from %s', $this->url));
 					}
 					$this->current_chunk = $chunk;
 
@@ -108,11 +105,7 @@ class WP_Remote_File_Reader extends WP_Byte_Reader {
 					}
 					return true;
 				case \WordPress\AsyncHttp\Client::EVENT_FAILED:
-					// TODO: Think through error handling. Errors are expected when working with
-					//       the network. Should we auto retry? Make it easy for the caller to retry?
-					//       Something else?
-					$this->last_error = $this->client->get_request()->error;
-					return false;
+					throw new WordPressException(sprintf('Failed to fetch data from %s', $this->url));
 				case \WordPress\AsyncHttp\Client::EVENT_FINISHED:
 					$this->is_finished = true;
 					return false;
@@ -130,23 +123,16 @@ class WP_Remote_File_Reader extends WP_Byte_Reader {
 			array( 'method' => 'HEAD' )
 		);
 		if ( false === $this->client->enqueue( $request ) ) {
-			// TODO: Think through error handling
-			return false;
+			throw new WordPressException(sprintf('Failed to enqueue the request to %s', $this->url));
 		}
 		while ( $this->client->await_next_event() ) {
 			switch ( $this->client->get_event() ) {
 				case \WordPress\AsyncHttp\Client::EVENT_GOT_HEADERS:
 					$request = $this->client->get_request();
-					if ( ! $request ) {
-						return false;
-					}
 					if($request->redirected_to) {
 						continue 2;
 					}
 					$response = $request->response;
-					if ( false === $response ) {
-						return false;
-					}
 					$content_length = $response->get_header( 'Content-Length' );
 					if ( false === $content_length ) {
 						return false;
@@ -181,11 +167,6 @@ class WP_Remote_File_Reader extends WP_Byte_Reader {
 	}
 
 	public function close(): bool {
-		_doing_it_wrong(
-			__METHOD__,
-			'Not implemented yet',
-			'1.0.0'
-		);
-		return false;
+		throw new WordPressException('Not implemented yet');
 	}
 }

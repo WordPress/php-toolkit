@@ -2,6 +2,8 @@
 
 namespace WordPress\ByteReader;
 
+use WordPress\Error\WordPressException;
+
 class WP_String_Reader extends WP_Byte_Reader {
 
 	const STATE_STREAMING = '#streaming';
@@ -12,13 +14,11 @@ class WP_String_Reader extends WP_Byte_Reader {
 	protected $offset = 0;
 	protected $output_bytes = '';
 	protected $last_chunk_size = 0;
-	protected $last_error;
 	protected $state = self::STATE_STREAMING;
 
 	static public function create($string, $chunk_size = 8096) {
 		if (!is_string($string)) {
-			_doing_it_wrong(__METHOD__, 'Input must be a string', '1.0.0');
-			return false;
+			throw new WordPressException('Input must be a string');
 		}
 		return new self($string, $chunk_size);
 	}
@@ -38,11 +38,10 @@ class WP_String_Reader extends WP_Byte_Reader {
 
 	public function seek($offset): bool {
 		if (!is_int($offset)) {
-			_doing_it_wrong(__METHOD__, 'Cannot set cursor to a non-integer offset.', '1.0.0');
-			return false;
+			throw new WordPressException('Cannot set cursor to a non-integer offset.');
 		}
 		if ($offset < 0 || $offset > strlen($this->string)) {
-			return false;
+			throw new WordPressException('Cannot set cursor to an offset outside the string bounds.');
 		}
 		$this->offset = $offset;
 		$this->last_chunk_size = 0;
@@ -63,15 +62,11 @@ class WP_String_Reader extends WP_Byte_Reader {
 		return $this->output_bytes;
 	}
 
-	public function get_last_error(): ?string {
-		return $this->last_error;
-	}
-
 	public function next_bytes(): bool {
 		$this->output_bytes = '';
 		$this->last_chunk_size = 0;
 
-		if ($this->last_error || $this->is_finished()) {
+		if ($this->is_finished()) {
 			return false;
 		}
 

@@ -2,6 +2,8 @@
 
 namespace WordPress\Filesystem;
 
+use WordPress\Error\WordPressException;
+
 /**
  * Stores files in SQLite database.
  */
@@ -100,63 +102,61 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 			$this->last_file_reader->close();
 		}
 		if (!$this->is_file($path)) {
-			return false;
+			throw new WordPressException('File not found ' . $path);
 		}
 		$stmt = $this->db->prepare('SELECT contents FROM files WHERE path = ?');
 		$stmt->bindValue(1, $path, SQLITE3_TEXT);
 		$result = $stmt->execute();
 		$row = $result->fetchArray(SQLITE3_ASSOC);
 		$this->last_file_reader = \WordPress\ByteReader\WP_String_Reader::create($row['contents']);
-		return true;
 	}
 
 	public function next_file_chunk() {
 		if(!$this->last_file_reader) {
-			return false;
+			throw new WordPressException('No file reader open');
 		}
 		return $this->last_file_reader->next_bytes();
 	}
 
 	public function get_file_chunk() {
 		if(!$this->last_file_reader) {
-			return false;
+			throw new WordPressException('No file reader open');
 		}
 		return $this->last_file_reader->get_bytes();
 	}
 
 	public function get_streamed_file_length() {
 		if(!$this->last_file_reader) {
-			return false;
+			throw new WordPressException('No file reader open');
 		}
 		return $this->last_file_reader->length();
 	}
 
 	public function get_last_error() {
 		if(!$this->last_file_reader) {
-			return false;
+			throw new WordPressException('No file reader open');
 		}
 		return $this->last_file_reader->get_last_error();
 	}
 
 	public function close_read_stream() {
 		if(!$this->last_file_reader) {
-			return false;
+			throw new WordPressException('No file reader open');
 		}
 		$this->last_file_reader->close();
 		$this->last_file_reader = null;
-		return true;
 	}
 
 	public function rename($old_path, $new_path) {
 		$old_path = wp_canonicalize_path($old_path);
 		$new_path = wp_canonicalize_path($new_path);
 		if (!$this->exists($old_path)) {
-			return false;
+			throw new WordPressException('File not found ' . $old_path);
 		}
 
 		$parent = $this->get_parent_dir($new_path);
 		if (!$this->is_dir($parent)) {
-			return false;
+			throw new WordPressException('Parent directory not found ' . $parent);
 		}
 
 		$this->db->exec('BEGIN TRANSACTION');
@@ -186,22 +186,21 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 			$stmt->execute();
 
 			$this->db->exec('COMMIT');
-			return true;
 		} catch (\Exception $e) {
 			$this->db->exec('ROLLBACK');
-			return false;
+			throw new WordPressException('Failed to rename ' . $old_path . ' to ' . $new_path, $e);
 		}
 	}
 
 	public function mkdir($path) {
 		$path = wp_canonicalize_path($path);
 		if ($this->exists($path)) {
-			return false;
+			throw new WordPressException('Directory already exists ' . $path);
 		}
 
 		$parent = $this->get_parent_dir($path);
 		if (!$this->is_dir($parent)) {
-			return false;
+			throw new WordPressException('Parent directory not found ' . $parent);
 		}
 
 		$this->db->exec('BEGIN TRANSACTION');
@@ -223,17 +222,16 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 			$stmt->execute();
 
 			$this->db->exec('COMMIT');
-			return true;
 		} catch (\Exception $e) {
 			$this->db->exec('ROLLBACK');
-			return false;
+			throw new WordPressException('Failed to create directory ' . $path, $e);
 		}
 	}
 
 	public function rm($path) {
 		$path = wp_canonicalize_path($path);
 		if (!$this->is_file($path)) {
-			return false;
+			throw new WordPressException('File not found ' . $path);
 		}
 
 		$this->db->exec('BEGIN TRANSACTION');
@@ -253,10 +251,9 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 			$stmt->execute();
 
 			$this->db->exec('COMMIT');
-			return true;
 		} catch (\Exception $e) {
 			$this->db->exec('ROLLBACK');
-			return false;
+			throw new WordPressException('Failed to remove file ' . $path, $e);
 		}
 	}
 
@@ -264,7 +261,7 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 		$path = wp_canonicalize_path($path);
 		$recursive = $options['recursive'] ?? false;
 		if (!$this->is_dir($path)) {
-			return false;
+			throw new WordPressException('Directory not found ' . $path);
 		}
 
 		$this->db->exec('BEGIN TRANSACTION');
@@ -295,10 +292,9 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 			$stmt->execute();
 
 			$this->db->exec('COMMIT');
-			return true;
 		} catch (\Exception $e) {
 			$this->db->exec('ROLLBACK');
-			return false;
+			throw new WordPressException('Failed to remove directory ' . $path, $e);
 		}
 	}
 
@@ -329,10 +325,9 @@ class WP_SQLite_Filesystem extends WP_Abstract_Filesystem {
 			$stmt->execute();
 
 			$this->db->exec('COMMIT');
-			return true;
 		} catch (\Exception $e) {
 			$this->db->exec('ROLLBACK');
-			return false;
+			throw new WordPressException('Failed to put contents into ' . $path, $e);
 		}
 	}
 

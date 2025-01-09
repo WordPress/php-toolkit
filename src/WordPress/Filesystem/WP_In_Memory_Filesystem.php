@@ -2,6 +2,8 @@
 
 namespace WordPress\Filesystem;
 
+use WordPress\Error\WordPressException;
+
 /**
  * Represents an in-memory filesystem.
  */
@@ -64,35 +66,35 @@ class WP_In_Memory_Filesystem extends WP_Abstract_Filesystem {
 
 	public function next_file_chunk() {
 		if(!$this->last_file_reader) {
-			return false;
+			throw new WordPressException('No file reader is open.');
 		}
 		return $this->last_file_reader->next_bytes();
 	}
 
 	public function get_file_chunk() {
 		if(!$this->last_file_reader) {
-			return false;
+			throw new WordPressException('No file reader is open.');
 		}
 		return $this->last_file_reader->get_bytes();
 	}
 
 	public function get_streamed_file_length() {
 		if(!$this->last_file_reader) {
-			return false;
+			throw new WordPressException('No file reader is open.');
 		}
 		return $this->last_file_reader->length();
 	}
 
 	public function get_last_error() {
 		if(!$this->last_file_reader) {
-			return false;
+			throw new WordPressException('No file reader is open.');
 		}
 		return $this->last_file_reader->get_last_error();
 	}
 
 	public function close_read_stream() {
 		if(!$this->last_file_reader) {
-			return false;
+			throw new WordPressException('No file reader is open.');
 		}
 		$this->last_file_reader->close();
 		$this->last_file_reader = null;
@@ -103,12 +105,12 @@ class WP_In_Memory_Filesystem extends WP_Abstract_Filesystem {
 		$old_path = wp_canonicalize_path($old_path);
 		$new_path = wp_canonicalize_path($new_path);
 		if (!$this->exists($old_path)) {
-			return false;
+			throw new WordPressException('The old path does not exist.');
 		}
 
 		$parent = $this->get_parent_dir($new_path);
 		if (!$this->is_dir($parent)) {
-			return false;
+			throw new WordPressException('The parent directory does not exist.');
 		}
 
 		$this->files[$new_path] = $this->files[$old_path];
@@ -119,7 +121,11 @@ class WP_In_Memory_Filesystem extends WP_Abstract_Filesystem {
 	public function mkdir($path) {
 		$path = wp_canonicalize_path($path);
 		if ($this->exists($path)) {
-			return false;
+            if($this->is_dir($path)) {
+                return false;
+            } else {
+                throw new WordPressException('The path already exists but is not a directory.');
+            }
 		}
 
 		$parent = $this->get_parent_dir($path);
@@ -138,7 +144,7 @@ class WP_In_Memory_Filesystem extends WP_Abstract_Filesystem {
 	public function rm($path) {
 		$path = wp_canonicalize_path($path);
 		if (!$this->is_file($path)) {
-			return false;
+			throw new WordPressException('The path is not a file and cannot be removed.');
 		}
 
 		$parent = $this->get_parent_dir($path);
@@ -151,7 +157,7 @@ class WP_In_Memory_Filesystem extends WP_Abstract_Filesystem {
 		$path = wp_canonicalize_path($path);
 		$recursive = $options['recursive'] ?? false;
 		if (!$this->is_dir($path)) {
-			return false;
+			throw new WordPressException('The path is not a directory and cannot be removed.');
 		}
 
 		if ($recursive) {
@@ -175,7 +181,7 @@ class WP_In_Memory_Filesystem extends WP_Abstract_Filesystem {
 		$path = wp_canonicalize_path($path);
 		$parent = $this->get_parent_dir($path);
 		if (!$this->is_dir($parent)) {
-			return false;
+			throw new WordPressException('The parent directory does not exist.');
 		}
 
 		$this->files[$path] = [
@@ -188,8 +194,7 @@ class WP_In_Memory_Filesystem extends WP_Abstract_Filesystem {
 
     public function open_write_stream($path) {
         if($this->write_stream) {
-            _doing_it_wrong(__METHOD__, 'Cannot open a new write stream while another write stream is open.', '1.0.0');
-            return false;
+            throw new WordPressException('Cannot open a new write stream while another write stream is open.');
         }
         $this->write_stream = [
             'path' => $path,
@@ -200,8 +205,7 @@ class WP_In_Memory_Filesystem extends WP_Abstract_Filesystem {
 
     public function append_bytes($data) {
         if(!$this->write_stream) {
-            _doing_it_wrong(__METHOD__, 'Cannot append bytes to a write stream that is not open.', '1.0.0');
-            return false;
+            throw new WordPressException('Cannot append bytes to a write stream that is not open.');
         }
         $path = $this->write_stream['path'];
         if(!isset($this->files[$path])) {
@@ -213,8 +217,7 @@ class WP_In_Memory_Filesystem extends WP_Abstract_Filesystem {
 
     public function close_write_stream() {
         if(!$this->write_stream) {
-            _doing_it_wrong(__METHOD__, 'Cannot close a write stream that is not open.', '1.0.0');
-            return false;
+            throw new WordPressException('Cannot close a write stream that is not open.');
         }
         $this->write_stream = null;
         return true;
