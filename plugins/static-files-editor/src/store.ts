@@ -34,7 +34,6 @@ const STORE_NAME = 'static-files-editor/ui';
 export const uiStore = createReduxStore(STORE_NAME, {
 	reducer(
 		state = {
-			previewPath: null,
 			selectedPath: undefined,
 			isListViewOpened: true,
 			isPostIdResolving: false,
@@ -42,8 +41,6 @@ export const uiStore = createReduxStore(STORE_NAME, {
 		action
 	) {
 		switch (action.type) {
-			case 'SET_PREVIEW_PATH':
-				return { ...state, previewPath: action.path };
 			case 'SET_SELECTED_PATH':
 				return { ...state, selectedPath: action.path };
 			case 'SET_POST_ID_RESOLVING':
@@ -53,10 +50,6 @@ export const uiStore = createReduxStore(STORE_NAME, {
 		}
 	},
 	actions: {
-		setPreviewPath(path) {
-			return { type: 'SET_PREVIEW_PATH', path };
-		},
-
 		closeListViewOnMobile() {
 			return async ({ registry }) => {
 				const filePickerContainer = document.getElementById(
@@ -218,16 +211,16 @@ export const uiStore = createReduxStore(STORE_NAME, {
 		isPostIdResolving(state) {
 			return state.isPostIdResolving;
 		},
-		getPreviewPath(state) {
-			return state.previewPath;
-		},
         getSelectedPath(state) {
 			return state.selectedPath;
 		},
 		getParentNode(state, path) {
 			const parentPath = path.split('/').slice(0, -1).join('/') || '/';
 			return state.files.find((node) => node.path === parentPath);
-		},
+        },
+        getSelectedNode(state) {
+            return select(coreStore).getEntityRecord('static-files-editor', 'files', state.selectedPath);
+        },
 		listFiles(state, path) {
 			const parentNode = this.getParentNode(state, path);
 			if (parentNode) {

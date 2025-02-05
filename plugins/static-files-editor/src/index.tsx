@@ -1,10 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-	useEffect,
-	useState,
-	useCallback,
-	createRoot,
-} from '@wordpress/element';
+import { useEffect, createRoot } from '@wordpress/element';
 import { FileNode, FilePickerTree } from './components/FilePickerTree';
 import { MobileMenu } from './components/MobileMenu/index';
 import { store as editorStore, ErrorBoundary } from '@wordpress/editor';
@@ -71,11 +66,7 @@ type ConnectedFileNode = FileNode & {
 function filesListToTree(list: ConnectedFileNode[]): ConnectedFileNode {
 	const findChildren = (parentPath: string) => {
 		return list
-			.filter(
-				(item) =>
-					item.path.startsWith(parentPath + '/') &&
-					item.path !== parentPath
-			)
+			.filter((item) => isDirectParentOf(parentPath, item.path))
 			.map((item) => ({
 				...item,
 				name: item.path.split('/').pop() || '',
@@ -95,6 +86,13 @@ function filesListToTree(list: ConnectedFileNode[]): ConnectedFileNode {
 				children: findChildren(item.path),
 			})),
 	};
+}
+
+function isDirectParentOf(parentPath: string, childPath: string) {
+	return (
+		childPath.startsWith(parentPath + '/') &&
+		!childPath.substring(parentPath.length + 1).includes('/')
+	);
 }
 
 function ConnectedFilePickerTree() {
@@ -134,15 +132,19 @@ function ConnectedFilePickerTree() {
 		[]
 	);
 
-    // One-time only – initialize the selected path
+	// One-time only – initialize the selected path
 	useEffect(() => {
-		if (!isFileListInitialized || selectedPath !== undefined || filesList.length === 0) {
+		if (
+			!isFileListInitialized ||
+			selectedPath !== undefined ||
+			filesList.length === 0
+		) {
 			return;
 		}
 		const initialEditedPostId = select(editorStore).getCurrentPostId();
 		const initialFile = filesList.find(
 			(file) => file.post_id === initialEditedPostId
-        );
+		);
 		dispatch(uiStore).setSelectedPath(initialFile?.path || '/');
 	}, [isFileListInitialized]);
 
@@ -330,18 +332,18 @@ ${figure.outerHTML}
 
 	if (!isFileListInitialized) {
 		return <Spinner />;
-    }
-    
-    if (selectedPath === undefined) {
-        // Wait until the selected path is initialized
+	}
+
+	if (selectedPath === undefined) {
+		// Wait until the selected path is initialized
 		return <Spinner />;
 	}
 
 	if (!fileTree) {
 		return <div>No files found</div>;
-    }
+	}
 
-    return (
+	return (
 		<FilePickerTree
 			treeRoot={fileTree}
 			onSelect={handleFileClick}
@@ -370,16 +372,20 @@ addLocalFilesTab({
 });
 
 function FilePreviewOverlay() {
-	const previewPath = useSelect(
-		(select) => select(uiStore).getPreviewPath(),
+	const selectedNode = useSelect(
+		(select) => select(uiStore).getSelectedNode(),
 		[]
 	);
 
-	if (!previewPath) {
+	if (
+		!selectedNode ||
+		selectedNode.type !== 'file' ||
+		!isPreviewableAssetPath(selectedNode.path)
+	) {
 		return null;
 	}
 
-	const extension = previewPath.split('.').pop()?.toLowerCase();
+	const extension = selectedNode.path.split('.').pop()?.toLowerCase();
 	const isPreviewable = ['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(
 		extension || ''
 	);
@@ -397,13 +403,13 @@ function FilePreviewOverlay() {
 				zIndex: 1000,
 			}}
 		>
-			<h2>{previewPath.split('/').pop()}</h2>
+			<h2>{selectedNode.path.split('/').pop()}</h2>
 			{isPreviewable ? (
 				<img
 					src={apiUrl(
-						`static-files-editor/v1/download-file?path=${previewPath}`
+						`static-files-editor/v1/download-file?path=${selectedNode.path}`
 					)}
-					alt={previewPath}
+					alt={selectedNode.path}
 					style={{ maxWidth: '100%', maxHeight: '80vh' }}
 				/>
 			) : (
