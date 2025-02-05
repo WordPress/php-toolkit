@@ -61,6 +61,7 @@ register(uiStore);
 
 type ConnectedFileNode = FileNode & {
 	post_id?: string;
+	post_title?: string;
 };
 
 function filesListToTree(list: ConnectedFileNode[]): ConnectedFileNode {
@@ -82,7 +83,7 @@ function filesListToTree(list: ConnectedFileNode[]): ConnectedFileNode {
 			.filter((item) => item.path.split('/').length === 2)
 			.map((item) => ({
 				...item,
-				name: item.path.split('/').pop() || '',
+				name: item.post_title || item.path.split('/').pop() || '',
 				children: findChildren(item.path),
 			})),
 	};
@@ -341,7 +342,7 @@ ${figure.outerHTML}
 
 	if (!fileTree) {
 		return <div>No files found</div>;
-	}
+    }
 
 	return (
 		<FilePickerTree

@@ -959,6 +959,7 @@ class WP_Static_Files_Editor_Plugin {
                 if (isset($path_to_post[$path])) {
                     $node['post_id'] = $path_to_post[$path]->ID;
                     $node['post_type'] = $path_to_post[$path]->post_type;
+                    $node['post_title'] = $path_to_post[$path]->post_title;
                 }
 
                 $list[] = $node;
