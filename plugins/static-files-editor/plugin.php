@@ -129,10 +129,11 @@ class WP_Static_Files_Editor_Plugin {
             return false;
         }
         self::get_fs();
-        self::$remote->force_pull_sparse(
+        self::$remote->pull(
             $config['selectedBranch'],
             [
                 'path' => $config['pathToSync'],
+                'force' => true
             ]
         );
         return true;

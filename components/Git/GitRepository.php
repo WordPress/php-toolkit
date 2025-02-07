@@ -280,6 +280,10 @@ class GitRepository {
 		return $this->fs->rm( $path );
 	}
 
+    public function get_current_branch_name() {
+        return $this->get_ref_head( 'HEAD', array( 'follow_symrefs' => false ) );
+    }
+
 	public function get_ref_head( $ref = 'HEAD', $options = array() ) {
 		while ( true ) {
 			if ( $this->has_object( $ref ) ) {

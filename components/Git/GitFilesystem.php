@@ -185,7 +185,10 @@ class GitFilesystem implements Filesystem {
 				$this->remote->force_push_one_commit();
 			} catch ( GitException $e ) {
 				// If push failed, force pull and retry
-				$this->remote->force_pull();
+				$this->remote->pull(
+                    $this->get_repository()->get_current_branch_name(),
+                    [ 'force' => true ]
+                );
 
 				// If pull succeeded, try committing and pushing again
 				$this->repo->commit( $options );

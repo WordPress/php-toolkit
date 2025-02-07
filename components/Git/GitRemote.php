@@ -243,39 +243,25 @@ class GitRemote {
         return $blobs_oids;
     }
 
-	public function force_pull( $full_branch_name ) {
-		$remote_head      = $this->fetch( $full_branch_name );
-		$nice_branch_name = $this->resolve_branch_name( $full_branch_name );
-		$this->repository->set_ref_head( 'refs/heads/' . $nice_branch_name, $remote_head );
-		return $remote_head;
-	}
-
-	public function force_pull_sparse( $full_branch_name, $options = [] ) {
-        if(!isset($options['path'])) {
-            throw new GitException('"path" option is required when calling force_pull_sparse');
-        }
-		$remote_head      = $this->fetch_sparse( $full_branch_name, $options );
-		$nice_branch_name = $this->resolve_branch_name( $full_branch_name );
-		$this->repository->set_ref_head( 'refs/heads/' . $nice_branch_name, $remote_head );
-		return $remote_head;
-	}
-
-	public function pull_sparse( $full_branch_name, $options = array() ) {
-        if(!isset($options['path'])) {
-            throw new GitException('"path" option is required when calling pull_sparse');
-        }
+	public function pull( $full_branch_name, $options = array() ) {
         $path = $options['path'] ?? '/';
 
-		$remote_head = $this->fetch_sparse( $full_branch_name, [
-            'path' => $path
-        ] );
+        if(isset($options['path'])) {
+            // Sparse pull
+            $remote_head = $this->fetch( $full_branch_name, [
+                'path' => $path
+            ] );
+        } else {
+            // Full pull
+            $remote_head = $this->fetch( $full_branch_name, [] );
+        }
 
         // Fetch the commits we need to perform the three-way merge
         $local_head = $this->repository->get_ref_head( 'HEAD' );
         $common_ancestor = $this->resolve_first_common_ancestor(
             $remote_head,
             $local_head
-        );        
+        );
         $required_commits = [$remote_head, $common_ancestor];
         foreach($required_commits as $commit) {
             if(!$this->repository->has_blobs_from_commit($commit, $path)) {
@@ -290,11 +276,17 @@ class GitRemote {
             }
         }
 
+        if(isset($options['force']) && $options['force']) {
+            $nice_branch_name = $this->localize_ref_name( $full_branch_name );
+            $this->repository->set_ref_head( 'refs/heads/' . $nice_branch_name, $remote_head );
+            return $remote_head;
+        }
+
         return $this->repository->merge($remote_head);
 	}
 
-	public function fetch( $full_branch_name ) {
-		$branch_name = $this->resolve_branch_name( $full_branch_name );
+	public function fetch( $full_branch_name, $options = array() ) {
+		$branch_name = $this->localize_ref_name( $full_branch_name );
 		try {
 			$last_fetched_head_ref = $this->repository->get_ref_head( 'refs/remotes/' . $this->remote_name . '/' . $branch_name );
 		} catch ( GitException $e ) {
@@ -302,26 +294,10 @@ class GitRemote {
 		}
 
 		$remote_head = $this->get_remote_head( 'refs/heads/' . $branch_name );
-		if ( $remote_head !== $last_fetched_head_ref ) {
-            $this->git_upload_pack( array(
-                'want_refs' => [$remote_head],
-                'have_refs' => $last_fetched_head_ref
-            ) );
-            $this->repository->set_ref_head( "refs/remotes/{$this->remote_name}/{$branch_name}", $remote_head );
+		if ( $remote_head === $last_fetched_head_ref ) {
+            return $remote_head;
         }
-		return $remote_head;
-	}
-
-	public function fetch_sparse( $full_branch_name, $options = array() ) {
-		$branch_name = $this->resolve_branch_name( $full_branch_name );
-		try {
-			$last_fetched_head_ref = $this->repository->get_ref_head( 'refs/remotes/' . $this->remote_name . '/' . $branch_name );
-		} catch ( GitException $e ) {
-			$last_fetched_head_ref = Commit::NULL_HASH;
-		}
-
-		$remote_head = $this->get_remote_head( 'refs/heads/' . $branch_name );
-		if ( $remote_head !== $last_fetched_head_ref ) {
+        if(isset($options['path'])) {
             $missing_oids = $this->resolve_missing_blobs_oids(
                 $remote_head,
                 [ 'path' => $options['path'] ]
@@ -332,20 +308,14 @@ class GitRemote {
                 'want_refs' => [$remote_head, ...$missing_oids],
                 'have_refs' => $last_fetched_head_ref
             ) );
-            $this->repository->set_ref_head( "refs/remotes/{$this->remote_name}/{$branch_name}", $remote_head );
+        } else {
+            $this->git_upload_pack( array(
+                'want_refs' => [$remote_head],
+                'have_refs' => $last_fetched_head_ref
+            ) );
         }
+        $this->repository->set_ref_head( "refs/remotes/{$this->remote_name}/{$branch_name}", $remote_head );
 		return $remote_head;
-	}
-
-	private function resolve_branch_name( $branch_name ) {
-		if ( null !== $branch_name ) {
-			return $branch_name;
-		}
-
-		// Return the default branch name
-		$branch_name = $this->repository->get_ref_head( 'HEAD', array( 'follow_symrefs' => false ) );
-		$branch_name = $this->localize_ref_name( $branch_name );
-		return $branch_name;
 	}
 
     public function resolve_first_common_ancestor( $remote_commit_hash, $local_commit_hash ) {
