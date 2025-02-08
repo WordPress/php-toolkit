@@ -249,15 +249,28 @@ class GitRemote {
         if(isset($options['path'])) {
             // Sparse pull
             $remote_head = $this->fetch( $full_branch_name, [
-                'path' => $path
+                'path' => $path,
+                'shallow' => $options['shallow'] ?? false,
             ] );
         } else {
             // Full pull
             $remote_head = $this->fetch( $full_branch_name, [] );
         }
 
-        // Fetch the commits we need to perform the three-way merge
         $local_head = $this->repository->get_ref_head( 'HEAD' );
+        if(Commit::is_null_hash($local_head)) {
+            // If the local head is an unborn branch, there's nothing to merge.
+            // We just pull and point the head to the remote head.
+            $options['force'] = true;
+        }
+
+        if(isset($options['force']) && $options['force']) {
+            $nice_branch_name = $this->localize_ref_name( $full_branch_name );
+            $this->repository->set_ref_head( 'refs/heads/' . $nice_branch_name, $remote_head );
+            return $remote_head;
+        }
+
+        // Fetch the commits we need to perform the three-way merge
         $common_ancestor = $this->resolve_first_common_ancestor(
             $remote_head,
             $local_head
@@ -272,14 +285,8 @@ class GitRemote {
                     ),
                     'shallow' => [ $commit ],
                     'deepen'    => 1,
-                ) );
+                ) )->consume_stream();
             }
-        }
-
-        if(isset($options['force']) && $options['force']) {
-            $nice_branch_name = $this->localize_ref_name( $full_branch_name );
-            $this->repository->set_ref_head( 'refs/heads/' . $nice_branch_name, $remote_head );
-            return $remote_head;
         }
 
         return $this->repository->merge($remote_head);
@@ -298,6 +305,9 @@ class GitRemote {
             return $remote_head;
         }
         if(isset($options['path'])) {
+            if(!isset($options['shallow']) || $options['shallow'] !== true) {
+                throw new GitException('When you pass a "path" to fetch(), you must also set the "shallow" option to true. Deep partial fetches are not supported.');
+            }
             $missing_oids = $this->resolve_missing_blobs_oids(
                 $remote_head,
                 [ 'path' => $options['path'] ]
@@ -306,13 +316,13 @@ class GitRemote {
                 'shallow'   => [$remote_head],
                 'deepen'    => 1,
                 'want_refs' => [$remote_head, ...$missing_oids],
-                'have_refs' => $last_fetched_head_ref
-            ) );
+                'have_refs' => [$last_fetched_head_ref]
+            ) )->consume_stream();
         } else {
             $this->git_upload_pack( array(
                 'want_refs' => [$remote_head],
-                'have_refs' => $last_fetched_head_ref
-            ) );
+                'have_refs' => [$last_fetched_head_ref]
+            ) )->consume_stream();
         }
         $this->repository->set_ref_head( "refs/remotes/{$this->remote_name}/{$branch_name}", $remote_head );
 		return $remote_head;
@@ -339,7 +349,7 @@ class GitRemote {
             // We're answering a question about a common ancestor in the commit
             // graph. We don't need all the extra downloads to do that.
             'filter' => 'tree:0'
-        ) );
+        ) )->consume_stream();
 
         try {
             return $this->repository->find_first_common_ancestor(
@@ -360,7 +370,7 @@ class GitRemote {
             // We're answering a question about a common ancestor in the commit
             // graph. We don't need all the extra downloads to do that.
             'filter' => 'tree:0'
-        ) );
+        ) )->consume_stream();
 
         try {
             return $this->repository->find_first_common_ancestor(
@@ -385,12 +395,11 @@ class GitRemote {
 		for ( $i = 0; $i < count( $want_refs ); $i++ ) {
 			$packet_line = "want {$want_refs[$i]}";
 			if ( $i === 0 ) {
-				$packet_line .= ' multi_ack_detailed no-done side-band-64k thin-pack ofs-delta agent=git/2.37.3 filter push-options';
+				$packet_line .= ' multi_ack_detailed no-done side-band-64k ofs-delta agent=git/2.37.3 filter push-options';
 			}
 			$packet_line   .= "\n";
 			$packet_lines[] = $packet_line;
 		}
-
 
         if(isset($options['filter'])) {
             $packet_lines[] = "filter {$options['filter']}\n";
@@ -401,19 +410,25 @@ class GitRemote {
 				$packet_lines[] = "shallow {$oid}\n";
 			}
 		}
+
         if(isset($options['deepen'])) {
             $packet_lines[] = "deepen " . $options['deepen'] . "\n";
         }
 
-		$packet_lines[] = '0000';
-
         $have_refs = $options['have_refs'] ?? [];
-		foreach ( $have_refs as $have_ref ) {
-			if ( Commit::is_null_hash( $have_ref ) ) {
-				continue;
-			}
-			$packet_lines[] = "have {$have_ref}\n";
-		}
+        if(count($have_refs) > 0) {
+            $sent_flush = false;
+            foreach ( $have_refs as $have_ref ) {
+                if ( Commit::is_null_hash( $have_ref ) ) {
+                    continue;
+                }
+                if(!$sent_flush) {
+                    $packet_lines[] = '0000';
+                    $sent_flush = true;
+                }
+                $packet_lines[] = "have {$have_ref}\n";
+            }
+        }
 		$packet_lines[] = '0000';
 		$packet_lines[] = "done\n";
 
@@ -426,13 +441,12 @@ class GitRemote {
 			)
 		);
 
-		$protocol = new GitProtocolDecoder(
+		return new GitProtocolDecoder(
 			$response_stream,
 			array(
 				'write_to_repository' => $this->repository,
 			)
 		);
-		$protocol->consume_stream();
 	}
 
 	private function http_request( $path, $postData = null, $headers = array() ) {
