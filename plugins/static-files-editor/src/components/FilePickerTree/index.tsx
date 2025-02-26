@@ -298,7 +298,7 @@ export const FilePickerTree: React.FC<FilePickerControlProps> = ({
 		e: React.DragEvent,
 		path: string,
 		node: FileNode
-    ) => {
+	) => {
 		e.stopPropagation();
 		const dragImage = createDragImage(node);
 		e.dataTransfer.setDragImage(dragImage, 10, 10);
@@ -315,12 +315,12 @@ export const FilePickerTree: React.FC<FilePickerControlProps> = ({
 			isExternal: false,
 		});
 
-        if (onDragStart) {
-            // Mobile Safari won't notice a drag&drop interaction unless
-            // some data is set in OnDragStart's event;
-            e.dataTransfer.setData('text/plain', 'placeholder');
-            onDragStart?.(e, path, node.type);
-        }
+		if (onDragStart) {
+			// Mobile Safari won't notice a drag&drop interaction unless
+			// some data is set in OnDragStart's event;
+			e.dataTransfer.setData('text/plain', 'placeholder');
+			onDragStart?.(e, path, node.type);
+		}
 	};
 
 	const isDescendantPath = (parentPath: string, childPath: string) => {
@@ -602,7 +602,7 @@ export const FilePickerTree: React.FC<FilePickerControlProps> = ({
 					style={{
 						marginBottom: '1rem',
 						display: 'flex',
-						gap: '0.5rem',
+						gap: '1rem',
 						flexGrow: 0,
 					}}
 				>
@@ -622,7 +622,7 @@ export const FilePickerTree: React.FC<FilePickerControlProps> = ({
 					</ButtonGroup>
 				</div>
 
-                <TreeGrid className={css['filePickerTree']}>
+				<TreeGrid className={css['filePickerTree']}>
 					<NodeRow
 						key={'/'}
 						node={files}
@@ -739,21 +739,20 @@ const NodeRow: React.FC<{
 		  })
 		: [];
 
-    
-    const onClick = () => {
-        toggleOpen();
-        selectNode(path);
-    }
+	const onClick = () => {
+		toggleOpen();
+		selectNode(path);
+	};
 
-    /**
-     * Bug: In mobile safari, the initial tap on each row does not trigger the click handler.
-     * Instead, it highlights the row and awaits a second tap to trigger the click handler.
-     * Double tapping is annoying so we're forcing the onClick handler when the user taps on
-     * a row. The downside is, this isn't an accurate approximation of the click handler
-     * as the user might just want to scroll.
-     */
-    const ButtonWrapper = isMobileSafari ? ApproximateClick : React.Fragment;
-    
+	/**
+	 * Bug: In mobile safari, the initial tap on each row does not trigger the click handler.
+	 * Instead, it highlights the row and awaits a second tap to trigger the click handler.
+	 * Double tapping is annoying so we're forcing the onClick handler when the user taps on
+	 * a row. The downside is, this isn't an accurate approximation of the click handler
+	 * as the user might just want to scroll.
+	 */
+	const ButtonWrapper = isMobileSafari ? ApproximateClick : React.Fragment;
+
 	const isImage = isImagePath(node.name);
 	return (
 		<>
@@ -788,61 +787,69 @@ const NodeRow: React.FC<{
 												marginTop: '-1px',
 											}}
 										/>
-                                    )}
-                                    <ButtonWrapper>
-                                        <Button
-                                            ref={buttonRef}
-                                            onClick={onClick}
-                                            onKeyDown={handleKeyDown}
-                                            className={classNames(
-                                                css['fileNodeButton'],
-                                                {
-                                                    [css['selected']]:
-                                                        selectedNode?.path === path,
-                                                    [css['dragging']]:
-                                                        isBeingDragged,
-                                                    [css['dropTarget']]:
-                                                        isHovered &&
-                                                        node.type === 'directory',
-                                                    'file-node-button': true,
-                                                }
-                                            )}
-                                            data-path={path}
-                                            draggable={true}
-                                            onDragStart={(e) =>
-                                                onDragStart?.(e, path, node)
-                                            }
-                                            onDragOver={(e) =>
-                                                onDragOver?.(e, path, node)
-                                            }
-                                            onDrop={(e) => onDrop?.(e, path, node)}
-                                            onDragEnd={onDragEnd}
-                                            style={{
-                                                opacity: isBeingDragged ? 0.5 : 1,
-                                                backgroundColor:
-                                                    isHovered &&
-                                                    node.type === 'directory'
-                                                        ? '#e5f1f8'
-                                                        : undefined,
-                                                position: 'relative',
-                                            }}
-                                        >
-                                            <FileButtonContent
-                                                node={node}
-                                                isOpen={
-                                                    node.type === 'directory' &&
-                                                    isExpanded
-                                                }
-                                                level={level}
-                                            />
-                                            {isImage && (
-                                                <img
-                                                    className={css['fileNodeImage']}
-                                                    src={`/wp-json/static-files-editor/v1/download-file?path=${path}`}
-                                                />
-                                            )}
-                                        </Button>
-                                    </ButtonWrapper>
+									)}
+									<ButtonWrapper>
+										<Button
+											ref={buttonRef}
+											onClick={onClick}
+											onKeyDown={handleKeyDown}
+											className={classNames(
+												css['fileNodeButton'],
+												{
+													[css['selected']]:
+														selectedNode?.path ===
+														path,
+													[css['dragging']]:
+														isBeingDragged,
+													[css['dropTarget']]:
+														isHovered &&
+														node.type ===
+															'directory',
+													'file-node-button': true,
+												}
+											)}
+											data-path={path}
+											draggable={true}
+											onDragStart={(e) =>
+												onDragStart?.(e, path, node)
+											}
+											onDragOver={(e) =>
+												onDragOver?.(e, path, node)
+											}
+											onDrop={(e) =>
+												onDrop?.(e, path, node)
+											}
+											onDragEnd={onDragEnd}
+											style={{
+												opacity: isBeingDragged
+													? 0.5
+													: 1,
+												backgroundColor:
+													isHovered &&
+													node.type === 'directory'
+														? '#e5f1f8'
+														: undefined,
+												position: 'relative',
+											}}
+										>
+											<FileButtonContent
+												node={node}
+												isOpen={
+													node.type === 'directory' &&
+													isExpanded
+												}
+												level={level}
+											/>
+											{isImage && (
+												<img
+													className={
+														css['fileNodeImage']
+													}
+													src={`/wp-json/static-files-editor/v1/download-file?path=${path}`}
+												/>
+											)}
+										</Button>
+									</ButtonWrapper>
 									<div className={css['moreActions']}>
 										<DropdownMenu
 											icon={moreVertical}
@@ -883,7 +890,7 @@ const NodeRow: React.FC<{
 									type={editedNode.type}
 									onComplete={onEditedNodeComplete}
 									onCancel={onEditedNodeCancel}
-									level={level + 1}
+									level={Math.max(level + 1, 1)}
 								/>
 							)}
 						</TreeGridCell>
@@ -954,7 +961,7 @@ const FilenameForm: React.FC<{
 	}
 
 	return (
-		<div className={css['editedNodeInput']}>
+		<div className={css['filenameForm']}>
 			<span
 				aria-hidden="true"
 				dangerouslySetInnerHTML={{ __html: indent.join('') }}

@@ -16,7 +16,7 @@ interface ByteTransformer {
 	 * @param string $bytes The bytes to append.
 	 * @return string|false The filtered bytes, or false if no bytes were filtered.
 	 */
-	public function filter_bytes( string $bytes ): string|false;
+	public function filter_bytes( string $bytes );
 
 	/**
 	 * Flushes the filter and returns the last chunk of data.

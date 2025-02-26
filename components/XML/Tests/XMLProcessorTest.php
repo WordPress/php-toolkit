@@ -1732,7 +1732,7 @@ class XMLProcessorTest extends TestCase {
 				<first_child>Hello there</first_child>
 				<second_child>I am a second child</second_child>
 			</root>
-		XML;
+XML;
 		$processor = XMLProcessor::create_for_streaming( $xml );
 		$processor->next_tag();
 		$processor->next_tag();

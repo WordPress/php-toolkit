@@ -18,11 +18,16 @@ class FileWriteStream implements ByteWriteStream {
 	 * @throws ByteStreamException If the file cannot be opened for writing.
 	 */
 	public static function from_path( string $path, string $mode = 'append' ): self {
-		$fileMode = match ( $mode ) {
-			'truncate' => 'wb', // Write mode: truncates the file.
-			'append'   => 'ab', // Append mode: appends to the file.
-			default    => throw new ByteStreamException( "Invalid mode: $mode. Use 'truncate' or 'append'." )
-		};
+		switch ( $mode ) {
+			case 'truncate':
+				$fileMode = 'wb'; // Write mode: truncates the file.
+				break;
+			case 'append':
+				$fileMode = 'ab'; // Append mode: appends to the file.
+				break;
+			default:
+				throw new ByteStreamException( "Invalid mode: $mode. Use 'truncate' or 'append'." );
+		}
 
 		$fileHandle = fopen( $path, $fileMode );
 		if ( $fileHandle === false ) {

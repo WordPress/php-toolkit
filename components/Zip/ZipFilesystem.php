@@ -200,13 +200,12 @@ class ZipFilesystem implements Filesystem {
 		$this->zip->seek_to_record( $length - 22 );
 		if ( ! $this->zip->next_object() ) {
 			throw new FilesystemException(
-				'Failed to read the end central directory index at the end of the ZIP file',
+				'Failed to read the end central directory index at the end of the ZIP file'
 			);
 		}
 		if ( ! ( $this->zip->get_object() instanceof EndCentralDirectoryEntry ) ) {
 			throw new FilesystemException(
-				'Expected end central directory index at the end of the ZIP file but found %s',
-				get_class( $this->zip->get_object() )
+				sprintf( 'Expected end central directory index at the end of the ZIP file but found %s', get_class( $this->zip->get_object() ) )
 			);
 		}
 

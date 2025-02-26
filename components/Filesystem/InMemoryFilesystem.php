@@ -42,7 +42,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 	public function ls( $parent = '/' ) {
 		if ( ! isset( $this->files[ $parent ] ) || $this->files[ $parent ]['type'] !== 'dir' ) {
 			throw new FilesystemException(
-				sprintf( 'Directory not found: %s', $parent ),
+				sprintf( 'Directory not found: %s', $parent )
 			);
 		}
 		return array_keys( $this->files[ $parent ]['contents'] );
@@ -63,7 +63,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 	public function open_read_stream( $path ): ByteReadStream {
 		if ( ! $this->is_file( $path ) ) {
 			throw new FilesystemException(
-				sprintf( 'File not found: %s', $path ),
+				sprintf( 'File not found: %s', $path )
 			);
 		}
 		return new MemoryPipe( $this->files[ $path ]['contents'] );
@@ -72,14 +72,14 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 	public function rename( $old_path, $new_path, $options = array() ) {
 		if ( ! $this->exists( $old_path ) ) {
 			throw new FilesystemException(
-				sprintf( 'File not found: %s', $old_path ),
+				sprintf( 'File not found: %s', $old_path )
 			);
 		}
 
-		$parent = dirname( $new_path );
+		$parent = wp_dirname( $new_path );
 		if ( ! $this->is_dir( $parent ) ) {
 			throw new FilesystemException(
-				sprintf( 'Parent directory not found: %s', $parent ),
+				sprintf( 'Parent directory not found: %s', $parent )
 			);
 		}
 
@@ -91,14 +91,14 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 	public function mkdir_single( $path, $options = array() ) {
 		if ( $this->exists( $path ) ) {
 			throw new FilesystemException(
-				sprintf( 'Directory already exists: %s', $path ),
+				sprintf( 'Directory already exists: %s', $path )
 			);
 		}
 
-		$parent = dirname( $path );
+		$parent = wp_dirname( $path );
 		if ( ! $this->is_dir( $parent ) ) {
 			throw new FilesystemException(
-				sprintf( 'Parent directory not found: %s', $parent ),
+				sprintf( 'Parent directory not found: %s', $parent )
 			);
 		}
 
@@ -113,11 +113,11 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 	public function rm( $path ) {
 		if ( ! $this->is_file( $path ) ) {
 			throw new FilesystemException(
-				sprintf( 'File not found: %s', $path ),
+				sprintf( 'File not found: %s', $path )
 			);
 		}
 
-		$parent = dirname( $path );
+		$parent = wp_dirname( $path );
 		unset( $this->files[ $parent ]['contents'][ basename( $path ) ] );
 		unset( $this->files[ $path ] );
 		return true;
@@ -127,7 +127,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 		$recursive = $options['recursive'] ?? false;
 		if ( ! $this->is_dir( $path ) ) {
 			throw new FilesystemException(
-				sprintf( 'Directory not found: %s', $path ),
+				sprintf( 'Directory not found: %s', $path )
 			);
 		}
 
@@ -142,17 +142,17 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 			}
 		}
 
-		$parent = dirname( $path );
+		$parent = wp_dirname( $path );
 		unset( $this->files[ $parent ]['contents'][ basename( $path ) ] );
 		unset( $this->files[ $path ] );
 		return true;
 	}
 
 	public function put_contents( $path, $data, $options = array() ) {
-		$parent = dirname( $path );
+		$parent = wp_dirname( $path );
 		if ( ! $this->is_dir( $parent ) ) {
 			throw new FilesystemException(
-				sprintf( 'Parent directory not found: %s', $parent ),
+				sprintf( 'Parent directory not found: %s', $parent )
 			);
 		}
 
@@ -174,7 +174,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 	public function write_stream_append_bytes( int $stream_id, $data ): bool {
 		if ( ! isset( $this->write_streams[ $stream_id ] ) ) {
 			throw new FilesystemException(
-				sprintf( 'Cannot append bytes to a write stream that is not open' ),
+				sprintf( 'Cannot append bytes to a write stream that is not open' )
 			);
 		}
 		$path                              = $this->write_streams[ $stream_id ];
@@ -185,7 +185,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 	public function write_stream_close( int $stream_id ): void {
 		if ( ! isset( $this->write_streams[ $stream_id ] ) ) {
 			throw new FilesystemException(
-				sprintf( 'Cannot close a write stream that is not open' ),
+				sprintf( 'Cannot close a write stream that is not open' )
 			);
 		}
 		unset( $this->write_streams[ $stream_id ] );

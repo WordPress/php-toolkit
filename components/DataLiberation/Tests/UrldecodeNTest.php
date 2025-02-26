@@ -13,7 +13,7 @@ class UrldecodeNTest extends TestCase {
 	public function test_urldecode_n(
 		$original_string,
 		$decode_length,
-		$expected_string,
+		$expected_string
 	) {
 		$result = urldecode_n( $original_string, $decode_length );
 		$this->assertEquals( $expected_string, $result, 'Failed to decode the first n bytes of the string' );

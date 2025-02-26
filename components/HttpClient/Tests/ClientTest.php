@@ -13,13 +13,16 @@ class ClientTest extends \PHPUnit\Framework\TestCase {
 		$client = new TestClient();
 		$this->assertEquals( 10, $client->getConcurrency() );
 		$this->assertEquals( 3, $client->getMaxRedirects() );
-		$this->assertEquals( 10, $client->getTimeout() );
 	}
 
 	/**
 	 * @dataProvider gzip_provider
 	 */
 	public function test_streaming_body_with_chunked_encoding( $use_gzip ) {
+		if (extension_loaded('wasm_memory_storage')) {
+			$this->markTestSkipped('Test not supported yet in PHP.wasm');
+		}
+
 		$this->withDevServer(
 			function ( $address ) use ( $use_gzip ) {
 				$client        = new TestClient();
@@ -27,26 +30,26 @@ class ClientTest extends \PHPUnit\Framework\TestCase {
 					$address,
 					array(
 						'headers' => array(
-							'Accept-Encoding' => 'identity', // $use_gzip ? 'gzip' : 'identity'
+							'Accept-Encoding' => $use_gzip ? 'gzip' : 'identity'
 						),
 					)
 				);
 				$body          = $client->fetch( $request );
 				$entire_body   = $body->consume_all();
 				$expected_body = <<<BODY
-            <!DOCTYPE html>
-            <html lang=en>
-            <head>
-            <meta charset='utf-8'>
-            <title>Chunked transfer encoding test</title>
-            </head>
-            <body><h1>Chunked transfer encoding test</h1>
-            <h5>This is a chunked response after 100 ms.</h5>
-            <h5>This is a chunked response after 1 second. The server should not close the stream before all chunks are sent to a client.</h5>
-            </body>
-            </html>
+<!DOCTYPE html>
+<html lang=en>
+<head>
+<meta charset='utf-8'>
+<title>Chunked transfer encoding test</title>
+</head>
+<body><h1>Chunked transfer encoding test</h1>
+<h5>This is a chunked response after 100 ms.</h5>
+<h5>This is a chunked response after 1 second. The server should not close the stream before all chunks are sent to a client.</h5>
+</body>
+</html>
 
-            BODY;
+BODY;
 				$this->assertEquals( $expected_body, $entire_body );
 				$this->assertTrue( $body->reached_end_of_data() );
 			}
@@ -111,68 +114,74 @@ class ClientTest extends \PHPUnit\Framework\TestCase {
 			$this->fail( 'Failed to start chunked encoding dev server' );
 		}
 
-		$port    = explode( 'http://127.0.0.1:', $output )[1];
-		$port    = substr( $port, 0, strpos( $port, "\n" ) );
+		if (preg_match('/\d\.\d\.\d\.\d:(\d+)/', $output, $matches)) {
+			$port = $matches[1];
+		}
+		
+		if(!$port) {
+			$this->fail('Failed to find port in server output');
+		}
 		$address = 'http://127.0.0.1:' . $port;
 
 		return array(
 			'server' => $server,
 			'address' => $address,
+			'pipes' => $pipes,
 		);
 	}
 
 	public function test_streaming_body() {
 		$reference = <<<PYGMALION
-        PREFACE TO PYGMALION.
+PREFACE TO PYGMALION.
 
-        A Professor of Phonetics.
+A Professor of Phonetics.
 
-        As will be seen later on, Pygmalion needs, not a preface, but a sequel,
-        which I have supplied in its due place. The English have no respect for
-        their language, and will not teach their children to speak it. They
-        spell it so abominably that no man can teach himself what it sounds
-        like. It is impossible for an Englishman to open his mouth without
-        making some other Englishman hate or despise him. German and Spanish
-        are accessible to foreigners: English is not accessible even to
-        Englishmen. The reformer England needs today is an energetic phonetic
-        enthusiast: that is why I have made such a one the hero of a popular
-        play. There have been heroes of that kind crying in the wilderness for
-        many years past. When I became interested in the subject towards the
-        end of the eighteen-seventies, Melville Bell was dead; but Alexander J.
-        Ellis was still a living patriarch, with an impressive head always
-        covered by a velvet skull cap, for which he would apologize to public
-        meetings in a very courtly manner. He and Tito Pagliardini, another
-        phonetic veteran, were men whom it was impossible to dislike. Henry
-        Sweet, then a young man, lacked their sweetness of character: he was
-        about as conciliatory to conventional mortals as Ibsen or Samuel
-        Butler. His great ability as a phonetician (he was, I think, the best
-        of them all at his job) would have entitled him to high official
-        recognition, and perhaps enabled him to popularize his subject, but for
-        his Satanic contempt for all academic dignitaries and persons in
-        general who thought more of Greek than of phonetics. Once, in the days
-        when the Imperial Institute rose in South Kensington, and Joseph
-        Chamberlain was booming the Empire, I induced the editor of a leading
-        monthly review to commission an article from Sweet on the imperial
-        importance of his subject. When it arrived, it contained nothing but a
-        savagely derisive attack on a professor of language and literature
-        whose chair Sweet regarded as proper to a phonetic expert only. The
-        article, being libelous, had to be returned as impossible; and I had to
-        renounce my dream of dragging its author into the limelight. When I met
-        him afterwards, for the first time for many years, I found to my
-        astonishment that he, who had been a quite tolerably presentable young
-        man, had actually managed by sheer scorn to alter his personal
-        appearance until he had become a sort of walking repudiation of Oxford
-        and all its traditions. It must have been largely in his own despite
-        that he was squeezed into something called a Readership of phonetics
-        there. The future of phonetics rests probably with his pupils, who all
-        swore by him; but nothing could bring the man himself into any sort of
-        compliance with the university, to which he nevertheless clung by
-        divine right in an intensely Oxonian way. I daresay his papers, if he
-        has left any, include some satires that may be published without too
-        destructive results fifty years hence. He was, I believe, not in the
-        least an ill-natured man: very much the opposite, I should say; but he
-        would not suffer fools gladly.
-        PYGMALION;
+As will be seen later on, Pygmalion needs, not a preface, but a sequel,
+which I have supplied in its due place. The English have no respect for
+their language, and will not teach their children to speak it. They
+spell it so abominably that no man can teach himself what it sounds
+like. It is impossible for an Englishman to open his mouth without
+making some other Englishman hate or despise him. German and Spanish
+are accessible to foreigners: English is not accessible even to
+Englishmen. The reformer England needs today is an energetic phonetic
+enthusiast: that is why I have made such a one the hero of a popular
+play. There have been heroes of that kind crying in the wilderness for
+many years past. When I became interested in the subject towards the
+end of the eighteen-seventies, Melville Bell was dead; but Alexander J.
+Ellis was still a living patriarch, with an impressive head always
+covered by a velvet skull cap, for which he would apologize to public
+meetings in a very courtly manner. He and Tito Pagliardini, another
+phonetic veteran, were men whom it was impossible to dislike. Henry
+Sweet, then a young man, lacked their sweetness of character: he was
+about as conciliatory to conventional mortals as Ibsen or Samuel
+Butler. His great ability as a phonetician (he was, I think, the best
+of them all at his job) would have entitled him to high official
+recognition, and perhaps enabled him to popularize his subject, but for
+his Satanic contempt for all academic dignitaries and persons in
+general who thought more of Greek than of phonetics. Once, in the days
+when the Imperial Institute rose in South Kensington, and Joseph
+Chamberlain was booming the Empire, I induced the editor of a leading
+monthly review to commission an article from Sweet on the imperial
+importance of his subject. When it arrived, it contained nothing but a
+savagely derisive attack on a professor of language and literature
+whose chair Sweet regarded as proper to a phonetic expert only. The
+article, being libelous, had to be returned as impossible; and I had to
+renounce my dream of dragging its author into the limelight. When I met
+him afterwards, for the first time for many years, I found to my
+astonishment that he, who had been a quite tolerably presentable young
+man, had actually managed by sheer scorn to alter his personal
+appearance until he had become a sort of walking repudiation of Oxford
+and all its traditions. It must have been largely in his own despite
+that he was squeezed into something called a Readership of phonetics
+there. The future of phonetics rests probably with his pupils, who all
+swore by him; but nothing could bring the man himself into any sort of
+compliance with the university, to which he nevertheless clung by
+divine right in an intensely Oxonian way. I daresay his papers, if he
+has left any, include some satires that may be published without too
+destructive results fifty years hence. He was, I believe, not in the
+least an ill-natured man: very much the opposite, I should say; but he
+would not suffer fools gladly.
+PYGMALION;
 
 		// @TODO: Use a local dev server instead of relying on an external service
 		$pygmalion_url = 'https://gist.githubusercontent.com/adamziel/f6cdffb3b4a8a8ccfd10e72cde1f9078/raw/cfbf4bf236dcf13fed5eb4e8babf40ae791326eb/pygmalion.md';

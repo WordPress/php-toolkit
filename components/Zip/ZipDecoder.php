@@ -61,7 +61,7 @@ class ZipDecoder {
 							break;
 						default:
 							throw new ByteStreamException(
-								sprintf( 'Invalid ZIP object signature %d', $signature ),
+								sprintf( 'Invalid ZIP object signature %d', $signature )
 							);
 					}
 					break;

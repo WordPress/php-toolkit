@@ -39,6 +39,12 @@
     max-height: 100%;
 }
 
+.filename-form {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
 .file-node-button {
 	display: inline-flex;
 	text-decoration: none;

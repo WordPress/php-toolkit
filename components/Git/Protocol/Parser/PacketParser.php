@@ -53,10 +53,12 @@ class PacketParser {
 						}
 						break;
 				}
+
 				return true;
 			}
 		} catch ( NotEnoughDataException $e ) {
 			$this->is_paused_at_incomplete_input = true;
+
 			return false;
 		}
 	}
@@ -69,6 +71,7 @@ class PacketParser {
 		} elseif ( $this->packet_type && $this->packet_bytes_read ) {
 			return '#packet-body';
 		}
+
 		return null;
 	}
 
@@ -88,6 +91,7 @@ class PacketParser {
 			$this->expected_length   = 0;
 			$this->packet_bytes_read = 0;
 			$this->state             = self::STATE_READ_PACKET_BODY;
+
 			return;
 		} elseif ( ! preg_match( '/^[0-9a-f]{4}$/', $length_hex ) ) {
 			throw new GitException( 'Invalid packet length hex "' . $length_hex . '" at offset ' . $this->get_offset_in_stream() );
@@ -101,6 +105,7 @@ class PacketParser {
 				$this->expected_length   = 0;
 				$this->packet_bytes_read = 0;
 				$this->body_chunk        = '';
+
 				return;
 
 			case '0001':
@@ -109,6 +114,7 @@ class PacketParser {
 				$this->expected_length   = 0;
 				$this->packet_bytes_read = 0;
 				$this->body_chunk        = '';
+
 				return;
 
 			case '0002':
@@ -118,6 +124,7 @@ class PacketParser {
 				$this->expected_length   = 0;
 				$this->packet_bytes_read = 0;
 				$this->body_chunk        = '';
+
 				return;
 		}
 
@@ -159,6 +166,7 @@ class PacketParser {
 			$this->body_chunk         = $next_chunk;
 			$this->bytes_read_so_far += strlen( $next_chunk );
 			$this->packet_bytes_read += strlen( $next_chunk );
+
 			return;
 		}
 
@@ -175,7 +183,7 @@ class PacketParser {
 
 		if ( $this->packet_bytes_read === $this->expected_length ) {
 			if ( str_ends_with( $this->body_chunk, "\n" ) ) {
-				$this->body_chunk = substr( $this->body_chunk, 0, -1 );
+				$this->body_chunk = substr( $this->body_chunk, 0, - 1 );
 			}
 		}
 	}

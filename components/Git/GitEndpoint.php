@@ -137,7 +137,9 @@ class GitEndpoint {
 	 * pointing to an unborn branch in the form "unborn HEAD symref-target:<target>".
 	 *
 	 * @see https://git-scm.com/docs/protocol-v2#_ls_refs
-	 * @param array $request_bytes The parsed request data
+	 *
+	 * @param  array $request_bytes  The parsed request data
+	 *
 	 * @return string The response in Git protocol v2 format
 	 */
 	public function handle_ls_refs_request( $request_bytes, GitProtocolEncoderPipe $git_response ) {
@@ -149,7 +151,7 @@ class GitEndpoint {
 		$this->respond_with_ls_refs(
 			$git_response,
 			array(
-				'ref-prefix' => $parsed['arguments']['ref-prefix'] ?? array( '' ),
+				'ref-prefix'   => $parsed['arguments']['ref-prefix'] ?? array( '' ),
 				'capabilities' => 'multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed allow-tip-sha1-in-want allow-reachable-sha1-in-want no-done symref=HEAD:refs/heads/trunk filter object-format=sha1 agent=git/github-395dce4f6ecf',
 			)
 		);
@@ -227,7 +229,7 @@ class GitEndpoint {
 			switch ( $mode ) {
 				case 'capabilities':
 					if ( str_contains( $packet, '=' ) ) {
-						list($key, $value)    = explode( '=', $packet );
+						list( $key, $value )  = explode( '=', $packet );
 						$capabilities[ $key ] = $value;
 					} else {
 						$capabilities[ $packet ] = true;
@@ -252,16 +254,18 @@ class GitEndpoint {
 					break 2;
 			}
 		}
+
 		return array(
 			'capabilities' => $capabilities,
-			'arguments' => $arguments,
+			'arguments'    => $arguments,
 		);
 	}
 
 	/**
 	 * Handle Git protocol v2 fetch command with "want" packets
 	 *
-	 * @param array $request_bytes The parsed request data
+	 * @param  array $request_bytes  The parsed request data
+	 *
 	 * @return string The response in Git protocol v2 format containing the pack data
 	 */
 	public function handle_fetch_request( $request_bytes, GitProtocolEncoderPipe $git_response ) {
@@ -379,14 +383,15 @@ class GitEndpoint {
 		$git_response->append_packet_line( "packfile\n" );
 		$git_response->append_packfile( $this->repository, $pack_objects, $multiplex = true );
 		$git_response->append_packet_line( '0000' );
+
 		return true;
 	}
 
 	/**
 	 * Handle Git protocol v2 push command
 	 *
-	 * @param string              $request_bytes Raw request bytes
-	 * @param ResponseWriteStream $response Response writer
+	 * @param  string              $request_bytes  Raw request bytes
+	 * @param  ResponseWriteStream $response  Response writer
 	 *
 	 * @return bool Success status
 	 */
@@ -399,6 +404,7 @@ class GitEndpoint {
 		if ( ! $header || empty( $header['new_oid'] ) ) {
 			$git_response->append_error_packet_line( "error header is empty\n" );
 			$git_response->append_error_packet_line( '0000' );
+
 			return false;
 		}
 
@@ -411,18 +417,20 @@ class GitEndpoint {
 		if ( ! preg_match( '|^refs/|', $ref_name ) ) {
 			$git_response->append_error_packet_line( "error invalid ref name: $ref_name\n" );
 			$git_response->append_error_packet_line( '0000' );
+
 			// @TODO: Throw / catch?
 			return false;
 		}
 
 		// Handle deletion
 		if ( Commit::is_null_hash( $new_oid ) ) {
-			if ( $this->repository->delete_ref( $ref_name ) ) {
+			if ( $this->repository->delete_branch( $ref_name ) ) {
 				$git_response->append_packet_line( "ok $ref_name\n" );
 			} else {
 				$git_response->append_error_packet_line( "error $ref_name delete failed\n" );
 				$git_response->append_error_packet_line( '0000' );
 			}
+
 			return false;
 		}
 
@@ -437,6 +445,7 @@ class GitEndpoint {
 		} catch ( GitException $e ) {
 			$git_response->append_error_packet_line( "error unpack failed\n" );
 			$git_response->append_error_packet_line( '0000' );
+
 			return false;
 		}
 
@@ -444,10 +453,11 @@ class GitEndpoint {
 
 		try {
 			$this->repository->read_object( $new_oid );
-			$this->repository->set_ref_head( $ref_name, $new_oid );
+			$this->repository->set_branch_tip( $ref_name, $new_oid );
 		} catch ( GitException $e ) {
 			$git_response->append_error_packet_line( "error processing pack: $new_oid\n" );
 			$git_response->append_error_packet_line( '0000' );
+
 			return false;
 		}
 
@@ -461,7 +471,8 @@ class GitEndpoint {
 	/**
 	 * Parse a push request according to Git protocol v2
 	 *
-	 * @param string $request_bytes Raw request bytes
+	 * @param  string $request_bytes  Raw request bytes
+	 *
 	 * @return array|false Parsed request data or false on error
 	 */
 	private function parse_push_header( GitProtocolDecoder $protocol_reader ) {
@@ -472,6 +483,7 @@ class GitEndpoint {
 					if ( ! preg_match( '/^(?:([0-9a-f]{40}) )?([0-9a-f]{40}) (.+?)\0(.*?)$/', $line, $matches ) ) {
 						throw new GitException( 'Invalid push request' );
 					}
+
 					return array(
 						'old_oid'      => $matches[1],
 						'new_oid'      => $matches[2],
@@ -487,17 +499,19 @@ class GitEndpoint {
 			return array( 'type' => 'none' );
 		} elseif ( $filter === 'blob:none' ) {
 			return array(
-				'type' => 'blob',
+				'type'   => 'blob',
 				'filter' => 'none',
 			);
 		} elseif ( str_starts_with( $filter, 'blob:limit=' ) ) {
 			$limit = substr( $filter, strlen( 'blob:limit=' ) );
+
 			return array(
-				'type' => 'blob',
+				'type'   => 'blob',
 				'filter' => 'limit',
-				'size' => intval( $limit ),
+				'size'   => intval( $limit ),
 			);
 		}
+
 		return false;
 	}
 
@@ -521,11 +535,12 @@ class GitEndpoint {
 				$length  = intval( $packet_length_bytes, 16 ) - 4;
 				$payload = substr( $pack_bytes, $offset, $length );
 				if ( str_ends_with( $payload, "\n" ) ) {
-					$payload = substr( $payload, 0, -1 );
+					$payload = substr( $payload, 0, - 1 );
 				}
 				$offset += $length;
+
 				return array(
-					'type' => '#packet',
+					'type'    => '#packet',
 					'payload' => $payload,
 				);
 		}

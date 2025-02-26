@@ -56,7 +56,11 @@ final class InlineParserEngine implements InlineParserEngineInterface
 
     public function parse(string $contents, AbstractBlock $block): void
     {
-        $contents = \trim($contents);
+        // Data Liberatin patch: trim() replaced with ltrim() to preserve
+        // right trailing whitespace. See MarkdownConsumerTest and MarkdownProducerTest
+        // for more details.
+        $contents = \ltrim($contents);
+        $contents = \trim($contents, "\n");
         $cursor   = new Cursor($contents);
 
         $inlineParserContext = new InlineParserContext($cursor, $block, $this->referenceMap, $this->environment->getConfiguration()->get('max_delimiters_per_line'));

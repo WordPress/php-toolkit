@@ -4,7 +4,14 @@ const { dispatch } = window.wp.data;
 const apiFetch = window.wp.apiFetch;
 
 const { state, actions } = store('staticFiles', {
-    state: {},
+	state: {
+		get isLocalDirectory() {
+			return state.dataSourceType === 'local_directory';
+		},
+		get isGitRepo() {
+			return state.dataSourceType === 'git_repo';
+		},
+	},
     callbacks: {
         bindSelectedBranch(e) {
             const { ref } = getElement();
@@ -18,8 +25,15 @@ const { state, actions } = store('staticFiles', {
         updateSelectedBranch(e) {
             state.selectedBranch = e.target.value;
         },
-        updatePathToSync(e) {
-            state.pathToSync = e.target.value;
+        updateSubdirectory(e) {
+            state.subdirectory = e.target.value;
+        },
+        updateLocalDirectory(e) {
+            state.localDirectory = e.target.value;
+        },
+        updateDataSourceType(e) {
+			state.dataSourceType = e.target.value;
+			console.log(state.dataSourceType);
         },
         async onGitRepoInputEnter(e) {
             if(e.key === 'Enter') {
@@ -36,7 +50,7 @@ const { state, actions } = store('staticFiles', {
         },
         async fetchBranches() {
             const response = await apiFetch({
-                path: '/static-files-editor/v1/git/branches',
+                path: '/static-files-editor/v1/data-source/branches',
                 method: 'POST',
                 data: {
                     gitRepo: state.gitRepo,
@@ -47,7 +61,7 @@ const { state, actions } = store('staticFiles', {
         },
         async fetchFiles() {
             const response = await apiFetch({
-                path: '/static-files-editor/v1/git/files',
+                path: '/static-files-editor/v1/data-source/files',
                 method: 'POST',
                 data: {
                     gitRepo: state.gitRepo,
@@ -64,7 +78,9 @@ const { state, actions } = store('staticFiles', {
                     data: {
                         gitRepo: state.gitRepo,
                         selectedBranch: state.selectedBranch,
-                        pathToSync: state.pathToSync,
+                        subdirectory: state.subdirectory,
+                        localDirectory: state.localDirectory,
+                        dataSourceType: state.dataSourceType,
                     },
                 });
                 state.notices.push({
@@ -81,7 +97,7 @@ const { state, actions } = store('staticFiles', {
         async forcePull() {
             try {
                 const response = await apiFetch({
-                    path: '/static-files-editor/v1/git/force-pull',
+                    path: '/static-files-editor/v1/data-source/sync',
                     method: 'POST',
                 });
                 state.notices.push({

@@ -18,7 +18,7 @@ class InflateTransformer implements ByteTransformer {
 		}
 	}
 
-	public function filter_bytes( string $bytes ): string|false {
+	public function filter_bytes( string $bytes ) {
 		if ( null === $this->inflate_handle ) {
 			throw new ByteStreamException( 'Inflate handle is not initialized' );
 		}

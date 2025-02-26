@@ -69,6 +69,7 @@ class DeltaResolver {
 			// a fixed MemoryPipe
 			$this->delta_reader->seek( $position );
 			$this->paused_on_incomplete_input = true;
+
 			return false;
 		}
 	}
@@ -81,6 +82,7 @@ class DeltaResolver {
 			$result |= ( $byte & 0x7F ) << $shift;
 			$shift  += 7;
 		} while ( $byte & 0x80 );
+
 		return $result;
 	}
 
@@ -157,12 +159,14 @@ class DeltaResolver {
 				$this->delta_reader->pull( $command_byte, ByteReadStream::PULL_EXACTLY );
 				$this->resolved_chunk = $this->delta_reader->consume( $command_byte );
 			}
+
 			return true;
 		} catch ( NotEnoughDataException $e ) {
 			if ( ! $this->delta_reader->reached_end_of_data() ) {
 				$this->delta_reader->seek( $position );
 				$this->paused_on_incomplete_input = true;
 			}
+
 			return false;
 		}
 	}

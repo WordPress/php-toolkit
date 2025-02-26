@@ -47,13 +47,15 @@ class RewriteUrlsTest extends TestCase {
 				<img src="https://legacy-blog.com/wp-content/assets/image.jpg">
 				<link rel="stylesheet" href="https://legacy-blog.com/style.css">
 				<script src="https://legacy-blog.com/main.js"></script>
-				HTML,
+HTML
+				,
 				<<<HTML
 				<a href="https://modern-webstore.org/contact-us/">Contact us</a>
 				<img src="https://modern-webstore.org/wp-content/assets/image.jpg">
 				<link rel="stylesheet" href="https://modern-webstore.org/style.css">
 				<script src="https://modern-webstore.org/main.js"></script>
-				HTML,
+HTML
+				,
 				'https://legacy-blog.com',
 				'https://modern-webstore.org',
 			),
@@ -168,7 +170,8 @@ class RewriteUrlsTest extends TestCase {
 
 				<!-- Classes are not migrated. -->
 				<span class="https://🚀-science.com/science"></span>
-				MARKUP,
+MARKUP
+				,
 				<<<MARKUP
 				<!-- wp:paragraph -->
 				<p>
@@ -193,7 +196,8 @@ class RewriteUrlsTest extends TestCase {
 
 				<!-- Classes are not migrated. -->
 				<span class="https://🚀-science.com/science"></span>
-				MARKUP,
+MARKUP
+				,
 				'https://🚀-science.com/science',
 				'https://science.wordpress.org',
 			),

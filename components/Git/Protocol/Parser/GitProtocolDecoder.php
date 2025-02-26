@@ -40,10 +40,9 @@ class GitProtocolDecoder {
 			}
 		} elseif ( $this->will_process_pack ) {
 			throw new GitException(
-				<<<ERROR
-            To process PACK packets, GitProtocolReader requires a 'write_to_repository' option with a GitRepository
-            instance to write the PACKed objects to.
-            ERROR
+				'To process PACK packets, GitProtocolReader requires a ' .
+                "'write_to_repository' option with a GitRepository instance " .
+                'to write the PACKed objects to.'
 			);
 		}
 		$this->demuxer       = new ProtocolDemultiplexer( $upstream );
@@ -61,6 +60,7 @@ class GitProtocolDecoder {
 		if ( ProtocolDemultiplexer::STREAM_CODE_PROGRESS !== $this->demuxer->get_stream_code() ) {
 			return null;
 		}
+
 		return $this->demuxer->get_chunk();
 	}
 
@@ -68,6 +68,7 @@ class GitProtocolDecoder {
 		if ( ProtocolDemultiplexer::STREAM_CODE_FATAL !== $this->demuxer->get_stream_code() ) {
 			return null;
 		}
+
 		return $this->demuxer->get_chunk();
 	}
 
@@ -78,6 +79,7 @@ class GitProtocolDecoder {
 		) {
 			return null;
 		}
+
 		return $this->packet_body;
 	}
 
@@ -97,6 +99,7 @@ class GitProtocolDecoder {
 		if ( $this->packet_body ) {
 			return $this->packet_parser->get_token_type();
 		}
+
 		return null;
 	}
 
@@ -238,6 +241,7 @@ class GitProtocolDecoder {
 						$this->base_object_reader->close_reading();
 						$this->delta_resolver     = null;
 						$this->base_object_reader = null;
+
 						return true;
 				}
 			} else {
@@ -255,6 +259,7 @@ class GitProtocolDecoder {
 						break;
 					case '#object-hash':
 						$this->new_object_write_stream->close_writing();
+
 						return true;
 				}
 			}

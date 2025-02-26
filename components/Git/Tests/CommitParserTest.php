@@ -8,14 +8,14 @@ class CommitParserTest extends \PHPUnit\Framework\TestCase {
 
 	public function test_parse_commit() {
 		$commit_bytes = <<<COMMIT
-        tree 0a55136b1c405d19a1e269c79f11713455aeb6cd
-        parent 1ea132870e8ba97f211c00b43722248eb842332f
-        author Adam Zieliński <adam@adamziel.com> 1736778854 +0100
-        committer Adam Zieliński <adam@adamziel.com> 1736778854 +0100
+tree 0a55136b1c405d19a1e269c79f11713455aeb6cd
+parent 1ea132870e8ba97f211c00b43722248eb842332f
+author Adam Zieliński <adam@adamziel.com> 1736778854 +0100
+committer Adam Zieliński <adam@adamziel.com> 1736778854 +0100
 
-        Add InflateReader
+Add InflateReader
 
-        COMMIT;
+COMMIT;
 		$parser       = new CommitParser( $commit_bytes );
 		$this->assertTrue( $parser->next() );
 		$commit = $parser->get_commit();

@@ -153,7 +153,8 @@ Have you seen my blog, adamadam.blog? I told a story there of how I got my Bache
 check it out: https://adamadam.blog/2021/09/16/how-i-got-bachelors-in-six-months/
 </p>
 <!-- /wp:paragraph -->
-HTML,
+HTML
+			,
 			'https://adamadam.blog'
 		);
 
@@ -178,7 +179,8 @@ Have you seen my blog, site-export.internal? I told a story there of how I got m
 check it out: https://site-export.internal
 </p>
 <!-- /wp:paragraph -->
-HTML,
+HTML
+			,
 			$p->get_updated_html(),
 			'Failed to update all the URLs in the markup.'
 		);

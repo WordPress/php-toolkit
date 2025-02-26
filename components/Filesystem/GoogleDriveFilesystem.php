@@ -171,7 +171,7 @@ class GoogleDriveFilesystem implements Filesystem {
 			array(
 				'name' => basename( $path ),
 				'mimeType' => 'application/vnd.google-apps.folder',
-				'parents' => array( $this->path_to_id( dirname( $path ) ) ),
+				'parents' => array( $this->path_to_id( wp_dirname( $path ) ) ),
 			)
 		);
 	}
@@ -203,8 +203,8 @@ class GoogleDriveFilesystem implements Filesystem {
 			"files/$file_id",
 			'PATCH',
 			array(
-				'addParents' => $this->path_to_id( dirname( $new_path ) ),
-				'removeParents' => $this->path_to_id( dirname( $path ) ),
+				'addParents' => $this->path_to_id( wp_dirname( $new_path ) ),
+				'removeParents' => $this->path_to_id( wp_dirname( $path ) ),
 			)
 		);
 	}
@@ -222,7 +222,7 @@ class GoogleDriveFilesystem implements Filesystem {
 		$metadata_json = json_encode(
 			array(
 				'name' => basename( $path ),
-				'parents' => array( $this->path_to_id( dirname( $path ) ) ),
+				'parents' => array( $this->path_to_id( wp_dirname( $path ) ) ),
 			)
 		);
 		$body          = <<<BODY

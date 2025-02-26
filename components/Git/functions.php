@@ -23,5 +23,6 @@ function get_all_descendant_oids_in_tree( GitRepository $repository, $tree_oid, 
 			}
 		}
 	}
+
 	return array_keys( $oids );
 }

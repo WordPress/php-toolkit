@@ -20,13 +20,14 @@ class PackfileEncoderReadStream extends BaseByteReadStream {
 
 	public static function create( GitRepository $objects_source, $oids ) {
 		$encoder = new self( $objects_source, $oids );
+
 		return new TransformedReadStream(
 			$encoder,
 			array(
 				'checksum' => new ChecksumTransformer(
 					'sha1',
 					array(
-						'flush_hash' => true,
+						'flush_hash'    => true,
 						'binary_output' => true,
 					)
 				),
@@ -43,12 +44,14 @@ class PackfileEncoderReadStream extends BaseByteReadStream {
 	public function internal_pull( $n ): string {
 		if ( $this->objects_written >= count( $this->oids ) ) {
 			$this->close_reading();
+
 			return '';
 		}
 
 		if ( ! $this->object_reader ) {
 			$this->object_reader = $this->objects_source->read_object( $this->oids[ $this->objects_written ] );
 			$this->object_reader->set_inflate_enabled( false );
+
 			return $this->encode_packfile_object_header(
 				$this->object_reader->get_object_type_name(),
 				$this->object_reader->get_uncompressed_size()

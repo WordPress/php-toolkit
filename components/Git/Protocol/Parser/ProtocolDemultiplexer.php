@@ -40,6 +40,7 @@ class ProtocolDemultiplexer {
 		}
 
 		$this->parse_chunk();
+
 		return true;
 	}
 
@@ -60,6 +61,7 @@ class ProtocolDemultiplexer {
 			$available = $this->upstream->pull( 1024 );
 			if ( $available > 0 ) {
 				$this->chunk = $length_hex . $this->upstream->consume( $available );
+
 				return;
 			} else {
 				if ( $length_hex !== '0000' ) {
@@ -86,6 +88,7 @@ class ProtocolDemultiplexer {
 		if ( $length_hex === '0000' || $length_hex === '0001' || $length_hex === '0002' ) {
 			$this->chunk       = $length_hex;
 			$this->stream_code = $stream_code;
+
 			return;
 		}
 

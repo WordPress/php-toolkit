@@ -55,9 +55,9 @@ class GitRepositoryTest extends \PHPUnit\Framework\TestCase {
 	}
 
 	public function test_find_hash_by_path() {
-		$repo          = new GitRepository( InMemoryFilesystem::create() );
-		$blob_oid      = $repo->add_object( 'blob', 'Hello, world!' );
-		$tree_oid      = $repo->add_object(
+		$repo              = new GitRepository( InMemoryFilesystem::create() );
+		$blob_oid          = $repo->add_object( 'blob', 'Hello, world!' );
+		$tree_oid          = $repo->add_object(
 			'tree',
 			GitProtocolEncoderPipe::encode_tree_bytes(
 				new Tree(
@@ -73,7 +73,7 @@ class GitRepositoryTest extends \PHPUnit\Framework\TestCase {
 				)
 			)
 		);
-		$root_tree_oid = $repo->add_object(
+		$root_tree_oid     = $repo->add_object(
 			'tree',
 			GitProtocolEncoderPipe::encode_tree_bytes(
 				new Tree(
@@ -89,13 +89,24 @@ class GitRepositoryTest extends \PHPUnit\Framework\TestCase {
 				)
 			)
 		);
-		$this->assertEquals( $blob_oid, $repo->find_hash_by_path( '/subdirectory/hello-world.txt', $root_tree_oid ) );
+		$parent_commit_oid = Commit::NULL_HASH;
+		$commit_oid        = $repo->add_object(
+			'commit',
+			<<<COMMIT
+tree $root_tree_oid
+parent $parent_commit_oid
+author John Doe <john.doe@example.com> 1713542400 +0000
+committer John Doe <john.doe@example.com> 1713542400 +0000
+message Hello, world!
+COMMIT
+		);
+		$this->assertEquals( $blob_oid, $repo->find_hash_by_path( '/subdirectory/hello-world.txt', $commit_oid ) );
 	}
 
 	public function test_read_object_by_path() {
-		$repo          = new GitRepository( InMemoryFilesystem::create() );
-		$blob_oid      = $repo->add_object( 'blob', 'Hello, world!' );
-		$tree_oid      = $repo->add_object(
+		$repo              = new GitRepository( InMemoryFilesystem::create() );
+		$blob_oid          = $repo->add_object( 'blob', 'Hello, world!' );
+		$tree_oid          = $repo->add_object(
 			'tree',
 			GitProtocolEncoderPipe::encode_tree_bytes(
 				new Tree(
@@ -111,7 +122,7 @@ class GitRepositoryTest extends \PHPUnit\Framework\TestCase {
 				)
 			)
 		);
-		$root_tree_oid = $repo->add_object(
+		$root_tree_oid     = $repo->add_object(
 			'tree',
 			GitProtocolEncoderPipe::encode_tree_bytes(
 				new Tree(
@@ -127,20 +138,31 @@ class GitRepositoryTest extends \PHPUnit\Framework\TestCase {
 				)
 			)
 		);
-		$this->assertEquals( 'Hello, world!', $repo->read_object_by_path( '/subdirectory/hello-world.txt', $root_tree_oid )->consume_all() );
+		$parent_commit_oid = Commit::NULL_HASH;
+		$commit_oid        = $repo->add_object(
+			'commit',
+			<<<COMMIT
+tree $root_tree_oid
+parent $parent_commit_oid
+author John Doe <john.doe@example.com> 1713542400 +0000
+committer John Doe <john.doe@example.com> 1713542400 +0000
+message Hello, world!
+COMMIT
+		);
+		$this->assertEquals( 'Hello, world!', $repo->read_object_by_path( '/subdirectory/hello-world.txt', $commit_oid )->consume_all() );
 	}
 
 	public function test_get_ref_head() {
 		$repo = new GitRepository( InMemoryFilesystem::create() );
-		$repo->set_ref_head( 'refs/heads/master', '6a59200c7c2330ebacd7830ea59e63e7c37f9287' );
-		$repo->set_ref_head( 'HEAD', 'ref: refs/heads/master' );
-		$this->assertEquals( '6a59200c7c2330ebacd7830ea59e63e7c37f9287', $repo->get_ref_head() );
+		$repo->set_branch_tip( 'refs/heads/master', '6a59200c7c2330ebacd7830ea59e63e7c37f9287' );
+		$repo->set_branch_tip( 'HEAD', 'ref: refs/heads/master' );
+		$this->assertEquals( '6a59200c7c2330ebacd7830ea59e63e7c37f9287', $repo->get_branch_tip() );
 	}
 
 	public function test_commit() {
 		$repo = new GitRepository( InMemoryFilesystem::create() );
-		$repo->set_ref_head( 'refs/heads/trunk', Commit::NULL_HASH );
-		$repo->set_ref_head( 'HEAD', 'ref: refs/heads/trunk' );
+		$repo->set_branch_tip( 'refs/heads/trunk', Commit::NULL_HASH );
+		$repo->set_branch_tip( 'HEAD', 'ref: refs/heads/trunk' );
 		$commit_oid = $repo->commit(
 			array(
 				'updates' => array(
@@ -148,18 +170,18 @@ class GitRepositoryTest extends \PHPUnit\Framework\TestCase {
 				),
 			)
 		);
-		$this->assertEquals( $commit_oid, $repo->get_ref_head() );
+		$this->assertEquals( $commit_oid, $repo->get_branch_tip() );
 	}
 
 	public function test_find_path_descendants() {
 		$repo = new GitRepository( InMemoryFilesystem::create() );
-		$repo->set_ref_head( 'refs/heads/trunk', Commit::NULL_HASH );
-		$repo->set_ref_head( 'HEAD', 'ref: refs/heads/trunk' );
+		$repo->set_branch_tip( 'refs/heads/trunk', Commit::NULL_HASH );
+		$repo->set_branch_tip( 'HEAD', 'ref: refs/heads/trunk' );
 		$commit_oid  = $repo->commit(
 			array(
 				'updates' => array(
 					'subdirectory/hello-world.txt' => 'Hello, world!',
-					'subdirectory/README.md' => '# README file',
+					'subdirectory/README.md'       => '# README file',
 				),
 			)
 		);
@@ -248,28 +270,29 @@ class GitRepositoryTest extends \PHPUnit\Framework\TestCase {
 		$branch_a_hash = $repo->commit(
 			array(
 				'updates' => array(
-					'dir1/file1.txt' => 'Updated content of file1 in branch A',
+					'dir1/file1.txt'         => 'Updated content of file1 in branch A',
 					'dir1/subdir1/file3.txt' => 'New content of file3 in branch A',
 				),
 			)
 		);
 
-		$repo->set_ref_head( 'refs/heads/branch_b', $initial_hash );
-		$repo->set_ref_head( 'HEAD', 'ref: refs/heads/branch_b' );
+		$repo->create_branch( 'refs/heads/branch_b', $initial_hash );
+		$repo->checkout( 'refs/heads/branch_b' );
 
 		$branch_b_hash = $repo->commit(
 			array(
 				'updates' => array(
-					'dir2/file2.txt' => 'Updated content of file2 in branch B',
+					'dir2/file2.txt'         => 'Updated content of file2 in branch B',
 					'dir2/subdir2/file4.txt' => 'New content of file4 in branch B',
 				),
 			)
 		);
 
-		$repo->set_ref_head( 'HEAD', 'ref: refs/heads/trunk' );
+		$repo->checkout( 'refs/heads/trunk' );
 
-		$merge_oid = $repo->merge( 'refs/heads/branch_b' );
-
+		$result = $repo->merge( 'refs/heads/branch_b' );
+		$this->assertEquals( 40, strlen( $result['new_head'] ) );
+		$this->assertEquals( array(), $result['conflicts'] );
 		$this->assertEquals( 'Updated content of file2 in branch B', $repo->read_object_by_path( '/dir2/file2.txt' )->consume_all() );
 		$this->assertEquals( 'Updated content of file1 in branch A', $repo->read_object_by_path( '/dir1/file1.txt' )->consume_all() );
 		$this->assertEquals( 'New content of file3 in branch A', $repo->read_object_by_path( '/dir1/subdir1/file3.txt' )->consume_all() );
@@ -290,14 +313,14 @@ class GitRepositoryTest extends \PHPUnit\Framework\TestCase {
 		$branch_a_hash = $repo->commit(
 			array(
 				'updates' => array(
-					'dir1/file1.txt' => 'Updated content of file1 in branch A',
+					'dir1/file1.txt'         => 'Updated content of file1 in branch A',
 					'dir1/subdir1/file3.txt' => 'New content of file3 in branch A',
 				),
 			)
 		);
 
-		$repo->set_ref_head( 'refs/heads/branch_b', $initial_hash );
-		$repo->set_ref_head( 'HEAD', 'ref: refs/heads/branch_b' );
+		$repo->create_branch( 'refs/heads/branch_b', $initial_hash );
+		$repo->set_branch_tip( 'HEAD', 'ref: refs/heads/branch_b' );
 
 		$branch_b_hash = $repo->commit(
 			array(
@@ -308,9 +331,10 @@ class GitRepositoryTest extends \PHPUnit\Framework\TestCase {
 			)
 		);
 
-		$repo->set_ref_head( 'HEAD', 'ref: refs/heads/trunk' );
+		$repo->set_branch_tip( 'HEAD', 'ref: refs/heads/trunk' );
 
-		$this->expectException( GitException::class );
-		$repo->merge( 'refs/heads/branch_b' );
+		$result = $repo->merge( 'refs/heads/branch_b' );
+		$this->assertEquals( 40, strlen( $result['new_head'] ) );
+		$this->assertEquals( array( '/dir1/file1.txt' ), $result['conflicts'] );
 	}
 }

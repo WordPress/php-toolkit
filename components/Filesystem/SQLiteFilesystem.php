@@ -135,7 +135,7 @@ class SQLiteFilesystem implements Filesystem {
 			);
 		}
 
-		$parent = dirname( $to_path );
+		$parent = wp_dirname( $to_path );
 		if ( ! $this->is_dir( $parent ) ) {
 			throw new FilesystemException(
 				sprintf( 'Parent directory not found: %s', $parent ),
@@ -152,8 +152,8 @@ class SQLiteFilesystem implements Filesystem {
 					$stmt->execute();
 
 					// Update directory entries
-					$old_parent = dirname( $from_path );
-					$parent     = dirname( $to_path );
+					$old_parent = wp_dirname( $from_path );
+					$parent     = wp_dirname( $to_path );
 
 					$stmt = $this->db->prepare(
 						'
@@ -193,7 +193,7 @@ class SQLiteFilesystem implements Filesystem {
 			);
 		}
 
-		$parent = dirname( $path );
+		$parent = wp_dirname( $path );
 		if ( ! $this->is_dir( $parent ) ) {
 			throw new FilesystemException(
 				sprintf( 'Parent directory not found: %s', $parent ),
@@ -203,7 +203,7 @@ class SQLiteFilesystem implements Filesystem {
 		try {
 			$this->in_transaction(
 				function () use ( $path ) {
-					$parent = dirname( $path );
+					$parent = wp_dirname( $path );
 
 					$stmt = $this->db->prepare(
 						'
@@ -246,7 +246,7 @@ class SQLiteFilesystem implements Filesystem {
 		try {
 			$this->in_transaction(
 				function () use ( $path ) {
-					$parent = dirname( $path );
+					$parent = wp_dirname( $path );
 
 					$stmt = $this->db->prepare( 'DELETE FROM files WHERE path = ?' );
 					$stmt->bindValue( 1, $path, SQLITE3_TEXT );
@@ -295,7 +295,7 @@ class SQLiteFilesystem implements Filesystem {
 						}
 					}
 
-					$parent = dirname( $path );
+					$parent = wp_dirname( $path );
 
 					$stmt = $this->db->prepare( 'DELETE FROM files WHERE path = ?' );
 					$stmt->bindValue( 1, $path, SQLITE3_TEXT );
@@ -322,7 +322,7 @@ class SQLiteFilesystem implements Filesystem {
 	}
 
 	public function put_contents( $path, $data, $options = array() ) {
-		$parent = dirname( $path );
+		$parent = wp_dirname( $path );
 		if ( ! $this->is_dir( $parent ) ) {
 			throw new FilesystemException(
 				sprintf( 'Parent directory not found: %s', $parent ),
@@ -332,7 +332,7 @@ class SQLiteFilesystem implements Filesystem {
 		try {
 			$this->in_transaction(
 				function () use ( $path, $data ) {
-					$parent = dirname( $path );
+					$parent = wp_dirname( $path );
 
 					$stmt = $this->db->prepare(
 						'

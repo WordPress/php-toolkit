@@ -8,7 +8,6 @@ use WordPress\Filesystem\FilesystemException;
 use WordPress\Filesystem\Layer\ChrootLayer;
 use WordPress\Filesystem\Mixin\BufferedWriteStreamViaPutContents;
 use WordPress\Filesystem\Mixin\CopyRecursiveViaStreaming;
-use WordPress\Filesystem\Mixin\RenameFileViaCopyAndRm;
 
 class GitFilesystem implements Filesystem {
 
@@ -25,6 +24,7 @@ class GitFilesystem implements Filesystem {
 	 */
 	private $remote;
 	private $write_stream;
+	private $amend_time_window;
 
 	public static function create( GitRepository $repo, $options = array() ) {
 		return new ChrootLayer(
@@ -40,8 +40,12 @@ class GitFilesystem implements Filesystem {
 		GitRepository $repo,
 		$options = array()
 	) {
-		$this->repo      = $repo;
-		$this->auto_push = $options['auto_push'] ?? false;
+		$this->repo              = $repo;
+		$this->auto_push         = $options['auto_push'] ?? false;
+		$this->amend_time_window = $options['amend_time_window'] ?? false;
+		// if ( false !== amend_time_window ) {
+
+		// }
 		if ( $this->auto_push ) {
 			$this->remote = $options['remote'] ?? null;
 			if ( ! $this->remote ) {
@@ -67,6 +71,7 @@ class GitFilesystem implements Filesystem {
 	public function is_dir( $path ) {
 		try {
 			$reader = $this->repo->read_object_by_path( $path );
+
 			return $reader->get_object_type_name() === 'tree';
 		} catch ( GitException $e ) {
 			return false;
@@ -76,6 +81,7 @@ class GitFilesystem implements Filesystem {
 	public function is_file( $path ) {
 		try {
 			$reader = $this->repo->read_object_by_path( $path );
+
 			return $reader->get_object_type_name() === 'blob';
 		} catch ( GitException $e ) {
 			return false;
@@ -109,6 +115,7 @@ class GitFilesystem implements Filesystem {
 		if ( $this->is_dir( $path ) ) {
 			return false;
 		}
+
 		return $this->commit(
 			array(
 				'deletes' => array(
@@ -139,16 +146,16 @@ class GitFilesystem implements Filesystem {
 
 	public function rename( $from_path, $to_path, $options = array() ) {
 		if ( $this->is_file( $from_path ) ) {
-            $this->copy( $from_path, $to_path, $options );
-            $this->rm( $from_path );
-		} else if ( $this->is_dir( $from_path ) ) {
-            $this->commit(
-                array(
-                    'move_trees' => array(
-                        $from_path => $to_path,
-                    ),
-                )
-            );
+			$this->copy( $from_path, $to_path, $options );
+			$this->rm( $from_path );
+		} elseif ( $this->is_dir( $from_path ) ) {
+			$this->commit(
+				array(
+					'move_trees' => array(
+						$from_path => $to_path,
+					),
+				)
+			);
 		} else {
 			throw new FilesystemException( sprintf( 'Path is not a file or directory: %s', $from_path ) );
 		}
@@ -168,33 +175,83 @@ class GitFilesystem implements Filesystem {
 	}
 
 	private function commit( $options ) {
-		$this->repo->commit( $options );
-
-		/**
-		 * Auto push if enabled
-		 *
-		 * This is a risky, best-effort PoC for automatic synchronization
-		 * of changes with the remote repository. There's no conflict
-		 * resolution here, only force overwriting of changes both locally
-		 * and in the remote repository.
-		 *
-		 * Let's re-work this once the notes management prototype is more mature.
-		 */
-		if ( $this->auto_push ) {
-			try {
-				$this->remote->force_push_one_commit();
-			} catch ( GitException $e ) {
-				// If push failed, force pull and retry
-				$this->remote->pull(
-                    $this->get_repository()->get_current_branch_name(),
-                    [ 'force' => true ]
-                );
-
-				// If pull succeeded, try committing and pushing again
-				$this->repo->commit( $options );
-				$this->remote->force_push_one_commit();
-			}
+		if ( ! $this->auto_push ) {
+			$this->repo->commit( $options );
+			return true;
 		}
+
+		$should_amend = $this->should_amend_last_commit();
+		if ( ! $should_amend ) {
+			$this->graceful_push();
+			$this->repo->commit( $options );
+			return true;
+		}
+
+		$this->repo->commit(
+			array_merge(
+				$options,
+				array(
+					'amend' => true,
+				)
+			)
+		);
+
 		return true;
+	}
+
+	private function graceful_push() {
+		try {
+			$this->remote->push();
+		} catch ( GitRemoteException $e ) {
+			// If push failed, there could be new remote commits.
+			// Pull and retry.
+			$this->remote->pull();
+
+			// If pull succeeded, try pushing again
+			$this->remote->push();
+		}
+	}
+
+	private function should_amend_last_commit() {
+		if ( false === $this->amend_time_window ) {
+			return false;
+		}
+
+		try {
+			$head_commit_hash = $this->repo->get_branch_tip( 'HEAD' );
+		} catch ( GitException $e ) {
+			return false;
+		}
+
+		$head_commit = $this->repo->read_object( $head_commit_hash )->as_commit();
+		/**
+		 * Amending merge commits in auto_push mode is not supported yet. It seems to involve
+		 * additional complexity for no apparent benefit. We can just create a new commit instead.
+		 */
+		if ( count( $head_commit->parents ) > 1 ) {
+			return false;
+		}
+
+		try {
+			$head_commit_time = $head_commit->get_author_date_time();
+		} catch ( \DateMalformedStringException $e ) {
+			return false;
+		}
+		$now               = new \DateTime();
+		$time_since_commit = (float) $now->format( 'U' ) - (float) $head_commit_time->format( 'U' );
+		if ( $time_since_commit > $this->amend_time_window ) {
+			return false;
+		}
+
+		$full_branch_name   = $this->get_repository()->get_current_branch_name();
+		$short_branch_name  = str_starts_with( $full_branch_name, 'refs/heads/' ) ? substr( $full_branch_name, 11 ) : $full_branch_name;
+		$remote_name        = $this->remote->get_name();
+		$remote_branch_name = "refs/remotes/{$remote_name}/{$short_branch_name}";
+		$remote_branch_hash = $this->get_repository()->get_branch_tip( $remote_branch_name );
+
+		// Very naively check whether we've already pushed this commit to the remote.
+		// @TODO: Either improve the graph algebra here or use "Draft: " prefix in these
+		// amended commits (and remove it before pushing?)
+		return $remote_branch_hash !== $head_commit_hash;
 	}
 }

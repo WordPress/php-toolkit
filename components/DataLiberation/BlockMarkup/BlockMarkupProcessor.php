@@ -2,6 +2,7 @@
 
 namespace WordPress\DataLiberation\BlockMarkup;
 
+use WP_Block_Parser_Error;
 use WP_HTML_Tag_Processor;
 
 /**
@@ -101,9 +102,9 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	/**
 	 * Gets the most recent error encountered while parsing blocks
 	 *
-	 * @return string|null The error message or null if no error
+	 * @return WP_Block_Parser_Error|null The error message or null if no error
 	 */
-	public function get_last_error(): ?string {
+	public function get_last_error(): ?WP_Block_Parser_Error {
 		return $this->last_block_error;
 	}
 
@@ -273,6 +274,9 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	 * @return bool Whether a token was parsed.
 	 */
 	public function next_token(): bool {
+		if ( $this->has_bookmark( 'block-delimiter' ) ) {
+			$this->release_bookmark( 'block-delimiter' );
+		}
 		$this->get_updated_html();
 
 		$this->block_name                = null;
@@ -310,7 +314,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 		 * while it can parse blocks, it has no semantics for rewriting the
 		 * block markup. Let's do our best here:
 		 */
-		$at = strspn( $text, ' \t\f\r\n' ); // Whitespace.
+		$at = strspn( $text, " \t\f\r\n" ); // Whitespace.
 
 		if ( $at >= strlen( $text ) ) {
 			// This is an empty comment. Not a block.
@@ -342,6 +346,10 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 		$name_length = strspn( $text, 'abcdefghijklmnopqrstuwxvyzABCDEFGHIJKLMNOPRQSTUWXVYZ0123456789_-', $at );
 		if ( $name_length === 0 ) {
 			// This wasn't a block after all, just a regular comment.
+			$this->last_block_error = new WP_Block_Parser_Error(
+				sprintf( 'An HTML comment started with "wp:" that was not followed by a valid block name: %s', $text ),
+				WP_Block_Parser_Error::TYPE_SUSPICIOUS_DELIMITER
+			);
 			return true;
 		}
 		$name = substr( $text, $name_starts_at, $name_length + 3 );
@@ -351,7 +359,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 		$attributes = array();
 
 		// Skip the whitespace that follows the block name.
-		$at += strspn( $text, ' \t\f\r\n', $at );
+		$at += strspn( $text, " \t\f\r\n", $at );
 		if ( $at < strlen( $text ) ) {
 			// It may be a self-closing block or a block with attributes.
 
@@ -375,10 +383,14 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 
 			// Let's try to parse attributes as JSON.
 			if ( strlen( $json_maybe ) > 0 ) {
-				$attributes = json_decode( $json_maybe, true );
+				$attributes = json_decode( trim( $json_maybe ), true );
 				if ( null === $attributes || ! is_array( $attributes ) ) {
 					// This comment looked like a block comment, but the attributes didn't
 					// parse as a JSON array. This means it wasn't a block after all.
+					$this->last_block_error = new WP_Block_Parser_Error(
+						sprintf( '%s could be parsed as a delimiter but JSON attributes were malformed: %s.', $name, $json_maybe ),
+						WP_Block_Parser_Error::TYPE_SUSPICIOUS_DELIMITER
+					);
 					return true;
 				}
 			}
@@ -393,13 +405,37 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 		if ( $this->block_closer ) {
 			$popped = array_pop( $this->stack_of_open_blocks );
 			if ( $popped !== $name ) {
-				$this->last_block_error = sprintf( 'Block closer %s does not match the last opened block %s.', $name, $popped );
+				$this->last_block_error = new WP_Block_Parser_Error(
+					sprintf( 'Block closer %s does not match the last opened block %s.', $name, $popped ),
+					WP_Block_Parser_Error::TYPE_MISMATCHED_CLOSER
+				);
 				return false;
 			}
 		} elseif ( ! $this->self_closing_flag ) {
 			array_push( $this->stack_of_open_blocks, $name );
 		}
 
+		$this->set_bookmark( 'block-delimiter' );
+
+		return true;
+	}
+
+	public function get_block_delimiter_span() {
+		if ( ! $this->has_bookmark( 'block-delimiter' ) ) {
+			return false;
+		}
+		return $this->bookmarks['block-delimiter'];
+	}
+
+	public function next_block_delimiter() {
+		while ( $this->next_token() ) {
+			if ( $this->get_token_type() === '#block-comment' ) {
+				break;
+			}
+		}
+		if ( $this->get_token_type() !== '#block-comment' ) {
+			return false;
+		}
 		return true;
 	}
 

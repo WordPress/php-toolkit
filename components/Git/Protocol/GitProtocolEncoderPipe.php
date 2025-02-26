@@ -16,6 +16,7 @@ class GitProtocolEncoderPipe extends BaseByteReadStream {
 		foreach ( $payloads as $payload ) {
 			$lines[] = self::encode_packet_line( $payload, $channel_code );
 		}
+
 		return implode( '', $lines );
 	}
 
@@ -30,6 +31,7 @@ class GitProtocolEncoderPipe extends BaseByteReadStream {
 			$payload = $channel_code . $payload;
 		}
 		$length = sprintf( '%04x', strlen( $payload ) + 4 );
+
 		return $length . $payload;
 	}
 
@@ -43,6 +45,7 @@ class GitProtocolEncoderPipe extends BaseByteReadStream {
 			}
 			$result .= chr( $byte );
 		} while ( $number > 0 );
+
 		return $result;
 	}
 
@@ -51,6 +54,7 @@ class GitProtocolEncoderPipe extends BaseByteReadStream {
 		foreach ( $tree->entries as $entry ) {
 			$tree_bytes .= $entry->mode . ' ' . $entry->name . "\0" . hex2bin( $entry->hash );
 		}
+
 		return $tree_bytes;
 	}
 
@@ -63,14 +67,17 @@ class GitProtocolEncoderPipe extends BaseByteReadStream {
 		switch ( $operation['type'] ) {
 			case 'raw-bytes':
 				$this->operation = null;
+
 				return $operation['bytes'];
 
 			case 'packet-line':
 				$this->operation = null;
+
 				return self::encode_packet_line( $operation['chunk'], $operation['channel_code'] );
 
 			case 'packet-lines':
 				$this->operation = null;
+
 				return self::encode_packet_lines( $operation['chunk'], $operation['channel_code'] );
 
 			case 'packfile':
@@ -80,6 +87,7 @@ class GitProtocolEncoderPipe extends BaseByteReadStream {
 					$this->packfile_pipe->close_reading();
 					$this->packfile_pipe = null;
 					$this->operation     = null;
+
 					return '';
 				}
 				$available = $this->packfile_pipe->pull( 8096 );
@@ -87,6 +95,7 @@ class GitProtocolEncoderPipe extends BaseByteReadStream {
 				if ( $operation['multiplex'] ) {
 					return self::encode_packet_line( $chunk, "\x01" );
 				}
+
 				return $chunk;
 			default:
 				return '';
@@ -97,65 +106,67 @@ class GitProtocolEncoderPipe extends BaseByteReadStream {
 		return empty( $this->operation_queue ) && ! $this->operation;
 	}
 
-	public function close_writing(): void {}
+	public function close_writing(): void {
+	}
 
 	public function append_sideband_bytes( $bytes ): void {
 		$this->operation_queue[] = array(
-			'type' => 'raw-bytes',
+			'type'  => 'raw-bytes',
 			'chunk' => self::encode_packet_lines( $bytes, "\x01" ),
 		);
 	}
 
 	public function append_progress_packet_line( $chunk ): void {
 		$this->operation_queue[] = array(
-			'type' => 'packet-line',
-			'chunk' => $chunk,
+			'type'         => 'packet-line',
+			'chunk'        => $chunk,
 			'channel_code' => "\x02",
 		);
 	}
 
 	public function append_error_packet_line( $chunk ): void {
 		$this->operation_queue[] = array(
-			'type' => 'packet-line',
-			'chunk' => $chunk,
+			'type'         => 'packet-line',
+			'chunk'        => $chunk,
 			'channel_code' => "\x03",
 		);
 	}
+
 	public function append_sideband_packet_line( $packet_line ): void {
 		$this->operation_queue[] = array(
-			'type' => 'packet-line',
-			'chunk' => self::encode_packet_line( $packet_line ),
+			'type'         => 'packet-line',
+			'chunk'        => self::encode_packet_line( $packet_line ),
 			'channel_code' => "\x01",
 		);
 	}
 
 	public function append_packet_line( $line, $channel_code = '' ): void {
 		$this->operation_queue[] = array(
-			'type' => 'packet-line',
-			'chunk' => $line,
+			'type'         => 'packet-line',
+			'chunk'        => $line,
 			'channel_code' => $channel_code,
 		);
 	}
 
 	public function append_raw_bytes( $bytes ): void {
 		$this->operation_queue[] = array(
-			'type' => 'raw-bytes',
+			'type'  => 'raw-bytes',
 			'bytes' => $bytes,
 		);
 	}
 
 	public function append_packet_lines( $lines, $channel_code = '' ): void {
 		$this->operation_queue[] = array(
-			'type' => 'packet-lines',
-			'chunk' => $lines,
+			'type'         => 'packet-lines',
+			'chunk'        => $lines,
 			'channel_code' => $channel_code,
 		);
 	}
 
 	public function append_packfile( $repository, $pack_objects, $multiplex = false ): void {
 		$this->operation_queue[] = array(
-			'type' => 'packfile',
-			'repository' => $repository,
+			'type'         => 'packfile',
+			'repository'   => $repository,
 			'pack_objects' => $pack_objects,
 			'object_index' => 0,
 			'multiplex'    => $multiplex,

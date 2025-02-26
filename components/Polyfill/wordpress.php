@@ -16,11 +16,28 @@ if ( ! class_exists( 'WP_Block_Parser' ) ) {
 	require_once __DIR__ . '/../BlockParser/class-wp-block-parser.php';
 }
 
-
 if ( ! function_exists( '_doing_it_wrong' ) ) {
 	$GLOBALS['_doing_it_wrong_messages'] = array();
 	function _doing_it_wrong( $method, $message, $version ) {
 		$GLOBALS['_doing_it_wrong_messages'][] = $message;
+	}
+}
+
+if ( ! class_exists( 'WP_Exception' ) ) {
+	class WP_Exception extends Exception {}
+}
+
+if ( ! function_exists( 'wp_trigger_error' ) ) {
+	function wp_trigger_error( $function_name, $message, $error_level = E_USER_NOTICE ) {
+		if ( ! empty( $function_name ) ) {
+			$message = sprintf( '%s(): %s', $function_name, $message );
+		}
+
+		if ( E_USER_ERROR === $error_level ) {
+			throw new WP_Exception( $message );
+		}
+
+		trigger_error( $message, $error_level );
 	}
 }
 
@@ -122,5 +139,80 @@ if ( ! function_exists( 'parse_blocks' ) ) {
 	function parse_blocks( $input ) {
 		$parser = new WP_Block_Parser();
 		return $parser->parse( $input );
+	}
+}
+
+if ( ! function_exists( 'serialize_blocks' ) ) {
+	function serialize_blocks( $blocks ) {
+		return implode( '', array_map( 'serialize_block', $blocks ) );
+	}
+}
+
+if ( ! function_exists( 'serialize_block' ) ) {
+	function serialize_block( $block ) {
+		$block_content = '';
+
+		$index = 0;
+		foreach ( $block['innerContent'] as $chunk ) {
+			$block_content .= is_string( $chunk ) ? $chunk : serialize_block( $block['innerBlocks'][ $index++ ] );
+		}
+
+		if ( ! is_array( $block['attrs'] ) ) {
+			$block['attrs'] = array();
+		}
+
+		return get_comment_delimited_block_content(
+			$block['blockName'],
+			$block['attrs'],
+			$block_content
+		);
+	}
+}
+
+if ( ! function_exists( 'get_comment_delimited_block_content' ) ) {
+	function get_comment_delimited_block_content( $block_name, $block_attributes, $block_content ) {
+		if ( is_null( $block_name ) ) {
+			return $block_content;
+		}
+
+		$serialized_block_name = strip_core_block_namespace( $block_name );
+		$serialized_attributes = empty( $block_attributes ) ? '' : serialize_block_attributes( $block_attributes ) . ' ';
+
+		if ( empty( $block_content ) ) {
+			return sprintf( '<!-- wp:%s %s/-->', $serialized_block_name, $serialized_attributes );
+		}
+
+		return sprintf(
+			'<!-- wp:%s %s-->%s<!-- /wp:%s -->',
+			$serialized_block_name,
+			$serialized_attributes,
+			$block_content,
+			$serialized_block_name
+		);
+	}
+}
+
+if ( ! function_exists( 'strip_core_block_namespace' ) ) {
+	function strip_core_block_namespace( $block_name = null ) {
+		if ( is_string( $block_name ) && str_starts_with( $block_name, 'core/' ) ) {
+			return substr( $block_name, 5 );
+		}
+
+		return $block_name;
+	}
+}
+
+
+if ( ! function_exists( 'serialize_block_attributes' ) ) {
+	function serialize_block_attributes( $block_attributes ) {
+		$encoded_attributes = json_encode( $block_attributes, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		$encoded_attributes = preg_replace( '/--/', '\\u002d\\u002d', $encoded_attributes );
+		$encoded_attributes = preg_replace( '/</', '\\u003c', $encoded_attributes );
+		$encoded_attributes = preg_replace( '/>/', '\\u003e', $encoded_attributes );
+		$encoded_attributes = preg_replace( '/&/', '\\u0026', $encoded_attributes );
+		// Regex: /\\"/
+		$encoded_attributes = preg_replace( '/\\\\"/', '\\u0022', $encoded_attributes );
+
+		return $encoded_attributes;
 	}
 }

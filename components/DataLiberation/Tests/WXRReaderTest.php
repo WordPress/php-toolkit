@@ -223,7 +223,7 @@ https://playground.internal/path-not-taken was the second best choice.
                     </item>
                 </channel>
             </rss>
-            XML
+XML
 		);
 		$importer->input_finished();
 		$this->assertTrue( $importer->next_entity() );
@@ -287,7 +287,7 @@ https://playground.internal/path-not-taken was the second best choice.
                     </wp:term>
                 </channel>
             </rss>
-            XML
+XML
 		);
 		$importer->input_finished();
 		$this->assertTrue( $importer->next_entity() );
@@ -321,7 +321,7 @@ https://playground.internal/path-not-taken was the second best choice.
                     </wp:category>
                 </channel>
             </rss>
-            XML
+XML
 		);
 		$this->assertTrue( $importer->next_entity() );
 		$this->assertEquals(
@@ -354,7 +354,7 @@ https://playground.internal/path-not-taken was the second best choice.
                     </wp:tag>
                 </channel>
             </rss>
-            XML
+XML
 		);
 		$this->assertTrue( $importer->next_entity() );
 		$this->assertEquals(
@@ -386,7 +386,8 @@ https://playground.internal/path-not-taken was the second best choice.
                     </wp:tag>
                 </channel>
             </rss>
-        XML;
+XML
+		;
 		$chunks = str_split( $wxr, 10 );
 
 		$wxr = WXREntityReader::create();
@@ -450,7 +451,7 @@ https://playground.internal/path-not-taken was the second best choice.
                     </item>
                 </channel>
             </rss>
-            XML
+XML
 		);
 		$wxr->input_finished();
 		$this->assertTrue( $wxr->next_entity() );
@@ -534,7 +535,7 @@ https://playground.internal/path-not-taken was the second best choice.
                     </item>
                 </channel>
             </rss>
-            XML
+XML
 		);
 		$wxr->input_finished();
 		$this->assertTrue( $wxr->next_entity() );

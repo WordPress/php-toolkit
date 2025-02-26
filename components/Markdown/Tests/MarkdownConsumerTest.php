@@ -36,6 +36,25 @@ MD;
 		$this->assertEquals( $expected_metadata, $metadata );
 	}
 
+	public function test_metadata_extraction_2() {
+		$markdown          = <<<MD
+---
+post_title: title :)
+menu_order: 0
+---
+
+Content
+MD;
+		$consumer          = new MarkdownConsumer( $markdown );
+		$result            = $consumer->consume();
+		$metadata          = $result->get_all_metadata();
+		$expected_metadata = array(
+			'post_title' => array( 'title :)' ),
+			'menu_order' => array( 0 ),
+		);
+		$this->assertEquals( $expected_metadata, $metadata );
+	}
+
 	/**
 	 * @dataProvider provider_test_conversion
 	 */
@@ -69,6 +88,42 @@ MD;
 				'markdown' => 'A simple paragraph',
 				'expected' => '<!-- wp:paragraph --><p>A simple paragraph</p><!-- /wp:paragraph -->',
 			),
+			'A simple paragraph – no blank text nodes' => array(
+				'markdown' => 'A simple paragraph',
+				'expected' => '<!-- wp:paragraph --><p>A simple paragraph</p><!-- /wp:paragraph -->',
+			),
+			'A simple paragraph – no blank text nodes – multiple spaces between words' => array(
+				'markdown' => 'A simple    paragraph',
+				'expected' => '<!-- wp:paragraph --><p>A simple    paragraph</p><!-- /wp:paragraph -->',
+			),
+			'A simple paragraph – no blank text nodes – single space at the end' => array(
+				'markdown' => 'A simple paragraph ',
+				'expected' => '<!-- wp:paragraph --><p>A simple paragraph </p><!-- /wp:paragraph -->',
+			),
+			'A simple paragraph – regular block markup formatting – no space at the end' => array(
+				'markdown' => <<<MD
+                A simple paragraph
+                MD,
+				'expected' => '<!-- wp:paragraph --><p>A simple paragraph</p><!-- /wp:paragraph -->',
+			),
+			'A simple paragraph – regular block markup formatting – single space at the end' => array(
+				'markdown' => <<<MD
+                A simple paragraph 
+                MD,
+				'expected' => '<!-- wp:paragraph --><p>A simple paragraph </p><!-- /wp:paragraph -->',
+			),
+			'A simple paragraph – regular HTML formatting – no space at the end' => array(
+				'markdown' => <<<MD
+                A simple paragraph
+                MD,
+				'expected' => '<!-- wp:paragraph --><p>A simple paragraph</p><!-- /wp:paragraph -->',
+			),
+			'A simple paragraph – regular HTML formatting – single space at the end' => array(
+				'markdown' => <<<MD
+                A simple paragraph 
+                MD,
+				'expected' => '<!-- wp:paragraph --><p>A simple paragraph </p><!-- /wp:paragraph -->',
+			),
 			'A simple list' => array(
 				'markdown' => "- Item 1\n- Item 2",
 				'expected' => <<<HTML
@@ -87,9 +142,17 @@ HTML
 				'markdown' => 'An inline image: ![An image](https://w.org/logo.png)',
 				'expected' => '<!-- wp:paragraph --><p>An inline image: <img alt="An image" src="https://w.org/logo.png"></p><!-- /wp:paragraph -->',
 			),
-			'A heading' => array(
+			'A heading - level 4' => array(
 				'markdown' => '#### A simple heading',
-				'expected' => '<!-- wp:heading {"level":4} --><h4>A simple heading</h4><!-- /wp:heading -->',
+				'expected' => '<!-- wp:heading {"level":4} --><h4 class="wp-block-heading">A simple heading</h4><!-- /wp:heading -->',
+			),
+			'A heading - level 2' => array(
+				'markdown' => '## A simple heading',
+				'expected' => '<!-- wp:heading --><h2 class="wp-block-heading">A simple heading</h2><!-- /wp:heading -->',
+			),
+			'A heading - level 1' => array(
+				'markdown' => '# A simple heading',
+				'expected' => '<!-- wp:heading {"level":1} --><h1 class="wp-block-heading">A simple heading</h1><!-- /wp:heading -->',
 			),
 			'A link inside a paragraph' => array(
 				'markdown' => 'A simple paragraph with a [link](https://wordpress.org)',

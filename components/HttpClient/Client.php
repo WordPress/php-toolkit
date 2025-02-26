@@ -111,7 +111,7 @@ class Client {
 	public function __construct( $options = array() ) {
 		$this->concurrency   = $options['concurrency'] ?? 10;
 		$this->max_redirects = $options['max_redirects'] ?? 3;
-		$this->timeout       = $options['timeout'] ?? 10;
+		$this->timeout       = $options['timeout'] ?? 30;
 		$this->requests      = array();
 	}
 
@@ -214,7 +214,14 @@ class Client {
 		$this->event               = null;
 		$this->request             = null;
 		$this->response_body_chunk = null;
+
+		$start_time = microtime( true );
+		$timeout    = $query['timeout'] ?? $this->timeout * 1000;
 		do {
+			if ( false !== $timeout && ( microtime( true ) - $start_time ) * 1000 >= $timeout ) {
+				return false;
+			}
+
 			if ( empty( $query['requests'] ) ) {
 				$events = array_keys( $this->events );
 			} else {
@@ -512,6 +519,7 @@ class Client {
 	 */
 	protected function enable_crypto( array $requests ) {
 		foreach ( $this->stream_select( $requests, static::STREAM_SELECT_WRITE ) as $request ) {
+			stream_set_timeout( $this->connections[ $request->id ]->http_socket, 1 );
 			$enabled_crypto = stream_socket_enable_crypto(
 				$this->connections[ $request->id ]->http_socket,
 				true,

@@ -23,11 +23,11 @@ class PackParser {
 	const OBJECT_TYPE_REF_DELTA = 7;
 
 	const OBJECT_NAMES = array(
-		self::OBJECT_TYPE_COMMIT => 'commit',
-		self::OBJECT_TYPE_TREE => 'tree',
-		self::OBJECT_TYPE_BLOB => 'blob',
-		self::OBJECT_TYPE_TAG => 'tag',
-		self::OBJECT_TYPE_RESERVED => 'reserved',
+		self::OBJECT_TYPE_COMMIT    => 'commit',
+		self::OBJECT_TYPE_TREE      => 'tree',
+		self::OBJECT_TYPE_BLOB      => 'blob',
+		self::OBJECT_TYPE_TAG       => 'tag',
+		self::OBJECT_TYPE_RESERVED  => 'reserved',
 		self::OBJECT_TYPE_OFS_DELTA => 'ofs_delta',
 		self::OBJECT_TYPE_REF_DELTA => 'ref_delta',
 	);
@@ -186,7 +186,8 @@ class PackParser {
 	/**
 	 * Append bytes to be processed
 	 *
-	 * @param string $bytes Raw bytes to process
+	 * @param  string $bytes  Raw bytes to process
+	 *
 	 * @return bool Whether processing can continue
 	 */
 	public function append_bytes( $bytes ) {
@@ -226,6 +227,7 @@ class PackParser {
 			try {
 				if ( $this->parser_state === self::STATE_PACK_HEADER ) {
 					$this->process_pack_header();
+
 					return true;
 				}
 
@@ -233,11 +235,13 @@ class PackParser {
 				if ( $this->parser_state === self::STATE_SCAN_FOR_OBJECT_HEADER && ! $this->object_header ) {
 					$this->parse_object_header();
 					$this->object_bytes_processed = 0;
+
 					return true;
 				}
 
 				if ( $this->parser_state === self::STATE_PROCESSING_OBJECT_BODY ) {
 					$this->next_body_chunk();
+
 					return true;
 				}
 
@@ -247,6 +251,7 @@ class PackParser {
 				}
 			} catch ( NotEnoughDataException $e ) {
 				$this->is_paused_on_incomplete_input = true;
+
 				return false;
 			}
 		}
@@ -265,6 +270,7 @@ class PackParser {
 		if ( $this->object_count ) {
 			return '#pack-header';
 		}
+
 		return null;
 	}
 
@@ -276,6 +282,7 @@ class PackParser {
 			return false;
 		}
 		$this->commit = CommitParser::parse( $this->body_buffer );
+
 		return true;
 	}
 
@@ -291,6 +298,7 @@ class PackParser {
 			return false;
 		}
 		$this->tree = TreeParser::parse_entire_tree( $this->body_buffer );
+
 		return true;
 	}
 
@@ -321,6 +329,7 @@ class PackParser {
 
 		if ( strlen( $this->pack_data ) <= $this->bytes_processed ) {
 			$this->is_paused_on_incomplete_input = true;
+
 			return false;
 		}
 
@@ -330,6 +339,7 @@ class PackParser {
 			$this->offset_hash_map[ $this->object_header['offset'] ] = $this->hash;
 			$this->body_chunk                                        = '';
 			$this->parser_state                                      = self::STATE_OBJECT_BODY_COMPLETE;
+
 			return true;
 		}
 
@@ -382,6 +392,7 @@ class PackParser {
 		if ( ! $this->object_header ) {
 			return null;
 		}
+
 		return $this->object_header['uncompressed_size'];
 	}
 
@@ -474,9 +485,9 @@ class PackParser {
 		}
 
 		$object_header = array(
-			'type' => $type,
+			'type'              => $type,
 			'uncompressed_size' => $size,
-			'offset' => $header_offset,
+			'offset'            => $header_offset,
 		);
 
 		// Deltas also have a reference to the original object
@@ -539,6 +550,7 @@ class PackParser {
 		if ( ! $this->object_header ) {
 			return null;
 		}
+
 		return self::OBJECT_NAMES[ $this->object_header['type'] ];
 	}
 
@@ -546,6 +558,7 @@ class PackParser {
 		if ( ! $this->object_header ) {
 			return null;
 		}
+
 		return $this->object_header['type'];
 	}
 
@@ -553,6 +566,7 @@ class PackParser {
 		if ( ! $this->object_header ) {
 			return null;
 		}
+
 		return $this->object_header['offset'];
 	}
 
@@ -560,6 +574,7 @@ class PackParser {
 		if ( ! $this->object_header ) {
 			return null;
 		}
+
 		return $this->object_header['reference'];
 	}
 }

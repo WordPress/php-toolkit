@@ -64,11 +64,11 @@ class TreeEntry {
 	const FILE_MODE_COMMIT                 = '160000';
 
 	const FILE_MODE_NAMES = array(
-		self::FILE_MODE_DIRECTORY => 'directory',
+		self::FILE_MODE_DIRECTORY              => 'directory',
 		self::FILE_MODE_REGULAR_NON_EXECUTABLE => 'regular_non_executable',
-		self::FILE_MODE_REGULAR_EXECUTABLE => 'regular_executable',
-		self::FILE_MODE_SYMBOLIC_LINK => 'symbolic_link',
-		self::FILE_MODE_COMMIT => 'commit',
+		self::FILE_MODE_REGULAR_EXECUTABLE     => 'regular_executable',
+		self::FILE_MODE_SYMBOLIC_LINK          => 'symbolic_link',
+		self::FILE_MODE_COMMIT                 => 'commit',
 	);
 
 	public function is_file() {

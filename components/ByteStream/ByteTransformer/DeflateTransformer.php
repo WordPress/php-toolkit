@@ -18,7 +18,7 @@ class DeflateTransformer implements ByteTransformer {
 		}
 	}
 
-	public function filter_bytes( string $bytes ): string|false {
+	public function filter_bytes( string $bytes ) {
 		if ( null === $this->deflate_handle ) {
 			throw new ByteStreamException( 'Deflate handle is not initialized' );
 		}

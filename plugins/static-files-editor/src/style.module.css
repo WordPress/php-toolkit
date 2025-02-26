@@ -12,6 +12,38 @@
     bottom: 104px !important;
 }
 
+/**
+ * Hide the post editor UI elements that are not useful in the
+ * static files editor
+ */
+:global(.editor-preview-dropdown),
+:global(.components-dropdown:has([aria-label="Tools"])),
+:global([aria-label="View Local File"]),
+:global(.editor-header__post-preview-button.is-compact),
+/**
+ * Hide the title bar, which is too large on mobile,
+ * but preserve the back button which fits the screen
+ * and is useful
+ */
+:global(.editor-document-bar__title),
+/** Hide the "Welcome to the block editor" modal */
+:global(.components-modal__screen-overlay:has(.components-modal__screen-overlay)) {
+    display: none !important;
+}
+
+/**
+ * Naively hide all the warnings just to get rid of the one
+ * that says "The backup of this post in your browser is not available."
+ */
+:global(.components-notice.is-warning.is-dismissible) {
+    display: none !important;
+}
+@media (max-width: 768px) {
+    :global(.editor-visual-editor__post-title-wrapper) {
+        margin-top: 2rem !important;
+    }
+}
+
 .file-picker-tree-container,
 .file-picker-tree-container > div {
 	flex-grow: 1;
@@ -21,4 +53,22 @@
 
 .file-picker-tree-container > div > div[role='application'] {
 	flex-grow: 1;
+}
+
+@keyframes fadeInOut {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.2;
+    }
+}
+
+.icon-fade {
+    animation: fadeInOut 2s infinite;
+}
+
+.sync-button {
+	justify-content: center;
+	min-width: 120px;
 }

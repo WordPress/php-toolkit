@@ -44,8 +44,18 @@ class MySQLExportTest extends TestCase {
 		$this->writer->close_writing();
 
 		// Verify exported SQL
-		$expected = "INSERT INTO posts (ID, post_title) VALUES (1, 'First Post');\n" .
-					"INSERT INTO posts (ID, post_title) VALUES (2, 'Second Post');\n";
+		/**
+		 * Older PDO return all database data as strings.
+		 * 
+		 * @see https://github.com/laravel/framework/issues/3548
+		 */
+		if (version_compare(PHP_VERSION, '8.0', '<=')) {
+			$expected = "INSERT INTO posts (ID, post_title) VALUES ('1', 'First Post');\n" .
+						"INSERT INTO posts (ID, post_title) VALUES ('2', 'Second Post');\n";
+		} else {
+			$expected = "INSERT INTO posts (ID, post_title) VALUES (1, 'First Post');\n" .
+						"INSERT INTO posts (ID, post_title) VALUES (2, 'Second Post');\n";
+		}
 
 		$this->assertEquals( $expected, $this->memory_pipe->consume_all() );
 	}
@@ -101,13 +111,29 @@ class MySQLExportTest extends TestCase {
 		$this->writer->close_writing();
 
 		$output = $this->memory_pipe->consume_all();
-		$this->assertEquals(
-			<<<SQL
+		/**
+		 * Older PDO return all database data as strings.
+		 * 
+		 * @see https://github.com/laravel/framework/issues/3548
+		 */
+		if (version_compare(PHP_VERSION, '8.0', '<=')) {
+			$expected = <<<SQL
+CREATE TABLE posts (ID INTEGER PRIMARY KEY, post_title TEXT);
+INSERT INTO posts (ID, post_title) VALUES ('1', 'First Post');
+INSERT INTO posts (ID, post_title) VALUES ('2', 'Second Post');
+
+SQL;
+		} else {
+			$expected = <<<SQL
 CREATE TABLE posts (ID INTEGER PRIMARY KEY, post_title TEXT);
 INSERT INTO posts (ID, post_title) VALUES (1, 'First Post');
 INSERT INTO posts (ID, post_title) VALUES (2, 'Second Post');
 
-SQL,
+SQL;
+		}
+
+		$this->assertEquals(
+			$expected,
 			$output
 		);
 	}
@@ -137,9 +163,18 @@ SQL,
 
 		$this->writer->close_writing();
 
-		// Verify full export was completed
-		$expected = "INSERT INTO posts (ID, post_title) VALUES (1, 'First Post');\n" .
-					"INSERT INTO posts (ID, post_title) VALUES (2, 'Second Post');\n";
+		/**
+		 * Older PDO return all database data as strings.
+		 * 
+		 * @see https://github.com/laravel/framework/issues/3548
+		 */
+		if (version_compare(PHP_VERSION, '8.0', '<=')) {
+			$expected = "INSERT INTO posts (ID, post_title) VALUES ('1', 'First Post');\n" .
+						"INSERT INTO posts (ID, post_title) VALUES ('2', 'Second Post');\n";
+		} else {
+			$expected = "INSERT INTO posts (ID, post_title) VALUES (1, 'First Post');\n" .
+						"INSERT INTO posts (ID, post_title) VALUES (2, 'Second Post');\n";
+		}
 
 		$this->assertEquals( $expected, $this->memory_pipe->consume_all() );
 	}

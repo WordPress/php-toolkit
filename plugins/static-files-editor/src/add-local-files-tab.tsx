@@ -108,3 +108,33 @@ export function addComponentToEditorContentArea(Component: React.ReactElement) {
 		return originalJSX(...patchArguments(args));
 	};
 }
+
+export function injectSingleClickSaveButton(
+	CustomButton: React.ComponentType
+) {
+	function patchButtonArguments(args: any[]) {
+		let [type, props, ...children] = args;
+		if (!props || typeof props.className !== 'string') {
+			return [type, props, ...children];
+		}
+		const hasButtonClass =
+			props.className.includes('components-button') &&
+			props.className.includes('editor-post-publish-button');
+		if (!hasButtonClass) {
+			return [type, props, ...children];
+		}
+		return [CustomButton, props, ...children];
+	}
+
+	// Monkey-patch window.React.createElement
+	const originalCreateElement = window.React.createElement as any;
+	(window.React as any).createElement = function (...args: any[]) {
+		return originalCreateElement(...patchButtonArguments(args));
+	};
+
+	// Monkey-patch window.ReactJSXRuntime.jsx
+	const originalJSX = window.ReactJSXRuntime.jsx;
+	window.ReactJSXRuntime.jsx = (...args: any[]) => {
+		return originalJSX(...patchButtonArguments(args));
+	};
+}

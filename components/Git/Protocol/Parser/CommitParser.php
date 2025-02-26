@@ -24,6 +24,7 @@ class CommitParser {
 	public static function parse( string $bytes ) {
 		$parser = new CommitParser( $bytes );
 		$parser->next();
+
 		return $parser->get_commit();
 	}
 
@@ -58,6 +59,7 @@ class CommitParser {
 					$this->bytes
 				);
 				$this->bytes           = '';
+
 				return true;
 			}
 
@@ -73,9 +75,9 @@ class CommitParser {
 				$committer_date_starts        = strpos( $value, '>' ) + 1;
 				$this->commit->committer      = substr( $value, 0, $committer_date_starts );
 				$this->commit->committer_date = substr( $value, $committer_date_starts + 1 );
-			} else if ($type === "parent" ) {
-                $this->commit->parents[] = $value;
-            } elseif ( property_exists( $this->commit, $type ) ) {
+			} elseif ( $type === 'parent' ) {
+				$this->commit->parents[] = $value;
+			} elseif ( property_exists( $this->commit, $type ) ) {
 				$this->commit->$type = $value;
 			} else {
 				throw new GitException( 'Unrecognized commit field: ' . $type );

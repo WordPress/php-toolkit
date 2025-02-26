@@ -27,8 +27,8 @@ class GitServerTest extends TestCase {
 				'default_branch' => 'main',
 			)
 		);
-		$this->repository->set_ref_head( 'HEAD', 'ref: refs/heads/main' );
-		$this->repository->set_ref_head( 'ref: refs/heads/main', Commit::NULL_HASH );
+		$this->repository->set_branch_tip( 'HEAD', 'ref: refs/heads/main' );
+		$this->repository->set_branch_tip( 'ref: refs/heads/main', Commit::NULL_HASH );
 		$this->main_branch_oid = $this->repository->commit(
 			array(
 				'updates' => array(
@@ -37,11 +37,11 @@ class GitServerTest extends TestCase {
 			)
 		);
 
-		$this->repository->set_ref_head( 'refs/heads/main', $this->main_branch_oid );
-		$this->repository->set_ref_head( 'refs/heads/twin', $this->main_branch_oid );
-		$this->repository->set_ref_head( 'refs/heads/main-backup', $this->main_branch_oid );
-		$this->repository->set_ref_head( 'refs/heads/dev', $this->main_branch_oid );
-		$this->repository->set_ref_head( 'HEAD', 'ref: refs/heads/dev' );
+		$this->repository->set_branch_tip( 'refs/heads/main', $this->main_branch_oid );
+		$this->repository->set_branch_tip( 'refs/heads/twin', $this->main_branch_oid );
+		$this->repository->set_branch_tip( 'refs/heads/main-backup', $this->main_branch_oid );
+		$this->repository->set_branch_tip( 'refs/heads/dev', $this->main_branch_oid );
+		$this->repository->set_branch_tip( 'HEAD', 'ref: refs/heads/dev' );
 
 		$this->dev_branch_oid = $this->repository->commit(
 			array(
@@ -64,7 +64,7 @@ class GitServerTest extends TestCase {
 
 	public static function provide_request_data() {
 		return array(
-			'basic ls-refs request' => array(
+			'basic ls-refs request'                => array(
 				GitProtocolEncoderPipe::encode_packet_lines(
 					array(
 						"command=ls-refs\n",
@@ -75,10 +75,10 @@ class GitServerTest extends TestCase {
 					'capabilities' => array(
 						'command' => 'ls-refs',
 					),
-					'arguments' => array(),
+					'arguments'    => array(),
 				),
 			),
-			'request with multiple capabilities' => array(
+			'request with multiple capabilities'   => array(
 				GitProtocolEncoderPipe::encode_packet_lines(
 					array(
 						"command=ls-refs\n",
@@ -89,12 +89,12 @@ class GitServerTest extends TestCase {
 				array(
 					'capabilities' => array(
 						'command' => 'ls-refs',
-						'agent' => 'git/2.37.3',
+						'agent'   => 'git/2.37.3',
 					),
-					'arguments' => array(),
+					'arguments'    => array(),
 				),
 			),
-			'request with multiple arguments' => array(
+			'request with multiple arguments'      => array(
 				GitProtocolEncoderPipe::encode_packet_lines(
 					array(
 						"command=ls-refs\n",
@@ -108,13 +108,13 @@ class GitServerTest extends TestCase {
 					'capabilities' => array(
 						'command' => 'ls-refs',
 					),
-					'arguments' => array(
-						'peel' => array( true ),
+					'arguments'    => array(
+						'peel'       => array( true ),
 						'ref-prefix' => array( 'HEAD' ),
 					),
 				),
 			),
-			'basic want request' => array(
+			'basic want request'                   => array(
 				GitProtocolEncoderPipe::encode_packet_lines(
 					array(
 						"command=fetch\n",
@@ -128,17 +128,17 @@ class GitServerTest extends TestCase {
 				),
 				array(
 					'capabilities' => array(
-						'command' => 'fetch',
-						'agent' => 'git/2.37.3',
+						'command'       => 'fetch',
+						'agent'         => 'git/2.37.3',
 						'object-format' => 'sha1',
 					),
-					'arguments' => array(
+					'arguments'    => array(
 						'want' => array( 'e0d02a851d0c461a7c725dc69eb2d53f57f666a6' ),
 						'done' => array( true ),
 					),
 				),
 			),
-			'want with have and filter' => array(
+			'want with have and filter'            => array(
 				GitProtocolEncoderPipe::encode_packet_lines(
 					array(
 						"command=fetch\n",
@@ -154,15 +154,15 @@ class GitServerTest extends TestCase {
 				),
 				array(
 					'capabilities' => array(
-						'command' => 'fetch',
-						'agent' => 'git/2.37.3',
+						'command'       => 'fetch',
+						'agent'         => 'git/2.37.3',
 						'object-format' => 'sha1',
 					),
-					'arguments' => array(
-						'want' => array( 'e0d02a851d0c461a7c725dc69eb2d53f57f666a6' ),
-						'have' => array( 'f5b97d7b9af357c81b5df5773329d50f764c2992' ),
+					'arguments'    => array(
+						'want'   => array( 'e0d02a851d0c461a7c725dc69eb2d53f57f666a6' ),
+						'have'   => array( 'f5b97d7b9af357c81b5df5773329d50f764c2992' ),
 						'filter' => array( 'blob:none' ),
-						'done' => array( true ),
+						'done'   => array( true ),
 					),
 				),
 			),
@@ -182,19 +182,19 @@ class GitServerTest extends TestCase {
 				),
 				array(
 					'capabilities' => array(
-						'command' => 'fetch',
-						'agent' => 'git/2.37.3',
+						'command'       => 'fetch',
+						'agent'         => 'git/2.37.3',
 						'object-format' => 'sha1',
 					),
-					'arguments' => array(
-						'want' => array( 'e0d02a851d0c461a7c725dc69eb2d53f57f666a6' ),
+					'arguments'    => array(
+						'want'   => array( 'e0d02a851d0c461a7c725dc69eb2d53f57f666a6' ),
 						'filter' => array( 'blob:limit=1000' ),
 						'deepen' => array( '10' ),
-						'done' => array( true ),
+						'done'   => array( true ),
 					),
 				),
 			),
-			'multiple want and have' => array(
+			'multiple want and have'               => array(
 				GitProtocolEncoderPipe::encode_packet_lines(
 					array(
 						"command=fetch\n",
@@ -211,7 +211,7 @@ class GitServerTest extends TestCase {
 					'capabilities' => array(
 						'command' => 'fetch',
 					),
-					'arguments' => array(
+					'arguments'    => array(
 						'want' => array(
 							'e0d02a851d0c461a7c725dc69eb2d53f57f666a6',
 							'f10e2821bbbea527ea02200352313bc059445190',
@@ -246,7 +246,7 @@ class GitServerTest extends TestCase {
 
 	public static function provide_ref_requests() {
 		return array(
-			'all refs' => array(
+			'all refs'        => array(
 				GitProtocolEncoderPipe::encode_packet_lines(
 					array(
 						"command=ls-refs\n",
@@ -261,7 +261,7 @@ class GitServerTest extends TestCase {
 0032{dev_branch_oid} HEAD
 0000
 RESPONSE
-				,
+			,
 			),
 			'specific branch' => array(
 				GitProtocolEncoderPipe::encode_packet_lines(
@@ -278,9 +278,9 @@ RESPONSE
 0044{main_branch_oid} refs/heads/main-backup
 0000
 RESPONSE
-				,
+			,
 			),
-			'HEAD ref' => array(
+			'HEAD ref'        => array(
 				GitProtocolEncoderPipe::encode_packet_lines(
 					array(
 						"command=ls-refs\n",
@@ -294,7 +294,7 @@ RESPONSE
 0154{dev_branch_oid} HEAD\0multi_ack thin-pack side-band side-band-64k ofs-delta shallow deepen-since deepen-not deepen-relative no-progress include-tag multi_ack_detailed allow-tip-sha1-in-want allow-reachable-sha1-in-want no-done symref=HEAD:refs/heads/trunk filter object-format=sha1 agent=git/github-395dce4f6ecf
 0000
 RESPONSE
-				,
+			,
 			),
 		);
 	}
@@ -340,8 +340,8 @@ RESPONSE
 		);
 
 		$test_cases = array(
-			'basic fetch' => array(
-				'request' => GitProtocolEncoderPipe::encode_packet_lines(
+			'basic fetch'                 => array(
+				'request'       => GitProtocolEncoderPipe::encode_packet_lines(
 					array(
 						"command=fetch\n",
 						'0000',
@@ -358,7 +358,7 @@ RESPONSE
 				),
 			),
 			'fetch with blob:none filter' => array(
-				'request' => GitProtocolEncoderPipe::encode_packet_lines(
+				'request'       => GitProtocolEncoderPipe::encode_packet_lines(
 					array(
 						"command=fetch\n",
 						'0000',
@@ -373,8 +373,8 @@ RESPONSE
 					$tree_oid,
 				),
 			),
-			'fetch with blob size limit' => array(
-				'request' => GitProtocolEncoderPipe::encode_packet_lines(
+			'fetch with blob size limit'  => array(
+				'request'       => GitProtocolEncoderPipe::encode_packet_lines(
 					array(
 						"command=fetch\n",
 						'0000',
@@ -390,8 +390,8 @@ RESPONSE
 					$readme_oid,
 				),
 			),
-			'fetch with multiple wants' => array(
-				'request' => GitProtocolEncoderPipe::encode_packet_lines(
+			'fetch with multiple wants'   => array(
+				'request'       => GitProtocolEncoderPipe::encode_packet_lines(
 					array(
 						"command=fetch\n",
 						'0000',
@@ -414,8 +414,8 @@ RESPONSE
 		foreach ( $test_cases as $name => $test ) {
 			/** @var BufferingResponseWriter */
 			$response    = $this->getMockBuilder( BufferingResponseWriter::class )
-				->onlyMethods( array( 'close_writing' ) )
-				->getMock();
+								->onlyMethods( array( 'close_writing' ) )
+								->getMock();
 			$git_encoder = new GitProtocolEncoderPipe( $response );
 			$this->server->handle_fetch_request( $test['request'], $git_encoder );
 
@@ -520,7 +520,7 @@ RESPONSE
 
 		$test_cases = array(
 			'basic push' => array(
-				'request' => GitProtocolEncoderPipe::encode_packet_lines(
+				'request'      => GitProtocolEncoderPipe::encode_packet_lines(
 					array(
 						"0000000000000000000000000000000000000000 $commit_oid refs/heads/main\0\n",
 						'0000',
@@ -530,7 +530,7 @@ RESPONSE
 				'expected_oid' => $commit_oid,
 			),
 			'delete ref' => array(
-				'request' => GitProtocolEncoderPipe::encode_packet_lines(
+				'request'      => GitProtocolEncoderPipe::encode_packet_lines(
 					array(
 						"$commit_oid 0000000000000000000000000000000000000000 refs/heads/main\0\n",
 						'0000',
@@ -544,8 +544,8 @@ RESPONSE
 		foreach ( $test_cases as $name => $test ) {
 			/** @var BufferingResponseWriter */
 			$response = $this->getMockBuilder( BufferingResponseWriter::class )
-				->onlyMethods( array( 'close_writing' ) )
-				->getMock();
+							->onlyMethods( array( 'close_writing' ) )
+							->getMock();
 
 			$git_encoder = new GitProtocolEncoderPipe( $response );
 			$this->server->handle_push_request( $test['request'], $git_encoder );
@@ -568,7 +568,7 @@ RESPONSE
 				// Should be updated
 				$this->assertBinaryEquals(
 					$test['expected_oid'],
-					$this->repository->get_ref_head( $test['expected_ref'] ),
+					$this->repository->get_branch_tip( $test['expected_ref'] ),
 					"$name: Ref should be updated to new commit"
 				);
 			}

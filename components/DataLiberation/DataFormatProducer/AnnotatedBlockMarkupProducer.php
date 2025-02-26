@@ -56,10 +56,11 @@ class AnnotatedBlockMarkupProducer {
 						$value = json_encode( $value );
 					}
 					$p->set_attribute( 'content', $value );
+					$p->set_attribute( 'type', gettype( $value ) );
 					$this->result .= $p->get_updated_html() . "\n";
 				}
 			}
-			$this->result .= $this->blocks_with_meta->get_block_markup();
+			$this->result .= "\n" . trim( $this->blocks_with_meta->get_block_markup(), "\n" );
 		}
 		return $this->result;
 	}

@@ -29,6 +29,9 @@ use WP_HTML_Tag_Processor;
  * * Consider implementing a dedicated markdown parser – similarly how we have
  *   a small, dedicated, and fast XML, HTML, etc. parsers. It would solve for
  *   code complexity, bundle size, performance, PHP compatibility, etc.
+ * * Serialize blocks with unrepresentable attributes as fenced code blocks,
+ *   e.g. a paragraph with a custom class would become code instead of a markdown
+ *   paragraph.
  */
 class MarkdownConsumer implements DataFormatConsumer {
 
@@ -107,13 +110,18 @@ class MarkdownConsumer implements DataFormatConsumer {
 						break;
 
 					case ExtensionBlock\Heading::class:
-						$this->push_block(
-							'heading',
-							array(
-								'level' => $node->getLevel(),
-							)
-						);
-						$this->append_content( '<h' . $node->getLevel() . '>' );
+						$level = $node->getLevel();
+						if ( ! $level ) {
+							$level = 3;
+						}
+						$attrs = array();
+						// 2 is the default level and the editor-produced markup won't contain this attribute, leading to
+						// permanent client-side three-way merges.
+						if ( $level !== 2 ) {
+							$attrs['level'] = $level;
+						}
+						$this->push_block( 'heading', $attrs );
+						$this->append_content( '<h' . $level . ' class="wp-block-heading">' );
 						break;
 
 					case ExtensionBlock\ListBlock::class:
@@ -205,6 +213,11 @@ class MarkdownConsumer implements DataFormatConsumer {
 						break;
 
 					case Inline\Text::class:
+						/**
+						 * Trailing whitespace is getting lost in the commonmark parser.
+						 *
+						 * @TODO: Patch the commonmark parser OR use a diffent parser.
+						 */
 						$this->append_content( $node->getLiteral() );
 						break;
 
@@ -296,7 +309,11 @@ BLOCK;
 						$this->pop_block();
 						break;
 					case ExtensionBlock\Heading::class:
-						$this->append_content( '</h' . $node->getLevel() . '>' );
+						$level = $node->getLevel();
+						if ( ! $level ) {
+							$level = 3;
+						}
+						$this->append_content( '</h' . $level . '>' );
 						$this->pop_block();
 						break;
 					case ExtensionInline\Strong::class:
@@ -401,7 +418,7 @@ BLOCK;
 	private function pop_block() {
 		if ( ! empty( $this->block_stack ) ) {
 			$popped              = array_pop( $this->block_stack );
-			$this->block_markup .= ImportUtils::block_closer( $popped->block_name ) . "\n";
+			$this->block_markup .= "\n" . ImportUtils::block_closer( $popped->block_name ) . "\n\n";
 			return $popped;
 		}
 	}

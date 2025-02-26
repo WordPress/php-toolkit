@@ -18,7 +18,7 @@ class ChecksumTransformer implements ByteTransformer {
 		$this->binary_output = $options['binary_output'] ?? false;
 	}
 
-	public function filter_bytes( string $bytes ): string|false {
+	public function filter_bytes( string $bytes ) {
 		hash_update( $this->hash_context, $bytes );
 		return $bytes;
 	}

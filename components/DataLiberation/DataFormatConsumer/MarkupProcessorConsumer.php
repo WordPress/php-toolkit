@@ -98,6 +98,15 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 					if ( ! array_key_exists( $key, $this->metadata ) ) {
 						$this->metadata[ $key ] = array();
 					}
+					switch ( $html->get_attribute( 'type' ) ) {
+						case 'integer':
+							$value = (int) $value;
+							break;
+						case 'boolean':
+							$value = (bool) $value;
+							break;
+						// @TODO: Discuss what would support for other types look like.
+					}
 					$this->metadata[ $key ][] = $value;
 					break;
 				case 'IMG':

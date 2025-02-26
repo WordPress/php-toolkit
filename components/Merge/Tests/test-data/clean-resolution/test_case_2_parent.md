@@ -1,0 +1,13 @@
+
+## 1. Merge Evaluation Test Suites
+
+The paper "Evaluation of Version Control Merge Tools" by the University of Washington provides a methodology for testing merge tools.
+
+It describes scenarios where:
+
+-   **Parent/Base Document**: The original document before changes.
+-   **Change A**: A modification made in one branch.
+-   **Change B**: A separate modification made in another branch.
+-   **Merge Result**: The expected outcome after resolving conflicts.
+
+The paper includes examples of merge scenarios.

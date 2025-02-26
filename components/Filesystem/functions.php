@@ -161,3 +161,18 @@ function wp_canonicalize_path( $path ) {
 	}
 	return $result === '' ? '/' : $result;
 }
+
+/**
+ * Returns the directory name of a path. Like dirname(), but
+ * consistent between different operating systems. wp_dirname("/foo")
+ * will return "/" whereas dirname("/foo") would return "\\".
+ *
+ * @param string $path The path to get the directory name of.
+ * @return string The directory name of the path.
+ */
+function wp_dirname( $path ) {
+	// @TODO: Scrutinize this naive implementation. Could
+	//        we mess things up on Unix when a directory name
+	//        legitimately contains a backslash?
+	return str_replace( '\\', '/', dirname( $path ) );
+}

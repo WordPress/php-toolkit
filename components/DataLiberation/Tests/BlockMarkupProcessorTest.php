@@ -19,6 +19,7 @@ class BlockMarkupProcessorTest extends TestCase {
 
 	public static function provider_test_finds_block_openers() {
 		return array(
+			'Opener with a line break before whitespace'       => array( "<!-- \nwp:paragraph -->", 'wp:paragraph', array() ),
 			'Opener without attributes'                        => array( '<!-- wp:paragraph -->', 'wp:paragraph', array() ),
 			'Opener without the trailing whitespace'           => array( '<!--wp:paragraph-->', 'wp:paragraph', array() ),
 			'Opener with a lot of trailing whitespace'         => array( '<!--    wp:paragraph          -->', 'wp:paragraph', array() ),
@@ -109,7 +110,6 @@ class BlockMarkupProcessorTest extends TestCase {
 
 	public static function provider_test_treat_invalid_block_openers_as_comments() {
 		return array(
-			'Opener with a line break before whitespace' => array( "<!-- \nwp:paragraph -->" ),
 			'Block name including !'                     => array( '<!-- wp:pa!ragraph -->' ),
 			'Block name including a whitespace'          => array( '<!-- wp: paragraph -->' ),
 			'No namespace in the block name'             => array( '<!-- paragraph -->' ),
@@ -132,7 +132,6 @@ class BlockMarkupProcessorTest extends TestCase {
 
 	public static function provider_test_treat_invalid_block_closers_as_comments() {
 		return array(
-			'Closer with a line break before whitespace'         => array( "<!-- \n/wp:paragraph -->" ),
 			'Closer with attributes'                             => array( '<!-- /wp:paragraph {"class": "block"} -->' ),
 			'Closer with solidus at the end (before whitespace)' => array( '<!-- wp:paragraph/ -->' ),
 		);
@@ -395,5 +394,33 @@ class BlockMarkupProcessorTest extends TestCase {
 			$p->get_updated_html(),
 			'Failed to update the block attribute value'
 		);
+	}
+
+	public function test_get_block_delimiter_offset() {
+		$p = new BlockMarkupProcessor(
+			<<<HTML
+Here's some text before the block.
+<div> And an element
+<!-- wp:paragraph {"class": "wp-bold"} -->Hello, there
+<!-- /wp:paragraph -->More text after the block.
+HTML
+		);
+		while ( $p->next_token() ) {
+			if ( $p->get_token_type() === '#block-comment' ) {
+				break;
+			}
+		}
+		$span = $p->get_block_delimiter_span();
+		$this->assertEquals( 56, $span->start, 'Failed to find the block start offset' );
+		$this->assertEquals( 42, $span->length, 'Failed to find the block end offset' );
+
+		while ( $p->next_token() ) {
+			if ( $p->get_token_type() === '#block-comment' ) {
+				break;
+			}
+		}
+		$span = $p->get_block_delimiter_span();
+		$this->assertEquals( 111, $span->start, 'Failed to find the block start offset' );
+		$this->assertEquals( 22, $span->length, 'Failed to find the block end offset' );
 	}
 }

@@ -135,7 +135,7 @@ class RequestReadStream extends BaseByteReadStream {
 			);
 		}
 		if ( ! $this->response ) {
-			throw new ByteStreamException( 'HTTP request failed' );
+			throw new ByteStreamException( 'HTTP request failed – never received a response' );
 		}
 		return $this->response;
 	}

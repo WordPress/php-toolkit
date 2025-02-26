@@ -78,7 +78,7 @@ class FilesystemEntityReaderTest extends TestCase {
 	private function assertMarkupMatches( $markup, $expected ) {
 		$this->assertEquals(
 			$this->normalize_markup( $expected ),
-			$this->normalize_markup( $markup ),
+			$this->normalize_markup( $markup )
 		);
 	}
 

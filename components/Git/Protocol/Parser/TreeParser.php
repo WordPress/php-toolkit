@@ -66,6 +66,7 @@ class TreeParser {
 		while ( $parser->next() ) {
 			$tree->add_entry( $parser->get_tree_entry() );
 		}
+
 		return $tree;
 	}
 
@@ -79,7 +80,8 @@ class TreeParser {
 	/**
 	 * Append bytes to be processed
 	 *
-	 * @param string $bytes Raw bytes to process
+	 * @param  string $bytes  Raw bytes to process
+	 *
 	 * @return bool Whether processing can continue
 	 */
 	public function append_bytes( $bytes ) {
@@ -122,12 +124,14 @@ class TreeParser {
 				if ( $this->parser_state === self::STATE_READING_SHA1 ) {
 					$this->tree_entry->hash = bin2hex( $this->consume_bytes( 20 ) );
 					$this->parser_state     = self::STATE_SCANNING_FOR_NEXT_ENTRY;
+
 					// Once we have the sha1, we can return the entry
 					return true;
 				}
 			}
 		} catch ( NotEnoughDataException $e ) {
 			$this->is_paused_on_incomplete_input = true;
+
 			return false;
 		}
 	}
@@ -163,6 +167,7 @@ class TreeParser {
 		}
 		$bytes                  = substr( $this->tree_data, $this->bytes_processed, $length );
 		$this->bytes_processed += $length;
+
 		return $bytes;
 	}
 

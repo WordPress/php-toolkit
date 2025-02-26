@@ -39,7 +39,8 @@ committer Adam Zieliński <adam@adamziel.com> 1736778854 +0100
 
 Add InflateReader
 
-BODY,
+BODY
+			,
 			$parser->get_body_chunk()
 		);
 		$this->assertTrue( $parser->next_token() );

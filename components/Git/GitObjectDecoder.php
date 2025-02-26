@@ -49,6 +49,7 @@ class GitObjectDecoder extends BaseByteReadStream {
 		if ( ! $this->object_header ) {
 			return false;
 		}
+
 		return $this->object_type_name;
 	}
 
@@ -56,12 +57,14 @@ class GitObjectDecoder extends BaseByteReadStream {
 		if ( ! $this->object_header ) {
 			return false;
 		}
+
 		return $this->uncompressed_length;
 	}
 
 	public function internal_pull( $n ): string {
 		$this->ensure_object_header();
 		$available = $this->body_source->pull( $n );
+
 		return $this->body_source->consume( $available );
 	}
 
@@ -69,6 +72,7 @@ class GitObjectDecoder extends BaseByteReadStream {
 		if ( $this->get_object_type_name() !== 'commit' ) {
 			throw new GitException( sprintf( 'Object was %s and not a commit in as_commit', $this->get_object_type_name() ) );
 		}
+
 		return CommitParser::parse( $this->consume_all() );
 	}
 
@@ -76,6 +80,7 @@ class GitObjectDecoder extends BaseByteReadStream {
 		if ( $this->get_object_type_name() !== 'tree' ) {
 			throw new GitException( sprintf( 'Object was %s and not a tree in as_tree', $this->get_object_type_name() ) );
 		}
+
 		return TreeParser::parse_entire_tree( $this->consume_all() );
 	}
 
