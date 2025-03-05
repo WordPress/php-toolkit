@@ -84,10 +84,12 @@ class LocalFilesystem implements Filesystem {
 	}
 
 	public function rename( $old_path, $new_path, $options = array() ) {
-		return rename(
-			$old_path,
-			$new_path
-		);
+		if ( false === rename( $old_path, $new_path ) ) {
+			throw new FilesystemException(
+				sprintf( 'Failed to rename: %s to %s', $old_path, $new_path )
+			);
+		}
+		return true;
 	}
 
 	public function copy_file( $from_path, $to_path, $options ) {

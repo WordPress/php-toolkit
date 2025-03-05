@@ -86,6 +86,9 @@ class ZipFilesystem implements Filesystem {
 	}
 
 	public function is_dir( $path ) {
+		if('/' === $path) {
+			return true;
+		}
 		$this->load_central_directory();
 		$path = trim( $path, '/' ) . '/';
 		return isset( $this->central_directory[ $path ] ) && $this->central_directory[ $path ]->is_directory();
