@@ -181,6 +181,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		if ( null === $this->raw_url ) {
 			return false;
 		}
+		$this->raw_url = $new_url;
 		switch ( parent::get_token_type() ) {
 			case '#tag':
 				$attr = $this->get_inspected_attribute_name();
