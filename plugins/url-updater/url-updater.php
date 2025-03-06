@@ -137,22 +137,22 @@ function rpi_render_admin_page() {
 	}
 }
 
-function rpi_install_plugin_from_url( string $url, bool $is_update = false, string $original_plugin_file = '' ) {
+function rpi_install_plugin_from_url( string $package_url, bool $is_update = false, string $original_plugin_file = '' ) {
 	require_once ABSPATH . 'wp-admin/includes/file.php';
 	require_once ABSPATH . 'wp-admin/includes/misc.php';
 	require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 	require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
-	$parsed_url     = wp_parse_url( $url );
-	$path           = isset( $parsed_url['path'] ) ? $parsed_url['path'] : '';
-	$file_extension = pathinfo( $path, PATHINFO_EXTENSION );
-	$base_name      = $original_plugin_file ? basename( dirname( $original_plugin_file ) ) : basename( $path, '.' . $file_extension );
-
-	$cache_busting_url = add_query_arg( '_cache_buster', time(), $url );
+	$cache_busting_url = add_query_arg( '_cache_buster', time(), $package_url );
 	$tmp_file          = download_url( $cache_busting_url );
 	if ( is_wp_error( $tmp_file ) ) {
 		return new WP_Error( 'download_failed', $tmp_file->get_error_message() );
 	}
+
+	$parsed_url     = wp_parse_url( $package_url );
+	$package_path   = isset( $parsed_url['path'] ) ? $parsed_url['path'] : '';
+	$package_extension = 'zip';
+	$base_name      = $original_plugin_file ? basename( dirname( $original_plugin_file ) ) : basename( $package_path, '.' . $package_extension );
 
 	/**
 	 * $tmp_file has a random component in the filename. WordPress would
@@ -161,7 +161,7 @@ function rpi_install_plugin_from_url( string $url, bool $is_update = false, stri
 	 * Let's give our package a stable filename to make WordPress actually
 	 * upgrade the existing plugin instead of installing a new one.
 	 */
-	$stable_tmp_path = sys_get_temp_dir() . '/' . $base_name . '.' . $file_extension;
+	$stable_tmp_path = sys_get_temp_dir() . '/' . $base_name . '.zip';
 	if ( file_exists( $stable_tmp_path ) && $stable_tmp_path !== $tmp_file ) {
 		unlink( $stable_tmp_path );
 	}
