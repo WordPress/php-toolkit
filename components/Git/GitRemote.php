@@ -333,7 +333,7 @@ class GitRemote {
 					$remote_head,
 					array( 'path' => $options['path'] )
 				);
-				if(count($missing_oids) > 0) {
+				if ( count( $missing_oids ) > 0 ) {
 					$this->git_upload_pack(
 						array(
 							'want_refs' => $missing_oids,
@@ -355,7 +355,7 @@ class GitRemote {
 			// Make double sure we have all the relevant objects from the remote commit.
 			// @TODO: investigate why sometimes the root tree is missing and address the
 			// root cause instead of plugging the hole with a bandaid.
-			if ( !isset($options['path']) || $options['path'] === '/' || $options['path'] === '' ) {
+			if ( ! isset( $options['path'] ) || $options['path'] === '/' || $options['path'] === '' ) {
 				if ( ! $this->repository->has_all_objects_from_commit( $remote_head ) ) {
 					$this->git_upload_pack(
 						array(
@@ -483,8 +483,8 @@ class GitRemote {
 				$packet_lines[] = "have {$have_ref}\n";
 			}
 		}
-		$packet_lines[] = '0000';
-		$packet_lines[] = "done\n";
+		$packet_lines[]  = '0000';
+		$packet_lines[]  = "done\n";
 		$response_stream = $this->http_request(
 			'/git-upload-pack',
 			GitProtocolEncoderPipe::encode_packet_lines( $packet_lines ),

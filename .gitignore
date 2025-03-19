@@ -1,6 +1,8 @@
 vendor/
 **/*/vendor/
 opfs/
+node_modules
+.cursor
 rest/
 dist/
 outdir/
@@ -27,3 +29,4 @@ blueprint-url-updater.json
 components/DataLiberation/Tests/test-output-html/
 components/DataLiberation/Tests/test-output-md
 blueprint-dev.json
+examples/create-wp-site/data-liberation.zip

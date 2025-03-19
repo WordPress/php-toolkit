@@ -22,9 +22,9 @@ class EPubEntityReaderTest extends TestCase {
 			);
 		}
 		$this->assertEquals( 3, count( $entities ) );
-		$this->assertGreaterThan( 100, strlen( $entities[0]['data']['content'] ) );
-		$this->assertGreaterThan( 1000, strlen( $entities[1]['data']['content'] ) );
-		$this->assertGreaterThan( 1000, strlen( $entities[2]['data']['content'] ) );
+		$this->assertGreaterThan( 100, strlen( $entities[0]['data']['post_content'] ) );
+		$this->assertGreaterThan( 1000, strlen( $entities[1]['data']['post_content'] ) );
+		$this->assertGreaterThan( 1000, strlen( $entities[2]['data']['post_content'] ) );
 	}
 
 	public static function epub_byte_reader_data_provider() {

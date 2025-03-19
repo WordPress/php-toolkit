@@ -12,6 +12,7 @@
  *   Still keep track of the number of total and successful downloads.
  */
 
+use WordPress\DataLiberation\DataLiberationException;
 use WordPress\DataLiberation\Importer\ImportSession;
 use WordPress\DataLiberation\Importer\RetryFrontloadingIterator;
 use WordPress\DataLiberation\Importer\StreamImporter;
@@ -84,6 +85,33 @@ add_action(
 				'label_count' => _n_noop( 'Error <span class="count">(%s)</span>', 'Error <span class="count">(%s)</span>' ),
 			)
 		);
+
+		if ( ! post_type_exists( 'frontloading_stub' ) ) {
+			register_post_type(
+				'frontloading_stub',
+				array(
+					'labels'              => array(
+						'name' => 'Frontloading Placeholder',
+						'singular_name' => 'Frontloading Placeholder',
+						'menu_name' => 'Frontloading Placeholders',
+					),
+					'public'              => false,
+					'publicly_queryable'  => false,
+					'exclude_from_search' => true,
+					'show_ui'             => false,
+					'show_in_menu'        => false,
+					'show_in_nav_menus'   => false,
+					'show_in_admin_bar'   => false,
+					'show_in_rest'        => false,
+					'hierarchical'        => false,
+					'supports'            => array( 'title' ),
+					'has_archive'         => false,
+					'rewrite'             => false,
+					'query_var'           => false,
+					'can_export'          => false,
+				)
+			);
+		}
 	}
 );
 
@@ -118,7 +146,6 @@ add_action(
 		);
 	}
 );
-
 add_action( 'admin_enqueue_scripts', 'enqueue_data_liberation_scripts' );
 
 function enqueue_data_liberation_scripts() {
@@ -422,7 +449,7 @@ function data_liberation_import_step( $session, $importer = null ) {
 			$should_advance_to_next_stage = null !== $importer->get_next_stage();
 			if ( $should_advance_to_next_stage ) {
 				if ( StreamImporter::STAGE_FRONTLOAD_ASSETS === $importer->get_stage() ) {
-					$resolved_all_failures = $session->count_unfinished_frontloading_placeholders() === 0;
+					$resolved_all_failures = $session->count_unfinished_frontloading_stubs() === 0;
 					if ( ! $resolved_all_failures ) {
 						break;
 					}
@@ -439,7 +466,7 @@ function data_liberation_import_step( $session, $importer = null ) {
 		switch ( $importer->get_stage() ) {
 			case StreamImporter::STAGE_INDEX_ENTITIES:
 				// Bump the total number of entities to import.
-				$session->create_frontloading_placeholders( $importer->get_indexed_assets_urls() );
+				$session->create_frontloading_stubs( $importer->get_indexed_assets_urls() );
 				$session->bump_total_number_of_entities(
 					$importer->get_indexed_entities_counts()
 				);
@@ -461,13 +488,16 @@ function data_liberation_import_step( $session, $importer = null ) {
 	}
 }
 
+/**
+ * @throws DataLiberationException If the import arguments are invalid.
+ * @return StreamImporter The created importer instance.
+ */
 function data_liberation_create_importer( $import ) {
 	switch ( $import['data_source'] ) {
 		case 'wxr_file':
 			$wxr_path = get_attached_file( $import['attachment_id'] );
 			if ( false === $wxr_path ) {
-				// @TODO: Save the error, report it to the user.
-				return;
+				throw new DataLiberationException( 'Failed to get the WXR file path' );
 			}
 			$importer = StreamImporter::create_for_wxr_file(
 				$wxr_path,
@@ -561,7 +591,7 @@ function data_liberation_get_interactivity_state() {
 		$import_session ? $import_session->get_frontloading_progress() : array(),
 		array_keys( $import_session ? $import_session->get_frontloading_progress() : array() )
 	);
-	$frontloading_placeholders = $import_session ? $import_session->get_frontloading_placeholders() : array();
+	$frontloading_stubs = $import_session ? $import_session->get_frontloading_stubs() : array();
 	return array(
 		// Current import state:
 		'currentImport' => $import_session
@@ -573,8 +603,8 @@ function data_liberation_get_interactivity_state() {
 				'entityCounts' => $import_session->count_imported_entities(),
 				'frontloadingProgress' => $frontloading_progress,
 				'hasFrontloadingProgress' => count( $frontloading_progress ) > 0,
-				'frontloadingPlaceholders' => $frontloading_placeholders,
-				'hasFrontloadingPlaceholders' => count( $frontloading_placeholders ) > 0,
+				'frontloadingPlaceholders' => $frontloading_stubs,
+				'hasFrontloadingPlaceholders' => count( $frontloading_stubs ) > 0,
 			)
 			/**
 			 * We need an empty default state that still has all the right data types

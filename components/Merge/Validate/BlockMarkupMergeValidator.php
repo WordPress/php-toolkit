@@ -85,8 +85,8 @@ class BlockMarkupMergeValidator implements MergeValidator {
 			 */
 			if ( $is_virtual->invoke( $html_processor ) ) {
 				throw new InvalidMergeException(
-					"Merge resulted in a non-normative block markup. The inputs are assumed to be normative, ".
-                    "which means the merge result is likely corrupted."
+					'Merge resulted in a non-normative block markup. The inputs are assumed to be normative, ' .
+					'which means the merge result is likely corrupted.'
 				);
 			}
 

@@ -4,6 +4,7 @@ namespace WordPress\DataLiberation\Importer;
 
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\DataLiberation\BlockMarkup\BlockMarkupUrlProcessor;
+use WordPress\DataLiberation\DataLiberationException;
 use WordPress\DataLiberation\EntityReader\EntityReaderIterator;
 use WordPress\DataLiberation\EntityReader\WXREntityReader;
 use WordPress\DataLiberation\URL\WPURL;
@@ -50,6 +51,10 @@ class StreamImporter {
 	 */
 	protected $site_url_mapping = array();
 	/**
+	 * A list of URLs to frontload the media files from.
+	 */
+	protected $source_media_root_urls = array();
+	/**
 	 * A list of candidate base URLs that have been spotted in the WXR file.
 	 *
 	 * For example, the theme unit test data refers to a site with a base
@@ -72,7 +77,7 @@ class StreamImporter {
 	 * it and how.
 	 *
 	 * Once the API consumer decides on the mapping, it can call
-	 * add_site_url_mapping() to tell the importer what to map that domain to.
+	 * add_url_mapping() to tell the importer what to map that domain to.
 	 */
 	protected $site_url_mapping_candidates = array();
 	protected $entity_reader_factory;
@@ -80,7 +85,7 @@ class StreamImporter {
 	 * @param array|string|null $query {
 	 *     @type string      $uploads_path  The directory to download the media attachments to.
 	 *                                      E.g. WP_CONTENT_DIR . '/uploads'
-	 *     @type string      $uploads_url   The URL where the media attachments will be accessible
+	 *     @type string      $new_media_root_url   The URL where the media attachments will be accessible
 	 *                                      after the import. E.g. http://127.0.0.1:9400/wp-content/uploads/
 	 * }
 	 */
@@ -201,7 +206,7 @@ class StreamImporter {
 		}
 		if ( ! empty( $cursor['site_url_mapping'] ) ) {
 			foreach ( $cursor['site_url_mapping'] as $pair ) {
-				$this->add_site_url_mapping( $pair[0], $pair[1] );
+				$this->add_url_mapping( $pair['from'], $pair['to'] );
 			}
 		}
 		if ( ! empty( $cursor['site_url_mapping_candidates'] ) ) {
@@ -216,8 +221,8 @@ class StreamImporter {
 		// Every subsequent call to set_source_site_url() will
 		// override that mapping.
 		$this->site_url_mapping[-1] = array(
-			WPURL::parse( $source_site_url ),
-			WPURL::parse( $this->options['new_site_url'] ),
+			'from' => WPURL::parse( $source_site_url ),
+			'to' => WPURL::parse( $this->options['new_site_content_root_url'] ),
 		);
 	}
 
@@ -235,16 +240,23 @@ class StreamImporter {
 		return $new_candidates;
 	}
 
-	public function add_site_url_mapping( $from, $to ) {
-		$this->site_url_mapping[] = array( WPURL::parse( $from ), WPURL::parse( $to ) );
+	public function add_url_mapping( $from_url, $to_url ) {
+		$this->site_url_mapping[] = array(
+			'from' => WPURL::parse( $from_url ),
+			'to' => WPURL::parse( $to_url ),
+		);
+	}
+
+	public function add_source_media_root_url( $source_media_root_url ) {
+		$this->source_media_root_urls[] = WPURL::parse( $source_media_root_url );
 	}
 
 	public function get_reentrancy_cursor() {
 		$serialized_site_url_mapping = array();
 		foreach ( $this->site_url_mapping as $pair ) {
 			$serialized_site_url_mapping[] = array(
-				(string) $pair[0],
-				(string) $pair[1],
+				'from' => (string) $pair['from'],
+				'to' => (string) $pair['to'],
 			);
 		}
 		return json_encode(
@@ -264,8 +276,12 @@ class StreamImporter {
 	}
 
 	protected static function parse_options( $options ) {
-		if ( ! isset( $options['new_site_url'] ) ) {
-			$options['new_site_url'] = get_site_url();
+		if ( ! isset( $options['source_site_url'] ) ) {
+			// @TODO: Throw only if source_site_url is not set by the time we're processing the first encountered URL.
+			// throw new DataLiberationException( 'The "source_site_url" option is required' );
+		}
+		if ( ! isset( $options['new_site_content_root_url'] ) ) {
+			$options['new_site_content_root_url'] = get_site_url();
 		}
 
 		if ( ! isset( $options['uploads_path'] ) ) {
@@ -274,11 +290,15 @@ class StreamImporter {
 		// Remove the trailing slash to make concatenation easier later.
 		$options['uploads_path'] = rtrim( $options['uploads_path'], '/' );
 
-		if ( ! isset( $options['uploads_url'] ) ) {
-			$options['uploads_url'] = $options['new_site_url'] . '/wp-content/uploads';
+		if ( ! isset( $options['new_media_root_url'] ) ) {
+			$options['new_media_root_url'] = rtrim( get_site_url(), '/' ) . '/wp-content/uploads';
 		}
 		// Remove the trailing slash to make concatenation easier later.
-		$options['uploads_url'] = rtrim( $options['uploads_url'], '/' );
+		$options['new_media_root_url'] = rtrim( $options['new_media_root_url'], '/' );
+
+		if ( ! isset( $options['index_batch_size'] ) ) {
+			$options['index_batch_size'] = 10000;
+		}
 
 		return $options;
 	}
@@ -289,8 +309,18 @@ class StreamImporter {
 	) {
 		$this->entity_reader_factory = $entity_reader_factory;
 		$this->options               = $options;
-		if ( isset( $options['default_source_site_url'] ) ) {
-			$this->set_source_site_url( $options['default_source_site_url'] );
+		$this->set_source_site_url( $options['source_site_url'] );
+
+		if ( isset( $options['source_media_root_urls'] ) ) {
+			foreach ( $options['source_media_root_urls'] as $source_media_root_url ) {
+				$this->add_source_media_root_url( $source_media_root_url );
+			}
+		}
+
+		if ( isset( $options['additional_url_mappings'] ) ) {
+			foreach ( $options['additional_url_mappings'] as $additional_url_mapping ) {
+				$this->add_url_mapping( $additional_url_mapping['from'], $additional_url_mapping['to'] );
+			}
 		}
 	}
 
@@ -306,7 +336,7 @@ class StreamImporter {
 	 *
 	 * @var WP_Entity_Importer
 	 */
-	protected $importer;
+	protected $entity_sink;
 
 	public function next_step() {
 		switch ( $this->stage ) {
@@ -362,7 +392,7 @@ class StreamImporter {
 	protected $indexed_entities_counts = array();
 	protected $indexed_assets_urls     = array();
 
-	protected function index_next_entities( $count = 10000 ) {
+	protected function index_next_entities() {
 		if ( null !== $this->next_stage ) {
 			return false;
 		}
@@ -391,7 +421,7 @@ class StreamImporter {
 		 * Internalize the loop to avoid computing the reentrancy cursor
 		 * on every entity in the imported data stream.
 		 */
-		for ( $i = 0; $i < $count; ++$i ) {
+		for ( $i = 0; $i < $this->options['index_batch_size']; ++$i ) {
 			if ( ! $this->entity_iterator->valid() ) {
 				break;
 			}
@@ -399,9 +429,10 @@ class StreamImporter {
 			 * Identify the static assets referenced in the current entity
 			 * and enqueue them for download.
 			 */
-			$entity = $this->entity_iterator->current();
+			$entity = $this->get_current_entity();
 
 			$type = $entity->get_type();
+			var_dump( $type );
 
 			// Count entities by type.
 			if ( ! isset( $this->indexed_entities_counts[ $type ] ) ) {
@@ -451,13 +482,17 @@ class StreamImporter {
 						}
 					} elseif ( isset( $data['post_content'] ) ) {
 						$post = $data;
-						$p    = new BlockMarkupUrlProcessor( $post['post_content'], $this->source_site_url );
+						$p    = new BlockMarkupUrlProcessor( $post['post_content'], $this->get_post_base_url( $post ) );
+
 						while ( $p->next_url() ) {
 							if ( ! $this->url_processor_matched_asset_url( $p ) ) {
 								continue;
 							}
 							// @TODO: Consider using sha1 hashes to prevent huge URLs from blowing up the memory.
-							$this->indexed_assets_urls[ $p->get_raw_url() ] = true;
+							// @TODO: Use a consistent identifier for tracking download progress. Unfortunately,
+							// $p->get_raw_url() does not line up with the resolved URL later on. The progress
+							// events are emited with the full, resolved URL.
+							$this->indexed_assets_urls[ $p->get_parsed_url() . '' ] = true;
 						}
 					}
 					break;
@@ -469,7 +504,7 @@ class StreamImporter {
 		return true;
 	}
 
-	public function get_new_site_url_mapping_candidates() {
+	public function get_new_site_content_root_url_mapping_candidates() {
 		$candidates = array();
 		foreach ( $this->site_url_mapping_candidates as $base_url => $status ) {
 			if ( false === $status ) {
@@ -491,6 +526,9 @@ class StreamImporter {
 	public function get_frontloading_events() {
 		return $this->frontloading_events;
 	}
+	/**
+	 * @return array<string, int> The frontloading progress per URL.
+	 */
 	public function get_frontloading_progress() {
 		return $this->downloader ? $this->downloader->get_progress() : array();
 	}
@@ -602,7 +640,7 @@ class StreamImporter {
 		 * Identify the static assets referenced in the current entity
 		 * and enqueue them for download.
 		 */
-		$entity                            = $this->entity_iterator->current();
+		$entity                            = $this->get_current_entity();
 		$cursor                            = $this->entity_iterator->get_reentrancy_cursor();
 		$this->active_downloads[ $cursor ] = array();
 
@@ -625,8 +663,9 @@ class StreamImporter {
 						_doing_it_wrong( __METHOD__, 'No attachment URL or file path found in the post entity.', '1.0' );
 					}
 				} elseif ( isset( $data['post_content'] ) ) {
-					$post = $data;
-					$p    = new BlockMarkupUrlProcessor( $post['post_content'], $this->source_site_url );
+					$post     = $data;
+					$base_url = $this->get_post_base_url( $post );
+					$p        = new BlockMarkupUrlProcessor( $post['post_content'], $base_url );
 					while ( $p->next_url() ) {
 						if ( ! $this->url_processor_matched_asset_url( $p ) ) {
 							continue;
@@ -634,7 +673,7 @@ class StreamImporter {
 						$this->enqueue_attachment_download(
 							$p->get_raw_url(),
 							array(
-								'context_path' => $post['local_file_path'] ?? $post['slug'] ?? null,
+								'base_url' => $base_url,
 							)
 						);
 					}
@@ -647,6 +686,29 @@ class StreamImporter {
 
 		$this->frontloading_advance_reentrancy_cursor();
 		return true;
+	}
+
+	protected function get_current_entity() {
+		$entity = $this->entity_iterator->current();
+		$entity = apply_filters(
+			'data_liberation.stream_importer.preprocess_entity',
+			$entity,
+			array(
+				'importer' => $this,
+			)
+		);
+		return $entity;
+	}
+
+	protected function get_post_base_url( $post ) {
+		return apply_filters(
+			'data_liberation.stream_importer.post_base_url',
+			$post['link'] ?? $this->source_site_url,
+			array(
+				'post' => $post,
+				'importer' => $this,
+			)
+		);
 	}
 
 	/**
@@ -665,18 +727,18 @@ class StreamImporter {
 
 		if ( null === $this->entity_iterator ) {
 			$this->entity_iterator = $this->create_entity_iterator();
-			$this->importer        = new EntityImporter();
+			$this->entity_sink     = $this->options['entity_sink'] ?? new EntityImporter();
 		}
 
 		if ( ! $this->entity_iterator->valid() ) {
 			// We're done.
 			$this->stage           = self::STAGE_FINISHED;
 			$this->entity_iterator = null;
-			$this->importer        = null;
+			$this->entity_sink     = null;
 			return false;
 		}
 
-		$entity = $this->entity_iterator->current();
+		$entity = $this->get_current_entity();
 
 		$attachments = array();
 		// Rewrite the URLs in the post.
@@ -691,19 +753,31 @@ class StreamImporter {
 					}
 					$asset_filename = $this->new_asset_filename(
 						$data['attachment_url'],
-						$data['local_file_path'] ?? $data['slug'] ?? null
+						$data['link'] ?? null
 					);
 					unset( $data['attachment_url'] );
 					$data['local_file_path'] = $this->options['uploads_path'] . '/' . $asset_filename;
 				} else {
-					foreach ( array( 'guid', 'post_content', 'post_excerpt' ) as $key ) {
+					/**
+					 * @TODO: Think through guid rewriting. It may matter for WXR posts,
+					 *        where the guid often describes the page URL, but it may
+					 *        get in the way for Markdown imports, where the guid is
+					 *        either inferred from the static file path or fixed and
+					 *        sourced from metadata.
+					 */
+					foreach ( array( 'post_content', 'post_excerpt' ) as $key ) {
 						if ( ! isset( $data[ $key ] ) ) {
 							continue;
 						}
-						$p = new BlockMarkupUrlProcessor( $data[ $key ], $this->source_site_url );
+						$base_url = $this->get_post_base_url( $data );
+						$p        = new BlockMarkupUrlProcessor( $data[ $key ], $base_url );
 						while ( $p->next_url() ) {
 							// Relative URLs are okay at this stage.
 							if ( ! $p->get_raw_url() ) {
+								continue;
+							}
+							// No need to rewrite anchor links.
+							if ( substr( $p->get_raw_url(), 0, 1 ) === '#' ) {
 								continue;
 							}
 
@@ -712,11 +786,14 @@ class StreamImporter {
 							 */
 							$asset_filename = $this->new_asset_filename(
 								$p->get_raw_url(),
-								$data['local_file_path'] ?? $data['slug'] ?? null
+								$base_url
 							);
+
 							if ( file_exists( $this->options['uploads_path'] . '/' . $asset_filename ) ) {
-								$p->set_raw_url(
-									$this->options['uploads_url'] . '/' . $asset_filename
+								$raw_url = rtrim( $this->options['new_media_root_url'], '/' ) . '/' . $asset_filename;
+								$p->set_url(
+									$raw_url,
+									WPURL::parse( $raw_url )
 								);
 								/**
 								 * @TODO: How would we know a specific image block refers to a specific
@@ -735,11 +812,21 @@ class StreamImporter {
 								continue;
 							}
 
-							$target_base_url = $this->get_url_mapping_target( $p->get_parsed_url() );
-							if ( false !== $target_base_url ) {
-								$p->replace_base_url( $target_base_url );
-								continue;
+							$raw_url_before          = $p->get_raw_url();
+							$mapping_pair            = $this->get_url_mapping_pair( $p->get_parsed_url() );
+							$should_rewrite_base_url = false !== $mapping_pair;
+							if ( $should_rewrite_base_url ) {
+								$p->replace_base_url( $mapping_pair['to'], $mapping_pair['from'] );
 							}
+							do_action(
+								'data_liberation.stream_importer.postprocess_url',
+								$p,
+								array(
+									'applied_base_url_mapping' => $mapping_pair,
+									'raw_url_before' => $raw_url_before,
+									'entity' => $entity,
+								)
+							);
 						}
 						$data[ $key ] = $p->get_updated_html();
 					}
@@ -748,7 +835,7 @@ class StreamImporter {
 				break;
 		}
 
-		$post_id = $this->importer->import_entity( $entity );
+		$post_id = $this->entity_sink->import_entity( $entity );
 		if ( false !== $post_id ) {
 			$this->count_imported_entity( $entity->get_type() );
 		} else {
@@ -756,7 +843,7 @@ class StreamImporter {
 		}
 		foreach ( $attachments as $filepath ) {
 			// @TODO: Monitor failures.
-			$attachment_id = $this->importer->import_attachment( $filepath, $post_id );
+			$attachment_id = $this->entity_sink->import_attachment( $filepath, $post_id );
 			if ( false !== $attachment_id ) {
 				// @TODO: How to count attachments?
 				$this->count_imported_entity( 'post' );
@@ -787,11 +874,10 @@ class StreamImporter {
 	protected function enqueue_attachment_download( string $raw_url, $options = array() ) {
 		$output_filename = $this->new_asset_filename(
 			$options['original_url'] ?? $raw_url,
-			$options['context_path'] ?? null
+			$options['base_url'] ?? null
 		);
-
-		$download_url = $this->rewrite_attachment_url( $raw_url, $options['context_path'] ?? null );
-		$enqueued     = $this->downloader->enqueue_if_not_exists( $download_url, $output_filename );
+		$download_url    = $this->rewrite_attachment_url( $raw_url, $options['base_url'] ?? null );
+		$enqueued        = $this->downloader->enqueue_if_not_exists( $download_url, $output_filename );
 		if ( false === $enqueued ) {
 			_doing_it_wrong( __METHOD__, sprintf( 'Failed to enqueue attachment download: %s', $raw_url ), '1.0' );
 			return false;
@@ -832,10 +918,10 @@ class StreamImporter {
 	 *   different permissions. Just because Bob deletes his copy, doesn't
 	 *   mean we should delete Alice's copy.
 	 */
-	protected function new_asset_filename( string $raw_asset_url, $context_path = null ) {
+	protected function new_asset_filename( string $raw_asset_url, $base_url = null ) {
 		$raw_asset_url = $this->rewrite_attachment_url(
 			$raw_asset_url,
-			$context_path
+			$base_url
 		);
 
 		$filename   = md5( $raw_asset_url );
@@ -854,16 +940,17 @@ class StreamImporter {
 		return $filename;
 	}
 
-	protected function rewrite_attachment_url( string $raw_url, $context_path = null ) {
+	protected function rewrite_attachment_url( string $raw_url, $base_url = null ) {
 		if ( WPURL::can_parse( $raw_url ) ) {
 			// Absolute URL, nothing to do.
 			return $raw_url;
 		}
-		$base_url = $this->source_site_url;
-		if ( null !== $base_url && null !== $context_path ) {
-			$base_url = $base_url . '/' . ltrim( $context_path, '/' );
+
+		if ( ! $base_url ) {
+			$base_url = $this->source_site_url;
 		}
 		$parsed_url = WPURL::parse( $raw_url, $base_url );
+
 		if ( false === $parsed_url ) {
 			return false;
 		}
@@ -878,23 +965,28 @@ class StreamImporter {
 	 * @TODO: What other asset types are there?
 	 */
 	protected function url_processor_matched_asset_url( BlockMarkupUrlProcessor $p ) {
-		return (
-			$p->get_tag() === 'IMG' &&
-			$p->get_inspected_attribute_name() === 'src' &&
-			$this->is_child_of_a_mapped_url( $p->get_parsed_url() )
-		);
+		if ( $p->get_tag() !== 'IMG' ) {
+			return false;
+		}
+		if ( $p->get_inspected_attribute_name() !== 'src' ) {
+			return false;
+		}
+		foreach ( $this->source_media_root_urls as $source_media_root_url ) {
+			if ( is_child_url_of( $p->get_parsed_url(), $source_media_root_url ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
-	protected function is_child_of_a_mapped_url( $url ) {
-		return $this->get_url_mapping_target( $url ) !== false;
+	protected function is_child_of_a_mapped_url( $url_detected_in_content ) {
+		return $this->get_url_mapping_pair( $url_detected_in_content ) !== false;
 	}
 
-	protected function get_url_mapping_target( $source_url ) {
-		$url = WPURL::parse( $source_url );
+	protected function get_url_mapping_pair( $url_detected_in_content ) {
 		foreach ( $this->site_url_mapping as $pair ) {
-			$parsed_base_url = $pair[0];
-			if ( is_child_url_of( $parsed_base_url, $url ) ) {
-				return $pair[1];
+			if ( is_child_url_of( $url_detected_in_content, $pair['from'] ) ) {
+				return $pair;
 			}
 		}
 		return false;

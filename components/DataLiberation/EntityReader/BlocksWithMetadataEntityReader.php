@@ -46,6 +46,7 @@ class BlocksWithMetadataEntityReader implements EntityReader {
 		$all_metadata   = $this->metadata;
 		$post_fields    = array();
 		$other_metadata = array();
+
 		foreach ( $all_metadata as $key => $values ) {
 			if ( in_array( $key, ImportEntity::POST_FIELDS, true ) ) {
 				$post_fields[ $key ] = $values[0];
@@ -54,8 +55,9 @@ class BlocksWithMetadataEntityReader implements EntityReader {
 			}
 		}
 
-		$post_fields['post_id']      = $this->post_id;
-		$post_fields['post_content'] = $this->block_markup;
+		$post_fields['post_id']         = $this->post_id;
+		$post_fields['post_content']    = $this->block_markup;
+		$post_fields['parsed_metadata'] = $all_metadata;
 
 		// In Markdown, the frontmatter title can be a worse title candidate than
 		// the first H1 block. In block markup exports, it will be the opposite.

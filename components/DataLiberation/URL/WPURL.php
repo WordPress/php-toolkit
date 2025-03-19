@@ -73,4 +73,10 @@ class WPURL {
 			)
 		);
 	}
+
+	public static function append_path( $base_url, $path ) {
+		$base_url           = self::parse( $base_url );
+		$base_url->pathname = rtrim( $base_url->pathname, '/' ) . '/' . ltrim( $path, '/' );
+		return $base_url->toString();
+	}
 }

@@ -23,8 +23,8 @@ HTML;
 		$entities = array();
 		while ( $reader->next_entity() ) {
 			$data = $reader->get_entity()->get_data();
-			if ( isset( $data['content'] ) ) {
-				$data['content'] = $this->normalize_markup( $data['content'] );
+			if ( isset( $data['post_content'] ) ) {
+				$data['post_content'] = $this->normalize_markup( $data['post_content'] );
 			}
 			$entities[] = array(
 				'type' => $reader->get_entity()->get_type(),
@@ -38,7 +38,7 @@ HTML;
 					'post_title' => 'WordPress 6.8 was released',
 					'post_date' => '2024-12-16',
 					'post_id' => 1,
-					'content' => $this->normalize_markup(
+					'post_content' => $this->normalize_markup(
 						<<<HTML
 <!-- wp:heading {"level":1} -->
 <h1>It is our pleasure to announce that WordPress 6.8 was released </h1><!-- /wp:heading -->

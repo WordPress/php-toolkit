@@ -46,10 +46,10 @@ class MySQLExportTest extends TestCase {
 		// Verify exported SQL
 		/**
 		 * Older PDO return all database data as strings.
-		 * 
+		 *
 		 * @see https://github.com/laravel/framework/issues/3548
 		 */
-		if (version_compare(PHP_VERSION, '8.0', '<=')) {
+		if ( version_compare( PHP_VERSION, '8.0', '<=' ) ) {
 			$expected = "INSERT INTO posts (ID, post_title) VALUES ('1', 'First Post');\n" .
 						"INSERT INTO posts (ID, post_title) VALUES ('2', 'Second Post');\n";
 		} else {
@@ -113,10 +113,10 @@ class MySQLExportTest extends TestCase {
 		$output = $this->memory_pipe->consume_all();
 		/**
 		 * Older PDO return all database data as strings.
-		 * 
+		 *
 		 * @see https://github.com/laravel/framework/issues/3548
 		 */
-		if (version_compare(PHP_VERSION, '8.0', '<=')) {
+		if ( version_compare( PHP_VERSION, '8.0', '<=' ) ) {
 			$expected = <<<SQL
 CREATE TABLE posts (ID INTEGER PRIMARY KEY, post_title TEXT);
 INSERT INTO posts (ID, post_title) VALUES ('1', 'First Post');
@@ -165,10 +165,10 @@ SQL;
 
 		/**
 		 * Older PDO return all database data as strings.
-		 * 
+		 *
 		 * @see https://github.com/laravel/framework/issues/3548
 		 */
-		if (version_compare(PHP_VERSION, '8.0', '<=')) {
+		if ( version_compare( PHP_VERSION, '8.0', '<=' ) ) {
 			$expected = "INSERT INTO posts (ID, post_title) VALUES ('1', 'First Post');\n" .
 						"INSERT INTO posts (ID, post_title) VALUES ('2', 'Second Post');\n";
 		} else {

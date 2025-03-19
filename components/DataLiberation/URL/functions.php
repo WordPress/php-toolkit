@@ -67,7 +67,15 @@ function is_child_url_of( $child, $parent_url ) {
 	$child                            = is_string( $child ) ? WPURL::parse( $child ) : $child;
 	$child_pathname_no_trailing_slash = rtrim( urldecode( $child->pathname ), '/' );
 
+	if ( false === $child || false === $parent_url ) {
+		return false;
+	}
+
 	if ( $parent_url->hostname !== $child->hostname ) {
+		return false;
+	}
+
+	if ( $parent_url->protocol !== $child->protocol ) {
 		return false;
 	}
 

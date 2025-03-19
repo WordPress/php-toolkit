@@ -39,22 +39,22 @@ if ( ! function_exists( 'reset_mbstring_encoding' ) ) {
 }
 
 if ( ! function_exists( 'mb_str_split' ) ) {
-    function mb_str_split( $string, $split_length = 1, $encoding = null ) {
-        if ( null !== $encoding ) {
-            $old_encoding = mb_internal_encoding();
-            mb_internal_encoding( $encoding );
-        }
+	function mb_str_split( $string, $split_length = 1, $encoding = null ) {
+		if ( null !== $encoding ) {
+			$old_encoding = mb_internal_encoding();
+			mb_internal_encoding( $encoding );
+		}
 
-        $result = array();
-        $length = mb_strlen( $string );
-        for ( $i = 0; $i < $length; $i += $split_length ) {
-            $result[] = mb_substr( $string, $i, $split_length );
-        }
+		$result = array();
+		$length = mb_strlen( $string );
+		for ( $i = 0; $i < $length; $i += $split_length ) {
+			$result[] = mb_substr( $string, $i, $split_length );
+		}
 
-        if ( null !== $encoding ) {
-            mb_internal_encoding( $old_encoding );
-        }
+		if ( null !== $encoding ) {
+			mb_internal_encoding( $old_encoding );
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 }

@@ -19,8 +19,8 @@ class ClientTest extends \PHPUnit\Framework\TestCase {
 	 * @dataProvider gzip_provider
 	 */
 	public function test_streaming_body_with_chunked_encoding( $use_gzip ) {
-		if (extension_loaded('wasm_memory_storage')) {
-			$this->markTestSkipped('Test not supported yet in PHP.wasm');
+		if ( extension_loaded( 'wasm_memory_storage' ) ) {
+			$this->markTestSkipped( 'Test not supported yet in PHP.wasm' );
 		}
 
 		$this->withDevServer(
@@ -30,7 +30,7 @@ class ClientTest extends \PHPUnit\Framework\TestCase {
 					$address,
 					array(
 						'headers' => array(
-							'Accept-Encoding' => $use_gzip ? 'gzip' : 'identity'
+							'Accept-Encoding' => $use_gzip ? 'gzip' : 'identity',
 						),
 					)
 				);
@@ -114,12 +114,12 @@ BODY;
 			$this->fail( 'Failed to start chunked encoding dev server' );
 		}
 
-		if (preg_match('/\d\.\d\.\d\.\d:(\d+)/', $output, $matches)) {
+		if ( preg_match( '/\d\.\d\.\d\.\d:(\d+)/', $output, $matches ) ) {
 			$port = $matches[1];
 		}
-		
-		if(!$port) {
-			$this->fail('Failed to find port in server output');
+
+		if ( ! $port ) {
+			$this->fail( 'Failed to find port in server output' );
 		}
 		$address = 'http://127.0.0.1:' . $port;
 

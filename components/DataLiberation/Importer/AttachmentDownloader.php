@@ -47,7 +47,8 @@ class AttachmentDownloader {
 
 	public function enqueue_if_not_exists( $url, $output_relative_path ) {
 		$this->enqueued_url = $url;
-		$output_path        = wp_join_paths( $this->output_root, $output_relative_path );
+
+		$output_path = wp_join_paths( $this->output_root, $output_relative_path );
 		if ( file_exists( $output_path ) ) {
 			$this->pending_events[] = new AttachmentDownloaderEvent(
 				$this->enqueued_url,
@@ -92,8 +93,8 @@ class AttachmentDownloader {
 					$stream = $this->source_from_filesystem->open_read_stream( $source_path );
 					$fp     = fopen( $output_path, 'wb' );
 					while ( ! $stream->reached_end_of_data() ) {
-						$stream->pull( 65536 );
-						$chunk = $stream->consume( 65536 );
+						$pulled = $stream->pull( 65536 );
+						$chunk  = $stream->consume( $pulled );
 						fwrite( $fp, $chunk );
 					}
 					fclose( $fp );
@@ -119,7 +120,7 @@ class AttachmentDownloader {
 				// Create a placeholder file to indicate that the download is in progress.
 				touch( $output_path . '.partial' );
 				$request                               = new Request( $url );
-				$this->output_paths[ $request->id ]    = $output_relative_path;
+				$this->output_paths[ $request->id ]    = $output_path;
 				$this->progress[ $this->enqueued_url ] = array(
 					'received' => null,
 					'total' => null,

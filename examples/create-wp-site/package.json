@@ -1,0 +1,19 @@
+{
+	"name": "create-wp-site",
+	"version": "1.0.0",
+	"description": "A package to import static files into WordPress",
+	"main": "index.js",
+	"bin": {
+		"create-wp-site": "./index.js"
+	},
+	"scripts": {
+		"start": "node main.js"
+	},
+	"dependencies": {
+		"@wp-playground/cli": "https://wpcomplaygroundpackages.wpcomstaging.com/packages/v1.0.27/@wp-playground-cli-1.0.27.tar.gz",
+		"yargs": "^17.7.2"
+	},
+	"author": "Adam Zieliński <adam@adamziel.com>",
+	"license": "ISC",
+	"type": "module"
+}

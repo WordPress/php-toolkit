@@ -386,8 +386,7 @@ XML
                     </wp:tag>
                 </channel>
             </rss>
-XML
-		;
+XML;
 		$chunks = str_split( $wxr, 10 );
 
 		$wxr = WXREntityReader::create();

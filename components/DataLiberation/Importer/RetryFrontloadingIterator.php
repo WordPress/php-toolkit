@@ -61,7 +61,7 @@ class RetryFrontloadingIterator implements \Iterator {
 		global $wpdb;
 
 		$where_clauses = array(
-			$wpdb->prepare( 'post_type = %s', 'frontloading_placeholder' ),
+			$wpdb->prepare( 'post_type = %s', 'frontloading_stub' ),
 			$wpdb->prepare( 'post_parent = %d', $this->import_post_id ),
 			$wpdb->prepare( 'post_status = %s', ImportSession::FRONTLOAD_STATUS_ERROR ),
 			"pm.meta_key = 'attempts'",

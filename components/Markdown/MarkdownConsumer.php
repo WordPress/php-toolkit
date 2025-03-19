@@ -121,7 +121,8 @@ class MarkdownConsumer implements DataFormatConsumer {
 							$attrs['level'] = $level;
 						}
 						$this->push_block( 'heading', $attrs );
-						$this->append_content( '<h' . $level . ' class="wp-block-heading">' );
+						$text_content = $this->get_text_content( $node );
+						$this->append_content( '<h' . $level . ' class="wp-block-heading" id="' . $this->slugify( $text_content ) . '">' );
 						break;
 
 					case ExtensionBlock\ListBlock::class:
@@ -367,6 +368,34 @@ BLOCK;
 				}
 			}
 		}
+	}
+
+	/**
+	 * Naive slugification.
+	 *
+	 * @TODO: Use a more sophisticated utf-8 aware slugification.
+	 */
+	private function slugify( $title ) {
+		return preg_replace( '/[^a-z0-9]+/i', '-', trim( strtolower( $title ) ) );
+	}
+
+	private function get_text_content( $node ) {
+		if ( $node instanceof Inline\Text ) {
+			return $node->getLiteral();
+		}
+		$text_content = '';
+		$walker       = $node->walker();
+		while ( true ) {
+			$event = $walker->next();
+			if ( ! $event ) {
+				break;
+			}
+			$node = $event->getNode();
+			if ( $node instanceof Inline\Text ) {
+				$text_content .= $node->getLiteral();
+			}
+		}
+		return $text_content;
 	}
 
 	private function drop_current_paragraph_if_empty() {

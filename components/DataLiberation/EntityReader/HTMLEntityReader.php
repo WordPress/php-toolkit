@@ -55,7 +55,7 @@ class HTMLEntityReader implements EntityReader {
 				$post_fields,
 				array(
 					'post_id' => $this->post_id,
-					'content' => $this->block_markup,
+					'post_content' => $this->block_markup,
 				)
 			)
 		);

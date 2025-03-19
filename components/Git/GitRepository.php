@@ -952,16 +952,18 @@ class GitRepository {
 
 			return false;
 		}
-		return new Commit( array_merge(
-			array(
-				'author' => $this->get_config_value( 'user.name' ) . ' <' . $this->get_config_value( 'user.email' ) . '>',
-				'author_date' => null,
-				'committer' => $this->get_config_value( 'user.name' ) . ' <' . $this->get_config_value( 'user.email' ) . '>',
-				'committer_date' => null,
-				'message' => 'Changes',
-			),
-			$options
-		) );
+		return new Commit(
+			array_merge(
+				array(
+					'author' => $this->get_config_value( 'user.name' ) . ' <' . $this->get_config_value( 'user.email' ) . '>',
+					'author_date' => null,
+					'committer' => $this->get_config_value( 'user.name' ) . ' <' . $this->get_config_value( 'user.email' ) . '>',
+					'committer_date' => null,
+					'message' => 'Changes',
+				),
+				$options
+			)
+		);
 	}
 
 	private function mark_tree_path_changed( &$changed_trees, $path ) {

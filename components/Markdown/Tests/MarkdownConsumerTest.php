@@ -144,15 +144,15 @@ HTML
 			),
 			'A heading - level 4' => array(
 				'markdown' => '#### A simple heading',
-				'expected' => '<!-- wp:heading {"level":4} --><h4 class="wp-block-heading">A simple heading</h4><!-- /wp:heading -->',
+				'expected' => '<!-- wp:heading {"level":4} --><h4 class="wp-block-heading" id="a-simple-heading">A simple heading</h4><!-- /wp:heading -->',
 			),
 			'A heading - level 2' => array(
 				'markdown' => '## A simple heading',
-				'expected' => '<!-- wp:heading --><h2 class="wp-block-heading">A simple heading</h2><!-- /wp:heading -->',
+				'expected' => '<!-- wp:heading --><h2 class="wp-block-heading" id="a-simple-heading">A simple heading</h2><!-- /wp:heading -->',
 			),
 			'A heading - level 1' => array(
 				'markdown' => '# A simple heading',
-				'expected' => '<!-- wp:heading {"level":1} --><h1 class="wp-block-heading">A simple heading</h1><!-- /wp:heading -->',
+				'expected' => '<!-- wp:heading {"level":1} --><h1 class="wp-block-heading" id="a-simple-heading">A simple heading</h1><!-- /wp:heading -->',
 			),
 			'A link inside a paragraph' => array(
 				'markdown' => 'A simple paragraph with a [link](https://wordpress.org)',

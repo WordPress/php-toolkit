@@ -32,7 +32,7 @@ class RewriteUrlsTest extends TestCase {
 			'Domain in a block attribute' => array(
 				'<!-- wp:image {"src": "http://legacy-blog.com/image.jpg"} -->',
 				'<!-- wp:image {"src":"https:\/\/modern-webstore.org\/image.jpg"} -->',
-				'https://legacy-blog.com',
+				'http://legacy-blog.com',
 				'https://modern-webstore.org',
 			),
 			'Domain in a block attribute expressed with JSON UTF-8 escape sequences' => array(

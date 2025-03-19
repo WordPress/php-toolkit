@@ -140,6 +140,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 
 			if ( is_string( $url_maybe ) ) {
 				$parsed_url = WPURL::parse( $url_maybe, $this->base_url_string );
+
 				if ( false === $parsed_url ) {
 					return false;
 				}
@@ -177,23 +178,33 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		return false;
 	}
 
-	public function set_raw_url( $new_url ) {
+	/**
+	 * Replaces the currently matched URL with a new one.
+	 *
+	 * @param string $raw_url The raw URL.
+	 * @param URL    $parsed_url The parsed version of the raw URL. It is required
+	 *                           as $raw_url might be a relative URL pointing to a different
+	 *                           host than this processor's base URL.
+	 * @return bool True if the URL was set, false otherwise.
+	 */
+	public function set_url( $raw_url, $parsed_url ) {
 		if ( null === $this->raw_url ) {
 			return false;
 		}
-		$this->raw_url = $new_url;
+		$this->raw_url    = $raw_url;
+		$this->parsed_url = $parsed_url;
 		switch ( parent::get_token_type() ) {
 			case '#tag':
 				$attr = $this->get_inspected_attribute_name();
 				if ( false === $attr ) {
 					return false;
 				}
-				$this->set_attribute( $attr, $new_url );
+				$this->set_attribute( $attr, $raw_url );
 
 				return true;
 
 			case '#block-comment':
-				return $this->set_block_attribute_value( $new_url );
+				return $this->set_block_attribute_value( $raw_url );
 
 			case '#text':
 				if ( null === $this->url_in_text_processor ) {
@@ -201,7 +212,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 				}
 				$this->url_in_text_node_updated = true;
 
-				return $this->url_in_text_processor->set_raw_url( $new_url );
+				return $this->url_in_text_processor->set_raw_url( $raw_url );
 		}
 	}
 
@@ -216,7 +227,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	 *        relative URLs in text nodes. On the other hand, the detection is performed
 	 *        by this WPURL_In_Text_Processor class so maybe the two do go hand in hand?
 	 */
-	public function replace_base_url( URL $to_url ) {
+	public function replace_base_url( URL $to_url, ?URL $base_url = null ) {
 		$updated_url = clone $this->get_parsed_url();
 
 		$updated_url->hostname = $to_url->hostname;
@@ -227,19 +238,22 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		$from_url      = $this->get_parsed_url();
 		$from_pathname = $from_url->pathname;
 		$to_pathname   = $to_url->pathname;
-		if ( $this->base_url_object->pathname !== $to_pathname ) {
-			$base_pathname_with_trailing_slash = rtrim( $this->base_url_object->pathname, '/' ) . '/';
+
+		$base_url = $base_url ?? $this->base_url_object;
+		if ( $base_url->pathname !== $to_pathname ) {
+			$base_pathname_with_trailing_slash = rtrim( $base_url->pathname, '/' ) . '/';
 			$decoded_matched_pathname          = urldecode_n(
 				$from_pathname,
 				strlen( $base_pathname_with_trailing_slash )
 			);
 			$to_pathname_with_trailing_slash   = rtrim( $to_pathname, '/' ) . '/';
-			$updated_url->pathname             =
-				$to_pathname_with_trailing_slash .
-					substr(
-						$decoded_matched_pathname,
-						strlen( $base_pathname_with_trailing_slash )
-					);
+			$remaining_pathname                =
+				substr(
+					$decoded_matched_pathname,
+					strlen( $base_pathname_with_trailing_slash )
+				);
+
+			$updated_url->pathname = $to_pathname_with_trailing_slash . $remaining_pathname;
 		}
 
 		/*
@@ -263,18 +277,8 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			return false;
 		}
 
-		$is_relative = (
-			// The URL-rewriting specific logic. We make an assumption that only
-			// absolute URLs are detected in text nodes.
-			// @TODO: Verify this assumption, evaluate whether this is the right
-			// place to place this logic. Perhaps this *method* could be
-			// decoupled into two separate *functions*?
-			$this->get_token_type() !== '#text' &&
-			! str_starts_with( $this->get_raw_url(), 'http://' ) &&
-			! str_starts_with( $this->get_raw_url(), 'https://' )
-		);
-		if ( ! $is_relative ) {
-			$this->set_raw_url( $new_raw_url );
+		if ( ! $this->is_url_relative() ) {
+			$this->set_url( $new_raw_url, $updated_url );
 			return true;
 		}
 
@@ -286,8 +290,29 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			$new_relative_url .= $updated_url->hash;
 		}
 
-		$this->set_raw_url( $new_relative_url );
+		$this->set_url( $new_relative_url, $updated_url );
 		return true;
+	}
+
+	/**
+	 * Returns true if the currently matched URL is relative.
+	 *
+	 * @return bool Whether the currently matched URL is relative.
+	 */
+	public function is_url_relative() {
+		return (
+			! WPURL::can_parse( $this->get_raw_url() ) &&
+			// only absolute URLs are detected in text nodes.
+			'#text' !== $this->get_token_type()
+		);
+	}
+	/**
+	 * Returns true if the currently matched URL is absolute.
+	 *
+	 * @return bool Whether the currently matched URL is absolute.
+	 */
+	public function is_url_absolute() {
+		return WPURL::can_parse( $this->get_raw_url() );
 	}
 
 	public function get_inspected_attribute_name() {
