@@ -548,7 +548,7 @@ function uri_to_byte_stream( $uri ) {
 	if ( file_exists( $uri ) ) {
 		return FileReadStream::from_path( $uri );
 	}
-	throw new \Exception( "Unknown resource type: $uri" );
+	throw new \Exception( "Unknown resource type: $uri. If that's a local file, \033[1mplease provide an absolute path to the file\033[0m." );
 }
 
 
