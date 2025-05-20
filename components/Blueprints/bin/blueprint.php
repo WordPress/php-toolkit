@@ -41,6 +41,7 @@ use WordPress\Blueprints\Logger\CLILogger;
 use WordPress\Blueprints\ProgressObserver;
 use WordPress\Blueprints\Runner;
 use WordPress\Blueprints\RunnerConfiguration;
+use WordPress\Filesystem\LocalFilesystem;
 
 // Enable colours on Windows 10+ (safe‑no‑op elsewhere)
 if ( PHP_OS_FAMILY === 'Windows' && function_exists( 'sapi_windows_vt100_support' ) ) {
@@ -302,9 +303,14 @@ function cliArgsToRunnerConfiguration( array $positionalArgs, array $options ): 
 		if ( $options['mode'] !== 'create-new-site' ) {
 			throw new InvalidArgumentException( "--truncate-new-site-directory can only be used with --mode=create-new-site" );
 		}
-		if ( ! is_dir( $targetSiteRoot ) ) {
+		$absoluteTargetSiteRoot = realpath( $targetSiteRoot );
+		if ( false === $absoluteTargetSiteRoot) {
 			mkdir( $targetSiteRoot, 0755, true );
-		}
+		} else if( is_dir( $absoluteTargetSiteRoot ) ) {
+			$fs = LocalFilesystem::create( $absoluteTargetSiteRoot );
+			$fs->rmdir( '/', [ 'recursive' => true ] );
+			$fs->mkdir( '/', [ 'chmod' => 0755 ] );
+		} 
 	}
 
 	$absoluteTargetSiteRoot = realpath( $targetSiteRoot );
