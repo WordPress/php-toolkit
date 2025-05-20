@@ -47,7 +47,7 @@ class StepTestCase extends TestCase {
 		$this->execution_context      = LocalFilesystem::create( $this->execution_context_path );
 
 		$base_site_root = wp_join_unix_paths( $tmp_dir, 'blueprint_test_base_site' );
-		if ( is_dir( $base_site_root ) && file_exists( $base_site_root . '/wp-load.php' ) ) {
+		if ( is_dir( $base_site_root ) && file_exists( wp_join_unix_paths( $base_site_root, 'wp-load.php' ) ) ) {
 			LocalFilesystem::create( $tmp_dir )->copy(
 				'blueprint_test_base_site',
 				basename( $this->document_root ),

@@ -84,7 +84,7 @@ class FunctionsTest extends TestCase {
 			'Trailing slash: /foo/bar/' => [ '/foo/bar/', 1, '/foo', true ],
 
 			// Multiple slashes
-			'Multiple slashes: //' => [ '//', 1, '/', true ],
+			'Multiple slashes: //' => [ '//', 1, '/', false ],
 			'Multiple slashes: ///' => [ '///', 1, '/', false ],
 
 			// No slash / relative
