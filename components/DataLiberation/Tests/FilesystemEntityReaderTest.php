@@ -10,11 +10,11 @@ class FilesystemEntityReaderTest extends TestCase {
 		$reader   = new FilesystemEntityReader(
 			LocalFilesystem::create( __DIR__ . '/fixtures/filesystem-entity-reader/simple-structure' ),
 			array(
-				'first_post_id' => 2,
+				'first_post_id'      => 2,
 				'create_index_pages' => true,
-				'filter_pattern' => '#\.html$#',
+				'filter_pattern'     => '#\.html$#',
 				'index_file_pattern' => '#root.html#',
-				'base_url' => 'https://example.com',
+				'base_url'           => 'https://example.com',
 			)
 		);
 		$entities = array();
@@ -81,8 +81,8 @@ class FilesystemEntityReaderTest extends TestCase {
 			LocalFilesystem::create( __DIR__ . '/fixtures/filesystem-entity-reader/simple-structure' ),
 			array(
 				'root_parent_id' => 2,
-				'first_post_id' => 3,
-				'base_url' => 'https://example.com',
+				'first_post_id'  => 3,
+				'base_url'       => 'https://example.com',
 			)
 		);
 		$entities = array();
@@ -102,11 +102,11 @@ class FilesystemEntityReaderTest extends TestCase {
 		$reader   = new FilesystemEntityReader(
 			LocalFilesystem::create( __DIR__ . '/fixtures/filesystem-entity-reader/simple-structure' ),
 			array(
-				'first_post_id' => 2,
+				'first_post_id'      => 2,
 				'create_index_pages' => true,
-				'filter_pattern' => '#\.html$#',
+				'filter_pattern'     => '#\.html$#',
 				'index_file_pattern' => '#root.html#',
-				'base_url' => 'https://example.com',
+				'base_url'           => 'https://example.com',
 			)
 		);
 		$entities = $this->get_post_entities( $reader );
@@ -119,11 +119,11 @@ class FilesystemEntityReaderTest extends TestCase {
 		$reader   = new FilesystemEntityReader(
 			LocalFilesystem::create( __DIR__ . '/fixtures/filesystem-entity-reader/with-nested-images-directory' ),
 			array(
-				'first_post_id' => 2,
+				'first_post_id'      => 2,
 				'create_index_pages' => true,
-				'filter_pattern' => '#\.html$#',
+				'filter_pattern'     => '#\.html$#',
 				'index_file_pattern' => '#root.html#',
-				'base_url' => 'https://example.com',
+				'base_url'           => 'https://example.com',
 			)
 		);
 		$entities = $this->get_post_entities( $reader );
@@ -141,6 +141,7 @@ class FilesystemEntityReaderTest extends TestCase {
 				$entities[] = $page_maybe->get_data();
 			}
 		}
+
 		return $entities;
 	}
 

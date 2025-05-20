@@ -28,7 +28,7 @@ final class DelimiterProcessorCollection implements DelimiterProcessorCollection
      *
      * @psalm-readonly-allow-private-mutation
      */
-    private array $processorsByChar = [];
+    private $processorsByChar = [];
 
     public function add(DelimiterProcessorInterface $processor): void
     {

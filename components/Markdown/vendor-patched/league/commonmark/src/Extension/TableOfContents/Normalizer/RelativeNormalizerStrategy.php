@@ -19,15 +19,16 @@ use League\CommonMark\Extension\TableOfContents\Node\TableOfContents;
 
 final class RelativeNormalizerStrategy implements NormalizerStrategyInterface
 {
-    /** @psalm-readonly */
-    private TableOfContents $toc;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Extension\TableOfContents\Node\TableOfContents */
+    private $toc;
 
     /**
      * @var array<int, ListItem>
      *
      * @psalm-readonly-allow-private-mutation
      */
-    private array $listItemStack = [];
+    private $listItemStack = [];
 
     public function __construct(TableOfContents $toc)
     {
@@ -36,12 +37,16 @@ final class RelativeNormalizerStrategy implements NormalizerStrategyInterface
 
     public function addItem(int $level, ListItem $listItemToAdd): void
     {
-        $previousLevel = \array_key_last($this->listItemStack);
+        end($this->listItemStack);
+        $previousLevel = key($this->listItemStack);
+        reset($this->listItemStack);
 
         // Pop the stack if we're too deep
         while ($previousLevel !== null && $level < $previousLevel) {
             \array_pop($this->listItemStack);
-            $previousLevel = \array_key_last($this->listItemStack);
+            end($this->listItemStack);
+            $previousLevel = key($this->listItemStack);
+            reset($this->listItemStack);
         }
 
         $lastListItem = \end($this->listItemStack);

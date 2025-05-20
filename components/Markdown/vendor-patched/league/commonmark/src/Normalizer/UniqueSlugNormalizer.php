@@ -16,9 +16,12 @@ namespace League\CommonMark\Normalizer;
 // phpcs:disable Squiz.Strings.DoubleQuoteUsage.ContainsVar
 final class UniqueSlugNormalizer implements UniqueSlugNormalizerInterface
 {
-    private TextNormalizerInterface $innerNormalizer;
+    /**
+     * @var \League\CommonMark\Normalizer\TextNormalizerInterface
+     */
+    private $innerNormalizer;
     /** @var array<string, bool> */
-    private array $alreadyUsed = [];
+    private $alreadyUsed = [];
 
     public function __construct(TextNormalizerInterface $innerNormalizer)
     {

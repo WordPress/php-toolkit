@@ -2,19 +2,21 @@
 
 namespace WordPress\DataLiberation\EntityReader;
 
+use Iterator;
+use ReturnTypeWillChange;
 use WordPress\DataLiberation\DataLiberationException;
 
 /**
  * An iterator that reads entities from a WP_Entity_Reader.
  */
-class EntityReaderIterator implements \Iterator {
+class EntityReaderIterator implements Iterator {
 
 	/**
 	 * @var EntityReader
 	 */
 	private $entity_reader;
 	private $is_initialized = false;
-	private $key            = 0;
+	private $key = 0;
 
 	public function __construct( EntityReader $entity_reader ) {
 		$this->entity_reader = $entity_reader;
@@ -24,25 +26,27 @@ class EntityReaderIterator implements \Iterator {
 		return $this->entity_reader;
 	}
 
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function current() {
 		$this->ensure_initialized();
+
 		return $this->entity_reader->get_entity();
 	}
 
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function next() {
 		$this->ensure_initialized();
 		$this->advance_to_next_entity();
 	}
 
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function key() {
 		$this->ensure_initialized();
+
 		return $this->key;
 	}
 
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function valid() {
 		$this->ensure_initialized();
 		if ( $this->entity_reader->is_finished() ) {
@@ -58,10 +62,11 @@ class EntityReaderIterator implements \Iterator {
 		if ( ! $entity->get_type() ) {
 			return false;
 		}
+
 		return true;
 	}
 
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function rewind() {
 		// rewind is not supported except for the first rewind call that initializes the iterator
 		if ( $this->is_initialized ) {
@@ -80,7 +85,7 @@ class EntityReaderIterator implements \Iterator {
 
 	private function advance_to_next_entity() {
 		if ( $this->entity_reader->next_entity() ) {
-			++$this->key;
+			++ $this->key;
 		}
 	}
 

@@ -272,13 +272,13 @@ class WP_Token_Map {
 	 *          ':?' => '😕',
 	 *       ) );
 	 *
-	 * @since 6.6.0
-	 *
-	 * @param array $mappings   The keys transform into the values, both are strings.
-	 * @param int   $key_length Determines the group key length. Leave at the default value
+	 * @param  array  $mappings  The keys transform into the values, both are strings.
+	 * @param  int  $key_length  Determines the group key length. Leave at the default value
 	 *                          of 2 unless there's an empirical reason to change it.
 	 *
 	 * @return WP_Token_Map|null Token map, unless unable to create it.
+	 * @since 6.6.0
+	 *
 	 */
 	public static function from_array( array $mappings, int $key_length = 2 ): ?WP_Token_Map {
 		$map             = new WP_Token_Map();
@@ -296,12 +296,13 @@ class WP_Token_Map {
 				_doing_it_wrong(
 					__METHOD__,
 					sprintf(
-						/* translators: 1: maximum byte length (a count) */
+					/* translators: 1: maximum byte length (a count) */
 						__( 'Token Map tokens and substitutions must all be shorter than %1$d bytes.' ),
 						self::MAX_LENGTH
 					),
 					'6.6.0'
 				);
+
 				return null;
 			}
 
@@ -337,7 +338,7 @@ class WP_Token_Map {
 		// Finally construct the optimized lookups.
 
 		foreach ( $shorts as $word ) {
-			$map->small_words     .= str_pad( $word, $key_length + 1, "\x00", STR_PAD_RIGHT );
+			$map->small_words      .= str_pad( $word, $key_length + 1, "\x00", STR_PAD_RIGHT );
 			$map->small_mappings[] = $mappings[ $word ];
 		}
 
@@ -354,7 +355,7 @@ class WP_Token_Map {
 
 				$word_length    = pack( 'C', strlen( $word ) );
 				$mapping_length = pack( 'C', strlen( $mapping ) );
-				$group_string  .= "{$word_length}{$word}{$mapping_length}{$mapping}";
+				$group_string   .= "{$word_length}{$word}{$mapping_length}{$mapping}";
 			}
 
 			$map->large_words[] = $group_string;
@@ -370,20 +371,20 @@ class WP_Token_Map {
 	 * This function should only be used to load data created with
 	 * WP_Token_Map::precomputed_php_source_tag().
 	 *
-	 * @since 6.6.0
-	 *
-	 * @param array $state {
+	 * @param  array  $state  {
 	 *     Stores pre-computed state for directly loading into a Token Map.
 	 *
-	 *     @type string $storage_version Which version of the code produced this state.
-	 *     @type int    $key_length      Group key length.
-	 *     @type string $groups          Group lookup index.
-	 *     @type array  $large_words     Large word groups and packed strings.
-	 *     @type string $small_words     Small words packed string.
-	 *     @type array  $small_mappings  Small word mappings.
+	 * @type string $storage_version Which version of the code produced this state.
+	 * @type int $key_length Group key length.
+	 * @type string $groups Group lookup index.
+	 * @type array $large_words Large word groups and packed strings.
+	 * @type string $small_words Small words packed string.
+	 * @type array $small_mappings Small word mappings.
 	 * }
 	 *
 	 * @return WP_Token_Map Map with precomputed data loaded.
+	 * @since 6.6.0
+	 *
 	 */
 	public static function from_precomputed_table( $state ): ?WP_Token_Map {
 		$has_necessary_state = isset(
@@ -401,6 +402,7 @@ class WP_Token_Map {
 				__( 'Missing required inputs to pre-computed WP_Token_Map.' ),
 				'6.6.0'
 			);
+
 			return null;
 		}
 
@@ -408,9 +410,11 @@ class WP_Token_Map {
 			_doing_it_wrong(
 				__METHOD__,
 				/* translators: 1: version string, 2: version string. */
-				sprintf( __( 'Loaded version \'%1$s\' incompatible with expected version \'%2$s\'.' ), $state['storage_version'], self::STORAGE_VERSION ),
+				sprintf( __( 'Loaded version \'%1$s\' incompatible with expected version \'%2$s\'.' ), $state['storage_version'],
+					self::STORAGE_VERSION ),
 				'6.6.0'
 			);
+
 			return null;
 		}
 
@@ -433,11 +437,12 @@ class WP_Token_Map {
 	 *     true  === $smilies->contains( ':)' );
 	 *     false === $smilies->contains( 'simile' );
 	 *
+	 * @param  string  $word  Determine if this word is a lookup key in the map.
+	 * @param  string  $case_sensitivity  Optional. Pass 'ascii-case-insensitive' to ignore ASCII case when matching. Default 'case-sensitive'.
+	 *
+	 * @return bool Whether there's an entry for the given word in the map.
 	 * @since 6.6.0
 	 *
-	 * @param string $word             Determine if this word is a lookup key in the map.
-	 * @param string $case_sensitivity Optional. Pass 'ascii-case-insensitive' to ignore ASCII case when matching. Default 'case-sensitive'.
-	 * @return bool Whether there's an entry for the given word in the map.
 	 */
 	public function contains( string $word, string $case_sensitivity = 'case-sensitive' ): bool {
 		$ignore_case = 'ascii-case-insensitive' === $case_sensitivity;
@@ -468,10 +473,10 @@ class WP_Token_Map {
 		$at           = 0;
 
 		while ( $at < $group_length ) {
-			$token_length   = unpack( 'C', $group[ $at++ ] )[1];
+			$token_length   = unpack( 'C', $group[ $at ++ ] )[1];
 			$token_at       = $at;
-			$at            += $token_length;
-			$mapping_length = unpack( 'C', $group[ $at++ ] )[1];
+			$at             += $token_length;
+			$mapping_length = unpack( 'C', $group[ $at ++ ] )[1];
 			$mapping_at     = $at;
 
 			if ( $token_length === $length && 0 === substr_compare( $group, $slug, $token_at, $token_length, $ignore_case ) ) {
@@ -518,16 +523,21 @@ class WP_Token_Map {
 	 *         $output .= "{$prefix}{$smily}";
 	 *     }
 	 *
-	 * @since 6.6.0
-	 *
-	 * @param string   $text                       String in which to search for a lookup key.
-	 * @param int      $offset                     Optional. How many bytes into the string where the lookup key ought to start. Default 0.
-	 * @param int|null &$matched_token_byte_length Optional. Holds byte-length of found token matched, otherwise not set. Default null.
-	 * @param string   $case_sensitivity           Optional. Pass 'ascii-case-insensitive' to ignore ASCII case when matching. Default 'case-sensitive'.
+	 * @param  string  $text  String in which to search for a lookup key.
+	 * @param  int  $offset  Optional. How many bytes into the string where the lookup key ought to start. Default 0.
+	 * @param  int|null &$matched_token_byte_length  Optional. Holds byte-length of found token matched, otherwise not set. Default null.
+	 * @param  string  $case_sensitivity  Optional. Pass 'ascii-case-insensitive' to ignore ASCII case when matching. Default 'case-sensitive'.
 	 *
 	 * @return string|null Mapped value of lookup key if found, otherwise `null`.
+	 * @since 6.6.0
+	 *
 	 */
-	public function read_token( string $text, int $offset = 0, &$matched_token_byte_length = null, $case_sensitivity = 'case-sensitive' ): ?string {
+	public function read_token(
+		string $text,
+		int $offset = 0,
+		&$matched_token_byte_length = null,
+		$case_sensitivity = 'case-sensitive'
+	): ?string {
 		$ignore_case = 'ascii-case-insensitive' === $case_sensitivity;
 		$text_length = strlen( $text );
 
@@ -547,14 +557,15 @@ class WP_Token_Map {
 			$group_length = strlen( $group );
 			$at           = 0;
 			while ( $at < $group_length ) {
-				$token_length   = unpack( 'C', $group[ $at++ ] )[1];
+				$token_length   = unpack( 'C', $group[ $at ++ ] )[1];
 				$token          = substr( $group, $at, $token_length );
-				$at            += $token_length;
-				$mapping_length = unpack( 'C', $group[ $at++ ] )[1];
+				$at             += $token_length;
+				$mapping_length = unpack( 'C', $group[ $at ++ ] )[1];
 				$mapping_at     = $at;
 
 				if ( 0 === substr_compare( $text, $token, $offset + $this->key_length, $token_length, $ignore_case ) ) {
 					$matched_token_byte_length = $this->key_length + $token_length;
+
 					return substr( $group, $mapping_at, $mapping_length );
 				}
 
@@ -571,16 +582,21 @@ class WP_Token_Map {
 	/**
 	 * Finds a match for a short word at the index.
 	 *
-	 * @since 6.6.0
-	 *
-	 * @param string   $text                       String in which to search for a lookup key.
-	 * @param int      $offset                     Optional. How many bytes into the string where the lookup key ought to start. Default 0.
-	 * @param int|null &$matched_token_byte_length Optional. Holds byte-length of found lookup key if matched, otherwise not set. Default null.
-	 * @param string   $case_sensitivity           Optional. Pass 'ascii-case-insensitive' to ignore ASCII case when matching. Default 'case-sensitive'.
+	 * @param  string  $text  String in which to search for a lookup key.
+	 * @param  int  $offset  Optional. How many bytes into the string where the lookup key ought to start. Default 0.
+	 * @param  int|null &$matched_token_byte_length  Optional. Holds byte-length of found lookup key if matched, otherwise not set. Default null.
+	 * @param  string  $case_sensitivity  Optional. Pass 'ascii-case-insensitive' to ignore ASCII case when matching. Default 'case-sensitive'.
 	 *
 	 * @return string|null Mapped value of lookup key if found, otherwise `null`.
+	 * @since 6.6.0
+	 *
 	 */
-	private function read_small_token( string $text, int $offset = 0, &$matched_token_byte_length = null, $case_sensitivity = 'case-sensitive' ): ?string {
+	private function read_small_token(
+		string $text,
+		int $offset = 0,
+		&$matched_token_byte_length = null,
+		$case_sensitivity = 'case-sensitive'
+	): ?string {
 		$ignore_case  = 'ascii-case-insensitive' === $case_sensitivity;
 		$small_length = strlen( $this->small_words );
 		$search_text  = substr( $text, $offset, $this->key_length );
@@ -599,9 +615,10 @@ class WP_Token_Map {
 				continue;
 			}
 
-			for ( $adjust = 1; $adjust < $this->key_length; $adjust++ ) {
+			for ( $adjust = 1; $adjust < $this->key_length; $adjust ++ ) {
 				if ( "\x00" === $this->small_words[ $at + $adjust ] ) {
 					$matched_token_byte_length = $adjust;
+
 					return $this->small_mappings[ $at / ( $this->key_length + 1 ) ];
 				}
 
@@ -615,6 +632,7 @@ class WP_Token_Map {
 			}
 
 			$matched_token_byte_length = $adjust;
+
 			return $this->small_mappings[ $at / ( $this->key_length + 1 ) ];
 		}
 
@@ -643,7 +661,7 @@ class WP_Token_Map {
 		$small_length  = strlen( $this->small_words );
 		while ( $at < $small_length ) {
 			$key            = rtrim( substr( $this->small_words, $at, $this->key_length + 1 ), "\x00" );
-			$value          = $this->small_mappings[ $small_mapping++ ];
+			$value          = $this->small_mappings[ $small_mapping ++ ];
 			$tokens[ $key ] = $value;
 
 			$at += $this->key_length + 1;
@@ -654,15 +672,15 @@ class WP_Token_Map {
 			$group_length = strlen( $group );
 			$at           = 0;
 			while ( $at < $group_length ) {
-				$length = unpack( 'C', $group[ $at++ ] )[1];
+				$length = unpack( 'C', $group[ $at ++ ] )[1];
 				$key    = $prefix . substr( $group, $at, $length );
 
-				$at    += $length;
-				$length = unpack( 'C', $group[ $at++ ] )[1];
+				$at     += $length;
+				$length = unpack( 'C', $group[ $at ++ ] )[1];
 				$value  = substr( $group, $at, $length );
 
 				$tokens[ $key ] = $value;
-				$at            += $length;
+				$at             += $length;
 			}
 		}
 
@@ -692,10 +710,11 @@ class WP_Token_Map {
 	 *         )
 	 *     );
 	 *
+	 * @param  string  $indent  Optional. Use this string for indentation, or rely on the default horizontal tab character. Default "\t".
+	 *
+	 * @return string Value which can be pasted into a PHP source file for quick loading of table.
 	 * @since 6.6.0
 	 *
-	 * @param string $indent Optional. Use this string for indentation, or rely on the default horizontal tab character. Default "\t".
-	 * @return string Value which can be pasted into a PHP source file for quick loading of table.
 	 */
 	public function precomputed_php_source_table( string $indent = "\t" ): string {
 		$i1 = $indent;
@@ -704,13 +723,13 @@ class WP_Token_Map {
 
 		$class_version = self::STORAGE_VERSION;
 
-		$output  = self::class . "::from_precomputed_table(\n";
+		$output = self::class . "::from_precomputed_table(\n";
 		$output .= "{$i1}array(\n";
 		$output .= "{$i2}\"storage_version\" => \"{$class_version}\",\n";
 		$output .= "{$i2}\"key_length\" => {$this->key_length},\n";
 
 		$group_line = str_replace( "\x00", "\\x00", $this->groups );
-		$output    .= "{$i2}\"groups\" => \"{$group_line}\",\n";
+		$output     .= "{$i2}\"groups\" => \"{$group_line}\",\n";
 
 		$output .= "{$i2}\"large_words\" => array(\n";
 
@@ -725,12 +744,12 @@ class WP_Token_Map {
 			$data_line    = "{$i3}\"";
 			$at           = 0;
 			while ( $at < $group_length ) {
-				$token_length   = unpack( 'C', $group[ $at++ ] )[1];
+				$token_length   = unpack( 'C', $group[ $at ++ ] )[1];
 				$token          = substr( $group, $at, $token_length );
-				$at            += $token_length;
-				$mapping_length = unpack( 'C', $group[ $at++ ] )[1];
+				$at             += $token_length;
+				$mapping_length = unpack( 'C', $group[ $at ++ ] )[1];
 				$mapping        = substr( $group, $at, $mapping_length );
-				$at            += $mapping_length;
+				$at             += $mapping_length;
 
 				$token_digits   = str_pad( dechex( $token_length ), 2, '0', STR_PAD_LEFT );
 				$mapping_digits = str_pad( dechex( $mapping_length ), 2, '0', STR_PAD_LEFT );
@@ -747,6 +766,7 @@ class WP_Token_Map {
 
 							default:
 								$hex = dechex( ord( $match_result[0] ) );
+
 								return "\\x{$hex}";
 						}
 					},
@@ -770,11 +790,11 @@ class WP_Token_Map {
 		$at           = 0;
 		while ( $at < $small_length ) {
 			$small_words[] = substr( $this->small_words, $at, $this->key_length + 1 );
-			$at           += $this->key_length + 1;
+			$at            += $this->key_length + 1;
 		}
 
 		$small_text = str_replace( "\x00", '\x00', implode( '', $small_words ) );
-		$output    .= "{$i2}\"small_words\" => \"{$small_text}\",\n";
+		$output     .= "{$i2}\"small_words\" => \"{$small_text}\",\n";
 
 		$output .= "{$i2}\"small_mappings\" => array(\n";
 		foreach ( $this->small_mappings as $mapping ) {
@@ -796,11 +816,12 @@ class WP_Token_Map {
 	 * match. For example, it should not detect `Cap` when matching
 	 * against the string `CapitalDifferentialD`.
 	 *
+	 * @param  string  $a  First string to compare.
+	 * @param  string  $b  Second string to compare.
+	 *
+	 * @return int -1 or lower if `$a` is less than `$b`; 1 or greater if `$a` is greater than `$b`, and 0 if they are equal.
 	 * @since 6.6.0
 	 *
-	 * @param string $a First string to compare.
-	 * @param string $b Second string to compare.
-	 * @return int -1 or lower if `$a` is less than `$b`; 1 or greater if `$a` is greater than `$b`, and 0 if they are equal.
 	 */
 	private static function longest_first_then_alphabetical( string $a, string $b ): int {
 		if ( $a === $b ) {

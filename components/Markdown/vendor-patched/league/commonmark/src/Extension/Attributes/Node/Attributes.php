@@ -23,9 +23,12 @@ final class Attributes extends AbstractBlock
     public const TARGET_NEXT     = 2;
 
     /** @var array<string, mixed> */
-    private array $attributes;
+    private $attributes;
 
-    private int $target = self::TARGET_NEXT;
+    /**
+     * @var int
+     */
+    private $target = self::TARGET_NEXT;
 
     /**
      * @param array<string, mixed> $attributes

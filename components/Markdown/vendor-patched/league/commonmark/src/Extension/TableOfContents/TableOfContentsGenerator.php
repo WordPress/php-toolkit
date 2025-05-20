@@ -39,20 +39,25 @@ final class TableOfContentsGenerator implements TableOfContentsGeneratorInterfac
     public const NORMALIZE_RELATIVE = 'relative';
     public const NORMALIZE_FLAT     = 'flat';
 
-    /** @psalm-readonly */
-    private string $style;
+    /** @psalm-readonly
+     * @var string */
+    private $style;
 
-    /** @psalm-readonly */
-    private string $normalizationStrategy;
+    /** @psalm-readonly
+     * @var string */
+    private $normalizationStrategy;
 
-    /** @psalm-readonly */
-    private int $minHeadingLevel;
+    /** @psalm-readonly
+     * @var int */
+    private $minHeadingLevel;
 
-    /** @psalm-readonly */
-    private int $maxHeadingLevel;
+    /** @psalm-readonly
+     * @var int */
+    private $maxHeadingLevel;
 
-    /** @psalm-readonly */
-    private string $fragmentPrefix;
+    /** @psalm-readonly
+     * @var string */
+    private $fragmentPrefix;
 
     public function __construct(string $style, string $normalizationStrategy, int $minHeadingLevel, int $maxHeadingLevel, string $fragmentPrefix)
     {
@@ -88,7 +93,7 @@ final class TableOfContentsGenerator implements TableOfContentsGeneratorInterfac
             }
 
             // Keep track of the first heading we see - we might need this later
-            $firstHeading ??= $heading;
+            $firstHeading = $firstHeading ?? $heading;
 
             // Keep track of the start and end lines
             $toc->setStartLine($firstHeading->getStartLine());

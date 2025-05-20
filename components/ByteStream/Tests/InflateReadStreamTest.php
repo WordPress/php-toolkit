@@ -8,7 +8,7 @@ class InflateReadStreamTest extends TestCase {
 
 	public function testInflateReaderNextBytesWithSeek() {
 		$text           = file_get_contents( __DIR__ . '/fixtures/preface-to-pygmalion.txt' );
-		$compressedData = gzdeflate( $text, -1, ZLIB_ENCODING_DEFLATE );
+		$compressedData = gzdeflate( $text, - 1, ZLIB_ENCODING_DEFLATE );
 		$stringReader   = new MemoryPipe( $compressedData );
 		$inflateReader  = new InflateReadStream( $stringReader );
 
@@ -32,7 +32,7 @@ class InflateReadStreamTest extends TestCase {
 	public function testPartialInflateWithSeek() {
 		$text   = file_get_contents( __DIR__ . '/fixtures/preface-to-pygmalion.txt' );
 		$header = 'blob ' . strlen( $text ) . "\x00";
-		$object = $header . gzdeflate( $text, -1, ZLIB_ENCODING_DEFLATE );
+		$object = $header . gzdeflate( $text, - 1, ZLIB_ENCODING_DEFLATE );
 
 		$stringReader  = new MemoryPipe( $object );
 		$inflateReader = new InflateReadStream( $stringReader );

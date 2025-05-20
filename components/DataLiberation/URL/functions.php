@@ -38,7 +38,7 @@ function wp_rewrite_urls( $options ) {
 	foreach ( $options['url-mapping'] as $from_url_string => $to_url_string ) {
 		$url_mapping[] = array(
 			'from_url' => WPURL::parse( $from_url_string ),
-			'to_url' => WPURL::parse( $to_url_string ),
+			'to_url'   => WPURL::parse( $to_url_string ),
 		);
 	}
 
@@ -52,14 +52,16 @@ function wp_rewrite_urls( $options ) {
 			}
 		}
 	}
+
 	return $p->get_updated_html();
 }
 
 /**
  * Check if a given URL matches the current site URL.
  *
- * @param URL    $parent The URL to check.
- * @param string $child The current site URL to compare against.
+ * @param  URL  $parent  The URL to check.
+ * @param  string  $child  The current site URL to compare against.
+ *
  * @return bool Whether the URL matches the current site URL.
  */
 function is_child_url_of( $child, $parent_url ) {
@@ -80,12 +82,13 @@ function is_child_url_of( $child, $parent_url ) {
 	}
 
 	$parent_pathname = urldecode( $parent_url->pathname );
+
 	return (
 		// Direct match
 		$parent_pathname === $child_pathname_no_trailing_slash ||
 		$parent_pathname === $child_pathname_no_trailing_slash . '/' ||
 		// Path prefix
-		str_starts_with( $child_pathname_no_trailing_slash . '/', $parent_pathname )
+		strncmp( $child_pathname_no_trailing_slash . '/', $parent_pathname, strlen( $parent_pathname ) ) === 0
 	);
 }
 
@@ -95,8 +98,9 @@ function is_child_url_of( $child, $parent_url ) {
  * For example, `urldecode_n( '%22is 6 %3C 6?%22 – asked Achilles', 1 )` returns
  * '"is 6 %3C 6?%22 – asked Achilles' because only the first encoded byte is decoded.
  *
- * @param string $string The string to decode.
- * @param int    $decode_n The number of bytes to decode in $input
+ * @param  string  $string  The string to decode.
+ * @param  int  $decode_n  The number of bytes to decode in $input
+ *
  * @return string The decoded string.
  */
 function urldecode_n( $input, $decode_n ) {
@@ -108,7 +112,7 @@ function urldecode_n( $input, $decode_n ) {
 		}
 
 		$last_at = $at;
-		$at     += strcspn( $input, '%', $at );
+		$at      += strcspn( $input, '%', $at );
 		// Consume bytes except for the percent sign.
 		$result .= substr( $input, $last_at, $at - $last_at );
 
@@ -117,7 +121,7 @@ function urldecode_n( $input, $decode_n ) {
 			break;
 		}
 
-		++$at;
+		++ $at;
 		if ( $at > strlen( $input ) ) {
 			break;
 		}
@@ -139,5 +143,6 @@ function urldecode_n( $input, $decode_n ) {
 		}
 	}
 	$result .= substr( $input, $at );
+
 	return $result;
 }

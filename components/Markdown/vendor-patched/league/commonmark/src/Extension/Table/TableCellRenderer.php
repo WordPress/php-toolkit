@@ -31,7 +31,7 @@ final class TableCellRenderer implements NodeRendererInterface, XmlNodeRendererI
     ];
 
     /** @var array<TableCell::ALIGN_*, array<string, string|string[]|bool>> */
-    private array $alignmentAttributes;
+    private $alignmentAttributes;
 
     /**
      * @param array<TableCell::ALIGN_*, array<string, string|string[]|bool>> $alignmentAttributes

@@ -2,20 +2,19 @@
 
 namespace WordPress\Git\Protocol;
 
-use WordPress\ByteStream\ReadStream\BaseByteReadStream;
-use WordPress\ByteStream\ReadStream\TransformedReadStream;
 use WordPress\ByteStream\ByteTransformer\ChecksumTransformer;
+use WordPress\ByteStream\ReadStream\BaseByteReadStream;
+use WordPress\ByteStream\ReadStream\DeflateReadStream;
+use WordPress\ByteStream\ReadStream\TransformedReadStream;
 use WordPress\Git\GitRepository;
 use WordPress\Git\Protocol\Parser\PackParser;
 
 class PackfileEncoderReadStream extends BaseByteReadStream {
 
-	protected $context_size_min = 100;
-	protected $context_size_max = 100;
-
 	protected $oids;
 	protected $objects_source;
-	protected $object_reader;
+	protected $object_reader_base;
+	protected $object_reader_deflate;
 	protected $objects_written = 0;
 
 	public static function create( GitRepository $objects_source, $oids ) {
@@ -48,25 +47,31 @@ class PackfileEncoderReadStream extends BaseByteReadStream {
 			return '';
 		}
 
-		if ( ! $this->object_reader ) {
-			$this->object_reader = $this->objects_source->read_object( $this->oids[ $this->objects_written ] );
-			$this->object_reader->set_inflate_enabled( false );
+		if ( ! $this->object_reader_base ) {
+			$this->object_reader_base    = $this->objects_source->read_object( $this->oids[ $this->objects_written ] );
+			$this->object_reader_deflate = new DeflateReadStream(
+				$this->object_reader_base
+			);
 
 			return $this->encode_packfile_object_header(
-				$this->object_reader->get_object_type_name(),
-				$this->object_reader->get_uncompressed_size()
+				$this->object_reader_base->get_object_type_name(),
+				$this->object_reader_base->get_uncompressed_size()
 			);
 		}
 
-		$available = $this->object_reader->pull( 8096 );
+		$available = $this->object_reader_deflate->pull( 8096 );
 		if ( $available ) {
-			return $this->object_reader->consume( $available );
+			return $this->object_reader_deflate->consume( $available );
 		}
 
-		if ( $this->object_reader->reached_end_of_data() ) {
-			$this->object_reader->close_reading();
-			$this->object_reader = null;
-			++$this->objects_written;
+		if ( $this->object_reader_deflate->reached_end_of_data() ) {
+			$this->object_reader_deflate->close_reading();
+			$this->object_reader_deflate = null;
+
+			$this->object_reader_base->close_reading();
+			$this->object_reader_base = null;
+
+			++ $this->objects_written;
 		}
 
 		return $this->internal_pull( $n );
@@ -77,7 +82,7 @@ class PackfileEncoderReadStream extends BaseByteReadStream {
 		$object_type = $types[ $object_type_name ];
 
 		// First byte: type in bits 4-6, size bits 0-3
-		$firstByte  = $uncompressed_size & 0b1111;
+		$firstByte = $uncompressed_size & 0b1111;
 		$firstByte |= ( $object_type & 0b111 ) << 4;
 
 		// Continuation bit 7 if needed
@@ -93,7 +98,7 @@ class PackfileEncoderReadStream extends BaseByteReadStream {
 		// Add continuation bytes if needed
 		while ( $remainingSize > 0 ) {
 			// Set continuation bit if we have more bytes
-			$byte            = $remainingSize & 0b01111111;
+			$byte          = $remainingSize & 0b01111111;
 			$remainingSize >>= 7;
 			if ( $remainingSize > 0 ) {
 				$byte |= 0b10000000;

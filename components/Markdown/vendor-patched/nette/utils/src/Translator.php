@@ -16,9 +16,12 @@ namespace Nette\Localization;
 interface Translator
 {
 	/**
-	 * Translates the given string.
-	 */
-	function translate(string|\Stringable $message, mixed ...$parameters): string|\Stringable;
+  * Translates the given string.
+  * @param string|\Stringable $message
+  * @return string|\Stringable
+  * @param mixed ...$parameters
+  */
+ function translate($message, ...$parameters);
 }
 
 

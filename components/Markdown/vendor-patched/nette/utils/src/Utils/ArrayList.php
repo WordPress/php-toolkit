@@ -22,14 +22,18 @@ class ArrayList implements \ArrayAccess, \Countable, \IteratorAggregate
 {
 	use Nette\SmartObject;
 
-	private array $list = [];
+	/**
+  * @var mixed[]
+  */
+ private $list = [];
 
 
 	/**
-	 * Transforms array to ArrayList.
-	 * @param  list<T>  $array
-	 */
-	public static function from(array $array): static
+  * Transforms array to ArrayList.
+  * @param  list<T>  $array
+  * @return static
+  */
+ public static function from(array $array)
 	{
 		if (!Arrays::isList($array)) {
 			throw new Nette\InvalidArgumentException('Array is not valid list.');
@@ -88,7 +92,8 @@ class ArrayList implements \ArrayAccess, \Countable, \IteratorAggregate
 	 * @return T
 	 * @throws Nette\OutOfRangeException
 	 */
-	public function offsetGet($index): mixed
+	#[\ReturnTypeWillChange]
+ public function offsetGet($index)
 	{
 		if (!is_int($index) || $index < 0 || $index >= count($this->list)) {
 			throw new Nette\OutOfRangeException('Offset invalid or out of range');
@@ -127,7 +132,7 @@ class ArrayList implements \ArrayAccess, \Countable, \IteratorAggregate
 	 * Prepends a item.
 	 * @param  T  $value
 	 */
-	public function prepend(mixed $value): void
+	public function prepend($value): void
 	{
 		$first = array_slice($this->list, 0, 1);
 		$this->offsetSet(0, $value);

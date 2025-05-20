@@ -21,26 +21,33 @@ use League\CommonMark\Exception\InvalidArgumentException;
 
 abstract class Node
 {
-    /** @psalm-readonly */
-    public Data $data;
+    /** @psalm-readonly
+     * @var \Dflydev\DotAccessData\Data */
+    public $data;
 
-    /** @psalm-readonly-allow-private-mutation */
-    protected int $depth = 0;
+    /** @psalm-readonly-allow-private-mutation
+     * @var int */
+    protected $depth = 0;
 
-    /** @psalm-readonly-allow-private-mutation */
-    protected ?Node $parent = null;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\CommonMark\Node\Node|null */
+    protected $parent;
 
-    /** @psalm-readonly-allow-private-mutation */
-    protected ?Node $previous = null;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\CommonMark\Node\Node|null */
+    protected $previous;
 
-    /** @psalm-readonly-allow-private-mutation */
-    protected ?Node $next = null;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\CommonMark\Node\Node|null */
+    protected $next;
 
-    /** @psalm-readonly-allow-private-mutation */
-    protected ?Node $firstChild = null;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\CommonMark\Node\Node|null */
+    protected $firstChild;
 
-    /** @psalm-readonly-allow-private-mutation */
-    protected ?Node $lastChild = null;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\CommonMark\Node\Node|null */
+    protected $lastChild;
 
     public function __construct()
     {

@@ -36,9 +36,11 @@ class BlocksWithMetadataEntityReader implements EntityReader {
 		if ( null !== $this->enqueued_entities ) {
 			if ( count( $this->enqueued_entities ) === 0 ) {
 				$this->finished = true;
+
 				return false;
 			} else {
 				$this->current_entity = array_shift( $this->enqueued_entities );
+
 				return true;
 			}
 		}
@@ -79,14 +81,15 @@ class BlocksWithMetadataEntityReader implements EntityReader {
 			$this->enqueued_entities[] = new ImportEntity(
 				'post_meta',
 				array(
-					'post_id' => $this->post_id,
-					'meta_key' => $key,
+					'post_id'    => $this->post_id,
+					'meta_key'   => $key,
 					'meta_value' => $value,
 				)
 			);
 		}
 
 		$this->current_entity = array_shift( $this->enqueued_entities );
+
 		return true;
 	}
 
@@ -94,6 +97,7 @@ class BlocksWithMetadataEntityReader implements EntityReader {
 		if ( $this->is_finished() ) {
 			return false;
 		}
+
 		return $this->current_entity;
 	}
 

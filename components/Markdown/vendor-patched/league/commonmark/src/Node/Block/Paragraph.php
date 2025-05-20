@@ -18,6 +18,7 @@ namespace League\CommonMark\Node\Block;
 
 class Paragraph extends AbstractBlock
 {
-    /** @internal */
-    public bool $onlyContainsLinkReferenceDefinitions = false;
+    /** @internal
+     * @var bool */
+    public $onlyContainsLinkReferenceDefinitions = false;
 }

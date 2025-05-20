@@ -1,17 +1,17 @@
 {
-	"name": "wordpress/dataliberation",
+	"name": "wordpress/data-liberation",
 	"description": "Data Liberation component for WordPress.",
 	"type": "library",
-    "authors": [
-        {
-            "name": "Adam Zielinski",
-            "email": "adam@adamziel.com"
-        },
-        {
-            "name": "WordPress Team",
-            "email": "wordpress@wordpress.org"
-        }
-    ],
+	"authors": [
+		{
+			"name": "Adam Zielinski",
+			"email": "adam@adamziel.com"
+		},
+		{
+			"name": "WordPress Team",
+			"email": "wordpress@wordpress.org"
+		}
+	],
 	"require": {
 		"php": ">=7.2"
 	},
@@ -24,11 +24,11 @@
 		],
 		"psr-4": {
 			"WordPress\\DataLiberation\\": "",
-            "Rowbot\\": "vendor-patched/",
-            "Brick\\": "vendor-patched/"
+			"Rowbot\\": "vendor-patched/",
+			"Brick\\": "vendor-patched/"
 		},
-        "exclude-from-classmap": [
-            "/Tests/"
-        ]
+		"exclude-from-classmap": [
+			"/Tests/"
+		]
 	}
 }

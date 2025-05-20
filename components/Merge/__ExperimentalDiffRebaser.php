@@ -6,7 +6,6 @@ namespace WordPress\Merge;
 
 use DiffMatchPatch\Diff;
 use DiffMatchPatch\DiffMatchPatch;
-use WordPress\Merge\MergeException;
 
 class DiffMatchPatchMergeDriver {
 	// implements MergeDriver {
@@ -29,7 +28,7 @@ class DiffMatchPatchMergeDriver {
 		// $this->dmp->diff_cleanupSemantic($diff_b);
 		// $this->dmp->diff_cleanupEfficiency($diff_b);
 
-		$patch_a                      = $this->dmp->patch_make( $common_parent, $diff_a );
+		$patch_a = $this->dmp->patch_make( $common_parent, $diff_a );
 		list( $merged_a, $applied_a ) = $this->dmp->patch_apply( $patch_a, $common_parent );
 		if ( ! $applied_a ) {
 			throw new MergeException( 'Diff failed to apply cleanly onto common parent' );
@@ -93,11 +92,11 @@ class DiffMatchPatchMergeDriver {
 		$rebased_diff      = array();
 		$accumulated_shift = 0;
 		while ( $i_b < count( $diff_b ) ) {
-			$change_b           = $diff_b[ $i_b ];
+			$change_b          = $diff_b[ $i_b ];
 			$change_b['start'] += $accumulated_shift;
 			if ( ! isset( $diff_a[ $i_a ] ) ) {
 				$rebased_diff[] = $change_b;
-				++$i_b;
+				++ $i_b;
 				continue;
 			}
 
@@ -123,7 +122,7 @@ class DiffMatchPatchMergeDriver {
 
 			if ( $change_b['start'] < $change_a['start'] ) {
 				$rebased_diff[] = $change_b;
-				++$i_b;
+				++ $i_b;
 			} else {
 				switch ( $change_a['type'] ) {
 					case Diff::INSERT:
@@ -140,7 +139,7 @@ class DiffMatchPatchMergeDriver {
 								case Diff::DELETE:
 									if ( $change_b['start'] + $change_b['length'] <= $change_a['start'] + $change_a['length'] ) {
 										// If deletion B is contained within deletion A, we can just ignore it
-										++$i_b;
+										++ $i_b;
 										var_dump(
 											array(
 												'change_a' => $change_a,
@@ -168,8 +167,8 @@ class DiffMatchPatchMergeDriver {
 										);
 										$rebased_diff[]            = $merged_deletion;
 										// Move past both deletions
-										++$i_b;
-										++$i_a;
+										++ $i_b;
+										++ $i_a;
 									}
 									break;
 							}
@@ -183,7 +182,7 @@ class DiffMatchPatchMergeDriver {
 						);
 						break;
 				}
-				++$i_a;
+				++ $i_a;
 			}
 		}
 
@@ -248,7 +247,7 @@ class DiffMatchPatchMergeDriver {
 						'length' => mb_strlen( $change[1] ),
 						'string' => $change[1],
 					);
-					$cursor          += $annotated_change['length'];
+					$cursor           += $annotated_change['length'];
 					$annotated_diff[] = $annotated_change;
 					break;
 				case Diff::DELETE:
@@ -258,7 +257,7 @@ class DiffMatchPatchMergeDriver {
 						'length' => mb_strlen( $change[1] ),
 						'string' => $change[1],
 					);
-					$cursor          += $annotated_change['length'];
+					$cursor           += $annotated_change['length'];
 					$annotated_diff[] = $annotated_change;
 					break;
 			}

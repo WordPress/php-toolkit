@@ -24,7 +24,8 @@ if ( ! function_exists( '_doing_it_wrong' ) ) {
 }
 
 if ( ! class_exists( 'WP_Exception' ) ) {
-	class WP_Exception extends Exception {}
+	class WP_Exception extends Exception {
+	}
 }
 
 if ( ! function_exists( 'wp_trigger_error' ) ) {
@@ -87,6 +88,7 @@ if ( ! function_exists( 'add_filter' ) ) {
 			'function'      => $callback,
 			'accepted_args' => $accepted_args,
 		);
+
 		return true;
 	}
 }
@@ -113,6 +115,7 @@ if ( ! function_exists( 'apply_filters' ) ) {
 				$value   = call_user_func_array( $function['function'], array_slice( $args, 0, $function['accepted_args'] ) );
 			}
 		}
+
 		return $value;
 	}
 }
@@ -138,6 +141,7 @@ if ( ! function_exists( 'do_action' ) ) {
 if ( ! function_exists( 'parse_blocks' ) ) {
 	function parse_blocks( $input ) {
 		$parser = new WP_Block_Parser();
+
 		return $parser->parse( $input );
 	}
 }
@@ -154,7 +158,7 @@ if ( ! function_exists( 'serialize_block' ) ) {
 
 		$index = 0;
 		foreach ( $block['innerContent'] as $chunk ) {
-			$block_content .= is_string( $chunk ) ? $chunk : serialize_block( $block['innerBlocks'][ $index++ ] );
+			$block_content .= is_string( $chunk ) ? $chunk : serialize_block( $block['innerBlocks'][ $index ++ ] );
 		}
 
 		if ( ! is_array( $block['attrs'] ) ) {
@@ -194,7 +198,7 @@ if ( ! function_exists( 'get_comment_delimited_block_content' ) ) {
 
 if ( ! function_exists( 'strip_core_block_namespace' ) ) {
 	function strip_core_block_namespace( $block_name = null ) {
-		if ( is_string( $block_name ) && str_starts_with( $block_name, 'core/' ) ) {
+		if ( is_string( $block_name ) && strncmp( $block_name, 'core/', strlen( 'core/' ) ) === 0 ) {
 			return substr( $block_name, 5 );
 		}
 

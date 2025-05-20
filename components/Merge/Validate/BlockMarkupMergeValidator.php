@@ -2,6 +2,7 @@
 
 namespace WordPress\Merge\Validate;
 
+use ReflectionClass;
 use WordPress\DataLiberation\BlockMarkup\BlockMarkupProcessor;
 use WP_HTML_Processor;
 
@@ -53,7 +54,7 @@ class BlockMarkupMergeValidator implements MergeValidator {
 	}
 
 	private function assert_html_is_structurally_sound( $html ) {
-		$html          .= '<TERMINATE-PROCESSING>';
+		$html           .= '<TERMINATE-PROCESSING>';
 		$html_processor = WP_HTML_Processor::create_fragment( $html );
 
 		/**
@@ -61,7 +62,7 @@ class BlockMarkupMergeValidator implements MergeValidator {
 		 *
 		 * @TODO: Review the visibility in the HTML processor class.
 		 */
-		$reflection = new \ReflectionClass( $html_processor );
+		$reflection = new ReflectionClass( $html_processor );
 		$is_virtual = $reflection->getMethod( 'is_virtual' );
 		$is_virtual->setAccessible( true );
 

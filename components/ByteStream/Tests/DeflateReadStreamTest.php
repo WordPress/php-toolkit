@@ -3,7 +3,6 @@
 use PHPUnit\Framework\TestCase;
 use WordPress\ByteStream\ByteStreamException;
 use WordPress\ByteStream\MemoryPipe;
-use WordPress\ByteStream\ReadStream\ByteReadStream;
 use WordPress\ByteStream\ReadStream\DeflateReadStream;
 use WordPress\ByteStream\ReadStream\InflateReadStream;
 

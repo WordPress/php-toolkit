@@ -10,7 +10,7 @@ trait InternalizeWriteStream {
 	/**
 	 * Start streaming a file.
 	 *
-	 * @param string $path The path to the file.
+	 * @param  string  $path  The path to the file.
 	 *
 	 * @return ByteWriteStream The stream.
 	 * @example
@@ -24,6 +24,7 @@ trait InternalizeWriteStream {
 	 */
 	public function open_write_stream( $path ): ByteWriteStream {
 		$stream_id = $this->write_stream_internal_open( $path );
+
 		return new FilesystemWriteStream( $this, $stream_id );
 	}
 

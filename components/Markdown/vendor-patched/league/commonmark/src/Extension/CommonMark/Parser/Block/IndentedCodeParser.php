@@ -22,11 +22,12 @@ use League\CommonMark\Util\ArrayCollection;
 
 final class IndentedCodeParser extends AbstractBlockContinueParser
 {
-    /** @psalm-readonly */
-    private IndentedCode $block;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Extension\CommonMark\Node\Block\IndentedCode */
+    private $block;
 
     /** @var ArrayCollection<string> */
-    private ArrayCollection $strings;
+    private $strings;
 
     public function __construct()
     {
@@ -34,7 +35,7 @@ final class IndentedCodeParser extends AbstractBlockContinueParser
         $this->strings = new ArrayCollection();
     }
 
-    public function getBlock(): IndentedCode
+    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }

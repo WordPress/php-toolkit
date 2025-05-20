@@ -24,18 +24,20 @@ use League\CommonMark\Reference\ReferenceInterface;
 
 final class FootnoteParser extends AbstractBlockContinueParser
 {
-    /** @psalm-readonly */
-    private Footnote $block;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Extension\Footnote\Node\Footnote */
+    private $block;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private ?int $indentation = null;
+    /** @psalm-readonly-allow-private-mutation
+     * @var int|null */
+    private $indentation;
 
     public function __construct(ReferenceInterface $reference)
     {
         $this->block = new Footnote($reference);
     }
 
-    public function getBlock(): Footnote
+    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }
@@ -47,7 +49,7 @@ final class FootnoteParser extends AbstractBlockContinueParser
         }
 
         if ($cursor->isIndented()) {
-            $this->indentation ??= $cursor->getIndent();
+            $this->indentation = $this->indentation ?? $cursor->getIndent();
             $cursor->advanceBy($this->indentation, true);
 
             return BlockContinue::at($cursor);

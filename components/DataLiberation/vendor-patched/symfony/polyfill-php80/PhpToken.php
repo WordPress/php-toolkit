@@ -11,93 +11,93 @@
 
 namespace Symfony\Polyfill\Php80;
 
+use function in_array;
+use function is_string;
+use function ord;
+use function strlen;
+
+use const T_COMMENT;
+use const T_DOC_COMMENT;
+use const T_OPEN_TAG;
+use const T_WHITESPACE;
+
 /**
  * @author Fedonyuk Anton <info@ensostudio.ru>
  *
  * @internal
  */
-class PhpToken implements \Stringable
-{
-    /**
-     * @var int
-     */
-    public $id;
+class PhpToken {
+	/**
+	 * @var int
+	 */
+	public $id;
+	/**
+	 * @var string
+	 */
+	public $text;
+	/**
+	 * @var int
+	 */
+	public $line;
+	/**
+	 * @var int
+	 */
+	public $pos;
 
-    /**
-     * @var string
-     */
-    public $text;
+	public function __construct( int $id, string $text, int $line = - 1, int $position = - 1 ) {
+		$this->id   = $id;
+		$this->text = $text;
+		$this->line = $line;
+		$this->pos  = $position;
+	}
 
-    /**
-     * @var int
-     */
-    public $line;
+	public function getTokenName(): ?string {
+		if ( 'UNKNOWN' === $name = token_name( $this->id ) ) {
+			$name = strlen( $this->text ) > 1 || ord( $this->text ) < 32 ? null : $this->text;
+		}
 
-    /**
-     * @var int
-     */
-    public $pos;
+		return $name;
+	}
 
-    public function __construct(int $id, string $text, int $line = -1, int $position = -1)
-    {
-        $this->id = $id;
-        $this->text = $text;
-        $this->line = $line;
-        $this->pos = $position;
-    }
+	/**
+	 * @param  int|string|array  $kind
+	 */
+	public function is( $kind ): bool {
+		foreach ( (array) $kind as $value ) {
+			if ( in_array( $value, [ $this->id, $this->text ], true ) ) {
+				return true;
+			}
+		}
 
-    public function getTokenName(): ?string
-    {
-        if ('UNKNOWN' === $name = token_name($this->id)) {
-            $name = \strlen($this->text) > 1 || \ord($this->text) < 32 ? null : $this->text;
-        }
+		return false;
+	}
 
-        return $name;
-    }
+	public function isIgnorable(): bool {
+		return in_array( $this->id, [ T_WHITESPACE, T_COMMENT, T_DOC_COMMENT, T_OPEN_TAG ], true );
+	}
 
-    /**
-     * @param int|string|array $kind
-     */
-    public function is($kind): bool
-    {
-        foreach ((array) $kind as $value) {
-            if (\in_array($value, [$this->id, $this->text], true)) {
-                return true;
-            }
-        }
+	public function __toString(): string {
+		return (string) $this->text;
+	}
 
-        return false;
-    }
+	/**
+	 * @return static[]
+	 */
+	public static function tokenize( string $code, int $flags = 0 ): array {
+		$line     = 1;
+		$position = 0;
+		$tokens   = token_get_all( $code, $flags );
+		foreach ( $tokens as $index => $token ) {
+			if ( is_string( $token ) ) {
+				$id   = ord( $token );
+				$text = $token;
+			} else {
+				[ $id, $text, $line ] = $token;
+			}
+			$tokens[ $index ] = new static( $id, $text, $line, $position );
+			$position         += strlen( $text );
+		}
 
-    public function isIgnorable(): bool
-    {
-        return \in_array($this->id, [\T_WHITESPACE, \T_COMMENT, \T_DOC_COMMENT, \T_OPEN_TAG], true);
-    }
-
-    public function __toString(): string
-    {
-        return (string) $this->text;
-    }
-
-    /**
-     * @return static[]
-     */
-    public static function tokenize(string $code, int $flags = 0): array
-    {
-        $line = 1;
-        $position = 0;
-        $tokens = token_get_all($code, $flags);
-        foreach ($tokens as $index => $token) {
-            if (\is_string($token)) {
-                $id = \ord($token);
-                $text = $token;
-            } else {
-                [$id, $text, $line] = $token;
-            }
-            $tokens[$index] = new static($id, $text, $line, $position);
-            $position += \strlen($text);
-        }
-
-        return $tokens;
-    }
+		return $tokens;
+	}
 }

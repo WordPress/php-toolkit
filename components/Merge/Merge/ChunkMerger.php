@@ -3,8 +3,8 @@
 namespace WordPress\Merge\Merge;
 
 use WordPress\Merge\Diff\Diff;
-use function str_starts_with;
-use function str_ends_with;
+
+use function sort;
 
 class ChunkMerger implements Merger {
 
@@ -13,30 +13,30 @@ class ChunkMerger implements Merger {
 
 	public function merge( Diff $diffAB, Diff $diffAC ): MergeResult {
 		list( $chunksA, $chunksB ) = $this->ensureChunks( $diffAB->get_changes(), $diffAC->get_changes() );
-		$this->chunksA             = $chunksA;
-		$this->chunksB             = $chunksB;
+		$this->chunksA = $chunksA;
+		$this->chunksB = $chunksB;
 
 		$results = array();
 		$n       = max( count( $chunksA ), count( $chunksB ) );
-		for ( $i = 0; $i < $n; $i++ ) {
+		for ( $i = 0; $i < $n; $i ++ ) {
 			$chunkA = $chunksA[ $i ] ?? array(
-				'base' => null,
-				'deleted' => false,
+				'base'     => null,
+				'deleted'  => false,
 				'inserted' => '',
 			);
 			$chunkB = $chunksB[ $i ] ?? array(
-				'base' => null,
-				'deleted' => false,
+				'base'     => null,
+				'deleted'  => false,
 				'inserted' => '',
 			);
 
 			if (
 				$chunkA['inserted'] !== '' &&
 				$chunkB['inserted'] !== '' &&
-				! str_starts_with( $chunkA['inserted'], $chunkB['inserted'] ) &&
-				! str_starts_with( $chunkB['inserted'], $chunkA['inserted'] ) &&
-				! str_ends_with( $chunkA['inserted'], $chunkB['inserted'] ) &&
-				! str_ends_with( $chunkB['inserted'], $chunkA['inserted'] )
+				strncmp( $chunkA['inserted'], $chunkB['inserted'], strlen( $chunkB['inserted'] ) ) !== 0 &&
+				strncmp( $chunkB['inserted'], $chunkA['inserted'], strlen( $chunkA['inserted'] ) ) !== 0 &&
+				substr_compare( $chunkA['inserted'], $chunkB['inserted'], - strlen( $chunkB['inserted'] ) ) !== 0 &&
+				substr_compare( $chunkB['inserted'], $chunkA['inserted'], - strlen( $chunkA['inserted'] ) ) !== 0
 			) {
 				$results[] = new MergeConflict(
 					$chunkA['inserted'],
@@ -70,11 +70,11 @@ class ChunkMerger implements Merger {
 
 			if ( $chunkA['deleted'] || $chunkB['deleted'] ) {
 				if ( $chunkA['inserted'] && $chunkB['inserted'] && (
-					str_starts_with( $chunkA['inserted'], $chunkB['inserted'] ) ||
-					str_starts_with( $chunkB['inserted'], $chunkA['inserted'] ) ||
-					str_ends_with( $chunkA['inserted'], $chunkB['inserted'] ) ||
-					str_ends_with( $chunkB['inserted'], $chunkA['inserted'] )
-				) ) {
+						strncmp( $chunkA['inserted'], $chunkB['inserted'], strlen( $chunkB['inserted'] ) ) === 0 ||
+						strncmp( $chunkB['inserted'], $chunkA['inserted'], strlen( $chunkA['inserted'] ) ) === 0 ||
+						substr_compare( $chunkA['inserted'], $chunkB['inserted'], - strlen( $chunkB['inserted'] ) ) === 0 ||
+						substr_compare( $chunkB['inserted'], $chunkA['inserted'], - strlen( $chunkA['inserted'] ) ) === 0
+					) ) {
 					$results[] = strlen( $chunkA['inserted'] ) > strlen( $chunkB['inserted'] ) ? $chunkA['inserted'] : $chunkB['inserted'];
 					continue;
 				}
@@ -134,8 +134,8 @@ class ChunkMerger implements Merger {
 	private static function convertDiffToChunks( array $diff ): array {
 		$chunks  = array();
 		$current = array(
-			'base' => null,
-			'deleted' => false,
+			'base'     => null,
+			'deleted'  => false,
 			'inserted' => '',
 		);
 
@@ -146,8 +146,8 @@ class ChunkMerger implements Merger {
 				if ( $current['base'] !== null || $current['inserted'] !== '' ) {
 					$chunks[] = $current;
 					$current  = array(
-						'base' => null,
-						'deleted' => false,
+						'base'     => null,
+						'deleted'  => false,
 						'inserted' => '',
 					);
 				}
@@ -180,7 +180,7 @@ class ChunkMerger implements Merger {
 			}
 		}
 		$boundaries = array_keys( $boundaries );
-		\sort( $boundaries );
+		sort( $boundaries );
 
 		return $boundaries;
 	}
@@ -207,7 +207,7 @@ class ChunkMerger implements Merger {
 				$boundaryIndex < count( $boundaries ) &&
 				$boundaries[ $boundaryIndex ] <= $startOffset
 			) {
-				++$boundaryIndex;
+				++ $boundaryIndex;
 			}
 
 			while (
@@ -222,9 +222,9 @@ class ChunkMerger implements Merger {
 					$resliced[] = array( $op, $sliceText );
 				}
 
-				$text         = substr( $text, $sliceLength );
+				$text        = substr( $text, $sliceLength );
 				$startOffset += $sliceLength;
-				++$boundaryIndex;
+				++ $boundaryIndex;
 				if ( ! $text ) {
 					break;
 				}

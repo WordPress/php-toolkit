@@ -19,6 +19,7 @@ class FileReadStream extends BaseByteReadStream {
 		if ( ! $handle ) {
 			throw new ByteStreamException( sprintf( 'Failed to open file %s', $file_path ) );
 		}
+
 		return self::from_resource( $handle, filesize( $file_path ) );
 	}
 
@@ -26,6 +27,7 @@ class FileReadStream extends BaseByteReadStream {
 		if ( ! is_resource( $handle ) ) {
 			throw new ByteStreamException( 'Invalid file pointer provided' );
 		}
+
 		return new self( $handle, $expected_length );
 	}
 
@@ -49,6 +51,7 @@ class FileReadStream extends BaseByteReadStream {
 		if ( false === $bytes ) {
 			throw new ByteStreamException( 'Failed to read from file' );
 		}
+
 		return $bytes;
 	}
 

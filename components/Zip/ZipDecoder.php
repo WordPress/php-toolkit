@@ -3,6 +3,7 @@
 namespace WordPress\Zip;
 
 use WordPress\ByteStream\ByteStreamException;
+use WordPress\ByteStream\NotEnoughDataException;
 use WordPress\ByteStream\ReadStream\ByteReadStream;
 use WordPress\ByteStream\ReadStream\InflateReadStream;
 use WordPress\ByteStream\ReadStream\LimitedByteReadStream;
@@ -10,16 +11,16 @@ use WordPress\ByteStream\ReadStream\LimitedByteReadStream;
 class ZipDecoder {
 
 	const COMPRESSION_DEFLATE = 8;
-	const COMPRESSION_NONE    = 0;
+	const COMPRESSION_NONE = 0;
 
-	const STATE_SCAN                                = 'scan';
-	const STATE_FILE_ENTRY                          = 'file-entry';
-	const STATE_CENTRAL_DIRECTORY_ENTRY_READING     = 'central-directory-entry-reading';
+	const STATE_SCAN = 'scan';
+	const STATE_FILE_ENTRY = 'file-entry';
+	const STATE_CENTRAL_DIRECTORY_ENTRY_READING = 'central-directory-entry-reading';
 	const STATE_END_CENTRAL_DIRECTORY_ENTRY_READING = 'end-central-directory-entry-reading';
-	const STATE_OBJECT_READY                        = 'object-ready';
-	const STATE_COMPLETE                            = 'complete';
+	const STATE_OBJECT_READY = 'object-ready';
+	const STATE_COMPLETE = 'complete';
 
-	private $state  = self::STATE_SCAN;
+	private $state = self::STATE_SCAN;
 	private $object = null;
 	private $byte_reader;
 
@@ -42,9 +43,11 @@ class ZipDecoder {
 		while ( true ) {
 			switch ( $this->state ) {
 				case self::STATE_SCAN:
-					$n = $this->byte_reader->pull( 4, ByteReadStream::PULL_EXACTLY );
-					if ( $n !== 4 ) {
+					try {
+						$this->byte_reader->pull( 4, ByteReadStream::PULL_EXACTLY );
+					} catch ( NotEnoughDataException $e ) {
 						$this->state = self::STATE_COMPLETE;
+
 						return false;
 					}
 					$signature = $this->byte_reader->consume( 4 );
@@ -201,6 +204,7 @@ class ZipDecoder {
 		$path = preg_replace( '#^(\.\./)+#', '', $path );
 		// Remove all the /./ and /../ segments.
 		$path = preg_replace( '#/\.\.?/#', '/', $path );
+
 		return $path;
 	}
 }

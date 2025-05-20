@@ -22,17 +22,21 @@ use League\CommonMark\Parser\InlineParserContext;
 
 final class MentionParser implements InlineParserInterface
 {
-    /** @psalm-readonly */
-    private string $name;
+    /** @psalm-readonly
+     * @var string */
+    private $name;
 
-    /** @psalm-readonly */
-    private string $prefix;
+    /** @psalm-readonly
+     * @var string */
+    private $prefix;
 
-    /** @psalm-readonly */
-    private string $identifierPattern;
+    /** @psalm-readonly
+     * @var string */
+    private $identifierPattern;
 
-    /** @psalm-readonly */
-    private MentionGeneratorInterface $mentionGenerator;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Extension\Mention\Generator\MentionGeneratorInterface */
+    private $mentionGenerator;
 
     public function __construct(string $name, string $prefix, string $identifierPattern, MentionGeneratorInterface $mentionGenerator)
     {

@@ -1,5 +1,5 @@
 {
-    "name": "wordpress/php-libraries",
+    "name": "wordpress/components",
     "type": "library",
     "description": "WordPress Components",
     "keywords": [
@@ -14,19 +14,21 @@
             "email": "adam@adamziel.com"
         },
         {
-            "name": "WordPress Team",
-            "email": "wordpress@wordpress.org"
+            "name": "Automattic Contributors"
         }
     ],
     "require": {
         "php": ">=7.2",
-        "ext-json": "*"
+        "ext-json": "*",
+        "ext-mbstring": "*"
     },
     "require-dev": {
         "yoast/phpunit-polyfills": "2.0.0",
-        "squizlabs/php_codesniffer": "3.10.0",
+        "squizlabs/php_codesniffer": "^3.6",
         "phpcompatibility/php-compatibility": "10.x-dev",
-        "wp-coding-standards/wpcs": "^3.0"
+        "wp-coding-standards/wpcs": "^2.3",
+        "phpunit/phpunit": "^9.5",
+        "phpstan/phpstan": "^1.0"
     },
     "autoload": {
         "exclude-from-classmap": [
@@ -35,37 +37,29 @@
             "/Tests/"
         ],
         "classmap": [
+            "components/BlockParser/",
+            "components/Blueprints/vendor-patched/",
             "components/DataLiberation/vendor-patched/",
             "components/Markdown/vendor-patched",
             "components/Merge/vendor-patched",
-            "components/HTML/./",
-            "components/BlockParser/"
+            "components/HTML/./"
         ],
         "files": [
             "components/DataLiberation/URL/functions.php",
             "components/Encoding/utf8_decoder.php",
             "components/Filesystem/functions.php",
-            "components/Polyfill/php_functions.php",
+            "components/Zip/functions.php",
             "components/Polyfill/wordpress.php",
             "components/Polyfill/mbstring.php",
-            "components/Git/functions.php",
-            "components/Merge/functions.php"
+            "components/Git/functions.php"
         ],
         "psr-4": {
+            "WordPress\\Blueprints\\": "components/Blueprints/",
             "WordPress\\DataLiberation\\": "components/DataLiberation/",
             "Rowbot\\": "components/DataLiberation/vendor-patched/",
             "Brick\\": "components/DataLiberation/vendor-patched/",
             "WordPress\\HttpClient\\": "components/HttpClient/",
-            "WordPress\\": "components/Blueprints/src/WordPress",
-            "Pimple\\": "components/Blueprints/src/pimple/pimple/src/Pimple",
-            "Psr\\Container\\": "components/Blueprints/src/psr/container",
-            "Psr\\SimpleCache\\": "components/Blueprints/src/psr/simple-cache",
-            "Symfony\\Component\\Process\\": "components/Blueprints/src/Symfony/process",
-            "Symfony\\Component\\EventDispatcher\\": "components/Blueprints/src/Symfony/event-dispatcher",
-            "Symfony\\Component\\filesystem\\": "components/Blueprints/src/Symfony/filesystem",
-            "Opis\\JsonSchema\\": "components/Blueprints/src/opis/json-schema/src",
-            "Opis\\String\\": "components/Blueprints/src/opis/string/src",
-            "Opis\\Uri\\": "components/Blueprints/src/opis/uri/src",
+            "WordPress\\Merge\\": "components/Merge/",
             "WordPress\\Markdown\\": "components/Markdown/",
             "WordPress\\Filesystem\\": "components/Filesystem/",
             "WordPress\\XML\\": "components/XML/",
@@ -73,12 +67,12 @@
             "WordPress\\Zip\\": "components/Zip/",
             "WordPress\\HttpServer\\": "components/HttpServer/",
             "WordPress\\CORSProxy\\": "components/CORSProxy/",
-            "WordPress\\Git\\": "components/Git/",
-            "WordPress\\Merge\\": "components/Merge/"
+            "WordPress\\Git\\": "components/Git/"
         }
     },
     "scripts": {
-        "regenerate-composer": "php bin/regenerate_composer.json.php",
+        "build-blueprints-phar": "box compile -c phar-box.json",
+        "regenerate-json-schema": "node components/Blueprints/Versions/Version2/json-schema/regenerate-schema.ts",
         "test": "phpunit -c phpunit.xml",
         "lint": "phpcs --standard=WordPress .",
         "lint-fix": "phpcbf --standard=WordPress ."
@@ -95,7 +89,6 @@
     "minimum-stability": "dev",
     "config": {
         "allow-plugins": {
-            "wikimedia/composer-merge-plugin": false,
             "dealerdirect/phpcodesniffer-composer-installer": true
         }
     }

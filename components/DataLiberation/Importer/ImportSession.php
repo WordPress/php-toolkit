@@ -5,6 +5,9 @@ namespace WordPress\DataLiberation\Importer;
 use WordPress\DataLiberation\DataLiberationException;
 use WP_Query;
 
+use function get_all_post_meta_flat;
+use function is_wp_error;
+
 /**
  * Manages import session data in the WordPress database.
  *
@@ -31,23 +34,24 @@ class ImportSession {
 	);
 
 	const FRONTLOAD_STATUS_AWAITING_DOWNLOAD = 'awaiting_download';
-	const FRONTLOAD_STATUS_IGNORED           = 'ignored';
-	const FRONTLOAD_STATUS_ERROR             = 'error';
-	const FRONTLOAD_STATUS_SUCCEEDED         = 'succeeded';
+	const FRONTLOAD_STATUS_IGNORED = 'ignored';
+	const FRONTLOAD_STATUS_ERROR = 'error';
+	const FRONTLOAD_STATUS_SUCCEEDED = 'succeeded';
 	private $post_id;
 	private $cached_stage;
 
 	/**
 	 * Creates a new import session.
 	 *
-	 * @param array $args {
-	 *     @type string $data_source     The data source (e.g. 'wxr_file', 'wxr_url', 'markdown_zip')
-	 *     @type string $source_url      Optional. URL of the source file for remote imports
-	 *     @type int    $attachment_id   Optional. ID of the uploaded file attachment
-	 *     @type string $file_name       Optional. Original name of the uploaded file
+	 * @param  array  $args  {
+	 *
+	 * @type string $data_source The data source (e.g. 'wxr_file', 'wxr_url', 'markdown_zip')
+	 * @type string $source_url Optional. URL of the source file for remote imports
+	 * @type int $attachment_id Optional. ID of the uploaded file attachment
+	 * @type string $file_name Optional. Original name of the uploaded file
 	 * }
-	 * @throws DataLiberationException If the arguments are invalid.
 	 * @return ImportSession The created ImportSession instance.
+	 * @throws DataLiberationException If the arguments are invalid.
 	 */
 	public static function create( $args ) {
 		// Validate the required arguments for each data source.
@@ -77,18 +81,18 @@ class ImportSession {
 
 		$post_id = wp_insert_post(
 			array(
-				'post_type' => self::POST_TYPE,
+				'post_type'   => self::POST_TYPE,
 				'post_status' => 'publish',
-				'post_title' => sprintf(
+				'post_title'  => sprintf(
 					'Import from %s - %s',
 					$args['data_source'],
 					$args['file_name'] ?? $args['source_url'] ?? 'Unknown source'
 				),
-				'meta_input' => array(
-					'data_source' => $args['data_source'],
-					'started_at' => time(),
-					'file_name' => $args['file_name'] ?? null,
-					'source_url' => $args['source_url'] ?? null,
+				'meta_input'  => array(
+					'data_source'   => $args['data_source'],
+					'started_at'    => time(),
+					'file_name'     => $args['file_name'] ?? null,
+					'source_url'    => $args['source_url'] ?? null,
 					'attachment_id' => $args['attachment_id'] ?? null,
 				),
 			),
@@ -101,7 +105,7 @@ class ImportSession {
 		if ( ! empty( $args['attachment_id'] ) ) {
 			wp_update_post(
 				array(
-					'ID' => $post_id,
+					'ID'          => $post_id,
 					'post_parent' => $args['attachment_id'],
 				)
 			);
@@ -113,7 +117,8 @@ class ImportSession {
 	/**
 	 * Gets an existing import session by ID.
 	 *
-	 * @param int $post_id The import session post ID
+	 * @param  int  $post_id  The import session post ID
+	 *
 	 * @return WP_Import_Model|null The import model instance or null if not found
 	 */
 	public static function by_id( $post_id ) {
@@ -121,6 +126,7 @@ class ImportSession {
 		if ( ! $post || $post->post_type !== self::POST_TYPE ) {
 			return false;
 		}
+
 		return new self( $post_id );
 	}
 
@@ -132,12 +138,12 @@ class ImportSession {
 	public static function get_active() {
 		$posts = get_posts(
 			array(
-				'post_type' => self::POST_TYPE,
-				'post_status' => array( 'publish' ),
+				'post_type'      => self::POST_TYPE,
+				'post_status'    => array( 'publish' ),
 				'posts_per_page' => 1,
-				'orderby' => 'date',
-				'order' => 'DESC',
-				'meta_query' => array(
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+				'meta_query'     => array(
 					// @TODO: This somehow makes $post empty.
 					// array(
 					// 'key' => 'current_stage',
@@ -170,11 +176,12 @@ class ImportSession {
 
 	public function get_metadata() {
 		$cursor = $this->get_reentrancy_cursor();
+
 		return array(
-			'post_id' => $this->post_id,
-			'cursor' => $cursor ? $cursor : null,
-			'data_source' => get_post_meta( $this->post_id, 'data_source', true ),
-			'source_url' => get_post_meta( $this->post_id, 'source_url', true ),
+			'post_id'       => $this->post_id,
+			'cursor'        => $cursor ? $cursor : null,
+			'data_source'   => get_post_meta( $this->post_id, 'data_source', true ),
+			'source_url'    => get_post_meta( $this->post_id, 'source_url', true ),
 			'attachment_id' => get_post_meta( $this->post_id, 'attachment_id', true ),
 		);
 	}
@@ -191,13 +198,14 @@ class ImportSession {
 			case 'wxr_url':
 				return get_post_meta( $this->post_id, 'source_url', true );
 		}
+
 		return '';
 	}
 
 	public function archive() {
 		wp_update_post(
 			array(
-				'ID' => $this->post_id,
+				'ID'          => $this->post_id,
 				'post_status' => 'archived',
 			)
 		);
@@ -212,26 +220,30 @@ class ImportSession {
 		$progress = array();
 		foreach ( self::PROGRESS_ENTITIES as $entity ) {
 			$progress[] = array(
-				'label' => $entity,
+				'label'    => $entity,
 				'imported' => (int) get_post_meta( $this->post_id, 'imported_' . $entity, true ),
-				'total' => (int) get_post_meta( $this->post_id, 'total_' . $entity, true ),
+				'total'    => (int) get_post_meta( $this->post_id, 'total_' . $entity, true ),
 			);
 		}
+
 		return $progress;
 	}
 
 	public function count_all_imported_entities() {
 		$counts = $this->count_imported_entities();
+
 		return array_sum( array_column( $counts, 'imported' ) );
 	}
 
 	public function count_all_total_entities() {
 		$counts = $this->count_imported_entities();
+
 		return array_sum( array_column( $counts, 'total' ) );
 	}
 
 	public function count_remaining_entities() {
 		$counts = $this->count_imported_entities();
+
 		return array_sum( array_column( $counts, 'total' ) ) - array_sum( array_column( $counts, 'imported' ) );
 	}
 
@@ -245,7 +257,7 @@ class ImportSession {
 	/**
 	 * Updates the progress information.
 	 *
-	 * @param array $newly_imported_entities The new progress data with keys: posts, comments, terms, attachments, users
+	 * @param  array  $newly_imported_entities  The new progress data with keys: posts, comments, terms, attachments, users
 	 */
 	public function bump_imported_entities_counts( $newly_imported_entities ) {
 		foreach ( $newly_imported_entities as $field => $count ) {
@@ -287,6 +299,7 @@ class ImportSession {
 
 	public function count_awaiting_frontloading_stubs() {
 		global $wpdb;
+
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM $wpdb->posts
@@ -301,6 +314,7 @@ class ImportSession {
 
 	public function count_unfinished_frontloading_stubs() {
 		global $wpdb;
+
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM $wpdb->posts
@@ -330,18 +344,18 @@ class ImportSession {
 	public function get_frontloading_stubs( $options = array() ) {
 		$query = new WP_Query(
 			array(
-				'post_type' => 'frontloading_stub',
-				'post_status' => 'any',
-				'post_parent' => $this->post_id,
+				'post_type'      => 'frontloading_stub',
+				'post_status'    => 'any',
+				'post_parent'    => $this->post_id,
 				'posts_per_page' => $options['per_page'] ?? 25,
-				'paged' => $options['page'] ?? 1,
-				'orderby' => array(
+				'paged'          => $options['page'] ?? 1,
+				'orderby'        => array(
 					'post_status' => array(
-						self::FRONTLOAD_STATUS_ERROR => 0,
+						self::FRONTLOAD_STATUS_ERROR             => 0,
 						self::FRONTLOAD_STATUS_AWAITING_DOWNLOAD => 1,
-						'any' => 2,
+						'any'                                    => 2,
 					),
-					'ID' => 'ASC',
+					'ID'          => 'ASC',
 				),
 			)
 		);
@@ -359,7 +373,7 @@ class ImportSession {
 		);
 		update_meta_cache( 'post', $ids );
 		foreach ( $posts as $post ) {
-			$post->meta = \get_all_post_meta_flat( $post->ID );
+			$post->meta = get_all_post_meta_flat( $post->ID );
 		}
 
 		return $posts;
@@ -371,11 +385,13 @@ class ImportSession {
 			$totals[ $field ] = (int) get_post_meta( $this->post_id, 'total_' . $field, true );
 		}
 		$totals['download'] = $this->get_total_number_of_assets();
+
 		return $totals;
 	}
 
 	public function get_total_number_of_assets() {
 		global $wpdb;
+
 		return (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM $wpdb->posts
@@ -401,6 +417,7 @@ class ImportSession {
 				$url
 			)
 		);
+
 		return get_post( $id );
 	}
 
@@ -438,21 +455,21 @@ class ImportSession {
 			}
 
 			$post_data        = array(
-				'post_type' => 'frontloading_stub',
+				'post_type'   => 'frontloading_stub',
 				'post_parent' => $this->post_id,
-				'post_title' => basename( $url ),
+				'post_title'  => basename( $url ),
 				'post_status' => self::FRONTLOAD_STATUS_AWAITING_DOWNLOAD,
-				'guid' => $url,
-				'meta_input' => array(
+				'guid'        => $url,
+				'meta_input'  => array(
 					'original_url' => $url,
-					'current_url' => $url,
-					'attempts' => 0,
-					'last_error' => null,
-					'target_path' => '',
+					'current_url'  => $url,
+					'attempts'     => 0,
+					'last_error'   => null,
+					'target_path'  => '',
 				),
 			);
 			$insertion_result = wp_insert_post( $post_data );
-			if ( \is_wp_error( $insertion_result ) ) {
+			if ( is_wp_error( $insertion_result ) ) {
 				throw new DataLiberationException( 'Failed to insert frontloading placeholder' );
 			}
 		}
@@ -461,7 +478,7 @@ class ImportSession {
 	/**
 	 * Sets the total number of entities to import for each type.
 	 *
-	 * @param array $totals The total number of entities for each type
+	 * @param  array  $totals  The total number of entities for each type
 	 */
 	private $cached_totals = array();
 
@@ -536,7 +553,7 @@ class ImportSession {
 			if ( $new_status !== $placeholder->post_status ) {
 				wp_update_post(
 					array(
-						'ID' => $placeholder->ID,
+						'ID'          => $placeholder->ID,
 						'post_status' => $new_status,
 					)
 				);
@@ -546,6 +563,7 @@ class ImportSession {
 
 	public function get_frontloading_progress() {
 		$meta = get_post_meta( $this->post_id, 'frontloading_progress', true );
+
 		return $meta ? $meta : array();
 	}
 
@@ -553,6 +571,7 @@ class ImportSession {
 		$current_stage       = $this->get_stage();
 		$stage_index         = array_search( $stage, StreamImporter::STAGES_IN_ORDER, true );
 		$current_stage_index = array_search( $current_stage, StreamImporter::STAGES_IN_ORDER, true );
+
 		return $current_stage_index > $stage_index;
 	}
 
@@ -566,13 +585,14 @@ class ImportSession {
 			$meta               = get_post_meta( $this->post_id, 'current_stage', true );
 			$this->cached_stage = $meta ? $meta : StreamImporter::STAGE_INITIAL;
 		}
+
 		return $this->cached_stage;
 	}
 
 	/**
 	 * Updates the current import stage.
 	 *
-	 * @param string $stage The new stage
+	 * @param  string  $stage  The new stage
 	 */
 	public function set_stage( $stage ) {
 		if ( $stage === $this->get_stage() ) {
@@ -609,7 +629,7 @@ class ImportSession {
 	/**
 	 * Updates the importer cursor.
 	 *
-	 * @param string $cursor The new cursor data
+	 * @param  string  $cursor  The new cursor data
 	 */
 	public function set_reentrancy_cursor( $cursor ) {
 		// WordPress, sadly, removes single slashes from the meta value and

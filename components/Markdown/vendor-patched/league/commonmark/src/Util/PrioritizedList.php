@@ -28,13 +28,13 @@ final class PrioritizedList implements \IteratorAggregate
      * @var array<int, array<mixed>>
      * @phpstan-var array<int, array<T>>
      */
-    private array $list = [];
+    private $list = [];
 
     /**
      * @var \Traversable<mixed>|null
      * @phpstan-var \Traversable<T>|null
      */
-    private ?\Traversable $optimized = null;
+    private $optimized;
 
     /**
      * @param mixed $item

@@ -4,16 +4,16 @@ namespace WordPress\HttpClient;
 
 class Request {
 
-	const STATE_ENQUEUED           = 'STATE_ENQUEUED';
+	const STATE_ENQUEUED = 'STATE_ENQUEUED';
 	const STATE_WILL_ENABLE_CRYPTO = 'STATE_WILL_ENABLE_CRYPTO';
-	const STATE_WILL_SEND_HEADERS  = 'STATE_WILL_SEND_HEADERS';
-	const STATE_WILL_SEND_BODY     = 'STATE_WILL_SEND_BODY';
-	const STATE_SENT               = 'STATE_SENT';
-	const STATE_RECEIVING_HEADERS  = 'STATE_RECEIVING_HEADERS';
-	const STATE_RECEIVING_BODY     = 'STATE_RECEIVING_BODY';
-	const STATE_RECEIVED           = 'STATE_RECEIVED';
-	const STATE_FAILED             = 'STATE_FAILED';
-	const STATE_FINISHED           = 'STATE_FINISHED';
+	const STATE_WILL_SEND_HEADERS = 'STATE_WILL_SEND_HEADERS';
+	const STATE_WILL_SEND_BODY = 'STATE_WILL_SEND_BODY';
+	const STATE_SENT = 'STATE_SENT';
+	const STATE_RECEIVING_HEADERS = 'STATE_RECEIVING_HEADERS';
+	const STATE_RECEIVING_BODY = 'STATE_RECEIVING_BODY';
+	const STATE_RECEIVED = 'STATE_RECEIVED';
+	const STATE_FAILED = 'STATE_FAILED';
+	const STATE_FINISHED = 'STATE_FINISHED';
 
 	private static $last_id;
 
@@ -43,7 +43,7 @@ class Request {
 	public $response;
 
 	/**
-	 * @param  string $url
+	 * @param  string  $url
 	 */
 	public function __construct( string $url, $request_info = array() ) {
 		$request_info = array_merge(
@@ -85,7 +85,7 @@ class Request {
 		$this->method = $request_info['method'];
 
 		$headers = array(
-			'host'            => $url_parts['host'],
+			'host'            => isset( $url_parts['host'] ) ? $url_parts['host'] : '',
 			'user-agent'      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36',
 			'accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
 			'accept-language' => 'en-US,en;q=0.9',
@@ -109,6 +109,10 @@ class Request {
 		if ( $this->redirected_from ) {
 			$this->redirected_from->redirected_to = $this;
 		}
+	}
+
+	public function __clone() {
+		$this->id = ++ self::$last_id;
 	}
 
 	public function get_header( $name ) {

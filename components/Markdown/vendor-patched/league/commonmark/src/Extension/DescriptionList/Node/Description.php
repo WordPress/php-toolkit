@@ -18,7 +18,10 @@ use League\CommonMark\Node\Block\TightBlockInterface;
 
 class Description extends AbstractBlock implements TightBlockInterface
 {
-    private bool $tight;
+    /**
+     * @var bool
+     */
+    private $tight;
 
     public function __construct(bool $tight = false)
     {

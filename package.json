@@ -1,0 +1,25 @@
+{
+  "name": "wordpress-components",
+  "version": "1.0.0",
+  "description": "Standalone PHP libraries for use in WordPress plugins and standalone PHP projects:",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "dependencies": {
+    "ts-json-schema-generator": "^2.4.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Automattic/php-toolkit.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Automattic/php-toolkit/issues"
+  },
+  "homepage": "https://github.com/Automattic/php-toolkit#readme"
+}

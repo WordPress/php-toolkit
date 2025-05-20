@@ -35,9 +35,9 @@ HTML;
 			array(
 				'type' => 'post',
 				'data' => array(
-					'post_title' => 'WordPress 6.8 was released',
-					'post_date' => '2024-12-16',
-					'post_id' => 1,
+					'post_title'   => 'WordPress 6.8 was released',
+					'post_date'    => '2024-12-16',
+					'post_id'      => 1,
 					'post_content' => $this->normalize_markup(
 						<<<HTML
 <!-- wp:heading {"level":1} -->
@@ -52,16 +52,16 @@ HTML
 			array(
 				'type' => 'post_meta',
 				'data' => array(
-					'post_id' => 1,
-					'meta_key' => 'custom_post_meta',
+					'post_id'    => 1,
+					'meta_key'   => 'custom_post_meta',
 					'meta_value' => 'custom_post_meta_value',
 				),
 			),
 			array(
 				'type' => 'post_meta',
 				'data' => array(
-					'post_id' => 1,
-					'meta_key' => 'color_palette',
+					'post_id'    => 1,
+					'meta_key'   => 'color_palette',
 					'meta_value' => 'use_that_pretty_one',
 				),
 			),
@@ -72,6 +72,7 @@ HTML
 	private function normalize_markup( $markup ) {
 		$processor  = WP_HTML_Processor::create_fragment( $markup );
 		$serialized = $processor->serialize();
+
 		return $serialized;
 	}
 }

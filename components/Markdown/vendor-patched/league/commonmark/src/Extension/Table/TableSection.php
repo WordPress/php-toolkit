@@ -27,8 +27,9 @@ final class TableSection extends AbstractBlock
      * @phpstan-var self::TYPE_*
      *
      * @psalm-readonly
+     * @var string
      */
-    private string $type;
+    private $type;
 
     /**
      * @psalm-param self::TYPE_* $type

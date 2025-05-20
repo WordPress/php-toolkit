@@ -2,6 +2,8 @@
 
 namespace WordPress\Zip;
 
+use InvalidArgumentException;
+
 /**
  * Represents the end of central directory entry in a ZIP file.
  *
@@ -73,7 +75,7 @@ class EndCentralDirectoryEntry {
 		$valid_properties = array_keys( get_object_vars( $this ) );
 		foreach ( $header_fields as $key => $value ) {
 			if ( ! in_array( $key, $valid_properties ) ) {
-				throw new \InvalidArgumentException( "Invalid property: $key. Expected one of: " . implode( ', ', $valid_properties ) );
+				throw new InvalidArgumentException( "Invalid property: $key. Expected one of: " . implode( ', ', $valid_properties ) );
 			}
 			$this->$key = $value;
 		}

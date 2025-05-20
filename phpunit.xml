@@ -5,7 +5,6 @@
     <testsuites>
         <testsuite name="Project Test Suite">
             <directory>components/*/Tests</directory>
-            <exclude>components/Blueprints</exclude>
         </testsuite>
     </testsuites>
 </phpunit>

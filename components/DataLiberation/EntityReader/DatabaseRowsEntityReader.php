@@ -2,9 +2,10 @@
 
 namespace WordPress\DataLiberation\EntityReader;
 
-use WordPress\DataLiberation\ImportEntity;
 use PDO;
+use PDOStatement;
 use WordPress\DataLiberation\DataLiberationException;
+use WordPress\DataLiberation\ImportEntity;
 
 /**
  * Reads the database rows, one table at a time, from the first row to the last row.
@@ -22,11 +23,11 @@ class DatabaseRowsEntityReader implements EntityReader {
 	/**
 	 * State constants for the finite state machine
 	 */
-	const STATE_INIT         = 'init';
-	const STATE_NEXT_ROW     = 'next_row';
-	const STATE_NEXT_TABLE   = 'next_table';
+	const STATE_INIT = 'init';
+	const STATE_NEXT_ROW = 'next_row';
+	const STATE_NEXT_TABLE = 'next_table';
 	const STATE_CREATE_TABLE = 'create_table';
-	const STATE_FINISHED     = 'finished';
+	const STATE_FINISHED = 'finished';
 
 	/**
 	 * The database connection used to fetch records.
@@ -72,7 +73,7 @@ class DatabaseRowsEntityReader implements EntityReader {
 	 * The current query result set.
 	 *
 	 * @since WP_VERSION
-	 * @var \PDOStatement|null
+	 * @var PDOStatement|null
 	 */
 	private $current_result_set = null;
 
@@ -117,10 +118,11 @@ class DatabaseRowsEntityReader implements EntityReader {
 	/**
 	 * Constructor.
 	 *
+	 * @param  PDO  $db  The database connection to use.
+	 * @param  array  $options  The options to configure the reader.
+	 *
 	 * @since WP_VERSION
 	 *
-	 * @param PDO   $db The database connection to use.
-	 * @param array $options The options to configure the reader.
 	 */
 	public function __construct( PDO $db, $options = array() ) {
 		$this->db                 = $db;
@@ -148,9 +150,9 @@ class DatabaseRowsEntityReader implements EntityReader {
 	/**
 	 * Gets the ID of the last processed record.
 	 *
+	 * @return int|null The record ID, or null if no records have been processed.
 	 * @since WP_VERSION
 	 *
-	 * @return int|null The record ID, or null if no records have been processed.
 	 */
 	public function get_last_record_id() {
 		return $this->last_record_id;
@@ -163,9 +165,9 @@ class DatabaseRowsEntityReader implements EntityReader {
 	/**
 	 * Advances to the next entity in the database.
 	 *
+	 * @return bool Whether another entity was found.
 	 * @since WP_VERSION
 	 *
-	 * @return bool Whether another entity was found.
 	 */
 	public function next_entity() {
 		if ( $this->is_finished() ) {
@@ -186,6 +188,7 @@ class DatabaseRowsEntityReader implements EntityReader {
 						$this->state = $this->create_table_query ? self::STATE_CREATE_TABLE : self::STATE_NEXT_ROW;
 					} else {
 						$this->state = self::STATE_FINISHED;
+
 						return false;
 					}
 					break;
@@ -193,6 +196,7 @@ class DatabaseRowsEntityReader implements EntityReader {
 				case self::STATE_CREATE_TABLE:
 					$this->export_create_table_query();
 					$this->state = self::STATE_NEXT_ROW;
+
 					return true;
 
 				case self::STATE_NEXT_ROW:
@@ -200,6 +204,7 @@ class DatabaseRowsEntityReader implements EntityReader {
 						return true;
 					}
 					$this->state = self::STATE_NEXT_TABLE;
+
 					return $this->next_entity();
 
 				case self::STATE_FINISHED:
@@ -213,39 +218,41 @@ class DatabaseRowsEntityReader implements EntityReader {
 	/**
 	 * Advances to the next entity in the current table.
 	 *
+	 * @return bool Whether another entity was found.
 	 * @since WP_VERSION
 	 *
-	 * @return bool Whether another entity was found.
 	 */
 	private function read_next_entity() {
 		if ( ! $this->current_result_set ) {
 			$this->current_result_set = $this->db->query( "SELECT * FROM {$this->current_table} WHERE ID > {$this->last_record_id}" );
 		}
 
-		$record = $this->current_result_set->fetch( \PDO::FETCH_ASSOC );
+		$record = $this->current_result_set->fetch( PDO::FETCH_ASSOC );
 		if ( ! $record ) {
 			$this->current_result_set = null;
+
 			return false;
 		}
 
 		$this->current_entity = new ImportEntity(
 			'database_row',
 			array(
-				'table' => $this->current_table,
+				'table'  => $this->current_table,
 				'record' => $record,
 			)
 		);
 		$this->last_record_id = $record['ID'] ?? null;
-		++$this->entities_read_so_far;
+		++ $this->entities_read_so_far;
+
 		return true;
 	}
 
 	/**
 	 * Moves to the next table in the list of tables to process.
 	 *
+	 * @return bool Whether there is another table to process.
 	 * @since WP_VERSION
 	 *
-	 * @return bool Whether there is another table to process.
 	 */
 	private function move_to_next_table() {
 		if ( ! $this->current_table ) {
@@ -254,6 +261,7 @@ class DatabaseRowsEntityReader implements EntityReader {
 			$this->current_table = next( $this->tables_to_process );
 		}
 		$this->last_record_id = 0;
+
 		return (bool) $this->current_table;
 	}
 
@@ -266,18 +274,18 @@ class DatabaseRowsEntityReader implements EntityReader {
 		switch ( $this->db_type ) {
 			case 'sqlite':
 				$result = $this->db->query( "SELECT sql FROM sqlite_master WHERE type='table' AND name='{$this->current_table}'" );
-				$row    = $result->fetch( \PDO::FETCH_ASSOC );
+				$row    = $result->fetch( PDO::FETCH_ASSOC );
 				$sql    = $row ? $row['sql'] . ';' : null;
 				break;
 			case 'mysql':
 				$result = $this->db->query( "SHOW CREATE TABLE {$this->current_table}" );
-				$row    = $result->fetch( \PDO::FETCH_ASSOC );
+				$row    = $result->fetch( PDO::FETCH_ASSOC );
 				$sql    = $row ? $row['Create Table'] : null;
 				break;
 		}
 
 		$this->current_entity = new ImportEntity( 'sql_query', $sql );
-		++$this->entities_read_so_far;
+		++ $this->entities_read_so_far;
 	}
 
 	/**
@@ -289,7 +297,7 @@ class DatabaseRowsEntityReader implements EntityReader {
 	private function initialize_tables_to_process() {
 		$this->tables_to_process = array();
 		$result                  = $this->db->query( 'SHOW TABLES' );
-		while ( $row = $result->fetch( \PDO::FETCH_NUM ) ) {
+		while ( $row = $result->fetch( PDO::FETCH_NUM ) ) {
 			$this->tables_to_process[] = $row[0];
 		}
 		sort( $this->tables_to_process );
@@ -299,8 +307,8 @@ class DatabaseRowsEntityReader implements EntityReader {
 		return json_encode(
 			array(
 				'last_record_id' => $this->last_record_id,
-				'current_table' => $this->current_table,
-				'state' => $this->state,
+				'current_table'  => $this->current_table,
+				'state'          => $this->state,
 			)
 		);
 	}
@@ -308,9 +316,10 @@ class DatabaseRowsEntityReader implements EntityReader {
 	/**
 	 * Initializes the reader from a cursor.
 	 *
+	 * @param  string  $cursor  The cursor to initialize from.
+	 *
 	 * @since WP_VERSION
 	 *
-	 * @param string $cursor The cursor to initialize from.
 	 */
 	private function initialize_from_cursor( $cursor ) {
 		$cursor_data = json_decode( $cursor, true );

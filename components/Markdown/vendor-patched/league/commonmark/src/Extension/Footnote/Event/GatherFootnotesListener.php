@@ -26,7 +26,10 @@ use League\Config\ConfigurationInterface;
 
 final class GatherFootnotesListener implements ConfigurationAwareInterface
 {
-    private ConfigurationInterface $config;
+    /**
+     * @var \League\Config\ConfigurationInterface
+     */
+    private $config;
 
     public function onDocumentParsed(DocumentParsedEvent $event): void
     {

@@ -2,13 +2,15 @@
 
 namespace WordPress\Filesystem;
 
+use ValueError;
+
 function ls_recursive( Filesystem $filesystem, $path = '/' ) {
 	$tree = array();
 	foreach ( $filesystem->ls( $path ) as $item ) {
 		if ( $filesystem->is_dir( $item ) ) {
 			$tree[] = array(
-				'name' => $item,
-				'type' => 'dir',
+				'name'     => $item,
+				'type'     => 'dir',
 				'children' => ls_recursive( $filesystem, $item ),
 			);
 		} else {
@@ -18,14 +20,22 @@ function ls_recursive( Filesystem $filesystem, $path = '/' ) {
 			);
 		}
 	}
+
 	return $tree;
 }
 
+/**
+ * Copies a file or directory between two Filesystem instances.
+ * 
+ * @param  array  $args  The arguments to pass to the copy function. {
+ *     @type Filesystem $source_filesystem The source filesystem.
+ *     @type Filesystem $destination_filesystem The destination filesystem.
+ *     @type string $source_path The path to the source file or directory. It must use forward slashes as path separators.
+ *     @type string $destination_path The path to the destination file or directory. It must use forward slashes as path separators.
+ *     @type bool $recursive Whether to copy the file or directory recursively.
+ * }
+ */
 function copy_between_filesystems( array $args ) {
-	/**
-	 * @var Filesystem $source
-	 * @var Filesystem $destination
-	 */
 	$source           = $args['source_filesystem'];
 	$source_path      = $args['source_path'] ?? '/';
 	$destination      = $args['target_filesystem'];
@@ -33,7 +43,7 @@ function copy_between_filesystems( array $args ) {
 	$recursive        = $args['recursive'] ?? true;
 
 	if ( $source->is_file( $source_path ) ) {
-		$destination_dir = wp_dirname( $destination_path );
+		$destination_dir = wp_unix_dirname( $destination_path );
 		if ( ! $destination->is_dir( $destination_dir ) ) {
 			$destination->mkdir(
 				$destination_dir,
@@ -51,7 +61,7 @@ function copy_between_filesystems( array $args ) {
 				while ( ! $from_stream->reached_end_of_data() ) {
 					$available = $from_stream->pull( 65536 );
 					$to_stream->append_bytes( $from_stream->consume( $available ), $to_stream );
-					++$chunks_written;
+					++ $chunks_written;
 				}
 				if ( $chunks_written === 0 ) {
 					// Make sure the file receives at least one chunk
@@ -81,36 +91,56 @@ function copy_between_filesystems( array $args ) {
 			copy_between_filesystems(
 				array(
 					'source_filesystem' => $source,
-					'source_path' => wp_join_paths( $source_path, $item ),
+					'source_path'       => wp_join_unix_paths( $source_path, $item ),
 					'target_filesystem' => $destination,
-					'target_path' => wp_join_paths( $destination_path, $item ),
+					'target_path'       => wp_join_unix_paths( $destination_path, $item ),
 				)
 			);
 		}
+	} elseif ( $source->exists( $source_path ) ) {
+		// For now ignore paths that are neither files nor directories.
+		// For example, in GitFilesystem that could be a submodule.
 	} else {
+		// When a path does not exist, throw a clear error.
 		throw new FilesystemException( 'Path does not exist in the source filesystem: ' . $source_path );
 	}
 }
 
-function wp_path_segments( $path ) {
-	$canonicalized   = wp_canonicalize_path( $path );
-	$without_slashes = trim( $canonicalized, '/' );
-	return explode( '/', $without_slashes );
+/**
+ * Pipes data from one stream to another.
+ *
+ * @param  ByteReadStream  $from_stream  The stream to read from.
+ * @param  ByteWriteStream  $to_stream  The stream to write to.
+ * @param  int  $chunk_size  Optional. The size of chunks to read at a time. Default 65536.
+ *
+ * @return int The number of chunks written.
+ * @throws FilesystemException If there's an error during the transfer.
+ */
+function pipe_stream( $from_stream, $to_stream, $chunk_size = 65536 ) {
+	$chunks_written = 0;
+	while ( ! $from_stream->reached_end_of_data() ) {
+		$available = $from_stream->pull( $chunk_size );
+		$to_stream->append_bytes( $from_stream->consume( $available ) );
+		++ $chunks_written;
+	}
+
+	if ( $chunks_written === 0 ) {
+		// Make sure the file receives at least one chunk
+		// so we can be sure it gets created in case the
+		// destination filesystem is lazy.
+		$to_stream->append_bytes( '' );
+		$chunks_written = 1;
+	}
+
+	return $chunks_written;
 }
 
-function wp_parent_paths( $path, $options = array() ) {
-	$include_self = $options['include_self'] ?? false;
-	$path         = '/' . trim( $path, '/' );
-	$segments     = wp_path_segments( $path );
-	$paths        = array( '/' );
-	yield '/';
-	for ( $i = 0; $i < count( $segments ) - 1; $i++ ) {
-		$paths[] = $segments[ $i ];
-		yield wp_join_paths( ...$paths );
-	}
-	if ( $include_self ) {
-		yield $path;
-	}
+
+function wp_unix_path_segments( $path ) {
+	$without_dots   = wp_unix_path_resolve_dots( $path );
+	$without_slashes = trim( $without_dots, '/' );
+
+	return explode( '/', $without_slashes );
 }
 
 /**
@@ -118,7 +148,7 @@ function wp_parent_paths( $path, $options = array() ) {
  *
  * Removes any double slashes between path segments.
  */
-function wp_join_paths( ...$path_segments ) {
+function wp_join_unix_paths( ...$path_segments ) {
 	$input_starts_with_slash = null;
 
 	$paths = array();
@@ -126,36 +156,36 @@ function wp_join_paths( ...$path_segments ) {
 		if ( $path_segment !== '' ) {
 			$paths[] = $path_segment;
 			if ( null === $input_starts_with_slash ) {
-				$input_starts_with_slash = str_starts_with( $path_segment, '/' );
+				$input_starts_with_slash = strncmp( $path_segment, '/', strlen( '/' ) ) === 0;
 			}
 		}
 	}
 	$path = implode( '/', $paths );
 
 	$result = preg_replace( '#/+#', '/', $path );
-	if ( $input_starts_with_slash && ! str_starts_with( $result, '/' ) ) {
+	if ( $input_starts_with_slash && strncmp( $result, '/', strlen( '/' ) ) !== 0 ) {
 		$result = '/' . $result;
 	}
+
 	return $result;
 }
 
 /**
- * Cleans up a file path.
+ * Cleans up a path segment.
  *
- * - Ensures it starts with a forward slash
  * - Removes the /./ segments
  * - Flattens the /../ segments
  *
  * Example:
  *
- * wp_canonicalize_path( 'foo/bar/../baz' ) => '/foo/baz'
+ * wp_unix_path_resolve_dots( 'foo/bar/../baz' ) => '/foo/baz'
  *
- * @param string $path The file path that needs cleaning up
+ * @param  string  $path  The file path that needs cleaning up
  * @return string The cleaned, absolute path
  */
-function wp_canonicalize_path( $path ) {
+function wp_unix_path_resolve_dots( $path ) {
 	// Convert to absolute path
-	if ( ! str_starts_with( $path, '/' ) ) {
+	if ( strncmp( $path, '/', strlen( '/' ) ) !== 0 ) {
 		$path = '/' . $path;
 	}
 
@@ -173,25 +203,87 @@ function wp_canonicalize_path( $path ) {
 		$normalized[] = $part;
 	}
 
-	// Reconstruct path
-	$result = '/' . implode( '/', $normalized );
-	if ( $result === '/.' ) {
-		$result = '/';
+	$result = implode( '/', $normalized );
+	if($result === '.') {
+		$result = '';
 	}
-	return $result === '' ? '/' : $result;
+	return $result;
+}
+
+
+/**
+ * Like sys_get_temp_dir(), but returns a path using forward slashes
+ * as separators.
+ */
+function wp_unix_sys_get_temp_dir() {
+	$path = sys_get_temp_dir();
+	if ( DIRECTORY_SEPARATOR === '\\' ) {
+		$path = str_replace( '\\', '/', $path );
+	}
+	return $path;
 }
 
 /**
- * Returns the directory name of a path. Like dirname(), but
- * consistent between different operating systems. wp_dirname("/foo")
- * will return "/" whereas dirname("/foo") would return "\\".
+ * A clone of PHP's dirname() that assumes the path is a Unix path.
  *
- * @param string $path The path to get the directory name of.
- * @return string The directory name of the path.
+ * Both functions agree on the following:
+ * 
+ *     dirname("/") === wp_unix_dirname("/") === "/"
+ *     dirname("/foo/bar") === wp_unix_dirname("/foo/bar") === "/foo"
+ *     dirname("/foo/bar/") === wp_unix_dirname("/foo/bar/") === "/foo/bar"
+ * 
+ * However, they disagree on Windows paths:
+ * 
+ *     dirname("C:/") === "C:/" (when ran on windows)
+ *     dirname("C:/") === "." (when ran on unix)
+ * 
+ *     wp_unix_dirname("C:/") === "." (regardless of the OS)
+ * 
+ * This ensures we get reliable results on all host OSes.
+ * 
+ * It might seem weird to use unix semantics on windows. However, keep in mind,
+ * that php-toolkit supports more filesystems than just a local disk and that
+ * C: is a valid filename on unix.
+ * 
+ * @param string $path   Path to inspect (assumed Unix).
+ * @param int    $levels How many levels to climb (≥ 1).
+ * @return string
+ * @throws ValueError on $levels < 1 (keeps parity with PHP 8.x).
  */
-function wp_dirname( $path ) {
-	// @TODO: Scrutinize this naive implementation. Could
-	// we mess things up on Unix when a directory name
-	// legitimately contains a backslash?
-	return str_replace( '\\', '/', dirname( $path ) );
+function wp_unix_dirname(string $path, int $levels = 1): string
+{
+    if ($levels < 1) {
+        throw new ValueError('unix_dirname(): $levels must be >= 1');
+    }
+
+    // treat empty string the same way PHP does
+    if ($path === '') {
+        return '';
+    }
+
+    // if the path is nothing but slashes, the result is always "/"
+    if (strspn($path, '/') === strlen($path)) {
+        return $levels === 1 ? '/' : wp_unix_dirname('/', $levels - 1);
+    }
+
+    // strip trailing slashes (but never the single root slash)
+    $path = rtrim($path, '/');
+    if ($path === '') {        // happens when the original was just "/"
+        return $levels === 1 ? '/' : wp_unix_dirname('/', $levels - 1);
+    }
+
+    // locate the last slash
+    $slash = strrpos($path, '/');
+    if ($slash === false) {    // no slash → current dir
+        $path = '.';
+    } else {
+        $path = substr($path, 0, $slash);  // cut off the basename
+        $path = rtrim($path, '/');         // collapse duplicate slashes
+        if ($path === '') {
+            $path = '/';                   // “/foo” → “/”
+        }
+    }
+
+    // recurse for additional levels
+    return $levels > 1 ? wp_unix_dirname($path, $levels - 1) : $path;
 }

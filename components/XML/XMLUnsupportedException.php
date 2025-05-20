@@ -5,6 +5,8 @@
 
 namespace WordPress\XML;
 
+use Exception;
+
 /**
  * Core class used by the XML processor during XML parsing
  * for indicating that a given operation is unsupported.
@@ -25,7 +27,7 @@ namespace WordPress\XML;
  *
  * @see XMLProcessor
  */
-class XMLUnsupportedException extends \Exception {
+class XMLUnsupportedException extends Exception {
 	/**
 	 * Name of the matched token when the exception was raised,
 	 * if matched on a token.
@@ -72,12 +74,12 @@ class XMLUnsupportedException extends \Exception {
 	/**
 	 * Constructor function.
 	 *
-	 * @param string   $message                    Brief message explaining what is unsupported, the reason this exception was raised.
-	 * @param string   $token_name                 Normalized name of matched token when this exception was raised.
-	 * @param int      $token_at                   Number of bytes into source XML document where matched token starts.
-	 * @param string   $token                      Full raw text of matched token when this exception was raised.
-	 * @param string[] $stack_of_open_elements     Stack of open elements when this exception was raised.
-	 * @param string[] $active_formatting_elements List of active formatting elements when this exception was raised.
+	 * @param  string  $message  Brief message explaining what is unsupported, the reason this exception was raised.
+	 * @param  string  $token_name  Normalized name of matched token when this exception was raised.
+	 * @param  int  $token_at  Number of bytes into source XML document where matched token starts.
+	 * @param  string  $token  Full raw text of matched token when this exception was raised.
+	 * @param  string[]  $stack_of_open_elements  Stack of open elements when this exception was raised.
+	 * @param  string[]  $active_formatting_elements  List of active formatting elements when this exception was raised.
 	 */
 	public function __construct( string $message, string $token_name, int $token_at, string $token, array $stack_of_open_elements ) {
 		parent::__construct( $message );

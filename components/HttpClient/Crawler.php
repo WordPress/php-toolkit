@@ -32,8 +32,8 @@ class Crawler {
 	private $responses = array();
 
 	/**
-	 * @param string $base_url The starting URL to crawl
-	 * @param array  $options Client options
+	 * @param  string  $base_url  The starting URL to crawl
+	 * @param  array  $options  Client options
 	 */
 	public function __construct( $base_url, array $options = array() ) {
 		$this->client                    = $options['client'] ?? new Client();
@@ -106,6 +106,7 @@ class Crawler {
 					}
 					$this->current_content = $this->responses[ $this->current_url ];
 					unset( $this->responses[ $this->current_url ] );
+
 					return true;
 			}
 		}

@@ -34,37 +34,43 @@ final class ReferenceParser
     // End state, no matter what kind of lines we add, they won't be references
     private const PARAGRAPH = 5;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private string $paragraph = '';
+    /** @psalm-readonly-allow-private-mutation
+     * @var string */
+    private $paragraph = '';
 
     /**
      * @var array<int, ReferenceInterface>
      *
      * @psalm-readonly-allow-private-mutation
      */
-    private array $references = [];
+    private $references = [];
 
-    /** @psalm-readonly-allow-private-mutation */
-    private int $state = self::START_DEFINITION;
+    /** @psalm-readonly-allow-private-mutation
+     * @var int */
+    private $state = self::START_DEFINITION;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private ?string $label = null;
+    /** @psalm-readonly-allow-private-mutation
+     * @var string|null */
+    private $label;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private ?string $destination = null;
+    /** @psalm-readonly-allow-private-mutation
+     * @var string|null */
+    private $destination;
 
     /**
      * @var string string
      *
      * @psalm-readonly-allow-private-mutation
      */
-    private string $title = '';
+    private $title = '';
 
-    /** @psalm-readonly-allow-private-mutation */
-    private ?string $titleDelimiter = null;
+    /** @psalm-readonly-allow-private-mutation
+     * @var string|null */
+    private $titleDelimiter;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private bool $referenceValid = false;
+    /** @psalm-readonly-allow-private-mutation
+     * @var bool */
+    private $referenceValid = false;
 
     public function getParagraphContent(): string
     {

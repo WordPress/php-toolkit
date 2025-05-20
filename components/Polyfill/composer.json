@@ -2,16 +2,16 @@
 	"name": "wordpress/polyfill",
 	"description": "Polyfill component for WordPress.",
 	"type": "library",
-    "authors": [
-        {
-            "name": "Adam Zielinski",
-            "email": "adam@adamziel.com"
-        },
-        {
-            "name": "WordPress Team",
-            "email": "wordpress@wordpress.org"
-        }
-    ],
+	"authors": [
+		{
+			"name": "Adam Zielinski",
+			"email": "adam@adamziel.com"
+		},
+		{
+			"name": "WordPress Team",
+			"email": "wordpress@wordpress.org"
+		}
+	],
 	"require": {
 		"php": ">=7.2"
 	},
@@ -20,8 +20,8 @@
 			"wordpress.php",
 			"mbstring.php"
 		],
-        "exclude-from-classmap": [
-            "/Tests/"
-        ]
+		"exclude-from-classmap": [
+			"/Tests/"
+		]
 	}
 }

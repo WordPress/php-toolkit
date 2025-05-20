@@ -19,10 +19,22 @@ use Webuni\FrontMatter\Processor\YamlProcessor;
 
 final class FrontMatter implements FrontMatterInterface
 {
-    private string $startSep;
-    private string $endSep;
-    private ProcessorInterface $processor;
-    private string $regexp;
+    /**
+     * @var string
+     */
+    private $startSep;
+    /**
+     * @var string
+     */
+    private $endSep;
+    /**
+     * @var \Webuni\FrontMatter\Processor\ProcessorInterface
+     */
+    private $processor;
+    /**
+     * @var string
+     */
+    private $regexp;
 
     public static function createYaml(): self
     {

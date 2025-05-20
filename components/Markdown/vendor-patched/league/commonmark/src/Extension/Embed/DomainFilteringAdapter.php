@@ -15,10 +15,14 @@ namespace League\CommonMark\Extension\Embed;
 
 class DomainFilteringAdapter implements EmbedAdapterInterface
 {
-    private EmbedAdapterInterface $decorated;
+    /**
+     * @var \League\CommonMark\Extension\Embed\EmbedAdapterInterface
+     */
+    private $decorated;
 
-    /** @psalm-var non-empty-string */
-    private string $regex;
+    /** @psalm-var non-empty-string
+     * @var string */
+    private $regex;
 
     /**
      * @param string[] $allowedDomains

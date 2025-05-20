@@ -68,11 +68,12 @@ class WP_HTML_Stack_Event {
 	/**
 	 * Constructor function.
 	 *
+	 * @param  WP_HTML_Token  $token  Token associated with stack event, always an opening token.
+	 * @param  string  $operation  One of self::PUSH or self::POP.
+	 * @param  string  $provenance  "virtual" or "real".
+	 *
 	 * @since 6.6.0
 	 *
-	 * @param WP_HTML_Token $token      Token associated with stack event, always an opening token.
-	 * @param string        $operation  One of self::PUSH or self::POP.
-	 * @param string        $provenance "virtual" or "real".
 	 */
 	public function __construct( WP_HTML_Token $token, string $operation, string $provenance ) {
 		$this->token      = $token;

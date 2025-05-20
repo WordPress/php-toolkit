@@ -20,6 +20,7 @@ class ChecksumTransformer implements ByteTransformer {
 
 	public function filter_bytes( string $bytes ) {
 		hash_update( $this->hash_context, $bytes );
+
 		return $bytes;
 	}
 
@@ -27,6 +28,7 @@ class ChecksumTransformer implements ByteTransformer {
 		if ( $this->flush_hash ) {
 			return $this->get_hash();
 		}
+
 		return '';
 	}
 
@@ -35,6 +37,7 @@ class ChecksumTransformer implements ByteTransformer {
 			$this->checksum     = hash_final( $this->hash_context, $this->binary_output );
 			$this->hash_context = null;
 		}
+
 		return $this->checksum;
 	}
 }

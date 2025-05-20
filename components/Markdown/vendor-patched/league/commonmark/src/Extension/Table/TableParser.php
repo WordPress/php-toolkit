@@ -28,17 +28,18 @@ final class TableParser extends AbstractBlockContinueParser implements BlockCont
     /**
      * @internal
      */
-    public const DEFAULT_MAX_AUTOCOMPLETED_CELLS = 10_000;
+    public const DEFAULT_MAX_AUTOCOMPLETED_CELLS = 10000;
 
-    /** @psalm-readonly */
-    private Table $block;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Extension\Table\Table */
+    private $block;
 
     /**
      * @var ArrayCollection<string>
      *
      * @psalm-readonly-allow-private-mutation
      */
-    private ArrayCollection $bodyLines;
+    private $bodyLines;
 
     /**
      * @var array<int, string|null>
@@ -47,19 +48,23 @@ final class TableParser extends AbstractBlockContinueParser implements BlockCont
      *
      * @psalm-readonly
      */
-    private array $columns;
+    private $columns;
 
     /**
      * @var array<int, string>
      *
      * @psalm-readonly-allow-private-mutation
      */
-    private array $headerCells;
+    private $headerCells;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private bool $nextIsSeparatorLine = true;
+    /** @psalm-readonly-allow-private-mutation
+     * @var bool */
+    private $nextIsSeparatorLine = true;
 
-    private int $remainingAutocompletedCells;
+    /**
+     * @var int
+     */
+    private $remainingAutocompletedCells;
 
     /**
      * @param array<int, string|null> $columns
@@ -83,7 +88,7 @@ final class TableParser extends AbstractBlockContinueParser implements BlockCont
         return true;
     }
 
-    public function getBlock(): Table
+    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }

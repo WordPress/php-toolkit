@@ -20,14 +20,14 @@ class LineDiffer implements Differ {
 						Diff::DIFF_DELETE,
 						$oldLines[ $oldIndex ] . "\n",
 					);
-					++$oldIndex;
+					++ $oldIndex;
 				}
 				if ( $newIndex < $match['new_index'] ) {
 					$diff[] = array(
 						Diff::DIFF_INSERT,
 						$newLines[ $newIndex ] . "\n",
 					);
-					++$newIndex;
+					++ $newIndex;
 				}
 			}
 
@@ -37,8 +37,8 @@ class LineDiffer implements Differ {
 					Diff::DIFF_EQUAL,
 					$oldLines[ $oldIndex ] . "\n",
 				);
-				++$oldIndex;
-				++$newIndex;
+				++ $oldIndex;
+				++ $newIndex;
 			}
 		}
 
@@ -48,14 +48,14 @@ class LineDiffer implements Differ {
 				Diff::DIFF_DELETE,
 				$oldLines[ $oldIndex ] . "\n",
 			);
-			++$oldIndex;
+			++ $oldIndex;
 		}
 		while ( $newIndex < count( $newLines ) ) {
 			$diff[] = array(
 				Diff::DIFF_INSERT,
 				$newLines[ $newIndex ] . "\n",
 			);
-			++$newIndex;
+			++ $newIndex;
 		}
 
 		return new Diff( $diff );
@@ -67,8 +67,8 @@ class LineDiffer implements Differ {
 		$lcsMatrix = array_fill( 0, $oldLen + 1, array_fill( 0, $newLen + 1, 0 ) );
 
 		// Build the LCS matrix
-		for ( $i = 1; $i <= $oldLen; $i++ ) {
-			for ( $j = 1; $j <= $newLen; $j++ ) {
+		for ( $i = 1; $i <= $oldLen; $i ++ ) {
+			for ( $j = 1; $j <= $newLen; $j ++ ) {
 				if ( $oldLines[ $i - 1 ] === $newLines[ $j - 1 ] ) {
 					$lcsMatrix[ $i ][ $j ] = $lcsMatrix[ $i - 1 ][ $j - 1 ] + 1;
 				} else {
@@ -87,12 +87,12 @@ class LineDiffer implements Differ {
 					'old_index' => $i - 1,
 					'new_index' => $j - 1,
 				);
-				--$i;
-				--$j;
+				-- $i;
+				-- $j;
 			} elseif ( $lcsMatrix[ $i - 1 ][ $j ] >= $lcsMatrix[ $i ][ $j - 1 ] ) {
-				--$i;
+				-- $i;
 			} else {
-				--$j;
+				-- $j;
 			}
 		}
 

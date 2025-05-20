@@ -20,7 +20,10 @@ use League\CommonMark\Node\Block\AbstractBlock;
 
 final class Heading extends AbstractBlock
 {
-    private int $level;
+    /**
+     * @var int
+     */
+    private $level;
 
     public function __construct(int $level)
     {

@@ -21,11 +21,13 @@ use League\Config\ConfigurationInterface;
 
 final class DisallowedRawHtmlRenderer implements NodeRendererInterface, ConfigurationAwareInterface
 {
-    /** @psalm-readonly */
-    private NodeRendererInterface $innerRenderer;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Renderer\NodeRendererInterface */
+    private $innerRenderer;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private ConfigurationInterface $config;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\Config\ConfigurationInterface */
+    private $config;
 
     public function __construct(NodeRendererInterface $innerRenderer)
     {

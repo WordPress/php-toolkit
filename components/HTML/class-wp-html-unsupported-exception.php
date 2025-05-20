@@ -93,23 +93,31 @@ class WP_HTML_Unsupported_Exception extends Exception {
 	/**
 	 * Constructor function.
 	 *
+	 * @param  string  $message  Brief message explaining what is unsupported, the reason this exception was raised.
+	 * @param  string  $token_name  Normalized name of matched token when this exception was raised.
+	 * @param  int  $token_at  Number of bytes into source HTML document where matched token starts.
+	 * @param  string  $token  Full raw text of matched token when this exception was raised.
+	 * @param  string[]  $stack_of_open_elements  Stack of open elements when this exception was raised.
+	 * @param  string[]  $active_formatting_elements  List of active formatting elements when this exception was raised.
+	 *
 	 * @since 6.7.0
 	 *
-	 * @param string   $message                    Brief message explaining what is unsupported, the reason this exception was raised.
-	 * @param string   $token_name                 Normalized name of matched token when this exception was raised.
-	 * @param int      $token_at                   Number of bytes into source HTML document where matched token starts.
-	 * @param string   $token                      Full raw text of matched token when this exception was raised.
-	 * @param string[] $stack_of_open_elements     Stack of open elements when this exception was raised.
-	 * @param string[] $active_formatting_elements List of active formatting elements when this exception was raised.
 	 */
-	public function __construct( string $message, string $token_name, int $token_at, string $token, array $stack_of_open_elements, array $active_formatting_elements ) {
+	public function __construct(
+		string $message,
+		string $token_name,
+		int $token_at,
+		string $token,
+		array $stack_of_open_elements,
+		array $active_formatting_elements
+	) {
 		parent::__construct( $message );
 
 		$this->token_name = $token_name;
 		$this->token_at   = $token_at;
 		$this->token      = $token;
 
-		$this->stack_of_open_elements     = $stack_of_open_elements;
+		$this->stack_of_open_elements = $stack_of_open_elements;
 		$this->active_formatting_elements = $active_formatting_elements;
 	}
 }

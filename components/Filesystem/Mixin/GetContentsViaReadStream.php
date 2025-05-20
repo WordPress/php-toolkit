@@ -11,6 +11,7 @@ trait GetContentsViaReadStream {
 		$stream = $this->open_read_stream( $path );
 		$body   = $stream->consume_all();
 		$stream->close_reading();
+
 		return $body;
 	}
 }

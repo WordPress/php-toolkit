@@ -20,9 +20,10 @@ final class Iterables
 	use Nette\StaticClass;
 
 	/**
-	 * Tests for the presence of value.
-	 */
-	public static function contains(iterable $iterable, mixed $value): bool
+  * Tests for the presence of value.
+  * @param mixed $value
+  */
+ public static function contains(iterable $iterable, $value): bool
 	{
 		foreach ($iterable as $v) {
 			if ($v === $value) {
@@ -34,9 +35,10 @@ final class Iterables
 
 
 	/**
-	 * Tests for the presence of key.
-	 */
-	public static function containsKey(iterable $iterable, mixed $key): bool
+  * Tests for the presence of key.
+  * @param mixed $key
+  */
+ public static function containsKey(iterable $iterable, $key): bool
 	{
 		foreach ($iterable as $k => $v) {
 			if ($k === $key) {
@@ -55,7 +57,7 @@ final class Iterables
 	 * @param  ?callable(V, K, iterable<K, V>): bool  $predicate
 	 * @return ?V
 	 */
-	public static function first(iterable $iterable, ?callable $predicate = null, ?callable $else = null): mixed
+	public static function first(iterable $iterable, ?callable $predicate = null, ?callable $else = null)
 	{
 		foreach ($iterable as $k => $v) {
 			if (!$predicate || $predicate($v, $k, $iterable)) {
@@ -74,7 +76,7 @@ final class Iterables
 	 * @param  ?callable(V, K, iterable<K, V>): bool  $predicate
 	 * @return ?K
 	 */
-	public static function firstKey(iterable $iterable, ?callable $predicate = null, ?callable $else = null): mixed
+	public static function firstKey(iterable $iterable, ?callable $predicate = null, ?callable $else = null)
 	{
 		foreach ($iterable as $k => $v) {
 			if (!$predicate || $predicate($v, $k, $iterable)) {
@@ -188,14 +190,20 @@ final class Iterables
 	public static function memoize(iterable $iterable): iterable
 	{
 		return new class (self::toIterator($iterable)) implements \IteratorAggregate {
-			public function __construct(
-				private \Iterator $iterator,
-				private array $cache = [],
-			) {
-			}
-
-
-			public function getIterator(): \Generator
+			/**
+    * @var \Iterator
+    */
+   private $iterator;
+   /**
+    * @var mixed[]
+    */
+   private $cache = [];
+   public function __construct(\Iterator $iterator, array $cache = [])
+   {
+       $this->iterator = $iterator;
+       $this->cache = $cache;
+   }
+   public function getIterator(): \Generator
 			{
 				if (!$this->cache) {
 					$this->iterator->rewind();
@@ -229,10 +237,13 @@ final class Iterables
 	 */
 	public static function toIterator(iterable $iterable): \Iterator
 	{
-		return match (true) {
-			$iterable instanceof \Iterator => $iterable,
-			$iterable instanceof \IteratorAggregate => self::toIterator($iterable->getIterator()),
-			is_array($iterable) => new \ArrayIterator($iterable),
-		};
+		switch (true) {
+      case $iterable instanceof \Iterator:
+          return $iterable;
+      case $iterable instanceof \IteratorAggregate:
+          return self::toIterator($iterable->getIterator());
+      case is_array($iterable):
+          return new \ArrayIterator($iterable);
+  }
 	}
 }

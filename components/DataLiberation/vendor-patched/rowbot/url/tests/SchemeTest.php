@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace Rowbot\URL\Tests;
 
@@ -10,31 +10,27 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Rowbot\URL\Component\Scheme;
 
-class SchemeTest extends TestCase
-{
-    public static function specialSchemeNonNullDefaultPortProvider(): iterable
-    {
-        $reflection = new ReflectionClass(Scheme::class);
-        $schemes = $reflection->getConstant('SPECIAL_SCHEMES');
+class SchemeTest extends TestCase {
+	public static function specialSchemeNonNullDefaultPortProvider(): iterable {
+		$reflection = new ReflectionClass( Scheme::class );
+		$schemes    = $reflection->getConstant( 'SPECIAL_SCHEMES' );
 
-        foreach ($schemes as $scheme => $port) {
-            if ($port === null) {
-                continue;
-            }
+		foreach ( $schemes as $scheme => $port ) {
+			if ( $port === null ) {
+				continue;
+			}
 
-            yield [$scheme, $port];
-        }
-    }
+			yield [ $scheme, $port ];
+		}
+	}
 
-    public function testIsDefaultPortReturnsTrueForNonNullPortSpecialSchemes(string $scheme, int $port): void
-    {
-        $scheme = new Scheme($scheme);
-        self::assertTrue($scheme->isDefaultPort($port));
-    }
+	public function testIsDefaultPortReturnsTrueForNonNullPortSpecialSchemes( string $scheme, int $port ): void {
+		$scheme = new Scheme( $scheme );
+		self::assertTrue( $scheme->isDefaultPort( $port ) );
+	}
 
-    public function testIsDefaultPortReturnsFalseForNonSpecialSchemesAndNullPorts(string $scheme, ?int $port): void
-    {
-        $scheme = new Scheme($scheme);
-        self::assertFalse($scheme->isDefaultPort($port));
-    }
+	public function testIsDefaultPortReturnsFalseForNonSpecialSchemesAndNullPorts( string $scheme, ?int $port ): void {
+		$scheme = new Scheme( $scheme );
+		self::assertFalse( $scheme->isDefaultPort( $port ) );
+	}
 }

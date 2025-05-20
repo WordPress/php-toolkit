@@ -13,7 +13,8 @@ trait BufferedWriteStreamViaPutContents {
 
 	public function open_write_stream( $path ): ByteWriteStream {
 		$fs = $this;
-		return new class($fs, $path) extends MemoryPipe {
+
+		return new class( $fs, $path ) extends MemoryPipe {
 			private $fs;
 			private $path;
 

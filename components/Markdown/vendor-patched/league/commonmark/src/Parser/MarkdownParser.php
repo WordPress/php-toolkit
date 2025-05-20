@@ -38,34 +38,39 @@ use League\CommonMark\Reference\ReferenceMap;
 
 final class MarkdownParser implements MarkdownParserInterface
 {
-    /** @psalm-readonly */
-    private EnvironmentInterface $environment;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Environment\EnvironmentInterface */
+    private $environment;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private int $maxNestingLevel;
+    /** @psalm-readonly-allow-private-mutation
+     * @var int */
+    private $maxNestingLevel;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private ReferenceMap $referenceMap;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\CommonMark\Reference\ReferenceMap */
+    private $referenceMap;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private int $lineNumber = 0;
+    /** @psalm-readonly-allow-private-mutation
+     * @var int */
+    private $lineNumber = 0;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private Cursor $cursor;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\CommonMark\Parser\Cursor */
+    private $cursor;
 
     /**
      * @var array<int, BlockContinueParserInterface>
      *
      * @psalm-readonly-allow-private-mutation
      */
-    private array $activeBlockParsers = [];
+    private $activeBlockParsers = [];
 
     /**
      * @var array<int, BlockContinueParserWithInlinesInterface>
      *
      * @psalm-readonly-allow-private-mutation
      */
-    private array $closedBlockParsers = [];
+    private $closedBlockParsers = [];
 
     public function __construct(EnvironmentInterface $environment)
     {

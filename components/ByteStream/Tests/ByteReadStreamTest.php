@@ -15,13 +15,13 @@ class ByteReadStreamTest extends TestCase {
 	 */
 	public function byteReaderProvider() {
 		$text           = file_get_contents( __DIR__ . '/fixtures/preface-to-pygmalion.txt' );
-		$compressedData = gzdeflate( $text, -1, ZLIB_ENCODING_DEFLATE );
+		$compressedData = gzdeflate( $text, - 1, ZLIB_ENCODING_DEFLATE );
 
 		return array(
 			'ResourceReader' => array( FileReadStream::from_path( __DIR__ . '/fixtures/preface-to-pygmalion.txt' ), strlen( $text ) ),
-			'StringReader' => array( new MemoryPipe( $text ), strlen( $text ) ),
-			'InflateReader' => array( new InflateReadStream( new MemoryPipe( $compressedData ) ), strlen( $text ) ),
-			'DeflateReader' => array( new DeflateReadStream( new MemoryPipe( $text ) ), strlen( $text ) ),
+			'StringReader'   => array( new MemoryPipe( $text ), strlen( $text ) ),
+			'InflateReader'  => array( new InflateReadStream( new MemoryPipe( $compressedData ) ), strlen( $text ) ),
+			'DeflateReader'  => array( new DeflateReadStream( new MemoryPipe( $text ) ), strlen( $text ) ),
 		);
 	}
 

@@ -24,11 +24,20 @@ use League\CommonMark\Parser\Cursor;
 
 final class AttributesBlockContinueParser extends AbstractBlockContinueParser
 {
-    private Attributes $block;
+    /**
+     * @var \League\CommonMark\Extension\Attributes\Node\Attributes
+     */
+    private $block;
 
-    private AbstractBlock $container;
+    /**
+     * @var \League\CommonMark\Node\Block\AbstractBlock
+     */
+    private $container;
 
-    private bool $hasSubsequentLine = false;
+    /**
+     * @var bool
+     */
+    private $hasSubsequentLine = false;
 
     /**
      * @param array<string, mixed> $attributes The attributes identified by the block start parser

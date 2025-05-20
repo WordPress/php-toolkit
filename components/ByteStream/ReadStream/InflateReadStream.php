@@ -2,8 +2,8 @@
 
 namespace WordPress\ByteStream\ReadStream;
 
+use Exception;
 use WordPress\ByteStream\ByteStreamException;
-use WordPress\ByteStream\ReadStream\BaseByteReadStream;
 
 class InflateReadStream extends BaseByteReadStream {
 
@@ -27,9 +27,9 @@ class InflateReadStream extends BaseByteReadStream {
 	protected $delegate_offset_0;
 
 	// Ensure properties are defined or inherited
-	protected $is_closed                = false;
-	protected $buffer                   = '';
-	protected $bytes_already_forgotten  = 0;
+	protected $is_closed = false;
+	protected $buffer = '';
+	protected $bytes_already_forgotten = 0;
 	protected $offset_in_current_buffer = 0;
 
 	public function __construct( ByteReadStream $upstream, $encoding = ZLIB_ENCODING_DEFLATE ) {
@@ -50,6 +50,7 @@ class InflateReadStream extends BaseByteReadStream {
 		if ( $this->upstream->reached_end_of_data() ) {
 			$bytes                 = inflate_add( $this->inflate_context, '', ZLIB_FINISH );
 			$this->inflate_context = null;
+
 			return $bytes;
 		}
 
@@ -60,6 +61,7 @@ class InflateReadStream extends BaseByteReadStream {
 		if ( false === $inflated ) {
 			throw new ByteStreamException( 'Inflate error: ' . $this->get_error_string() );
 		}
+
 		return $inflated;
 	}
 
@@ -101,7 +103,7 @@ class InflateReadStream extends BaseByteReadStream {
 	private function inflate_init() {
 		$this->inflate_context = inflate_init( $this->inflate_encoding );
 		if ( ! $this->inflate_context ) {
-			throw new \Exception( 'Failed to initialize inflate context' );
+			throw new Exception( 'Failed to initialize inflate context' );
 		}
 	}
 
@@ -136,6 +138,7 @@ class InflateReadStream extends BaseByteReadStream {
 				$error_string = 'Unknown error';
 				break;
 		}
+
 		return "Error $status: $error_string";
 	}
 }

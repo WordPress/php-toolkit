@@ -17,9 +17,15 @@ use League\CommonMark\Exception\InvalidArgumentException;
 
 final class InlineParserMatch
 {
-    private string $regex;
+    /**
+     * @var string
+     */
+    private $regex;
 
-    private bool $caseSensitive;
+    /**
+     * @var bool
+     */
+    private $caseSensitive;
 
     private function __construct(string $regex, bool $caseSensitive = false)
     {
@@ -57,7 +63,9 @@ final class InlineParserMatch
      */
     public static function oneOf(string ...$str): self
     {
-        return new self(\implode('|', \array_map(static fn (string $str): string => \preg_quote($str, '/'), $str)));
+        return new self(\implode('|', \array_map(static function (string $str) : string {
+            return \preg_quote($str, '/');
+        }, $str)));
     }
 
     /**

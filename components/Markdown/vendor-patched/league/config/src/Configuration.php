@@ -27,28 +27,31 @@ use Nette\Schema\ValidationException as NetteValidationException;
 
 final class Configuration implements ConfigurationBuilderInterface, ConfigurationInterface
 {
-    /** @psalm-readonly */
-    private Data $userConfig;
+    /** @psalm-readonly
+     * @var \Dflydev\DotAccessData\Data */
+    private $userConfig;
 
     /**
      * @var array<string, Schema>
      *
      * @psalm-allow-private-mutation
      */
-    private array $configSchemas = [];
+    private $configSchemas = [];
 
-    /** @psalm-allow-private-mutation */
-    private Data $finalConfig;
+    /** @psalm-allow-private-mutation
+     * @var \Dflydev\DotAccessData\Data */
+    private $finalConfig;
 
     /**
      * @var array<string, mixed>
      *
      * @psalm-allow-private-mutation
      */
-    private array $cache = [];
+    private $cache = [];
 
-    /** @psalm-readonly */
-    private ConfigurationInterface $reader;
+    /** @psalm-readonly
+     * @var \League\Config\ConfigurationInterface */
+    private $reader;
 
     /**
      * @param array<string, Schema> $baseSchemas

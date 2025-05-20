@@ -37,7 +37,7 @@ final class CommonMarkConverter extends MarkdownConverter
         parent::__construct($environment);
     }
 
-    public function getEnvironment(): Environment
+    public function getEnvironment(): \League\CommonMark\Environment\EnvironmentInterface
     {
         \assert($this->environment instanceof Environment);
 

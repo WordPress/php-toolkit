@@ -5,7 +5,7 @@ use WordPress\Filesystem\LocalFilesystem;
 use WordPress\Zip\ZipFilesystem;
 
 use function WordPress\Filesystem\copy_between_filesystems;
-use function WordPress\Filesystem\wp_join_paths;
+use function WordPress\Filesystem\wp_join_unix_paths;
 
 class PluginUpdater {
 	private $installed_plugin_backup_dir;
@@ -59,7 +59,7 @@ class PluginUpdater {
 				}
 			);
 			if ( count( $extracted_dirs ) === 1 ) {
-				$potential_root_dir = wp_join_paths( $this->new_version_extract_to_dir, $extracted_dirs[0] );
+				$potential_root_dir = wp_join_unix_paths( $this->new_version_extract_to_dir, $extracted_dirs[0] );
 				if ( $this->wp_plugins_directory->is_dir( $potential_root_dir ) ) {
 					return $potential_root_dir;
 				}
@@ -96,7 +96,7 @@ class PluginUpdater {
 				if ( empty( $installed_plugin_files ) ) {
 					throw new Exception( 'No valid plugin file found in the new plugin directory' );
 				}
-				$this->installed_plugin_file = wp_join_paths( $this->installed_plugin_dir, key( $installed_plugin_files ) );
+				$this->installed_plugin_file = wp_join_unix_paths( $this->installed_plugin_dir, key( $installed_plugin_files ) );
 			}
 
 			$this->cleanup();

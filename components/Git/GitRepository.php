@@ -11,9 +11,9 @@ use WordPress\Merge\Diff\MyersDiffer;
 use WordPress\Merge\Merge\ChunkMerger;
 use WordPress\Merge\MergeStrategy;
 
-use function WordPress\Filesystem\wp_canonicalize_path;
-use function WordPress\Filesystem\wp_join_paths;
-use function WordPress\Filesystem\wp_dirname;
+use function WordPress\Filesystem\wp_unix_dirname;
+use function WordPress\Filesystem\wp_join_unix_paths;
+use function WordPress\Filesystem\wp_unix_path_resolve_dots;
 
 class GitRepository {
 
@@ -67,7 +67,7 @@ class GitRepository {
 
 	public function add_remote( $name, $url ) {
 		$this->set_config_value( array( 'remote', $name, 'url' ), $url );
-		$path = wp_join_paths( 'refs/remotes', $name );
+		$path = wp_join_unix_paths( 'refs/remotes', $name );
 		if ( ! $this->fs->is_dir( $path ) ) {
 			$this->fs->mkdir( $path );
 		}
@@ -340,7 +340,7 @@ class GitRepository {
 				throw new GitException( 'Branch file not found: ' . $path );
 			}
 			$branch_name = trim( $this->fs->get_contents( $path ) );
-			if ( str_starts_with( $branch_name, 'ref: ' ) && ( $options['follow_symrefs'] ?? true ) ) {
+			if ( strncmp( $branch_name, 'ref: ', strlen( 'ref: ' ) ) === 0 && ( $options['follow_symrefs'] ?? true ) ) {
 				continue;
 			}
 
@@ -350,26 +350,26 @@ class GitRepository {
 
 	private function resolve_branch_file_path( $branch_name ) {
 		$branch_name = trim( $branch_name );
-		if ( str_starts_with( $branch_name, 'ref: ' ) ) {
+		if ( strncmp( $branch_name, 'ref: ', strlen( 'ref: ' ) ) === 0 ) {
 			$branch_name = trim( substr( $branch_name, 5 ) );
 		}
 		if (
-			str_contains( $branch_name, '/' ) &&
-			! str_starts_with( $branch_name, 'refs/heads/' ) &&
-			! str_starts_with( $branch_name, 'refs/remotes/' )
+			strpos( $branch_name, '/' ) !== false &&
+			strncmp( $branch_name, 'refs/heads/', strlen( 'refs/heads/' ) ) !== 0 &&
+			strncmp( $branch_name, 'refs/remotes/', strlen( 'refs/remotes/' ) ) !== 0
 		) {
 			_doing_it_wrong( __METHOD__, 'Invalid ref name: ' . $branch_name, '1.0.0' );
 
 			return false;
 		}
-		if ( str_contains( $branch_name, '../' ) ) {
+		if ( strpos( $branch_name, '../' ) !== false ) {
 			_doing_it_wrong( __METHOD__, 'Invalid ref name: ' . $branch_name, '1.0.0' );
 
 			return false;
 		}
 
 		// Make sure all the directories leading up to the ref exist
-		$parent_path = wp_dirname( $branch_name );
+		$parent_path = wp_unix_dirname( $branch_name );
 		if ( ! $this->fs->exists( $parent_path ) ) {
 			$this->fs->mkdir( $parent_path, array( 'recursive' => true ) );
 		}
@@ -406,7 +406,7 @@ class GitRepository {
 	 *        everything into memory and will fail for large merges.
 	 * @TODO: Do not change the HEAD ref.
 	 *
-	 * @param  string $branch_name  The branch to merge.
+	 * @param  string  $branch_name  The branch to merge.
 	 * @param  array  $options  An associative array of options. {
 	 *
 	 * @type string $path The path to merge files at. The other paths will be ignored.
@@ -436,7 +436,7 @@ class GitRepository {
 		while ( ! empty( $tree_stack ) ) {
 			list( $incoming_branch_diff, $current_branch_diff, $parent_path ) = array_pop( $tree_stack );
 			foreach ( $incoming_branch_diff as $name => $incoming_entry ) {
-				$path = wp_join_paths( $parent_path, $name );
+				$path = wp_join_unix_paths( $parent_path, $name );
 				if ( $incoming_entry === self::DELETE_PLACEHOLDER ) {
 					$deletes[] = $path;
 					continue;
@@ -482,7 +482,7 @@ class GitRepository {
 
 		$new_commit_hash = $this->commit(
 			array(
-				'commit' => array(
+				'commit'  => array(
 					'message' => 'Merge commit ' . $commit_hash2 . ' into ' . $commit_hash1,
 					'parents' => array(
 						$commit_hash1,
@@ -514,8 +514,8 @@ class GitRepository {
 	 *
 	 * TODO: Support commits with multiple parents.
 	 *
-	 * @param  string $commit_hash1  The first reference.
-	 * @param  string $commit_hash2  The second reference.
+	 * @param  string  $commit_hash1  The first reference.
+	 * @param  string  $commit_hash2  The second reference.
 	 *
 	 * @return string The common ancestor hash.
 	 */
@@ -568,7 +568,7 @@ class GitRepository {
 	public function get_nth_ancestor_hash( $n, $commit_hash = null ) {
 		$commit_hash = $options['commit_hash'] ?? $this->get_branch_tip( 'HEAD' );
 
-		for ( $i = 0; $i < $n; $i++ ) {
+		for ( $i = 0; $i < $n; $i ++ ) {
 			$commit_hash = $this->read_object( $commit_hash )->as_commit()->parents[0];
 		}
 
@@ -652,12 +652,12 @@ class GitRepository {
 		foreach ( $updates as $path => $content ) {
 			$path     = '/' . ltrim( $path, '/' );
 			$blob_oid = $this->add_object( 'blob', $content );
-			$this->mark_tree_path_changed( $changed_trees, wp_dirname( $path ) );
+			$this->mark_tree_path_changed( $changed_trees, wp_unix_dirname( $path ) );
 			$basename = basename( $path );
 			if ( $basename === '' ) {
 				throw new GitException( 'Cannot commit a file with an empty filename' );
 			}
-			$changed_trees[ wp_dirname( $path ) ]->entries[ basename( $path ) ] = new TreeEntry(
+			$changed_trees[ wp_unix_dirname( $path ) ]->entries[ basename( $path ) ] = new TreeEntry(
 				array(
 					'name' => $basename,
 					'mode' => TreeEntry::FILE_MODE_REGULAR_NON_EXECUTABLE,
@@ -669,13 +669,13 @@ class GitRepository {
 		// Process deletes
 		foreach ( $deletes as $path ) {
 			$path = '/' . ltrim( $path, '/' );
-			if ( ! $this->read_object_by_path( wp_dirname( $path ) ) ) {
+			if ( ! $this->read_object_by_path( wp_unix_dirname( $path ) ) ) {
 				_doing_it_wrong( __METHOD__, 'File not found in HEAD: ' . $path, '1.0.0' );
 
 				return false;
 			}
-			$this->mark_tree_path_changed( $changed_trees, wp_dirname( $path ) );
-			$changed_trees[ wp_dirname( $path ) ]->entries[ basename( $path ) ] = self::DELETE_PLACEHOLDER;
+			$this->mark_tree_path_changed( $changed_trees, wp_unix_dirname( $path ) );
+			$changed_trees[ wp_unix_dirname( $path ) ]->entries[ basename( $path ) ] = self::DELETE_PLACEHOLDER;
 		}
 
 		// Process tree moves
@@ -687,15 +687,15 @@ class GitRepository {
 
 				return false;
 			}
-			$this->mark_tree_path_changed( $changed_trees, wp_dirname( $old_path ) );
-			$this->mark_tree_path_changed( $changed_trees, wp_dirname( $new_path ) );
+			$this->mark_tree_path_changed( $changed_trees, wp_unix_dirname( $old_path ) );
+			$this->mark_tree_path_changed( $changed_trees, wp_unix_dirname( $new_path ) );
 
-			$changed_trees[ wp_dirname( $old_path ) ]->entries[ basename( $old_path ) ] = self::DELETE_PLACEHOLDER;
-			$new_basename = basename( $new_path );
+			$changed_trees[ wp_unix_dirname( $old_path ) ]->entries[ basename( $old_path ) ] = self::DELETE_PLACEHOLDER;
+			$new_basename                                                               = basename( $new_path );
 			if ( $new_basename === '' ) {
 				throw new GitException( 'Cannot rename a file to an empty filename' );
 			}
-			$changed_trees[ wp_dirname( $new_path ) ]->entries[ $new_basename ] = new TreeEntry(
+			$changed_trees[ wp_unix_dirname( $new_path ) ]->entries[ $new_basename ] = new TreeEntry(
 				array(
 					'name' => $new_basename,
 					'mode' => TreeEntry::FILE_MODE_DIRECTORY,
@@ -892,7 +892,7 @@ class GitRepository {
 		// Rebase $squash_into_commit_oid and its descenrants onto the parent
 		// of the squashed range.
 		$new_parent_oid = $new_base_oid;
-		for ( $i = count( $commits_to_rebase ) - 1; $i >= 0; $i-- ) {
+		for ( $i = count( $commits_to_rebase ) - 1; $i >= 0; $i -- ) {
 			$parsed_old_commit       = $this->read_object( $commits_to_rebase[ $i ] )->as_commit();
 			$updated_commit          = clone $parsed_old_commit;
 			$updated_commit->parents = array( $new_parent_oid );
@@ -943,6 +943,7 @@ class GitRepository {
 		if ( ! $include_ancestor ) {
 			array_pop( $commits );
 		}
+
 		return $commits;
 	}
 
@@ -952,14 +953,15 @@ class GitRepository {
 
 			return false;
 		}
+
 		return new Commit(
 			array_merge(
 				array(
-					'author' => $this->get_config_value( 'user.name' ) . ' <' . $this->get_config_value( 'user.email' ) . '>',
-					'author_date' => null,
-					'committer' => $this->get_config_value( 'user.name' ) . ' <' . $this->get_config_value( 'user.email' ) . '>',
+					'author'         => $this->get_config_value( 'user.name' ) . ' <' . $this->get_config_value( 'user.email' ) . '>',
+					'author_date'    => null,
+					'committer'      => $this->get_config_value( 'user.name' ) . ' <' . $this->get_config_value( 'user.email' ) . '>',
 					'committer_date' => null,
-					'message' => 'Changes',
+					'message'        => 'Changes',
 				),
 				$options
 			)
@@ -971,7 +973,7 @@ class GitRepository {
 			if ( ! isset( $changed_trees[ $path ] ) ) {
 				$changed_trees[ $path ] = new Tree();
 			}
-			$path = wp_dirname( $path );
+			$path = wp_unix_dirname( $path );
 		}
 	}
 
@@ -998,7 +1000,7 @@ class GitRepository {
 
 		// Recursively process child trees
 		foreach ( $changed_trees as $child_path => $child_tree ) {
-			if ( wp_dirname( $child_path ) === $path && $child_path !== '/' ) {
+			if ( wp_unix_dirname( $child_path ) === $path && $child_path !== '/' ) {
 				$child_oid                               = $this->commit_tree( $child_path, $changed_trees );
 				$tree_objects[ basename( $child_path ) ] = new TreeEntry(
 					array(
@@ -1033,9 +1035,9 @@ class GitRepository {
 		 */
 		$stack = array( 'refs/heads/' );
 		foreach ( $prefixes as $prefix ) {
-			$path       = ltrim( wp_canonicalize_path( $prefix ), '/' );
-			$first_path = $this->fs->is_dir( $path ) ? $path : wp_dirname( $path );
-			if ( str_starts_with( $first_path, 'refs/' ) ) {
+			$path       = ltrim( wp_unix_path_resolve_dots( $prefix ), '/' );
+			$first_path = $this->fs->is_dir( $path ) ? $path : wp_unix_dirname( $path );
+			if ( strncmp( $first_path, 'refs/', strlen( 'refs/' ) ) === 0 ) {
 				$stack[] = $first_path;
 			}
 		}
@@ -1045,13 +1047,13 @@ class GitRepository {
 			if ( $this->fs->is_dir( $path ) ) {
 				$ref_files = $this->fs->ls( $path );
 				foreach ( $ref_files as $ref_file ) {
-					$full_path = wp_join_paths( $path, $ref_file );
+					$full_path = wp_join_unix_paths( $path, $ref_file );
 					array_push( $stack, $full_path );
 				}
 			} elseif ( $this->fs->is_file( $path ) ) {
 				// Check if path matches any of the prefixes
 				foreach ( $prefixes as $prefix ) {
-					if ( str_starts_with( $path, $prefix ) ) {
+					if ( strncmp( $path, $prefix, strlen( $prefix ) ) === 0 ) {
 						$hash = trim( $this->fs->get_contents( $path ) );
 						if ( $hash ) {
 							$ref_name          = trim( $path, '/' );
@@ -1065,7 +1067,7 @@ class GitRepository {
 
 		// Check if we should include HEAD
 		foreach ( $prefixes as $prefix ) {
-			if ( $prefix === '' || str_starts_with( 'HEAD', $prefix ) ) {
+			if ( $prefix === '' || strncmp( 'HEAD', $prefix, strlen( $prefix ) ) === 0 ) {
 				$refs['HEAD'] = $this->get_branch_tip( 'HEAD' );
 				break;
 			}

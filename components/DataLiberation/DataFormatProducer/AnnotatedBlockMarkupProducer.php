@@ -3,6 +3,7 @@
 namespace WordPress\DataLiberation\DataFormatProducer;
 
 use WordPress\DataLiberation\DataFormatConsumer\BlocksWithMetadata;
+use WP_HTML_Tag_Processor;
 
 /**
  * Turns Block Markup + Metadata into a metadata-annotated Block Markup.
@@ -49,7 +50,7 @@ class AnnotatedBlockMarkupProducer {
 			$this->result = '';
 			foreach ( $this->blocks_with_meta->get_all_metadata() as $key => $values ) {
 				foreach ( $values as $value ) {
-					$p = new \WP_HTML_Tag_Processor( '<meta>' );
+					$p = new WP_HTML_Tag_Processor( '<meta>' );
 					$p->next_tag();
 					$p->set_attribute( 'name', $key );
 					if ( is_array( $value ) || is_object( $value ) ) {
@@ -62,6 +63,7 @@ class AnnotatedBlockMarkupProducer {
 			}
 			$this->result .= "\n" . trim( $this->blocks_with_meta->get_block_markup(), "\n" );
 		}
+
 		return $this->result;
 	}
 }

@@ -31,6 +31,7 @@ class InflateTransformer implements ByteTransformer {
 			}
 			throw new ByteStreamException( 'Failed to inflate data: ' . $last_error['message'] );
 		}
+
 		return $inflated_data;
 	}
 
@@ -41,6 +42,7 @@ class InflateTransformer implements ByteTransformer {
 
 		$last_chunk           = inflate_add( $this->inflate_handle, '', ZLIB_FINISH );
 		$this->inflate_handle = null;
+
 		return $last_chunk;
 	}
 }

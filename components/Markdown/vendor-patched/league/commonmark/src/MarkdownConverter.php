@@ -23,14 +23,17 @@ use League\CommonMark\Renderer\MarkdownRendererInterface;
 
 class MarkdownConverter implements ConverterInterface, MarkdownConverterInterface
 {
-    /** @psalm-readonly */
-    protected EnvironmentInterface $environment;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Environment\EnvironmentInterface */
+    protected $environment;
 
-    /** @psalm-readonly */
-    protected MarkdownParserInterface $markdownParser;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Parser\MarkdownParserInterface */
+    protected $markdownParser;
 
-    /** @psalm-readonly */
-    protected MarkdownRendererInterface $htmlRenderer;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Renderer\MarkdownRendererInterface */
+    protected $htmlRenderer;
 
     public function __construct(EnvironmentInterface $environment)
     {

@@ -2,6 +2,8 @@
 
 namespace WordPress\ByteStream\ReadStream;
 
+use Exception;
+
 class DeflateReadStream extends BaseByteReadStream {
 
 
@@ -33,6 +35,7 @@ class DeflateReadStream extends BaseByteReadStream {
 		if ( $this->upstream->reached_end_of_data() ) {
 			$bytes                 = deflate_add( $this->deflate_context, '', ZLIB_FINISH );
 			$this->deflate_context = null;
+
 			return $bytes;
 		}
 
@@ -42,6 +45,7 @@ class DeflateReadStream extends BaseByteReadStream {
 			$inflated = $this->upstream->peek( $n );
 		}
 		$this->upstream->consume( strlen( $inflated ) );
+
 		return deflate_add( $this->deflate_context, $inflated );
 	}
 
@@ -80,7 +84,7 @@ class DeflateReadStream extends BaseByteReadStream {
 	private function deflate_init() {
 		$this->deflate_context = deflate_init( $this->deflate_encoding );
 		if ( ! $this->deflate_context ) {
-			throw new \Exception( 'Failed to initialize deflate context' );
+			throw new Exception( 'Failed to initialize deflate context' );
 		}
 	}
 }

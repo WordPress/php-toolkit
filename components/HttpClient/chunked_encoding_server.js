@@ -19,27 +19,27 @@ const http = require( 'http' );
 const zlib = require( 'zlib' );
 
 const server = http.createServer(
-	(req, res) => {
-    // Check if the client is using HTTP/1.1
-		const isHttp11                  = req.httpVersion === '1.1';
-    res.useChunkedEncodingByDefault = false
+	( req, res ) => {
+		// Check if the client is using HTTP/1.1
+		const isHttp11 = req.httpVersion === '1.1';
+		res.useChunkedEncodingByDefault = false;
 
 		// Check if the client accepts gzip encoding
-		const acceptEncoding = req.headers['accept-encoding'];
-    const useGzip        = acceptEncoding && acceptEncoding.includes( 'gzip' );
-		if (req.headers['please-redirect']) {
+		const acceptEncoding = req.headers[ 'accept-encoding' ];
+		const useGzip = acceptEncoding && acceptEncoding.includes( 'gzip' );
+		if ( req.headers[ 'please-redirect' ] ) {
 			res.writeHead( 301, { Location: req.url } );
 			res.end();
 			return;
 		}
 		// Set headers for chunked transfer encoding if HTTP/1.1
-		if (isHttp11) {
+		if ( isHttp11 ) {
 			res.setHeader( 'Transfer-Encoding', 'chunked' );
 		}
 
 		res.setHeader( 'Content-Type', 'text/plain' );
 		// Create a function to write chunks
-		const writeChunks      = (stream) => {
+		const writeChunks = ( stream ) => {
 			stream.write(
 				`<!DOCTYPE html>
 <html lang=en>
@@ -47,38 +47,39 @@ const server = http.createServer(
 <meta charset='utf-8'>
 <title>Chunked transfer encoding test</title>
 </head>
-`);
-		stream.write( '<body><h1>Chunked transfer encoding test</h1>\n' );
-		setTimeout(
-		() => {
-			stream.write( '<h5>This is a chunked response after 100 ms.</h5>\n' );
+` );
+			stream.write( '<body><h1>Chunked transfer encoding test</h1>\n' );
 			setTimeout(
-                () => {
-						stream.write( '<h5>This is a chunked response after 1 second. The server should not close the stream before all chunks are sent to a client.</h5>\n</body>\n</html>\n' );
-						stream.end();
-                },
-                1000
-            );
-		},
-		100
-    );
+				() => {
+					stream.write( '<h5>This is a chunked response after 100 ms.</h5>\n' );
+					setTimeout(
+						() => {
+							stream.write(
+								'<h5>This is a chunked response after 1 second. The server should not close the stream before all chunks are sent to a client.</h5>\n</body>\n</html>\n' );
+							stream.end();
+						},
+						1000,
+					);
+				},
+				100,
+			);
 		};
-		if (useGzip) {
+		if ( useGzip ) {
 			res.setHeader( 'Content-Encoding', 'gzip' );
 			const gzip = zlib.createGzip();
 			gzip.pipe( res );
 
-			if (isHttp11) {
+			if ( isHttp11 ) {
 				writeChunks(
-				{
-					write( data ) {
-						gzip.write( data );
-						gzip.flush();
+					{
+						write( data ) {
+							gzip.write( data );
+							gzip.flush();
+						},
+						end() {
+							gzip.end();
+						},
 					},
-					end() {
-						gzip.end();
-					}
-				}
 				);
 			} else {
 				gzip.write( 'Chunked transfer encoding test\n' );
@@ -87,19 +88,19 @@ const server = http.createServer(
 				gzip.end();
 			}
 		} else {
-			if (isHttp11) {
+			if ( isHttp11 ) {
 				writeChunks( res );
-				} else {
+			} else {
 				res.write( 'Chunked transfer encoding test\n' );
 				res.write( 'This is a chunked response after 100 ms.\n' );
 				res.write( 'This is a chunked response after 1 second.\n' );
 				res.end();
-				}
+			}
 		}
-	}
+	},
 );
 
-server.listen(0, '127.0.0.1', () => {
+server.listen( 0, '127.0.0.1', () => {
 	const newPort = server.address().port;
-	console.log(`Server is listening on http://127.0.0.1:${newPort}`);
-});
+	console.log( `Server is listening on http://127.0.0.1:${ newPort }` );
+} );

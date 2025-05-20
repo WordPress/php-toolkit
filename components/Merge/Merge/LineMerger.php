@@ -14,15 +14,15 @@ class LineMerger implements Merger {
 		$results = array();
 		$n       = max( count( $linesA ), count( $linesB ) );
 
-		for ( $i = 0; $i < $n; $i++ ) {
+		for ( $i = 0; $i < $n; $i ++ ) {
 			$lineA = $linesA[ $i ] ?? array(
-				'base' => null,
-				'deleted' => false,
+				'base'     => null,
+				'deleted'  => false,
 				'inserted' => '',
 			);
 			$lineB = $linesB[ $i ] ?? array(
-				'base' => null,
-				'deleted' => false,
+				'base'     => null,
+				'deleted'  => false,
 				'inserted' => '',
 			);
 
@@ -102,8 +102,8 @@ class LineMerger implements Merger {
 	private function to_chunks( array $diff ): array {
 		$lines   = array();
 		$current = array(
-			'base' => null,
-			'deleted' => false,
+			'base'     => null,
+			'deleted'  => false,
 			'inserted' => '',
 		);
 
@@ -114,8 +114,8 @@ class LineMerger implements Merger {
 				if ( $current['base'] !== null || $current['inserted'] !== '' ) {
 					$lines[] = $current;
 					$current = array(
-						'base' => null,
-						'deleted' => false,
+						'base'     => null,
+						'deleted'  => false,
 						'inserted' => '',
 					);
 				}

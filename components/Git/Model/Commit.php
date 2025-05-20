@@ -2,11 +2,12 @@
 
 namespace WordPress\Git\Model;
 
+use DateTime;
 use WordPress\Git\GitException;
 
 class Commit {
 
-	public const NULL_HASH   = '0000000000000000000000000000000000000000';
+	public const NULL_HASH = '0000000000000000000000000000000000000000';
 	public const DATE_FORMAT = 'U +0000';
 
 	/**
@@ -101,9 +102,11 @@ class Commit {
 		// Workaround: We can't use $head_commit_time->getTimestamp() on 32bit systems
 		if ( preg_match( '/^(\d+)\s+([+-]\d{2})(\d{2})$/', $this->author_date, $matches ) ) {
 			$timestamp = $matches[1];
-			return \DateTime::createFromFormat( 'U', $timestamp );
+
+			return DateTime::createFromFormat( 'U', $timestamp );
 		}
-		return new \DateTime( $this->author_date );
+
+		return new DateTime( $this->author_date );
 	}
 
 	public function get_first_parent_hash() {

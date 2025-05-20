@@ -102,26 +102,30 @@ MD;
 			),
 			'A simple paragraph – regular block markup formatting – no space at the end' => array(
 				'markdown' => <<<MD
-                A simple paragraph
-                MD,
+A simple paragraph
+MD
+				,
 				'expected' => '<!-- wp:paragraph --><p>A simple paragraph</p><!-- /wp:paragraph -->',
 			),
 			'A simple paragraph – regular block markup formatting – single space at the end' => array(
 				'markdown' => <<<MD
-                A simple paragraph 
-                MD,
+A simple paragraph 
+MD
+				,	
 				'expected' => '<!-- wp:paragraph --><p>A simple paragraph </p><!-- /wp:paragraph -->',
 			),
 			'A simple paragraph – regular HTML formatting – no space at the end' => array(
 				'markdown' => <<<MD
-                A simple paragraph
-                MD,
+A simple paragraph
+MD
+				,
 				'expected' => '<!-- wp:paragraph --><p>A simple paragraph</p><!-- /wp:paragraph -->',
 			),
 			'A simple paragraph – regular HTML formatting – single space at the end' => array(
 				'markdown' => <<<MD
-                A simple paragraph 
-                MD,
+A simple paragraph 
+MD
+				,
 				'expected' => '<!-- wp:paragraph --><p>A simple paragraph </p><!-- /wp:paragraph -->',
 			),
 			'A simple list' => array(

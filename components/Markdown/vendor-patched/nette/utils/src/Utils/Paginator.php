@@ -34,21 +34,28 @@ class Paginator
 {
 	use Nette\SmartObject;
 
-	private int $base = 1;
+	/**
+  * @var int
+  */
+ private $base = 1;
 
 	/** @var positive-int */
-	private int $itemsPerPage = 1;
+	private $itemsPerPage = 1;
 
-	private int $page = 1;
+	/**
+  * @var int
+  */
+ private $page = 1;
 
 	/** @var int<0, max>|null */
-	private ?int $itemCount = null;
+	private $itemCount;
 
 
 	/**
-	 * Sets current page number.
-	 */
-	public function setPage(int $page): static
+  * Sets current page number.
+  * @return static
+  */
+ public function setPage(int $page)
 	{
 		$this->page = $page;
 		return $this;
@@ -107,9 +114,10 @@ class Paginator
 
 
 	/**
-	 * Sets first page (base) number.
-	 */
-	public function setBase(int $base): static
+  * Sets first page (base) number.
+  * @return static
+  */
+ public function setBase(int $base)
 	{
 		$this->base = $base;
 		return $this;
@@ -171,9 +179,10 @@ class Paginator
 
 
 	/**
-	 * Sets the number of items to display on a single page.
-	 */
-	public function setItemsPerPage(int $itemsPerPage): static
+  * Sets the number of items to display on a single page.
+  * @return static
+  */
+ public function setItemsPerPage(int $itemsPerPage)
 	{
 		$this->itemsPerPage = max(1, $itemsPerPage);
 		return $this;
@@ -191,9 +200,10 @@ class Paginator
 
 
 	/**
-	 * Sets the total number of items.
-	 */
-	public function setItemCount(?int $itemCount = null): static
+  * Sets the total number of items.
+  * @return static
+  */
+ public function setItemCount(?int $itemCount = null)
 	{
 		$this->itemCount = $itemCount === null ? null : max(0, $itemCount);
 		return $this;

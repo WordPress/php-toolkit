@@ -18,8 +18,8 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 	use Mixin\CopyRecursiveViaStreaming;
 
 	private $last_write_stream_id = 0;
-	private $write_streams        = array();
-	private $files                = array();
+	private $write_streams = array();
+	private $files = array();
 
 	public static function create() {
 		return new ChrootLayer(
@@ -30,7 +30,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 
 	private function __construct() {
 		$this->files['/'] = array(
-			'type' => 'dir',
+			'type'     => 'dir',
 			'contents' => array(),
 		);
 	}
@@ -45,6 +45,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 				sprintf( 'Directory not found: %s', $parent )
 			);
 		}
+
 		return array_keys( $this->files[ $parent ]['contents'] );
 	}
 
@@ -66,6 +67,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 				sprintf( 'File not found: %s', $path )
 			);
 		}
+
 		return new MemoryPipe( $this->files[ $path ]['contents'] );
 	}
 
@@ -76,7 +78,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 			);
 		}
 
-		$parent = wp_dirname( $new_path );
+		$parent = wp_unix_dirname( $new_path );
 		if ( ! $this->is_dir( $parent ) ) {
 			throw new FilesystemException(
 				sprintf( 'Parent directory not found: %s', $parent )
@@ -85,6 +87,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 
 		$this->files[ $new_path ] = $this->files[ $old_path ];
 		unset( $this->files[ $old_path ] );
+
 		return true;
 	}
 
@@ -95,7 +98,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 			);
 		}
 
-		$parent = wp_dirname( $path );
+		$parent = wp_unix_dirname( $path );
 		if ( ! $this->is_dir( $parent ) ) {
 			throw new FilesystemException(
 				sprintf( 'Parent directory not found: %s', $parent )
@@ -103,10 +106,11 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 		}
 
 		$this->files[ $path ]                                    = array(
-			'type' => 'dir',
+			'type'     => 'dir',
 			'contents' => array(),
 		);
 		$this->files[ $parent ]['contents'][ basename( $path ) ] = true;
+
 		return true;
 	}
 
@@ -117,9 +121,10 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 			);
 		}
 
-		$parent = wp_dirname( $path );
+		$parent = wp_unix_dirname( $path );
 		unset( $this->files[ $parent ]['contents'][ basename( $path ) ] );
 		unset( $this->files[ $path ] );
+
 		return true;
 	}
 
@@ -142,14 +147,15 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 			}
 		}
 
-		$parent = wp_dirname( $path );
+		$parent = wp_unix_dirname( $path );
 		unset( $this->files[ $parent ]['contents'][ basename( $path ) ] );
 		unset( $this->files[ $path ] );
+
 		return true;
 	}
 
 	public function put_contents( $path, $data, $options = array() ) {
-		$parent = wp_dirname( $path );
+		$parent = wp_unix_dirname( $path );
 		if ( ! $this->is_dir( $parent ) ) {
 			throw new FilesystemException(
 				sprintf( 'Parent directory not found: %s', $parent )
@@ -157,17 +163,19 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 		}
 
 		$this->files[ $path ]                                    = array(
-			'type' => 'file',
+			'type'     => 'file',
 			'contents' => $data,
 		);
 		$this->files[ $parent ]['contents'][ basename( $path ) ] = true;
+
 		return true;
 	}
 
 	protected function write_stream_internal_open( string $path ): int {
 		$this->put_contents( $path, '' );
-		$stream_id                         = $this->last_write_stream_id++;
+		$stream_id                         = $this->last_write_stream_id ++;
 		$this->write_streams[ $stream_id ] = $path;
+
 		return $stream_id;
 	}
 
@@ -177,8 +185,9 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 				sprintf( 'Cannot append bytes to a write stream that is not open' )
 			);
 		}
-		$path                              = $this->write_streams[ $stream_id ];
+		$path                             = $this->write_streams[ $stream_id ];
 		$this->files[ $path ]['contents'] .= $data;
+
 		return true;
 	}
 
@@ -189,5 +198,9 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 			);
 		}
 		unset( $this->write_streams[ $stream_id ] );
+	}
+
+	public function get_meta(): array {
+		return [];
 	}
 }

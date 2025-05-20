@@ -1,9 +1,8 @@
 <?php
 
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace Rowbot\URL\Exception;
 
-class TypeError extends URLException
-{
+class TypeError extends URLException {
 }

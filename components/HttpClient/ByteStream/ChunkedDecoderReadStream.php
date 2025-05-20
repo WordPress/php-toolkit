@@ -2,16 +2,16 @@
 
 namespace WordPress\HttpClient\ByteStream;
 
+use Exception;
 use WordPress\ByteStream\ReadStream\BaseByteReadStream;
-use WordPress\ByteStream\ReadStream\ByteReadStream;
 
 class ChunkedDecoderReadStream extends BaseByteReadStream {
 
-	private $state           = self::SCAN_CHUNK_SIZE;
-	const SCAN_CHUNK_SIZE    = 'SCAN_CHUNK_SIZE';
-	const SCAN_CHUNK_DATA    = 'SCAN_CHUNK_DATA';
+	private $state = self::SCAN_CHUNK_SIZE;
+	const SCAN_CHUNK_SIZE = 'SCAN_CHUNK_SIZE';
+	const SCAN_CHUNK_DATA = 'SCAN_CHUNK_DATA';
 	const SCAN_CHUNK_TRAILER = 'SCAN_CHUNK_TRAILER';
-	const SCAN_FINAL_CHUNK   = 'SCAN_FINAL_CHUNK';
+	const SCAN_FINAL_CHUNK = 'SCAN_FINAL_CHUNK';
 
 	private $upstream;
 	private $chunk_remaining_bytes = 0;
@@ -37,7 +37,7 @@ class ChunkedDecoderReadStream extends BaseByteReadStream {
 
 				$chunk_bytes_nb = strspn( $peeked, '0123456789abcdefABCDEF' );
 				if ( $chunk_bytes_nb === 0 ) {
-					throw new \Exception( 'Invalid chunk size format' );
+					throw new Exception( 'Invalid chunk size format' );
 				}
 
 				$clrf_pos = strpos( $peeked, "\r\n", $chunk_bytes_nb );
@@ -51,6 +51,7 @@ class ChunkedDecoderReadStream extends BaseByteReadStream {
 
 				if ( 0 === $chunk_size ) {
 					$this->state = self::SCAN_FINAL_CHUNK;
+
 					return '';
 				}
 
@@ -63,11 +64,12 @@ class ChunkedDecoderReadStream extends BaseByteReadStream {
 					break;
 				}
 
-				$data                         = $this->upstream->consume( $available );
+				$data                        = $this->upstream->consume( $available );
 				$this->chunk_remaining_bytes -= strlen( $data );
 				if ( $this->chunk_remaining_bytes === 0 ) {
 					$this->state = self::SCAN_CHUNK_TRAILER;
 				}
+
 				return $data;
 			} elseif ( $this->state === self::SCAN_CHUNK_TRAILER ) {
 				$this->upstream->pull( 2 );
@@ -78,13 +80,14 @@ class ChunkedDecoderReadStream extends BaseByteReadStream {
 				}
 
 				if ( $trailer !== "\r\n" ) {
-					throw new \Exception( 'Expected CRLF after chunk data' );
+					throw new Exception( 'Expected CRLF after chunk data' );
 				}
 
 				$this->upstream->consume( 2 );
 				$this->state = self::SCAN_CHUNK_SIZE;
 			}
 		}
+
 		return '';
 	}
 

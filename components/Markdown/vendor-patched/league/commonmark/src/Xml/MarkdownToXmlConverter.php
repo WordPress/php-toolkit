@@ -23,11 +23,13 @@ use League\CommonMark\Renderer\DocumentRendererInterface;
 
 final class MarkdownToXmlConverter implements ConverterInterface
 {
-    /** @psalm-readonly */
-    private MarkdownParserInterface $parser;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Parser\MarkdownParserInterface */
+    private $parser;
 
-    /** @psalm-readonly */
-    private DocumentRendererInterface $renderer;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Renderer\DocumentRendererInterface */
+    private $renderer;
 
     public function __construct(EnvironmentInterface $environment)
     {

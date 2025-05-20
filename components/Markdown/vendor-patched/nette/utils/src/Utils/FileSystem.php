@@ -23,13 +23,8 @@ final class FileSystem
 	 */
 	public static function createDir(string $dir, int $mode = 0777): void
 	{
-		if (!is_dir($dir) && !@mkdir($dir, $mode, recursive: true) && !is_dir($dir)) { // @ - dir may already exist
-			throw new Nette\IOException(sprintf(
-				"Unable to create directory '%s' with mode %s. %s",
-				self::normalizePath($dir),
-				decoct($mode),
-				Helpers::getLastError(),
-			));
+		if (!is_dir($dir) && !@mkdir($dir, $mode, true) && !is_dir($dir)) { // @ - dir may already exist
+			throw new Nette\IOException(sprintf("Unable to create directory '%s' with mode %s. %s", self::normalizePath($dir), decoct($mode), Helpers::getLastError()));
 		}
 	}
 
@@ -63,12 +58,7 @@ final class FileSystem
 		} else {
 			static::createDir(dirname($target));
 			if (@stream_copy_to_stream(static::open($origin, 'rb'), static::open($target, 'wb')) === false) { // @ is escalated to exception
-				throw new Nette\IOException(sprintf(
-					"Unable to copy file '%s' to '%s'. %s",
-					self::normalizePath($origin),
-					self::normalizePath($target),
-					Helpers::getLastError(),
-				));
+				throw new Nette\IOException(sprintf("Unable to copy file '%s' to '%s'. %s", self::normalizePath($origin), self::normalizePath($target), Helpers::getLastError()));
 			}
 		}
 	}
@@ -83,11 +73,7 @@ final class FileSystem
 	{
 		$f = @fopen($path, $mode); // @ is escalated to exception
 		if (!$f) {
-			throw new Nette\IOException(sprintf(
-				"Unable to open file '%s'. %s",
-				self::normalizePath($path),
-				Helpers::getLastError(),
-			));
+			throw new Nette\IOException(sprintf("Unable to open file '%s'. %s", self::normalizePath($path), Helpers::getLastError()));
 		}
 		return $f;
 	}
@@ -102,11 +88,7 @@ final class FileSystem
 		if (is_file($path) || is_link($path)) {
 			$func = DIRECTORY_SEPARATOR === '\\' && is_dir($path) ? 'rmdir' : 'unlink';
 			if (!@$func($path)) { // @ is escalated to exception
-				throw new Nette\IOException(sprintf(
-					"Unable to delete '%s'. %s",
-					self::normalizePath($path),
-					Helpers::getLastError(),
-				));
+				throw new Nette\IOException(sprintf("Unable to delete '%s'. %s", self::normalizePath($path), Helpers::getLastError()));
 			}
 		} elseif (is_dir($path)) {
 			foreach (new \FilesystemIterator($path) as $item) {
@@ -114,11 +96,7 @@ final class FileSystem
 			}
 
 			if (!@rmdir($path)) { // @ is escalated to exception
-				throw new Nette\IOException(sprintf(
-					"Unable to delete directory '%s'. %s",
-					self::normalizePath($path),
-					Helpers::getLastError(),
-				));
+				throw new Nette\IOException(sprintf("Unable to delete directory '%s'. %s", self::normalizePath($path), Helpers::getLastError()));
 			}
 		}
 	}
@@ -144,12 +122,7 @@ final class FileSystem
 			}
 
 			if (!@rename($origin, $target)) { // @ is escalated to exception
-				throw new Nette\IOException(sprintf(
-					"Unable to rename file or directory '%s' to '%s'. %s",
-					self::normalizePath($origin),
-					self::normalizePath($target),
-					Helpers::getLastError(),
-				));
+				throw new Nette\IOException(sprintf("Unable to rename file or directory '%s' to '%s'. %s", self::normalizePath($origin), self::normalizePath($target), Helpers::getLastError()));
 			}
 		}
 	}
@@ -163,11 +136,7 @@ final class FileSystem
 	{
 		$content = @file_get_contents($file); // @ is escalated to exception
 		if ($content === false) {
-			throw new Nette\IOException(sprintf(
-				"Unable to read file '%s'. %s",
-				self::normalizePath($file),
-				Helpers::getLastError(),
-			));
+			throw new Nette\IOException(sprintf("Unable to read file '%s'. %s", self::normalizePath($file), Helpers::getLastError()));
 		}
 
 		return $content;
@@ -185,11 +154,9 @@ final class FileSystem
 		return (function ($f) use ($file, $stripNewLines) {
 			$counter = 0;
 			do {
-				$line = Callback::invokeSafe('fgets', [$f], fn($error) => throw new Nette\IOException(sprintf(
-					"Unable to read file '%s'. %s",
-					self::normalizePath($file),
-					$error,
-				)));
+				$line = Callback::invokeSafe('fgets', [$f], function ($error) use ($file) {
+        throw new Nette\IOException(sprintf("Unable to read file '%s'. %s", self::normalizePath($file), $error));
+    });
 				if ($line === false) {
 					fclose($f);
 					break;
@@ -213,20 +180,11 @@ final class FileSystem
 	{
 		static::createDir(dirname($file));
 		if (@file_put_contents($file, $content) === false) { // @ is escalated to exception
-			throw new Nette\IOException(sprintf(
-				"Unable to write file '%s'. %s",
-				self::normalizePath($file),
-				Helpers::getLastError(),
-			));
+			throw new Nette\IOException(sprintf("Unable to write file '%s'. %s", self::normalizePath($file), Helpers::getLastError()));
 		}
 
 		if ($mode !== null && !@chmod($file, $mode)) { // @ is escalated to exception
-			throw new Nette\IOException(sprintf(
-				"Unable to chmod file '%s' to mode %s. %s",
-				self::normalizePath($file),
-				decoct($mode),
-				Helpers::getLastError(),
-			));
+			throw new Nette\IOException(sprintf("Unable to chmod file '%s' to mode %s. %s", self::normalizePath($file), decoct($mode), Helpers::getLastError()));
 		}
 	}
 
@@ -240,12 +198,7 @@ final class FileSystem
 	{
 		if (is_file($path)) {
 			if (!@chmod($path, $fileMode)) { // @ is escalated to exception
-				throw new Nette\IOException(sprintf(
-					"Unable to chmod file '%s' to mode %s. %s",
-					self::normalizePath($path),
-					decoct($fileMode),
-					Helpers::getLastError(),
-				));
+				throw new Nette\IOException(sprintf("Unable to chmod file '%s' to mode %s. %s", self::normalizePath($path), decoct($fileMode), Helpers::getLastError()));
 			}
 		} elseif (is_dir($path)) {
 			foreach (new \FilesystemIterator($path) as $item) {
@@ -253,12 +206,7 @@ final class FileSystem
 			}
 
 			if (!@chmod($path, $dirMode)) { // @ is escalated to exception
-				throw new Nette\IOException(sprintf(
-					"Unable to chmod directory '%s' to mode %s. %s",
-					self::normalizePath($path),
-					decoct($dirMode),
-					Helpers::getLastError(),
-				));
+				throw new Nette\IOException(sprintf("Unable to chmod directory '%s' to mode %s. %s", self::normalizePath($path), decoct($dirMode), Helpers::getLastError()));
 			}
 		} else {
 			throw new Nette\IOException(sprintf("File or directory '%s' not found.", self::normalizePath($path)));

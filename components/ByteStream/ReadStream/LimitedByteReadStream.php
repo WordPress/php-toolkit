@@ -2,8 +2,6 @@
 
 namespace WordPress\ByteStream\ReadStream;
 
-use WordPress\ByteStream\ByteStreamException;
-
 /**
  * A reader that limits the number of bytes that can be read.
  */
@@ -27,6 +25,7 @@ class LimitedByteReadStream extends BaseByteReadStream {
 			return '';
 		}
 		$this->upstream->pull( $max_bytes );
+
 		return $this->upstream->consume( $max_bytes );
 	}
 

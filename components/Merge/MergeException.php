@@ -2,5 +2,7 @@
 
 namespace WordPress\Merge;
 
-class MergeException extends \Exception {
+use Exception;
+
+class MergeException extends Exception {
 }

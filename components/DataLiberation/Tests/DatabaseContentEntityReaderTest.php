@@ -2,7 +2,6 @@
 
 use PHPUnit\Framework\TestCase;
 use WordPress\DataLiberation\EntityReader\DatabaseContentEntityReader;
-use WordPress\DataLiberation\ImportEntity;
 
 class DatabaseContentEntityReaderTest extends TestCase {
 
@@ -36,7 +35,7 @@ class DatabaseContentEntityReaderTest extends TestCase {
 
 	private function populateTestTables(): void {
 		// Insert parent posts
-		for ( $i = 1; $i <= 10; $i++ ) {
+		for ( $i = 1; $i <= 10; $i ++ ) {
 			$this->db->exec( "INSERT INTO wp_posts (ID, post_parent, post_title) VALUES ($i, 0, 'Parent Post $i')" );
 			$this->db->exec( "INSERT INTO wp_postmeta (meta_id, post_id, meta_key, meta_value) VALUES ($i, $i, 'meta_key_$i', 'meta_value_$i')" );
 			$this->db->exec( "INSERT INTO wp_terms (term_id, name) VALUES ($i, 'Term $i')" );
@@ -45,7 +44,7 @@ class DatabaseContentEntityReaderTest extends TestCase {
 			$this->db->exec( "INSERT INTO wp_comments (comment_ID, comment_post_ID, comment_content) VALUES ($i, $i, 'Comment $i')" );
 		}
 		// Insert child posts
-		for ( $i = 11; $i <= 20; $i++ ) {
+		for ( $i = 11; $i <= 20; $i ++ ) {
 			$parent_id = $i - 10;
 			$this->db->exec( "INSERT INTO wp_posts (ID, post_parent, post_title) VALUES ($i, $parent_id, 'Child Post $i')" );
 			$this->db->exec( "INSERT INTO wp_postmeta (meta_id, post_id, meta_key, meta_value) VALUES ($i, $i, 'meta_key_$i', 'meta_value_$i')" );
@@ -61,7 +60,7 @@ class DatabaseContentEntityReaderTest extends TestCase {
 		while ( $this->reader->next_entity() ) {
 			$entity = $this->reader->get_entity();
 			if ( $entity->get_type() === 'post' ) {
-				++$postCount;
+				++ $postCount;
 			}
 		}
 		$this->assertEquals( 20, $postCount );
@@ -72,7 +71,7 @@ class DatabaseContentEntityReaderTest extends TestCase {
 		while ( $this->reader->next_entity() ) {
 			$entity = $this->reader->get_entity();
 			if ( $entity->get_type() === 'post_meta' ) {
-				++$metaCount;
+				++ $metaCount;
 			}
 		}
 		$this->assertEquals( 20, $metaCount );
@@ -83,7 +82,7 @@ class DatabaseContentEntityReaderTest extends TestCase {
 		while ( $this->reader->next_entity() ) {
 			$entity = $this->reader->get_entity();
 			if ( $entity->get_type() === 'term' ) {
-				++$termCount;
+				++ $termCount;
 			}
 		}
 		$this->assertEquals( 20, $termCount );
@@ -94,7 +93,7 @@ class DatabaseContentEntityReaderTest extends TestCase {
 		while ( $this->reader->next_entity() ) {
 			$entity = $this->reader->get_entity();
 			if ( $entity->get_type() === 'comment' ) {
-				++$commentCount;
+				++ $commentCount;
 			}
 		}
 		$this->assertEquals( 20, $commentCount );

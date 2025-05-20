@@ -35,13 +35,15 @@ class BlocksWithMetadata {
 	 *
 	 * get_first_meta_value( 'post_author' ) returns 'Patrick Rothfuss'.
 	 *
-	 * @param string $key The metadata key.
+	 * @param  string  $key  The metadata key.
+	 *
 	 * @return mixed The metadata value.
 	 */
 	public function get_first_meta_value( $key ) {
 		if ( ! array_key_exists( $key, $this->metadata ) ) {
 			return null;
 		}
+
 		return $this->metadata[ $key ][0];
 	}
 
@@ -65,8 +67,10 @@ class BlocksWithMetadata {
 			foreach ( $this->metadata as $key => $values ) {
 				$meta[ $key ] = $values[0];
 			}
+
 			return $meta;
 		}
+
 		return $this->metadata;
 	}
 

@@ -16,20 +16,18 @@ declare(strict_types=1);
 
 namespace League\CommonMark\Util;
 
-final class HtmlElement implements \Stringable
+final class HtmlElement
 {
-    /** @psalm-readonly */
-    private string $tagName;
-
+    /** @psalm-readonly
+     * @var string */
+    private $tagName;
     /** @var array<string, string|bool> */
-    private array $attributes = [];
-
+    private $attributes = [];
     /** @var \Stringable|\Stringable[]|string */
     private $contents;
-
-    /** @psalm-readonly */
-    private bool $selfClosing;
-
+    /** @psalm-readonly
+     * @var bool */
+    private $selfClosing;
     /**
      * @param string                                $tagName     Name of the HTML tag
      * @param array<string, string|string[]|bool>   $attributes  Array of attributes (values should be unescaped)
@@ -47,13 +45,11 @@ final class HtmlElement implements \Stringable
 
         $this->setContents($contents ?? '');
     }
-
     /** @psalm-immutable */
     public function getTagName(): string
     {
         return $this->tagName;
     }
-
     /**
      * @return array<string, string|bool>
      *
@@ -63,7 +59,6 @@ final class HtmlElement implements \Stringable
     {
         return $this->attributes;
     }
-
     /**
      * @return string|bool|null
      *
@@ -73,7 +68,6 @@ final class HtmlElement implements \Stringable
     {
         return $this->attributes[$key] ?? null;
     }
-
     /**
      * @param string|string[]|bool $value
      */
@@ -87,7 +81,6 @@ final class HtmlElement implements \Stringable
 
         return $this;
     }
-
     /**
      * @return \Stringable|\Stringable[]|string
      *
@@ -101,7 +94,6 @@ final class HtmlElement implements \Stringable
 
         return $this->getContentsAsString();
     }
-
     /**
      * Sets the inner contents of the tag (must be pre-escaped if needed)
      *
@@ -115,7 +107,6 @@ final class HtmlElement implements \Stringable
 
         return $this;
     }
-
     /** @psalm-immutable */
     public function __toString(): string
     {
@@ -143,7 +134,6 @@ final class HtmlElement implements \Stringable
 
         return $result;
     }
-
     /** @psalm-immutable */
     private function getContentsAsString(): string
     {

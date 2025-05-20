@@ -90,9 +90,10 @@ trait SmartObject
 
 
 	/**
-	 * @throws MemberAccessException if the property is not defined or is read-only
-	 */
-	public function __set(string $name, mixed $value): void
+  * @throws MemberAccessException if the property is not defined or is read-only
+  * @param mixed $value
+  */
+ public function __set(string $name, $value): void
 	{
 		$class = static::class;
 

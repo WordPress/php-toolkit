@@ -2,6 +2,7 @@
 
 namespace WordPress\Zip;
 
+use InvalidArgumentException;
 use WordPress\ByteStream\ReadStream\ByteReadStream;
 
 /**
@@ -24,7 +25,7 @@ use WordPress\ByteStream\ReadStream\ByteReadStream;
  *   30       n    File name
  *   30+n     m    Extra field
  *
- * @param resource $stream
+ * @param  resource  $stream
  */
 class FileEntry {
 
@@ -108,7 +109,7 @@ class FileEntry {
 		$valid_properties = array_keys( get_object_vars( $this ) );
 		foreach ( $header_fields as $key => $value ) {
 			if ( ! in_array( $key, $valid_properties ) ) {
-				throw new \InvalidArgumentException( "Invalid property: $key. Expected one of: " . implode( ', ', $valid_properties ) );
+				throw new InvalidArgumentException( "Invalid property: $key. Expected one of: " . implode( ', ', $valid_properties ) );
 			}
 			$this->$key = $value;
 		}
@@ -118,16 +119,16 @@ class FileEntry {
 			// DOS date format: bits 0-4: day, bits 5-8: month, bits 9-15: years since 1980
 			$dt                     = getdate( $this->lastModifiedTime );
 			$this->lastModifiedDate = ( ( $dt['year'] - 1980 ) << 9 ) |
-									( $dt['mon'] << 5 ) |
-									$dt['mday'];
+			                          ( $dt['mon'] << 5 ) |
+			                          $dt['mday'];
 		}
 
 		if ( null === $this->lastModifiedTime ) {
 			// DOS time format: bits 0-4: seconds/2, bits 5-10: minutes, bits 11-15: hours
 			$dt                     = getdate( $this->lastModifiedTime );
 			$this->lastModifiedTime = ( $dt['hours'] << 11 ) |
-									( $dt['minutes'] << 5 ) |
-									( floor( $dt['seconds'] / 2 ) );
+			                          ( $dt['minutes'] << 5 ) |
+			                          ( floor( $dt['seconds'] / 2 ) );
 		}
 
 		if ( null !== $this->path ) {

@@ -253,7 +253,7 @@ class WXREntityReader implements EntityReader {
 	const KNOWN_SITE_OPTIONS = array(
 		'wp:base_blog_url' => 'home',
 		'wp:base_site_url' => 'siteurl',
-		'title' => 'blogname',
+		'title'            => 'blogname',
 	);
 
 	/**
@@ -263,101 +263,101 @@ class WXREntityReader implements EntityReader {
 	 * @var array
 	 */
 	const KNOWN_ENITIES = array(
-		'wp:comment' => array(
-			'type' => 'comment',
+		'wp:comment'     => array(
+			'type'   => 'comment',
 			'fields' => array(
-				'wp:comment_id' => 'comment_id',
-				'wp:comment_author' => 'comment_author',
+				'wp:comment_id'           => 'comment_id',
+				'wp:comment_author'       => 'comment_author',
 				'wp:comment_author_email' => 'comment_author_email',
-				'wp:comment_author_url' => 'comment_author_url',
-				'wp:comment_author_IP' => 'comment_author_IP',
-				'wp:comment_date' => 'comment_date',
-				'wp:comment_date_gmt' => 'comment_date_gmt',
-				'wp:comment_content' => 'comment_content',
-				'wp:comment_approved' => 'comment_approved',
-				'wp:comment_type' => 'comment_type',
-				'wp:comment_parent' => 'comment_parent',
-				'wp:comment_user_id' => 'comment_user_id',
+				'wp:comment_author_url'   => 'comment_author_url',
+				'wp:comment_author_IP'    => 'comment_author_IP',
+				'wp:comment_date'         => 'comment_date',
+				'wp:comment_date_gmt'     => 'comment_date_gmt',
+				'wp:comment_content'      => 'comment_content',
+				'wp:comment_approved'     => 'comment_approved',
+				'wp:comment_type'         => 'comment_type',
+				'wp:comment_parent'       => 'comment_parent',
+				'wp:comment_user_id'      => 'comment_user_id',
 			),
 		),
 		'wp:commentmeta' => array(
-			'type' => 'comment_meta',
+			'type'   => 'comment_meta',
 			'fields' => array(
-				'wp:meta_key' => 'meta_key',
+				'wp:meta_key'   => 'meta_key',
 				'wp:meta_value' => 'meta_value',
 			),
 		),
-		'wp:author' => array(
-			'type' => 'user',
+		'wp:author'      => array(
+			'type'   => 'user',
 			'fields' => array(
-				'wp:author_id' => 'ID',
-				'wp:author_login' => 'user_login',
-				'wp:author_email' => 'user_email',
+				'wp:author_id'           => 'ID',
+				'wp:author_login'        => 'user_login',
+				'wp:author_email'        => 'user_email',
 				'wp:author_display_name' => 'display_name',
-				'wp:author_first_name' => 'first_name',
-				'wp:author_last_name' => 'last_name',
+				'wp:author_first_name'   => 'first_name',
+				'wp:author_last_name'    => 'last_name',
 			),
 		),
-		'item' => array(
-			'type' => 'post',
+		'item'           => array(
+			'type'   => 'post',
 			'fields' => array(
-				'title' => 'post_title',
-				'link' => 'link',
-				'guid' => 'guid',
-				'description' => 'post_excerpt',
-				'pubDate' => 'post_published_at',
-				'dc:creator' => 'post_author',
-				'content:encoded' => 'post_content',
-				'excerpt:encoded' => 'post_excerpt',
-				'wp:post_id' => 'post_id',
-				'wp:status' => 'post_status',
-				'wp:post_date' => 'post_date',
-				'wp:post_date_gmt' => 'post_date_gmt',
-				'wp:post_modified' => 'post_modified',
+				'title'                => 'post_title',
+				'link'                 => 'link',
+				'guid'                 => 'guid',
+				'description'          => 'post_excerpt',
+				'pubDate'              => 'post_published_at',
+				'dc:creator'           => 'post_author',
+				'content:encoded'      => 'post_content',
+				'excerpt:encoded'      => 'post_excerpt',
+				'wp:post_id'           => 'post_id',
+				'wp:status'            => 'post_status',
+				'wp:post_date'         => 'post_date',
+				'wp:post_date_gmt'     => 'post_date_gmt',
+				'wp:post_modified'     => 'post_modified',
 				'wp:post_modified_gmt' => 'post_modified_gmt',
-				'wp:comment_status' => 'comment_status',
-				'wp:ping_status' => 'ping_status',
-				'wp:post_name' => 'post_name',
-				'wp:post_parent' => 'post_parent',
-				'wp:menu_order' => 'menu_order',
-				'wp:post_type' => 'post_type',
-				'wp:post_password' => 'post_password',
-				'wp:is_sticky' => 'is_sticky',
-				'wp:attachment_url' => 'attachment_url',
+				'wp:comment_status'    => 'comment_status',
+				'wp:ping_status'       => 'ping_status',
+				'wp:post_name'         => 'post_name',
+				'wp:post_parent'       => 'post_parent',
+				'wp:menu_order'        => 'menu_order',
+				'wp:post_type'         => 'post_type',
+				'wp:post_password'     => 'post_password',
+				'wp:is_sticky'         => 'is_sticky',
+				'wp:attachment_url'    => 'attachment_url',
 			),
 		),
-		'wp:postmeta' => array(
-			'type' => 'post_meta',
+		'wp:postmeta'    => array(
+			'type'   => 'post_meta',
 			'fields' => array(
-				'wp:meta_key' => 'meta_key',
+				'wp:meta_key'   => 'meta_key',
 				'wp:meta_value' => 'meta_value',
 			),
 		),
-		'wp:term' => array(
-			'type' => 'term',
+		'wp:term'        => array(
+			'type'   => 'term',
 			'fields' => array(
-				'wp:term_id' => 'term_id',
+				'wp:term_id'       => 'term_id',
 				'wp:term_taxonomy' => 'taxonomy',
-				'wp:term_slug' => 'slug',
-				'wp:term_parent' => 'parent',
-				'wp:term_name' => 'name',
+				'wp:term_slug'     => 'slug',
+				'wp:term_parent'   => 'parent',
+				'wp:term_name'     => 'name',
 			),
 		),
-		'wp:tag' => array(
-			'type' => 'tag',
+		'wp:tag'         => array(
+			'type'   => 'tag',
 			'fields' => array(
-				'wp:term_id' => 'term_id',
-				'wp:tag_slug' => 'slug',
-				'wp:tag_name' => 'name',
+				'wp:term_id'         => 'term_id',
+				'wp:tag_slug'        => 'slug',
+				'wp:tag_name'        => 'name',
 				'wp:tag_description' => 'description',
 			),
 		),
-		'wp:category' => array(
-			'type' => 'category',
+		'wp:category'    => array(
+			'type'   => 'category',
 			'fields' => array(
-				'wp:category_nicename' => 'slug',
-				'wp:category_parent' => 'parent',
-				'wp:cat_name' => 'name',
+				'wp:category_nicename'    => 'slug',
+				'wp:category_parent'      => 'parent',
+				'wp:cat_name'             => 'name',
 				'wp:category_description' => 'description',
 			),
 		),
@@ -373,6 +373,7 @@ class WXREntityReader implements EntityReader {
 					'Invalid cursor provided for WP_WXR_Entity_Reader::create().',
 					null
 				);
+
 				return false;
 			}
 			$xml_cursor = $cursor['xml'];
@@ -397,15 +398,17 @@ class WXREntityReader implements EntityReader {
 				}
 			}
 		}
+
 		return $reader;
 	}
 
 	/**
 	 * Constructor.
 	 *
+	 * @param  WP_XML_Processor  $xml  The XML processor to use.
+	 *
 	 * @since WP_VERSION
 	 *
-	 * @param WP_XML_Processor $xml The XML processor to use.
 	 */
 	protected function __construct( XMLProcessor $xml ) {
 		$this->xml = $xml;
@@ -422,11 +425,12 @@ class WXREntityReader implements EntityReader {
 		$xml_cursor                             = json_decode( base64_decode( $xml_cursor ), true );
 		$xml_cursor['upstream_bytes_forgotten'] = $this->last_xml_byte_offset_outside_of_entity;
 		$xml_cursor                             = base64_encode( json_encode( $xml_cursor ) );
+
 		return json_encode(
 			array(
-				'xml' => $xml_cursor,
-				'upstream' => $this->last_xml_byte_offset_outside_of_entity,
-				'last_post_id' => $this->last_post_id,
+				'xml'             => $xml_cursor,
+				'upstream'        => $this->last_xml_byte_offset_outside_of_entity,
+				'last_post_id'    => $this->last_post_id,
 				'last_comment_id' => $this->last_comment_id,
 			)
 		);
@@ -442,6 +446,7 @@ class WXREntityReader implements EntityReader {
 		if ( ! $this->get_entity_type() ) {
 			return false;
 		}
+
 		return new ImportEntity(
 			$this->get_entity_type(),
 			$this->entity_data
@@ -451,9 +456,9 @@ class WXREntityReader implements EntityReader {
 	/**
 	 * Gets the type of the current entity.
 	 *
+	 * @return string|false The entity type, or false if no entity is being processed.
 	 * @since WP_VERSION
 	 *
-	 * @return string|false The entity type, or false if no entity is being processed.
 	 */
 	private function get_entity_type() {
 		if ( null !== $this->entity_type ) {
@@ -465,15 +470,16 @@ class WXREntityReader implements EntityReader {
 		if ( ! array_key_exists( $this->entity_tag, static::KNOWN_ENITIES ) ) {
 			return false;
 		}
+
 		return static::KNOWN_ENITIES[ $this->entity_tag ]['type'];
 	}
 
 	/**
 	 * Gets the ID of the last processed post.
 	 *
+	 * @return int|null The post ID, or null if no posts have been processed.
 	 * @since WP_VERSION
 	 *
-	 * @return int|null The post ID, or null if no posts have been processed.
 	 */
 	public function get_last_post_id() {
 		return $this->last_post_id;
@@ -482,9 +488,9 @@ class WXREntityReader implements EntityReader {
 	/**
 	 * Gets the ID of the last processed comment.
 	 *
+	 * @return int|null The comment ID, or null if no comments have been processed.
 	 * @since WP_VERSION
 	 *
-	 * @return int|null The comment ID, or null if no comments have been processed.
 	 */
 	public function get_last_comment_id() {
 		return $this->last_comment_id;
@@ -493,9 +499,10 @@ class WXREntityReader implements EntityReader {
 	/**
 	 * Appends bytes to the input stream.
 	 *
+	 * @param  string  $bytes  The bytes to append.
+	 *
 	 * @since WP_VERSION
 	 *
-	 * @param string $bytes The bytes to append.
 	 */
 	public function append_bytes( string $bytes ): void {
 		$this->xml->append_bytes( $bytes );
@@ -513,9 +520,9 @@ class WXREntityReader implements EntityReader {
 	/**
 	 * Checks if processing is finished.
 	 *
+	 * @return bool Whether processing is finished.
 	 * @since WP_VERSION
 	 *
-	 * @return bool Whether processing is finished.
 	 */
 	public function is_finished(): bool {
 		return $this->is_finished;
@@ -524,9 +531,9 @@ class WXREntityReader implements EntityReader {
 	/**
 	 * Checks if processing is paused waiting for more input.
 	 *
+	 * @return bool Whether processing is paused.
 	 * @since WP_VERSION
 	 *
-	 * @return bool Whether processing is paused.
 	 */
 	public function is_paused_at_incomplete_input(): bool {
 		return $this->xml->is_paused_at_incomplete_input();
@@ -535,9 +542,9 @@ class WXREntityReader implements EntityReader {
 	/**
 	 * Gets the last error that occurred.
 	 *
+	 * @return string|null The error message, or null if no error occurred.
 	 * @since WP_VERSION
 	 *
-	 * @return string|null The error message, or null if no error occurred.
 	 */
 	public function get_last_error(): ?string {
 		return $this->xml->get_last_error();
@@ -550,9 +557,9 @@ class WXREntityReader implements EntityReader {
 	/**
 	 * Advances to the next entity in the WXR file.
 	 *
+	 * @return bool Whether another entity was found.
 	 * @since WP_VERSION
 	 *
-	 * @return bool Whether another entity was found.
 	 */
 	public function next_entity() {
 		if ( $this->is_finished ) {
@@ -574,19 +581,21 @@ class WXREntityReader implements EntityReader {
 			$this->is_finished = true;
 			break;
 		}
+
 		return false;
 	}
 
 	/**
 	 * Advances to the next entity in the WXR file.
 	 *
+	 * @return bool Whether another entity was found.
 	 * @since WP_VERSION
 	 *
-	 * @return bool Whether another entity was found.
 	 */
 	private function read_next_entity() {
 		if ( $this->xml->is_finished() ) {
 			$this->after_entity();
+
 			return false;
 		}
 
@@ -671,6 +680,7 @@ class WXREntityReader implements EntityReader {
 			if ( array_key_exists( $tag, static::KNOWN_ENITIES ) ) {
 				if ( $this->entity_type && ! $this->entity_finished ) {
 					$this->emit_entity();
+
 					return true;
 				}
 				$this->after_entity();
@@ -785,8 +795,8 @@ class WXREntityReader implements EntityReader {
 				array_key_exists( 'nicename', $this->last_opener_attributes )
 			) {
 				$this->entity_data['terms'][] = array(
-					'taxonomy' => $this->last_opener_attributes['domain'],
-					'slug' => $this->last_opener_attributes['nicename'],
+					'taxonomy'    => $this->last_opener_attributes['domain'],
+					'slug'        => $this->last_opener_attributes['nicename'],
 					'description' => $this->text_buffer,
 				);
 				$this->text_buffer            = '';
@@ -824,6 +834,7 @@ class WXREntityReader implements EntityReader {
 			! $this->entity_finished
 		) {
 			$this->emit_entity();
+
 			return true;
 		}
 
@@ -843,10 +854,11 @@ class WXREntityReader implements EntityReader {
 
 		$this->entity_type = 'site_option';
 		$this->entity_data = array(
-			'option_name' => static::KNOWN_SITE_OPTIONS[ $this->xml->get_tag() ],
+			'option_name'  => static::KNOWN_SITE_OPTIONS[ $this->xml->get_tag() ],
 			'option_value' => $this->text_buffer,
 		);
 		$this->emit_entity();
+
 		return true;
 	}
 
@@ -854,7 +866,7 @@ class WXREntityReader implements EntityReader {
 	 * Connects a byte stream to automatically pull bytes from once
 	 * the last input chunk have been processed.
 	 *
-	 * @param WP_Byte_Reader $stream The upstream stream.
+	 * @param  WP_Byte_Reader  $stream  The upstream stream.
 	 */
 	public function connect_upstream( ByteReadStream $stream ) {
 		$this->upstream = $stream;
@@ -869,11 +881,13 @@ class WXREntityReader implements EntityReader {
 		}
 		if ( $this->upstream->reached_end_of_data() ) {
 			$this->input_finished();
+
 			return false;
 		}
 
 		$available_bytes = $this->upstream->pull( 65536 );
 		$this->append_bytes( $this->upstream->consume( $available_bytes ) );
+
 		return true;
 	}
 
@@ -899,15 +913,16 @@ class WXREntityReader implements EntityReader {
 			$this->entity_data['taxonomy'] = 'category';
 		}
 		$this->entity_finished = true;
-		++$this->entities_read_so_far;
+		++ $this->entities_read_so_far;
 	}
 
 	/**
 	 * Sets the current entity tag and type.
 	 *
+	 * @param  string  $tag  The entity tag name.
+	 *
 	 * @since WP_VERSION
 	 *
-	 * @param string $tag The entity tag name.
 	 */
 	private function set_entity_tag( string $tag ) {
 		$this->entity_tag = $tag;

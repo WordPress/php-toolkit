@@ -2,167 +2,126 @@
 
 namespace WordPress\HttpClient\ByteStream;
 
-use WordPress\ByteStream\ByteStreamException;
+use WordPress\ByteStream\FileReadWriteStream;
 use WordPress\ByteStream\ReadStream\BaseByteReadStream;
 use WordPress\ByteStream\ReadStream\ByteReadStream;
-use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\HttpClient\Request;
 
 /**
- * Streams bytes from a remote file. Supports seeking to a specific offset and
- * requesting sub-ranges of the file.
+ * HTTP reader that can seek() within the stream.
  *
- * @TODO: Abort in-progress requests when seeking to a new offset.
+ * Downloaded bytes are stored in a temporary file. All the read operations are delegated to that file.
+ *
+ * – Seek()-ing forward is done by fetching all the bytes up to the target offset.
+ * – Seek()-ing backwards is done by seeking within the temporary file.
  */
-class SeekableRequestReadStream extends BaseByteReadStream {
+class SeekableRequestReadStream implements ByteReadStream {
 
-	// const CONTEXT_SIZE_MIN = 0;
-	// const CONTEXT_SIZE_MAX = 0;
+	private $remote;   // RequestReadStream
+	private $cache;    // FileReadWriteStream
+	private $temp;
+	private $length_resolved = false;
 
-	private $url;
-	private $remote_file_length;
-	private $current_reader;
-	private $offset_in_remote_file       = 0;
-	private $default_expected_chunk_size = 10 * 1024; // 10 KB
-	private $expected_chunk_size         = 10 * 1024; // 10 KB
-	private $stop_after_chunk            = false;
-
-	/**
-	 * Creates a seekable reader for the remote file.
-	 * Detects support for range requests and falls back to saving the entire
-	 * file to disk when the remote server does not support range requests.
-	 */
-	public static function create( $url ) {
-		$remote_file_reader = new self( $url );
-
-		if ( false === $remote_file_reader->length() ) {
-			return self::save_to_disk( $url );
+	public function __construct( $request, array $options = array() ) {
+		if ( is_string( $request ) ) {
+			$request = new Request( $request );
 		}
-
-		$remote_file_reader->seek_to_chunk( 0, 2 );
-		if ( false === $remote_file_reader->pull( 2 ) ) {
-			return self::save_to_disk( $url );
-		}
-
-		$bytes = $remote_file_reader->peek( 2 );
-		if ( strlen( $bytes ) !== 2 ) {
-			return self::redirect_output_to_disk( $remote_file_reader );
-		}
-
-		$remote_file_reader->seek( 0 );
-		return $remote_file_reader;
+		$this->remote = new RequestReadStream( $request, $options );
+		$this->temp   = $options['cache_path'] ?? tempnam( sys_get_temp_dir(), 'wp_http_cache_' );
+		$this->cache  = FileReadWriteStream::from_path( $this->temp, true );
 	}
 
-	private static function save_to_disk( $url ) {
-		$remote_file_reader = new RequestReadStream( $url );
-		return self::redirect_output_to_disk( $remote_file_reader );
-	}
-
-	private static function redirect_output_to_disk( ByteReadStream $reader ) {
-		$file_path = tempnam( sys_get_temp_dir(), 'wp-remote-file-reader-' ) . '.epub';
-		$file      = fopen( $file_path, 'w' );
-		if ( false === $file ) {
-			throw new ByteStreamException( 'Failed to open file for writing' );
-		}
-
-		if ( $bytes = $reader->peek( 8096 ) ) {
-			if ( false === fwrite( $file, $bytes ) ) {
-				throw new ByteStreamException( 'Failed to write bytes to file' );
+	private function pipe_until( int $offset ): void {
+		while ( $this->cache->length() === null || $this->cache->length() < $offset ) {
+			$pulled = $this->remote->pull( BaseByteReadStream::CHUNK_SIZE );
+			if ( 0 === $pulled ) {
+				break;
 			}
+			$this->cache->append_bytes( $this->remote->consume( $pulled ) );
 		}
-
-		while ( $reader->pull( 8096 ) ) {
-			if ( false === fwrite( $file, $reader->peek( 8096 ) ) ) {
-				throw new ByteStreamException( 'Failed to write bytes to file' );
-			}
-		}
-
-		if ( false === fclose( $file ) ) {
-			throw new ByteStreamException( 'Failed to close file' );
-		}
-		return FileReadStream::from_path( $file_path );
-	}
-
-	public function __construct( $url ) {
-		$this->url = $url;
-	}
-
-	protected function internal_pull( $n ): string {
-		if ( null === $this->current_reader ) {
-			$this->create_reader();
-		}
-
-		if ( $this->current_reader->get_bytes() ) {
-			$this->offset_in_remote_file += strlen( $this->current_reader->get_bytes() );
-		}
-
-		if ( $this->offset_in_remote_file >= $this->length() - 1 ) {
-			$this->is_closed = true;
-			return '';
-		}
-
-		if ( false === $this->current_reader->pull( $n ) ) {
-			if ( $this->stop_after_chunk ) {
-				$this->is_closed = true;
-				return '';
-			}
-			$this->current_reader = null;
-			return $this->internal_pull( $n );
-		}
-
-		return $this->current_reader->get_bytes();
 	}
 
 	public function length(): ?int {
-		$this->ensure_content_length();
-		return $this->remote_file_length;
-	}
-
-	private function create_reader() {
-		$this->current_reader = new RequestReadStream(
-			new Request(
-				$this->url,
-				array(
-					'headers' => array(
-						'Range' => 'bytes=' . $this->offset_in_remote_file . '-' . (
-							$this->offset_in_remote_file + $this->expected_chunk_size - 1
-						),
-					),
-				)
-			)
-		);
-	}
-
-	public function seek_to_chunk( $offset, $length ) {
-		$this->seek( $offset );
-		$this->expected_chunk_size = $length;
-		$this->stop_after_chunk    = true;
-	}
-
-	public function seek( int $offset ): void {
-		$this->offset_in_remote_file    = $offset;
-		$this->current_reader           = null;
-		$this->expected_chunk_size      = $this->default_expected_chunk_size;
-		$this->stop_after_chunk         = false;
-		$this->buffer                   = '';
-		$this->offset_in_current_buffer = 0;
-	}
-
-	private function ensure_content_length() {
-		if ( null !== $this->remote_file_length ) {
-			return;
+		if ( ! $this->length_resolved && null === $this->remote->length() ) {
+			/**
+			 * Wait for the remote headers before returning the length.
+			 *
+			 * This is an inconsistency between RequestReadStream::length():
+			 *
+			 * * RequestReadStream returns null until the remote headers are known.
+			 * * SeekableRequestReadStream proactively waits for the remote headers.
+			 *
+			 * That's because:
+			 *
+			 * * RequestReadStream class is a lower-level utility where we simply
+			 *   expose what's available at the moment. The developer is responsible
+			 *   for awaiting the response headers.
+			 * * SeekableRequestReadStream is a higher-level tool meant for usage
+			 *   when knowing the length is vital, e.g. reading from a remote ZIP file.
+			 */
+			$this->remote->await_response();
+			if ( null === $this->remote->length() ) {
+				// The server did not send the Content-Length header.
+				// We need to consume the entire stream to infer the length.
+				$position = $this->tell();
+				$this->consume_all();
+				$this->seek( $position );
+			}
+			$this->length_resolved = true;
 		}
-		if ( null === $this->current_reader ) {
-			$this->current_reader = new RequestReadStream( $this->url );
+
+		return $this->remote->length();
+	}
+
+	public function tell(): int {
+		return $this->cache->tell();
+	}
+
+	public function seek( int $offset ) {
+		$this->pipe_until( $offset );
+		$this->cache->seek( $offset );
+	}
+
+	public function reached_end_of_data(): bool {
+		return $this->remote->reached_end_of_data() && $this->cache->reached_end_of_data();
+	}
+
+	public function pull( $n, $mode = self::PULL_NO_MORE_THAN ): int {
+		$this->pipe_until( $this->tell() + $n );
+
+		return $this->cache->pull( $n, $mode );
+	}
+
+	public function peek( $n ): string {
+		$this->pipe_until( $this->tell() + $n );
+
+		return $this->cache->peek( $n );
+	}
+
+	public function consume( $n ): string {
+		return $this->cache->consume( $n );
+	}
+
+	public function consume_all(): string {
+		while ( ! $this->remote->reached_end_of_data() ) {
+			$pulled = $this->remote->pull( BaseByteReadStream::CHUNK_SIZE );
+			if ( 0 === $pulled ) {
+				break;
+			}
+			$this->cache->append_bytes( $this->remote->consume( $pulled ) );
 		}
-		$this->remote_file_length = $this->current_reader->length();
+		$this->cache->close_writing();
+
+		return $this->cache->consume_all();
+	}
+
+	public function await_response() {
+		return $this->remote->await_response();
 	}
 
 	public function close_reading(): void {
-		if ( null !== $this->current_reader ) {
-			$this->current_reader->close();
-			$this->current_reader = null;
-		}
-		$this->is_closed = true;
+		$this->remote->close_reading();
+		$this->cache->close_reading();
+		@unlink( $this->temp );
 	}
 }

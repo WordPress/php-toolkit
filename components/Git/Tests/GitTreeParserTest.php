@@ -2,10 +2,11 @@
 
 namespace Git\Tests;
 
+use PHPUnit\Framework\TestCase;
 use WordPress\Git\Protocol\Parser\PackParser;
 use WordPress\Git\Protocol\Parser\TreeParser;
 
-class GitTreeParserTest extends \PHPUnit\Framework\TestCase {
+class GitTreeParserTest extends TestCase {
 
 	public function test_parse_tree() {
 		// @TODO: Store raw tree data in a file instead of going through the pack parser
@@ -38,7 +39,7 @@ class GitTreeParserTest extends \PHPUnit\Framework\TestCase {
 
 		$parser->next_body_chunk();
 		$tree_parser->append_bytes( $parser->get_body_chunk() );
-		for ( $i = 0; $i < 8; $i++ ) {
+		for ( $i = 0; $i < 8; $i ++ ) {
 			$this->assertTrue( $tree_parser->next() );
 		}
 		$this->assertFalse( $tree_parser->next() );

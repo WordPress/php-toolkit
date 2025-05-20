@@ -24,7 +24,10 @@ use League\Config\ConfigurationInterface;
 
 final class FootnoteRefParser implements InlineParserInterface, ConfigurationAwareInterface
 {
-    private ConfigurationInterface $config;
+    /**
+     * @var \League\Config\ConfigurationInterface
+     */
+    private $config;
 
     public function getMatchDefinition(): InlineParserMatch
     {

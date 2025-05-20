@@ -62,14 +62,20 @@ final class Message
 	/** @deprecated use Message::Deprecated */
 	public const DEPRECATED = self::Deprecated;
 
-	public string $message;
-	public string $code;
+	/**
+  * @var string
+  */
+ public $message;
+	/**
+  * @var string
+  */
+ public $code;
 
 	/** @var string[] */
-	public array $path;
+	public $path;
 
 	/** @var string[] */
-	public array $variables;
+	public $variables;
 
 
 	public function __construct(string $message, string $code, array $path, array $variables = [])
@@ -89,10 +95,15 @@ final class Message
 			? "'" . implode("\u{a0}›\u{a0}", $this->path) . "'"
 			: null;
 		$vars['value'] = Helpers::formatValue($vars['value'] ?? null);
-
-		return preg_replace_callback('~( ?)%(\w+)%~', function ($m) use ($vars) {
+  if (preg_replace_callback('~( ?)%(\w+)%~', function ($m) use ($vars) {
 			[, $space, $key] = $m;
 			return $vars[$key] === null ? '' : $space . $vars[$key];
-		}, $this->message) ?? throw new Nette\InvalidStateException(preg_last_error_msg());
+		}, $this->message) !== null) {
+      throw new Nette\InvalidStateException(preg_last_error_msg());
+  }
+  return preg_replace_callback('~( ?)%(\w+)%~', function ($m) use ($vars) {
+			[, $space, $key] = $m;
+			return $vars[$key] === null ? '' : $space . $vars[$key];
+		}, $this->message);
 	}
 }

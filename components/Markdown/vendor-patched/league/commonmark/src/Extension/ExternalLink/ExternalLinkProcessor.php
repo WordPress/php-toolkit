@@ -24,8 +24,9 @@ final class ExternalLinkProcessor
     public const APPLY_EXTERNAL = 'external';
     public const APPLY_INTERNAL = 'internal';
 
-    /** @psalm-readonly */
-    private ConfigurationInterface $config;
+    /** @psalm-readonly
+     * @var \League\Config\ConfigurationInterface */
+    private $config;
 
     public function __construct(ConfigurationInterface $config)
     {

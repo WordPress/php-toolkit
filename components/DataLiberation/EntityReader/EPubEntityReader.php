@@ -7,7 +7,7 @@ use WordPress\DataLiberation\DataFormatConsumer\MarkupProcessorConsumer;
 use WordPress\Filesystem\Filesystem;
 use WordPress\XML\XMLProcessor;
 
-use function WordPress\Filesystem\wp_join_paths;
+use function WordPress\Filesystem\wp_join_unix_paths;
 
 /**
  * https://www.w3.org/AudioVideo/ebook/
@@ -50,6 +50,7 @@ class EPubEntityReader implements EntityReader {
 			if ( false === $this->parse_manifest() ) {
 				_doing_it_wrong( __METHOD__, 'The EPUB file did not contain a manifest.', '1.0.0' );
 				$this->finished = true;
+
 				return false;
 			}
 
@@ -60,7 +61,7 @@ class EPubEntityReader implements EntityReader {
 				if ( ( $item['properties'] ?? '' ) === 'nav' ) {
 					continue;
 				}
-				$this->remaining_html_files[] = wp_join_paths(
+				$this->remaining_html_files[] = wp_join_unix_paths(
 					dirname( $this->manifest_path ),
 					$item['href']
 				);
@@ -79,6 +80,7 @@ class EPubEntityReader implements EntityReader {
 
 			if ( count( $this->remaining_html_files ) === 0 ) {
 				$this->finished = true;
+
 				return false;
 			}
 
@@ -110,7 +112,7 @@ class EPubEntityReader implements EntityReader {
 				$blocks_with_meta,
 				$this->current_post_id
 			);
-			++$this->current_post_id;
+			++ $this->current_post_id;
 		}
 
 		return false;
@@ -123,6 +125,7 @@ class EPubEntityReader implements EntityReader {
 		if ( null === $this->manifest_path ) {
 			$this->parse_manifest();
 		}
+
 		return $this->manifest_path;
 	}
 
@@ -154,7 +157,7 @@ class EPubEntityReader implements EntityReader {
 
 		$parsed = array(
 			'metadata' => array(),
-			'items' => array(),
+			'items'    => array(),
 		);
 		while ( $xml->next_tag() ) {
 			$parsed_entry = array();
@@ -164,7 +167,7 @@ class EPubEntityReader implements EntityReader {
 			}
 			if ( $xml->matches_breadcrumbs( array( 'metadata', '*' ) ) ) {
 				$parsed['metadata'][] = array(
-					'tag' => $xml->get_tag(),
+					'tag'        => $xml->get_tag(),
 					'attributes' => $parsed_entry,
 				);
 			} elseif ( $xml->matches_breadcrumbs( array( 'manifest', 'item' ) ) ) {
@@ -173,6 +176,7 @@ class EPubEntityReader implements EntityReader {
 			}
 		}
 		$this->manifest = $parsed;
+
 		return true;
 	}
 

@@ -26,9 +26,15 @@ use League\CommonMark\Node\Node;
  */
 abstract class AbstractBlock extends Node
 {
-    protected ?int $startLine = null;
+    /**
+     * @var int|null
+     */
+    protected $startLine;
 
-    protected ?int $endLine = null;
+    /**
+     * @var int|null
+     */
+    protected $endLine;
 
     protected function setParent(?Node $node = null): void
     {

@@ -19,11 +19,13 @@ class Cursor
 {
     public const INDENT_LEVEL = 4;
 
-    /** @psalm-readonly */
-    private string $line;
+    /** @psalm-readonly
+     * @var string */
+    private $line;
 
-    /** @psalm-readonly */
-    private int $length;
+    /** @psalm-readonly
+     * @var int */
+    private $length;
 
     /**
      * @var int
@@ -31,17 +33,32 @@ class Cursor
      * It's possible for this to be 1 char past the end, meaning we've parsed all chars and have
      * reached the end.  In this state, any character-returning method MUST return null.
      */
-    private int $currentPosition = 0;
+    private $currentPosition = 0;
 
-    private int $column = 0;
+    /**
+     * @var int
+     */
+    private $column = 0;
 
-    private int $indent = 0;
+    /**
+     * @var int
+     */
+    private $indent = 0;
 
-    private int $previousPosition = 0;
+    /**
+     * @var int
+     */
+    private $previousPosition = 0;
 
-    private ?int $nextNonSpaceCache = null;
+    /**
+     * @var int|null
+     */
+    private $nextNonSpaceCache;
 
-    private bool $partiallyConsumedTab = false;
+    /**
+     * @var bool
+     */
+    private $partiallyConsumedTab = false;
 
     /**
      * @var int|false
@@ -50,11 +67,12 @@ class Cursor
      */
     private $lastTabPosition;
 
-    /** @psalm-readonly */
-    private bool $isMultibyte;
+    /** @psalm-readonly
+     * @var bool */
+    private $isMultibyte;
 
     /** @var array<int, string> */
-    private array $charCache = [];
+    private $charCache = [];
 
     /**
      * @param string $line The line being parsed (ASCII or UTF-8)
@@ -89,7 +107,7 @@ class Cursor
         for ($i = $this->currentPosition; $i < $this->length; $i++) {
             // This if-else was copied out of getCharacter() for performance reasons
             if ($this->isMultibyte) {
-                $c = $this->charCache[$i] ??= \mb_substr($this->line, $i, 1, 'UTF-8');
+                $c = $this->charCache[$i] = $this->charCache[$i] ?? \mb_substr($this->line, $i, 1, 'UTF-8');
             } else {
                 $c = $this->line[$i];
             }
@@ -119,7 +137,7 @@ class Cursor
         }
 
         if ($this->isMultibyte) {
-            return $this->charCache[$index] ??= \mb_substr($this->line, $index, 1, 'UTF-8');
+            return $this->charCache[$index] = $this->charCache[$index] ?? \mb_substr($this->line, $index, 1, 'UTF-8');
         }
 
         return $this->line[$index];
@@ -161,7 +179,7 @@ class Cursor
         }
 
         if ($this->isMultibyte) {
-            return $this->charCache[$index] ??= \mb_substr($this->line, $index, 1, 'UTF-8');
+            return $this->charCache[$index] = $this->charCache[$index] ?? \mb_substr($this->line, $index, 1, 'UTF-8');
         }
 
         return $this->line[$index];
@@ -177,7 +195,7 @@ class Cursor
         }
 
         if ($this->isMultibyte) {
-            return $this->charCache[$this->currentPosition] ??= \mb_substr($this->line, $this->currentPosition, 1, 'UTF-8');
+            return $this->charCache[$this->currentPosition] = $this->charCache[$this->currentPosition] ?? \mb_substr($this->line, $this->currentPosition, 1, 'UTF-8');
         }
 
         return $this->line[$this->currentPosition];

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace Rowbot\URL\Component;
 
@@ -9,64 +9,58 @@ use Rowbot\URL\URLRecord;
 
 use function count;
 
-abstract class AbstractPath implements PathInterface
-{
-    /**
-     * @var list<\Rowbot\URL\Component\PathSegment>
-     */
-    protected $list;
+abstract class AbstractPath implements PathInterface {
+	/**
+	 * @var list<PathSegment>
+	 */
+	protected $list;
 
-    /**
-     * @param list<\Rowbot\URL\Component\PathSegment> $paths
-     */
-    public function __construct(array $paths = [])
-    {
-        $this->list = $paths;
-    }
+	/**
+	 * @param  list<PathSegment>  $paths
+	 */
+	public function __construct( array $paths = [] ) {
+		$this->list = $paths;
+	}
 
-    public function count(): int
-    {
-        return count($this->list);
-    }
+	public function count(): int {
+		return count( $this->list );
+	}
 
-    public function first(): PathSegment
-    {
-        if (!isset($this->list[0])) {
-            throw new UndefinedIndexException();
-        }
-        return $this->list[0];
-    }
+	public function first(): PathSegment {
+		if ( ! isset( $this->list[0] ) ) {
+			throw new UndefinedIndexException();
+		}
 
-    public function isEmpty(): bool
-    {
-        return $this->list === [];
-    }
+		return $this->list[0];
+	}
 
-    public function potentiallyStripTrailingSpaces(URLRecord $url): void
-    {
-        if (!$this->isOpaque()) {
-            return;
-        }
+	public function isEmpty(): bool {
+		return $this->list === [];
+	}
 
-        if ($url->fragment !== null) {
-            return;
-        }
+	public function potentiallyStripTrailingSpaces( URLRecord $url ): void {
+		if ( ! $this->isOpaque() ) {
+			return;
+		}
 
-        if ($url->query !== null) {
-            return;
-        }
+		if ( $url->fragment !== null ) {
+			return;
+		}
 
-        $this->list[0]->stripTrailingSpaces();
-    }
+		if ( $url->query !== null ) {
+			return;
+		}
 
-    public function __clone()
-    {
-        $list = [];
+		$this->list[0]->stripTrailingSpaces();
+	}
 
-        foreach ($this->list as $path) {
-            $list[] = clone $path;
-        }
+	public function __clone() {
+		$list = [];
 
-        $this->list = $list;
-    }
+		foreach ( $this->list as $path ) {
+			$list[] = clone $path;
+		}
+
+		$this->list = $list;
+	}
 }

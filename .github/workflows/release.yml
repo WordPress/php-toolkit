@@ -90,3 +90,14 @@ jobs:
                   asset_path: ./dist/examples/create-wp-site.tar.gz
                   asset_name: create-wp-site.tar.gz
                   asset_content_type: application/gzip
+
+
+            - name: Upload Blueprints Asset
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: ./dist/blueprints.phar
+                  asset_name: blueprints.phar
+                  asset_content_type: application/phar

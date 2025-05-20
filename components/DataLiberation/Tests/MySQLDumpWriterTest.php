@@ -1,9 +1,10 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\DataLiberation\DataLiberationException;
 use WordPress\DataLiberation\EntityWriter\MySQLDumpWriter;
 use WordPress\DataLiberation\ImportEntity;
-use WordPress\ByteStream\MemoryPipe;
 
 class MySQLDumpWriterTest extends TestCase {
 
@@ -19,10 +20,10 @@ class MySQLDumpWriterTest extends TestCase {
 		$entity = new ImportEntity(
 			'database_row',
 			array(
-				'table' => 'posts',
+				'table'  => 'posts',
 				'record' => array(
-					'ID' => 1,
-					'post_title' => 'First Post',
+					'ID'           => 1,
+					'post_title'   => 'First Post',
 					'post_content' => 'Hello World',
 				),
 			)
@@ -39,9 +40,9 @@ class MySQLDumpWriterTest extends TestCase {
 		$entity = new ImportEntity(
 			'database_row',
 			array(
-				'table' => 'posts',
+				'table'  => 'posts',
 				'record' => array(
-					'ID' => 1,
+					'ID'         => 1,
 					'post_title' => null,
 				),
 			)
@@ -58,7 +59,7 @@ class MySQLDumpWriterTest extends TestCase {
 		$entity = new ImportEntity(
 			'database_row',
 			array(
-				'table' => 'posts',
+				'table'  => 'posts',
 				'record' => array(
 					'post_title' => "It's a \"quote\" with \\ backslash",
 				),
@@ -76,7 +77,7 @@ class MySQLDumpWriterTest extends TestCase {
 		$entity = new ImportEntity(
 			'database_row',
 			array(
-				'table' => 'posts',
+				'table'  => 'posts',
 				'record' => array(
 					'post_title' => "Line1\nLine2\tTabbed\0NullByte",
 				),
@@ -93,12 +94,12 @@ class MySQLDumpWriterTest extends TestCase {
 	public function testCloseWriting() {
 		$this->writer->close_writing();
 
-		$this->expectException( \WordPress\DataLiberation\DataLiberationException::class );
+		$this->expectException( DataLiberationException::class );
 		$this->writer->append_entity(
 			new ImportEntity(
 				'database_row',
 				array(
-					'table' => 'posts',
+					'table'  => 'posts',
 					'record' => array(),
 				)
 			)

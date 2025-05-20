@@ -16,10 +16,22 @@ use Symfony\Component\Yaml\Yaml;
 
 final class YamlProcessor implements ProcessorInterface
 {
-    private int $parseFlags;
-    private int $dumpFlags;
-    private int $inline;
-    private int $indent;
+    /**
+     * @var int
+     */
+    private $parseFlags;
+    /**
+     * @var int
+     */
+    private $dumpFlags;
+    /**
+     * @var int
+     */
+    private $inline;
+    /**
+     * @var int
+     */
+    private $indent;
 
     public function __construct(int $parseFlags = 0, int $dumpFlags = 0, int $inline = 2, int $indent = 4)
     {

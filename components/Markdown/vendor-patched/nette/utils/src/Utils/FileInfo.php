@@ -18,7 +18,10 @@ use Nette;
  */
 final class FileInfo extends \SplFileInfo
 {
-	private string $relativePath;
+	/**
+  * @var string
+  */
+ private $relativePath;
 
 
 	public function __construct(string $file, string $relativePath = '')

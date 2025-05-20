@@ -2,4 +2,5 @@
 
 namespace WordPress\ByteStream;
 
-class NotEnoughDataException extends ByteStreamException {}
+class NotEnoughDataException extends ByteStreamException {
+}

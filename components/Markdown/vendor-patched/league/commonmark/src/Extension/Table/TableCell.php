@@ -31,16 +31,18 @@ final class TableCell extends AbstractBlock
      * @phpstan-var self::TYPE_*
      *
      * @psalm-readonly-allow-private-mutation
+     * @var string
      */
-    private string $type = self::TYPE_DATA;
+    private $type = self::TYPE_DATA;
 
     /**
      * @psalm-var self::ALIGN_*|null
      * @phpstan-var self::ALIGN_*|null
      *
      * @psalm-readonly-allow-private-mutation
+     * @var string|null
      */
-    private ?string $align = null;
+    private $align;
 
     /**
      * @psalm-param self::TYPE_* $type

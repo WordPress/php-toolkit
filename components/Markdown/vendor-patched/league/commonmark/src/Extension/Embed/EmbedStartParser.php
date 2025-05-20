@@ -31,7 +31,7 @@ class EmbedStartParser implements BlockStartParserInterface
         $cursor->advanceToNextNonSpaceOrTab();
 
         // The line must begin with "https://"
-        if (! str_starts_with($cursor->getRemainder(), 'https://')) {
+        if (strncmp($cursor->getRemainder(), 'https://', strlen('https://')) !== 0) {
             return BlockStart::none();
         }
 

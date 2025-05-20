@@ -21,9 +21,10 @@ final class Callback
 	use Nette\StaticClass;
 
 	/**
-	 * Invokes internal PHP function with own error handler.
-	 */
-	public static function invokeSafe(string $function, array $args, callable $onError): mixed
+  * Invokes internal PHP function with own error handler.
+  * @return mixed
+  */
+ public static function invokeSafe(string $function, array $args, callable $onError)
 	{
 		$prev = set_error_handler(function ($severity, $message, $file) use ($onError, &$prev, $function): ?bool {
 			if ($file === __FILE__) {
@@ -48,19 +49,18 @@ final class Callback
 
 
 	/**
-	 * Checks that $callable is valid PHP callback. Otherwise throws exception. If the $syntax is set to true, only verifies
-	 * that $callable has a valid structure to be used as a callback, but does not verify if the class or method actually exists.
-	 * @return callable
-	 * @throws Nette\InvalidArgumentException
-	 */
-	public static function check(mixed $callable, bool $syntax = false)
+  * Checks that $callable is valid PHP callback. Otherwise throws exception. If the $syntax is set to true, only verifies
+  * that $callable has a valid structure to be used as a callback, but does not verify if the class or method actually exists.
+  * @return callable
+  * @throws Nette\InvalidArgumentException
+  * @param mixed $callable
+  */
+ public static function check($callable, bool $syntax = false)
 	{
 		if (!is_callable($callable, $syntax)) {
-			throw new Nette\InvalidArgumentException(
-				$syntax
+			throw new Nette\InvalidArgumentException($syntax
 				? 'Given value is not a callable type.'
-				: sprintf("Callback '%s' is not callable.", self::toString($callable)),
-			);
+				: sprintf("Callback '%s' is not callable.", self::toString($callable)));
 		}
 
 		return $callable;
@@ -68,9 +68,10 @@ final class Callback
 
 
 	/**
-	 * Converts PHP callback to textual form. Class or method may not exists.
-	 */
-	public static function toString(mixed $callable): string
+  * Converts PHP callback to textual form. Class or method may not exists.
+  * @param mixed $callable
+  */
+ public static function toString($callable): string
 	{
 		if ($callable instanceof \Closure) {
 			$inner = self::unwrap($callable);
@@ -83,17 +84,18 @@ final class Callback
 
 
 	/**
-	 * Returns reflection for method or function used in PHP callback.
-	 * @param  callable  $callable  type check is escalated to ReflectionException
-	 * @throws \ReflectionException  if callback is not valid
-	 */
-	public static function toReflection($callable): \ReflectionMethod|\ReflectionFunction
+  * Returns reflection for method or function used in PHP callback.
+  * @param  callable  $callable  type check is escalated to ReflectionException
+  * @throws \ReflectionException  if callback is not valid
+  * @return \ReflectionMethod|\ReflectionFunction
+  */
+ public static function toReflection($callable)
 	{
 		if ($callable instanceof \Closure) {
 			$callable = self::unwrap($callable);
 		}
 
-		if (is_string($callable) && str_contains($callable, '::')) {
+		if (is_string($callable) && strpos($callable, '::') !== false) {
 			return new ReflectionMethod(...explode('::', $callable, 2));
 		} elseif (is_array($callable)) {
 			return new ReflectionMethod($callable[0], $callable[1]);
@@ -115,16 +117,17 @@ final class Callback
 
 
 	/**
-	 * Unwraps closure created by Closure::fromCallable().
-	 */
-	public static function unwrap(\Closure $closure): callable|array
+  * Unwraps closure created by Closure::fromCallable().
+  * @return mixed[]|callable
+  */
+ public static function unwrap(\Closure $closure)
 	{
 		$r = new \ReflectionFunction($closure);
-		$class = $r->getClosureScopeClass()?->name;
-		if (str_ends_with($r->name, '}')) {
+		$class = ($nullsafeVariable1 = $r->getClosureScopeClass()) ? $nullsafeVariable1->name : null;
+		if (substr_compare($r->name, '}', -strlen('}')) === 0) {
 			return $closure;
 
-		} elseif (($obj = $r->getClosureThis()) && $obj::class === $class) {
+		} elseif (($obj = $r->getClosureThis()) && get_class($obj) === $class) {
 			return [$obj, $r->name];
 
 		} elseif ($class) {

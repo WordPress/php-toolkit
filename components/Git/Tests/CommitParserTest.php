@@ -2,9 +2,10 @@
 
 namespace WordPress\Git\Tests;
 
+use PHPUnit\Framework\TestCase;
 use WordPress\Git\Protocol\Parser\CommitParser;
 
-class CommitParserTest extends \PHPUnit\Framework\TestCase {
+class CommitParserTest extends TestCase {
 
 	public function test_parse_commit() {
 		$commit_bytes = <<<COMMIT

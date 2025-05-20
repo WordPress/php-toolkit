@@ -2,9 +2,9 @@
 
 namespace WordPress\Git\Tests;
 
-use WordPress\ByteStream\MemoryPipe;
-use WordPress\ByteStream\ReadStream\ProducerProducer;
+use PHPUnit\Framework\TestCase;
 use WordPress\ByteStream\ReadStream\FileReadStream;
+use WordPress\ByteStream\ReadStream\ProducerProducer;
 use WordPress\Filesystem\InMemoryFilesystem;
 use WordPress\Git\GitRepository;
 use WordPress\Git\Model\Commit;
@@ -13,11 +13,9 @@ use WordPress\Git\Model\TreeEntry;
 use WordPress\Git\Protocol\GitProtocolEncoderPipe;
 use WordPress\Git\Protocol\Parser\ProtocolDemultiplexer;
 
-class ProtocolDemultiplexerTest extends \PHPUnit\Framework\TestCase {
+class ProtocolDemultiplexerTest extends TestCase {
 
 	public function test_parse_simple_response() {
-		$request_buffer = new MemoryPipe();
-
 		$repo = new GitRepository( InMemoryFilesystem::create() );
 		$oid  = $repo->add_object(
 			'tree',
@@ -71,8 +69,8 @@ class ProtocolDemultiplexerTest extends \PHPUnit\Framework\TestCase {
 			array_slice( $chunks, 0, 6 )
 		);
 		$this->assertStringStartsWith( 'PACK', $chunks[6] );
-		$this->assertEquals( 59, strlen( $chunks[6] ) );
-		$this->assertEquals( 20, strlen( $chunks[7] ) );
+		$this->assertEquals( 60, strlen( $chunks[6] ) );
+		$this->assertEquals( 26, strlen( $chunks[7] ) );
 	}
 
 	public function test_parse_response_no_blobs() {
@@ -83,7 +81,7 @@ class ProtocolDemultiplexerTest extends \PHPUnit\Framework\TestCase {
 			if ( ! isset( $chunks_counts[ $demuxer->get_stream_code() ] ) ) {
 				$chunks_counts[ $demuxer->get_stream_code() ] = 0;
 			}
-			++$chunks_counts[ $demuxer->get_stream_code() ];
+			++ $chunks_counts[ $demuxer->get_stream_code() ];
 		}
 		$reader->close_reading();
 		$this->assertEquals(
@@ -104,7 +102,7 @@ class ProtocolDemultiplexerTest extends \PHPUnit\Framework\TestCase {
 			if ( ! isset( $chunks_counts[ $demuxer->get_stream_code() ] ) ) {
 				$chunks_counts[ $demuxer->get_stream_code() ] = 0;
 			}
-			++$chunks_counts[ $demuxer->get_stream_code() ];
+			++ $chunks_counts[ $demuxer->get_stream_code() ];
 		}
 		$reader->close_reading();
 		$this->assertEquals(

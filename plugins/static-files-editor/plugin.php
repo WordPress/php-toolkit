@@ -40,8 +40,8 @@ use WordPress\XML\XMLProcessor;
 use function WordPress\DataLiberation\URL\is_child_url_of;
 use function WordPress\Filesystem\copy_between_filesystems;
 use function WordPress\Filesystem\ls_recursive;
-use function WordPress\Filesystem\wp_canonicalize_path;
-use function WordPress\Filesystem\wp_join_paths;
+use function WordPress\Filesystem\wp_join_unix_paths;
+use function WordPress\Filesystem\wp_unix_path_resolve_dots;
 
 if ( ! defined( 'WP_STATIC_PAGES_DIR' ) ) {
 	define( 'WP_STATIC_PAGES_DIR', WP_CONTENT_DIR . '/uploads/my-static-pages' );
@@ -290,7 +290,7 @@ class WP_Static_Files_Editor_Plugin {
 					$local_fs = LocalFilesystem::create( dirname( $file_path ) );
 
 					$file_name   = basename( $file_path );
-					$target_path = wp_join_paths( WP_STATIC_MEDIA_DIR, $file_name );
+					$target_path = wp_join_unix_paths( WP_STATIC_MEDIA_DIR, $file_name );
 
 					// Skip if the file was already processed
 					$main_fs = self::get_data_source()->get_filesystem();
@@ -346,7 +346,7 @@ class WP_Static_Files_Editor_Plugin {
 					$local_fs = LocalFilesystem::create( dirname( $file_path ) );
 
 					$file_name   = basename( $file_path );
-					$target_path = wp_join_paths( WP_STATIC_MEDIA_DIR, $file_name );
+					$target_path = wp_join_unix_paths( WP_STATIC_MEDIA_DIR, $file_name );
 
 					// Skip if the file was already processed
 					$main_fs = self::get_data_source()->get_filesystem();
@@ -921,7 +921,7 @@ class WP_Static_Files_Editor_Plugin {
 	}
 
 	public static function download_file_endpoint( $request ) {
-		$path = wp_canonicalize_path( $request->get_param( 'path' ) );
+		$path = '/' . ltrim( wp_unix_path_resolve_dots( $request->get_param( 'path' ) ), '/' );
 		$fs   = self::get_data_source()->get_filesystem();
 
 		if ( $fs->is_dir( $path ) ) {
@@ -1172,7 +1172,7 @@ class WP_Static_Files_Editor_Plugin {
 	 */
 	private static function wordpressify_static_assets_urls( $content ) {
 		$parsed_site_url        = WPURL::parse( rtrim( get_site_url(), '/' ) . '/' );
-		$expected_endpoint_path = wp_join_paths(
+		$expected_endpoint_path = wp_join_unix_paths(
 			$parsed_site_url->pathname,
 			'wp-json/static-files-editor/v1/download-file'
 		);
@@ -1425,7 +1425,7 @@ class WP_Static_Files_Editor_Plugin {
 				return new WP_Error( 'synchronization_lock_failed', 'Failed to acquire synchronization lock' );
 			}
 
-			$file_path   = wp_canonicalize_path( $request->get_param( 'path' ) );
+			$file_path   = '/' . ltrim( wp_unix_path_resolve_dots( $request->get_param( 'path' ) ), '/' );
 			$create_file = $request->get_param( 'create_file' );
 
 			if ( ! $file_path ) {
@@ -1493,7 +1493,7 @@ class WP_Static_Files_Editor_Plugin {
 			if ( ! self::acquire_synchronization_lock() ) {
 				return;
 			}
-			$path    = wp_canonicalize_path( $request->get_param( 'path' ) );
+			$path    = '/' . ltrim( wp_unix_path_resolve_dots( $request->get_param( 'path' ) ), '/' );
 			$content = $request->get_param( 'content' );
 			$fs      = self::get_data_source()->get_filesystem();
 			if ( ! $fs->is_dir( dirname( $path ) ) ) {
@@ -1520,7 +1520,7 @@ class WP_Static_Files_Editor_Plugin {
 			}
 			// Need to rawurldecode() because PHP only decodes query parameters automatically.
 			// Paths need manual treatment.
-			$from_path = wp_canonicalize_path( rawurldecode( $request->get_param( 'id' ) ) );
+			$from_path = '/' . ltrim( wp_unix_path_resolve_dots( rawurldecode( $request->get_param( 'id' ) ) ), '/' );
 			$from_path = rtrim( $from_path, '/' );
 
 			$to_path = $request->get_param( 'path' );
@@ -1629,7 +1629,7 @@ class WP_Static_Files_Editor_Plugin {
 
 			// Copy the uploaded files to the main filesystem
 			$main_fs       = self::get_data_source()->get_filesystem();
-			$create_in_dir = wp_canonicalize_path( $request->get_param( 'path' ) );
+			$create_in_dir = '/' . ltrim( wp_unix_path_resolve_dots( $request->get_param( 'path' ) ), '/' );
 			copy_between_filesystems(
 				array(
 					'source_filesystem' => $uploaded_fs,
@@ -1689,7 +1689,7 @@ class WP_Static_Files_Editor_Plugin {
 				foreach ( $paths as $path ) {
 					$type         = $uploaded_fs->is_dir( $path ) ? 'directory' : 'file';
 					$post_id      = null;
-					$created_path = wp_join_paths( $create_in_dir, $path );
+					$created_path = wp_join_unix_paths( $create_in_dir, $path );
 					if ( $type === 'post' ) {
 						$created_post = get_posts(
 							array(
@@ -1798,7 +1798,7 @@ class WP_Static_Files_Editor_Plugin {
 	public static function delete_file_endpoint( $request ) {
 		// Need to rawurldecode() because PHP only decodes query parameters automatically.
 		// Paths need manual treatment.
-		$path = wp_canonicalize_path( rawurldecode( $request->get_param( 'id' ) ) );
+		$path = '/' . ltrim( wp_unix_path_resolve_dots( rawurldecode( $request->get_param( 'id' ) ) ), '/' );
 		if ( ! $path ) {
 			return new WP_Error( 'missing_path', 'File path is required' );
 		}

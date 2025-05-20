@@ -1,0 +1,47 @@
+{
+	"version": 2,
+	"blueprintMeta": {
+		"name": "Invalid Blueprint - Additional Steps",
+		"description": "This blueprint has invalid additional steps"
+	},
+	"content": [
+		{
+			"type": "posts",
+			"source": [
+				{
+					"post_title": "Sample Post",
+					"post_content": "This is a sample post."
+				}
+			]
+		}
+	],
+	"additionalStepsAfterExecution": [
+		{
+			"step": "unknownStep"
+		},
+		{
+			"step": "activatePlugin"
+		},
+		{
+			"step": "activateTheme",
+			"themeFolderName": 123
+		},
+		{
+			"step": "defineConstants",
+			"constants": "not-an-object"
+		},
+		{
+			"step": "installPlugin",
+			"plugin": 123
+		},
+		{
+			"step": "runPHP"
+		},
+		{
+			"step": "setSiteOptions",
+			"options": {
+				"permalink_structure": {}
+			}
+		}
+	]
+}

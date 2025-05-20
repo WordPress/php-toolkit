@@ -19,23 +19,36 @@ namespace Symfony\Component\Yaml\Exception;
 class ParseException extends RuntimeException
 {
     /**
+     * @var string
+     */
+    private $rawMessage;
+    /**
+     * @var int
+     */
+    private $parsedLine = -1;
+    /**
+     * @var string|null
+     */
+    private $snippet;
+    /**
+     * @var string|null
+     */
+    private $parsedFile;
+    /**
      * @param string      $rawMessage The error message
      * @param int         $parsedLine The line where the error occurred
      * @param string|null $snippet    The snippet of code near the problem
      * @param string|null $parsedFile The file name where the error occurred
      */
-    public function __construct(
-        private string $rawMessage,
-        private int $parsedLine = -1,
-        private ?string $snippet = null,
-        private ?string $parsedFile = null,
-        ?\Throwable $previous = null,
-    ) {
+    public function __construct(string $rawMessage, int $parsedLine = -1, ?string $snippet = null, ?string $parsedFile = null, ?\Throwable $previous = null)
+    {
+        $this->rawMessage = $rawMessage;
+        $this->parsedLine = $parsedLine;
+        $this->snippet = $snippet;
+        $this->parsedFile = $parsedFile;
         $this->updateRepr();
-
         parent::__construct($this->message, 0, $previous);
     }
-
     /**
      * Gets the snippet of code near the error.
      */
@@ -97,7 +110,7 @@ class ParseException extends RuntimeException
         $this->message = $this->rawMessage;
 
         $dot = false;
-        if (str_ends_with($this->message, '.')) {
+        if (substr_compare($this->message, '.', -strlen('.')) === 0) {
             $this->message = substr($this->message, 0, -1);
             $dot = true;
         }

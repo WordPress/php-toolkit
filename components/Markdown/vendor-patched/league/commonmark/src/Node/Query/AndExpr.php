@@ -24,7 +24,7 @@ final class AndExpr implements ExpressionInterface
      * @var callable[]
      * @psalm-var list<callable(Node): bool>
      */
-    private array $conditions;
+    private $conditions;
 
     /**
      * @psalm-param callable(Node): bool $expressions

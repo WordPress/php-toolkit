@@ -20,8 +20,9 @@ use League\CommonMark\Node\Block\Document;
  */
 final class DocumentParsedEvent extends AbstractEvent
 {
-    /** @psalm-readonly */
-    private Document $document;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Node\Block\Document */
+    private $document;
 
     public function __construct(Document $document)
     {

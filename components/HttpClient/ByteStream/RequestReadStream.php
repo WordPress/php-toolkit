@@ -5,6 +5,7 @@ namespace WordPress\HttpClient\ByteStream;
 use WordPress\ByteStream\ByteStreamException;
 use WordPress\ByteStream\ReadStream\BaseByteReadStream;
 use WordPress\HttpClient\Client;
+use WordPress\HttpClient\HttpClientException;
 use WordPress\HttpClient\Request;
 use WordPress\HttpClient\Response;
 
@@ -33,6 +34,10 @@ class RequestReadStream extends BaseByteReadStream {
 	 * @var int
 	 */
 	private $remote_file_length;
+	/**
+	 * @var Tracker
+	 */
+	private $progress_tracker;
 
 	public function __construct( $request, $options = array() ) {
 		if ( is_string( $request ) ) {
@@ -40,31 +45,57 @@ class RequestReadStream extends BaseByteReadStream {
 		}
 		$this->client  = $options['client'] ?? new Client();
 		$this->request = $request;
+		if ( isset( $options['buffer_size'] ) ) {
+			$this->buffer_size = $options['buffer_size'];
+		}
+		if ( isset( $options['progress_tracker'] ) ) {
+			$this->progress_tracker = $options['progress_tracker'];
+		}
+		if ( isset( $options['eagerly_enqueue'] ) ) {
+			$this->ensure_is_enqueued();
+		}
+	}
+
+	public function get_request(): Request {
+		return $this->request;
+	}
+
+	public function json() {
+		return json_decode( $this->consume_all(), true );
+	}
+
+	private function ensure_is_enqueued() {
+		if ( ! $this->is_enqueued ) {
+			$this->client->enqueue( $this->request );
+			$this->is_enqueued = true;
+		}
 	}
 
 	protected function seek_outside_of_buffer( int $target_offset ): void {
-		throw new ByteStreamException(
-			'Cannot seek() a RemoteFileReader instance once the request was initialized. ' .
-			'Use RemoteFileRangedReader to seek() using range requests instead.'
-		);
+		if ( $target_offset > $this->tell() ) {
+			$pulled = $this->pull_exactly( $target_offset - $this->tell() );
+			$this->consume( $pulled );
+		} else {
+			throw new ByteStreamException(
+				'RequestReadStream cannot seek() backwards to offset ' . $target_offset . ' outside of the in-memory data buffer. ' .
+				'You can either increase the buffer size or implement a custom SeekableRequestReadStream.'
+			);
+		}
 	}
 
 	protected function internal_pull( $max_bytes = 8096 ): string {
 		return $this->pull_until_event(
 			array(
 				'max_bytes' => $max_bytes,
-				'event' => Client::EVENT_BODY_CHUNK_AVAILABLE,
+				'event'     => Client::EVENT_BODY_CHUNK_AVAILABLE,
 			)
 		);
 	}
 
 	private function pull_until_event( $options = array() ) {
 		$stop_at_event = $options['event'] ?? Client::EVENT_BODY_CHUNK_AVAILABLE;
+		$this->ensure_is_enqueued();
 
-		if ( ! $this->is_enqueued ) {
-			$this->client->enqueue( $this->request );
-			$this->is_enqueued = true;
-		}
 		while ( $this->client->await_next_event(
 			array(
 				'requests' => array( $this->request ),
@@ -72,7 +103,7 @@ class RequestReadStream extends BaseByteReadStream {
 		) ) {
 			$request = $this->client->get_request();
 			if ( $request->error ) {
-				throw new ByteStreamException( 'HTTP request failed: ' . $request->error->message );
+				throw new HttpClientException( sprintf( 'HTTP request failed: %s. Method=%s, URL=%s', $request->error->message, $request->method, $request->url ) );
 			}
 			$response = $request->response;
 			if ( ! $response ) {
@@ -84,16 +115,45 @@ class RequestReadStream extends BaseByteReadStream {
 			switch ( $this->client->get_event() ) {
 				case Client::EVENT_GOT_HEADERS:
 					$this->response = $response;
+					$content_length = $response->get_header( 'Content-Length' );
+					if ( null !== $content_length ) {
+						/**
+						 * Set the content-length based on the header, but make sure it stays null
+						 * when the Content-Length header is not set.
+						 *
+						 * Important: Don't set the content-length to 0 if the header is missing! This
+						 * would tell the streaming machinery there's no body to consume.
+						 */
+						$this->remote_file_length = (int) $content_length;
+					}
 					if ( $stop_at_event === Client::EVENT_GOT_HEADERS ) {
 						return true;
 					}
 					break;
 				case Client::EVENT_BODY_CHUNK_AVAILABLE:
 					if ( $stop_at_event === Client::EVENT_BODY_CHUNK_AVAILABLE ) {
-						return $this->client->get_response_body_chunk();
+						$body_chunk = $this->client->get_response_body_chunk();
+
+						if ( $this->progress_tracker ) {
+							$bytes_downloaded = $this->bytes_already_forgotten + strlen( $this->buffer ) + strlen( $body_chunk );
+							// Arbitrarily assume 15MB if no length is provided
+							$length = $this->remote_file_length ?: 15 * 1024 * 1024;
+							$this->progress_tracker->set( $bytes_downloaded / $length * 100 );
+						}
+
+						return $body_chunk;
 					}
 					break;
 				case Client::EVENT_FINISHED:
+					/**
+					 * If the server did not provide a Content-Length header,
+					 * backfill the file length with the number of downloaded
+					 * bytes.
+					 */
+					if ( null === $this->remote_file_length ) {
+						$this->remote_file_length = $this->bytes_already_forgotten + strlen( $this->buffer );
+					}
+
 					return '';
 				case Client::EVENT_FAILED:
 					// TODO: Think through error handling. Errors are expected when working with
@@ -107,22 +167,6 @@ class RequestReadStream extends BaseByteReadStream {
 	}
 
 	public function length(): ?int {
-		if ( null !== $this->remote_file_length ) {
-			return $this->remote_file_length;
-		}
-
-		if ( ! $this->response ) {
-			$this->pull_until_event(
-				array(
-					'event' => Client::EVENT_GOT_HEADERS,
-				)
-			);
-		}
-		$content_length = $this->response->get_header( 'Content-Length' );
-		if ( null === $content_length ) {
-			return null;
-		}
-		$this->remote_file_length = (int) $content_length;
 		return $this->remote_file_length;
 	}
 
@@ -137,6 +181,7 @@ class RequestReadStream extends BaseByteReadStream {
 		if ( ! $this->response ) {
 			throw new ByteStreamException( 'HTTP request failed – never received a response' );
 		}
+
 		return $this->response;
 	}
 
@@ -146,6 +191,10 @@ class RequestReadStream extends BaseByteReadStream {
 			! $this->client->has_pending_event( $this->request, Client::EVENT_BODY_CHUNK_AVAILABLE ) &&
 			strlen( $this->buffer ) === $this->offset_in_current_buffer
 		);
+	}
+
+	public function close_reading(): void {
+		$this->is_closed = true;
 	}
 
 	protected function internal_close_reading(): void {

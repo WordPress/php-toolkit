@@ -22,12 +22,19 @@ use League\CommonMark\Util\RegexHelper;
 
 final class HtmlBlockParser extends AbstractBlockContinueParser
 {
-    /** @psalm-readonly */
-    private HtmlBlock $block;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Extension\CommonMark\Node\Block\HtmlBlock */
+    private $block;
 
-    private string $content = '';
+    /**
+     * @var string
+     */
+    private $content = '';
 
-    private bool $finished = false;
+    /**
+     * @var bool
+     */
+    private $finished = false;
 
     /**
      * @psalm-param HtmlBlock::TYPE_* $blockType
@@ -39,7 +46,7 @@ final class HtmlBlockParser extends AbstractBlockContinueParser
         $this->block = new HtmlBlock($blockType);
     }
 
-    public function getBlock(): HtmlBlock
+    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }

@@ -21,34 +21,34 @@ class UrldecodeNTest extends TestCase {
 
 	public static function provider_test_urldecode_n() {
 		return array(
-			'Encoded path segment with no encoded bytes later on' => array(
+			'Encoded path segment with no encoded bytes later on'                => array(
 				'original_string' => '/%73/%63/image.png',
-				'decode_length' => 4,
+				'decode_length'   => 4,
 				'expected_string' => '/s/c/image.png',
 			),
-			'Encoded path segment with encoded bytes later on' => array(
+			'Encoded path segment with encoded bytes later on'                   => array(
 				'original_string' => '/%73/%63/%73%63ience.png',
-				'decode_length' => 4,
+				'decode_length'   => 4,
 				'expected_string' => '/s/c/%73%63ience.png',
 			),
-			'Decode past the encoded path segment' => array(
+			'Decode past the encoded path segment'                               => array(
 				'original_string' => '/%73/%63/science.png',
-				'decode_length' => 10,
+				'decode_length'   => 10,
 				'expected_string' => '/s/c/science.png',
 			),
-			'Double percent sign – decode it' => array(
+			'Double percent sign – decode it'                                    => array(
 				'original_string' => '/%%73cience.png',
-				'decode_length' => 3,
+				'decode_length'   => 3,
 				'expected_string' => '/%science.png',
 			),
 			'Double percent sign – finish decoding after the first percent sign' => array(
 				'original_string' => '/%%73cience.png',
-				'decode_length' => 2,
+				'decode_length'   => 2,
 				'expected_string' => '/%%73cience.png',
 			),
-			'UTF-8 encoded path segment' => array(
+			'UTF-8 encoded path segment'                                         => array(
 				'original_string' => '/%e4%b8%ad%e6%96%87',
-				'decode_length' => 10,
+				'decode_length'   => 10,
 				'expected_string' => '/中文',
 			),
 		);

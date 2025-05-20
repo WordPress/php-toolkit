@@ -18,7 +18,7 @@ class UploadedFilesystemTest extends TestCase {
 			'tree' => json_encode( $tree ),
 		);
 
-		$request = new class($params, $files) {
+		$request = new class( $params, $files ) {
 			private $params;
 			private $files;
 
@@ -30,6 +30,7 @@ class UploadedFilesystemTest extends TestCase {
 			public function get_param( $key ) {
 				return $this->params[ $key ] ?? null;
 			}
+
 			public function get_file_params() {
 				return $this->files;
 			}
@@ -48,17 +49,17 @@ class UploadedFilesystemTest extends TestCase {
 		$fs = $this->create_fs(
 			array(
 				array(
-					'type' => 'file',
-					'name' => 'README.md',
+					'type'    => 'file',
+					'name'    => 'README.md',
 					'content' => '@file:file1',
 				),
 			),
 			array(
 				'file1' => array(
-					'name' => 'README.md',
+					'name'     => 'README.md',
 					'contents' => '## This is WordPress readme',
 					'tmp_name' => '/tmp/file_892378.txt',
-					'error' => UPLOAD_ERR_OK,
+					'error'    => UPLOAD_ERR_OK,
 				),
 			)
 		);
@@ -71,8 +72,8 @@ class UploadedFilesystemTest extends TestCase {
 		$fs = $this->create_fs(
 			array(
 				array(
-					'type' => 'directory',
-					'name' => 'src',
+					'type'     => 'directory',
+					'name'     => 'src',
 					'children' => array(),
 				),
 			),
@@ -87,17 +88,17 @@ class UploadedFilesystemTest extends TestCase {
 		$fs = $this->create_fs(
 			array(
 				array(
-					'type' => 'file',
-					'name' => 'README.md',
+					'type'    => 'file',
+					'name'    => 'README.md',
 					'content' => '@file:file1',
 				),
 				array(
-					'type' => 'directory',
-					'name' => 'src',
+					'type'     => 'directory',
+					'name'     => 'src',
 					'children' => array(
 						array(
-							'type' => 'file',
-							'name' => 'index.php',
+							'type'    => 'file',
+							'name'    => 'index.php',
 							'content' => '@file:file2',
 						),
 					),
@@ -105,16 +106,16 @@ class UploadedFilesystemTest extends TestCase {
 			),
 			array(
 				'file1' => array(
-					'name' => 'README.md',
+					'name'     => 'README.md',
 					'contents' => '## This is WordPress readme',
 					'tmp_name' => '/tmp/file_892378.txt',
-					'error' => UPLOAD_ERR_OK,
+					'error'    => UPLOAD_ERR_OK,
 				),
 				'file2' => array(
-					'name' => 'index.php',
+					'name'     => 'index.php',
 					'contents' => '<?php echo "Hello World"; ?>',
 					'tmp_name' => '/tmp/file_892379.txt',
-					'error' => UPLOAD_ERR_OK,
+					'error'    => UPLOAD_ERR_OK,
 				),
 			)
 		);
@@ -129,17 +130,17 @@ class UploadedFilesystemTest extends TestCase {
 		$fs = $this->create_fs(
 			array(
 				array(
-					'type' => 'file',
-					'name' => 'README.md',
+					'type'    => 'file',
+					'name'    => 'README.md',
 					'content' => '@file:file1',
 				),
 			),
 			array(
 				'file1' => array(
-					'name' => 'README.md',
+					'name'     => 'README.md',
 					'contents' => '## This is WordPress readme',
 					'tmp_name' => '/tmp/file_892378.txt',
-					'error' => UPLOAD_ERR_OK,
+					'error'    => UPLOAD_ERR_OK,
 				),
 			)
 		);
@@ -151,17 +152,17 @@ class UploadedFilesystemTest extends TestCase {
 		$fs = $this->create_fs(
 			array(
 				array(
-					'type' => 'file',
-					'name' => 'README.md',
+					'type'    => 'file',
+					'name'    => 'README.md',
 					'content' => '@file:file1',
 				),
 			),
 			array(
 				'file1' => array(
-					'name' => 'README.md',
+					'name'     => 'README.md',
 					'contents' => '## This is WordPress readme',
 					'tmp_name' => '/tmp/file_892378.txt',
-					'error' => UPLOAD_ERR_OK,
+					'error'    => UPLOAD_ERR_OK,
 				),
 			)
 		);
@@ -173,31 +174,31 @@ class UploadedFilesystemTest extends TestCase {
 		$fs = $this->create_fs(
 			array(
 				array(
-					'type' => 'file',
-					'name' => 'README.md',
+					'type'    => 'file',
+					'name'    => 'README.md',
 					'content' => '@file:file1',
 				),
 				array(
-					'type' => 'directory',
-					'name' => 'src',
+					'type'     => 'directory',
+					'name'     => 'src',
 					'children' => array(
 						array(
-							'type' => 'file',
-							'name' => 'index.php',
+							'type'    => 'file',
+							'name'    => 'index.php',
 							'content' => '@file:file2',
 						),
 						array(
-							'type' => 'file',
-							'name' => 'style.css',
+							'type'    => 'file',
+							'name'    => 'style.css',
 							'content' => '#main-div { color: red; }',
 						),
 						array(
-							'type' => 'directory',
-							'name' => 'js',
+							'type'     => 'directory',
+							'name'     => 'js',
 							'children' => array(
 								array(
-									'type' => 'file',
-									'name' => 'script.js',
+									'type'    => 'file',
+									'name'    => 'script.js',
 									'content' => 'console.log("Hello, world!");',
 								),
 							),
@@ -207,16 +208,16 @@ class UploadedFilesystemTest extends TestCase {
 			),
 			array(
 				'file1' => array(
-					'name' => 'README.md',
+					'name'     => 'README.md',
 					'contents' => '## This is WordPress readme',
 					'tmp_name' => '/tmp/file_892378.txt',
-					'error' => UPLOAD_ERR_OK,
+					'error'    => UPLOAD_ERR_OK,
 				),
 				'file2' => array(
-					'name' => 'index.php',
+					'name'     => 'index.php',
 					'contents' => '<?php echo "Hello, world!";',
 					'tmp_name' => '/tmp/file_892379.txt',
-					'error' => UPLOAD_ERR_OK,
+					'error'    => UPLOAD_ERR_OK,
 				),
 			)
 		);

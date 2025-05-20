@@ -1,4 +1,5 @@
 <?php
+
 // Set error reporting
 error_reporting( E_ALL );
 ini_set( 'display_errors', 1 );
@@ -121,6 +122,7 @@ function send_response_chunk( $data ) {
  */
 function should_send_as_chunked_response() {
 	global $is_chunked_response;
+
 	return $is_chunked_response && php_sapi_name() === 'cli-server';
 }
 
@@ -153,7 +155,7 @@ $curlHeaders                 = kv_headers_to_curl_format(
 	filter_headers_by_name(
 		getallheaders(),
 		$strictly_disallowed_headers,
-		$headers_requiring_opt_in,
+		$headers_requiring_opt_in
 	)
 );
 curl_setopt(
@@ -169,7 +171,7 @@ curl_setopt(
 			// NOTE: We cannot do this reliably based on X-Forwarded-For unless
 			// we trust the reverse proxy, so it cannot be done unconditionally
 			// in this script because we do not control where others deploy it.
-		),
+		)
 	)
 );
 
@@ -206,12 +208,14 @@ curl_setopt(
 				send_response_chunk( 'Response Too Large' );
 				exit;
 			}
+
 			return $len;
 		}
 
 		if ( $name === 'transfer-encoding' && stripos( $value, 'chunked' ) !== false ) {
 			$is_chunked_response = true;
 			header( $header, false );
+
 			return $len;
 		}
 
@@ -246,6 +250,7 @@ curl_setopt(
 		) {
 			header( $header, false );
 		}
+
 		return $len;
 	}
 );
@@ -255,6 +260,7 @@ curl_setopt(
 	CURLOPT_WRITEFUNCTION,
 	function ( $curl, $data ) use ( &$is_chunked_response ) {
 		send_response_chunk( $data, $is_chunked_response );
+
 		return strlen( $data );
 	}
 );

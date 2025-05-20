@@ -19,14 +19,29 @@ final class Type implements Schema
 {
 	use Base;
 
-	private string $type;
-	private ?Schema $itemsValue = null;
-	private ?Schema $itemsKey = null;
+	/**
+  * @var string
+  */
+ private $type;
+	/**
+  * @var \Nette\Schema\Schema|null
+  */
+ private $itemsValue;
+	/**
+  * @var \Nette\Schema\Schema|null
+  */
+ private $itemsKey;
 
 	/** @var array{?float, ?float} */
-	private array $range = [null, null];
-	private ?string $pattern = null;
-	private bool $merge = true;
+	private $range = [null, null];
+	/**
+  * @var string|null
+  */
+ private $pattern;
+	/**
+  * @var bool
+  */
+ private $merge = true;
 
 
 	public function __construct(string $type)
@@ -73,9 +88,11 @@ final class Type implements Schema
 
 
 	/**
-	 * @internal  use arrayOf() or listOf()
-	 */
-	public function items(string|Schema $valueType = 'mixed', string|Schema|null $keyType = null): self
+  * @internal  use arrayOf() or listOf()
+  * @param string|\Nette\Schema\Schema $valueType
+  * @param string|\Nette\Schema\Schema|null $keyType
+  */
+ public function items($valueType = 'mixed', $keyType = null): self
 	{
 		$this->itemsValue = $valueType instanceof Schema
 			? $valueType
@@ -95,9 +112,11 @@ final class Type implements Schema
 
 
 	/********************* processing ****************d*g**/
-
-
-	public function normalize(mixed $value, Context $context): mixed
+ /**
+  * @param mixed $value
+  * @return mixed
+  */
+ public function normalize($value, Context $context)
 	{
 		if ($prevent = (is_array($value) && isset($value[Helpers::PreventMerging]))) {
 			unset($value[Helpers::PreventMerging]);
@@ -128,7 +147,12 @@ final class Type implements Schema
 	}
 
 
-	public function merge(mixed $value, mixed $base): mixed
+	/**
+  * @param mixed $value
+  * @param mixed $base
+  * @return mixed
+  */
+ public function merge($value, $base)
 	{
 		if (is_array($value) && isset($value[Helpers::PreventMerging])) {
 			unset($value[Helpers::PreventMerging]);
@@ -155,7 +179,11 @@ final class Type implements Schema
 	}
 
 
-	public function complete(mixed $value, Context $context): mixed
+	/**
+  * @param mixed $value
+  * @return mixed
+  */
+ public function complete($value, Context $context)
 	{
 		$merge = $this->merge;
 		if (is_array($value) && isset($value[Helpers::PreventMerging])) {

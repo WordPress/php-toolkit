@@ -25,8 +25,9 @@ use League\CommonMark\Extension\FrontMatter\Listener\FrontMatterPreParser;
 
 final class FrontMatterExtension implements ExtensionInterface
 {
-    /** @psalm-readonly */
-    private FrontMatterParserInterface $frontMatterParser;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Extension\FrontMatter\FrontMatterParserInterface */
+    private $frontMatterParser;
 
     public function __construct(?FrontMatterDataParserInterface $dataParser = null)
     {

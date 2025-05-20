@@ -16,7 +16,7 @@ class WXRReaderTest extends TestCase {
 
 		$found_entities = 0;
 		while ( $wxr->next_entity() ) {
-			++$found_entities;
+			++ $found_entities;
 		}
 
 		$this->assertEquals( $expected_entitys, $found_entities );
@@ -37,7 +37,7 @@ class WXRReaderTest extends TestCase {
 
 			$wxr->append_bytes( $chunk );
 			while ( true === $wxr->next_entity() ) {
-				++$found_entities;
+				++ $found_entities;
 			}
 		}
 		$this->assertNull( $wxr->get_xml_exception() );
@@ -76,7 +76,7 @@ class WXRReaderTest extends TestCase {
 		);
 		$this->assertEquals(
 			array(
-				'option_name' => 'blogname',
+				'option_name'  => 'blogname',
 				'option_value' => 'My WordPress Website',
 			),
 			$importer->get_entity()->get_data()
@@ -89,7 +89,7 @@ class WXRReaderTest extends TestCase {
 		);
 		$this->assertEquals(
 			array(
-				'option_name' => 'siteurl',
+				'option_name'  => 'siteurl',
 				'option_value' => 'https://playground.internal/path',
 			),
 			$importer->get_entity()->get_data()
@@ -98,7 +98,7 @@ class WXRReaderTest extends TestCase {
 		$this->assertTrue( $importer->next_entity() );
 		$this->assertEquals(
 			array(
-				'option_name' => 'home',
+				'option_name'  => 'home',
 				'option_value' => 'https://playground.internal/path',
 			),
 			$importer->get_entity()->get_data()
@@ -107,12 +107,12 @@ class WXRReaderTest extends TestCase {
 		$this->assertTrue( $importer->next_entity() );
 		$this->assertEquals(
 			array(
-				'user_login' => 'admin',
-				'user_email' => 'admin@localhost.com',
+				'user_login'   => 'admin',
+				'user_email'   => 'admin@localhost.com',
 				'display_name' => 'admin',
-				'first_name' => '',
-				'last_name' => '',
-				'ID' => 1,
+				'first_name'   => '',
+				'last_name'    => '',
+				'ID'           => 1,
 			),
 			$importer->get_entity()->get_data()
 		);
@@ -120,14 +120,14 @@ class WXRReaderTest extends TestCase {
 		$this->assertTrue( $importer->next_entity() );
 		$this->assertEquals(
 			array(
-				'post_title' => '"The Road Not Taken" by Robert Frost',
-				'guid' => 'https://playground.internal/path/?p=1',
-				'link' => 'https://playground.internal/path/?p=1',
-				'post_date' => '2024-06-05 16:04:48',
+				'post_title'        => '"The Road Not Taken" by Robert Frost',
+				'guid'              => 'https://playground.internal/path/?p=1',
+				'link'              => 'https://playground.internal/path/?p=1',
+				'post_date'         => '2024-06-05 16:04:48',
 				'post_published_at' => 'Wed, 05 Jun 2024 16:04:48 +0000',
-				'post_author' => 'admin',
-				'post_excerpt' => '',
-				'post_content' => '<!-- wp:paragraph -->
+				'post_author'       => 'admin',
+				'post_excerpt'      => '',
+				'post_content'      => '<!-- wp:paragraph -->
 <p>Two roads diverged in a yellow wood,<br>And sorry I could not travel both</p>
 <!-- /wp:paragraph -->
 
@@ -140,23 +140,23 @@ playground.internal/path/one was the best choice.
 https://playground.internal/path-not-taken was the second best choice.
 </p>
 <!-- /wp:paragraph -->',
-				'post_id' => '10',
-				'post_date_gmt' => '2024-06-05 16:04:48',
-				'post_modified' => '2024-06-10 12:28:55',
+				'post_id'           => '10',
+				'post_date_gmt'     => '2024-06-05 16:04:48',
+				'post_modified'     => '2024-06-10 12:28:55',
 				'post_modified_gmt' => '2024-06-10 12:28:55',
-				'comment_status' => 'open',
-				'ping_status' => 'open',
-				'post_name' => 'hello-world',
-				'post_status' => 'publish',
-				'post_parent' => '0',
-				'menu_order' => '0',
-				'post_type' => 'post',
-				'post_password' => '',
-				'is_sticky' => '0',
-				'terms' => array(
+				'comment_status'    => 'open',
+				'ping_status'       => 'open',
+				'post_name'         => 'hello-world',
+				'post_status'       => 'publish',
+				'post_parent'       => '0',
+				'menu_order'        => '0',
+				'post_type'         => 'post',
+				'post_password'     => '',
+				'is_sticky'         => '0',
+				'terms'             => array(
 					array(
-						'taxonomy' => 'category',
-						'slug' => 'uncategorized',
+						'taxonomy'    => 'category',
+						'slug'        => 'uncategorized',
 						'description' => 'Uncategorized',
 					),
 				),
@@ -167,9 +167,9 @@ https://playground.internal/path-not-taken was the second best choice.
 		$this->assertTrue( $importer->next_entity() );
 		$this->assertEquals(
 			array(
-				'meta_key' => '_pingme',
+				'meta_key'   => '_pingme',
 				'meta_value' => '1',
-				'post_id' => '10',
+				'post_id'    => '10',
 			),
 			$importer->get_entity()->get_data()
 		);
@@ -177,9 +177,9 @@ https://playground.internal/path-not-taken was the second best choice.
 		$this->assertTrue( $importer->next_entity() );
 		$this->assertEquals(
 			array(
-				'meta_key' => '_encloseme',
+				'meta_key'   => '_encloseme',
 				'meta_value' => '1',
-				'post_id' => '10',
+				'post_id'    => '10',
 			),
 			$importer->get_entity()->get_data()
 		);
@@ -233,25 +233,25 @@ XML
 		);
 		$this->assertEquals(
 			array(
-				'post_title' => 'vneck-tee-2.jpg',
-				'post_id' => '31',
-				'guid' => 'https://raw.githubusercontent.com/wordpress/blueprints/stylish-press/blueprints/stylish-press/woo-product-images/vneck-tee-2.jpg',
-				'link' => 'https://stylish-press.wordpress.org/?attachment_id=31',
+				'post_title'        => 'vneck-tee-2.jpg',
+				'post_id'           => '31',
+				'guid'              => 'https://raw.githubusercontent.com/wordpress/blueprints/stylish-press/blueprints/stylish-press/woo-product-images/vneck-tee-2.jpg',
+				'link'              => 'https://stylish-press.wordpress.org/?attachment_id=31',
 				'post_published_at' => 'Wed, 16 Jan 2019 13:01:56 +0000',
-				'post_date' => '2019-01-16 13:01:56',
-				'post_date_gmt' => '2019-01-16 13:01:56',
-				'post_author' => 'shopmanager',
-				'post_excerpt' => '',
-				'comment_status' => 'open',
-				'ping_status' => 'closed',
-				'post_name' => 'vneck-tee-2-jpg',
-				'post_status' => 'inherit',
-				'post_parent' => '6',
-				'menu_order' => '0',
-				'post_type' => 'attachment',
-				'attachment_url' => 'https://raw.githubusercontent.com/wordpress/blueprints/stylish-press/blueprints/stylish-press/woo-product-images/vneck-tee-2.jpg',
-				'post_content' => '',
-				'is_sticky' => '0',
+				'post_date'         => '2019-01-16 13:01:56',
+				'post_date_gmt'     => '2019-01-16 13:01:56',
+				'post_author'       => 'shopmanager',
+				'post_excerpt'      => '',
+				'comment_status'    => 'open',
+				'ping_status'       => 'closed',
+				'post_name'         => 'vneck-tee-2-jpg',
+				'post_status'       => 'inherit',
+				'post_parent'       => '6',
+				'menu_order'        => '0',
+				'post_type'         => 'attachment',
+				'attachment_url'    => 'https://raw.githubusercontent.com/wordpress/blueprints/stylish-press/blueprints/stylish-press/woo-product-images/vneck-tee-2.jpg',
+				'post_content'      => '',
+				'is_sticky'         => '0',
 			),
 			$importer->get_entity()->get_data()
 		);
@@ -263,9 +263,9 @@ XML
 		);
 		$this->assertEquals(
 			array(
-				'meta_key' => '_wc_attachment_source',
+				'meta_key'   => '_wc_attachment_source',
 				'meta_value' => 'https://raw.githubusercontent.com/wordpress/blueprints/stylish-press/blueprints/stylish-press/woo-product-images/vneck-tee-2.jpg',
-				'post_id' => '31',
+				'post_id'    => '31',
 			),
 			$importer->get_entity()->get_data()
 		);
@@ -297,11 +297,11 @@ XML
 		);
 		$this->assertEquals(
 			array(
-				'term_id' => '9',
+				'term_id'  => '9',
 				'taxonomy' => 'slider_category',
-				'slug' => 'fullscreen_slider',
-				'parent' => '',
-				'name' => 'fullscreen_slider',
+				'slug'     => 'fullscreen_slider',
+				'parent'   => '',
+				'name'     => 'fullscreen_slider',
 			),
 			$importer->get_entity()->get_data()
 		);
@@ -330,9 +330,9 @@ XML
 		);
 		$this->assertEquals(
 			array(
-				'slug' => 'uncategorized',
-				'parent' => '',
-				'name' => 'Uncategorized',
+				'slug'     => 'uncategorized',
+				'parent'   => '',
+				'name'     => 'Uncategorized',
 				'taxonomy' => 'category',
 			),
 			$importer->get_entity()->get_data()
@@ -363,11 +363,11 @@ XML
 		);
 		$this->assertEquals(
 			array(
-				'term_id' => '651',
-				'slug' => 'articles',
-				'name' => 'Articles',
+				'term_id'     => '651',
+				'slug'        => 'articles',
+				'name'        => 'Articles',
 				'description' => 'Tags posts about Articles.',
-				'taxonomy' => 'post_tag',
+				'taxonomy'    => 'post_tag',
 			),
 			$importer->get_entity()->get_data()
 		);
@@ -410,11 +410,11 @@ XML;
 		);
 		$this->assertEquals(
 			array(
-				'term_id' => '651',
-				'slug' => 'articles',
-				'name' => 'Articles for everyone',
+				'term_id'     => '651',
+				'slug'        => 'articles',
+				'name'        => 'Articles for everyone',
 				'description' => 'Tags posts about Articles.',
-				'taxonomy' => 'post_tag',
+				'taxonomy'    => 'post_tag',
 			),
 			$wxr->get_entity()->get_data()
 		);
@@ -472,17 +472,17 @@ XML
 		);
 		$this->assertEquals(
 			array(
-				'comment_id' => '167',
-				'comment_approved' => '1',
-				'comment_author' => 'Anon',
+				'comment_id'           => '167',
+				'comment_approved'     => '1',
+				'comment_author'       => 'Anon',
 				'comment_author_email' => 'anon@example.com',
-				'comment_author_IP' => '59.167.157.3',
-				'comment_user_id' => '0',
-				'comment_date' => '2007-09-04 10:49:28',
-				'comment_date_gmt' => '2007-09-04 00:49:28',
-				'comment_content' => 'Anonymous comment.',
-				'comment_parent' => '0',
-				'post_id' => null,
+				'comment_author_IP'    => '59.167.157.3',
+				'comment_user_id'      => '0',
+				'comment_date'         => '2007-09-04 10:49:28',
+				'comment_date_gmt'     => '2007-09-04 00:49:28',
+				'comment_content'      => 'Anonymous comment.',
+				'comment_parent'       => '0',
+				'post_id'              => null,
 			),
 			$wxr->get_entity()->get_data()
 		);
@@ -494,7 +494,7 @@ XML
 		);
 		$this->assertEquals(
 			array(
-				'meta_key' => '_wp_karma',
+				'meta_key'   => '_wp_karma',
 				'meta_value' => '1',
 				'comment_id' => '167',
 			),
@@ -581,7 +581,7 @@ XML
 			FileReadStream::from_path( $xml_path )
 		);
 
-		for ( $i = 0; $i < 11; $i++ ) {
+		for ( $i = 0; $i < 11; $i ++ ) {
 			$this->assertTrue( $wxr->next_entity() );
 			$this->assertEquals(
 				$expected_entities[ $i ],
@@ -611,7 +611,7 @@ XML
 			FileReadStream::from_path( $xml_path )
 		);
 
-		for ( $i = 0; $i < 11; $i++ ) {
+		for ( $i = 0; $i < 11; $i ++ ) {
 			$this->assertTrue( $wxr->next_entity() );
 			$this->assertEquals(
 				$expected_entities[ $i ],

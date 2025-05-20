@@ -23,11 +23,12 @@ use League\CommonMark\Util\RegexHelper;
 
 final class FencedCodeParser extends AbstractBlockContinueParser
 {
-    /** @psalm-readonly */
-    private FencedCode $block;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Extension\CommonMark\Node\Block\FencedCode */
+    private $block;
 
     /** @var ArrayCollection<string> */
-    private ArrayCollection $strings;
+    private $strings;
 
     public function __construct(int $fenceLength, string $fenceChar, int $fenceOffset)
     {
@@ -35,7 +36,7 @@ final class FencedCodeParser extends AbstractBlockContinueParser
         $this->strings = new ArrayCollection();
     }
 
-    public function getBlock(): FencedCode
+    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }

@@ -2,6 +2,8 @@
 
 namespace WordPress\Filesystem;
 
+use Exception;
+use SQLite3;
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\ByteStream\ReadStream\ByteReadStream;
 use WordPress\Filesystem\Layer\ChrootLayer;
@@ -33,7 +35,7 @@ class SQLiteFilesystem implements Filesystem {
 	}
 
 	private function __construct( $db_path ) {
-		$this->db = new \SQLite3( $db_path );
+		$this->db = new SQLite3( $db_path );
 		$this->db->exec(
 			'
 			CREATE TABLE IF NOT EXISTS files (
@@ -70,6 +72,7 @@ class SQLiteFilesystem implements Filesystem {
 		while ( $row = $result->fetchArray( SQLITE3_ASSOC ) ) {
 			$entries[] = $row['name'];
 		}
+
 		return $entries;
 	}
 
@@ -83,6 +86,7 @@ class SQLiteFilesystem implements Filesystem {
 		$stmt->bindValue( 1, $path, SQLITE3_TEXT );
 		$stmt->bindValue( 2, 'dir', SQLITE3_TEXT );
 		$result = $stmt->execute();
+
 		return $result->fetchArray() !== false;
 	}
 
@@ -96,6 +100,7 @@ class SQLiteFilesystem implements Filesystem {
 		$stmt->bindValue( 1, $path, SQLITE3_TEXT );
 		$stmt->bindValue( 2, 'file', SQLITE3_TEXT );
 		$result = $stmt->execute();
+
 		return $result->fetchArray() !== false;
 	}
 
@@ -108,6 +113,7 @@ class SQLiteFilesystem implements Filesystem {
 		);
 		$stmt->bindValue( 1, $path, SQLITE3_TEXT );
 		$result = $stmt->execute();
+
 		return $result->fetchArray() !== false;
 	}
 
@@ -118,27 +124,28 @@ class SQLiteFilesystem implements Filesystem {
 	public function get_contents( $path ) {
 		if ( ! $this->is_file( $path ) ) {
 			throw new FilesystemException(
-				sprintf( 'File not found: %s', $path ),
+				sprintf( 'File not found: %s', $path )
 			);
 		}
 		$stmt = $this->db->prepare( 'SELECT contents FROM files WHERE path = ?' );
 		$stmt->bindValue( 1, $path, SQLITE3_TEXT );
 		$result = $stmt->execute();
 		$row    = $result->fetchArray( SQLITE3_ASSOC );
+
 		return $row['contents'];
 	}
 
 	public function rename( $from_path, $to_path, $options = array() ) {
 		if ( ! $this->exists( $from_path ) ) {
 			throw new FilesystemException(
-				sprintf( 'File not found: %s', $from_path ),
+				sprintf( 'File not found: %s', $from_path )
 			);
 		}
 
-		$parent = wp_dirname( $to_path );
+		$parent = wp_unix_dirname( $to_path );
 		if ( ! $this->is_dir( $parent ) ) {
 			throw new FilesystemException(
-				sprintf( 'Parent directory not found: %s', $parent ),
+				sprintf( 'Parent directory not found: %s', $parent )
 			);
 		}
 
@@ -152,8 +159,8 @@ class SQLiteFilesystem implements Filesystem {
 					$stmt->execute();
 
 					// Update directory entries
-					$old_parent = wp_dirname( $from_path );
-					$parent     = wp_dirname( $to_path );
+					$old_parent = wp_unix_dirname( $from_path );
+					$parent     = wp_unix_dirname( $to_path );
 
 					$stmt = $this->db->prepare(
 						'
@@ -176,8 +183,9 @@ class SQLiteFilesystem implements Filesystem {
 					$stmt->execute();
 				}
 			);
+
 			return true;
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to rename file: %s to %s', $from_path, $to_path ),
 				0,
@@ -189,21 +197,21 @@ class SQLiteFilesystem implements Filesystem {
 	public function mkdir_single( $path, $options = array() ) {
 		if ( $this->exists( $path ) ) {
 			throw new FilesystemException(
-				sprintf( 'Directory already exists: %s', $path ),
+				sprintf( 'Directory already exists: %s', $path )
 			);
 		}
 
-		$parent = wp_dirname( $path );
+		$parent = wp_unix_dirname( $path );
 		if ( ! $this->is_dir( $parent ) ) {
 			throw new FilesystemException(
-				sprintf( 'Parent directory not found: %s', $parent ),
+				sprintf( 'Parent directory not found: %s', $parent )
 			);
 		}
 
 		try {
 			$this->in_transaction(
 				function () use ( $path ) {
-					$parent = wp_dirname( $path );
+					$parent = wp_unix_dirname( $path );
 
 					$stmt = $this->db->prepare(
 						'
@@ -226,8 +234,9 @@ class SQLiteFilesystem implements Filesystem {
 					$stmt->execute();
 				}
 			);
+
 			return true;
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to create directory: %s', $path ),
 				0,
@@ -239,14 +248,14 @@ class SQLiteFilesystem implements Filesystem {
 	public function rm( $path ) {
 		if ( ! $this->is_file( $path ) ) {
 			throw new FilesystemException(
-				sprintf( 'File not found: %s', $path ),
+				sprintf( 'File not found: %s', $path )
 			);
 		}
 
 		try {
 			$this->in_transaction(
 				function () use ( $path ) {
-					$parent = wp_dirname( $path );
+					$parent = wp_unix_dirname( $path );
 
 					$stmt = $this->db->prepare( 'DELETE FROM files WHERE path = ?' );
 					$stmt->bindValue( 1, $path, SQLITE3_TEXT );
@@ -263,7 +272,7 @@ class SQLiteFilesystem implements Filesystem {
 					$stmt->execute();
 				}
 			);
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to remove file: %s', $path ),
 				0,
@@ -276,7 +285,7 @@ class SQLiteFilesystem implements Filesystem {
 		$recursive = $options['recursive'] ?? false;
 		if ( ! $this->is_dir( $path ) ) {
 			throw new FilesystemException(
-				sprintf( 'Directory not found: %s', $path ),
+				sprintf( 'Directory not found: %s', $path )
 			);
 		}
 
@@ -286,7 +295,7 @@ class SQLiteFilesystem implements Filesystem {
 					if ( $recursive ) {
 						$path = rtrim( $path, '/' );
 						foreach ( $this->ls( $path ) as $child ) {
-							$child_path = wp_join_paths( $path, $child );
+							$child_path = wp_join_unix_paths( $path, $child );
 							if ( $this->is_dir( $child_path ) ) {
 								$this->rmdir( $child_path, $options );
 							} else {
@@ -295,7 +304,7 @@ class SQLiteFilesystem implements Filesystem {
 						}
 					}
 
-					$parent = wp_dirname( $path );
+					$parent = wp_unix_dirname( $path );
 
 					$stmt = $this->db->prepare( 'DELETE FROM files WHERE path = ?' );
 					$stmt->bindValue( 1, $path, SQLITE3_TEXT );
@@ -312,7 +321,7 @@ class SQLiteFilesystem implements Filesystem {
 					$stmt->execute();
 				}
 			);
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to remove directory: %s', $path ),
 				0,
@@ -322,17 +331,17 @@ class SQLiteFilesystem implements Filesystem {
 	}
 
 	public function put_contents( $path, $data, $options = array() ) {
-		$parent = wp_dirname( $path );
+		$parent = wp_unix_dirname( $path );
 		if ( ! $this->is_dir( $parent ) ) {
 			throw new FilesystemException(
-				sprintf( 'Parent directory not found: %s', $parent ),
+				sprintf( 'Parent directory not found: %s', $parent )
 			);
 		}
 
 		try {
 			$this->in_transaction(
 				function () use ( $path, $data ) {
-					$parent = wp_dirname( $path );
+					$parent = wp_unix_dirname( $path );
 
 					$stmt = $this->db->prepare(
 						'
@@ -356,8 +365,9 @@ class SQLiteFilesystem implements Filesystem {
 					$stmt->execute();
 				}
 			);
+
 			return true;
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to put contents: %s', $path ),
 				0,
@@ -367,14 +377,14 @@ class SQLiteFilesystem implements Filesystem {
 	}
 
 	private function in_transaction( $callback ) {
-		$current_level = $this->transaction_level++;
+		$current_level = $this->transaction_level ++;
 		try {
 			if ( $current_level === 0 ) {
 				$this->db->exec( 'BEGIN TRANSACTION' );
 				try {
 					$callback();
 					$this->db->exec( 'COMMIT' );
-				} catch ( \Exception $e ) {
+				} catch ( Exception $e ) {
 					$this->db->exec( 'ROLLBACK' );
 					throw $e;
 				}
@@ -383,13 +393,17 @@ class SQLiteFilesystem implements Filesystem {
 				try {
 					$callback();
 					$this->db->exec( 'RELEASE SAVEPOINT level_' . $current_level );
-				} catch ( \Exception $e ) {
+				} catch ( Exception $e ) {
 					$this->db->exec( 'ROLLBACK TO SAVEPOINT level_' . $current_level );
 					throw $e;
 				}
 			}
 		} finally {
-			--$this->transaction_level;
+			-- $this->transaction_level;
 		}
+	}
+
+	public function get_meta(): array {
+		return [];
 	}
 }

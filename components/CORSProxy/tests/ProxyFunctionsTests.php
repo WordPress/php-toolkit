@@ -43,7 +43,7 @@ class ProxyFunctionsTests extends TestCase {
 
 	public static function providerRewriteRelativeRedirect() {
 		return array(
-			'Relative redirect to a trailing slash path' => array(
+			'Relative redirect to a trailing slash path'                       => array(
 				'https://w.org/hosting',
 				'/hosting/',
 				'https://cors.playground.wordpress.net/proxy.php',
@@ -55,13 +55,13 @@ class ProxyFunctionsTests extends TestCase {
 				'https://cors.playground.wordpress.net/proxy.php/',
 				'https://cors.playground.wordpress.net/proxy.php/https://w.org/hosting/',
 			),
-			'Relative redirect with query params involved' => array(
+			'Relative redirect with query params involved'                     => array(
 				'https://w.org/hosting',
 				'/hosting/?utm_source=wporg',
 				'https://cors.playground.wordpress.net/proxy.php',
 				'https://cors.playground.wordpress.net/proxy.php?https://w.org/hosting/?utm_source=wporg',
 			),
-			'Absolute redirect with query params involved' => array(
+			'Absolute redirect with query params involved'                     => array(
 				'https://w.org/hosting',
 				'https://w.net/hosting/?utm_source=wporg',
 				'https://cors.playground.wordpress.net/proxy.php',
@@ -80,52 +80,54 @@ class ProxyFunctionsTests extends TestCase {
 
 	public static function providerGetTargetUrl() {
 		return array(
-			'Request with server-provided PATH_INFO' => array(
+			'Request with server-provided PATH_INFO'                        => array(
 				array(
 					'PATH_INFO' => '/http://example.com',
 				),
 				'http://example.com',
 			),
-			'Request with server-provided single-slash PATH_INFO' => array(
+			'Request with server-provided single-slash PATH_INFO'           => array(
 				array(
 					'PATH_INFO' => '/',
 				),
 				false,
 			),
-			'Request with server-provided empty PATH_INFO' => array(
+			'Request with server-provided empty PATH_INFO'                  => array(
 				array(
 					'PATH_INFO' => '',
 				),
 				false,
 			),
-			'Request with server-provided PATH_INFO and QUERY_STRING' => array(
+			'Request with server-provided PATH_INFO and QUERY_STRING'       => array(
 				array(
-					'PATH_INFO' => '/http://example.com/from-path-info',
+					'PATH_INFO'    => '/http://example.com/from-path-info',
 					'QUERY_STRING' => 'http://example.com/from-query-string',
 				),
 				'http://example.com/from-path-info',
 			),
 			'Request with server-provided slash PATH_INFO and QUERY_STRING' => array(
 				array(
-					'PATH_INFO' => '/',
+					'PATH_INFO'    => '/',
 					'QUERY_STRING' => 'http://example.com/from-query-string',
 				),
 				'http://example.com/from-query-string',
 			),
-			'Request with just query params' => array(
+			'Request with just query params'                                => array(
 				array(
 					'QUERY_STRING' => 'http://example.com/from-query-string',
 				),
 				'http://example.com/from-query-string',
 			),
-			'Request with neither PATH_INFO nor QUERY_STRING' => array(
+			'Request with neither PATH_INFO nor QUERY_STRING'               => array(
 				array(),
 				false,
 			),
 		);
 	}
+
 	public function testGetCurrentScriptUri() {
-		$this->assertEquals( 'http://localhost/cors-proxy/', get_current_script_uri( 'http://example.com', 'http://localhost/cors-proxy/http://example.com' ) );
+		$this->assertEquals( 'http://localhost/cors-proxy/',
+			get_current_script_uri( 'http://example.com', 'http://localhost/cors-proxy/http://example.com' ) );
 	}
 
 	public function testUrlValidateAndResolve() {
@@ -143,10 +145,10 @@ class ProxyFunctionsTests extends TestCase {
 
 	public function testFilterHeadersStrings() {
 		$original_headers = array(
-			'Accept' => 'application/json',
+			'Accept'       => 'application/json',
 			'Content-Type' => 'application/json',
-			'Cookie' => 'test=1',
-			'Host' => 'example.com',
+			'Cookie'       => 'test=1',
+			'Host'         => 'example.com',
 		);
 
 		$strictly_disallowed_headers = array(
@@ -160,25 +162,25 @@ class ProxyFunctionsTests extends TestCase {
 
 		$this->assertEquals(
 			array(
-				'Accept' => 'application/json',
+				'Accept'       => 'application/json',
 				'Content-Type' => 'application/json',
 			),
 			filter_headers_by_name(
 				$original_headers,
 				$strictly_disallowed_headers,
-				$headers_requiring_opt_in,
+				$headers_requiring_opt_in
 			)
 		);
 	}
 
 	public function testFilterHeaderStringsWithAdditionalAllowedHeaders() {
 		$original_headers = array(
-			'Accept' => 'application/json',
-			'Content-Type' => 'application/json',
-			'Cookie' => 'test=1',
-			'Host' => 'example.com',
-			'Authorization' => 'Bearer 1234567890',
-			'X-Authorization' => 'Bearer 1234567890',
+			'Accept'                               => 'application/json',
+			'Content-Type'                         => 'application/json',
+			'Cookie'                               => 'test=1',
+			'Host'                                 => 'example.com',
+			'Authorization'                        => 'Bearer 1234567890',
+			'X-Authorization'                      => 'Bearer 1234567890',
 			'X-Cors-Proxy-Allowed-Request-Headers' => 'Authorization',
 		);
 
@@ -193,16 +195,16 @@ class ProxyFunctionsTests extends TestCase {
 
 		$this->assertEquals(
 			array(
-				'Accept' => 'application/json',
-				'Content-Type' => 'application/json',
-				'Authorization' => 'Bearer 1234567890',
-				'X-Authorization' => 'Bearer 1234567890',
+				'Accept'                               => 'application/json',
+				'Content-Type'                         => 'application/json',
+				'Authorization'                        => 'Bearer 1234567890',
+				'X-Authorization'                      => 'Bearer 1234567890',
 				'X-Cors-Proxy-Allowed-Request-Headers' => 'Authorization',
 			),
 			filter_headers_by_name(
 				$original_headers,
 				$strictly_disallowed_headers,
-				$headers_requiring_opt_in,
+				$headers_requiring_opt_in
 			)
 		);
 	}

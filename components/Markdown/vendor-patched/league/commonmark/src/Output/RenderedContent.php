@@ -15,13 +15,15 @@ namespace League\CommonMark\Output;
 
 use League\CommonMark\Node\Block\Document;
 
-class RenderedContent implements RenderedContentInterface, \Stringable
+class RenderedContent implements RenderedContentInterface
 {
-    /** @psalm-readonly */
-    private Document $document;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Node\Block\Document */
+    private $document;
 
-    /** @psalm-readonly */
-    private string $content;
+    /** @psalm-readonly
+     * @var string */
+    private $content;
 
     public function __construct(Document $document, string $content)
     {

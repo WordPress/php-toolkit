@@ -24,8 +24,14 @@ final class EmbedProcessor
     public const FALLBACK_REMOVE = 'remove';
     public const FALLBACK_LINK   = 'link';
 
-    private EmbedAdapterInterface $adapter;
-    private string $fallback;
+    /**
+     * @var \League\CommonMark\Extension\Embed\EmbedAdapterInterface
+     */
+    private $adapter;
+    /**
+     * @var string
+     */
+    private $fallback;
 
     public function __construct(EmbedAdapterInterface $adapter, string $fallback = self::FALLBACK_REMOVE)
     {

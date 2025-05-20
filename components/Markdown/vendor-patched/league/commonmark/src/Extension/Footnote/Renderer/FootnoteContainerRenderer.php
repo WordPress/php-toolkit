@@ -25,7 +25,10 @@ use League\Config\ConfigurationInterface;
 
 final class FootnoteContainerRenderer implements NodeRendererInterface, XmlNodeRendererInterface, ConfigurationAwareInterface
 {
-    private ConfigurationInterface $config;
+    /**
+     * @var \League\Config\ConfigurationInterface
+     */
+    private $config;
 
     /**
      * @param FootnoteContainer $node

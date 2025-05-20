@@ -9,7 +9,7 @@ class GitObjectReadStreamTest extends TestCase {
 
 	public function testReadHeader() {
 		$header  = "commit 123\x00";
-		$content = $header . gzdeflate( 'Some commit content', - 1, ZLIB_ENCODING_DEFLATE );
+		$content = gzdeflate( $header . 'Some commit content', - 1, ZLIB_ENCODING_DEFLATE );
 		$reader  = new GitObjectDecoder( new MemoryPipe( $content ) );
 
 		$reader->read_header();
@@ -20,7 +20,7 @@ class GitObjectReadStreamTest extends TestCase {
 	public function testNextBytes() {
 		$uncompressed = '1234567890';
 		$header       = 'blob ' . strlen( $uncompressed ) . "\x00";
-		$content      = $header . gzdeflate( $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
+		$content      = gzdeflate( $header . $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
 		$reader       = new GitObjectDecoder( new MemoryPipe( $content ) );
 		$this->assertEquals( 5, $reader->pull( 5, ByteReadStream::PULL_EXACTLY ) );
 		$this->assertEquals( '12345', $reader->consume( 5 ) );
@@ -32,7 +32,7 @@ class GitObjectReadStreamTest extends TestCase {
 	public function testSeek() {
 		$uncompressed = '1234567890';
 		$header       = 'blob ' . strlen( $uncompressed ) . "\x00";
-		$content      = $header . gzdeflate( $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
+		$content      = gzdeflate( $header . $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
 		$reader       = new GitObjectDecoder( new MemoryPipe( $content ) );
 
 		$reader->seek( 5 );
@@ -43,7 +43,7 @@ class GitObjectReadStreamTest extends TestCase {
 	public function testReadEntireObjectContents() {
 		$uncompressed = '1234567890';
 		$header       = 'blob ' . strlen( $uncompressed ) . "\x00";
-		$content      = $header . gzdeflate( $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
+		$content      = gzdeflate( $header . $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
 		$reader       = new GitObjectDecoder( new MemoryPipe( $content ) );
 
 		$reader->read_header();
@@ -53,7 +53,7 @@ class GitObjectReadStreamTest extends TestCase {
 	public function testAsCommit() {
 		$uncompressed = "tree 1234567890\nauthor John Doe <john@example.com> 1234567890 +0000\ncommitter John Doe <john@example.com> 1234567890 +0000\n\nInitial commit";
 		$header       = 'commit ' . strlen( $uncompressed ) . "\x00";
-		$content      = $header . gzdeflate( $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
+		$content      = gzdeflate( $header . $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
 		$reader       = new GitObjectDecoder( new MemoryPipe( $content ) );
 
 		$reader->read_header();
@@ -64,7 +64,7 @@ class GitObjectReadStreamTest extends TestCase {
 	public function testAsTree() {
 		$uncompressed = "100644 README.md\x00" . str_repeat( 'a', 20 ) . "100644 test.txt\x00" . str_repeat( 'b', 20 );
 		$header       = 'tree ' . strlen( $uncompressed ) . "\x00";
-		$content      = $header . gzdeflate( $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
+		$content      = gzdeflate( $header . $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
 		$reader       = new GitObjectDecoder( new MemoryPipe( $content ) );
 
 		$reader->read_header();
@@ -78,7 +78,7 @@ class GitObjectReadStreamTest extends TestCase {
 	public function testAsBlob() {
 		$uncompressed = 'Hello World!';
 		$header       = 'blob ' . strlen( $uncompressed ) . "\x00";
-		$content      = $header . gzdeflate( $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
+		$content      = gzdeflate( $header . $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
 		$reader       = new GitObjectDecoder( new MemoryPipe( $content ) );
 
 		$this->assertEquals( $uncompressed, $reader->consume_all() );
@@ -87,7 +87,7 @@ class GitObjectReadStreamTest extends TestCase {
 	public function testSeekToBeginning() {
 		$uncompressed = '1234567890';
 		$header       = 'blob ' . strlen( $uncompressed ) . "\x00";
-		$content      = $header . gzdeflate( $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
+		$content      = gzdeflate( $header . $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
 		$reader       = new GitObjectDecoder( new MemoryPipe( $content ) );
 
 		$reader->read_header();
@@ -100,7 +100,7 @@ class GitObjectReadStreamTest extends TestCase {
 	public function testSeekToMiddle() {
 		$uncompressed = '1234567890';
 		$header       = 'blob ' . strlen( $uncompressed ) . "\x00";
-		$content      = $header . gzdeflate( $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
+		$content      = gzdeflate( $header . $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
 		$reader       = new GitObjectDecoder( new MemoryPipe( $content ) );
 
 		$reader->read_header();
@@ -114,7 +114,7 @@ class GitObjectReadStreamTest extends TestCase {
 
 		$uncompressed = '1234567890';
 		$header       = 'blob ' . strlen( $uncompressed ) . "\x00";
-		$content      = $header . gzdeflate( $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
+		$content      = gzdeflate( $header . $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
 		$reader       = new GitObjectDecoder( new MemoryPipe( $content ) );
 
 		$reader->read_header();
@@ -124,7 +124,7 @@ class GitObjectReadStreamTest extends TestCase {
 	public function testSeekBackwards() {
 		$uncompressed = '1234567890';
 		$header       = 'blob ' . strlen( $uncompressed ) . "\x00";
-		$content      = $header . gzdeflate( $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
+		$content      = gzdeflate( $header . $uncompressed, - 1, ZLIB_ENCODING_DEFLATE );
 		$reader       = new GitObjectDecoder( new MemoryPipe( $content ) );
 
 		$reader->read_header();

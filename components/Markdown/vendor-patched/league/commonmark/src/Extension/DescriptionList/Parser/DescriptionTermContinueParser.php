@@ -23,9 +23,15 @@ use League\CommonMark\Parser\InlineParserEngineInterface;
 
 final class DescriptionTermContinueParser extends AbstractBlockContinueParser implements BlockContinueParserWithInlinesInterface
 {
-    private DescriptionTerm $block;
+    /**
+     * @var \League\CommonMark\Extension\DescriptionList\Node\DescriptionTerm
+     */
+    private $block;
 
-    private string $term;
+    /**
+     * @var string
+     */
+    private $term;
 
     public function __construct(string $term)
     {
@@ -33,7 +39,7 @@ final class DescriptionTermContinueParser extends AbstractBlockContinueParser im
         $this->term  = $term;
     }
 
-    public function getBlock(): DescriptionTerm
+    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }

@@ -18,11 +18,20 @@ use League\CommonMark\Util\HtmlElement;
 
 final class HtmlDecorator implements NodeRendererInterface
 {
-    private NodeRendererInterface $inner;
-    private string $tag;
+    /**
+     * @var \League\CommonMark\Renderer\NodeRendererInterface
+     */
+    private $inner;
+    /**
+     * @var string
+     */
+    private $tag;
     /** @var array<string, string|string[]|bool> */
-    private array $attributes;
-    private bool $selfClosing;
+    private $attributes;
+    /**
+     * @var bool
+     */
+    private $selfClosing;
 
     /**
      * @param array<string, string|string[]|bool> $attributes

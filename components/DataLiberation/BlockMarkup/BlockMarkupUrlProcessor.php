@@ -123,7 +123,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			return false;
 		}
 
-		while ( ++$this->inspected_url_attribute_idx < count( self::URL_ATTRIBUTES[ $tag ] ) ) {
+		while ( ++ $this->inspected_url_attribute_idx < count( self::URL_ATTRIBUTES[ $tag ] ) ) {
 			$attr = self::URL_ATTRIBUTES[ $tag ][ $this->inspected_url_attribute_idx ];
 			if ( false === $attr ) {
 				return false;
@@ -181,10 +181,11 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	/**
 	 * Replaces the currently matched URL with a new one.
 	 *
-	 * @param string $raw_url The raw URL.
-	 * @param URL    $parsed_url The parsed version of the raw URL. It is required
+	 * @param  string  $raw_url  The raw URL.
+	 * @param  URL  $parsed_url  The parsed version of the raw URL. It is required
 	 *                           as $raw_url might be a relative URL pointing to a different
 	 *                           host than this processor's base URL.
+	 *
 	 * @return bool True if the URL was set, false otherwise.
 	 */
 	public function set_url( $raw_url, $parsed_url ) {
@@ -279,6 +280,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 
 		if ( ! $this->is_url_relative() ) {
 			$this->set_url( $new_raw_url, $updated_url );
+
 			return true;
 		}
 
@@ -291,6 +293,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		}
 
 		$this->set_url( $new_relative_url, $updated_url );
+
 		return true;
 	}
 
@@ -306,6 +309,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			'#text' !== $this->get_token_type()
 		);
 	}
+
 	/**
 	 * Returns true if the currently matched URL is absolute.
 	 *

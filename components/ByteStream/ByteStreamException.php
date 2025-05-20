@@ -2,6 +2,8 @@
 
 namespace WordPress\ByteStream;
 
-class ByteStreamException extends \Exception {
+use Exception;
+
+class ByteStreamException extends Exception {
 
 }

@@ -2,10 +2,11 @@
 
 namespace WordPress\Merge\Tests;
 
+use PHPUnit\Framework\TestCase;
 use WordPress\Merge\Validate\BlockMarkupMergeValidator;
 use WordPress\Merge\Validate\InvalidMergeException;
 
-class BlockMarkupMergeValidatorTest extends \PHPUnit\Framework\TestCase {
+class BlockMarkupMergeValidatorTest extends TestCase {
 
 	/**
 	 * @dataProvider corruptedMergeResultsProvider

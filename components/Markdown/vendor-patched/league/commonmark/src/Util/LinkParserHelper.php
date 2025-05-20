@@ -132,8 +132,11 @@ final class LinkParserHelper
     }
 
     /** @var \WeakReference<Cursor>|null */
-    private static ?\WeakReference $lastCursor       = null;
-    private static bool $lastCursorLacksClosingBrace = false;
+    private static $lastCursor;
+    /**
+     * @var bool
+     */
+    private static $lastCursorLacksClosingBrace = false;
 
     private static function parseDestinationBraces(Cursor $cursor): ?string
     {

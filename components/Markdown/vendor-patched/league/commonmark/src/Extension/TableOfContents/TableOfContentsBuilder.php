@@ -30,20 +30,15 @@ final class TableOfContentsBuilder implements ConfigurationAwareInterface
     public const POSITION_BEFORE_HEADINGS = 'before-headings';
     public const POSITION_PLACEHOLDER     = 'placeholder';
 
-    /** @psalm-readonly-allow-private-mutation */
-    private ConfigurationInterface $config;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\Config\ConfigurationInterface */
+    private $config;
 
     public function onDocumentParsed(DocumentParsedEvent $event): void
     {
         $document = $event->getDocument();
 
-        $generator = new TableOfContentsGenerator(
-            (string) $this->config->get('table_of_contents/style'),
-            (string) $this->config->get('table_of_contents/normalize'),
-            (int) $this->config->get('table_of_contents/min_heading_level'),
-            (int) $this->config->get('table_of_contents/max_heading_level'),
-            (string) $this->config->get('heading_permalink/fragment_prefix'),
-        );
+        $generator = new TableOfContentsGenerator((string) $this->config->get('table_of_contents/style'), (string) $this->config->get('table_of_contents/normalize'), (int) $this->config->get('table_of_contents/min_heading_level'), (int) $this->config->get('table_of_contents/max_heading_level'), (string) $this->config->get('heading_permalink/fragment_prefix'));
 
         $toc = $generator->generate($document);
         if ($toc === null) {

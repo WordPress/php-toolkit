@@ -33,11 +33,13 @@ final class HeadingPermalinkProcessor implements EnvironmentAwareInterface
     public const INSERT_AFTER  = 'after';
     public const INSERT_NONE   = 'none';
 
-    /** @psalm-readonly-allow-private-mutation */
-    private TextNormalizerInterface $slugNormalizer;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\CommonMark\Normalizer\TextNormalizerInterface */
+    private $slugNormalizer;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private ConfigurationInterface $config;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\Config\ConfigurationInterface */
+    private $config;
 
     public function setEnvironment(EnvironmentInterface $environment): void
     {

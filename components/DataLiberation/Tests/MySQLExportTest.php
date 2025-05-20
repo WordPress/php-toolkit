@@ -1,9 +1,9 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
+use WordPress\ByteStream\MemoryPipe;
 use WordPress\DataLiberation\EntityReader\DatabaseRowsEntityReader;
 use WordPress\DataLiberation\EntityWriter\MySQLDumpWriter;
-use WordPress\ByteStream\MemoryPipe;
 
 class MySQLExportTest extends TestCase {
 
@@ -49,12 +49,12 @@ class MySQLExportTest extends TestCase {
 		 *
 		 * @see https://github.com/laravel/framework/issues/3548
 		 */
-		if ( version_compare( PHP_VERSION, '8.0', '<=' ) ) {
+		if ( version_compare( PHP_VERSION, '8.1', '<' ) ) {
 			$expected = "INSERT INTO posts (ID, post_title) VALUES ('1', 'First Post');\n" .
-						"INSERT INTO posts (ID, post_title) VALUES ('2', 'Second Post');\n";
+			            "INSERT INTO posts (ID, post_title) VALUES ('2', 'Second Post');\n";
 		} else {
 			$expected = "INSERT INTO posts (ID, post_title) VALUES (1, 'First Post');\n" .
-						"INSERT INTO posts (ID, post_title) VALUES (2, 'Second Post');\n";
+			            "INSERT INTO posts (ID, post_title) VALUES (2, 'Second Post');\n";
 		}
 
 		$this->assertEquals( $expected, $this->memory_pipe->consume_all() );
@@ -98,7 +98,7 @@ class MySQLExportTest extends TestCase {
 		$this->reader      = DatabaseRowsEntityReader::create(
 			$this->db,
 			array(
-				'tables_to_process' => array( 'posts' ),
+				'tables_to_process'  => array( 'posts' ),
 				'create_table_query' => true,
 			)
 		);
@@ -116,7 +116,7 @@ class MySQLExportTest extends TestCase {
 		 *
 		 * @see https://github.com/laravel/framework/issues/3548
 		 */
-		if ( version_compare( PHP_VERSION, '8.0', '<=' ) ) {
+		if ( version_compare( PHP_VERSION, '8.1', '<' ) ) {
 			$expected = <<<SQL
 CREATE TABLE posts (ID INTEGER PRIMARY KEY, post_title TEXT);
 INSERT INTO posts (ID, post_title) VALUES ('1', 'First Post');
@@ -152,7 +152,7 @@ SQL;
 			$this->db,
 			array(
 				'tables_to_process' => array( 'posts' ),
-				'cursor' => $cursor,
+				'cursor'            => $cursor,
 			)
 		);
 
@@ -168,12 +168,12 @@ SQL;
 		 *
 		 * @see https://github.com/laravel/framework/issues/3548
 		 */
-		if ( version_compare( PHP_VERSION, '8.0', '<=' ) ) {
+		if ( version_compare( PHP_VERSION, '8.1', '<' ) ) {
 			$expected = "INSERT INTO posts (ID, post_title) VALUES ('1', 'First Post');\n" .
-						"INSERT INTO posts (ID, post_title) VALUES ('2', 'Second Post');\n";
+			            "INSERT INTO posts (ID, post_title) VALUES ('2', 'Second Post');\n";
 		} else {
 			$expected = "INSERT INTO posts (ID, post_title) VALUES (1, 'First Post');\n" .
-						"INSERT INTO posts (ID, post_title) VALUES (2, 'Second Post');\n";
+			            "INSERT INTO posts (ID, post_title) VALUES (2, 'Second Post');\n";
 		}
 
 		$this->assertEquals( $expected, $this->memory_pipe->consume_all() );

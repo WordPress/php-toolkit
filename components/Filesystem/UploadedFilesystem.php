@@ -34,12 +34,13 @@ class UploadedFilesystem implements Filesystem {
 	/**
 	 * Create a new UploadedFilesystem instance.
 	 *
-	 * @param REST_Request $request The request object containing uploaded files
-	 * @param string       $tree_parameter_name The name of the parameter containing the tree structure
-	 * @param array        $options The options array {
-	 *  @var Filesystem $uploads_fs Optional. The filesystem to read the uploaded files from.
-	 * }
+	 * @param  REST_Request  $request  The request object containing uploaded files
+	 * @param  string  $tree_parameter_name  The name of the parameter containing the tree structure
+	 * @param  array  $options  The options array {
+	 *
 	 * @return UploadedFilesystem The new instance
+	 * @var Filesystem $uploads_fs Optional. The filesystem to read the uploaded files from.
+	 * }
 	 */
 	public static function create( $request, $tree_parameter_name, $options = array() ) {
 		return new ChrootLayer(
@@ -49,13 +50,14 @@ class UploadedFilesystem implements Filesystem {
 	}
 
 	/**
+	 * @param  array  $tree  The directory tree structure
+	 * @param  array  $options  The options array
+	 * @param  Filesystem  $uploads_fs  The filesystem to read the uploaded files from.
+	 * @param  REST_Request  $request  The request object containing uploaded files
+	 *
 	 * @internal
 	 * Use the static create() method instead.
 	 *
-	 * @param array        $tree The directory tree structure
-	 * @param array        $options The options array
-	 * @param Filesystem   $uploads_fs The filesystem to read the uploaded files from.
-	 * @param REST_Request $request The request object containing uploaded files
 	 */
 	private function __construct( $request, $tree_parameter_name, $options = array() ) {
 		$tree_json = $request->get_param( $tree_parameter_name );
@@ -70,8 +72,8 @@ class UploadedFilesystem implements Filesystem {
 
 		if ( ! isset( $tree['type'] ) || $tree['type'] !== 'directory' || ! isset( $tree['name'] ) || $tree['name'] !== '' ) {
 			$tree = array(
-				'type' => 'directory',
-				'name' => '',
+				'type'     => 'directory',
+				'name'     => '',
 				'children' => $tree,
 			);
 		}
@@ -82,25 +84,29 @@ class UploadedFilesystem implements Filesystem {
 	}
 
 	public function ls( $parent = '/' ) {
-		$parent = wp_canonicalize_path( $parent );
+		$parent = '/' . ltrim( wp_unix_path_resolve_dots( $parent ), '/' );
 		$node   = $this->find_node( $parent );
 		if ( ! $node || $node['type'] !== 'directory' ) {
 			return array();
 		}
+
 		return array_map(
 			function ( $child ) {
-				return $child['name']; },
+				return $child['name'];
+			},
 			$node['children'] ?? array()
 		);
 	}
 
 	public function is_dir( $path ) {
 		$node = $this->find_node( $path );
+
 		return $node && $node['type'] === 'directory';
 	}
 
 	public function is_file( $path ) {
 		$node = $this->find_node( $path );
+
 		return $node && $node['type'] === 'file';
 	}
 
@@ -153,7 +159,8 @@ class UploadedFilesystem implements Filesystem {
 	/**
 	 * Find a node in the tree by its path
 	 *
-	 * @param string $path The path to find
+	 * @param  string  $path  The path to find
+	 *
 	 * @return array|null The node if found, null otherwise
 	 */
 	private function find_node( $path ) {
@@ -179,5 +186,9 @@ class UploadedFilesystem implements Filesystem {
 		}
 
 		return $current;
+	}
+
+	public function get_meta(): array {
+		return array();
 	}
 }

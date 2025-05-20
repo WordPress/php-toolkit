@@ -2,7 +2,7 @@
 
 namespace WordPress\Filesystem\Mixin;
 
-use function WordPress\Filesystem\wp_join_paths;
+use function WordPress\Filesystem\wp_join_unix_paths;
 
 trait RmdirRecursive {
 
@@ -10,7 +10,7 @@ trait RmdirRecursive {
 		$recursive = $options['recursive'] ?? false;
 		if ( $recursive ) {
 			foreach ( $this->ls( $path ) as $child ) {
-				$child_path = wp_join_paths( $path, $child );
+				$child_path = wp_join_unix_paths( $path, $child );
 				if ( $this->is_dir( $child_path ) ) {
 					$this->rmdir( $child_path, $options );
 				} else {

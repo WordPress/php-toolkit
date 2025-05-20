@@ -22,17 +22,21 @@ use League\CommonMark\Reference\ReferenceMapInterface;
 
 final class InlineParserContext
 {
-    /** @psalm-readonly */
-    private AbstractBlock $container;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Node\Block\AbstractBlock */
+    private $container;
 
-    /** @psalm-readonly */
-    private ReferenceMapInterface $referenceMap;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Reference\ReferenceMapInterface */
+    private $referenceMap;
 
-    /** @psalm-readonly */
-    private Cursor $cursor;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Parser\Cursor */
+    private $cursor;
 
-    /** @psalm-readonly */
-    private DelimiterStack $delimiterStack;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Delimiter\DelimiterStack */
+    private $delimiterStack;
 
     /**
      * @var string[]
@@ -40,7 +44,7 @@ final class InlineParserContext
      *
      * @psalm-readonly-allow-private-mutation
      */
-    private array $matches;
+    private $matches;
 
     public function __construct(Cursor $contents, AbstractBlock $container, ReferenceMapInterface $referenceMap, int $maxDelimitersPerLine = PHP_INT_MAX)
     {

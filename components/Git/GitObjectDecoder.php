@@ -2,6 +2,7 @@
 
 namespace WordPress\Git;
 
+use WordPress\ByteStream\NotEnoughDataException;
 use WordPress\ByteStream\ReadStream\BaseByteReadStream;
 use WordPress\ByteStream\ReadStream\ByteReadStream;
 use WordPress\ByteStream\ReadStream\InflateReadStream;
@@ -10,58 +11,53 @@ use WordPress\Git\Protocol\Parser\TreeParser;
 
 class GitObjectDecoder extends BaseByteReadStream {
 
-	private $object_header;
-	private $object_type_name;
-	private $uncompressed_length;
-
 	/**
-	 * @var ByteReadStream
+	 * @var string|null
 	 */
-	private $upstream;
-
+	private $object_header;
 	/**
+	 * @var string|null
+	 */
+	private $object_type_name;
+	/**
+	 * @var int|null
+	 */
+	private $uncompressed_length;
+	/**
+	 * @var int
+	 */
+	private $header_length = 0; // Uncompressed header length (in bytes, incl. trailing NUL)
+	/** Decompressed view of the full object (header+body).
 	 * @var InflateReadStream
 	 */
-	private $inflated_body_reader;
+	private $inflated_reader;
 
-	/**
+	/** Points to the body inside $inflated_reader; seek(0) == body start.
 	 * @var ByteReadStream
 	 */
 	private $body_source;
 
 	public function __construct( ByteReadStream $upstream ) {
-		$this->upstream             = $upstream;
-		$this->inflated_body_reader = new InflateReadStream( $upstream );
-		$this->body_source          = $this->inflated_body_reader;
-	}
-
-	public function set_inflate_enabled( $inflate_enabled ) {
-		if ( $inflate_enabled ) {
-			$this->body_source     = $this->inflated_body_reader;
-			$this->expected_length = $this->uncompressed_length;
-		} else {
-			$this->body_source     = $this->upstream;
-			$this->expected_length = $this->upstream->length() - strlen( $this->object_header );
-		}
+		$this->inflated_reader = new InflateReadStream( $upstream );
+		$this->body_source     = $this->inflated_reader;
 	}
 
 	public function get_object_type_name() {
-		if ( ! $this->object_header ) {
-			return false;
-		}
+		$this->ensure_object_header();
 
 		return $this->object_type_name;
 	}
 
 	public function get_uncompressed_size() {
-		if ( ! $this->object_header ) {
-			return false;
-		}
+		$this->ensure_object_header();
 
 		return $this->uncompressed_length;
 	}
 
-	public function internal_pull( $n ): string {
+	/**
+	 * Pulls up to $n bytes of *body* data (header is skipped automatically).
+	 */
+	protected function internal_pull( $n ): string {
 		$this->ensure_object_header();
 		$available = $this->body_source->pull( $n );
 
@@ -70,7 +66,7 @@ class GitObjectDecoder extends BaseByteReadStream {
 
 	public function as_commit() {
 		if ( $this->get_object_type_name() !== 'commit' ) {
-			throw new GitException( sprintf( 'Object was %s and not a commit in as_commit', $this->get_object_type_name() ) );
+			throw new GitException( sprintf( 'Object is %s, expected commit', $this->get_object_type_name() ) );
 		}
 
 		return CommitParser::parse( $this->consume_all() );
@@ -78,53 +74,59 @@ class GitObjectDecoder extends BaseByteReadStream {
 
 	public function as_tree() {
 		if ( $this->get_object_type_name() !== 'tree' ) {
-			throw new GitException( sprintf( 'Object was %s and not a tree in as_tree', $this->get_object_type_name() ) );
+			throw new GitException( sprintf( 'Object is %s, expected tree', $this->get_object_type_name() ) );
 		}
 
 		return TreeParser::parse_entire_tree( $this->consume_all() );
 	}
 
 	public function read_header() {
-		if ( $this->object_header ) {
-			return;
-		}
 		$this->ensure_object_header();
 	}
 
-	private function ensure_object_header() {
+	/**
+	 * Inflate until we hit the NUL terminator, then parse <type> <size>\x00.
+	 */
+	private function ensure_object_header(): void {
 		if ( null !== $this->object_header ) {
 			return;
 		}
-		// Read the object header and initialize the internal state
-		// for the specific get_* methods below.
+
 		$header = '';
-		$byte   = '';
-		while ( $this->upstream->pull( 1 ) ) {
-			$byte    = $this->upstream->consume( 1 );
+		while ( true ) {
+			if ( 0 === $this->inflated_reader->pull( 1, ByteReadStream::PULL_EXACTLY ) ) {
+				throw new GitException( 'Unexpected end of data while reading object header' );
+			}
+			$byte   = $this->inflated_reader->consume( 1 );
 			$header .= $byte;
 			if ( "\x00" === $byte ) {
 				break;
 			}
 		}
 
-		if ( false === strpos( $header, "\x00" ) ) {
-			throw new GitException( 'Failed to read the object header' );
-		}
-
 		$this->object_header = $header;
+		$this->header_length = strlen( $header );
 
-		$type_length            = strpos( $header, ' ' );
-		$this->object_type_name = substr( $header, 0, $type_length );
-
-		$length_as_string          = substr( $header, $type_length + 1 );
-		$this->uncompressed_length = intval( $length_as_string );
+		$space_pos                 = strpos( $header, ' ' );
+		$this->object_type_name    = substr( $header, 0, $space_pos );
+		$this->uncompressed_length = (int) substr( $header, $space_pos + 1 );
 		$this->expected_length     = $this->uncompressed_length;
 	}
 
+	/**
+	 * External offsets are relative to the body; internally we seek past the header first.
+	 */
 	protected function seek_outside_of_buffer( int $target_offset ): void {
 		$this->ensure_object_header();
-		$this->body_source->seek( $target_offset );
 
+		if ( null !== $this->length() && $target_offset > $this->length() ) {
+			throw new NotEnoughDataException( 'Cannot seek past end of object body' );
+		}
+
+		$absolute_offset = $this->header_length + $target_offset;
+		$this->body_source->seek( $absolute_offset );
+
+		// Reset local buffer tracking
 		$this->buffer                   = '';
 		$this->offset_in_current_buffer = 0;
 		$this->bytes_already_forgotten  = $target_offset;

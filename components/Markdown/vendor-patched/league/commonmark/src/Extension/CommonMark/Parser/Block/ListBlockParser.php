@@ -24,15 +24,16 @@ use League\CommonMark\Parser\Cursor;
 
 final class ListBlockParser extends AbstractBlockContinueParser
 {
-    /** @psalm-readonly */
-    private ListBlock $block;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Extension\CommonMark\Node\Block\ListBlock */
+    private $block;
 
     public function __construct(ListData $listData)
     {
         $this->block = new ListBlock($listData);
     }
 
-    public function getBlock(): ListBlock
+    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }

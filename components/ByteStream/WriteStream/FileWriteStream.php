@@ -11,8 +11,8 @@ class FileWriteStream implements ByteWriteStream {
 	/**
 	 * Creates a new instance of FileWriter from a file path with a mode (truncate or append).
 	 *
-	 * @param string $path Path to the file.
-	 * @param string $mode Writing mode: 'truncate' or 'append'.
+	 * @param  string  $path  Path to the file.
+	 * @param  string  $mode  Writing mode: 'truncate' or 'append'.
 	 *
 	 * @return FileWriteStream
 	 * @throws ByteStreamException If the file cannot be opened for writing.
@@ -40,7 +40,7 @@ class FileWriteStream implements ByteWriteStream {
 	/**
 	 * Creates a new instance of FileWriter from an existing file handle.
 	 *
-	 * @param resource $fileHandle A valid file handle.
+	 * @param  resource  $fileHandle  A valid file handle.
 	 *
 	 * @return FileWriteStream
 	 * @throws ByteStreamException If the file handle is invalid.
@@ -52,7 +52,7 @@ class FileWriteStream implements ByteWriteStream {
 	/**
 	 * Private constructor to enforce the use of static factory methods.
 	 *
-	 * @param resource $fileHandle
+	 * @param  resource  $fileHandle
 	 */
 	public function __construct( $fileHandle ) {
 		if ( ! is_resource( $fileHandle ) || get_resource_type( $fileHandle ) !== 'stream' ) {
@@ -64,12 +64,26 @@ class FileWriteStream implements ByteWriteStream {
 	/**
 	 * Appends bytes to the file.
 	 *
-	 * @param string $bytes The data to write.
+	 * @param  string  $bytes  The data to write.
+	 *
 	 * @return void
 	 * @throws ByteStreamException If the write operation fails.
 	 */
 	public function append_bytes( string $bytes ): void {
-		if ( fwrite( $this->fileHandle, $bytes ) === false ) {
+		$result = fwrite( $this->fileHandle, $bytes );
+		/**
+		 * We cannot just test for `false === $result` if we want to be
+		 * compatible with PHP 7.3.
+		 * 
+		 * The `!fwrite()` check is used for PHP 7.3 compatibility.
+		 * Between PHP 7.3 and 7.4, this change was made:
+		 * 
+		 * > fread() and fwrite() will now return FALSE if the operation failed. Previously an empty
+		 * > string or 0 was returned. EAGAIN/EWOULDBLOCK are not considered failures.
+		 * 
+		 * https://www.php.net/manual/en/migration74.incompatible.php#migration74.incompatible.core.fread-fwrite
+		 */
+		if ( ! $result && $bytes !== '' ) {
 			throw new ByteStreamException( 'Failed to write bytes to file.' );
 		}
 	}

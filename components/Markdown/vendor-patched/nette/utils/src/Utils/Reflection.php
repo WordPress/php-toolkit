@@ -33,8 +33,9 @@ final class Reflection
 	}
 
 
-	/** @deprecated use native ReflectionParameter::getDefaultValue() */
-	public static function getParameterDefaultValue(\ReflectionParameter $param): mixed
+	/** @deprecated use native ReflectionParameter::getDefaultValue()
+  * @return mixed */
+ public static function getParameterDefaultValue(\ReflectionParameter $param)
 	{
 		if ($param->isDefaultValueConstant()) {
 			$const = $orig = $param->getDefaultValueConstantName();
@@ -217,7 +218,7 @@ final class Reflection
 	private static function parseUseStatements(string $code, ?string $forClass = null): array
 	{
 		try {
-			$tokens = \PhpToken::tokenize($code, TOKEN_PARSE);
+			$tokens = token_get_all($code, TOKEN_PARSE);
 		} catch (\ParseError $e) {
 			trigger_error($e->getMessage(), E_USER_NOTICE);
 			$tokens = [];
@@ -304,7 +305,10 @@ final class Reflection
 	}
 
 
-	private static function fetch(array &$tokens, string|int|array $take): ?string
+	/**
+  * @param string|int|mixed[] $take
+  */
+ private static function fetch(array &$tokens, $take): ?string
 	{
 		$res = null;
 		while ($token = current($tokens)) {

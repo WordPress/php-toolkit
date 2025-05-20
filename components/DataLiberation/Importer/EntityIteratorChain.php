@@ -3,10 +3,11 @@
 namespace WordPress\DataLiberation\Importer;
 
 use Iterator;
+use ReturnTypeWillChange;
 
 class EntityIteratorChain implements Iterator {
 	private $assets_attempts_iterator = null;
-	private $entities_iterator        = null;
+	private $entities_iterator = null;
 
 	public function set_assets_attempts_iterator( Iterator $iterator ) {
 		$this->assets_attempts_iterator = $iterator;
@@ -16,15 +17,17 @@ class EntityIteratorChain implements Iterator {
 		$this->entities_iterator = $iterator;
 	}
 
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function current() {
 		$iterator = $this->get_iterator();
+
 		return $iterator ? $iterator->current() : null;
 	}
 
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function key() {
 		$iterator = $this->get_iterator();
+
 		return $iterator ? $iterator->key() : null;
 	}
 
@@ -47,6 +50,7 @@ class EntityIteratorChain implements Iterator {
 
 	public function valid(): bool {
 		$iterator = $this->get_iterator();
+
 		return $iterator && $iterator->valid();
 	}
 
@@ -56,10 +60,11 @@ class EntityIteratorChain implements Iterator {
 		} elseif ( $this->entities_iterator && $this->entities_iterator->valid() ) {
 			return $this->entities_iterator;
 		}
+
 		return null;
 	}
 
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function get_reentrancy_cursor() {
 		if ( ! $this->entities_iterator ) {
 			return null;
@@ -67,6 +72,7 @@ class EntityIteratorChain implements Iterator {
 		if ( ! method_exists( $this->entities_iterator, 'get_reentrancy_cursor' ) ) {
 			return null;
 		}
+
 		return $this->entities_iterator->get_reentrancy_cursor();
 	}
 }

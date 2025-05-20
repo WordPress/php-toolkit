@@ -27,8 +27,9 @@ use League\CommonMark\Output\RenderedContentInterface;
 
 final class HtmlRenderer implements DocumentRendererInterface, ChildNodeRendererInterface
 {
-    /** @psalm-readonly */
-    private EnvironmentInterface $environment;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Environment\EnvironmentInterface */
+    private $environment;
 
     public function __construct(EnvironmentInterface $environment)
     {

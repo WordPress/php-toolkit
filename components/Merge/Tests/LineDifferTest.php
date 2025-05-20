@@ -2,11 +2,11 @@
 
 namespace WordPress\Merge\Tests;
 
-use WordPress\Merge\Diff\Differ;
+use PHPUnit\Framework\TestCase;
 use WordPress\Merge\Diff\Diff;
 use WordPress\Merge\Diff\LineDiffer;
 
-class LineDifferTest extends \PHPUnit\Framework\TestCase {
+class LineDifferTest extends TestCase {
 
 	public function test_lines_diff() {
 		$base = <<<EOT

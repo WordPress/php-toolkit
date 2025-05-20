@@ -1,9 +1,8 @@
 <?php
 
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace Rowbot\URL\State;
 
-class HostState extends AbstractHostState
-{
+class HostState extends AbstractHostState {
 }

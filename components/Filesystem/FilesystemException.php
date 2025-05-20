@@ -2,6 +2,8 @@
 
 namespace WordPress\Filesystem;
 
-class FilesystemException extends \Exception {
+use Exception;
+
+class FilesystemException extends Exception {
 
 }

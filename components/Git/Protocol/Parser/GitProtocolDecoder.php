@@ -5,7 +5,6 @@ namespace WordPress\Git\Protocol\Parser;
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\ByteStream\ReadStream\ByteReadStream;
 use WordPress\Git\GitException;
-use WordPress\Git\GitObjectDecoder;
 use WordPress\Git\GitRepository;
 
 class GitProtocolDecoder {
@@ -41,8 +40,8 @@ class GitProtocolDecoder {
 		} elseif ( $this->will_process_pack ) {
 			throw new GitException(
 				'To process PACK packets, GitProtocolReader requires a ' .
-                "'write_to_repository' option with a GitRepository instance " .
-                'to write the PACKed objects to.'
+				"'write_to_repository' option with a GitRepository instance " .
+				'to write the PACKed objects to.'
 			);
 		}
 		$this->demuxer       = new ProtocolDemultiplexer( $upstream );

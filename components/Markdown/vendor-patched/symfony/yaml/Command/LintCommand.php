@@ -33,23 +33,35 @@ use Symfony\Component\Yaml\Yaml;
  * @author Grégoire Pineau <lyrixx@lyrixx.info>
  * @author Robin Chalas <robin.chalas@gmail.com>
  */
-#[AsCommand(name: 'lint:yaml', description: 'Lint a YAML file and outputs encountered errors')]
 class LintCommand extends Command
 {
-    private Parser $parser;
-    private ?string $format = null;
-    private bool $displayCorrectFiles;
-    private ?\Closure $directoryIteratorProvider;
-    private ?\Closure $isReadableProvider;
-
+    /**
+     * @var \Symfony\Component\Yaml\Parser
+     */
+    private $parser;
+    /**
+     * @var string|null
+     */
+    private $format;
+    /**
+     * @var bool
+     */
+    private $displayCorrectFiles;
+    /**
+     * @var \Closure|null
+     */
+    private $directoryIteratorProvider;
+    /**
+     * @var \Closure|null
+     */
+    private $isReadableProvider;
     public function __construct(?string $name = null, ?callable $directoryIteratorProvider = null, ?callable $isReadableProvider = null)
     {
         parent::__construct($name);
 
-        $this->directoryIteratorProvider = null === $directoryIteratorProvider ? null : $directoryIteratorProvider(...);
-        $this->isReadableProvider = null === $isReadableProvider ? null : $isReadableProvider(...);
+        $this->directoryIteratorProvider = null === $directoryIteratorProvider ? null : \Closure::fromCallable($directoryIteratorProvider);
+        $this->isReadableProvider = null === $isReadableProvider ? null : \Closure::fromCallable($isReadableProvider);
     }
-
     protected function configure(): void
     {
         $this
@@ -85,7 +97,6 @@ EOF
             )
         ;
     }
-
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
@@ -126,7 +137,6 @@ EOF
 
         return $this->display($io, $filesInfo);
     }
-
     private function validate(string $content, int $flags, ?string $file = null): array
     {
         $prevErrorHandler = set_error_handler(function ($level, $message, $file, $line) use (&$prevErrorHandler) {
@@ -147,17 +157,19 @@ EOF
 
         return ['file' => $file, 'valid' => true];
     }
-
     private function display(SymfonyStyle $io, array $files): int
     {
-        return match ($this->format) {
-            'txt' => $this->displayTxt($io, $files),
-            'json' => $this->displayJson($io, $files),
-            'github' => $this->displayTxt($io, $files, true),
-            default => throw new InvalidArgumentException(\sprintf('Supported formats are "%s".', implode('", "', $this->getAvailableFormatOptions()))),
-        };
+        switch ($this->format) {
+            case 'txt':
+                return $this->displayTxt($io, $files);
+            case 'json':
+                return $this->displayJson($io, $files);
+            case 'github':
+                return $this->displayTxt($io, $files, true);
+            default:
+                throw new InvalidArgumentException(\sprintf('Supported formats are "%s".', implode('", "', $this->getAvailableFormatOptions())));
+        }
     }
-
     private function displayTxt(SymfonyStyle $io, array $filesInfo, bool $errorAsGithubAnnotations = false): int
     {
         $countFiles = \count($filesInfo);
@@ -176,7 +188,7 @@ EOF
                 $io->text('<error> ERROR </error>'.($info['file'] ? \sprintf(' in %s', $info['file']) : ''));
                 $io->text(\sprintf('<error> >> %s</error>', $info['message']));
 
-                if (str_contains($info['message'], 'PARSE_CUSTOM_TAGS')) {
+                if (strpos($info['message'], 'PARSE_CUSTOM_TAGS') !== false) {
                     $suggestTagOption = true;
                 }
 
@@ -194,7 +206,6 @@ EOF
 
         return min($erroredFiles, 1);
     }
-
     private function displayJson(SymfonyStyle $io, array $filesInfo): int
     {
         $errors = 0;
@@ -205,7 +216,7 @@ EOF
                 ++$errors;
             }
 
-            if (isset($v['message']) && str_contains($v['message'], 'PARSE_CUSTOM_TAGS')) {
+            if (isset($v['message']) && strpos($v['message'], 'PARSE_CUSTOM_TAGS') !== false) {
                 $v['message'] .= ' Use the --parse-tags option if you want parse custom tags.';
             }
         });
@@ -214,7 +225,6 @@ EOF
 
         return min($errors, 1);
     }
-
     private function getFiles(string $fileOrDirectory): iterable
     {
         if (is_file($fileOrDirectory)) {
@@ -231,18 +241,18 @@ EOF
             yield $file;
         }
     }
-
     private function getParser(): Parser
     {
-        return $this->parser ??= new Parser();
+        return $this->parser = $this->parser ?? new Parser();
     }
-
     private function getDirectoryIterator(string $directory): iterable
     {
-        $default = fn ($directory) => new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::FOLLOW_SYMLINKS),
-            \RecursiveIteratorIterator::LEAVES_ONLY
-        );
+        $default = function ($directory) {
+            return new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::FOLLOW_SYMLINKS),
+                \RecursiveIteratorIterator::LEAVES_ONLY
+            );
+        };
 
         if (null !== $this->directoryIteratorProvider) {
             return ($this->directoryIteratorProvider)($directory, $default);
@@ -250,10 +260,9 @@ EOF
 
         return $default($directory);
     }
-
     private function isReadable(string $fileOrDirectory): bool
     {
-        $default = is_readable(...);
+        $default = \Closure::fromCallable('is_readable');
 
         if (null !== $this->isReadableProvider) {
             return ($this->isReadableProvider)($fileOrDirectory, $default);
@@ -261,14 +270,12 @@ EOF
 
         return $default($fileOrDirectory);
     }
-
     public function complete(CompletionInput $input, CompletionSuggestions $suggestions): void
     {
         if ($input->mustSuggestOptionValuesFor('format')) {
             $suggestions->suggestValues($this->getAvailableFormatOptions());
         }
     }
-
     /** @return string[] */
     private function getAvailableFormatOptions(): array
     {

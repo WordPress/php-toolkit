@@ -2,6 +2,7 @@
 
 namespace WordPress\DataLiberation\EntityReader;
 
+use InvalidArgumentException;
 use WordPress\DataLiberation\DataFormatConsumer\BlocksWithMetadata;
 use WordPress\DataLiberation\DataFormatConsumer\MarkupProcessorConsumer;
 use WordPress\DataLiberation\ImportEntity;
@@ -13,7 +14,7 @@ use WordPress\Markdown\MarkdownConsumer;
 use WordPress\XML\XMLProcessor;
 use WP_HTML_Processor;
 
-use function WordPress\Filesystem\wp_join_paths;
+use function WordPress\Filesystem\wp_join_unix_paths;
 
 /**
  * Recursively reads files from a filesystem and converts them into WordPress post entities.
@@ -165,8 +166,8 @@ class FilesystemEntityReader implements EntityReader {
 	/**
 	 * Initializes the reader with filesystem and options.
 	 *
-	 * @param Filesystem $filesystem The filesystem to traverse.
-	 * @param array      $options Configuration options.
+	 * @param  Filesystem  $filesystem  The filesystem to traverse.
+	 * @param  array  $options  Configuration options.
 	 */
 	public function __construct(
 		Filesystem $filesystem,
@@ -177,11 +178,11 @@ class FilesystemEntityReader implements EntityReader {
 			if ( function_exists( 'get_posts' ) ) {
 				$max_id = get_posts(
 					array(
-						'post_type' => 'any',
+						'post_type'      => 'any',
 						'posts_per_page' => 1,
-						'fields' => 'ids',
-						'orderby' => 'ID',
-						'order' => 'DESC',
+						'fields'         => 'ids',
+						'orderby'        => 'ID',
+						'order'          => 'DESC',
 					)
 				);
 				if ( ! empty( $max_id ) ) {
@@ -190,10 +191,10 @@ class FilesystemEntityReader implements EntityReader {
 			}
 		}
 		if ( 1 === $options['first_post_id'] ) {
-			throw new \InvalidArgumentException( 'First node ID must be greater than 1' );
+			throw new InvalidArgumentException( 'First node ID must be greater than 1' );
 		}
 		if ( ! isset( $options['base_url'] ) ) {
-			throw new \InvalidArgumentException( 'The "base_url" option is required. It should contain the root URL of the imported site.' );
+			throw new InvalidArgumentException( 'The "base_url" option is required. It should contain the root URL of the imported site.' );
 		}
 
 		$this->fs                 = $filesystem;
@@ -207,7 +208,7 @@ class FilesystemEntityReader implements EntityReader {
 		}
 		$this->base_url = $options['base_url'];
 		if ( isset( $options['root_parent_id'] ) ) {
-			$this->parent_ids[-1] = $options['root_parent_id'];
+			$this->parent_ids[ - 1 ] = $options['root_parent_id'];
 		}
 	}
 
@@ -242,24 +243,26 @@ class FilesystemEntityReader implements EntityReader {
 		while ( true ) {
 			while ( count( $this->entities ) > 0 ) {
 				$this->current_entity = array_shift( $this->entities );
+
 				return true;
 			}
 
 			if ( ! $this->next_filesystem_node() ) {
 				$this->finished = true;
+
 				return false;
 			}
 
 			$post_tree_node = $this->get_current_filesystem_node();
 			$metadata       = array(
-				'post_id'           => $post_tree_node['post_id'],
-				'post_parent'       => $post_tree_node['parent_id'],
-				'post_title'        => $post_tree_node['post_title'] ?? null,
-				'post_status'       => 'publish',
-				'post_type'         => $this->post_type,
-				'guid'              => $post_tree_node['local_file_path'],
-				'local_file_path'   => $post_tree_node['local_file_path'],
-				'link'              => WPURL::append_path( $this->base_url, $post_tree_node['local_file_path'] ),
+				'post_id'         => $post_tree_node['post_id'],
+				'post_parent'     => $post_tree_node['parent_id'],
+				'post_title'      => $post_tree_node['post_title'] ?? null,
+				'post_status'     => 'publish',
+				'post_type'       => $this->post_type,
+				'guid'            => $post_tree_node['local_file_path'],
+				'local_file_path' => $post_tree_node['local_file_path'],
+				'link'            => WPURL::append_path( $this->base_url, $post_tree_node['local_file_path'] ),
 			);
 			if ( $post_tree_node['type'] === 'file' ) {
 				$extension = pathinfo( $post_tree_node['local_file_path'], PATHINFO_EXTENSION );
@@ -327,8 +330,8 @@ class FilesystemEntityReader implements EntityReader {
 				$this->entities[] = new ImportEntity(
 					'post_meta',
 					array(
-						'post_id' => $post_tree_node['post_id'],
-						'meta_key' => $key,
+						'post_id'    => $post_tree_node['post_id'],
+						'meta_key'   => $key,
 						'meta_value' => $value,
 					)
 				);
@@ -373,28 +376,28 @@ class FilesystemEntityReader implements EntityReader {
 					// Find the topmost missing parent ID
 					$missing_parent_id_depth = 1;
 					while ( isset( $this->parent_ids[ $missing_parent_id_depth ] ) ) {
-						++$missing_parent_id_depth;
+						++ $missing_parent_id_depth;
 					}
 
 					// Move up to the corresponding directory
 					$missing_parent_path = $dir;
-					for ( $i = $missing_parent_id_depth; $i < $depth; $i++ ) {
+					for ( $i = $missing_parent_id_depth; $i < $depth; $i ++ ) {
 						$missing_parent_path = dirname( $missing_parent_path );
 					}
 
 					$this->parent_ids[ $missing_parent_id_depth ] = $this->emit_filesystem_node(
 						array(
-							'type' => 'directory',
+							'type'            => 'directory',
 							'local_file_path' => $missing_parent_path,
-							'parent_id' => $this->parent_ids[ $missing_parent_id_depth - 1 ] ?? null,
+							'parent_id'       => $this->parent_ids[ $missing_parent_id_depth - 1 ] ?? null,
 						)
 					);
 				} elseif ( false === $this->pending_directory_index ) {
 					// No directory index candidate found in the current directory.
-					if ( $depth === 0 && isset( $this->parent_ids[-1] ) && $parent_id === $this->parent_ids[-1] ) {
+					if ( $depth === 0 && isset( $this->parent_ids[ - 1 ] ) && $parent_id === $this->parent_ids[ - 1 ] ) {
 						// We're at the root directory and we have a root parent ID. Let's
 						// reuse that as the top-level parent.
-						$this->parent_ids[ $depth ] = $this->parent_ids[-1];
+						$this->parent_ids[ $depth ] = $this->parent_ids[ - 1 ];
 						// We're no longer looking for a directory index.
 						$this->pending_directory_index = null;
 						continue;
@@ -403,9 +406,9 @@ class FilesystemEntityReader implements EntityReader {
 					// Let's create a fake page just to have something in the page tree.
 					$this->parent_ids[ $depth ] = $this->emit_filesystem_node(
 						array(
-							'type' => 'index_file_placeholder',
+							'type'            => 'index_file_placeholder',
 							'local_file_path' => $dir,
-							'parent_id' => $parent_id,
+							'parent_id'       => $parent_id,
 						)
 					);
 
@@ -415,14 +418,15 @@ class FilesystemEntityReader implements EntityReader {
 					$file_path                  = $this->pending_directory_index;
 					$this->parent_ids[ $depth ] = $this->emit_filesystem_node(
 						array(
-							'type' => 'file',
+							'type'            => 'file',
 							'local_file_path' => $file_path,
-							'parent_id' => $parent_id,
+							'parent_id'       => $parent_id,
 						)
 					);
 					// We're no longer looking for a directory index.
 					$this->pending_directory_index = null;
 				}
+
 				return true;
 			}
 			while ( count( $this->pending_files ) ) {
@@ -430,11 +434,12 @@ class FilesystemEntityReader implements EntityReader {
 				$file_path = array_shift( $this->pending_files );
 				$this->emit_filesystem_node(
 					array(
-						'type' => 'file',
+						'type'            => 'file',
 						'local_file_path' => $file_path,
-						'parent_id' => $parent_id,
+						'parent_id'       => $parent_id,
 					)
 				);
+
 				return true;
 			}
 
@@ -443,6 +448,7 @@ class FilesystemEntityReader implements EntityReader {
 			}
 		}
 		$this->is_finished = true;
+
 		return false;
 	}
 
@@ -466,7 +472,7 @@ class FilesystemEntityReader implements EntityReader {
 			if ( $event->is_entering() ) {
 				$abs_paths = array();
 				foreach ( $event->files as $filename ) {
-					$abs_paths[] = wp_join_paths( $event->dir, $filename );
+					$abs_paths[] = wp_join_unix_paths( $event->dir, $filename );
 				}
 				$this->pending_files = array();
 				foreach ( $abs_paths as $path ) {
@@ -500,43 +506,48 @@ class FilesystemEntityReader implements EntityReader {
 					continue;
 				}
 				$directory_index_idx = $this->choose_directory_index( $this->pending_files );
-				if ( -1 === $directory_index_idx ) {
+				if ( - 1 === $directory_index_idx ) {
 					$this->pending_directory_index = false;
 				} else {
 					$this->pending_directory_index = $this->pending_files[ $directory_index_idx ];
 					unset( $this->pending_files[ $directory_index_idx ] );
 				}
+
 				return true;
 			}
 
 			return false;
 		}
+
 		return false;
 	}
 
 	/**
 	 * Emits a WordPress post entity based on the provided options.
 	 *
-	 * @param array $options Configuration for the post entity.
+	 * @param  array  $options  Configuration for the post entity.
+	 *
 	 * @return int The ID of the created post.
 	 */
 	protected function emit_filesystem_node( $options ) {
 		$post_id = $this->next_post_id;
-		++$this->next_post_id;
+		++ $this->next_post_id;
 		$this->current_filesystem_node = array_merge(
 			array(
 				'post_id' => $post_id,
 			),
-			$options,
+			$options
 		);
-		++$this->fs_nodes_emited_so_far;
+		++ $this->fs_nodes_emited_so_far;
+
 		return $post_id;
 	}
 
 	/**
 	 * Chooses an index file from the list of pending files.
 	 *
-	 * @param array $files List of files to choose from.
+	 * @param  array  $files  List of files to choose from.
+	 *
 	 * @return int The index of the chosen file or -1 if none.
 	 */
 	protected function choose_directory_index( $files ) {
@@ -548,13 +559,15 @@ class FilesystemEntityReader implements EntityReader {
 		if ( ! $this->create_index_pages && count( $files ) > 0 ) {
 			return 0;
 		}
-		return -1;
+
+		return - 1;
 	}
 
 	/**
 	 * Determines if a file path matches the index file pattern.
 	 *
-	 * @param string $path The file path to check.
+	 * @param  string  $path  The file path to check.
+	 *
 	 * @return bool True if it matches, false otherwise.
 	 */
 	protected function looks_like_directory_index( $path ) {

@@ -20,35 +20,45 @@ use League\CommonMark\Node\Inline\AbstractStringContainer;
 
 final class Delimiter implements DelimiterInterface
 {
-    /** @psalm-readonly */
-    private string $char;
+    /** @psalm-readonly
+     * @var string */
+    private $char;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private int $length;
+    /** @psalm-readonly-allow-private-mutation
+     * @var int */
+    private $length;
 
-    /** @psalm-readonly */
-    private int $originalLength;
+    /** @psalm-readonly
+     * @var int */
+    private $originalLength;
 
-    /** @psalm-readonly */
-    private AbstractStringContainer $inlineNode;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Node\Inline\AbstractStringContainer */
+    private $inlineNode;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private ?DelimiterInterface $previous = null;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\CommonMark\Delimiter\DelimiterInterface|null */
+    private $previous;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private ?DelimiterInterface $next = null;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\CommonMark\Delimiter\DelimiterInterface|null */
+    private $next;
 
-    /** @psalm-readonly */
-    private bool $canOpen;
+    /** @psalm-readonly
+     * @var bool */
+    private $canOpen;
 
-    /** @psalm-readonly */
-    private bool $canClose;
+    /** @psalm-readonly
+     * @var bool */
+    private $canClose;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private bool $active;
+    /** @psalm-readonly-allow-private-mutation
+     * @var bool */
+    private $active;
 
-    /** @psalm-readonly */
-    private ?int $index = null;
+    /** @psalm-readonly
+     * @var int|null */
+    private $index;
 
     public function __construct(string $char, int $numDelims, AbstractStringContainer $node, bool $canOpen, bool $canClose, ?int $index = null)
     {

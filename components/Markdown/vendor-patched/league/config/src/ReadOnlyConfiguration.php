@@ -18,7 +18,10 @@ namespace League\Config;
  */
 final class ReadOnlyConfiguration implements ConfigurationInterface
 {
-    private Configuration $config;
+    /**
+     * @var \League\Config\Configuration
+     */
+    private $config;
 
     public function __construct(Configuration $config)
     {

@@ -7,7 +7,7 @@ use WordPress\ByteStream\ByteTransformer\DeflateTransformer;
 use WordPress\ByteStream\WriteStream\ByteWriteStream;
 use WordPress\ByteStream\WriteStream\TransformedWriteStream;
 
-use function WordPress\Filesystem\wp_dirname;
+use function WordPress\Filesystem\wp_unix_dirname;
 
 class GitObjectEncoder implements ByteWriteStream {
 
@@ -29,17 +29,15 @@ class GitObjectEncoder implements ByteWriteStream {
 				);
 		}
 
-		$this->repository = $repository;
-
-		$header           = "$object_type_name $object_length\x00";
-		$this->downstream = new TransformedWriteStream(
+		$this->repository            = $repository;
+		$this->downstream            = new TransformedWriteStream(
 			$repository->get_object_storage_filesystem()->open_write_stream( 'objects/.tmp' ),
 			array(
 				'checksum' => new ChecksumTransformer( 'sha1' ),
 			)
 		);
-		$this->downstream->append_bytes( $header );
 		$this->downstream['deflate'] = new DeflateTransformer( ZLIB_ENCODING_DEFLATE );
+		$this->downstream->append_bytes( "$object_type_name $object_length\x00" );
 	}
 
 	public function append_bytes( $data ): void {
@@ -55,7 +53,7 @@ class GitObjectEncoder implements ByteWriteStream {
 		$hash = $this->downstream['checksum']->get_hash();
 		$this->downstream->get_downstream_writer()->close_writing();
 		$target_path = $this->repository->get_storage_path( $hash );
-		$target_dir  = wp_dirname( $target_path );
+		$target_dir  = wp_unix_dirname( $target_path );
 		$fs          = $this->repository->get_object_storage_filesystem();
 		if ( ! $fs->is_dir( $target_dir ) ) {
 			$fs->mkdir( $target_dir, array( 'recursive' => true ) );

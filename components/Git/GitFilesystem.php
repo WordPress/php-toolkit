@@ -2,6 +2,8 @@
 
 namespace WordPress\Git;
 
+use DateMalformedStringException;
+use DateTime;
 use WordPress\ByteStream\ReadStream\ByteReadStream;
 use WordPress\Filesystem\Filesystem;
 use WordPress\Filesystem\FilesystemException;
@@ -89,7 +91,9 @@ class GitFilesystem implements Filesystem {
 	}
 
 	public function exists( $path ) {
-		return $this->is_file( $path ) || $this->is_dir( $path );
+		$children = $this->ls( dirname( $path ) );
+
+		return in_array( basename( $path ), $children, true );
 	}
 
 	public function get_contents( $path ) {
@@ -177,6 +181,7 @@ class GitFilesystem implements Filesystem {
 	private function commit( $options ) {
 		if ( ! $this->auto_push ) {
 			$this->repo->commit( $options );
+
 			return true;
 		}
 
@@ -184,6 +189,7 @@ class GitFilesystem implements Filesystem {
 		if ( ! $should_amend ) {
 			$this->graceful_push();
 			$this->repo->commit( $options );
+
 			return true;
 		}
 
@@ -234,17 +240,18 @@ class GitFilesystem implements Filesystem {
 
 		try {
 			$head_commit_time = $head_commit->get_author_date_time();
-		} catch ( \DateMalformedStringException $e ) {
+		} catch ( DateMalformedStringException $e ) {
 			return false;
 		}
-		$now               = new \DateTime();
+		$now               = new DateTime();
 		$time_since_commit = (float) $now->format( 'U' ) - (float) $head_commit_time->format( 'U' );
 		if ( $time_since_commit > $this->amend_time_window ) {
 			return false;
 		}
 
 		$full_branch_name   = $this->get_repository()->get_current_branch_name();
-		$short_branch_name  = str_starts_with( $full_branch_name, 'refs/heads/' ) ? substr( $full_branch_name, 11 ) : $full_branch_name;
+		$short_branch_name  = strncmp( $full_branch_name, 'refs/heads/', strlen( 'refs/heads/' ) ) === 0 ? substr( $full_branch_name,
+			11 ) : $full_branch_name;
 		$remote_name        = $this->remote->get_name();
 		$remote_branch_name = "refs/remotes/{$remote_name}/{$short_branch_name}";
 		$remote_branch_hash = $this->get_repository()->get_branch_tip( $remote_branch_name );
@@ -253,5 +260,9 @@ class GitFilesystem implements Filesystem {
 		// @TODO: Either improve the graph algebra here or use "Draft: " prefix in these
 		// amended commits (and remove it before pushing?)
 		return $remote_branch_hash !== $head_commit_hash;
+	}
+
+	public function get_meta(): array {
+		return [];
 	}
 }

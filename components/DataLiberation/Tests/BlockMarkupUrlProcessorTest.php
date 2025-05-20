@@ -24,40 +24,43 @@ class BlockMarkupUrlProcessorTest extends TestCase {
 
 	public static function provider_test_finds_next_url() {
 		return array(
-			'In the <a> tag' => array( 'https://wordpress.org', '<a href="https://wordpress.org">' ),
-			'In the second block attribute, when it contains just the URL' => array(
+			'In the <a> tag'                                                                       => array(
+				'https://wordpress.org',
+				'<a href="https://wordpress.org">',
+			),
+			'In the second block attribute, when it contains just the URL'                         => array(
 				'https://mysite.com/wp-content/image.png',
 				'<!-- wp:image {"class": "wp-bold", "src": "https://mysite.com/wp-content/image.png"} -->',
 			),
-			'In the first block attribute, when it contains just the URL' => array(
+			'In the first block attribute, when it contains just the URL'                          => array(
 				'https://mysite.com/wp-content/image.png',
 				'<!-- wp:image {"src": "https://mysite.com/wp-content/image.png"} -->',
 			),
-			'In a block attribute, in a nested object, when it contains just the URL' => array(
+			'In a block attribute, in a nested object, when it contains just the URL'              => array(
 				'https://mysite.com/wp-content/image.png',
 				'<!-- wp:image {"class": "wp-bold", "meta": { "src": "https://mysite.com/wp-content/image.png" } } -->',
 			),
-			'In a block attribute, in an array, when it contains just the URL' => array(
+			'In a block attribute, in an array, when it contains just the URL'                     => array(
 				'https://mysite.com/wp-content/image.png',
 				'<!-- wp:image {"class": "wp-bold", "srcs": [ "https://mysite.com/wp-content/image.png" ] } -->',
 			),
-			'In a text node, when it contains a well-formed absolute URL' => array(
+			'In a text node, when it contains a well-formed absolute URL'                          => array(
 				'https://wordpress.org',
 				'Have you seen https://wordpress.org? ',
 			),
-			'In a text node after a tag' => array(
+			'In a text node after a tag'                                                           => array(
 				'wordpress.org',
 				'<p>Have you seen wordpress.org',
 			),
-			'In a text node, when it contains a protocol-relative absolute URL' => array(
+			'In a text node, when it contains a protocol-relative absolute URL'                    => array(
 				'//wordpress.org',
 				'Have you seen //wordpress.org? ',
 			),
-			'In a text node, when it contains a domain-only absolute URL' => array(
+			'In a text node, when it contains a domain-only absolute URL'                          => array(
 				'wordpress.org',
 				'Have you seen wordpress.org? ',
 			),
-			'In a text node, when it contains a domain-only absolute URL with path' => array(
+			'In a text node, when it contains a domain-only absolute URL with path'                => array(
 				'wordpress.org/plugins',
 				'Have you seen wordpress.org/plugins? ',
 			),
@@ -66,7 +69,7 @@ class BlockMarkupUrlProcessorTest extends TestCase {
 				'<a href=""></a>',
 				'https://wordpress.org',
 			),
-			'Skips over an empty string in <a href=""> when not given a base URL' => array(
+			'Skips over an empty string in <a href=""> when not given a base URL'                  => array(
 				'https://developer.w.org',
 				'<a href=""></a><a href="https://developer.w.org"></a>',
 				null,
@@ -92,12 +95,12 @@ class BlockMarkupUrlProcessorTest extends TestCase {
 				'<a href="nodejs-development-environment.md">',
 				'https://wordpress.org',
 			),
-			'Relative URL in the <a> tag' => array(
+			'Relative URL in the <a> tag'    => array(
 				'https://wordpress.org/docs/page.html',
 				'<a href="docs/page.html">',
 				'https://wordpress.org',
 			),
-			'Absolute URL with base URL' => array(
+			'Absolute URL with base URL'     => array(
 				'https://example.com/page.html',
 				'<a href="https://example.com/page.html">',
 				'https://wordpress.org',
@@ -120,7 +123,8 @@ class BlockMarkupUrlProcessorTest extends TestCase {
 		$this->assertEquals( 'https://first-url.org', $p->get_raw_url(), 'Found a URL in the markup, but it wasn\'t the expected one.' );
 
 		$this->assertTrue( $p->next_url(), 'Failed to find the URL in the markup.' );
-		$this->assertEquals( 'https://mysite.com/wp-content/image.png', $p->get_raw_url(), 'Found a URL in the markup, but it wasn\'t the expected one.' );
+		$this->assertEquals( 'https://mysite.com/wp-content/image.png', $p->get_raw_url(),
+			'Found a URL in the markup, but it wasn\'t the expected one.' );
 	}
 
 	public function test_next_url_finds_urls_in_multiple_tags() {
@@ -130,7 +134,8 @@ class BlockMarkupUrlProcessorTest extends TestCase {
 		$this->assertEquals( 'https://first-url.org', $p->get_raw_url(), 'Found a URL in the markup, but it wasn\'t the expected one.' );
 
 		$this->assertTrue( $p->next_url(), 'Failed to find the URL in the markup.' );
-		$this->assertEquals( 'https://mysite.com/wp-content/image.png', $p->get_raw_url(), 'Found a URL in the markup, but it wasn\'t the expected one.' );
+		$this->assertEquals( 'https://mysite.com/wp-content/image.png', $p->get_raw_url(),
+			'Found a URL in the markup, but it wasn\'t the expected one.' );
 
 		$this->assertTrue( $p->next_url(), 'Failed to find the URL in the markup.' );
 		$this->assertEquals( 'https://third-url.org', $p->get_raw_url(), 'Found a URL in the markup, but it wasn\'t the expected one.' );
@@ -154,12 +159,12 @@ class BlockMarkupUrlProcessorTest extends TestCase {
 				'https://w.org',
 				'<a href="https://w.org">',
 			),
-			'In the "src" block attribute' => array(
+			'In the "src" block attribute'        => array(
 				'<!-- wp:image {"src": "https://mysite.com/wp-content/image.png"} -->',
 				'https://w.org',
 				'<!-- wp:image {"src":"https:\/\/w.org"} -->',
 			),
-			'In a text node' => array(
+			'In a text node'                      => array(
 				'Have you seen https://wordpress.org yet?',
 				'https://w.org',
 				'Have you seen https://w.org yet?',
@@ -216,6 +221,7 @@ HTML
 			'Failed to update all the URLs in the markup.'
 		);
 	}
+
 	/**
 	 * @dataProvider provider_test_next_url_replace_base_url
 	 */
@@ -231,35 +237,35 @@ HTML
 
 	public static function provider_test_next_url_replace_base_url() {
 		return array(
-			'simple url with query params' => array(
-				'input_url' => 'https://example.com/test/?page_id=1',
-				'base_url' => 'https://example.com/',
+			'simple url with query params'           => array(
+				'input_url'       => 'https://example.com/test/?page_id=1',
+				'base_url'        => 'https://example.com/',
 				'target_base_url' => 'https://example.org:8888/',
-				'expected' => 'https://example.org:8888/test/?page_id=1',
+				'expected'        => 'https://example.org:8888/test/?page_id=1',
 			),
-			'complex path with many segments' => array(
-				'input_url' => 'https://example.com/a/b/c/d/e/f/g/h/i/j/page/',
-				'base_url' => 'https://example.com/a/b/c/d/e/f/',
+			'complex path with many segments'        => array(
+				'input_url'       => 'https://example.com/a/b/c/d/e/f/g/h/i/j/page/',
+				'base_url'        => 'https://example.com/a/b/c/d/e/f/',
 				'target_base_url' => 'https://example.org/docs/',
-				'expected' => 'https://example.org/docs/g/h/i/j/page/',
+				'expected'        => 'https://example.org/docs/g/h/i/j/page/',
 			),
 			'Actual developer.wordpress.org example' => array(
-				'input_url' => 'https://developer.wordpress.org/block-editor/getting-started/devenv/get-started-with-wp-env/',
-				'base_url' => 'https://developer.wordpress.org/block-editor/getting-started/devenv/',
+				'input_url'       => 'https://developer.wordpress.org/block-editor/getting-started/devenv/get-started-with-wp-env/',
+				'base_url'        => 'https://developer.wordpress.org/block-editor/getting-started/devenv/',
 				'target_base_url' => 'http://127.0.0.1:9400/imported_content/',
-				'expected' => 'http://127.0.0.1:9400/imported_content/get-started-with-wp-env/',
+				'expected'        => 'http://127.0.0.1:9400/imported_content/get-started-with-wp-env/',
 			),
-			'path with query and hash' => array(
-				'input_url' => 'https://example.com/path/to/page/?id=123#section',
-				'base_url' => 'https://example.com/path/',
+			'path with query and hash'               => array(
+				'input_url'       => 'https://example.com/path/to/page/?id=123#section',
+				'base_url'        => 'https://example.com/path/',
 				'target_base_url' => 'https://example.org/new/',
-				'expected' => 'https://example.org/new/to/page/?id=123#section',
+				'expected'        => 'https://example.org/new/to/page/?id=123#section',
 			),
-			'deep nested paths' => array(
-				'input_url' => 'https://example.com/one/two/three/four/five/six/seven/eight/nine/ten/file.html',
-				'base_url' => 'https://example.com/one/two/three/four/five/six/',
+			'deep nested paths'                      => array(
+				'input_url'       => 'https://example.com/one/two/three/four/five/six/seven/eight/nine/ten/file.html',
+				'base_url'        => 'https://example.com/one/two/three/four/five/six/',
 				'target_base_url' => 'https://example.org/root/',
-				'expected' => 'https://example.org/root/seven/eight/nine/ten/file.html',
+				'expected'        => 'https://example.org/root/seven/eight/nine/ten/file.html',
 			),
 		);
 	}

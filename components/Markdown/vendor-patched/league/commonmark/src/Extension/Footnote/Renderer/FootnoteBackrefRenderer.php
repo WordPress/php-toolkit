@@ -27,7 +27,10 @@ final class FootnoteBackrefRenderer implements NodeRendererInterface, XmlNodeRen
 {
     public const DEFAULT_SYMBOL = '↩';
 
-    private ConfigurationInterface $config;
+    /**
+     * @var \League\Config\ConfigurationInterface
+     */
+    private $config;
 
     /**
      * @param FootnoteBackref $node

@@ -3,19 +3,19 @@
 namespace WordPress\DataLiberation\EntityWriter;
 
 use WordPress\ByteStream\WriteStream\ByteWriteStream;
-use WordPress\DataLiberation\ImportEntity;
 use WordPress\DataLiberation\DataLiberationException;
+use WordPress\DataLiberation\ImportEntity;
 use WordPress\XML\XMLProcessor;
 
 class WXRWriter implements EntityWriter {
 
 	private $write_stream;
-	private $state     = self::STATE_WRITING;
+	private $state = self::STATE_WRITING;
 	private $open_tags = array();
 
-	const STATE_NEW     = 'new';
+	const STATE_NEW = 'new';
 	const STATE_WRITING = 'writing';
-	const STATE_CLOSED  = 'closed';
+	const STATE_CLOSED = 'closed';
 
 	public function __construct( ByteWriteStream $write_stream, $cursor = null ) {
 		$this->write_stream = $write_stream;
@@ -127,6 +127,7 @@ class WXRWriter implements EntityWriter {
 		$xml->next_token(); // Move to the opening tag
 		$xml->next_token(); // Move to the text node
 		$xml->set_modifiable_text( $content );
+
 		return $xml->get_updated_xml();
 	}
 

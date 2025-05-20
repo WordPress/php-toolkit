@@ -1,7 +1,6 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use WordPress\ByteStream\MemoryPipe;
 use WordPress\ByteStream\WriteStream\FileWriteStream;
 
 class FileWriteStreamTest extends TestCase {

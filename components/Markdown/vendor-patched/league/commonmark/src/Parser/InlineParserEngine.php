@@ -28,18 +28,20 @@ use League\CommonMark\Reference\ReferenceMapInterface;
  */
 final class InlineParserEngine implements InlineParserEngineInterface
 {
-    /** @psalm-readonly */
-    private EnvironmentInterface $environment;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Environment\EnvironmentInterface */
+    private $environment;
 
-    /** @psalm-readonly */
-    private ReferenceMapInterface $referenceMap;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Reference\ReferenceMapInterface */
+    private $referenceMap;
 
     /**
      * @var array<int, InlineParserInterface|string|bool>
      * @psalm-var list<array{0: InlineParserInterface, 1: non-empty-string, 2: bool}>
      * @phpstan-var array<int, array{0: InlineParserInterface, 1: non-empty-string, 2: bool}>
      */
-    private array $parsers = [];
+    private $parsers = [];
 
     public function __construct(EnvironmentInterface $environment, ReferenceMapInterface $referenceMap)
     {

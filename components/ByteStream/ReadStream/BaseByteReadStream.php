@@ -7,22 +7,21 @@ use WordPress\ByteStream\NotEnoughDataException;
 
 abstract class BaseByteReadStream implements ByteReadStream {
 
-	const CHUNK_SIZE = 8096;
+	const CHUNK_SIZE = 100;// 64 * 1024;
 
-	protected $context_size_min = 1024;
-	protected $context_size_max = 2048;
+	protected $buffer_size = 2048;
 
-	protected $buffer                   = '';
+	protected $buffer = '';
 	protected $offset_in_current_buffer = 0;
-	protected $bytes_already_forgotten  = 0;
-	protected $is_closed                = false;
-	protected $expected_length          = null;
+	protected $bytes_already_forgotten = 0;
+	protected $is_closed = false;
+	protected $expected_length = null;
 
 	public function length(): ?int {
 		return $this->expected_length;
 	}
 
-	public function pull( $n, $mode = self::PULL_NO_MORE_THAN ): int {
+	public function pull( $n = self::CHUNK_SIZE, $mode = self::PULL_NO_MORE_THAN ): int {
 		switch ( $mode ) {
 			case self::PULL_NO_MORE_THAN:
 			case self::PULL_EXACTLY:
@@ -32,10 +31,6 @@ abstract class BaseByteReadStream implements ByteReadStream {
 		}
 		if ( $this->is_closed ) {
 			throw new ByteStreamException( 'Cannot pull() on a closed producer' );
-		}
-
-		if ( $this->reached_end_of_data() ) {
-			return 0;
 		}
 
 		if ( $n === 0 ) {
@@ -50,37 +45,47 @@ abstract class BaseByteReadStream implements ByteReadStream {
 			return $n;
 		}
 
+		if ( $this->reached_end_of_data() ) {
+			if ( $mode === ByteReadStream::PULL_EXACTLY ) {
+				throw new NotEnoughDataException( 'End of data reached while pulling' );
+			}
+
+			return 0;
+		}
+
 		if ( $mode === ByteReadStream::PULL_NO_MORE_THAN ) {
 			return $this->pull_no_more_than( $n );
 		}
-		return $this->pull_exactly( $n );
-	}
 
-	protected function pull_no_more_than( $n ): int {
-		$this->buffer .= $this->internal_pull( self::CHUNK_SIZE );
-		return min( $n, $this->count_consumable_bytes() );
+		return $this->pull_exactly( $n );
 	}
 
 	protected function pull_exactly( $n ): int {
 		$empty_pulls = 0;
-		while ( true ) {
-			$pulled = $this->pull_no_more_than( $n );
-			if ( 0 === $pulled ) {
-				++$empty_pulls;
+		while ( $this->count_consumable_bytes() < $n ) {
+			$consumable_before = $this->count_consumable_bytes();
+			$this->pull_no_more_than( $n );
+			$consumable_after = $this->count_consumable_bytes();
+
+			if ( $consumable_after === $consumable_before ) {
+				++ $empty_pulls;
+				if ( $this->reached_end_of_data() ) {
+					throw new NotEnoughDataException( 'End of data reached while pulling' );
+				}
 			}
 
-			if ( $n <= $this->count_consumable_bytes() ) {
-				return $n;
-			}
-
-			if ( $this->reached_end_of_data() ) {
-				throw new NotEnoughDataException( 'End of data reached while pulling' );
-			}
 			if ( $empty_pulls > 4 ) {
 				throw new NotEnoughDataException( '4 empty pulls in a row, we are probably at the end of the data' );
 			}
 		}
+
 		return $n;
+	}
+
+	protected function pull_no_more_than( $n ): int {
+		$this->buffer .= $this->internal_pull( self::CHUNK_SIZE );
+
+		return min( $n, $this->count_consumable_bytes() );
 	}
 
 	public function consume_all(): string {
@@ -89,8 +94,8 @@ abstract class BaseByteReadStream implements ByteReadStream {
 			if ( $this->reached_end_of_data() ) {
 				return $body;
 			}
-			$consumable = $this->pull( 8096 );
-			$body      .= $this->consume( $consumable );
+			$consumable = $this->pull( 64 * 1024 );
+			$body       .= $this->consume( $consumable );
 		}
 	}
 
@@ -108,14 +113,15 @@ abstract class BaseByteReadStream implements ByteReadStream {
 		if ( strlen( $this->buffer ) < $this->offset_in_current_buffer + $n ) {
 			throw new NotEnoughDataException( 'Cannot consume more bytes than available in the buffer.' );
 		}
-		$bytes                           = substr( $this->buffer, $this->offset_in_current_buffer, $n );
+		$bytes                          = substr( $this->buffer, $this->offset_in_current_buffer, $n );
 		$this->offset_in_current_buffer += $n;
-		if ( $this->offset_in_current_buffer > $this->context_size_max ) {
-			$overflow                        = $this->offset_in_current_buffer - $this->context_size_min;
+		if ( $this->offset_in_current_buffer > $this->buffer_size ) {
+			$overflow                       = $this->offset_in_current_buffer - $this->buffer_size;
 			$this->offset_in_current_buffer -= $overflow;
 			$this->bytes_already_forgotten  += $overflow;
-			$this->buffer                    = substr( $this->buffer, $overflow );
+			$this->buffer                   = substr( $this->buffer, $overflow );
 		}
+
 		return $bytes;
 	}
 
@@ -123,10 +129,17 @@ abstract class BaseByteReadStream implements ByteReadStream {
 		// We have that offset in the buffer, let's just update the pointer
 		if ( $target_offset >= $this->bytes_already_forgotten && $target_offset <= $this->bytes_already_forgotten + strlen( $this->buffer ) ) {
 			$this->offset_in_current_buffer = $target_offset - $this->bytes_already_forgotten;
+
 			return;
 		}
 		if ( null !== $this->length() && $target_offset > $this->length() ) {
-			throw new NotEnoughDataException( 'Cannot seek past the available data. Call append_bytes() first.' );
+			$length = $this->length();
+			throw new NotEnoughDataException( sprintf( 'Cannot seek to past the stream length (seeked to %d, stream length is %d).',
+				$target_offset, $length ) );
+		}
+
+		if ( $target_offset < 0 ) {
+			throw new ByteStreamException( 'Cannot seek to a negative offset' );
 		}
 
 		// Seeking outside of buffer range, we need a producer-specific implementation
@@ -151,6 +164,7 @@ abstract class BaseByteReadStream implements ByteReadStream {
 		if ( null !== $this->length() ) {
 			return $this->tell() >= $this->length();
 		}
+
 		return $this->internal_reached_end_of_data();
 	}
 
@@ -162,5 +176,6 @@ abstract class BaseByteReadStream implements ByteReadStream {
 		$this->is_closed = true;
 	}
 
-	protected function internal_close_reading(): void {}
+	protected function internal_close_reading(): void {
+	}
 }

@@ -33,8 +33,10 @@ class HTMLEntityReader implements EntityReader {
 			array_shift( $this->entities );
 			if ( count( $this->entities ) === 0 ) {
 				$this->finished = true;
+
 				return false;
 			}
+
 			return true;
 		}
 
@@ -54,7 +56,7 @@ class HTMLEntityReader implements EntityReader {
 			array_merge(
 				$post_fields,
 				array(
-					'post_id' => $this->post_id,
+					'post_id'      => $this->post_id,
 					'post_content' => $this->block_markup,
 				)
 			)
@@ -65,12 +67,13 @@ class HTMLEntityReader implements EntityReader {
 			$this->entities[] = new ImportEntity(
 				'post_meta',
 				array(
-					'post_id' => $this->post_id,
-					'meta_key' => $key,
+					'post_id'    => $this->post_id,
+					'meta_key'   => $key,
 					'meta_value' => $value,
 				)
 			);
 		}
+
 		return true;
 	}
 
@@ -83,6 +86,7 @@ class HTMLEntityReader implements EntityReader {
 		if ( $this->is_finished() ) {
 			return false;
 		}
+
 		return $this->entities[0];
 	}
 

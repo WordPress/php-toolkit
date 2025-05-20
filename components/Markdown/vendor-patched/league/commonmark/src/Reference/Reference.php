@@ -21,14 +21,17 @@ namespace League\CommonMark\Reference;
  */
 final class Reference implements ReferenceInterface
 {
-    /** @psalm-readonly */
-    private string $label;
+    /** @psalm-readonly
+     * @var string */
+    private $label;
 
-    /** @psalm-readonly */
-    private string $destination;
+    /** @psalm-readonly
+     * @var string */
+    private $destination;
 
-    /** @psalm-readonly */
-    private string $title;
+    /** @psalm-readonly
+     * @var string */
+    private $title;
 
     public function __construct(string $label, string $destination, string $title)
     {

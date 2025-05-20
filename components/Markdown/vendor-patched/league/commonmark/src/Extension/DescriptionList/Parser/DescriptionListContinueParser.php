@@ -24,14 +24,17 @@ use League\CommonMark\Parser\Cursor;
 
 final class DescriptionListContinueParser extends AbstractBlockContinueParser
 {
-    private DescriptionList $block;
+    /**
+     * @var \League\CommonMark\Extension\DescriptionList\Node\DescriptionList
+     */
+    private $block;
 
     public function __construct()
     {
         $this->block = new DescriptionList();
     }
 
-    public function getBlock(): DescriptionList
+    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }

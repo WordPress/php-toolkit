@@ -17,7 +17,23 @@ use Nette;
  */
 class ImageColor
 {
-	public static function rgb(int $red, int $green, int $blue, float $opacity = 1): self
+	/**
+  * @var int
+  */
+ public $red;
+ /**
+  * @var int
+  */
+ public $green;
+ /**
+  * @var int
+  */
+ public $blue;
+ /**
+  * @var float
+  */
+ public $opacity = 1;
+ public static function rgb(int $red, int $green, int $blue, float $opacity = 1): self
 	{
 		return new self($red, $green, $blue, $opacity);
 	}
@@ -31,36 +47,26 @@ class ImageColor
 		$hex = ltrim($hex, '#');
 		$len = strlen($hex);
 		if ($len === 3 || $len === 4) {
-			return new self(
-				(int) hexdec($hex[0]) * 17,
-				(int) hexdec($hex[1]) * 17,
-				(int) hexdec($hex[2]) * 17,
-				(int) hexdec($hex[3] ?? 'F') * 17 / 255,
-			);
+			return new self((int) hexdec($hex[0]) * 17, (int) hexdec($hex[1]) * 17, (int) hexdec($hex[2]) * 17, (int) hexdec($hex[3] ?? 'F') * 17 / 255);
 		} elseif ($len === 6 || $len === 8) {
-			return new self(
-				(int) hexdec($hex[0] . $hex[1]),
-				(int) hexdec($hex[2] . $hex[3]),
-				(int) hexdec($hex[4] . $hex[5]),
-				(int) hexdec(($hex[6] ?? 'F') . ($hex[7] ?? 'F')) / 255,
-			);
+			return new self((int) hexdec($hex[0] . $hex[1]), (int) hexdec($hex[2] . $hex[3]), (int) hexdec($hex[4] . $hex[5]), (int) hexdec(($hex[6] ?? 'F') . ($hex[7] ?? 'F')) / 255);
 		} else {
 			throw new Nette\InvalidArgumentException('Invalid hex color format.');
 		}
 	}
 
 
-	private function __construct(
-		public int $red,
-		public int $green,
-		public int $blue,
-		public float $opacity = 1,
-	) {
-		$this->red = max(0, min(255, $red));
-		$this->green = max(0, min(255, $green));
-		$this->blue = max(0, min(255, $blue));
-		$this->opacity = max(0, min(1, $opacity));
-	}
+	private function __construct(int $red, int $green, int $blue, float $opacity = 1)
+ {
+     $this->red = $red;
+     $this->green = $green;
+     $this->blue = $blue;
+     $this->opacity = $opacity;
+     $this->red = max(0, min(255, $red));
+     $this->green = max(0, min(255, $green));
+     $this->blue = max(0, min(255, $blue));
+     $this->opacity = max(0, min(1, $opacity));
+ }
 
 
 	public function toRGBA(): array

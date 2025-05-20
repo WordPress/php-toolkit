@@ -11,7 +11,7 @@ use WordPress\Git\Model\Tree;
 use WordPress\Git\Model\TreeEntry;
 use WordPress\Git\Protocol\GitProtocolEncoderPipe;
 use WordPress\Git\Protocol\Parser\GitProtocolDecoder;
-use WordPress\HttpServer\ResponseWriter\BufferingResponseWriter;
+use WordPress\HttpServer\Response\BufferingResponseWriter;
 
 class GitServerTest extends TestCase {
 
@@ -414,8 +414,8 @@ RESPONSE
 		foreach ( $test_cases as $name => $test ) {
 			/** @var BufferingResponseWriter */
 			$response    = $this->getMockBuilder( BufferingResponseWriter::class )
-								->onlyMethods( array( 'close_writing' ) )
-								->getMock();
+			                    ->onlyMethods( array( 'close_writing' ) )
+			                    ->getMock();
 			$git_encoder = new GitProtocolEncoderPipe( $response );
 			$this->server->handle_fetch_request( $test['request'], $git_encoder );
 
@@ -544,8 +544,8 @@ RESPONSE
 		foreach ( $test_cases as $name => $test ) {
 			/** @var BufferingResponseWriter */
 			$response = $this->getMockBuilder( BufferingResponseWriter::class )
-							->onlyMethods( array( 'close_writing' ) )
-							->getMock();
+			                 ->onlyMethods( array( 'close_writing' ) )
+			                 ->getMock();
 
 			$git_encoder = new GitProtocolEncoderPipe( $response );
 			$this->server->handle_push_request( $test['request'], $git_encoder );

@@ -24,6 +24,7 @@ class DataLiberationHTMLProcessor extends WP_HTML_Processor {
 
 		if ( false === WP_HTML_Tag_Processor::set_bookmark( 'tag-end' ) ) {
 			WP_HTML_Tag_Processor::release_bookmark( 'tag-start' );
+
 			return false;
 		}
 
@@ -61,6 +62,7 @@ class DataLiberationHTMLProcessor extends WP_HTML_Processor {
 		$this->set_bookmark( $name );
 		$bookmark = $this->bookmarks[ '_' . $name ];
 		$this->release_bookmark( $name );
+
 		return $bookmark->start + $bookmark->length;
 	}
 }

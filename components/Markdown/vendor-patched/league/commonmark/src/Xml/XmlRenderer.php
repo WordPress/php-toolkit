@@ -19,12 +19,18 @@ final class XmlRenderer implements DocumentRendererInterface
 {
     private const INDENTATION = '    ';
 
-    private EnvironmentInterface $environment;
+    /**
+     * @var \League\CommonMark\Environment\EnvironmentInterface
+     */
+    private $environment;
 
-    private XmlNodeRendererInterface $fallbackRenderer;
+    /**
+     * @var \League\CommonMark\Xml\XmlNodeRendererInterface
+     */
+    private $fallbackRenderer;
 
     /** @var array<class-string, XmlNodeRendererInterface> */
-    private array $rendererCache = [];
+    private $rendererCache = [];
 
     public function __construct(EnvironmentInterface $environment)
     {

@@ -48,7 +48,10 @@ final class Expect
 	}
 
 
-	public static function anyOf(mixed ...$set): AnyOf
+	/**
+  * @param mixed ...$set
+  */
+ public static function anyOf(...$set): AnyOf
 	{
 		return new AnyOf(...$set);
 	}
@@ -95,9 +98,10 @@ final class Expect
 
 
 	/**
-	 * @param  mixed[]  $shape
-	 */
-	public static function array(?array $shape = []): Structure|Type
+  * @param  mixed[]  $shape
+  * @return \Nette\Schema\Elements\Structure|\Nette\Schema\Elements\Type
+  */
+ public static function array(?array $shape = [])
 	{
 		return Nette\Utils\Arrays::first($shape ?? []) instanceof Schema
 			? (new Structure($shape))->castTo('array')
@@ -105,13 +109,20 @@ final class Expect
 	}
 
 
-	public static function arrayOf(string|Schema $valueType, string|Schema|null $keyType = null): Type
+	/**
+  * @param string|\Nette\Schema\Schema $valueType
+  * @param string|\Nette\Schema\Schema|null $keyType
+  */
+ public static function arrayOf($valueType, $keyType = null): Type
 	{
 		return (new Type('array'))->items($valueType, $keyType);
 	}
 
 
-	public static function listOf(string|Schema $type): Type
+	/**
+  * @param string|\Nette\Schema\Schema $type
+  */
+ public static function listOf($type): Type
 	{
 		return (new Type('list'))->items($type);
 	}

@@ -30,10 +30,14 @@ final class HtmlBlock extends AbstractBlock implements RawMarkupContainerInterfa
     /**
      * @psalm-var self::TYPE_* $type
      * @phpstan-var self::TYPE_* $type
+     * @var int
      */
-    private int $type;
+    private $type;
 
-    private string $literal = '';
+    /**
+     * @var string
+     */
+    private $literal = '';
 
     /**
      * @psalm-param self::TYPE_* $type

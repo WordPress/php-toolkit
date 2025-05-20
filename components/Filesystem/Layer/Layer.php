@@ -19,7 +19,7 @@ class Layer implements Filesystem {
 	protected $fs;
 
 	/**
-	 * @param Filesystem $fs The filesystem to delegate to.
+	 * @param  Filesystem  $fs  The filesystem to delegate to.
 	 */
 	function __construct( Filesystem $fs ) {
 		$this->fs = $fs;
@@ -75,5 +75,9 @@ class Layer implements Filesystem {
 
 	public function put_contents( $path, $contents, $options = array() ) {
 		return $this->fs->put_contents( $path, $contents, $options );
+	}
+
+	public function get_meta(): array {
+		return $this->fs->get_meta();
 	}
 }

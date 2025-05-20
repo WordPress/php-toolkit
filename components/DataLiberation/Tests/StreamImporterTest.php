@@ -59,7 +59,7 @@ class StreamImporterTest extends TestCase {
 
 		$progress_url   = null;
 		$progress_value = null;
-		for ( $i = 0; $i < 20; ++$i ) {
+		for ( $i = 0; $i < 20; ++ $i ) {
 			$importer->next_step();
 			$progress = $importer->get_frontloading_progress();
 			if ( count( $progress ) === 0 ) {
@@ -85,7 +85,7 @@ class StreamImporterTest extends TestCase {
 
 		// Restart the download of the same entity – from scratch.
 		$progress_value = array();
-		for ( $i = 0; $i < 20; ++$i ) {
+		for ( $i = 0; $i < 20; ++ $i ) {
 			$importer->next_step();
 			$progress = $importer->get_frontloading_progress();
 			if ( count( $progress ) === 0 ) {
@@ -112,7 +112,7 @@ class StreamImporterTest extends TestCase {
 		$importer = StreamImporter::create_for_wxr_file( $wxr_path );
 		$this->skip_to_stage( $importer, StreamImporter::STAGE_IMPORT_ENTITIES );
 
-		for ( $i = 0; $i < 11; ++$i ) {
+		for ( $i = 0; $i < 11; ++ $i ) {
 			$this->assertTrue( $importer->next_step() );
 			$cursor   = $importer->get_reentrancy_cursor();
 			$importer = StreamImporter::create_for_wxr_file( $wxr_path, array(), $cursor );

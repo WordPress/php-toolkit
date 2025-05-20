@@ -16,7 +16,9 @@
 		"test": {
 			"executor": "nx:run-commands",
 			"options": {
-				"commands": ["bash test.sh"],
+				"commands": [
+					"bash test.sh"
+				],
 				"cwd": "packages/playground/php-cors-proxy"
 			}
 		}

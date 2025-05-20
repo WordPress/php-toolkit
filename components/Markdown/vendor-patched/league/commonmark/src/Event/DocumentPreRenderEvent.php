@@ -20,11 +20,13 @@ use League\CommonMark\Node\Block\Document;
  */
 final class DocumentPreRenderEvent extends AbstractEvent
 {
-    /** @psalm-readonly */
-    private Document $document;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Node\Block\Document */
+    private $document;
 
-    /** @psalm-readonly */
-    private string $format;
+    /** @psalm-readonly
+     * @var string */
+    private $format;
 
     public function __construct(Document $document, string $format)
     {

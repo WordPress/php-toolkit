@@ -21,15 +21,30 @@ use League\CommonMark\Node\StringContainerInterface;
 
 final class FencedCode extends AbstractBlock implements StringContainerInterface
 {
-    private ?string $info = null;
+    /**
+     * @var string|null
+     */
+    private $info;
 
-    private string $literal = '';
+    /**
+     * @var string
+     */
+    private $literal = '';
 
-    private int $length;
+    /**
+     * @var int
+     */
+    private $length;
 
-    private string $char;
+    /**
+     * @var string
+     */
+    private $char;
 
-    private int $offset;
+    /**
+     * @var int
+     */
+    private $offset;
 
     public function __construct(int $length, string $char, int $offset)
     {

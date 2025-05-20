@@ -18,7 +18,10 @@ use League\CommonMark\Node\StringContainerInterface;
 
 final class IndentedCode extends AbstractBlock implements StringContainerInterface
 {
-    private string $literal = '';
+    /**
+     * @var string
+     */
+    private $literal = '';
 
     public function getLiteral(): string
     {

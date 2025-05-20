@@ -16,12 +16,18 @@ namespace Nette\Utils;
  */
 final class ReflectionMethod extends \ReflectionMethod
 {
-	private \ReflectionClass $originalClass;
+	/**
+  * @var \ReflectionClass
+  */
+ private $originalClass;
 
 
-	public function __construct(object|string $objectOrMethod, ?string $method = null)
+	/**
+  * @param object|string $objectOrMethod
+  */
+ public function __construct($objectOrMethod, ?string $method = null)
 	{
-		if (is_string($objectOrMethod) && str_contains($objectOrMethod, '::')) {
+		if (is_string($objectOrMethod) && strpos($objectOrMethod, '::') !== false) {
 			[$objectOrMethod, $method] = explode('::', $objectOrMethod, 2);
 		}
 		parent::__construct($objectOrMethod, $method);

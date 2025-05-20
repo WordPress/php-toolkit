@@ -72,6 +72,7 @@ class URLParserWHATWGComplianceTest extends TestCase {
 				$valid_urls[] = array( $example );
 			}
 		}
+
 		return $valid_urls;
 
 		// @TODO: Figure out why this test case fails. I had to remove it from urltestdata.json because
@@ -131,6 +132,7 @@ class URLParserWHATWGComplianceTest extends TestCase {
 				$urls[] = array( $example );
 			}
 		}
+
 		return $urls;
 	}
 }

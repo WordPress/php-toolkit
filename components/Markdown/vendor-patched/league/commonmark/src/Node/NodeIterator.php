@@ -22,8 +22,14 @@ final class NodeIterator implements \IteratorAggregate
 {
     public const FLAG_BLOCKS_ONLY = 1;
 
-    private Node $node;
-    private bool $blocksOnly;
+    /**
+     * @var \League\CommonMark\Node\Node
+     */
+    private $node;
+    /**
+     * @var bool
+     */
+    private $blocksOnly;
 
     public function __construct(Node $node, int $flags = 0)
     {

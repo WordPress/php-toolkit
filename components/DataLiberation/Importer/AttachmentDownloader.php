@@ -2,10 +2,12 @@
 
 namespace WordPress\DataLiberation\Importer;
 
+use Exception;
+use WordPress\Filesystem\Filesystem;
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
 
-use function WordPress\Filesystem\wp_join_paths;
+use function WordPress\Filesystem\wp_join_unix_paths;
 
 class AttachmentDownloader {
 	private $client;
@@ -13,7 +15,7 @@ class AttachmentDownloader {
 	private $output_root;
 	private $output_paths = array();
 	/**
-	 * @var \WordPress\Filesystem\Filesystem
+	 * @var Filesystem
 	 */
 	private $source_from_filesystem;
 
@@ -48,12 +50,13 @@ class AttachmentDownloader {
 	public function enqueue_if_not_exists( $url, $output_relative_path ) {
 		$this->enqueued_url = $url;
 
-		$output_path = wp_join_paths( $this->output_root, $output_relative_path );
+		$output_path = wp_join_unix_paths( $this->output_root, $output_relative_path );
 		if ( file_exists( $output_path ) ) {
 			$this->pending_events[] = new AttachmentDownloaderEvent(
 				$this->enqueued_url,
 				AttachmentDownloaderEvent::ALREADY_EXISTS
 			);
+
 			return true;
 		}
 		if ( file_exists( $output_path . '.partial' ) ) {
@@ -61,6 +64,7 @@ class AttachmentDownloader {
 				$this->enqueued_url,
 				AttachmentDownloaderEvent::IN_PROGRESS
 			);
+
 			return true;
 		}
 
@@ -78,7 +82,10 @@ class AttachmentDownloader {
 		switch ( $protocol ) {
 			case 'file':
 				if ( ! $this->source_from_filesystem ) {
-					_doing_it_wrong( __METHOD__, 'Cannot process file:// URLs without a source filesystem instance. Use the source_from_filesystem option to pass in a filesystem instance to WP_Attachment_Downloader.', '1.0' );
+					_doing_it_wrong( __METHOD__,
+						'Cannot process file:// URLs without a source filesystem instance. Use the source_from_filesystem option to pass in a filesystem instance to WP_Attachment_Downloader.',
+						'1.0' );
+
 					return false;
 				}
 				$source_path = parse_url( $url, PHP_URL_PATH );
@@ -103,7 +110,7 @@ class AttachmentDownloader {
 						$this->enqueued_url,
 						AttachmentDownloaderEvent::SUCCESS
 					);
-				} catch ( \Exception $e ) {
+				} catch ( Exception $e ) {
 					$this->pending_events[] = new AttachmentDownloaderEvent(
 						$this->enqueued_url,
 						AttachmentDownloaderEvent::FAILURE,
@@ -114,6 +121,7 @@ class AttachmentDownloader {
 						$stream->close_reading();
 					}
 				}
+
 				return true;
 			case 'http':
 			case 'https':
@@ -123,11 +131,13 @@ class AttachmentDownloader {
 				$this->output_paths[ $request->id ]    = $output_path;
 				$this->progress[ $this->enqueued_url ] = array(
 					'received' => null,
-					'total' => null,
+					'total'    => null,
 				);
 				$this->client->enqueue( $request );
+
 				return true;
 		}
+
 		return false;
 	}
 
@@ -150,6 +160,7 @@ class AttachmentDownloader {
 		}
 
 		$this->current_event = array_shift( $this->pending_events );
+
 		return true;
 	}
 
@@ -187,9 +198,10 @@ class AttachmentDownloader {
 				break;
 			case Client::EVENT_BODY_CHUNK_AVAILABLE:
 				$chunk = $this->client->get_response_body_chunk();
-				if ( false === fwrite( $this->fps[ $original_request_id ], $chunk ) ) {
+				if ( ! fwrite( $this->fps[ $original_request_id ], $chunk ) ) {
 					// @TODO: Don't echo the error message. Attach it to the import session instead for the user to review later on.
-					_doing_it_wrong( __METHOD__, sprintf( 'Failed to write to file: %s', $this->output_paths[ $original_request_id ] ), '1.0' );
+					_doing_it_wrong( __METHOD__, sprintf( 'Failed to write to file: %s', $this->output_paths[ $original_request_id ] ),
+						'1.0' );
 				}
 				$this->progress[ $original_url ]['received'] += strlen( $chunk );
 				break;
@@ -241,9 +253,9 @@ class AttachmentDownloader {
 		}
 		if ( isset( $this->output_paths[ $original_request_id ] ) ) {
 			if ( false === rename(
-				$this->output_paths[ $original_request_id ] . '.partial',
-				$this->output_paths[ $original_request_id ]
-			) ) {
+					$this->output_paths[ $original_request_id ] . '.partial',
+					$this->output_paths[ $original_request_id ]
+				) ) {
 				// @TODO: Log an error.
 			}
 		}

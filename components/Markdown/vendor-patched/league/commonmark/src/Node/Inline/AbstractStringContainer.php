@@ -20,7 +20,10 @@ use League\CommonMark\Node\StringContainerInterface;
 
 abstract class AbstractStringContainer extends AbstractInline implements StringContainerInterface
 {
-    protected string $literal = '';
+    /**
+     * @var string
+     */
+    protected $literal = '';
 
     /**
      * @param array<string, mixed> $data

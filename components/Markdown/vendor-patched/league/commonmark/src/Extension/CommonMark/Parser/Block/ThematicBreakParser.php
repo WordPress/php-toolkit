@@ -21,15 +21,16 @@ use League\CommonMark\Parser\Cursor;
 
 final class ThematicBreakParser extends AbstractBlockContinueParser
 {
-    /** @psalm-readonly */
-    private ThematicBreak $block;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Extension\CommonMark\Node\Block\ThematicBreak */
+    private $block;
 
     public function __construct()
     {
         $this->block = new ThematicBreak();
     }
 
-    public function getBlock(): ThematicBreak
+    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }

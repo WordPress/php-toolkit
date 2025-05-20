@@ -2,12 +2,13 @@
 
 namespace WordPress\Git\Tests;
 
+use PHPUnit\Framework\TestCase;
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\Filesystem\InMemoryFilesystem;
 use WordPress\Git\GitRepository;
 use WordPress\Git\Protocol\Parser\GitProtocolDecoder;
 
-class GitProtocolDecoderTest extends \PHPUnit\Framework\TestCase {
+class GitProtocolDecoderTest extends TestCase {
 
 	public function test_protocol_reader_wordpress_develop() {
 		$repo = new GitRepository( InMemoryFilesystem::create() );

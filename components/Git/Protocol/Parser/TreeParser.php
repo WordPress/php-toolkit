@@ -2,15 +2,16 @@
 
 namespace WordPress\Git\Protocol\Parser;
 
+use Exception;
 use WordPress\ByteStream\NotEnoughDataException;
 use WordPress\Git\Model\Tree;
 use WordPress\Git\Model\TreeEntry;
 
 class TreeParser {
 
-	const STATE_READING_MODE            = 'STATE_READING_MODE';
-	const STATE_READING_NAME            = 'STATE_READING_NAME';
-	const STATE_READING_SHA1            = 'STATE_READING_SHA1';
+	const STATE_READING_MODE = 'STATE_READING_MODE';
+	const STATE_READING_NAME = 'STATE_READING_NAME';
+	const STATE_READING_SHA1 = 'STATE_READING_SHA1';
 	const STATE_SCANNING_FOR_NEXT_ENTRY = 'STATE_SCANNING_FOR_NEXT_ENTRY';
 
 	/**
@@ -72,7 +73,7 @@ class TreeParser {
 
 	public function __construct( $options = array() ) {
 		if ( ! isset( $options['expected_bytes'] ) ) {
-			throw new \Exception( 'The expected_bytes option is required' );
+			throw new Exception( 'The expected_bytes option is required' );
 		}
 		$this->expected_bytes = $options['expected_bytes'];
 	}
@@ -80,12 +81,12 @@ class TreeParser {
 	/**
 	 * Append bytes to be processed
 	 *
-	 * @param  string $bytes  Raw bytes to process
+	 * @param  string  $bytes  Raw bytes to process
 	 *
 	 * @return bool Whether processing can continue
 	 */
 	public function append_bytes( $bytes ) {
-		$this->tree_data                    .= $bytes;
+		$this->tree_data                     .= $bytes;
 		$this->is_paused_on_incomplete_input = false;
 
 		// Flush processed bytes
@@ -165,7 +166,7 @@ class TreeParser {
 		if ( $this->bytes_processed + $length > strlen( $this->tree_data ) ) {
 			throw new NotEnoughDataException();
 		}
-		$bytes                  = substr( $this->tree_data, $this->bytes_processed, $length );
+		$bytes                 = substr( $this->tree_data, $this->bytes_processed, $length );
 		$this->bytes_processed += $length;
 
 		return $bytes;

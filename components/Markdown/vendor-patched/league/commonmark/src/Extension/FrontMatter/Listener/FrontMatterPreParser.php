@@ -18,7 +18,10 @@ use League\CommonMark\Extension\FrontMatter\FrontMatterParserInterface;
 
 final class FrontMatterPreParser
 {
-    private FrontMatterParserInterface $parser;
+    /**
+     * @var \League\CommonMark\Extension\FrontMatter\FrontMatterParserInterface
+     */
+    private $parser;
 
     public function __construct(FrontMatterParserInterface $parser)
     {

@@ -4,7 +4,6 @@ namespace WordPress\DataLiberation\Importer;
 
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\DataLiberation\BlockMarkup\BlockMarkupUrlProcessor;
-use WordPress\DataLiberation\DataLiberationException;
 use WordPress\DataLiberation\EntityReader\EntityReaderIterator;
 use WordPress\DataLiberation\EntityReader\WXREntityReader;
 use WordPress\DataLiberation\URL\WPURL;
@@ -82,21 +81,22 @@ class StreamImporter {
 	protected $site_url_mapping_candidates = array();
 	protected $entity_reader_factory;
 	/**
-	 * @param array|string|null $query {
-	 *     @type string      $uploads_path  The directory to download the media attachments to.
+	 * @param  array|string|null  $query  {
+	 *
+	 * @type string $uploads_path The directory to download the media attachments to.
 	 *                                      E.g. WP_CONTENT_DIR . '/uploads'
-	 *     @type string      $new_media_root_url   The URL where the media attachments will be accessible
+	 * @type string $new_media_root_url The URL where the media attachments will be accessible
 	 *                                      after the import. E.g. http://127.0.0.1:9400/wp-content/uploads/
 	 * }
 	 */
 	protected $options;
 
-	const STAGE_INITIAL          = '#initial';
-	const STAGE_INDEX_ENTITIES   = '#index_entities';
+	const STAGE_INITIAL = '#initial';
+	const STAGE_INDEX_ENTITIES = '#index_entities';
 	const STAGE_TOPOLOGICAL_SORT = '#topological_sort';
 	const STAGE_FRONTLOAD_ASSETS = '#frontload_assets';
-	const STAGE_IMPORT_ENTITIES  = '#import_entities';
-	const STAGE_FINISHED         = '#finished';
+	const STAGE_IMPORT_ENTITIES = '#import_entities';
+	const STAGE_FINISHED = '#finished';
 
 	const STAGES_IN_ORDER = array(
 		self::STAGE_INITIAL,
@@ -189,6 +189,7 @@ class StreamImporter {
 		if ( null !== $cursor && true !== $importer->initialize_from_cursor( $cursor ) ) {
 			return false;
 		}
+
 		return $importer;
 	}
 
@@ -196,6 +197,7 @@ class StreamImporter {
 		$cursor = json_decode( $cursor, true );
 		if ( ! is_array( $cursor ) ) {
 			_doing_it_wrong( __METHOD__, 'Cannot resume an importer with a non-array cursor.', '1.0.0' );
+
 			return false;
 		}
 		$this->stage            = $cursor['stage'];
@@ -212,6 +214,7 @@ class StreamImporter {
 		if ( ! empty( $cursor['site_url_mapping_candidates'] ) ) {
 			$this->site_url_mapping_candidates = $cursor['site_url_mapping_candidates'];
 		}
+
 		return true;
 	}
 
@@ -220,9 +223,9 @@ class StreamImporter {
 		// -1 is a well-known index for the source site URL.
 		// Every subsequent call to set_source_site_url() will
 		// override that mapping.
-		$this->site_url_mapping[-1] = array(
+		$this->site_url_mapping[ - 1 ] = array(
 			'from' => WPURL::parse( $source_site_url ),
-			'to' => WPURL::parse( $this->options['new_site_content_root_url'] ),
+			'to'   => WPURL::parse( $this->options['new_site_content_root_url'] ),
 		);
 	}
 
@@ -237,13 +240,14 @@ class StreamImporter {
 				$new_candidates[] = $base_url;
 			}
 		}
+
 		return $new_candidates;
 	}
 
 	public function add_url_mapping( $from_url, $to_url ) {
 		$this->site_url_mapping[] = array(
 			'from' => WPURL::parse( $from_url ),
-			'to' => WPURL::parse( $to_url ),
+			'to'   => WPURL::parse( $to_url ),
 		);
 	}
 
@@ -256,20 +260,21 @@ class StreamImporter {
 		foreach ( $this->site_url_mapping as $pair ) {
 			$serialized_site_url_mapping[] = array(
 				'from' => (string) $pair['from'],
-				'to' => (string) $pair['to'],
+				'to'   => (string) $pair['to'],
 			);
 		}
+
 		return json_encode(
 			array(
-				'stage' => $this->stage,
+				'stage'                       => $this->stage,
 				/**
 				 * Store `next_stage` to distinguish between the start and the end of the entity
 				 * stream. `resume_at_entity` may be null in both cases.
 				 */
-				'next_stage' => $this->next_stage,
-				'resume_at_entity' => $this->resume_at_entity,
-				'source_site_url' => $this->source_site_url,
-				'site_url_mapping' => $serialized_site_url_mapping,
+				'next_stage'                  => $this->next_stage,
+				'resume_at_entity'            => $this->resume_at_entity,
+				'source_site_url'             => $this->source_site_url,
+				'site_url_mapping'            => $serialized_site_url_mapping,
 				'site_url_mapping_candidates' => $this->site_url_mapping_candidates,
 			)
 		);
@@ -325,6 +330,7 @@ class StreamImporter {
 	}
 
 	protected $frontloading_retries_iterator;
+
 	public function set_frontloading_retries_iterator( $frontloading_retries_iterator ) {
 		$this->frontloading_retries_iterator = $frontloading_retries_iterator;
 	}
@@ -342,30 +348,35 @@ class StreamImporter {
 		switch ( $this->stage ) {
 			case self::STAGE_INITIAL:
 				$this->next_stage = self::STAGE_INDEX_ENTITIES;
+
 				return false;
 			case self::STAGE_INDEX_ENTITIES:
 				if ( true === $this->index_next_entities() ) {
 					return true;
 				}
 				$this->next_stage = self::STAGE_TOPOLOGICAL_SORT;
+
 				return false;
 			case self::STAGE_TOPOLOGICAL_SORT:
 				// @TODO: Different modes:
 				// 1. skip, reprocess
 				// 2. sort topologically
 				$this->next_stage = self::STAGE_FRONTLOAD_ASSETS;
+
 				return false;
 			case self::STAGE_FRONTLOAD_ASSETS:
 				if ( true === $this->frontload_next_entity() ) {
 					return true;
 				}
 				$this->next_stage = self::STAGE_IMPORT_ENTITIES;
+
 				return false;
 			case self::STAGE_IMPORT_ENTITIES:
 				if ( true === $this->import_next_entity() ) {
 					return true;
 				}
 				$this->next_stage = self::STAGE_FINISHED;
+
 				return false;
 			case self::STAGE_FINISHED:
 				return false;
@@ -386,11 +397,12 @@ class StreamImporter {
 		}
 		$this->stage      = $this->next_stage;
 		$this->next_stage = null;
+
 		return true;
 	}
 
 	protected $indexed_entities_counts = array();
-	protected $indexed_assets_urls     = array();
+	protected $indexed_assets_urls = array();
 
 	protected function index_next_entities() {
 		if ( null !== $this->next_stage ) {
@@ -414,6 +426,7 @@ class StreamImporter {
 		if ( ! $this->entity_iterator->valid() ) {
 			$this->entity_iterator  = null;
 			$this->resume_at_entity = null;
+
 			return false;
 		}
 
@@ -421,7 +434,7 @@ class StreamImporter {
 		 * Internalize the loop to avoid computing the reentrancy cursor
 		 * on every entity in the imported data stream.
 		 */
-		for ( $i = 0; $i < $this->options['index_batch_size']; ++$i ) {
+		for ( $i = 0; $i < $this->options['index_batch_size']; ++ $i ) {
 			if ( ! $this->entity_iterator->valid() ) {
 				break;
 			}
@@ -438,7 +451,7 @@ class StreamImporter {
 			if ( ! isset( $this->indexed_entities_counts[ $type ] ) ) {
 				$this->indexed_entities_counts[ $type ] = 0;
 			}
-			++$this->indexed_entities_counts[ $type ];
+			++ $this->indexed_entities_counts[ $type ];
 
 			/**
 			 * Track unique assets URLs.
@@ -501,6 +514,7 @@ class StreamImporter {
 			$this->entity_iterator->next();
 		}
 		$this->resume_at_entity = $this->entity_iterator->get_reentrancy_cursor();
+
 		return true;
 	}
 
@@ -511,6 +525,7 @@ class StreamImporter {
 				$candidates[] = $base_url;
 			}
 		}
+
 		return $candidates;
 	}
 
@@ -523,9 +538,11 @@ class StreamImporter {
 	}
 
 	protected $frontloading_events = array();
+
 	public function get_frontloading_events() {
 		return $this->frontloading_events;
 	}
+
 	/**
 	 * @return array<string, int> The frontloading progress per URL.
 	 */
@@ -618,6 +635,7 @@ class StreamImporter {
 			 */
 			if ( true === $this->downloader->poll() ) {
 				$this->frontloading_advance_reentrancy_cursor();
+
 				return true;
 			}
 		}
@@ -633,6 +651,7 @@ class StreamImporter {
 			$this->entity_iterator     = null;
 			$this->resume_at_entity    = null;
 			$this->frontloading_events = array();
+
 			return false;
 		}
 
@@ -685,6 +704,7 @@ class StreamImporter {
 		$this->entity_iterator->next();
 
 		$this->frontloading_advance_reentrancy_cursor();
+
 		return true;
 	}
 
@@ -697,6 +717,7 @@ class StreamImporter {
 				'importer' => $this,
 			)
 		);
+
 		return $entity;
 	}
 
@@ -705,7 +726,7 @@ class StreamImporter {
 			'data_liberation.stream_importer.post_base_url',
 			$post['link'] ?? $this->source_site_url,
 			array(
-				'post' => $post,
+				'post'     => $post,
 				'importer' => $this,
 			)
 		);
@@ -735,6 +756,7 @@ class StreamImporter {
 			$this->stage           = self::STAGE_FINISHED;
 			$this->entity_iterator = null;
 			$this->entity_sink     = null;
+
 			return false;
 		}
 
@@ -823,8 +845,8 @@ class StreamImporter {
 								$p,
 								array(
 									'applied_base_url_mapping' => $mapping_pair,
-									'raw_url_before' => $raw_url_before,
-									'entity' => $entity,
+									'raw_url_before'           => $raw_url_before,
+									'entity'                   => $entity,
 								)
 							);
 						}
@@ -857,16 +879,19 @@ class StreamImporter {
 		 */
 		$this->resume_at_entity = $this->entity_iterator->get_reentrancy_cursor();
 		$this->entity_iterator->next();
+
 		return true;
 	}
 
 	protected $imported_entities_counts = array();
+
 	protected function count_imported_entity( $type ) {
 		if ( ! array_key_exists( $type, $this->imported_entities_counts ) ) {
 			$this->imported_entities_counts[ $type ] = 0;
 		}
-		++$this->imported_entities_counts[ $type ];
+		++ $this->imported_entities_counts[ $type ];
 	}
+
 	public function get_imported_entities_counts() {
 		return $this->imported_entities_counts;
 	}
@@ -880,11 +905,13 @@ class StreamImporter {
 		$enqueued        = $this->downloader->enqueue_if_not_exists( $download_url, $output_filename );
 		if ( false === $enqueued ) {
 			_doing_it_wrong( __METHOD__, sprintf( 'Failed to enqueue attachment download: %s', $raw_url ), '1.0' );
+
 			return false;
 		}
 
 		$entity_cursor                                        = $this->entity_iterator->get_reentrancy_cursor();
 		$this->active_downloads[ $entity_cursor ][ $raw_url ] = true;
+
 		return true;
 	}
 
@@ -937,6 +964,7 @@ class StreamImporter {
 		if ( ! empty( $extension ) ) {
 			$filename .= '.' . $extension;
 		}
+
 		return $filename;
 	}
 
@@ -954,6 +982,7 @@ class StreamImporter {
 		if ( false === $parsed_url ) {
 			return false;
 		}
+
 		return $parsed_url->toString();
 	}
 
@@ -976,6 +1005,7 @@ class StreamImporter {
 				return true;
 			}
 		}
+
 		return false;
 	}
 
@@ -989,6 +1019,7 @@ class StreamImporter {
 				return $pair;
 			}
 		}
+
 		return false;
 	}
 
@@ -999,6 +1030,7 @@ class StreamImporter {
 			$this->first_iterator = false;
 			$cursor               = $this->resume_at_entity;
 		}
+
 		return new EntityReaderIterator( $factory( $cursor ) );
 	}
 }

@@ -51,55 +51,55 @@ final class Environment implements EnvironmentInterface, EnvironmentBuilderInter
      *
      * @psalm-readonly-allow-private-mutation
      */
-    private array $extensions = [];
+    private $extensions = [];
 
     /**
      * @var ExtensionInterface[]
      *
      * @psalm-readonly-allow-private-mutation
      */
-    private array $uninitializedExtensions = [];
+    private $uninitializedExtensions = [];
 
     /** @psalm-readonly-allow-private-mutation */
-    private bool $extensionsInitialized = false;
+    private $extensionsInitialized = false;
 
     /**
      * @var PrioritizedList<BlockStartParserInterface>
      *
      * @psalm-readonly
      */
-    private PrioritizedList $blockStartParsers;
+    private $blockStartParsers;
 
     /**
      * @var PrioritizedList<InlineParserInterface>
      *
      * @psalm-readonly
      */
-    private PrioritizedList $inlineParsers;
+    private $inlineParsers;
 
     /** @psalm-readonly */
-    private DelimiterProcessorCollection $delimiterProcessors;
+    private $delimiterProcessors;
 
     /**
      * @var array<string, PrioritizedList<NodeRendererInterface>>
      *
      * @psalm-readonly-allow-private-mutation
      */
-    private array $renderersByClass = [];
+    private $renderersByClass = [];
 
     /**
      * @var PrioritizedList<ListenerData>
      *
      * @psalm-readonly-allow-private-mutation
      */
-    private PrioritizedList $listenerData;
+    private $listenerData;
 
-    private ?EventDispatcherInterface $eventDispatcher = null;
+    private $eventDispatcher = null;
 
     /** @psalm-readonly */
-    private Configuration $config;
+    private $config;
 
-    private ?TextNormalizerInterface $slugNormalizer = null;
+    private $slugNormalizer = null;
 
     /**
      * @param array<string, mixed> $config
@@ -217,7 +217,7 @@ final class Environment implements EnvironmentInterface, EnvironmentBuilderInter
         }
 
         /** @psalm-suppress TypeDoesNotContainType -- Bug: https://github.com/vimeo/psalm/issues/3332 */
-        while (\class_exists($parent ??= $nodeClass) && $parent = \get_parent_class($parent)) {
+        while (\class_exists($parent = $parent ?? $nodeClass) && $parent = \get_parent_class($parent)) {
             if (! isset($this->renderersByClass[$parent])) {
                 continue;
             }

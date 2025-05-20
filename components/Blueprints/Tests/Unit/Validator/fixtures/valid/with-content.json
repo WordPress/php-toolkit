@@ -1,0 +1,66 @@
+{
+	"version": 2,
+	"blueprintMeta": {
+		"name": "Content Showcase Blueprint",
+		"description": "A blueprint demonstrating various content types"
+	},
+	"content": [
+		{
+			"type": "posts",
+			"source": [
+				{
+					"post_title": "Regular Post",
+					"post_content": "This is a regular post.",
+					"post_status": "publish",
+					"post_type": "post",
+					"post_date": "2023-05-15 14:30:00",
+					"post_excerpt": "Post excerpt",
+					"post_category": [
+						"news",
+						"updates"
+					],
+					"post_tags": [
+						"test",
+						"example"
+					],
+					"meta_input": {
+						"custom_field": "Custom value",
+						"featured": true,
+						"rating": 5
+					}
+				},
+				{
+					"post_title": "Regular Page",
+					"post_content": "This is a regular page.",
+					"post_status": "publish",
+					"post_type": "page",
+					"post_parent_name": "Parent Page"
+				},
+				{
+					"post_title": "Custom Post Type",
+					"post_content": "This is a custom post type.",
+					"post_status": "publish",
+					"post_type": "custom_type"
+				}
+			],
+			"urlsMode": "rewrite",
+			"urlsMap": {
+				"https://old-site.com": "https://new-site.com"
+			}
+		},
+		{
+			"type": "mysql-dump",
+			"source": "./dump.sql",
+			"urlsMode": "preserve"
+		},
+		{
+			"type": "wxr",
+			"source": "https://example.com/export.xml",
+			"staticAssets": "fetch",
+			"authorsMode": "create",
+			"importUsers": true,
+			"importComments": true,
+			"importSiteOptions": false
+		}
+	]
+}

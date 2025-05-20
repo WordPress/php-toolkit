@@ -3,8 +3,9 @@
 namespace WordPress\DataLiberation\EntityReader;
 
 use PDO;
-use WordPress\DataLiberation\ImportEntity;
+use PDOStatement;
 use WordPress\DataLiberation\DataLiberationException;
+use WordPress\DataLiberation\ImportEntity;
 
 /**
  * Reads WordPress content in a "topological content order" – the same as seen
@@ -26,11 +27,11 @@ class DatabaseContentEntityReader implements EntityReader {
 	 * State constants for the finite state machine
 	 */
 	const STATE_ADVANCE_TO_NEXT_POST = 'advance_to_next_post';
-	const STATE_POST                 = 'post';
-	const STATE_META                 = 'meta';
-	const STATE_TERMS                = 'terms';
-	const STATE_COMMENTS             = 'comments';
-	const STATE_FINISHED             = 'finished';
+	const STATE_POST = 'post';
+	const STATE_META = 'meta';
+	const STATE_TERMS = 'terms';
+	const STATE_COMMENTS = 'comments';
+	const STATE_FINISHED = 'finished';
 
 	/**
 	 * The database connection used to fetch records.
@@ -80,7 +81,7 @@ class DatabaseContentEntityReader implements EntityReader {
 	 */
 	private $parent_stack = array(
 		array(
-			'parent_id' => 0,
+			'parent_id'            => 0,
 			'last_processed_child' => 0,
 		),
 	);
@@ -89,7 +90,7 @@ class DatabaseContentEntityReader implements EntityReader {
 	 * The current meta result set.
 	 *
 	 * @since WP_VERSION
-	 * @var \PDOStatement|null
+	 * @var PDOStatement|null
 	 */
 	private $current_meta_result_set = null;
 
@@ -97,7 +98,7 @@ class DatabaseContentEntityReader implements EntityReader {
 	 * The current term result set.
 	 *
 	 * @since WP_VERSION
-	 * @var \PDOStatement|null
+	 * @var PDOStatement|null
 	 */
 	private $current_term_result_set = null;
 
@@ -105,7 +106,7 @@ class DatabaseContentEntityReader implements EntityReader {
 	 * The current comment result set.
 	 *
 	 * @since WP_VERSION
-	 * @var \PDOStatement|null
+	 * @var PDOStatement|null
 	 */
 	private $current_comment_result_set = null;
 
@@ -116,10 +117,11 @@ class DatabaseContentEntityReader implements EntityReader {
 	/**
 	 * Constructor.
 	 *
+	 * @param  PDO  $db  The database connection to use.
+	 * @param  array  $options  The options to configure the reader.
+	 *
 	 * @since WP_VERSION
 	 *
-	 * @param PDO   $db The database connection to use.
-	 * @param array $options The options to configure the reader.
 	 */
 	public function __construct( PDO $db, $options = array() ) {
 		$this->db           = $db;
@@ -146,9 +148,9 @@ class DatabaseContentEntityReader implements EntityReader {
 	/**
 	 * Advances to the next entity in the database.
 	 *
+	 * @return bool Whether another entity was found.
 	 * @since WP_VERSION
 	 *
-	 * @return bool Whether another entity was found.
 	 */
 	public function next_entity() {
 		if ( $this->is_finished() ) {
@@ -198,6 +200,7 @@ class DatabaseContentEntityReader implements EntityReader {
 			"SELECT * FROM {$this->table_prefix}posts WHERE post_parent = ? AND ID > ? ORDER BY ID LIMIT 1"
 		);
 		$stmt->execute( array( $parent_id, $last_id ) );
+
 		return $stmt->fetch( PDO::FETCH_ASSOC );
 	}
 
@@ -209,14 +212,14 @@ class DatabaseContentEntityReader implements EntityReader {
 			if ( $post ) {
 				// Acknowledge we've processed the next child of the last recorded parent
 				if ( count( $this->parent_stack ) > 0 ) {
-					$last_key = count( $this->parent_stack ) - 1;
+					$last_key                                                = count( $this->parent_stack ) - 1;
 					$this->parent_stack[ $last_key ]['last_processed_child'] = $post['ID'];
 				}
 				// Push current post to parent stack to process its children later
 				array_push(
 					$this->parent_stack,
 					array(
-						'parent_id' => $post['ID'],
+						'parent_id'            => $post['ID'],
 						'last_processed_child' => 0,
 					)
 				);
@@ -231,12 +234,14 @@ class DatabaseContentEntityReader implements EntityReader {
 			$this->current_post_id = null;
 			$this->current_entity  = null;
 			$this->state           = self::STATE_FINISHED;
+
 			return false;
 		}
 
 		$this->current_post_id = $post['ID'];
 		$this->current_entity  = new ImportEntity( 'post', $post );
 		$this->state           = self::STATE_META;
+
 		return true;
 	}
 
@@ -252,11 +257,13 @@ class DatabaseContentEntityReader implements EntityReader {
 		$meta = $this->current_meta_result_set->fetch( PDO::FETCH_ASSOC );
 		if ( $meta ) {
 			$this->current_entity = new ImportEntity( 'post_meta', $meta );
+
 			return true;
 		}
 
 		$this->state                   = self::STATE_TERMS;
 		$this->current_meta_result_set = null;
+
 		return $this->next_entity();
 	}
 
@@ -276,11 +283,13 @@ class DatabaseContentEntityReader implements EntityReader {
 		$term = $this->current_term_result_set->fetch( PDO::FETCH_ASSOC );
 		if ( $term ) {
 			$this->current_entity = new ImportEntity( 'term', $term );
+
 			return true;
 		}
 
 		$this->state                   = self::STATE_COMMENTS;
 		$this->current_term_result_set = null;
+
 		return $this->next_entity();
 	}
 
@@ -296,19 +305,21 @@ class DatabaseContentEntityReader implements EntityReader {
 		$comment = $this->current_comment_result_set->fetch( PDO::FETCH_ASSOC );
 		if ( $comment ) {
 			$this->current_entity = new ImportEntity( 'comment', $comment );
+
 			return true;
 		}
 
 		$this->state                      = self::STATE_POST;
 		$this->current_comment_result_set = null;
+
 		return $this->next_entity();
 	}
 
 	public function get_reentrancy_cursor() {
 		return json_encode(
 			array(
-				'post_id' => $this->current_post_id,
-				'state' => $this->state,
+				'post_id'      => $this->current_post_id,
+				'state'        => $this->state,
 				'parent_stack' => $this->parent_stack,
 			)
 		);
@@ -317,9 +328,10 @@ class DatabaseContentEntityReader implements EntityReader {
 	/**
 	 * Initializes the reader from a cursor.
 	 *
+	 * @param  string  $cursor  The cursor to initialize from.
+	 *
 	 * @since WP_VERSION
 	 *
-	 * @param string $cursor The cursor to initialize from.
 	 */
 	private function initialize_from_cursor( $cursor ) {
 		$cursor_data = json_decode( $cursor, true );

@@ -10,10 +10,10 @@ trait CopyDirectoryRecursive {
 		copy_between_filesystems(
 			array(
 				'source_filesystem' => $this,
-				'source_path' => $from_path,
+				'source_path'       => $from_path,
 				'target_filesystem' => $this,
-				'target_path' => $to_path,
-				'recursive' => $options['recursive'] ?? true,
+				'target_path'       => $to_path,
+				'recursive'         => $options['recursive'] ?? true,
 			)
 		);
 	}

@@ -10,7 +10,7 @@ function get_target_url( $server_data = null ) {
 	}
 
 	$path_info = $server_data['PATH_INFO'] ?? '';
-	if ( str_starts_with( $path_info, '/' ) && strlen( $path_info ) > 1 ) {
+	if ( strncmp( $path_info, '/', strlen( '/' ) ) === 0 && strlen( $path_info ) > 1 ) {
 		return substr( $path_info, 1 );
 	}
 
@@ -23,7 +23,7 @@ function get_target_url( $server_data = null ) {
 }
 
 function get_current_script_uri( $targetUrl, $request_uri ) {
-	return substr( $request_uri, 0, -strlen( $targetUrl ) );
+	return substr( $request_uri, 0, - strlen( $targetUrl ) );
 }
 
 function url_validate_and_resolve( $url, $resolve_function = 'gethostbynamel' ) {
@@ -48,9 +48,9 @@ function url_validate_and_resolve( $url, $resolve_function = 'gethostbynamel' ) 
 
 	if (
 		( isset( $_SERVER['HTTP_HOST'] ) &&
-			strcasecmp( $_SERVER['HTTP_HOST'], $host ) === 0 ) ||
+		  strcasecmp( $_SERVER['HTTP_HOST'], $host ) === 0 ) ||
 		( isset( $_SERVER['SERVER_ADDR'] ) &&
-			strcasecmp( $_SERVER['SERVER_ADDR'], $host ) === 0 )
+		  strcasecmp( $_SERVER['SERVER_ADDR'], $host ) === 0 )
 	) {
 		throw new CorsProxyException( 'URL cannot target the CORS proxy host.' );
 	}
@@ -69,7 +69,7 @@ function url_validate_and_resolve( $url, $resolve_function = 'gethostbynamel' ) 
 
 	return array(
 		'host' => $host,
-		'ip' => $resolved_ips[0],
+		'ip'   => $resolved_ips[0],
 	);
 }
 
@@ -82,7 +82,8 @@ class IpUtils {
 	/**
 	 * Checks if the given IP address is a private IP address.
 	 *
-	 * @param string $ip
+	 * @param  string  $ip
+	 *
 	 * @return bool
 	 */
 	public static function isPrivateIp( $ip ) {
@@ -98,7 +99,8 @@ class IpUtils {
 	/**
 	 * Checks if the given IPv4 address is private.
 	 *
-	 * @param string $ip
+	 * @param  string  $ip
+	 *
 	 * @return bool
 	 */
 	private static function isPrivateIpv4( $ip ) {
@@ -166,7 +168,8 @@ class IpUtils {
 	/**
 	 * Checks if the given IPv6 address is private.
 	 *
-	 * @param string $ip
+	 * @param  string  $ip
+	 *
 	 * @return bool
 	 */
 	private static function isPrivateIpv6( $ip ) {
@@ -255,9 +258,10 @@ class IpUtils {
 	/**
 	 * Checks if the given IPv4 address is within the specified range.
 	 *
-	 * @param string $ip
-	 * @param string $start
-	 * @param string $end
+	 * @param  string  $ip
+	 * @param  string  $start
+	 * @param  string  $end
+	 *
 	 * @return bool
 	 */
 	private static function ipv4InRange( $ip, $start, $end ) {
@@ -271,9 +275,10 @@ class IpUtils {
 	/**
 	 * Checks if the given IPv6 address is within the specified range.
 	 *
-	 * @param string $ip
-	 * @param string $start
-	 * @param string $end
+	 * @param  string  $ip
+	 * @param  string  $start
+	 * @param  string  $end
+	 *
 	 * @return bool
 	 */
 	private static function ipv6InRange( $ip, $start, $end ) {
@@ -295,22 +300,24 @@ class IpUtils {
 /**
  * Filters headers by name, removing disallowed headers and enforcing opt-in requirements.
  *
- * @param array $php_headers {
+ * @param  array  $php_headers  {
  *  An associative array of headers.
- *  @type string $key Header name.
+ *
+ * @type string $key Header name.
  * }
- * @param array $disallowed_headers       List of header names that are disallowed.
- * @param array $headers_requiring_opt_in List of header names that require opt-in
+ *
+ * @param  array  $disallowed_headers  List of header names that are disallowed.
+ * @param  array  $headers_requiring_opt_in  List of header names that require opt-in
  *                                        via the X-Cors-Proxy-Allowed-Request-Headers header.
  *
  * @return array {
  *  Filtered headers.
- *  @type string $key Header name.
+ * @type string $key Header name.
  */
 function filter_headers_by_name(
 	$php_headers,
 	$disallowed_headers,
-	$headers_requiring_opt_in = array(),
+	$headers_requiring_opt_in = array()
 ) {
 	$lowercased_php_headers   = array_change_key_case( $php_headers, CASE_LOWER );
 	$disallowed_headers       = array_map( 'strtolower', $disallowed_headers );
@@ -332,7 +339,7 @@ function filter_headers_by_name(
 		) use (
 			$disallowed_headers,
 			$headers_requiring_opt_in,
-			$headers_with_opt_in,
+			$headers_with_opt_in
 		) {
 			$lower_key = strtolower( $key );
 
@@ -360,6 +367,7 @@ function kv_headers_to_curl_format( $headers ) {
 	foreach ( $headers as $key => $value ) {
 		$curl_headers[] = $key . ': ' . $value;
 	}
+
 	return $curl_headers;
 }
 
@@ -389,6 +397,7 @@ function rewrite_relative_redirect(
 	if ( $last_char !== '/' && $last_char !== '?' ) {
 		$proxy_absolute_url .= '?';
 	}
+
 	return $proxy_absolute_url . $redirect_location;
 }
 

@@ -2,9 +2,10 @@
 
 namespace WordPress\Merge\Tests;
 
+use PHPUnit\Framework\TestCase;
 use WordPress\Merge\Diff\Diff;
 
-class DiffTest extends \PHPUnit\Framework\TestCase {
+class DiffTest extends TestCase {
 
 	public function test_get_new_document() {
 		$diff = new Diff(

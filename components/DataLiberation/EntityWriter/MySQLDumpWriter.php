@@ -3,8 +3,8 @@
 namespace WordPress\DataLiberation\EntityWriter;
 
 use WordPress\ByteStream\WriteStream\ByteWriteStream;
-use WordPress\DataLiberation\ImportEntity;
 use WordPress\DataLiberation\DataLiberationException;
+use WordPress\DataLiberation\ImportEntity;
 
 class MySQLDumpWriter implements EntityWriter {
 
@@ -47,6 +47,7 @@ class MySQLDumpWriter implements EntityWriter {
 		if ( is_bool( $value ) ) {
 			return $value ? '1' : '0';
 		}
+
 		return $value;
 	}
 
@@ -67,7 +68,7 @@ class MySQLDumpWriter implements EntityWriter {
 		$result = '';
 		$len    = strlen( $value );
 
-		for ( $i = 0; $i < $len; $i++ ) {
+		for ( $i = 0; $i < $len; $i ++ ) {
 			$char = $value[ $i ];
 			$ord  = ord( $char );
 

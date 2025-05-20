@@ -20,8 +20,9 @@ use League\CommonMark\Node\Inline\AbstractInline;
  */
 final class HeadingPermalink extends AbstractInline
 {
-    /** @psalm-readonly */
-    private string $slug;
+    /** @psalm-readonly
+     * @var string */
+    private $slug;
 
     public function __construct(string $slug)
     {

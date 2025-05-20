@@ -14,7 +14,10 @@ namespace Webuni\FrontMatter\Processor;
 
 abstract class ProcessorDecorator implements ProcessorInterface
 {
-    private ProcessorInterface $wrapped;
+    /**
+     * @var \Webuni\FrontMatter\Processor\ProcessorInterface
+     */
+    private $wrapped;
 
     public function __construct(ProcessorInterface $wrapped)
     {

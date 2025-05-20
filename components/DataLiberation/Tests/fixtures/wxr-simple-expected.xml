@@ -18,11 +18,10 @@
 
 <!-- generator="WordPress/6.5.4" created="2024-06-10 12:29" -->
 <rss version="2.0"
-    xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
-    xmlns:content="http://purl.org/rss/1.0/modules/content/"
-    xmlns:wfw="http://wellformedweb.org/CommentAPI/"
-    xmlns:dc="http://purl.org/dc/elements/1.1/"
-    xmlns:wp="http://wordpress.org/export/1.2/">
+     xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+     xmlns:content="http://purl.org/rss/1.0/modules/content/"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:wp="http://wordpress.org/export/1.2/">
 
     <channel>
         <title>My WordPress Website</title>

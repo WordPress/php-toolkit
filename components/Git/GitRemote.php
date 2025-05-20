@@ -1,4 +1,14 @@
 <?php
+/**
+ * @TODO: Support different ref formats:
+ * – nice branch names like "trunk"
+ * – full branch names like "refs/heads/trunk"
+ * – tags
+ * – commit hashes
+ * - ... what else? ...
+ *
+ * Currently, we only support full branch names.
+ */
 
 namespace WordPress\Git;
 
@@ -59,14 +69,14 @@ class GitRemote {
 		while ( $protocol->next_token() ) {
 			switch ( $protocol->get_token_type() ) {
 				case '#packet-footer':
-					$ref_line = $protocol->get_packet_body();
-					$ref      = $this->parse_ref_line( $ref_line );
+					$ref_line                 = $protocol->get_packet_body();
+					$ref                      = $this->parse_ref_line( $ref_line );
+					$refs[ $ref['ref_name'] ] = $ref['hash'];
 					if ( false === $ref ) {
 						continue 2;
 					}
-					$refs[ $ref['ref_name'] ] = $ref['hash'];
 
-					if ( str_starts_with( $ref['ref_name'], 'refs/heads/' ) ) {
+					if ( strncmp( $ref['ref_name'], 'refs/heads/', strlen( 'refs/heads/' ) ) === 0 ) {
 						$branch_name = substr( $ref['ref_name'], strlen( 'refs/heads/' ) );
 						$this->repository->set_branch_tip( 'refs/remotes/' . $this->remote_name . '/' . $branch_name, $ref['hash'] );
 					}
@@ -175,10 +185,10 @@ class GitRemote {
 	}
 
 	private function localize_ref_name( $ref_name ) {
-		if ( str_starts_with( $ref_name, 'ref: ' ) ) {
+		if ( strncmp( $ref_name, 'ref: ', strlen( 'ref: ' ) ) === 0 ) {
 			$ref_name = trim( substr( $ref_name, 5 ) );
 		}
-		if ( str_starts_with( $ref_name, 'refs/heads/' ) ) {
+		if ( strncmp( $ref_name, 'refs/heads/', strlen( 'refs/heads/' ) ) === 0 ) {
 			return substr( $ref_name, strlen( 'refs/heads/' ) );
 		}
 
@@ -214,7 +224,7 @@ class GitRemote {
 					"done\n",
 					"done\n",
 				)
-			),
+			)
 		);
 	}
 
@@ -446,12 +456,12 @@ class GitRemote {
 		}
 		$want_refs    = $options['want_refs'];
 		$packet_lines = array();
-		for ( $i = 0; $i < count( $want_refs ); $i++ ) {
+		for ( $i = 0; $i < count( $want_refs ); $i ++ ) {
 			$packet_line = "want {$want_refs[$i]}";
 			if ( $i === 0 ) {
 				$packet_line .= ' multi_ack_detailed no-done side-band-64k ofs-delta thin-pack agent=git/2.37.3 filter';
 			}
-			$packet_line   .= "\n";
+			$packet_line    .= "\n";
 			$packet_lines[] = $packet_line;
 		}
 

@@ -1,9 +1,11 @@
 <?php
+
 namespace WordPress\ByteStream\ReadStream;
 
 use ArrayAccess;
-use WordPress\ByteStream\ByteTransformer\ByteTransformer;
+use ReturnTypeWillChange;
 use WordPress\ByteStream\ByteStreamException;
+use WordPress\ByteStream\ByteTransformer\ByteTransformer;
 
 class TransformedReadStream extends BaseByteReadStream implements ArrayAccess {
 
@@ -34,6 +36,7 @@ class TransformedReadStream extends BaseByteReadStream implements ArrayAccess {
 			if ( $this->reader->reached_end_of_data() && ! $this->filters_flushed ) {
 				return $this->flush_filters();
 			}
+
 			return '';
 		}
 
@@ -53,35 +56,37 @@ class TransformedReadStream extends BaseByteReadStream implements ArrayAccess {
 
 		$flush = '';
 		foreach ( $this->filters as $filter ) {
-			$flush  = $filter->filter_bytes( $flush );
+			$flush = $filter->filter_bytes( $flush );
 			$flush .= $filter->flush();
 		}
+
 		return $flush;
 	}
 
 	/** @disregard P1038 */
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function offsetGet( $offset ) {
 		if ( ! isset( $this->filters[ $offset ] ) ) {
 			throw new ByteStreamException( sprintf( 'Filter %s not found', $offset ) );
 		}
+
 		return $this->filters[ $offset ];
 	}
 
 	/** @disregard P1038 */
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function offsetExists( $offset ) {
 		return isset( $this->filters[ $offset ] );
 	}
 
 	/** @disregard P1038 */
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function offsetSet( $offset, $value ) {
 		throw new ByteStreamException( 'Filters are immutable' );
 	}
 
 	/** @disregard P1038 */
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function offsetUnset( $offset ) {
 		throw new ByteStreamException( 'Filters are immutable' );
 	}

@@ -14,7 +14,7 @@ function print_diff_chunks( array $chunks_a, array $chunks_b ): void {
 	echo str_repeat( '-', $width ) . "\n";
 
 	$n = max( count( $chunks_a ), count( $chunks_b ) );
-	for ( $i = 0; $i < $n; $i++ ) {
+	for ( $i = 0; $i < $n; $i ++ ) {
 		$chunk_a = $chunks_a[ $i ];
 		$chunk_b = $chunks_b[ $i ];
 
@@ -22,7 +22,7 @@ function print_diff_chunks( array $chunks_a, array $chunks_b ): void {
 		$right_lines = explode( "\n", format_chunk_side( $chunk_b, $half_width ) );
 
 		$max_lines = max( count( $left_lines ), count( $right_lines ) );
-		for ( $j = 0; $j < $max_lines; $j++ ) {
+		for ( $j = 0; $j < $max_lines; $j ++ ) {
 			printf(
 				"%3d: %s | %s\n",
 				$i,
@@ -40,16 +40,16 @@ function mb_wordwrap( string $text, int $width, string $break = "\n", bool $cut 
 	$lines        = array();
 	$current_line = '';
 
-	for ( $i = 0; $i < count( $words ); $i++ ) {
+	for ( $i = 0; $i < count( $words ); $i ++ ) {
 		$word = $words[ $i ];
-		if ( str_contains( $word, "\n" ) ) {
+		if ( strpos( $word, "\n" ) !== false ) {
 			$offset = strpos( $word, "\n" );
 			// Slice until the newline character while keeping the number of
 			// characters the same.
 			$before = substr( $word, 0, $offset ) . ' ';
 			$after  = substr( $word, $offset + 1 );
 			array_splice( $words, $i, 1, array( $before, $after ) );
-			--$i;
+			-- $i;
 			continue;
 		}
 		// Strip unprintable characters for length calculation

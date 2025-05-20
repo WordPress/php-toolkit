@@ -18,7 +18,7 @@ use Nette\Schema\ValidationException as NetteException;
 final class ValidationException extends InvalidConfigurationException
 {
     /** @var string[] */
-    private array $messages;
+    private $messages;
 
     public function __construct(NetteException $innerException)
     {

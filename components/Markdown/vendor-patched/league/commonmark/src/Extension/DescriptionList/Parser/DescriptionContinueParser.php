@@ -22,9 +22,15 @@ use League\CommonMark\Parser\Cursor;
 
 final class DescriptionContinueParser extends AbstractBlockContinueParser
 {
-    private Description $block;
+    /**
+     * @var \League\CommonMark\Extension\DescriptionList\Node\Description
+     */
+    private $block;
 
-    private int $indentation;
+    /**
+     * @var int
+     */
+    private $indentation;
 
     public function __construct(bool $tight, int $indentation)
     {
@@ -32,7 +38,7 @@ final class DescriptionContinueParser extends AbstractBlockContinueParser
         $this->indentation = $indentation;
     }
 
-    public function getBlock(): Description
+    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }

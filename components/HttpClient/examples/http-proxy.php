@@ -31,18 +31,15 @@ function get_target_url( $server_data = null ) {
 
 	return $targetUrl;
 }
+
 $target_url = get_target_url();
 $host       = parse_url( $target_url, PHP_URL_HOST );
 $requests   = array(
 	new Request(
 		$target_url,
 		array(
-			'method' => $_SERVER['REQUEST_METHOD'],
-			'headers' => array(
-				...getallheaders(),
-				'Accept-Encoding' => 'gzip, deflate',
-				'Host' => $host,
-			),
+			'method'      => $_SERVER['REQUEST_METHOD'],
+			'headers'     => array_merge( getallheaders(), [ 'Accept-Encoding' => 'gzip, deflate', 'Host' => $host ] ),
 			'body_stream' => $_SERVER['REQUEST_METHOD'] === 'POST' ? fopen( 'php://input', 'r' ) : null,
 		)
 	),

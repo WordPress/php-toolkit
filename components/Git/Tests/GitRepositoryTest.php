@@ -2,8 +2,8 @@
 
 namespace WordPress\Git\Tests;
 
+use PHPUnit\Framework\TestCase;
 use WordPress\Filesystem\InMemoryFilesystem;
-use WordPress\Git\GitException;
 use WordPress\Git\GitRepository;
 use WordPress\Git\Model\Commit;
 use WordPress\Git\Model\Tree;
@@ -12,7 +12,7 @@ use WordPress\Git\Protocol\GitProtocolEncoderPipe;
 
 use function WordPress\Git\get_all_descendant_oids_in_tree;
 
-class GitRepositoryTest extends \PHPUnit\Framework\TestCase {
+class GitRepositoryTest extends TestCase {
 
 	public function test_add_new_object() {
 		$blob_data = 'Hello, world!';

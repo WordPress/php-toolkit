@@ -20,8 +20,9 @@ use League\CommonMark\Reference\ReferenceableInterface;
 
 final class Footnote extends AbstractBlock implements ReferenceableInterface
 {
-    /** @psalm-readonly */
-    private ReferenceInterface $reference;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Reference\ReferenceInterface */
+    private $reference;
 
     public function __construct(ReferenceInterface $reference)
     {

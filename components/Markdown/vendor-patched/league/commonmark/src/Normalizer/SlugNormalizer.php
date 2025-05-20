@@ -21,8 +21,9 @@ use League\Config\ConfigurationInterface;
  */
 final class SlugNormalizer implements TextNormalizerInterface, ConfigurationAwareInterface
 {
-    /** @psalm-allow-private-mutation */
-    private int $defaultMaxLength = 255;
+    /** @psalm-allow-private-mutation
+     * @var int */
+    private $defaultMaxLength = 255;
 
     public function setConfiguration(ConfigurationInterface $configuration): void
     {

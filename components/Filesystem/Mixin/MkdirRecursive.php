@@ -4,7 +4,8 @@ namespace WordPress\Filesystem\Mixin;
 
 use WordPress\Filesystem\FilesystemException;
 
-use function WordPress\Filesystem\wp_parent_paths;
+use function WordPress\Filesystem\wp_join_unix_paths;
+use function WordPress\Filesystem\wp_unix_path_segments;
 
 /**
  * Implements a recursive mkdir() function by calling mkdir_single() for
@@ -13,9 +14,15 @@ use function WordPress\Filesystem\wp_parent_paths;
 trait MkdirRecursive {
 
 	public function mkdir( $path, $options = array() ) {
+		// Windows paths compatibility for LocalFilesystem:
+		if(method_exists($this, 'normalize_path')) {
+			$path = $this->normalize_path( $path );
+		}
+
 		$recursive = $options['recursive'] ?? false;
 		if ( ! $recursive ) {
 			$this->mkdir_single( $path, $options );
+
 			return;
 		}
 
@@ -32,29 +39,41 @@ trait MkdirRecursive {
 		 */
 		$root = rtrim( $this->get_root(), '/' ) . '/';
 		$path = rtrim( $path, '/' ) . '/';
-		if ( ! str_starts_with( $path, $root ) ) {
-			throw new FilesystemException( sprintf( 'Path is not within the root: %s', $path ) );
+
+		// Windows paths compatibility for LocalFilesystem:
+		if(method_exists($this, 'normalize_path')) {
+			$root = $this->normalize_path( $root );
+			$path = $this->normalize_path( $path );
+		}
+		// Assert to be extra sure the operation is safe:
+		if ( strncmp( $path, $root, strlen( $root ) ) !== 0 ) {
+			throw new FilesystemException( sprintf( 'Path %s is not within the root %s', $path, $root ) );
 		}
 
-		// Alright, we're sure that $path is within the root. It's time
-		// to start iterating over the path segment by segment.
-
-		// Start at the root.
-		foreach ( wp_parent_paths(
-			$path,
-			array(
-				'include_self' => true,
-			)
-		) as $parent_path ) {
-			if ( $parent_path === $root ) {
-				continue;
-			}
+		$child_path = substr( $path, strlen( $root ) );
+		$segments = wp_unix_path_segments( $child_path );
+		for( $i = 0; $i < count( $segments ); $i++ ) {
+			$parent_path = wp_join_unix_paths(
+				$root,
+				...array_slice( $segments, 0, $i + 1 )
+			);
 			if ( ! $this->exists( $parent_path ) ) {
 				$this->mkdir_single( $parent_path, $options );
 			}
 		}
 	}
 
+	private function parent_paths( $path ) {
+		$segments     = wp_unix_path_segments( $path );
+		$paths        = array();
+		for ( $i = 0; $i < count( $segments ) - 1; $i ++ ) {
+			$paths[] = $segments[ $i ];
+			yield wp_join_unix_paths( ...$paths );
+		}
+		yield $path;
+	}
+
 	abstract protected function get_root(): string;
+
 	abstract protected function mkdir_single( $path, $options = array() );
 }

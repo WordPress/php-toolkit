@@ -12,21 +12,27 @@ namespace Nette\Schema;
 
 final class Context
 {
-	public bool $skipDefaults = false;
+	/**
+  * @var bool
+  */
+ public $skipDefaults = false;
 
 	/** @var string[] */
-	public array $path = [];
+	public $path = [];
 
-	public bool $isKey = false;
+	/**
+  * @var bool
+  */
+ public $isKey = false;
 
 	/** @var Message[] */
-	public array $errors = [];
+	public $errors = [];
 
 	/** @var Message[] */
-	public array $warnings = [];
+	public $warnings = [];
 
 	/** @var array[] */
-	public array $dynamics = [];
+	public $dynamics = [];
 
 
 	public function addError(string $message, string $code, array $variables = []): Message
@@ -46,6 +52,8 @@ final class Context
 	public function createChecker(): \Closure
 	{
 		$count = count($this->errors);
-		return fn(): bool => $count === count($this->errors);
+		return function () use ($count) : bool {
+      return $count === count($this->errors);
+  };
 	}
 }

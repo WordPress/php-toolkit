@@ -29,11 +29,13 @@ use League\Config\ConfigurationInterface;
 
 final class EmphasisDelimiterProcessor implements CacheableDelimiterProcessorInterface, ConfigurationAwareInterface
 {
-    /** @psalm-readonly */
-    private string $char;
+    /** @psalm-readonly
+     * @var string */
+    private $char;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private ConfigurationInterface $config;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\Config\ConfigurationInterface */
+    private $config;
 
     /**
      * @param string $char The emphasis character to use (typically '*' or '_')
@@ -108,12 +110,6 @@ final class EmphasisDelimiterProcessor implements CacheableDelimiterProcessorInt
 
     public function getCacheKey(DelimiterInterface $closer): string
     {
-        return \sprintf(
-            '%s-%s-%d-%d',
-            $this->char,
-            $closer->canOpen() ? 'canOpen' : 'cannotOpen',
-            $closer->getOriginalLength() % 3,
-            $closer->getLength(),
-        );
+        return \sprintf('%s-%s-%d-%d', $this->char, $closer->canOpen() ? 'canOpen' : 'cannotOpen', $closer->getOriginalLength() % 3, $closer->getLength());
     }
 }

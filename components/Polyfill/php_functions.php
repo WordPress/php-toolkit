@@ -8,7 +8,7 @@ if ( ! function_exists( 'str_starts_with' ) ) {
 
 if ( ! function_exists( 'str_ends_with' ) ) {
 	function str_ends_with( $haystack, $needle ) {
-		return substr( $haystack, -strlen( $needle ) ) === $needle;
+		return substr( $haystack, - strlen( $needle ) ) === $needle;
 	}
 }
 
@@ -23,6 +23,7 @@ if ( ! function_exists( 'array_key_first' ) ) {
 		foreach ( $array as $key => $value ) {
 			return $key;
 		}
+
 		return null;
 	}
 }

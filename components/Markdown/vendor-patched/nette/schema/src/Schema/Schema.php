@@ -13,22 +13,26 @@ namespace Nette\Schema;
 interface Schema
 {
 	/**
-	 * Normalization.
-	 * @return mixed
-	 */
-	function normalize(mixed $value, Context $context);
+  * Normalization.
+  * @return mixed
+  * @param mixed $value
+  */
+ function normalize($value, Context $context);
 
 	/**
-	 * Merging.
-	 * @return mixed
-	 */
-	function merge(mixed $value, mixed $base);
+  * Merging.
+  * @return mixed
+  * @param mixed $value
+  * @param mixed $base
+  */
+ function merge($value, $base);
 
 	/**
-	 * Validation and finalization.
-	 * @return mixed
-	 */
-	function complete(mixed $value, Context $context);
+  * Validation and finalization.
+  * @return mixed
+  * @param mixed $value
+  */
+ function complete($value, Context $context);
 
 	/**
 	 * @return mixed

@@ -21,11 +21,13 @@ use League\CommonMark\Reference\ReferenceParser;
 
 final class ParagraphParser extends AbstractBlockContinueParser implements BlockContinueParserWithInlinesInterface
 {
-    /** @psalm-readonly */
-    private Paragraph $block;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Node\Block\Paragraph */
+    private $block;
 
-    /** @psalm-readonly */
-    private ReferenceParser $referenceParser;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Reference\ReferenceParser */
+    private $referenceParser;
 
     public function __construct()
     {
@@ -38,7 +40,7 @@ final class ParagraphParser extends AbstractBlockContinueParser implements Block
         return true;
     }
 
-    public function getBlock(): Paragraph
+    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }

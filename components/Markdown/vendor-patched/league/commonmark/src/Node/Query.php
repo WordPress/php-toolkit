@@ -95,7 +95,9 @@ final class Query
      */
     public static function type(string $class): callable
     {
-        return static fn (Node $node): bool => $node instanceof $class;
+        return static function (Node $node) use ($class) : bool {
+            return $node instanceof $class;
+        };
     }
 
     /**

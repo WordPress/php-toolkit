@@ -18,7 +18,10 @@ use League\CommonMark\Node\Inline\AbstractInline;
 
 final class StringTemplateLinkGenerator implements MentionGeneratorInterface
 {
-    private string $urlTemplate;
+    /**
+     * @var string
+     */
+    private $urlTemplate;
 
     public function __construct(string $urlTemplate)
     {

@@ -22,15 +22,15 @@ class Arrays
 	use Nette\StaticClass;
 
 	/**
-	 * Returns item from array. If it does not exist, it throws an exception, unless a default value is set.
-	 * @template T
-	 * @param  array<T>  $array
-	 * @param  array-key|array-key[]  $key
-	 * @param  ?T  $default
-	 * @return ?T
-	 * @throws Nette\InvalidArgumentException if item does not exist and default value is not provided
-	 */
-	public static function get(array $array, string|int|array $key, mixed $default = null): mixed
+  * Returns item from array. If it does not exist, it throws an exception, unless a default value is set.
+  * @template T
+  * @param  array<T>  $array
+  * @param  array-key|array-key[]  $key
+  * @param mixed $default
+  * @return ?T
+  * @throws Nette\InvalidArgumentException if item does not exist and default value is not provided
+  */
+ public static function get(array $array, $key, $default = null)
 	{
 		foreach (is_array($key) ? $key : [$key] as $k) {
 			if (is_array($array) && array_key_exists($k, $array)) {
@@ -56,7 +56,7 @@ class Arrays
 	 * @return ?T
 	 * @throws Nette\InvalidArgumentException if traversed item is not an array
 	 */
-	public static function &getRef(array &$array, string|int|array $key): mixed
+	public static function &getRef(array &$array, $key)
 	{
 		foreach (is_array($key) ? $key : [$key] as $k) {
 			if (is_array($array) || $array === null) {
@@ -94,11 +94,12 @@ class Arrays
 
 
 	/**
-	 * Returns zero-indexed position of given array key. Returns null if key is not found.
-	 */
-	public static function getKeyOffset(array $array, string|int $key): ?int
+  * Returns zero-indexed position of given array key. Returns null if key is not found.
+  * @param string|int $key
+  */
+ public static function getKeyOffset(array $array, $key): ?int
 	{
-		return Helpers::falseToNull(array_search(self::toKey($key), array_keys($array), strict: true));
+		return Helpers::falseToNull(array_search(self::toKey($key), array_keys($array), true));
 	}
 
 
@@ -112,9 +113,10 @@ class Arrays
 
 
 	/**
-	 * Tests an array for the presence of value.
-	 */
-	public static function contains(array $array, mixed $value): bool
+  * Tests an array for the presence of value.
+  * @param mixed $value
+  */
+ public static function contains(array $array, $value): bool
 	{
 		return in_array($value, $array, true);
 	}
@@ -128,7 +130,7 @@ class Arrays
 	 * @param  ?callable(V, K, array<K, V>): bool  $predicate
 	 * @return ?V
 	 */
-	public static function first(array $array, ?callable $predicate = null, ?callable $else = null): mixed
+	public static function first(array $array, ?callable $predicate = null, ?callable $else = null)
 	{
 		$key = self::firstKey($array, $predicate);
 		return $key === null
@@ -145,7 +147,7 @@ class Arrays
 	 * @param  ?callable(V, K, array<K, V>): bool  $predicate
 	 * @return ?V
 	 */
-	public static function last(array $array, ?callable $predicate = null, ?callable $else = null): mixed
+	public static function last(array $array, ?callable $predicate = null, ?callable $else = null)
 	{
 		$key = self::lastKey($array, $predicate);
 		return $key === null
@@ -162,10 +164,11 @@ class Arrays
 	 * @param  ?callable(V, K, array<K, V>): bool  $predicate
 	 * @return ?K
 	 */
-	public static function firstKey(array $array, ?callable $predicate = null): int|string|null
+	public static function firstKey(array $array, ?callable $predicate = null)
 	{
 		if (!$predicate) {
-			return array_key_first($array);
+			reset($array);
+   return key($array);
 		}
 		foreach ($array as $k => $v) {
 			if ($predicate($v, $k, $array)) {
@@ -184,47 +187,52 @@ class Arrays
 	 * @param  ?callable(V, K, array<K, V>): bool  $predicate
 	 * @return ?K
 	 */
-	public static function lastKey(array $array, ?callable $predicate = null): int|string|null
+	public static function lastKey(array $array, ?callable $predicate = null)
 	{
-		return $predicate
-			? self::firstKey(array_reverse($array, preserve_keys: true), $predicate)
-			: array_key_last($array);
+		end($array);
+  return $predicate
+			? self::firstKey(array_reverse($array, true), $predicate)
+			: key($array);
 	}
 
 
 	/**
-	 * Inserts the contents of the $inserted array into the $array immediately after the $key.
-	 * If $key is null (or does not exist), it is inserted at the beginning.
-	 */
-	public static function insertBefore(array &$array, string|int|null $key, array $inserted): void
+  * Inserts the contents of the $inserted array into the $array immediately after the $key.
+  * If $key is null (or does not exist), it is inserted at the beginning.
+  * @param string|int|null $key
+  */
+ public static function insertBefore(array &$array, $key, array $inserted): void
 	{
 		$offset = $key === null ? 0 : (int) self::getKeyOffset($array, $key);
-		$array = array_slice($array, 0, $offset, preserve_keys: true)
+		$array = array_slice($array, 0, $offset, true)
 			+ $inserted
-			+ array_slice($array, $offset, count($array), preserve_keys: true);
+			+ array_slice($array, $offset, count($array), true);
 	}
 
 
 	/**
-	 * Inserts the contents of the $inserted array into the $array before the $key.
-	 * If $key is null (or does not exist), it is inserted at the end.
-	 */
-	public static function insertAfter(array &$array, string|int|null $key, array $inserted): void
+  * Inserts the contents of the $inserted array into the $array before the $key.
+  * If $key is null (or does not exist), it is inserted at the end.
+  * @param string|int|null $key
+  */
+ public static function insertAfter(array &$array, $key, array $inserted): void
 	{
 		if ($key === null || ($offset = self::getKeyOffset($array, $key)) === null) {
 			$offset = count($array) - 1;
 		}
 
-		$array = array_slice($array, 0, $offset + 1, preserve_keys: true)
+		$array = array_slice($array, 0, $offset + 1, true)
 			+ $inserted
-			+ array_slice($array, $offset + 1, count($array), preserve_keys: true);
+			+ array_slice($array, $offset + 1, count($array), true);
 	}
 
 
 	/**
-	 * Renames key in array.
-	 */
-	public static function renameKey(array &$array, string|int $oldKey, string|int $newKey): bool
+  * Renames key in array.
+  * @param string|int $oldKey
+  * @param string|int $newKey
+  */
+ public static function renameKey(array &$array, $oldKey, $newKey): bool
 	{
 		$offset = self::getKeyOffset($array, $oldKey);
 		if ($offset === null) {
@@ -241,20 +249,23 @@ class Arrays
 
 
 	/**
-	 * Returns only those array items, which matches a regular expression $pattern.
-	 * @param  string[]  $array
-	 * @return string[]
-	 */
-	public static function grep(
-		array $array,
-		#[Language('RegExp')]
-		string $pattern,
-		bool|int $invert = false,
-	): array
-	{
-		$flags = $invert ? PREG_GREP_INVERT : 0;
-		return Strings::pcre('preg_grep', [$pattern, $array, $flags]);
-	}
+  * Returns only those array items, which matches a regular expression $pattern.
+  * @param  string[]  $array
+  * @return string[]
+  * @param bool|int $invert
+  */
+ public static function grep(
+     array $array,
+     /**
+      * @language
+      */
+     string $pattern,
+     $invert = false
+ ) : array
+ {
+     $flags = $invert ? PREG_GREP_INVERT : 0;
+     return Strings::pcre('preg_grep', [$pattern, $array, $flags]);
+ }
 
 
 	/**
@@ -272,23 +283,41 @@ class Arrays
 
 
 	/**
-	 * Checks if the array is indexed in ascending order of numeric keys from zero, a.k.a list.
-	 * @return ($value is list ? true : false)
-	 */
-	public static function isList(mixed $value): bool
+  * Checks if the array is indexed in ascending order of numeric keys from zero, a.k.a list.
+  * @return ($value is list ? true : false)
+  * @param mixed $value
+  */
+ public static function isList($value): bool
 	{
-		return is_array($value) && (PHP_VERSION_ID < 80100
+		$arrayIsListFunction = function (array $array) : bool {
+      if (function_exists('array_is_list')) {
+          return array_is_list($array);
+      }
+      if ($array === []) {
+          return true;
+      }
+      $current_key = 0;
+      foreach ($array as $key => $noop) {
+          if ($key !== $current_key) {
+              return false;
+          }
+          ++$current_key;
+      }
+      return true;
+  };
+  return is_array($value) && (PHP_VERSION_ID < 80100
 			? !$value || array_keys($value) === range(0, count($value) - 1)
-			: array_is_list($value)
+			: $arrayIsListFunction($value)
 		);
 	}
 
 
 	/**
-	 * Reformats table to associative tree. Path looks like 'field|field[]field->field=field'.
-	 * @param  string|string[]  $path
-	 */
-	public static function associate(array $array, $path): array|\stdClass
+  * Reformats table to associative tree. Path looks like 'field|field[]field->field=field'.
+  * @param  string|string[]  $path
+  * @return mixed[]|\stdClass
+  */
+ public static function associate(array $array, $path)
 	{
 		$parts = is_array($path)
 			? $path
@@ -339,9 +368,10 @@ class Arrays
 
 
 	/**
-	 * Normalizes array to associative array. Replace numeric keys with their values, the new value will be $filling.
-	 */
-	public static function normalize(array $array, mixed $filling = null): array
+  * Normalizes array to associative array. Replace numeric keys with their values, the new value will be $filling.
+  * @param mixed $filling
+  */
+ public static function normalize(array $array, $filling = null): array
 	{
 		$res = [];
 		foreach ($array as $k => $v) {
@@ -353,15 +383,16 @@ class Arrays
 
 
 	/**
-	 * Returns and removes the value of an item from an array. If it does not exist, it throws an exception,
-	 * or returns $default, if provided.
-	 * @template T
-	 * @param  array<T>  $array
-	 * @param  ?T  $default
-	 * @return ?T
-	 * @throws Nette\InvalidArgumentException if item does not exist and default value is not provided
-	 */
-	public static function pick(array &$array, string|int $key, mixed $default = null): mixed
+  * Returns and removes the value of an item from an array. If it does not exist, it throws an exception,
+  * or returns $default, if provided.
+  * @template T
+  * @param  array<T>  $array
+  * @param mixed $default
+  * @return ?T
+  * @throws Nette\InvalidArgumentException if item does not exist and default value is not provided
+  * @param string|int $key
+  */
+ public static function pick(array &$array, $key, $default = null)
 	{
 		if (array_key_exists($key, $array)) {
 			$value = $array[$key];
@@ -527,9 +558,11 @@ class Arrays
 
 
 	/**
-	 * Converts value to array key.
-	 */
-	public static function toKey(mixed $value): int|string
+  * Converts value to array key.
+  * @return int|string
+  * @param mixed $value
+  */
+ public static function toKey($value)
 	{
 		return key([$value => null]);
 	}

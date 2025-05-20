@@ -20,7 +20,10 @@ use League\CommonMark\Parser\Cursor;
 
 class EmbedParser implements BlockContinueParserInterface
 {
-    private Embed $embed;
+    /**
+     * @var \League\CommonMark\Extension\Embed\Embed
+     */
+    private $embed;
 
     public function __construct(string $url)
     {

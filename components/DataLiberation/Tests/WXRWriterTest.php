@@ -1,8 +1,8 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use WordPress\DataLiberation\EntityWriter\WXRWriter;
 use WordPress\ByteStream\MemoryPipe;
+use WordPress\DataLiberation\EntityWriter\WXRWriter;
 use WordPress\DataLiberation\ImportEntity;
 
 class WXRWriterTest extends TestCase {
@@ -19,23 +19,23 @@ class WXRWriterTest extends TestCase {
 		$entity = new ImportEntity(
 			'post',
 			array(
-				'post_title' => 'Test Post',
-				'post_date' => '2023-10-01',
-				'guid' => '12345',
-				'description' => 'Test Description',
-				'content' => 'Test Content',
-				'excerpt' => 'Test Excerpt',
-				'post_id' => '1',
-				'post_date_gmt' => '2023-10-01T00:00:00',
+				'post_title'     => 'Test Post',
+				'post_date'      => '2023-10-01',
+				'guid'           => '12345',
+				'description'    => 'Test Description',
+				'content'        => 'Test Content',
+				'excerpt'        => 'Test Excerpt',
+				'post_id'        => '1',
+				'post_date_gmt'  => '2023-10-01T00:00:00',
 				'comment_status' => 'open',
-				'ping_status' => 'open',
-				'post_name' => 'test-post',
-				'status' => 'publish',
-				'post_parent' => '0',
-				'menu_order' => '0',
-				'post_type' => 'post',
-				'post_password' => '',
-				'is_sticky' => '0',
+				'ping_status'    => 'open',
+				'post_name'      => 'test-post',
+				'status'         => 'publish',
+				'post_parent'    => '0',
+				'menu_order'     => '0',
+				'post_type'      => 'post',
+				'post_password'  => '',
+				'is_sticky'      => '0',
 			)
 		);
 		$this->wxr_writer->append_entity( $entity );
@@ -78,23 +78,23 @@ XML;
 		$post = new ImportEntity(
 			'post',
 			array(
-				'post_title' => 'Test Post',
-				'post_date' => '2023-10-01',
-				'guid' => '12345',
-				'description' => 'Test Description',
-				'content' => 'Test Content',
-				'excerpt' => 'Test Excerpt',
-				'post_id' => '1',
-				'post_date_gmt' => '2023-10-01T00:00:00',
+				'post_title'     => 'Test Post',
+				'post_date'      => '2023-10-01',
+				'guid'           => '12345',
+				'description'    => 'Test Description',
+				'content'        => 'Test Content',
+				'excerpt'        => 'Test Excerpt',
+				'post_id'        => '1',
+				'post_date_gmt'  => '2023-10-01T00:00:00',
 				'comment_status' => 'open',
-				'ping_status' => 'open',
-				'post_name' => 'test-post',
-				'status' => 'publish',
-				'post_parent' => '0',
-				'menu_order' => '0',
-				'post_type' => 'post',
-				'post_password' => '',
-				'is_sticky' => '0',
+				'ping_status'    => 'open',
+				'post_name'      => 'test-post',
+				'status'         => 'publish',
+				'post_parent'    => '0',
+				'menu_order'     => '0',
+				'post_type'      => 'post',
+				'post_password'  => '',
+				'is_sticky'      => '0',
 			)
 		);
 		$this->wxr_writer->append_entity( $post );
@@ -102,7 +102,7 @@ XML;
 		$post_meta = new ImportEntity(
 			'post_meta',
 			array(
-				'meta_key' => 'key',
+				'meta_key'   => 'key',
 				'meta_value' => 'value',
 			)
 		);
@@ -111,10 +111,10 @@ XML;
 		$term = new ImportEntity(
 			'term',
 			array(
-				'term_id' => '1',
+				'term_id'  => '1',
 				'taxonomy' => 'category',
-				'slug' => 'test-term',
-				'parent' => '0',
+				'slug'     => 'test-term',
+				'parent'   => '0',
 			)
 		);
 		$this->wxr_writer->append_entity( $term );
@@ -122,18 +122,18 @@ XML;
 		$comment = new ImportEntity(
 			'comment',
 			array(
-				'comment_id' => '1',
-				'comment_author' => 'Author',
+				'comment_id'           => '1',
+				'comment_author'       => 'Author',
 				'comment_author_email' => 'author@example.com',
-				'comment_author_url' => 'http://example.com',
-				'comment_author_IP' => '127.0.0.1',
-				'comment_date' => '2023-10-01',
-				'comment_date_gmt' => '2023-10-01T00:00:00',
-				'comment_content' => 'Content',
-				'comment_approved' => '1',
-				'comment_type' => '',
-				'comment_parent' => '0',
-				'comment_user_id' => '1',
+				'comment_author_url'   => 'http://example.com',
+				'comment_author_IP'    => '127.0.0.1',
+				'comment_date'         => '2023-10-01',
+				'comment_date_gmt'     => '2023-10-01T00:00:00',
+				'comment_content'      => 'Content',
+				'comment_approved'     => '1',
+				'comment_type'         => '',
+				'comment_parent'       => '0',
+				'comment_user_id'      => '1',
 			)
 		);
 		$this->wxr_writer->append_entity( $comment );
@@ -203,23 +203,23 @@ XML;
 		$post1 = new ImportEntity(
 			'post',
 			array(
-				'post_title' => 'Post 1',
-				'post_date' => '2023-10-01',
-				'guid' => '12345',
-				'description' => 'Description 1',
-				'content' => 'Content 1',
-				'excerpt' => 'Excerpt 1',
-				'post_id' => '1',
-				'post_date_gmt' => '2023-10-01T00:00:00',
+				'post_title'     => 'Post 1',
+				'post_date'      => '2023-10-01',
+				'guid'           => '12345',
+				'description'    => 'Description 1',
+				'content'        => 'Content 1',
+				'excerpt'        => 'Excerpt 1',
+				'post_id'        => '1',
+				'post_date_gmt'  => '2023-10-01T00:00:00',
 				'comment_status' => 'open',
-				'ping_status' => 'open',
-				'post_name' => 'post-1',
-				'status' => 'publish',
-				'post_parent' => '0',
-				'menu_order' => '0',
-				'post_type' => 'post',
-				'post_password' => '',
-				'is_sticky' => '0',
+				'ping_status'    => 'open',
+				'post_name'      => 'post-1',
+				'status'         => 'publish',
+				'post_parent'    => '0',
+				'menu_order'     => '0',
+				'post_type'      => 'post',
+				'post_password'  => '',
+				'is_sticky'      => '0',
 			)
 		);
 		$this->wxr_writer->append_entity( $post1 );
@@ -227,23 +227,23 @@ XML;
 		$post2 = new ImportEntity(
 			'post',
 			array(
-				'post_title' => 'Post 2',
-				'post_date' => '2023-10-02',
-				'guid' => '12346',
-				'description' => 'Description 2',
-				'content' => 'Content 2',
-				'excerpt' => 'Excerpt 2',
-				'post_id' => '2',
-				'post_date_gmt' => '2023-10-02T00:00:00',
+				'post_title'     => 'Post 2',
+				'post_date'      => '2023-10-02',
+				'guid'           => '12346',
+				'description'    => 'Description 2',
+				'content'        => 'Content 2',
+				'excerpt'        => 'Excerpt 2',
+				'post_id'        => '2',
+				'post_date_gmt'  => '2023-10-02T00:00:00',
 				'comment_status' => 'open',
-				'ping_status' => 'open',
-				'post_name' => 'post-2',
-				'status' => 'publish',
-				'post_parent' => '0',
-				'menu_order' => '0',
-				'post_type' => 'post',
-				'post_password' => '',
-				'is_sticky' => '0',
+				'ping_status'    => 'open',
+				'post_name'      => 'post-2',
+				'status'         => 'publish',
+				'post_parent'    => '0',
+				'menu_order'     => '0',
+				'post_type'      => 'post',
+				'post_password'  => '',
+				'is_sticky'      => '0',
 			)
 		);
 		$this->wxr_writer->append_entity( $post2 );
@@ -251,18 +251,18 @@ XML;
 		$comment1 = new ImportEntity(
 			'comment',
 			array(
-				'comment_id' => '1',
-				'comment_author' => 'Author 1',
+				'comment_id'           => '1',
+				'comment_author'       => 'Author 1',
 				'comment_author_email' => 'author1@example.com',
-				'comment_author_url' => 'http://example.com',
-				'comment_author_IP' => '127.0.0.1',
-				'comment_date' => '2023-10-02',
-				'comment_date_gmt' => '2023-10-02T00:00:00',
-				'comment_content' => 'Content 1',
-				'comment_approved' => '1',
-				'comment_type' => '',
-				'comment_parent' => '0',
-				'comment_user_id' => '1',
+				'comment_author_url'   => 'http://example.com',
+				'comment_author_IP'    => '127.0.0.1',
+				'comment_date'         => '2023-10-02',
+				'comment_date_gmt'     => '2023-10-02T00:00:00',
+				'comment_content'      => 'Content 1',
+				'comment_approved'     => '1',
+				'comment_type'         => '',
+				'comment_parent'       => '0',
+				'comment_user_id'      => '1',
 			)
 		);
 		$this->wxr_writer->append_entity( $comment1 );
@@ -270,18 +270,18 @@ XML;
 		$comment2 = new ImportEntity(
 			'comment',
 			array(
-				'comment_id' => '2',
-				'comment_author' => 'Author 2',
+				'comment_id'           => '2',
+				'comment_author'       => 'Author 2',
 				'comment_author_email' => 'author2@example.com',
-				'comment_author_url' => 'http://example.com',
-				'comment_author_IP' => '127.0.0.1',
-				'comment_date' => '2023-10-02',
-				'comment_date_gmt' => '2023-10-02T00:00:00',
-				'comment_content' => 'Content 2',
-				'comment_approved' => '1',
-				'comment_type' => '',
-				'comment_parent' => '0',
-				'comment_user_id' => '1',
+				'comment_author_url'   => 'http://example.com',
+				'comment_author_IP'    => '127.0.0.1',
+				'comment_date'         => '2023-10-02',
+				'comment_date_gmt'     => '2023-10-02T00:00:00',
+				'comment_content'      => 'Content 2',
+				'comment_approved'     => '1',
+				'comment_type'         => '',
+				'comment_parent'       => '0',
+				'comment_user_id'      => '1',
 			)
 		);
 		$this->wxr_writer->append_entity( $comment2 );
@@ -289,18 +289,18 @@ XML;
 		$comment3 = new ImportEntity(
 			'comment',
 			array(
-				'comment_id' => '3',
-				'comment_author' => 'Author 3',
+				'comment_id'           => '3',
+				'comment_author'       => 'Author 3',
 				'comment_author_email' => 'author3@example.com',
-				'comment_author_url' => 'http://example.com',
-				'comment_author_IP' => '127.0.0.1',
-				'comment_date' => '2023-10-02',
-				'comment_date_gmt' => '2023-10-02T00:00:00',
-				'comment_content' => 'Content 3',
-				'comment_approved' => '1',
-				'comment_type' => '',
-				'comment_parent' => '0',
-				'comment_user_id' => '1',
+				'comment_author_url'   => 'http://example.com',
+				'comment_author_IP'    => '127.0.0.1',
+				'comment_date'         => '2023-10-02',
+				'comment_date_gmt'     => '2023-10-02T00:00:00',
+				'comment_content'      => 'Content 3',
+				'comment_approved'     => '1',
+				'comment_type'         => '',
+				'comment_parent'       => '0',
+				'comment_user_id'      => '1',
 			)
 		);
 		$this->wxr_writer->append_entity( $comment3 );
@@ -308,23 +308,23 @@ XML;
 		$post3 = new ImportEntity(
 			'post',
 			array(
-				'post_title' => 'Post 3',
-				'post_date' => '2023-10-03',
-				'guid' => '12347',
-				'description' => 'Description 3',
-				'content' => 'Content 3',
-				'excerpt' => 'Excerpt 3',
-				'post_id' => '3',
-				'post_date_gmt' => '2023-10-03T00:00:00',
+				'post_title'     => 'Post 3',
+				'post_date'      => '2023-10-03',
+				'guid'           => '12347',
+				'description'    => 'Description 3',
+				'content'        => 'Content 3',
+				'excerpt'        => 'Excerpt 3',
+				'post_id'        => '3',
+				'post_date_gmt'  => '2023-10-03T00:00:00',
 				'comment_status' => 'open',
-				'ping_status' => 'open',
-				'post_name' => 'post-3',
-				'status' => 'publish',
-				'post_parent' => '0',
-				'menu_order' => '0',
-				'post_type' => 'post',
-				'post_password' => '',
-				'is_sticky' => '0',
+				'ping_status'    => 'open',
+				'post_name'      => 'post-3',
+				'status'         => 'publish',
+				'post_parent'    => '0',
+				'menu_order'     => '0',
+				'post_type'      => 'post',
+				'post_password'  => '',
+				'is_sticky'      => '0',
 			)
 		);
 		$this->wxr_writer->append_entity( $post3 );
@@ -332,18 +332,18 @@ XML;
 		$comment4 = new ImportEntity(
 			'comment',
 			array(
-				'comment_id' => '4',
-				'comment_author' => 'Author 4',
+				'comment_id'           => '4',
+				'comment_author'       => 'Author 4',
 				'comment_author_email' => 'author4@example.com',
-				'comment_author_url' => 'http://example.com',
-				'comment_author_IP' => '127.0.0.1',
-				'comment_date' => '2023-10-03',
-				'comment_date_gmt' => '2023-10-03T00:00:00',
-				'comment_content' => 'Content 4',
-				'comment_approved' => '1',
-				'comment_type' => '',
-				'comment_parent' => '0',
-				'comment_user_id' => '1',
+				'comment_author_url'   => 'http://example.com',
+				'comment_author_IP'    => '127.0.0.1',
+				'comment_date'         => '2023-10-03',
+				'comment_date_gmt'     => '2023-10-03T00:00:00',
+				'comment_content'      => 'Content 4',
+				'comment_approved'     => '1',
+				'comment_type'         => '',
+				'comment_parent'       => '0',
+				'comment_user_id'      => '1',
 			)
 		);
 		$this->wxr_writer->append_entity( $comment4 );
@@ -512,23 +512,23 @@ XML;
 		$post1 = new ImportEntity(
 			'post',
 			array(
-				'post_title' => 'Post 1',
-				'post_date' => '2023-10-01',
-				'guid' => '12345',
-				'description' => 'Description 1',
-				'content' => 'Content 1',
-				'excerpt' => 'Excerpt 1',
-				'post_id' => '1',
-				'post_date_gmt' => '2023-10-01T00:00:00',
+				'post_title'     => 'Post 1',
+				'post_date'      => '2023-10-01',
+				'guid'           => '12345',
+				'description'    => 'Description 1',
+				'content'        => 'Content 1',
+				'excerpt'        => 'Excerpt 1',
+				'post_id'        => '1',
+				'post_date_gmt'  => '2023-10-01T00:00:00',
 				'comment_status' => 'open',
-				'ping_status' => 'open',
-				'post_name' => 'post-1',
-				'status' => 'publish',
-				'post_parent' => '0',
-				'menu_order' => '0',
-				'post_type' => 'post',
-				'post_password' => '',
-				'is_sticky' => '0',
+				'ping_status'    => 'open',
+				'post_name'      => 'post-1',
+				'status'         => 'publish',
+				'post_parent'    => '0',
+				'menu_order'     => '0',
+				'post_type'      => 'post',
+				'post_password'  => '',
+				'is_sticky'      => '0',
 			)
 		);
 		$this->wxr_writer->append_entity( $post1 );
@@ -546,23 +546,23 @@ XML;
 		$post2 = new ImportEntity(
 			'post',
 			array(
-				'post_title' => 'Post 2',
-				'post_date' => '2023-10-02',
-				'guid' => '12346',
-				'description' => 'Description 2',
-				'content' => 'Content 2',
-				'excerpt' => 'Excerpt 2',
-				'post_id' => '2',
-				'post_date_gmt' => '2023-10-02T00:00:00',
+				'post_title'     => 'Post 2',
+				'post_date'      => '2023-10-02',
+				'guid'           => '12346',
+				'description'    => 'Description 2',
+				'content'        => 'Content 2',
+				'excerpt'        => 'Excerpt 2',
+				'post_id'        => '2',
+				'post_date_gmt'  => '2023-10-02T00:00:00',
 				'comment_status' => 'open',
-				'ping_status' => 'open',
-				'post_name' => 'post-2',
-				'status' => 'publish',
-				'post_parent' => '0',
-				'menu_order' => '0',
-				'post_type' => 'post',
-				'post_password' => '',
-				'is_sticky' => '0',
+				'ping_status'    => 'open',
+				'post_name'      => 'post-2',
+				'status'         => 'publish',
+				'post_parent'    => '0',
+				'menu_order'     => '0',
+				'post_type'      => 'post',
+				'post_password'  => '',
+				'is_sticky'      => '0',
 			)
 		);
 		$this->wxr_writer->append_entity( $post2 );

@@ -9,9 +9,9 @@ use WordPress\Git\GitException;
 class ProtocolDemultiplexer {
 
 	const STREAM_CODE_SIDE_BAND = 'side_band';
-	const STREAM_CODE_PROGRESS  = 'progress';
-	const STREAM_CODE_FATAL     = 'fatal';
-	const STREAM_CODE_UNKNOWN   = 'unknown';
+	const STREAM_CODE_PROGRESS = 'progress';
+	const STREAM_CODE_FATAL = 'fatal';
+	const STREAM_CODE_UNKNOWN = 'unknown';
 
 	const STREAM_CODE_MAP = array(
 		0x01 => self::STREAM_CODE_SIDE_BAND,
@@ -22,7 +22,7 @@ class ProtocolDemultiplexer {
 	/**
 	 * @var ByteReadStream
 	 */
-	protected $upstream                      = '';
+	protected $upstream = '';
 	protected $is_paused_at_incomplete_input = false;
 
 	protected $chunk;
@@ -74,15 +74,19 @@ class ProtocolDemultiplexer {
 		$length = hexdec( $length_hex );
 
 		$stream_code = 'unknown';
-		// Peek the next byte to determine the stream code.
-		$this->upstream->pull( 1, ByteReadStream::PULL_EXACTLY );
-		$stream_code_byte      = $this->upstream->peek( 1 );
-		$potential_stream_code = ord( $stream_code_byte );
-		if ( isset( self::STREAM_CODE_MAP[ $potential_stream_code ] ) ) {
-			$stream_code = self::STREAM_CODE_MAP[ $potential_stream_code ];
-			// Skip over the stream code byte.
-			$this->upstream->consume( 1 );
-			$length -= 1;
+		try {
+			// Peek the next byte to determine the stream code.
+			$this->upstream->pull( 1, ByteReadStream::PULL_EXACTLY );
+			$stream_code_byte      = $this->upstream->peek( 1 );
+			$potential_stream_code = ord( $stream_code_byte );
+			if ( isset( self::STREAM_CODE_MAP[ $potential_stream_code ] ) ) {
+				$stream_code = self::STREAM_CODE_MAP[ $potential_stream_code ];
+				// Skip over the stream code byte.
+				$this->upstream->consume( 1 );
+				$length -= 1;
+			}
+		} catch ( NotEnoughDataException $e ) {
+			// Ignore.
 		}
 
 		if ( $length_hex === '0000' || $length_hex === '0001' || $length_hex === '0002' ) {

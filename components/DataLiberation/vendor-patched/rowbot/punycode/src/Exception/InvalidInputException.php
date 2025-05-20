@@ -1,9 +1,8 @@
 <?php
 
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace Rowbot\Punycode\Exception;
 
-class InvalidInputException extends PunycodeException
-{
+class InvalidInputException extends PunycodeException {
 }

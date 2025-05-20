@@ -27,7 +27,7 @@ final class FallbackNodeXmlRenderer implements XmlNodeRendererInterface
      *
      * @psalm-allow-private-mutation
      */
-    private array $classCache = [];
+    private $classCache = [];
 
     /**
      * @psalm-allow-private-mutation

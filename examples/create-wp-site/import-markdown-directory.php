@@ -18,7 +18,7 @@ use WordPress\HttpClient\Crawler;
 use WordPress\Zip\ZipFilesystem;
 
 use function WordPress\DataLiberation\URL\is_child_url_of;
-use function WordPress\Filesystem\wp_join_paths;
+use function WordPress\Filesystem\wp_join_unix_paths;
 
 if ( file_exists( '/wordpress/wp-load.php' ) ) {
 	require_once '/wordpress/wp-load.php';
@@ -341,7 +341,7 @@ if ( in_array( $args['mode'], array( 'local-directory', 'git', 'crawler' ) ) ) {
 		 * This isn't trivial. Having a top-level path prefix is not perfect,
 		 * but it's a sound compromise.
 		 */
-		$path = wp_join_paths( $import_path_prefix, $path );
+		$path = wp_join_unix_paths( $import_path_prefix, $path );
 
 		if ( 1 === preg_match( $index_file_pattern, $path ) ) {
 			$path = dirname( $path );
@@ -398,7 +398,7 @@ if ( in_array( $args['mode'], array( 'local-directory', 'git', 'crawler' ) ) ) {
 				 * to a WordPress-friendly URL scheme.
 				 */
 				$path_rewritten = map_file_path_to_wordpress_url( $path_relative_to_base );
-				$path_rewritten = wp_join_paths( $base_url_path_prefix, $path_rewritten );
+				$path_rewritten = wp_join_unix_paths( $base_url_path_prefix, $path_rewritten );
 			} elseif ( $processor->is_url_absolute() ) {
 				/**
 				 * No. We are linking to a content page within our site but there is
@@ -412,7 +412,7 @@ if ( in_array( $args['mode'], array( 'local-directory', 'git', 'crawler' ) ) ) {
 				 * Our best shot is to keep the URL as is, just with the imported
 				 * content root prepended to it.
 				 */
-				$path_rewritten = wp_join_paths( $base_url_path_prefix, $import_path_prefix, $path_relative_to_base );
+				$path_rewritten = wp_join_unix_paths( $base_url_path_prefix, $import_path_prefix, $path_relative_to_base );
 			} else {
 				/**
 				 * It's a relative URL pointing somewhere within the URL space we're importing

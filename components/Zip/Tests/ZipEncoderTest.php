@@ -9,9 +9,9 @@ use WordPress\Zip\ZipEncoder;
 
 class ZipEncoderTest extends TestCase {
 
-	private $tempDir        = '';
+	private $tempDir = '';
 	private $tempSourceFile = '';
-	private $tempZipPath    = '';
+	private $tempZipPath = '';
 
 	/**
 	 * @before
@@ -68,8 +68,8 @@ class ZipEncoderTest extends TestCase {
 			new FileEntry(
 				array(
 					'compressionMethod' => $should_deflate ? ZipDecoder::COMPRESSION_DEFLATE : ZipDecoder::COMPRESSION_NONE,
-					'path' => 'file.txt',
-					'body_reader' => new MemoryPipe( 'Hello' ),
+					'path'              => 'file.txt',
+					'body_reader'       => new MemoryPipe( 'Hello' ),
 				)
 			)
 		);
@@ -81,7 +81,7 @@ class ZipEncoderTest extends TestCase {
 		$this->assertGreaterThan( 0, filesize( $this->tempZipPath ) );
 
 		// Open the ZIP file and verify its contents
-		$zip = new \ZipArchive();
+		$zip = new ZipArchive();
 		$zip->open( $this->tempZipPath );
 		$this->assertTrue( $zip->locateName( 'file.txt' ) !== false, 'The file was not found in the ZIP' );
 		$fileContent = $zip->getFromName( 'file.txt' );

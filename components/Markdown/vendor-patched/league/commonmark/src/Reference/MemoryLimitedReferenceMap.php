@@ -15,11 +15,17 @@ namespace League\CommonMark\Reference;
 
 final class MemoryLimitedReferenceMap implements ReferenceMapInterface
 {
-    private ReferenceMapInterface $decorated;
+    /**
+     * @var \League\CommonMark\Reference\ReferenceMapInterface
+     */
+    private $decorated;
 
-    private const MINIMUM_SIZE = 100_000;
+    private const MINIMUM_SIZE = 100000;
 
-    private int $remaining;
+    /**
+     * @var int
+     */
+    private $remaining;
 
     public function __construct(ReferenceMapInterface $decorated, int $maxSize)
     {

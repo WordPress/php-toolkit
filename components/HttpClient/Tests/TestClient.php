@@ -43,9 +43,10 @@ class TestClient extends Client {
 	public function getRedirectCount( $request ) {
 		$count = 0;
 		while ( $request->redirected_to ) {
-			++$count;
+			++ $count;
 			$request = $request->redirected_to;
 		}
+
 		return $count;
 	}
 }

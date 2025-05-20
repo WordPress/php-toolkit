@@ -23,15 +23,16 @@ use League\CommonMark\Normalizer\TextNormalizer;
  */
 final class ReferenceMap implements ReferenceMapInterface
 {
-    /** @psalm-readonly */
-    private TextNormalizer $normalizer;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Normalizer\TextNormalizer */
+    private $normalizer;
 
     /**
      * @var array<string, ReferenceInterface>
      *
      * @psalm-readonly-allow-private-mutation
      */
-    private array $references = [];
+    private $references = [];
 
     public function __construct()
     {

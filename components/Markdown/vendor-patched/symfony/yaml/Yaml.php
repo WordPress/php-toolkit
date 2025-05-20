@@ -48,8 +48,9 @@ class Yaml
      * @param int-mask-of<self::PARSE_*> $flags    A bit field of PARSE_* constants to customize the YAML parser behavior
      *
      * @throws ParseException If the file could not be read or the YAML is not valid
+     * @return mixed
      */
-    public static function parseFile(string $filename, int $flags = 0): mixed
+    public static function parseFile(string $filename, int $flags = 0)
     {
         $yaml = new Parser();
 
@@ -69,8 +70,9 @@ class Yaml
      * @param int-mask-of<self::PARSE_*> $flags A bit field of PARSE_* constants to customize the YAML parser behavior
      *
      * @throws ParseException If the YAML is not valid
+     * @return mixed
      */
-    public static function parse(string $input, int $flags = 0): mixed
+    public static function parse(string $input, int $flags = 0)
     {
         $yaml = new Parser();
 
@@ -88,7 +90,7 @@ class Yaml
      * @param int                       $indent The amount of spaces to use for indentation of nested nodes
      * @param int-mask-of<self::DUMP_*> $flags  A bit field of DUMP_* constants to customize the dumped YAML string
      */
-    public static function dump(mixed $input, int $inline = 2, int $indent = 4, int $flags = 0): string
+    public static function dump($input, int $inline = 2, int $indent = 4, int $flags = 0): string
     {
         $yaml = new Dumper($indent);
 

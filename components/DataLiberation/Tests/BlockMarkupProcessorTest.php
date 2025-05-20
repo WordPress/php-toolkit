@@ -38,8 +38,8 @@ class BlockMarkupProcessorTest extends TestCase {
 				'<!-- wp:code { "meta": { "language": "php", "highlightedLines": [14, 22] }, "class": "dark" } -->',
 				'wp:code',
 				array(
-					'meta' => array(
-						'language' => 'php',
+					'meta'  => array(
+						'language'         => 'php',
 						'highlightedLines' => array( 14, 22 ),
 					),
 					'class' => 'dark',
@@ -68,7 +68,7 @@ class BlockMarkupProcessorTest extends TestCase {
 				'wp:spacer',
 				array(),
 			),
-			'Self-closing block with attributes' => array(
+			'Self-closing block with attributes'    => array(
 				'<!-- wp:spacer {"height":"20px"} /-->',
 				'wp:spacer',
 				array( 'height' => '20px' ),
@@ -110,11 +110,11 @@ class BlockMarkupProcessorTest extends TestCase {
 
 	public static function provider_test_treat_invalid_block_openers_as_comments() {
 		return array(
-			'Block name including !'                     => array( '<!-- wp:pa!ragraph -->' ),
-			'Block name including a whitespace'          => array( '<!-- wp: paragraph -->' ),
-			'No namespace in the block name'             => array( '<!-- paragraph -->' ),
-			'Non-object attributes'                      => array( '<!-- wp:paragraph "attrs" -->' ),
-			'Invalid JSON as attributes – Double }} '    => array( '<!-- wp:paragraph {"class":"wp-block"}} -->' ),
+			'Block name including !'                  => array( '<!-- wp:pa!ragraph -->' ),
+			'Block name including a whitespace'       => array( '<!-- wp: paragraph -->' ),
+			'No namespace in the block name'          => array( '<!-- paragraph -->' ),
+			'Non-object attributes'                   => array( '<!-- wp:paragraph "attrs" -->' ),
+			'Invalid JSON as attributes – Double }} ' => array( '<!-- wp:paragraph {"class":"wp-block"}} -->' ),
 		);
 	}
 
@@ -142,7 +142,7 @@ class BlockMarkupProcessorTest extends TestCase {
 	 */
 	public function test_set_modifiable_text( $markup, $new_text, $new_markup, $which_token = 1 ) {
 		$p = new BlockMarkupProcessor( $markup );
-		for ( $i = 0; $i < $which_token; $i++ ) {
+		for ( $i = 0; $i < $which_token; $i ++ ) {
 			$p->next_token();
 		}
 		$this->assertTrue( $p->set_modifiable_text( $new_text ), 'Failed to set the modifiable text.' );
@@ -167,7 +167,7 @@ class BlockMarkupProcessorTest extends TestCase {
 				'<p>I am a new text</p>',
 				2,
 			),
-			'Escapes the text in a text node' => array(
+			'Escapes the text in a text node'           => array(
 				'<p>Hello, there</p>',
 				'The <div> tag is my favorite one',
 				'<p>The &lt;div&gt; tag is my favorite one</p>',
@@ -188,8 +188,8 @@ class BlockMarkupProcessorTest extends TestCase {
 
 	public static function provider_test_set_modifiable_text_invalid_nodes() {
 		return array(
-			'Tag' => array( '<a href="">' ),
-			'DOCTYPE' => array( '<!DOCTYPE html>' ),
+			'Tag'           => array( '<a href="">' ),
+			'DOCTYPE'       => array( '<!DOCTYPE html>' ),
 			'Funky comment' => array( '</1I am a comment>' ),
 		);
 	}

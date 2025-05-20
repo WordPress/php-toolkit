@@ -18,11 +18,13 @@ namespace League\CommonMark\Node;
 
 final class NodeWalkerEvent
 {
-    /** @psalm-readonly */
-    private Node $node;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Node\Node */
+    private $node;
 
-    /** @psalm-readonly */
-    private bool $isEntering;
+    /** @psalm-readonly
+     * @var bool */
+    private $isEntering;
 
     public function __construct(Node $node, bool $isEntering = true)
     {

@@ -27,6 +27,7 @@ class DeflateTransformer implements ByteTransformer {
 		if ( false === $chunk ) {
 			throw new ByteStreamException( 'Failed to deflate bytes' );
 		}
+
 		return $chunk;
 	}
 
@@ -36,6 +37,7 @@ class DeflateTransformer implements ByteTransformer {
 		}
 		$last_chunk           = deflate_add( $this->deflate_handle, '', ZLIB_FINISH );
 		$this->deflate_handle = null;
+
 		return $last_chunk;
 	}
 }

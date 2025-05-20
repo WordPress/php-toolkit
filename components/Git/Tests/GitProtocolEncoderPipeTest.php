@@ -2,13 +2,14 @@
 
 namespace WordPress\Git\Tests;
 
+use PHPUnit\Framework\TestCase;
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\Filesystem\InMemoryFilesystem;
 use WordPress\Git\GitRepository;
 use WordPress\Git\Protocol\GitProtocolEncoderPipe;
 use WordPress\Git\Protocol\Parser\GitProtocolDecoder;
 
-class GitProtocolEncoderPipeTest extends \PHPUnit\Framework\TestCase {
+class GitProtocolEncoderPipeTest extends TestCase {
 
 	public function test_encode_empty_file_and_a_text_file() {
 		$fs         = InMemoryFilesystem::create();

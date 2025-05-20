@@ -2,11 +2,12 @@
 
 namespace WordPress\Git\Tests;
 
+use PHPUnit\Framework\TestCase;
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\Git\Protocol\Parser\PacketParser;
 use WordPress\Git\Protocol\Parser\ProtocolDemultiplexer;
 
-class PacketParserTest extends \PHPUnit\Framework\TestCase {
+class PacketParserTest extends TestCase {
 
 	public function test_parse_response_no_blobs() {
 		$reader        = FileReadStream::from_path( __DIR__ . '/fixtures/wordpress-develop-response-no-blobs.bin' );

@@ -13,10 +13,10 @@ if ( $argc < 2 ) {
 $command = $argv[1];
 $options = array();
 
-for ( $i = 2; $i < $argc; $i++ ) {
-	if ( str_starts_with( $argv[ $i ], '--' ) && isset( $argv[ $i + 1 ] ) ) {
+for ( $i = 2; $i < $argc; $i ++ ) {
+	if ( strncmp( $argv[ $i ], '--', strlen( '--' ) ) === 0 && isset( $argv[ $i + 1 ] ) ) {
 		$options[ substr( $argv[ $i ], 2 ) ] = $argv[ $i + 1 ];
-		++$i;
+		++ $i;
 	}
 }
 
@@ -43,7 +43,7 @@ switch ( $command ) {
 		wp_list_urls_in_block_markup(
 			array(
 				'block_markup' => $block_markup,
-				'base_url' => $base_url,
+				'base_url'     => $base_url,
 			)
 		);
 		echo "\n";
@@ -65,8 +65,8 @@ switch ( $command ) {
 		$result = wp_rewrite_urls(
 			array(
 				'block_markup' => $block_markup,
-				'base_url' => $base_url,
-				'url-mapping' => array(
+				'base_url'     => $base_url,
+				'url-mapping'  => array(
 					$options['from-url'] => $options['to-url'],
 				),
 			)

@@ -1,0 +1,47 @@
+{
+	"version": 2,
+	"blueprintMeta": {
+		"name": "Plugin Showcase Blueprint",
+		"description": "A blueprint demonstrating various plugin configurations"
+	},
+	"plugins": [
+		"akismet",
+		"jetpack@latest",
+		"woocommerce@7.8.0",
+		{
+			"source": "gutenberg",
+			"active": true
+		},
+		{
+			"source": "contact-form-7",
+			"active": false
+		},
+		{
+			"source": "https://example.com/plugins/custom-plugin.zip",
+			"active": true,
+			"activationOptions": {
+				"setupWizard": "skip",
+				"defaultSettings": {
+					"optionA": true,
+					"optionB": "value"
+				}
+			},
+			"onError": "skip-plugin"
+		},
+		{
+			"source": "./local-plugin.zip",
+			"active": true
+		}
+	],
+	"content": [
+		{
+			"type": "posts",
+			"source": [
+				{
+					"post_title": "Plugin Showcase",
+					"post_content": "This blueprint demonstrates various plugin configurations."
+				}
+			]
+		}
+	]
+}

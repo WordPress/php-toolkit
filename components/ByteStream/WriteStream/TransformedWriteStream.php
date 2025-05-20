@@ -1,7 +1,9 @@
 <?php
+
 namespace WordPress\ByteStream\WriteStream;
 
 use ArrayAccess;
+use ReturnTypeWillChange;
 use WordPress\ByteStream\ByteStreamException;
 use WordPress\ByteStream\ByteTransformer\ByteTransformer;
 
@@ -46,28 +48,29 @@ class TransformedWriteStream implements ByteWriteStream, ArrayAccess {
 	}
 
 	/** @disregard P1038 */
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function offsetGet( $offset ) {
 		if ( ! isset( $this->filters[ $offset ] ) ) {
 			throw new ByteStreamException( sprintf( 'Filter %s not found', $offset ) );
 		}
+
 		return $this->filters[ $offset ];
 	}
 
 	/** @disregard P1038 */
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function offsetExists( $offset ) {
 		return isset( $this->filters[ $offset ] );
 	}
 
 	/** @disregard P1038 */
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function offsetSet( $offset, $value ) {
 		$this->filters[ $offset ] = $value;
 	}
 
 	/** @disregard P1038 */
-	#[\ReturnTypeWillChange]
+	#[ReturnTypeWillChange]
 	public function offsetUnset( $offset ) {
 		unset( $this->filters[ $offset ] );
 	}

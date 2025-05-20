@@ -10,14 +10,14 @@ use WordPress\DataLiberation\DataFormatConsumer\AnnotatedBlockMarkupConsumer;
 use WordPress\DataLiberation\DataFormatConsumer\BlocksWithMetadata;
 use WordPress\DataLiberation\DataFormatProducer\AnnotatedBlockMarkupProducer;
 use WordPress\Filesystem\Layer\ChrootLayer;
-use WordPress\HttpServer\ResponseWriter\BufferingResponseWriter;
+use WordPress\HttpServer\Response\BufferingResponseWriter;
 use WordPress\Filesystem\LocalFilesystem;
 use WordPress\Filesystem\Visitor\FilesystemVisitor;
 use WordPress\Git\GitEndpoint;
 use WordPress\Git\GitFilesystem;
 use WordPress\Git\GitRepository;
 
-use function WordPress\Filesystem\wp_canonicalize_path;
+use function WordPress\Filesystem\wp_unix_path_resolve_dots;
 
 $git_repo_path = __DIR__ . '/git-test-server-data';
 if(!is_dir($git_repo_path)) {
@@ -68,12 +68,12 @@ switch($request_path) {
                 'post_status' => 'publish',
             ]);
             foreach($pages as $page) {
-                $file_path = wp_canonicalize_path($post_type . '/' . $page->post_name . '.html');
+                $file_path = '/' . ltrim(wp_unix_path_resolve_dots($post_type . '/' . $page->post_name . '.html'), '/');
                 $metadata = [];
                 foreach(['post_date_gmt', 'post_title', 'menu_order'] as $key) {
                     $metadata[$key] = get_post_field($key, $page->ID);
                 }
-                
+
                 $converter = new AnnotatedBlockMarkupProducer(
                     new BlocksWithMetadata($page->post_content, $metadata)
                 );
@@ -91,7 +91,7 @@ switch($request_path) {
                 $event = $visitor->get_event();
                 if($event->is_entering()) {
                     foreach($event->files as $file_name) {
-                        $path = wp_canonicalize_path($post_type . '/' . $event->dir . '/' . $file_name);
+                        $path = '/' . ltrim(wp_unix_path_resolve_dots($post_type . '/' . $event->dir . '/' . $file_name), '/');
                         if(!isset($diff['updates'][$path])) {
                             $diff['deletes'][] = $path;
                         }
@@ -116,7 +116,7 @@ if($request_path === '/git-receive-pack') {
         $updated_ids = [];
         foreach($git_fs->ls($post_type) as $file_name) {
             $file_path = $post_type . '/' . $file_name;
-            $converter = new AnnotatedBlockMarkupConsumer( 
+            $converter = new AnnotatedBlockMarkupConsumer(
                 $git_fs->get_contents($file_path)
             );
             $result = $converter->consume();

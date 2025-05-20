@@ -36,8 +36,9 @@ use League\CommonMark\Util\RegexHelper;
 
 final class CloseBracketParser implements InlineParserInterface, EnvironmentAwareInterface
 {
-    /** @psalm-readonly-allow-private-mutation */
-    private EnvironmentInterface $environment;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\CommonMark\Environment\EnvironmentInterface */
+    private $environment;
 
     public function getMatchDefinition(): InlineParserMatch
     {

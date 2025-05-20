@@ -28,10 +28,9 @@ final class ObjectHelpers
 	public static function strictGet(string $class, string $name): void
 	{
 		$rc = new \ReflectionClass($class);
-		$hint = self::getSuggestion(array_merge(
-			array_filter($rc->getProperties(\ReflectionProperty::IS_PUBLIC), fn($p) => !$p->isStatic()),
-			self::parseFullDoc($rc, '~^[ \t*]*@property(?:-read)?[ \t]+(?:\S+[ \t]+)??\$(\w+)~m'),
-		), $name);
+		$hint = self::getSuggestion(array_merge(array_filter($rc->getProperties(\ReflectionProperty::IS_PUBLIC), function ($p) {
+      return !$p->isStatic();
+  }), self::parseFullDoc($rc, '~^[ \t*]*@property(?:-read)?[ \t]+(?:\S+[ \t]+)??\$(\w+)~m')), $name);
 		throw new MemberAccessException("Cannot read an undeclared property $class::\$$name" . ($hint ? ", did you mean \$$hint?" : '.'));
 	}
 
@@ -43,10 +42,9 @@ final class ObjectHelpers
 	public static function strictSet(string $class, string $name): void
 	{
 		$rc = new \ReflectionClass($class);
-		$hint = self::getSuggestion(array_merge(
-			array_filter($rc->getProperties(\ReflectionProperty::IS_PUBLIC), fn($p) => !$p->isStatic()),
-			self::parseFullDoc($rc, '~^[ \t*]*@property(?:-write)?[ \t]+(?:\S+[ \t]+)??\$(\w+)~m'),
-		), $name);
+		$hint = self::getSuggestion(array_merge(array_filter($rc->getProperties(\ReflectionProperty::IS_PUBLIC), function ($p) {
+      return !$p->isStatic();
+  }), self::parseFullDoc($rc, '~^[ \t*]*@property(?:-write)?[ \t]+(?:\S+[ \t]+)??\$(\w+)~m')), $name);
 		throw new MemberAccessException("Cannot write to an undeclared property $class::\$$name" . ($hint ? ", did you mean \$$hint?" : '.'));
 	}
 
@@ -74,11 +72,7 @@ final class ObjectHelpers
 			throw new MemberAccessException("Call to {$visibility}method $class::$method() from " . ($context ? "scope $context." : 'global scope.'));
 
 		} else {
-			$hint = self::getSuggestion(array_merge(
-				get_class_methods($class),
-				self::parseFullDoc(new \ReflectionClass($class), '~^[ \t*]*@method[ \t]+(?:static[ \t]+)?(?:\S+[ \t]+)??(\w+)\(~m'),
-				$additionalMethods,
-			), $method);
+			$hint = self::getSuggestion(array_merge(get_class_methods($class), self::parseFullDoc(new \ReflectionClass($class), '~^[ \t*]*@method[ \t]+(?:static[ \t]+)?(?:\S+[ \t]+)??(\w+)\(~m'), $additionalMethods), $method);
 			throw new MemberAccessException("Call to undefined method $class::$method()" . ($hint ? ", did you mean $hint()?" : '.'));
 		}
 	}
@@ -107,10 +101,9 @@ final class ObjectHelpers
 			throw new MemberAccessException("Call to {$visibility}method $class::$method() from " . ($context ? "scope $context." : 'global scope.'));
 
 		} else {
-			$hint = self::getSuggestion(
-				array_filter((new \ReflectionClass($class))->getMethods(\ReflectionMethod::IS_PUBLIC), fn($m) => $m->isStatic()),
-				$method,
-			);
+			$hint = self::getSuggestion(array_filter((new \ReflectionClass($class))->getMethods(\ReflectionMethod::IS_PUBLIC), function ($m) {
+       return $m->isStatic();
+   }), $method);
 			throw new MemberAccessException("Call to undefined static method $class::$method()" . ($hint ? ", did you mean $hint()?" : '.'));
 		}
 	}
@@ -130,12 +123,7 @@ final class ObjectHelpers
 		}
 
 		$rc = new \ReflectionClass($class);
-		preg_match_all(
-			'~^  [ \t*]*  @property(|-read|-write|-deprecated)  [ \t]+  [^\s$]+  [ \t]+  \$  (\w+)  ()~mx',
-			(string) $rc->getDocComment(),
-			$matches,
-			PREG_SET_ORDER,
-		);
+		preg_match_all('~^  [ \t*]*  @property(|-read|-write|-deprecated)  [ \t]+  [^\s$]+  [ \t]+  \$  (\w+)  ()~mx', (string) $rc->getDocComment(), $matches, PREG_SET_ORDER);
 
 		$props = [];
 		foreach ($matches as [, $type, $name]) {
@@ -205,11 +193,12 @@ final class ObjectHelpers
 
 
 	/**
-	 * Checks if the public non-static property exists.
-	 * Returns 'event' if the property exists and has event like name
-	 * @internal
-	 */
-	public static function hasProperty(string $class, string $name): bool|string
+  * Checks if the public non-static property exists.
+  * Returns 'event' if the property exists and has event like name
+  * @internal
+  * @return bool|string
+  */
+ public static function hasProperty(string $class, string $name)
 	{
 		static $cache;
 		$prop = &$cache[$class][$name];
@@ -217,6 +206,7 @@ final class ObjectHelpers
 			$prop = false;
 			try {
 				$rp = new \ReflectionProperty($class, $name);
+    $rp->setAccessible(true);
 				if ($rp->isPublic() && !$rp->isStatic()) {
 					$prop = $name >= 'onA' && $name < 'on_' ? 'event' : true;
 				}

@@ -2,6 +2,8 @@
 
 namespace WordPress\Zip;
 
+use InvalidArgumentException;
+
 /**
  * Represents a central directory entry in a ZIP file.
  *
@@ -41,16 +43,16 @@ class CentralDirectoryEntry {
 	const HEADER_SIZE = 42;
 
 	public $firstByteAt;
-	public $versionCreated    = 2;
-	public $versionNeeded     = 2;
-	public $generalPurpose    = 0;
+	public $versionCreated = 2;
+	public $versionNeeded = 2;
+	public $generalPurpose = 0;
 	public $compressionMethod = 0;
-	public $lastModifiedTime  = 0;
-	public $lastModifiedDate  = 0;
+	public $lastModifiedTime = 0;
+	public $lastModifiedDate = 0;
 	public $crc;
 	public $compressedSize;
 	public $uncompressedSize;
-	public $diskNumber         = 0;
+	public $diskNumber = 0;
 	public $internalAttributes = 0;
 	public $externalAttributes = 0;
 	public $pathLength;
@@ -64,7 +66,7 @@ class CentralDirectoryEntry {
 		$valid_properties = array_keys( get_object_vars( $this ) );
 		foreach ( $header_fields as $key => $value ) {
 			if ( ! in_array( $key, $valid_properties ) ) {
-				throw new \InvalidArgumentException( "Invalid property: $key. Expected one of: " . implode( ', ', $valid_properties ) );
+				throw new InvalidArgumentException( "Invalid property: $key. Expected one of: " . implode( ', ', $valid_properties ) );
 			}
 			$this->$key = $value;
 		}
@@ -83,6 +85,6 @@ class CentralDirectoryEntry {
 	}
 
 	public function is_directory() {
-		return str_ends_with( $this->path, '/' );
+		return substr_compare( $this->path, '/', - strlen( '/' ) ) === 0;
 	}
 }

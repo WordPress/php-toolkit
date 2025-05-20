@@ -20,14 +20,17 @@ use League\CommonMark\Node\Block\AbstractBlock;
 
 final class NodeWalker
 {
-    /** @psalm-readonly */
-    private Node $root;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Node\Node */
+    private $root;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private ?Node $current = null;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\CommonMark\Node\Node|null */
+    private $current;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private bool $entering;
+    /** @psalm-readonly-allow-private-mutation
+     * @var bool */
+    private $entering;
 
     public function __construct(Node $root)
     {

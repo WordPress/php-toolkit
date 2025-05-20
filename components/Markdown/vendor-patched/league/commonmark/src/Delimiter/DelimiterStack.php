@@ -26,11 +26,13 @@ use League\CommonMark\Node\Node;
 
 final class DelimiterStack
 {
-    /** @psalm-readonly-allow-private-mutation */
-    private ?DelimiterInterface $top = null;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\CommonMark\Delimiter\DelimiterInterface|null */
+    private $top;
 
-    /** @psalm-readonly-allow-private-mutation */
-    private ?Bracket $brackets = null;
+    /** @psalm-readonly-allow-private-mutation
+     * @var \League\CommonMark\Delimiter\Bracket|null */
+    private $brackets;
 
     /**
      * @deprecated This property will be removed in 3.0 once all delimiters MUST have an index/position
@@ -40,7 +42,10 @@ final class DelimiterStack
     private $missingIndexCache;
 
 
-    private int $remainingDelimiters = 0;
+    /**
+     * @var int
+     */
+    private $remainingDelimiters = 0;
 
     public function __construct(int $maximumStackSize = PHP_INT_MAX)
     {

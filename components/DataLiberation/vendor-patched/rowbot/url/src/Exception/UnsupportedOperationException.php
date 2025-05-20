@@ -1,9 +1,8 @@
 <?php
 
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace Rowbot\URL\Exception;
 
-class UnsupportedOperationException extends URLException
-{
+class UnsupportedOperationException extends URLException {
 }

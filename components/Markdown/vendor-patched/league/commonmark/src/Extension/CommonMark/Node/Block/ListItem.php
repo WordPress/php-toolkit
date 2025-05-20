@@ -20,8 +20,9 @@ use League\CommonMark\Node\Block\AbstractBlock;
 
 class ListItem extends AbstractBlock
 {
-    /** @psalm-readonly */
-    protected ListData $listData;
+    /** @psalm-readonly
+     * @var \League\CommonMark\Extension\CommonMark\Node\Block\ListData */
+    protected $listData;
 
     public function __construct(ListData $listData)
     {

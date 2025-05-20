@@ -23,7 +23,10 @@ use League\CommonMark\Parser\MarkdownParserStateInterface;
 
 final class TableStartParser implements BlockStartParserInterface
 {
-    private int $maxAutocompletedCells;
+    /**
+     * @var int
+     */
+    private $maxAutocompletedCells;
 
     public function __construct(int $maxAutocompletedCells = TableParser::DEFAULT_MAX_AUTOCOMPLETED_CELLS)
     {

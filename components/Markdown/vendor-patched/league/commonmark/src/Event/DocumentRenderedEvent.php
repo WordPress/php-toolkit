@@ -17,7 +17,10 @@ use League\CommonMark\Output\RenderedContentInterface;
 
 final class DocumentRenderedEvent extends AbstractEvent
 {
-    private RenderedContentInterface $output;
+    /**
+     * @var \League\CommonMark\Output\RenderedContentInterface
+     */
+    private $output;
 
     public function __construct(RenderedContentInterface $output)
     {

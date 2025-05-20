@@ -19,7 +19,7 @@ use Webuni\FrontMatter\Twig\TwigCommentFrontMatter;
 final class FrontMatterChain implements FrontMatterInterface
 {
     /** @var FrontMatterInterface[] */
-    private array $adapters = [];
+    private $adapters = [];
 
     public function __construct(iterable $adapters)
     {

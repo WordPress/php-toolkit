@@ -21,12 +21,28 @@ class LocalFilesystem implements Filesystem {
 
 	private $root;
 
-	public static function create( $root = '/' ) {
+	public static function create( $root = null ) {
+		// Make sure the root path uses forward slashes on Windows.
+		// This allows us to use all wp_unix_* functions across the board.
+		if ( null === $root ) {
+			if ( strtoupper( substr( PHP_OS, 0, 3 ) ) === 'WIN' ) {
+				$systemDrive = getenv( 'SystemDrive' );
+				$root = $systemDrive ? $systemDrive . '\\' : 'C:\\';
+			} else {
+				$root = '/';
+			}
+		} else {
+			if ( strtoupper( substr( PHP_OS, 0, 3 ) ) === 'WIN' ) {
+				$root = self::normalize_path( $root );
+			}
+		}
+
 		if ( ! is_dir( $root ) ) {
 			if ( false === mkdir( $root, 0755, true ) ) {
 				throw new FilesystemException( sprintf( 'Root directory did not exist and could not be created: %s', $root ) );
 			}
 		}
+
 		return new ChrootLayer(
 			new LocalFilesystem( $root ),
 			$root
@@ -47,8 +63,14 @@ class LocalFilesystem implements Filesystem {
 		return $this->root;
 	}
 
+	public function get_meta(): array {
+		return [
+			'root' => $this->root,
+		];
+	}
+
 	public function ls( $path = '/' ) {
-		$dh = opendir( $path );
+		$dh = @opendir( $path );
 		if ( false === $dh ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to open directory: %s', $path )
@@ -84,16 +106,17 @@ class LocalFilesystem implements Filesystem {
 	}
 
 	public function rename( $old_path, $new_path, $options = array() ) {
-		if ( false === rename( $old_path, $new_path ) ) {
+		if ( false === @rename( $old_path, $new_path ) ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to rename: %s to %s', $old_path, $new_path )
 			);
 		}
+
 		return true;
 	}
 
 	public function copy_file( $from_path, $to_path, $options ) {
-		if ( false === copy( $from_path, $to_path ) ) {
+		if ( false === @copy( $from_path, $to_path ) ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to copy file: %s to %s', $from_path, $to_path )
 			);
@@ -101,20 +124,28 @@ class LocalFilesystem implements Filesystem {
 	}
 
 	protected function mkdir_single( $path, $options = array() ) {
+		$resolved_path = $this->normalize_path( $path );
 		if ( $this->exists( $path ) ) {
 			throw new FilesystemException(
 				sprintf( 'Path already exists: %s', $path )
 			);
 		}
-		if ( false === mkdir( $path ) ) {
+		if ( false === @mkdir( $resolved_path ) ) {
 			throw new FilesystemException(
-				sprintf( 'Failed to create directory: %s', $path )
+				sprintf( 'Failed to create directory: %s', $resolved_path )
 			);
+		}
+		if ( isset( $options['chmod'] ) ) {
+			if ( false === @chmod( $path, $options['chmod'] ) ) {
+				throw new FilesystemException(
+					sprintf( 'Failed to chmod directory: %s', $path )
+				);
+			}
 		}
 	}
 
 	public function rm( $path ) {
-		if ( false === unlink( $path ) ) {
+		if ( false === @unlink( $path ) ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to remove file: %s', $path )
 			);
@@ -122,7 +153,7 @@ class LocalFilesystem implements Filesystem {
 	}
 
 	protected function rmdir_single( $path, $options = array() ) {
-		if ( false === rmdir( $path ) ) {
+		if ( false === @rmdir( $path ) ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to remove directory: %s', $path )
 			);
@@ -130,10 +161,10 @@ class LocalFilesystem implements Filesystem {
 	}
 
 	public function put_contents( $path, $data, $options = array() ) {
-		if ( false === file_put_contents(
-			$path,
-			$data
-		) ) {
+		if ( false === @file_put_contents(
+				$path,
+				$data
+			) ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to write to file: %s', $path )
 			);
@@ -146,5 +177,20 @@ class LocalFilesystem implements Filesystem {
 
 	public function open_read_stream( $path ): ByteReadStream {
 		return FileReadStream::from_path( $path );
+	}
+
+	/**
+	 * Turns a linux path into an OS-specific path.
+	 *
+	 * This is necessary because Filesystem-related classes use
+	 * forward slashes to separate paths. They must. LocalFilesystem
+	 * is just one of the available Filesystem implementations.
+	 *
+	 * Therefore, the problem of converting forward slashes to
+	 * OS-specific path separators is specific to the LocalFilesystem
+	 * class
+	 */
+	static private function normalize_path( $path ) {
+		return str_replace( DIRECTORY_SEPARATOR, '/', $path );
 	}
 }

@@ -16,8 +16,9 @@ class ImportUtils {
 	/**
 	 * Generates a block opener comment with given attributes.
 	 *
-	 * @param string $block_name The name of the block.
-	 * @param array  $attrs The attributes of the block.
+	 * @param  string  $block_name  The name of the block.
+	 * @param  array  $attrs  The attributes of the block.
+	 *
 	 * @return string The block opener.
 	 */
 	public static function block_opener( $block_name, $attrs = array() ) {
@@ -25,13 +26,15 @@ class ImportUtils {
 		$processor = new BlockMarkupProcessor( $template );
 		$processor->next_token();
 		$processor->set_block_attributes( $attrs );
+
 		return $processor->get_updated_html();
 	}
 
 	/**
 	 * Generates a block closer comment.
 	 *
-	 * @param string $block_name The name of the block.
+	 * @param  string  $block_name  The name of the block.
+	 *
 	 * @return string The block closer.
 	 */
 	public static function block_closer( $block_name ) {
@@ -41,7 +44,8 @@ class ImportUtils {
 	/**
 	 * Convert an array of WP_Block_Object objects to HTML markup.
 	 *
-	 * @param array $blocks The blocks to convert to markup.
+	 * @param  array  $blocks  The blocks to convert to markup.
+	 *
 	 * @return string The HTML markup.
 	 */
 	public static function convert_blocks_to_markup( $blocks ) {
@@ -72,6 +76,7 @@ class ImportUtils {
 			$name
 		);
 		$name = ucwords( $name );
+
 		return $name;
 	}
 
@@ -108,7 +113,7 @@ class ImportUtils {
 		}
 
 		return array(
-			'h1_content' => trim( $title ),
+			'h1_content'     => trim( $title ),
 			'remaining_html' => substr(
 				$html,
 				$p->get_string_index_after_current_token()

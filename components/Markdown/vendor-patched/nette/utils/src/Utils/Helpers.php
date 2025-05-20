@@ -44,18 +44,24 @@ class Helpers
 
 
 	/**
-	 * Converts false to null, does not change other values.
-	 */
-	public static function falseToNull(mixed $value): mixed
+  * Converts false to null, does not change other values.
+  * @param mixed $value
+  * @return mixed
+  */
+ public static function falseToNull($value)
 	{
 		return $value === false ? null : $value;
 	}
 
 
 	/**
-	 * Returns value clamped to the inclusive range of min and max.
-	 */
-	public static function clamp(int|float $value, int|float $min, int|float $max): int|float
+  * Returns value clamped to the inclusive range of min and max.
+  * @param int|float $value
+  * @param int|float $min
+  * @param int|float $max
+  * @return float|int
+  */
+ public static function clamp($value, $min, $max)
 	{
 		if ($min > $max) {
 			throw new Nette\InvalidArgumentException("Minimum ($min) is not less than maximum ($max).");
@@ -85,20 +91,33 @@ class Helpers
 
 
 	/**
-	 * Compares two values in the same way that PHP does. Recognizes operators: >, >=, <, <=, =, ==, ===, !=, !==, <>
-	 */
-	public static function compare(mixed $left, string $operator, mixed $right): bool
+  * Compares two values in the same way that PHP does. Recognizes operators: >, >=, <, <=, =, ==, ===, !=, !==, <>
+  * @param mixed $left
+  * @param mixed $right
+  */
+ public static function compare($left, string $operator, $right): bool
 	{
-		return match ($operator) {
-			'>' => $left > $right,
-			'>=' => $left >= $right,
-			'<' => $left < $right,
-			'<=' => $left <= $right,
-			'=', '==' => $left == $right,
-			'===' => $left === $right,
-			'!=', '<>' => $left != $right,
-			'!==' => $left !== $right,
-			default => throw new Nette\InvalidArgumentException("Unknown operator '$operator'"),
-		};
+		switch ($operator) {
+      case '>':
+          return $left > $right;
+      case '>=':
+          return $left >= $right;
+      case '<':
+          return $left < $right;
+      case '<=':
+          return $left <= $right;
+      case '=':
+      case '==':
+          return $left == $right;
+      case '===':
+          return $left === $right;
+      case '!=':
+      case '<>':
+          return $left != $right;
+      case '!==':
+          return $left !== $right;
+      default:
+          throw new Nette\InvalidArgumentException("Unknown operator '$operator'");
+  }
 	}
 }

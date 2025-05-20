@@ -20,7 +20,10 @@ use League\CommonMark\Extension\Embed\EmbedAdapterInterface;
 
 final class OscaroteroEmbedAdapter implements EmbedAdapterInterface
 {
-    private EmbedLib $embedLib;
+    /**
+     * @var EmbedLib
+     */
+    private $embedLib;
 
     public function __construct(?EmbedLib $embed = null)
     {
@@ -40,7 +43,9 @@ final class OscaroteroEmbedAdapter implements EmbedAdapterInterface
      */
     public function updateEmbeds(array $embeds): void
     {
-        $extractors = $this->embedLib->getMulti(...\array_map(static fn (Embed $embed) => $embed->getUrl(), $embeds));
+        $extractors = $this->embedLib->getMulti(...\array_map(static function (Embed $embed) {
+            return $embed->getUrl();
+        }, $embeds));
         foreach ($extractors as $i => $extractor) {
             if ($extractor->code !== null) {
                 $embeds[$i]->setEmbedCode($extractor->code->html);

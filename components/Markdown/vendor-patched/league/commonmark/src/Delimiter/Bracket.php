@@ -17,12 +17,30 @@ use League\CommonMark\Node\Node;
 
 final class Bracket
 {
-    private Node $node;
-    private ?Bracket $previous;
-    private bool $hasNext = false;
-    private int $position;
-    private bool $image;
-    private bool $active = true;
+    /**
+     * @var \League\CommonMark\Node\Node
+     */
+    private $node;
+    /**
+     * @var \League\CommonMark\Delimiter\Bracket|null
+     */
+    private $previous;
+    /**
+     * @var bool
+     */
+    private $hasNext = false;
+    /**
+     * @var int
+     */
+    private $position;
+    /**
+     * @var bool
+     */
+    private $image;
+    /**
+     * @var bool
+     */
+    private $active = true;
 
     public function __construct(Node $node, ?Bracket $previous, int $position, bool $image)
     {

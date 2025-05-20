@@ -33,11 +33,14 @@ final class BacktickParser implements InlineParserInterface
     private const MAX_BACKTICKS = 1000;
 
     /** @var \WeakReference<Cursor>|null */
-    private ?\WeakReference $lastCursor = null;
-    private bool $lastCursorScanned     = false;
+    private $lastCursor;
+    /**
+     * @var bool
+     */
+    private $lastCursorScanned     = false;
 
     /** @var array<int, int> backtick count => position of known ender */
-    private array $seenBackticks = [];
+    private $seenBackticks = [];
 
     public function getMatchDefinition(): InlineParserMatch
     {
