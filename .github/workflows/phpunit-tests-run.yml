@@ -31,6 +31,22 @@ jobs:
     timeout-minutes: 60
 
     steps:
+      # Dev drive speeds up Windows CI tests from ~25 minutes to ~15 minutes
+      - name: Setup RAM Disk (Windows only)
+        uses: samypr100/setup-dev-drive@v3
+        with:
+          drive-size: 15GB
+        if: ${{ inputs.os == 'windows-latest' }}
+
+      - name: Create DEV_DRIVE/tmp and set TEMP and TMP (Windows only)
+        if: ${{ inputs.os == 'windows-latest' }}
+        run: |
+          echo "Setting TEMP and TMP to ${{ env.DEV_DRIVE }}\tmp"
+        env:
+          DEV_DRIVE: ${{ env.DEV_DRIVE }}
+          TEMP: ${{ env.DEV_DRIVE }}\tmp
+          TMP: ${{ env.DEV_DRIVE }}\tmp
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -40,6 +56,8 @@ jobs:
           php-version: '${{ inputs.php }}'
           tools: phpunit-polyfills
           extensions: zip, sqlite3, pdo, pdo_sqlite
+          ini-values: |
+            ${{ inputs.os == 'windows-latest' && format('sys_temp_dir={0}/tmp', env.DEV_DRIVE) || '' }}
 
       - name: Install Composer dependencies (using composer-ci-matrix-tests.json)
         run: |
