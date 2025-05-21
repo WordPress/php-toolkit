@@ -30,14 +30,6 @@ how the runner is implemented.
 
 ### Using the libraries
 
-#### In WordPress
-
-The included [WordPress plugin](https://github.com/Automattic/php-toolkit) ships the libraries from this repository. Include it as a dependency in your plugin to use the PHP libraries safely.
-
-Why not just ship the libraries with your plugin? Imagine two plugins doing that. They would conflict, trigger a PHP fatal error on every page load, and break the site.
-
-#### Outside of WordPress
-
 Use composer to install the libraries in a non-WordPress project.
 
 This is the minimal composer.json file you need to consume the libraries:
