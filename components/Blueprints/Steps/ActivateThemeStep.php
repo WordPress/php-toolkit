@@ -9,6 +9,21 @@ use WordPress\Blueprints\Runtime;
  * Represents the 'activateTheme' step.
  */
 class ActivateThemeStep implements StepInterface {
+
+	// Inline PHP script to avoid reading a static script.php file via
+	// file_get_contents() inside the built blueprints.phar file.
+	const ACTIVATE_THEME_SCRIPT = <<<'PHP'
+<?php
+
+define( 'WP_ADMIN', true );
+require_once getenv( 'DOCROOT' ) . '/wp-load.php';
+
+// Set current user to admin
+set_current_user( get_users( array( 'role' => 'Administrator' ) )[0] );
+switch_theme( getenv( 'THEME_FOLDER_NAME' ) );
+PHP
+	;
+
 	/**
 	 * The name of the theme folder inside wp-content/themes/.
 	 * @var string
@@ -28,7 +43,7 @@ class ActivateThemeStep implements StepInterface {
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Activating theme ' . $this->themeFolderName );
 		$runtime->evalPhpCodeInSubProcess(
-			file_get_contents( __DIR__ . '/scripts/ActivateTheme/wp_activate_theme.php' ),
+			self::ACTIVATE_THEME_SCRIPT,
 			[
 				'THEME_FOLDER_NAME' => $this->themeFolderName,
 			]
