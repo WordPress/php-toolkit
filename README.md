@@ -23,7 +23,7 @@ php blueprints.phar
 
 From there, follow the help message for required arguments and options.
 
-If you want to use Bluepritns as a library, you absolutely can. It is designed to be reusable,
+If you want to use Blueprints as a library, you absolutely can. It is designed to be reusable,
 compatible with web and CLI environments on PHP 7.2+. There's not much technical documentation
 at this point but you can refer to the [blueprints.php file](https://github.com/Automattic/php-toolkit/blob/219dc4e846af270a5009e523244d0ec23baaa32a/components/Blueprints/bin/blueprint.php#L226) to see
 how the runner is implemented.
