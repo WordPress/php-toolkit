@@ -34,6 +34,8 @@ class Request {
 	public $redirected_from;
 	public $redirected_to;
 
+	public $cache_key;
+
 	/**
 	 * @var HttpError
 	 */

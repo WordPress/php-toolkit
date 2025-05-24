@@ -339,6 +339,10 @@ class Client {
 		return $this->request;
 	}
 
+	public function get_response() {
+		return $this->get_request()->response;
+	}
+
 	/**
 	 * Returns the response body chunk associated with the EVENT_BODY_CHUNK_AVAILABLE
 	 * event found by await_next_event().
