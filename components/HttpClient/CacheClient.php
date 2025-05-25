@@ -99,7 +99,7 @@ final class CacheClient {
 
 	public function get_response(): ?Response {
 		return $this->response;
-	}
+	}	
 
 	public function get_response_body_chunk(): ?string {
 		return $this->cache_key;

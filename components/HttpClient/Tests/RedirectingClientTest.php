@@ -4,55 +4,13 @@ namespace WordPress\HttpClient\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Process\Process;
+use WordPress\ByteStream\MemoryPipe;
 use WordPress\HttpClient\Client;
+use WordPress\HttpClient\RedirectingClient;
 use WordPress\HttpClient\HttpError;
 use WordPress\HttpClient\Request;
 
-if ( ! class_exists( 'WordPress\ByteStream\ReadStream\StringReadStream' ) ) {
-    interface ReadStream {
-        public function pull( int $length ) : int;
-        public function consume( int $length ) : string;
-        public function reached_end_of_data() : bool;
-        public function close_reading() : void;
-        public function length() : ?int;
-    }
-    class StringReadStream implements ReadStream {
-        protected $data;
-        protected $offset = 0;
-        protected $length = null;
-
-        public function __construct( string $data, ?int $length = null ) {
-            $this->data = $data;
-            $this->length = $length ?? strlen($data);
-        }
-
-        public function pull( int $length ) : int {
-            $remaining = $this->length - $this->offset;
-            return min( $length, $remaining );
-        }
-
-        public function consume( int $length ) : string {
-            $chunk = substr( $this->data, $this->offset, $length );
-            $this->offset += strlen( $chunk );
-            return $chunk;
-        }
-
-        public function reached_end_of_data() : bool {
-            return $this->offset >= $this->length;
-        }
-
-        public function close_reading() : void {
-            // No-op for string stream
-        }
-
-        public function length() : ?int {
-            return $this->length;
-        }
-    }
-}
-
-
-class ClientTest extends TestCase {
+class RedirectingClientTest extends TestCase {
 
     /** one-shot TCP server that writes $rawResponse and dies */
     private function withRawResponse(string $raw, callable $cb, int $port = 8970): void {
@@ -139,28 +97,52 @@ PHP
 
     /**
      * Helper to consume the entire response body for a request using the event loop.
+     * RedirectingClient emits body chunks from all requests in the redirect chain.
      */
-    protected function consume_entire_body( Client $client, Request $request ) {
+    protected function consume_entire_body( RedirectingClient $client, Request $request ) {
         if($request->state === Request::STATE_CREATED) {
-            $client->enqueue( $request );
+            $client->enqueue( [ $request ] );
         }
         $body = '';
+        
         while ( $client->await_next_event( [ 'requests' => [ $request ] ] ) ) {
             switch ( $client->get_event() ) {
-                case Client::EVENT_BODY_CHUNK_AVAILABLE:
+                case RedirectingClient::EVENT_BODY_CHUNK_AVAILABLE:
                     $chunk = $client->get_response_body_chunk();
                     if ( $chunk !== false ) { // Ensure chunk is not false
                         $body .= $chunk;
                     }
                     break;
-                case Client::EVENT_FAILED:
-                    throw $request->error;
-                case Client::EVENT_FINISHED:
+                case RedirectingClient::EVENT_FAILED:
+                    throw $request->latest_redirect()->error ?? $request->error;
+                case RedirectingClient::EVENT_FINISHED:
                     return $body;
+                case RedirectingClient::EVENT_REDIRECT:
+                    // Continue processing redirects
+                    break;
             }
         }
         // If the loop finishes without EVENT_FINISHED, it means timeout or no more events
         return $body;
+    }
+
+
+
+    /**
+     * Test constructor with default options
+     */
+    public function test_constructor_default() {
+        $client = new RedirectingClient();
+        $this->assertInstanceOf( RedirectingClient::class, $client );
+    }
+
+    /**
+     * Test constructor with custom client and options
+     */
+    public function test_constructor_with_options() {
+        $base_client = new Client();
+        $client = new RedirectingClient( $base_client, [ 'max_redirects' => 5 ] );
+        $this->assertInstanceOf( RedirectingClient::class, $client );
     }
 
     /**
@@ -168,7 +150,7 @@ PHP
      */
     public function test_http_methods( $method ) {
         $this->withServer( function ( $url ) use ( $method ) {
-            $client  = new Client();
+            $client  = new RedirectingClient();
             $request = new Request( "$url/echo-method", [ 'method' => $method ] );
             $body    = $this->consume_entire_body( $client, $request );
             $this->assertEquals( $method, $body );
@@ -192,8 +174,16 @@ PHP
      */
     public function test_status_codes( $status, $expectedBody ) {
         $this->withServer( function ( $url ) use ( $status, $expectedBody ) {
-            $client  = new Client();
+            $client  = new RedirectingClient();
             $request = new Request( "$url/status/$status" );
+            
+            // For redirect status codes, we expect the RedirectingClient to handle them
+            if ( $status >= 300 && $status < 400 ) {
+                // These should be handled as redirects, not returned as-is
+                $this->markTestSkipped( 'Redirect status codes are handled automatically by RedirectingClient' );
+                return;
+            }
+            
             $body    = $this->consume_entire_body( $client, $request );
             $this->assertEquals( $status, $request->response->status_code );
 
@@ -207,11 +197,6 @@ PHP
         return [
             [ 200, 'OK' ],
             [ 204, '' ], // 204 No Content should have empty body
-            [ 301, 'Redirect' ],
-            [ 302, 'Redirect' ],
-            [ 303, 'Redirect' ], // Added for POST to GET redirect
-            [ 307, 'Redirect' ], // Temporary Redirect
-            [ 308, 'Redirect' ], // Permanent Redirect
             [ 400, 'Bad Request' ],
             [ 404, 'Not Found' ],
             [ 500, 'Internal Server Error' ],
@@ -223,7 +208,7 @@ PHP
      */
     public function test_encodings( $encoding, $expectedBody ) {
         $this->withServer( function ( $url ) use ( $encoding, $expectedBody ) {
-            $client  = new Client();
+            $client  = new RedirectingClient();
             $request = new Request( "$url/encoding/$encoding" );
             $body    = $this->consume_entire_body( $client, $request );
             $this->assertEquals( $expectedBody, $body );
@@ -253,14 +238,14 @@ PHP
      */
     public function test_errors( $scenario, $expectedErrorSubstring ) {
         $this->withServer( function ( $url ) use ( $scenario, $expectedErrorSubstring ) {
-            $client  = new Client( [ 'timeout_ms' => 1000 ] ); // Increased timeout for timeout tests
+            $client  = new RedirectingClient( null, [ 'timeout_ms' => 1000 ] ); // Increased timeout for timeout tests
             $request = new Request( "$url/error/$scenario" );
-            $client->enqueue( $request );
+            $client->enqueue( [ $request ] );
 
             $error_occurred = false;
             while ( $client->await_next_event( [ 'requests' => [ $request ], 'timeout_ms' => 2000 ] ) ) {
                 switch ( $client->get_event() ) {
-                    case Client::EVENT_FAILED:
+                    case RedirectingClient::EVENT_FAILED:
                         $error_occurred = true;
                         $this->assertNotNull( $request->error );
                         $this->assertStringContainsString( $expectedErrorSubstring, $request->error->message );
@@ -291,14 +276,14 @@ PHP
         $port = 9999;
         $host = '127.0.0.1';
 
-        $client  = new Client( [ 'timeout_ms' => 1000 ] ); // Short timeout for connection attempt
+        $client  = new RedirectingClient( null, [ 'timeout_ms' => 1000 ] ); // Short timeout for connection attempt
         $request = new Request( "http://{$host}:{$port}/" );
-        $client->enqueue( $request );
+        $client->enqueue( [ $request ] );
 
         $error_occurred = false;
         while ( $client->await_next_event( [ 'requests' => [ $request ] ] ) ) {
             switch ( $client->get_event() ) {
-                case Client::EVENT_FAILED:
+                case RedirectingClient::EVENT_FAILED:
                     $this->assertNotNull( $request->error );
                     if(
                         false === strpos($request->error->message, 'Request timed out') &&
@@ -314,13 +299,12 @@ PHP
         $this->assertTrue( $error_occurred, 'Connection refused should have resulted in an error.' );
     }
 
-
     /**
      * @dataProvider headerProvider
      */
     public function test_headers( $headerName, $headerValue ) {
         $this->withServer( function ( $url ) use ( $headerName, $headerValue ) {
-            $client  = new Client();
+            $client  = new RedirectingClient();
             $request = new Request( "$url/headers/$headerName" );
             $body    = $this->consume_entire_body( $client, $request );
             $this->assertStringContainsString( $headerValue, $body );
@@ -341,21 +325,21 @@ PHP
      */
     public function test_multiple_set_cookie_headers() {
         $this->withServer( function ( $url ) {
-            $client  = new Client();
+            $client  = new RedirectingClient();
             $request = new Request( "$url/headers/multiple-set-cookie" );
-            $client->enqueue( $request );
+            $client->enqueue( [ $request ] );
 
             $headers_received = false;
             while ( $client->await_next_event( [ 'requests' => [ $request ] ] ) ) {
                 switch ( $client->get_event() ) {
-                    case Client::EVENT_GOT_HEADERS:
+                    case RedirectingClient::EVENT_GOT_HEADERS:
                         $response = $request->response;
                         $this->assertNotNull( $response );
                         $this->assertArrayHasKey( 'set-cookie', $response->headers );
                         $this->assertEquals( 'cookie2=value2', $response->headers['set-cookie'] );
                         $headers_received = true;
                         break;
-                    case Client::EVENT_FINISHED:
+                    case RedirectingClient::EVENT_FINISHED:
                         break 2;
                 }
             }
@@ -368,7 +352,7 @@ PHP
      */
     public function test_large_response_header() {
         $this->withServer( function ( $url ) {
-            $client = new Client();
+            $client = new RedirectingClient();
             $request = new Request( "$url/error/large-headers" ); // Using error scenario for large header
             $body = $this->consume_entire_body( $client, $request );
 
@@ -379,13 +363,12 @@ PHP
         }, 'error' ); // Using 'error' scenario to simulate a server sending large headers
     }
 
-
     /**
      * @dataProvider bodyProvider
      */
     public function test_body_types( $type, $expectedLength ) {
         $this->withServer( function ( $url ) use ( $type, $expectedLength ) {
-            $client  = new Client();
+            $client  = new RedirectingClient();
             $request = new Request( "$url/body/$type" );
             $body    = $this->consume_entire_body( $client, $request );
             $this->assertEquals( $expectedLength, strlen( $body ) );
@@ -406,21 +389,21 @@ PHP
      */
     public function test_streaming( $type, $expectedChunks ) {
         $this->withServer( function ( $url ) use ( $type, $expectedChunks ) {
-            $client  = new Client();
+            $client  = new RedirectingClient();
             $request = new Request( "$url/stream/$type" );
-            $client->enqueue( $request );
+            $client->enqueue( [ $request ] );
             $chunks = [];
             while ( $client->await_next_event( [ 'requests' => [ $request ] ] ) ) {
                 switch ( $client->get_event() ) {
-                    case Client::EVENT_BODY_CHUNK_AVAILABLE:
+                    case RedirectingClient::EVENT_BODY_CHUNK_AVAILABLE:
                         $chunk = $client->get_response_body_chunk();
                         if ( $chunk !== false ) {
                             $chunks[] = $chunk;
                         }
                         break;
-                    case Client::EVENT_FAILED:
+                    case RedirectingClient::EVENT_FAILED:
                         throw $request->error;
-                    case Client::EVENT_FINISHED:
+                    case RedirectingClient::EVENT_FINISHED:
                         break 2;
                 }
             }
@@ -435,12 +418,316 @@ PHP
         ];
     }
 
+    // ========== REDIRECT-SPECIFIC TESTS ==========
+
+    /**
+     * Test simple redirect (302).
+     */
+    public function test_simple_redirect() {
+        $this->withServer( function ( $url ) {
+            $client  = new RedirectingClient();
+            $request = new Request( "$url/redirect/chain-1" );
+            $client->enqueue( [ $request ] );
+
+            $redirect_events = 0;
+            $final_body = '';
+            
+            while ( $client->await_next_event( [ 'requests' => [ $request ] ] ) ) {
+                switch ( $client->get_event() ) {
+                    case RedirectingClient::EVENT_REDIRECT:
+                        $redirect_events++;
+                        break;
+                    case RedirectingClient::EVENT_BODY_CHUNK_AVAILABLE:
+                        $chunk = $client->get_response_body_chunk();
+                        if ( $chunk !== false ) {
+                            $final_body .= $chunk;
+                        }
+                        break;
+                    case RedirectingClient::EVENT_FINISHED:
+                        break 2;
+                    case RedirectingClient::EVENT_FAILED:
+                        throw $request->error;
+                }
+            }
+
+            // Should have followed redirects automatically
+            $this->assertGreaterThan( 0, $redirect_events );
+            $this->assertEquals( 'Redirect 1Redirect 2Final Redirected Content!', $final_body );
+            
+            // Check redirect chain
+            $this->assertNotNull( $request->redirected_to );
+            $this->assertNotNull( $request->redirected_to->redirected_to );
+            $this->assertEquals( 200, $request->redirected_to->redirected_to->response->status_code );
+        }, 'redirect' );
+    }
+
+    /**
+     * Test redirect chain following.
+     */
+    public function test_redirect_chain() {
+        $this->withServer( function ( $url ) {
+            $client  = new RedirectingClient();
+            $request = new Request( "$url/redirect/chain-1" );
+            $client->enqueue( [ $request ] );
+
+            $redirect_count = 0;
+            while ( $client->await_next_event( [ 'requests' => [ $request ] ] ) ) {
+                switch ( $client->get_event() ) {
+                    case RedirectingClient::EVENT_REDIRECT:
+                        $redirect_count++;
+                        break;
+                    case RedirectingClient::EVENT_FINISHED:
+                        break 2;
+                    case RedirectingClient::EVENT_FAILED:
+                        throw $request->error;
+                }
+            }
+
+            $this->assertEquals( 2, $redirect_count ); // chain-1 -> chain-2 -> final
+            
+            // Verify the redirect chain structure
+            $this->assertNotNull( $request->redirected_to );
+            $this->assertEquals( 302, $request->response->status_code );
+            
+            $this->assertNotNull( $request->redirected_to->redirected_to );
+            $this->assertEquals( 302, $request->redirected_to->response->status_code );
+            
+            $this->assertEquals( 200, $request->redirected_to->redirected_to->response->status_code );
+        }, 'redirect' );
+    }
+
+    /**
+     * Test redirect loop with max_redirects limit.
+     */
+    public function test_redirect_loop() {
+        $this->withServer( function ( $url ) {
+            $client  = new RedirectingClient( null, [ 'max_redirects' => 2, 'timeout_ms' => 20000 ] ); // Set a low redirect limit
+            $request = new Request( "$url/redirect/loop" );
+            $client->enqueue( [ $request ] );
+
+            $error_occurred = false;
+            $redirect_count = 0;
+            
+            while ( $client->await_next_event( [ 'requests' => [ $request ] ] ) ) {
+                switch ( $client->get_event() ) {
+                    case RedirectingClient::EVENT_REDIRECT:
+                        $redirect_count++;
+                        break;
+                    case RedirectingClient::EVENT_FAILED:
+                        $latest_request = $request->latest_redirect();
+                        $this->assertNotNull( $latest_request->error );
+                        $this->assertStringContainsString( 'Too many redirects', $latest_request->error->message );
+                        $error_occurred = true;
+                        break 2;
+                    case RedirectingClient::EVENT_FINISHED:
+                        break 2;
+                }
+            }
+            
+            // Check if any request in the chain has an error (redirect limit may be enforced without EVENT_FAILED)
+            if ( ! $error_occurred ) {
+                $current = $request;
+                while ( $current ) {
+                    if ( $current->error ) {
+                        $error_occurred = true;
+                        $this->assertStringContainsString( 'Too many redirects', $current->error->message );
+                        break;
+                    }
+                    $current = $current->redirected_to;
+                }
+            }
+            
+            $this->assertTrue( $error_occurred, 'Redirect loop should have resulted in an error.' );
+            $this->assertGreaterThanOrEqual( 2, $redirect_count, 'Should have attempted at least max_redirects redirects.' );
+        }, 'redirect' );
+    }
+
+    /**
+     * Test POST request redirected to GET (303 See Other).
+     */
+    public function test_post_to_get_redirect() {
+        $this->withServer( function ( $url ) {
+            $client  = new RedirectingClient();
+            $request = new Request( "$url/redirect/post-to-get", [ 'method' => 'POST', 'body_stream' => new MemoryPipe('test body') ] );
+            $client->enqueue( [ $request ] );
+
+            $redirect_occurred = false;
+            while ( $client->await_next_event( [ 'requests' => [ $request ] ] ) ) {
+                switch ( $client->get_event() ) {
+                    case RedirectingClient::EVENT_REDIRECT:
+                        $redirect_occurred = true;
+                        break;
+                    case RedirectingClient::EVENT_FINISHED:
+                        break 2;
+                    case RedirectingClient::EVENT_FAILED:
+                        throw $request->error;
+                }
+            }
+
+            $this->assertTrue( $redirect_occurred );
+            $this->assertEquals( 'POST', $request->method );
+            $this->assertEquals( 303, $request->response->status_code );
+
+            $redirected = $request->redirected_to;
+            $this->assertNotNull( $redirected );
+            $this->assertEquals( 'GET', $redirected->method ); // The redirected request should be GET
+        }, 'redirect' );
+    }
+
+    /**
+     * Test invalid redirect URL.
+     */
+    public function test_invalid_redirect_url() {
+        $this->withServer( function ( $url ) {
+            $client  = new RedirectingClient();
+            $request = new Request( "$url/redirect/invalid-location" );
+            $client->enqueue( [ $request ] );
+
+            $error_occurred = false;
+            while ( $client->await_next_event( [ 'requests' => [ $request ] ] ) ) {
+                switch ( $client->get_event() ) {
+                                         case RedirectingClient::EVENT_FAILED:
+                        $this->assertNotNull( $request->latest_redirect()->error );
+                        // The error could be either "Invalid redirect URL" or "only HTTP and HTTPS URLs are supported"
+                        $error_message = $request->latest_redirect()->error->message;
+                        $this->assertTrue(
+                            strpos($error_message, 'Invalid redirect URL') !== false ||
+                            strpos($error_message, 'only HTTP and HTTPS URLs are supported') !== false,
+                            "Expected error about invalid URL, got: " . $error_message
+                        );
+                        $error_occurred = true;
+                        break 2;
+                }
+            }
+            $this->assertTrue( $error_occurred, 'Invalid redirect URL should have resulted in an error.' );
+        }, 'redirect' );
+    }
+
+    /**
+     * Test relative path redirect.
+     */
+    public function test_relative_path_redirect() {
+        $this->withServer( function ( $url ) {
+            $client  = new RedirectingClient();
+            $request = new Request( "$url/redirect/relative-path-redirect" );
+            $client->enqueue( [ $request ] );
+
+            $redirect_occurred = false;
+            $final_body = '';
+            
+            while ( $client->await_next_event( [ 'requests' => [ $request ] ] ) ) {
+                switch ( $client->get_event() ) {
+                    case RedirectingClient::EVENT_REDIRECT:
+                        $redirect_occurred = true;
+                        break;
+                    case RedirectingClient::EVENT_BODY_CHUNK_AVAILABLE:
+                        $chunk = $client->get_response_body_chunk();
+                        if ( $chunk !== false ) {
+                            $final_body .= $chunk;
+                        }
+                        break;
+                    case RedirectingClient::EVENT_FINISHED:
+                        break 2;
+                    case RedirectingClient::EVENT_FAILED:
+                        throw $request->error;
+                }
+            }
+
+            $this->assertTrue( $redirect_occurred );
+            $this->assertEquals( 302, $request->response->status_code );
+            $this->assertStringContainsString( '/redirect/new-path/resource.html', $request->redirected_to->url );
+            $this->assertEquals( 'Redirecting to new-path/resource.htmlArrived at /redirect/new-path/resource.html.', $final_body );
+            $this->assertEquals( 200, $request->redirected_to->response->status_code );
+        }, 'redirect' );
+    }
+
+    /**
+     * Test that RedirectingClient properly handles await_next_event with redirect chains.
+     */
+    public function test_await_next_event_with_redirect_chain() {
+        $this->withServer( function ( $url ) {
+            $client  = new RedirectingClient();
+            $request = new Request( "$url/redirect/chain-1" );
+            $client->enqueue( [ $request ] );
+
+            // Test that querying for the original request also includes redirected requests
+            $events = [];
+            while ( $client->await_next_event( [ 'requests' => [ $request ] ] ) ) {
+                $events[] = $client->get_event();
+                if ( $client->get_event() === RedirectingClient::EVENT_FINISHED ) {
+                    break;
+                }
+            }
+
+            $this->assertContains( RedirectingClient::EVENT_REDIRECT, $events );
+            $this->assertContains( RedirectingClient::EVENT_FINISHED, $events );
+        }, 'redirect' );
+    }
+
+    /**
+     * Test fetch method delegation.
+     */
+    public function test_fetch_delegation() {
+        $this->withServer( function ( $url ) {
+            $client  = new RedirectingClient();
+            $request = new Request( "$url/body/small" );
+            $stream  = $client->fetch( $request );
+            
+            $this->assertInstanceOf( \WordPress\HttpClient\ByteStream\RequestReadStream::class, $stream );
+        }, 'body' );
+    }
+
+    /**
+     * Test fetch_many method delegation.
+     */
+    public function test_fetch_many_delegation() {
+        $this->withServer( function ( $url ) {
+            $client   = new RedirectingClient();
+            $requests = [
+                new Request( "$url/body/small" ),
+                new Request( "$url/body/empty" ),
+            ];
+            $streams  = $client->fetch_many( $requests );
+            
+            $this->assertIsArray( $streams );
+            $this->assertCount( 2, $streams );
+            foreach ( $streams as $stream ) {
+                $this->assertInstanceOf( \WordPress\HttpClient\ByteStream\RequestReadStream::class, $stream );
+            }
+        }, 'body' );
+    }
+
+    /**
+     * Test has_pending_event method delegation.
+     */
+    public function test_has_pending_event_delegation() {
+        $this->withServer( function ( $url ) {
+            $client  = new RedirectingClient();
+            $request = new Request( "$url/body/small" );
+            $client->enqueue( [ $request ] );
+            
+            // Initially should not have pending events
+            $this->assertFalse( $client->has_pending_event( $request, RedirectingClient::EVENT_FINISHED ) );
+        }, 'body' );
+    }
+
+    /**
+     * Test event constants are properly defined.
+     */
+    public function test_event_constants() {
+        $this->assertEquals( Client::EVENT_GOT_HEADERS, RedirectingClient::EVENT_GOT_HEADERS );
+        $this->assertEquals( Client::EVENT_BODY_CHUNK_AVAILABLE, RedirectingClient::EVENT_BODY_CHUNK_AVAILABLE );
+        $this->assertEquals( Client::EVENT_FAILED, RedirectingClient::EVENT_FAILED );
+        $this->assertEquals( Client::EVENT_FINISHED, RedirectingClient::EVENT_FINISHED );
+        $this->assertEquals( 'EVENT_REDIRECT', RedirectingClient::EVENT_REDIRECT );
+    }
+
     /**
      * Test no body for 204 No Content status.
      */
     public function test_no_body_204() {
         $this->withServer( function ( $url ) {
-            $client  = new Client();
+            $client  = new RedirectingClient();
             $request = new Request( "$url/edge-cases/no-body-204" );
             $body    = $this->consume_entire_body( $client, $request );
             $this->assertEquals( 204, $request->response->status_code );
@@ -454,7 +741,7 @@ PHP
      */
     public function test_no_body_304() {
         $this->withServer( function ( $url ) {
-            $client  = new Client();
+            $client  = new RedirectingClient();
             $request = new Request( "$url/edge-cases/no-body-304" );
             $body    = $this->consume_entire_body( $client, $request );
             $this->assertEquals( 304, $request->response->status_code );
@@ -468,7 +755,7 @@ PHP
      */
     public function test_content_length_zero() {
         $this->withServer( function ( $url ) {
-            $client  = new Client();
+            $client  = new RedirectingClient();
             $request = new Request( "$url/edge-cases/content-length-zero" );
             $body    = $this->consume_entire_body( $client, $request );
             $this->assertEquals( 200, $request->response->status_code );
@@ -482,7 +769,7 @@ PHP
      */
     public function test_head_request() {
         $this->withServer( function ( $url ) {
-            $client  = new Client();
+            $client  = new RedirectingClient();
             $request = new Request( "$url/edge-cases/head-request", [ 'method' => 'HEAD' ] );
             $body    = $this->consume_entire_body( $client, $request );
             $this->assertEquals( 200, $request->response->status_code );
@@ -496,7 +783,7 @@ PHP
      */
     public function test_range_request() {
         $this->withServer( function ( $url ) {
-            $client  = new Client();
+            $client  = new RedirectingClient();
             $request = new Request( "$url/edge-cases/range-request", [ 'headers' => [ 'Range' => 'bytes=0-9' ] ] );
             $body    = $this->consume_entire_body( $client, $request );
             $this->assertEquals( 206, $request->response->status_code );
@@ -511,7 +798,7 @@ PHP
         ]);
     }
 
-    public function test_dns_failure()                  {
+    public function test_dns_failure() {
         $this->expectClientError(new Request('http://nope.' . uniqid() . '/'), 300, [
             'message' => ['unable to open a stream to http://nope.', 'Request timed out']
         ]);
@@ -532,7 +819,7 @@ PHP
     public function test_write_failure() {
         $this->withDroppingServer(function (string $base) {
             $req        = new Request("$base/submit", [
-                'body_stream' => new StringReadStream(str_repeat('A', 262144))
+                'body_stream' => new MemoryPipe(str_repeat('A', 262144))
             ]);
             $req->method = 'POST';
             $this->expectClientError($req, null, [
@@ -596,7 +883,7 @@ PHP
 
     private function expectClientError(Request $req, ?float $timeout_ms = null, array $opts = []): void {
         if ($timeout_ms !== null) $opts['timeout_ms'] = $timeout_ms;
-        $client = new Client($opts);
+        $client = new RedirectingClient(null, $opts);
         try {
             $this->consume_entire_body($client, $req);
             $this->fail('Expected error not thrown');
@@ -615,4 +902,4 @@ PHP
             }
         }
     }
-}
+} 

@@ -57,7 +57,7 @@ use WordPress\HttpClient\ByteStream\RequestReadStream;
  * @package  WordPress
  * @subpackage Async_HTTP
  */
-class Client {
+class Client implements ClientInterface {
 
 	/**
 	 * The maximum number of concurrent connections allowed.
@@ -70,16 +70,6 @@ class Client {
 	 * @var int
 	 */
 	protected $concurrency;
-
-	/**
-	 * The maximum number of redirects to follow for a single request.
-	 *
-	 * This prevents infinite redirect loops and provides a degree of control over the client's behavior.
-	 * Setting it too high might lead to unexpected navigation paths.
-	 *
-	 * @var int
-	 */
-	protected $max_redirects = 3;
 
 	/**
 	 * All the HTTP requests ever enqueued with this Client.
@@ -112,10 +102,9 @@ class Client {
 	protected $requests_started_at = array();
 
 	public function __construct( $options = array() ) {
-		$this->concurrency   = $options['concurrency'] ?? 10;
-		$this->max_redirects = $options['max_redirects'] ?? 3;
+		$this->concurrency        = $options['concurrency'] ?? 10;
 		$this->request_timeout_ms = $options['timeout_ms'] ?? 30000;
-		$this->requests      = array();
+		$this->requests           = array();
 	}
 
 	/**
@@ -123,12 +112,13 @@ class Client {
 	 * given request.
 	 *
 	 * @param  Request  $request  The request to stream.
+	 * @param  array    $options  Options for the request.
 	 *
 	 * @return RequestReadStream
 	 */
-	public function fetch( $request, $options = array() ) {
+	public function fetch( Request $request, array $options = [] ) {
 		return new RequestReadStream( $request,
-			array_merge( [ 'client' => $this ], is_array( $options ) ? $options : iterator_to_array( $options ) ) );
+			array_merge( [ 'client' => $this ], $options ) );
 	}
 
 	/**
@@ -136,10 +126,11 @@ class Client {
 	 * of the given requests.
 	 *
 	 * @param  Request[]  $requests  The requests to stream.
+	 * @param  array      $options   Options for the requests.
 	 *
 	 * @return RequestReadStream[]
 	 */
-	public function fetch_many( array $requests, $options = array() ) {
+	public function fetch_many( array $requests, array $options = [] ) {
 		$streams = array();
 
 		foreach ( $requests as $request ) {
@@ -155,11 +146,11 @@ class Client {
 	 * an internal queue. Network transmission is delayed until one of the returned
 	 * streams is read from.
 	 *
-	 * @param  Request|Request[]  $requests  The HTTP request(s) to enqueue. Can be a single request or an array of requests.
+	 * @param  Request[]  $requests  The HTTP request(s) to enqueue.
 	 */
 	public function enqueue( $requests ) {
-		if ( ! is_array( $requests ) ) {
-			$requests = array( $requests );
+		if(!is_array($requests)) {
+			$requests = [$requests];
 		}
 
 		foreach ( $requests as $request ) {
@@ -199,7 +190,6 @@ class Client {
 	 *
 	 * * `Client::EVENT_GOT_HEADERS`
 	 * * `Client::EVENT_BODY_CHUNK_AVAILABLE`
-	 * * `Client::EVENT_REDIRECT`
 	 * * `Client::EVENT_FAILED`
 	 * * `Client::EVENT_FINISHED`
 	 *
@@ -227,7 +217,7 @@ class Client {
 	 * $request = new Request( "https://w.org" );
 	 *
 	 * $client = new HttpClientClient();
-	 * $client->enqueue( $request );
+	 * $client->enqueue( [$request] );
 	 * $event = $client->await_next_event( [
 	 *    'request_id' => $request->id,
 	 * ] );
@@ -239,15 +229,14 @@ class Client {
 	 * request #1 has finished before you started awaiting
 	 * events for request #2.
 	 *
-	 * @param $query
+	 * @param array $query Query parameters for filtering events.
 	 *
 	 * @return bool
 	 */
-	public function await_next_event( $query = array() ) {
+	public function await_next_event( array $query = [] ) {
 		$ordered_events            = array(
 			self::EVENT_GOT_HEADERS,
 			self::EVENT_BODY_CHUNK_AVAILABLE,
-			self::EVENT_REDIRECT,
 			self::EVENT_FAILED,
 			self::EVENT_FINISHED,
 		);
@@ -269,10 +258,6 @@ class Client {
 				$events = array();
 				foreach ( $query['requests'] as $query_request ) {
 					$events[] = $query_request->id;
-					while ( $query_request->redirected_to ) {
-						$query_request = $query_request->redirected_to;
-						$events[]      = $query_request->id;
-					}
 				}
 			}
 
@@ -308,7 +293,7 @@ class Client {
 		return false;
 	}
 
-	public function has_pending_event( $request, $event_type ) {
+	public function has_pending_event( Request $request, string $event_type ): bool {
 		return $this->events[ $request->id ][ $event_type ] ?? false;
 	}
 
@@ -403,7 +388,11 @@ class Client {
 			$this->get_active_requests( Request::STATE_RECEIVING_HEADERS )
 		);
 
-		$this->handle_redirects(
+		$this->receive_response_body(
+			$this->get_active_requests( Request::STATE_RECEIVING_BODY )
+		);
+
+		$this->mark_requests_finished(
 			$this->get_active_requests( Request::STATE_RECEIVED )
 		);
 
@@ -426,11 +415,6 @@ class Client {
 		if ( $nb_headers_received > 0 ) {
 			return true;
 		}
-
-		$this->receive_response_body(
-			$this->get_active_requests( Request::STATE_RECEIVING_BODY )
-		);
-
 
 		return true;
 	}
@@ -779,8 +763,6 @@ class Client {
 	}
 
 	/**
-	 * Reads the next received portion of HTTP response headers for multiple requests.
-	 *
 	 * @param  array  $requests  An array of requests.
 	 */
 	protected function receive_response_body( $requests ) {
@@ -804,60 +786,6 @@ class Client {
 					break;
 				}
 			}
-		}
-	}
-
-	/**
-	 * @param  array  $requests  An array of requests.
-	 */
-	protected function handle_redirects( $requests ) {
-		foreach ( $requests as $request ) {
-			$response = $request->response;
-			if ( ! $response ) {
-				continue;
-			}
-			$code = $response->status_code;
-			$this->mark_finished( $request );
-			if ( ! ( $code >= 300 && $code < 400 ) ) {
-				continue;
-			}
-
-			$location = $response->get_header( 'location' );
-			if ( null === $location ) {
-				continue;
-			}
-
-			$redirects_so_far = 0;
-			$cause            = $request;
-			while ( $cause->redirected_from ) {
-				++ $redirects_so_far;
-				$cause = $cause->redirected_from;
-			}
-
-			if ( $redirects_so_far >= $this->max_redirects ) {
-				$this->set_error( $request, new HttpError( 'Too many redirects' ) );
-				continue;
-			}
-
-			$redirect_url = $location;
-			$parsed = WPURL::parse($redirect_url, $request->url);
-			if(false === $parsed) {
-				$this->set_error( $request, new HttpError( sprintf( 'Invalid redirect URL: %s', $redirect_url ) ) );
-				continue;
-			}
-			$redirect_url = $parsed->toString();
-
-			$this->events[ $request->id ][ self::EVENT_REDIRECT ] = true;
-			$this->enqueue(
-				new Request(
-					$redirect_url,
-					array(
-						// Redirects are always GET requests
-						'method'          => 'GET',
-						'redirected_from' => $request,
-					)
-				)
-			);
 		}
 	}
 
@@ -1082,7 +1010,6 @@ class Client {
 
 	const EVENT_GOT_HEADERS = 'EVENT_GOT_HEADERS';
 	const EVENT_BODY_CHUNK_AVAILABLE = 'EVENT_BODY_CHUNK_AVAILABLE';
-	const EVENT_REDIRECT = 'EVENT_REDIRECT';
 	const EVENT_FAILED = 'EVENT_FAILED';
 	const EVENT_FINISHED = 'EVENT_FINISHED';
 
@@ -1097,4 +1024,10 @@ class Client {
 	 * 5/100th of a second
 	 */
 	const NONBLOCKING_TIMEOUT_MICROSECONDS = 0.05 * self::MICROSECONDS_TO_SECONDS;
+
+	protected function mark_requests_finished( $requests ) {
+		foreach ( $requests as $request ) {
+			$this->mark_finished( $request );
+		}
+	}
 }
