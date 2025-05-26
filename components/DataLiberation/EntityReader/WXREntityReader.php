@@ -659,7 +659,7 @@ class WXREntityReader implements EntityReader {
 				$this->last_xml_cursor_outside_of_entity      = $this->xml->get_reentrancy_cursor();
 			}
 
-			$tag = $this->xml->get_tag();
+			$tag = $this->xml->get_qualified_tag();
 			/**
 			 * Custom adjustment: the Accessibility WXR file uses a non-standard
 			 * wp:wp_author tag.
@@ -732,16 +732,16 @@ class WXREntityReader implements EntityReader {
 			 */
 			if ( $this->xml->is_tag_opener() ) {
 				$this->last_opener_attributes = array();
-				$names                        = $this->xml->get_attribute_names_with_prefix( '' );
+				$names                        = $this->xml->get_attribute_qualified_names_with_prefix( '' );
 				foreach ( $names as $name ) {
-					$this->last_opener_attributes[ $name ] = $this->xml->get_attribute( $name );
+					$this->last_opener_attributes[ $name ] = $this->xml->get_attribute_by_qualified_name( $name );
 				}
 				$this->text_buffer = '';
 
 				$is_site_option_opener = (
 					count( $this->xml->get_breadcrumbs() ) === 3 &&
 					$this->xml->matches_breadcrumbs( array( 'rss', 'channel', '*' ) ) &&
-					array_key_exists( $this->xml->get_tag(), static::KNOWN_SITE_OPTIONS )
+					array_key_exists( $this->xml->get_qualified_tag(), static::KNOWN_SITE_OPTIONS )
 				);
 				if ( $is_site_option_opener ) {
 					$this->last_xml_byte_offset_outside_of_entity = $this->xml->get_token_byte_offset_in_the_input_stream();
@@ -848,13 +848,13 @@ class WXREntityReader implements EntityReader {
 	 * @return bool Whether a site_option entity was emitted.
 	 */
 	private function parse_site_option() {
-		if ( ! array_key_exists( $this->xml->get_tag(), static::KNOWN_SITE_OPTIONS ) ) {
+		if ( ! array_key_exists( $this->xml->get_qualified_tag(), static::KNOWN_SITE_OPTIONS ) ) {
 			return false;
 		}
 
 		$this->entity_type = 'site_option';
 		$this->entity_data = array(
-			'option_name'  => static::KNOWN_SITE_OPTIONS[ $this->xml->get_tag() ],
+			'option_name'  => static::KNOWN_SITE_OPTIONS[ $this->xml->get_qualified_tag() ],
 			'option_value' => $this->text_buffer,
 		);
 		$this->emit_entity();
