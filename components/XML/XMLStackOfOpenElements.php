@@ -81,4 +81,14 @@ class XMLStackOfOpenElements {
 		return $top->namespaces_in_scope;
 	}
 
+	public function get_namespace_prefix($namespace) {
+		$namespaces_in_scope = $this->get_namespaces_in_scope();
+		foreach($namespaces_in_scope as $prefix => $uri) {
+			if($uri === $namespace) {
+				return $prefix;
+			}
+		}
+		return false;
+	}
+
 }

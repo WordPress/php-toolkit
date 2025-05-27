@@ -25,7 +25,7 @@ class XMLAttributeToken {
 	 *
 	 * @var string
 	 */
-	public $name;
+	public $qualified_name;
 
 	/**
 	 * Attribute value.
@@ -102,8 +102,8 @@ class XMLAttributeToken {
 	 * @param  string  $namespace  Namespace.
 	 *
 	 */
-	public function __construct( $name, $value_start, $value_length, $start, $length, $namespace_prefix=null, $local_name=null, $namespace=null ) {
-		$this->name            = $name;
+	public function __construct( $qualified_name, $value_start, $value_length, $start, $length, $namespace_prefix=null, $local_name=null, $namespace=null ) {
+		$this->qualified_name  = $qualified_name;
 		$this->value_starts_at = $value_start;
 		$this->value_length    = $value_length;
 		$this->start           = $start;

@@ -533,22 +533,27 @@ class XMLProcessor {
 	private $exception = null;
 
 	/**
-	 * Lazily-built index of attributes found within an XML tag, keyed by the attribute name.
+	 * Temporary index of attributes found within an XML tag, keyed by the qualified
+	 * attribute name. It is only used during the initial attributes parsing phase and
+	 * discarded once all the attributes have been parsed.
+	 *
+	 * @since WP_VERSION
+	 * @var XMLAttributeToken[]
+	 */
+	private $qualified_attributes = array();
+
+	/**
+	 * Stores the attributes found within an XML tag, keyed by their namespace
+	 * and local name combination.
 	 *
 	 * Example:
 	 *
-	 *     // Supposing the parser is working through this content
-	 *     // and stops after recognizing the `id` attribute.
-	 *     // <wp:content id="test-4" class=outline title="data:text/plain;base64=asdk3nk1j3fo8">
-	 *     //                 ^ parsing will continue from this point.
-	 *     $this->attributes = array(
-	 *         'id' => new XMLAttributeToken( 'id', 9, 6, 5, 11, '', 'id', '' )
-	 *     );
-	 *
-	 *     // When picking up parsing again, or when asking to find the
-	 *     // `class` attribute we will continue and add to this array.
-	 *     $this->attributes = array(
-	 *         'id'    => new XMLAttributeToken( 'id', 9, 6, 5, 11, '', 'id', '' ),
+	 *     // Supposing the parser just finished parsing the wp:content tag:
+	 *     // <channel xmlns:wp="http://wordpress.org/export/1.2/">
+	 *     //   <wp:content wp:id="test-4" class="outline">
+	 *     // </channel>
+	 *     $this->qualified_attributes = array(
+	 *         '{http://wordpress.org/export/1.2/}id' => new XMLAttributeToken( 'id', 9, 6, 5, 14, 'wp', 'id' ),
 	 *         'class' => new XMLAttributeToken( 'class', 23, 7, 17, 13, '', 'class', '' )
 	 *     );
 	 *
@@ -1056,12 +1061,129 @@ class XMLProcessor {
 		$this->token_length         = $this->bytes_already_parsed - $this->token_starts_at;
 
 		/**
-		 * Confirm the tag name is valid with respect to XML namespaces.
-		 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#Conformance
+		 * Resolve the namespaces defined in opening tags.
 		 */
-		$tag_name = $this->get_local_tag_name();
-		if ( false === $this->validate_qualified_name( $tag_name ) ) {
-			return false;
+		if ( ! $this->is_closing_tag ) {
+			/**
+			 * By default, inherit all namespaces from the parent element.
+			 */
+			$namespaces = $this->stack_of_open_elements->get_namespaces_in_scope();
+			foreach ( $this->qualified_attributes as $attribute ) {
+				/**
+				 * xmlns attribute is the default namespace
+				 * xmlns:<prefix> declares a namespace prefix scoped to the current element and its descendants
+				 *
+				 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#ns-decl
+				 */
+				if ( 'xmlns' === $attribute->qualified_name ) {
+					$value                                        = $this->get_qualified_attribute( $attribute->qualified_name );
+					$namespaces[ self::DEFAULT_NAMESPACE_PREFIX ] = $value;
+					continue;
+				}
+
+				if ( 'xmlns' === $attribute->namespace_prefix ) {
+					$value = $this->get_qualified_attribute( $attribute->qualified_name );
+
+					/**
+					 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#xmlReserved
+					 */
+					if ( 'xml' === $attribute->namespace_prefix && 'http://www.w3.org/XML/1998/namespace' !== $value ) {
+						$this->bail( 'The `xml` namespace prefix is by definition bound to the namespace name http://www.w3.org/XML/1998/namespace and must not be overridden.',
+							self::ERROR_SYNTAX );
+
+						return false;
+					}
+					/**
+					 * The attribute value in a namespace declaration for a prefix MAY be empty.
+					 * This has the effect, within the scope of the declaration, of removing any
+					 * association of the prefix with a namespace name. Further declarations MAY
+					 * re-declare the prefix again.
+					 */
+					if ( '' === $value ) {
+						unset( $namespaces[ $attribute->namespace_prefix ] );
+						continue;
+					}
+
+					$namespaces[ $attribute->local_name ] = $value;
+					continue;
+				}
+			}
+
+			/**
+			 * Confirm the tag name is valid with respect to XML namespaces.
+			 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#Conformance
+			 */
+			$tag_name = $this->get_qualified_tag_name();
+			if ( false === $this->validate_qualified_name( $tag_name ) ) {
+				return false;
+			}
+
+			list( $tag_namespace_prefix, $tag_local_name ) = $this->parse_qualified_name( $tag_name );
+
+			/**
+			 * Validate the element namespace.
+			 */
+			if ( ! array_key_exists( $tag_namespace_prefix, $namespaces ) ) {
+				$this->bail(
+					sprintf(
+						'Namespace prefix "%s" does not resolve to any namespace in the current element\'s scope.',
+						$tag_namespace_prefix
+					),
+					self::ERROR_SYNTAX
+				);
+			}
+
+			/**
+			 * Compute fully qualified attributes and assert:
+			 *
+			 * * All attributes have valid namespaces.
+			 * * No two attributes have the same (local name, namespace) pair.
+			 *
+			 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#uniqAttrs
+			 */
+			$namespaced_attributes = array();
+			foreach ( $this->qualified_attributes as $attribute ) {
+				list( $attribute_namespace_prefix, $attribute_local_name ) = $this->parse_qualified_name( $attribute->qualified_name );
+				if ( ! array_key_exists( $attribute_namespace_prefix, $namespaces ) ) {
+					$this->bail(
+						sprintf(
+							'Attribute "%s" has an invalid namespace prefix "%s".',
+							$attribute->qualified_name,
+							$attribute_namespace_prefix
+						),
+						self::ERROR_SYNTAX
+					);
+
+					return false;
+				}
+				$namespace_reference = $namespaces[ $attribute_namespace_prefix ];
+
+				/**
+				 * It looks supicious but it's safe – $local_name is guaranteed to not contain
+				 * curly braces at this point.
+				 */
+				$attribute_full_name = $namespace_reference ? '{' . $namespace_reference . '}' . $attribute_local_name : $attribute_local_name;
+				if ( isset( $namespaced_attributes[ $attribute_full_name ] ) ) {
+					$this->bail(
+						sprintf(
+							'Duplicate attribute "%s" with namespace "%s" found in the same element.',
+							$attribute_local_name,
+							$namespace_reference
+						),
+						self::ERROR_SYNTAX
+					);
+
+					return false;
+				}
+				$namespaced_attributes[ $attribute_full_name ] = $attribute;
+			}
+
+			// Store attributes with their namespaces and discard the temporary
+			// qualified attributes array.
+			$this->attributes = $namespaced_attributes;
+			$this->qualified_attributes = array();
+
+			$this->element = new XMLElement( $tag_local_name, $tag_namespace_prefix, $namespaces[ $tag_namespace_prefix ], $namespaces );
 		}
 
 		/*
@@ -1081,9 +1203,9 @@ class XMLProcessor {
 		$tag_name_starts_at = $this->tag_name_starts_at;
 		$tag_name_length    = $this->tag_name_length;
 		$tag_ends_at        = $this->token_starts_at + $this->token_length;
-		$attributes         = $this->attributes;
+		$attributes         = $this->qualified_attributes;
 
-		$found_closer = $this->skip_pcdata( $this->get_local_tag_name() );
+		$found_closer = $this->skip_pcdata( $this->get_tag_local_name() );
 
 		// Closer not found, the document is incomplete.
 		if ( false === $found_closer ) {
@@ -1106,7 +1228,7 @@ class XMLProcessor {
 		$this->text_length        = $this->tag_name_starts_at - $this->text_starts_at;
 		$this->tag_name_starts_at = $tag_name_starts_at;
 		$this->tag_name_length    = $tag_name_length;
-		$this->attributes         = $attributes;
+		$this->qualified_attributes         = $attributes;
 
 		return true;
 	}
@@ -1424,7 +1546,7 @@ class XMLProcessor {
 	 *
 	 */
 	public function is_pcdata_element() {
-		return array_key_exists( $this->get_local_tag_name(), $this->pcdata_elements );
+		return array_key_exists( $this->get_tag_local_name(), $this->pcdata_elements );
 	}
 
 
@@ -1478,6 +1600,10 @@ class XMLProcessor {
 			return false;
 		}
 
+		if ( array_keys($query) === array(0, 1) && is_string($query[0]) && is_string($query[1]) ) {
+			$query = array( 'breadcrumbs' => array( $query ) );
+		}
+
 		if ( ! ( array_key_exists( 'breadcrumbs', $query ) && is_array( $query['breadcrumbs'] ) ) ) {
 			while ( $this->step() ) {
 				if ( '#tag' !== $this->get_token_type() ) {
@@ -1502,7 +1628,22 @@ class XMLProcessor {
 			return false;
 		}
 
-		$breadcrumbs  = $query['breadcrumbs'];
+
+		$namespaced_breadcrumbs = array();
+		foreach($query['breadcrumbs'] as $breadcrumb) {
+			if(is_array($breadcrumb) && count($breadcrumb) === 2) {
+				$namespaced_breadcrumbs[] = $breadcrumb;
+			} else if(is_string($breadcrumb)) {
+				$namespaced_breadcrumbs[] = array('', $breadcrumb);
+			} else {
+				_doing_it_wrong(
+					__METHOD__,
+					__( 'Breadcrumbs must be an array of strings or two-tuples of (namespace, local name).' ),
+					'WP_VERSION'
+				);
+			}
+		}
+		$breadcrumbs  = $namespaced_breadcrumbs;
 		$match_offset = isset( $query['match_offset'] ) ? (int) $query['match_offset'] : 1;
 
 		while ( $match_offset > 0 && $this->step() ) {
@@ -1902,14 +2043,14 @@ class XMLProcessor {
 					return false;
 				}
 
-				foreach ( $this->attributes as $name => $attribute ) {
+				foreach ( $this->qualified_attributes as $name => $attribute ) {
 					if ( 'version' !== $name && 'encoding' !== $name && 'standalone' !== $name ) {
 						$this->bail( 'Invalid attribute found in XML declaration.', self::ERROR_SYNTAX );
 						return false;
 					}
 				}
 
-				if ( '1.0' !== $this->get_attribute( '', 'version' ) ) {
+				if ( '1.0' !== $this->get_qualified_attribute( 'version' ) ) {
 					$this->bail( 'Unsupported XML version declared', self::ERROR_UNSUPPORTED );
 					return false;
 				}
@@ -1920,15 +2061,15 @@ class XMLProcessor {
 				 *
 				 * See https://www.w3.org/TR/xml/#sec-predefined-ent.
 				 */
-				if ( null !== $this->get_attribute( '', 'encoding' )
-				     && 'UTF-8' !== strtoupper( $this->get_attribute( '', 'encoding' ) )
+				if ( null !== $this->get_qualified_attribute( 'encoding' )
+				     && 'UTF-8' !== strtoupper( $this->get_qualified_attribute( 'encoding' ) )
 				) {
 					$this->bail( 'Unsupported XML encoding declared, only UTF-8 is supported.', self::ERROR_UNSUPPORTED );
 					return false;
 				}
 
-				if ( null !== $this->get_attribute( '', 'standalone' )
-				     && 'YES' !== strtoupper( $this->get_attribute( '', 'standalone' ) )
+				if ( null !== $this->get_qualified_attribute( 'standalone' )
+				     && 'YES' !== strtoupper( $this->get_qualified_attribute( 'standalone' ) )
 				) {
 					$this->bail( 'Standalone XML documents are not supported.', self::ERROR_UNSUPPORTED );
 					return false;
@@ -1954,6 +2095,12 @@ class XMLProcessor {
 				$this->text_length          = $at - $this->text_starts_at;
 				$this->bytes_already_parsed = $at + 2;
 				$this->parser_state         = self::STATE_XML_DECLARATION;
+
+				// Processing instructions don't have namespaces. We can just
+				// copy the qualified attributes to the attributes array without
+				// resolving anything.
+				$this->attributes           = $this->qualified_attributes;
+				$this->qualified_attributes = array();
 
 				return true;
 			}
@@ -2064,12 +2211,12 @@ class XMLProcessor {
 		}
 
 		$attribute_start       = $this->bytes_already_parsed;
-		$attribute_name_length = $this->parse_name( $this->bytes_already_parsed );
-		if ( 0 === $attribute_name_length ) {
+		$attribute_qname_length = $this->parse_name( $this->bytes_already_parsed );
+		if ( 0 === $attribute_qname_length ) {
 			$this->bail( 'Invalid attribute name encountered.', self::ERROR_SYNTAX );
 		}
-		$this->bytes_already_parsed += $attribute_name_length;
-		$attribute_name             = substr( $this->xml, $attribute_start, $attribute_name_length );
+		$this->bytes_already_parsed += $attribute_qname_length;
+		$attribute_qname             = substr( $this->xml, $attribute_start, $attribute_qname_length );
 		$this->skip_whitespace();
 
 		// Parse attribute value.
@@ -2126,7 +2273,7 @@ class XMLProcessor {
 			return true;
 		}
 
-		if ( array_key_exists( $attribute_name, $this->attributes ) ) {
+		if ( array_key_exists( $attribute_qname, $this->qualified_attributes ) ) {
 			$this->bail( 'Duplicate attribute found in an XML tag.', self::ERROR_SYNTAX );
 		}
 
@@ -2134,7 +2281,7 @@ class XMLProcessor {
 		 * Confirm the tag name is valid with respect to XML namespaces.
 		 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#Conformance
 		 */
-		if ( false === $this->validate_qualified_name( $attribute_name ) ) {
+		if ( false === $this->validate_qualified_name( $attribute_qname ) ) {
 			return false;
 		}
 
@@ -2144,21 +2291,20 @@ class XMLProcessor {
 		 * element. Note we must still keep track of string indices to support
 		 * replacements.
 		 */
-		list( $namespace_prefix, $local_name ) = $this->parse_qualified_name( $attribute_name );
+		list( $namespace_prefix, $local_name ) = $this->parse_qualified_name( $attribute_qname );
 
-		$this->attributes[ $attribute_name ] = new XMLAttributeToken(
-			$attribute_name,
+		$this->qualified_attributes[ $attribute_qname ] = new XMLAttributeToken(
+			$attribute_qname,
 			$value_start,
 			$value_length,
 			$attribute_start,
 			$attribute_end - $attribute_start,
 			$namespace_prefix,
 			$local_name
-		/**
-		 * The full namespace is resolved in push_open_element() once
-		 * we know all xmlns declarations in the current element's
-		 * scope.
-		 */
+			/**
+			 * The full namespace is resolved in parse_next_token() once
+			 * all the attributes have been consumed.
+			 */
 		);
 
 		return true;
@@ -2361,6 +2507,7 @@ class XMLProcessor {
 		$this->pubid_literal      = null;
 		$this->system_literal     = null;
 		$this->attributes         = array();
+		$this->qualified_attributes = array();
 	}
 
 	/**
@@ -2654,17 +2801,19 @@ class XMLProcessor {
 			return null;
 		}
 
+		$full_name = $namespace_reference ? '{' . $namespace_reference . '}' . $local_name : $local_name;
+
 		// Return any enqueued attribute value updates if they exist.
-		$enqueued_value = $this->get_enqueued_attribute_value( $local_name );
+		$enqueued_value = $this->get_enqueued_attribute_value( $full_name );
 		if ( false !== $enqueued_value ) {
 			return $enqueued_value;
 		}
 
-		if ( ! isset( $this->attributes[ $local_name ] ) ) {
+		if ( ! isset( $this->attributes[ $full_name ] ) ) {
 			return null;
 		}
 
-		$attribute = $this->attributes[ $local_name ];
+		$attribute = $this->attributes[ $full_name ];
 		$raw_value = substr( $this->xml, $attribute->value_starts_at, $attribute->value_length );
 
 		$decoded = XMLDecoder::decode( $raw_value );
@@ -2688,13 +2837,22 @@ class XMLProcessor {
 		return $decoded;
 	}
 
-	private function get_attribute_value( XMLAttributeToken $attribute ) {
-		// Return any enqueued attribute value updates if they exist.
-		// $enqueued_value = $this->get_enqueued_attribute_value( $local_name );
-		// if ( false !== $enqueued_value ) {
-		// 	return $enqueued_value;
-		// }
+	/**
+	 * Gets a value from a qualified attribute name if it exists in the
+	 * matched tag.
+	 *
+	 * It's for internal use only to source values of raw attributes
+	 * after they're parsed but before the namespaces are resolved.
+	 *
+	 * @param string $qname The qualified attribute name.
+	 * @return string|null The attribute value, or null if not found.
+	 */
+	private function get_qualified_attribute( $qname ) {
+		if(!isset($this->qualified_attributes[$qname])) {
+			return null;
+		}
 
+		$attribute = $this->qualified_attributes[ $qname ];
 		$raw_value = substr( $this->xml, $attribute->value_starts_at, $attribute->value_length );
 
 		$decoded = XMLDecoder::decode( $raw_value );
@@ -2727,9 +2885,9 @@ class XMLProcessor {
 	 *
 	 *     $p = new XMLProcessor( '<wp:content data-ENABLED="1" class="test" DATA-test-id="14">Test</wp:content>' );
 	 *     $p->next_tag( array( 'class_name' => 'test' ) ) === true;
-	 *     $p->get_attribute_qualified_names_with_prefix( 'data-' ) === array( 'data-ENABLED' );
-	 *     $p->get_attribute_qualified_names_with_prefix( 'DATA-' ) === array( 'DATA-test-id' );
-	 *     $p->get_attribute_qualified_names_with_prefix( 'DAta-' ) === array();
+	 *     $p->get_attribute_names_with_prefix( 'data-' ) === array( 'data-ENABLED' );
+	 *     $p->get_attribute_names_with_prefix( 'DATA-' ) === array( 'DATA-test-id' );
+	 *     $p->get_attribute_names_with_prefix( 'DAta-' ) === array();
 	 *
 	 * @param  string  $prefix  Prefix of requested attribute names.
 	 *
@@ -2737,7 +2895,7 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 *
 	 */
-	public function get_attribute_qualified_names_with_prefix( $prefix ) {
+	public function get_attribute_names_with_prefix( $ns_prefix, $name_prefix ) {
 		if (
 			self::STATE_MATCHED_TAG !== $this->parser_state ||
 			$this->is_closing_tag
@@ -2746,9 +2904,9 @@ class XMLProcessor {
 		}
 
 		$matches = array();
-		foreach ( array_keys( $this->attributes ) as $attr_name ) {
-			if ( strncmp( $attr_name, $prefix, strlen( $prefix ) ) === 0 ) {
-				$matches[] = $attr_name;
+		foreach ( $this->attributes as $attr ) {
+			if ( 0 === strncmp( $attr->local_name, $name_prefix, strlen( $name_prefix ) ) && 0 === strncmp( $attr->namespace_prefix, $ns_prefix, strlen( $ns_prefix ) ) ) {
+				$matches[] = [$attr->namespace_prefix, $attr->local_name];
 			}
 		}
 
@@ -2771,7 +2929,7 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 *
 	 */
-	public function get_local_tag_name() {
+	public function get_tag_local_name() {
 		if ( null !== $this->element ) {
 			// Return cached name if we already have it.
 			return $this->element->local_name;
@@ -3048,7 +3206,7 @@ class XMLProcessor {
 	public function get_token_name() {
 		switch ( $this->parser_state ) {
 			case self::STATE_MATCHED_TAG:
-				return $this->get_local_tag_name();
+				return $this->get_tag_local_name();
 
 			case self::STATE_TEXT_NODE:
 				return '#text';
@@ -3196,7 +3354,7 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 *
 	 */
-	public function set_attribute( $name, $value ) {
+	public function set_attribute( $namespace, $local_name, $value ) {
 		if ( ! is_string( $value ) ) {
 			_doing_it_wrong(
 				__METHOD__,
@@ -3214,6 +3372,20 @@ class XMLProcessor {
 		}
 
 		$value             = htmlspecialchars( $value, ENT_XML1, 'UTF-8' );
+		
+		if($namespace !== '') {
+			$prefix = $this->stack_of_open_elements->get_namespace_prefix($namespace);
+			if(false === $prefix) {
+				$this->bail(
+					__( 'The namespace "%1$s" is not in scope.' ),
+					$namespace
+				);
+				return false;
+			}
+			$name = $prefix . ':' . $local_name;
+		} else {
+			$name = $local_name;
+		}
 		$updated_attribute = "{$name}=\"{$value}\"";
 
 		/*
@@ -3274,13 +3446,15 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 *
 	 */
-	public function remove_attribute( $name ) {
+	public function remove_attribute( $namespace, $local_name ) {
 		if (
 			self::STATE_MATCHED_TAG !== $this->parser_state ||
 			$this->is_closing_tag
 		) {
 			return false;
 		}
+
+		$name = $namespace ? '{' . $namespace . '}' . $local_name : $local_name;
 
 		/*
 		 * If updating an attribute that didn't exist in the input
@@ -3446,7 +3620,7 @@ class XMLProcessor {
 
 		if ( self::PROCESS_NEXT_NODE === $node_to_process ) {
 			if ( $this->is_empty_element() ) {
-				$this->pop_open_element();
+				$this->stack_of_open_elements->pop();
 			}
 		}
 
@@ -3564,7 +3738,15 @@ class XMLProcessor {
 				// Update the stack of open elements
 				$tag_qname = $this->get_qualified_tag_name();
 				if ( $this->is_tag_closer() ) {
-					$popped_qname = $this->pop_open_element()->qualified_name;
+					if(!$this->stack_of_open_elements->count()) {
+						$this->bail(
+							__( 'The closing tag "%1$s" did not match the opening tag "%2$s".' ),
+							$tag_qname,
+							$tag_qname
+						);
+						return false;
+					}
+					$popped_qname = $this->stack_of_open_elements->pop()->qualified_name;
 					if ( $popped_qname !== $tag_qname ) {
 						$this->bail(
 							sprintf(
@@ -3580,7 +3762,7 @@ class XMLProcessor {
 						$this->parser_context = self::IN_MISC_CONTEXT;
 					}
 				} else {
-					$this->push_open_element( $tag_qname );
+					$this->stack_of_open_elements->push( $this->element );
 					$this->element = $this->stack_of_open_elements->top();
 				}
 
@@ -3663,7 +3845,9 @@ class XMLProcessor {
 	 *
 	 */
 	public function get_breadcrumbs() {
-		return $this->stack_of_open_elements->get_items();
+		return array_map( function( $element ) {
+			return array( $element->namespace, $element->local_name );
+		}, $this->stack_of_open_elements->get_items() );
 	}
 
 	/**
@@ -3701,29 +3885,40 @@ class XMLProcessor {
 		// Start at the last crumb.
 		$crumb = end( $breadcrumbs );
 
-		if (
-			'#tag' === $this->get_token_type() &&
-			'*' !== $crumb &&
-			$this->get_local_tag_name() !== $crumb
-		) {
+		if ( '#tag' !== $this->get_token_type() ) {
 			return false;
 		}
 
-		// @TODO: Match namespaces!
-		for ( $i = $this->stack_of_open_elements->count() - 1; $i >= 0; $i -- ) {
-			$tag_name = $this->stack_of_open_elements->get_items()[ $i ]->local_name;
-			$crumb    = current( $breadcrumbs );
+		$open_elements = $this->stack_of_open_elements->get_items();
+		$crumb_count   = count( $breadcrumbs );
+		$elem_count    = count( $open_elements );
 
-			if ( '*' !== $crumb && $tag_name !== $crumb ) {
+		// Walk backwards through both arrays, matching each crumb to the corresponding open element.
+		for ( $j = 1; $j <= $crumb_count; $j++ ) {
+			$crumb = $breadcrumbs[ $crumb_count - $j ];
+			$element = $open_elements[ $elem_count - $j ] ?? null;
+
+			if ( ! $element ) {
 				return false;
 			}
 
-			if ( false === prev( $breadcrumbs ) ) {
-				return true;
+			// Normalize crumb to [namespace, local_name]
+			if ( ! is_array( $crumb ) ) {
+				$crumb = array( '', $crumb );
+			}
+			list( $namespace, $local_name ) = $crumb;
+
+			// Match local name, respecting wildcard '*'
+			if ( '*' !== $local_name && $local_name !== $element->local_name ) {
+				return false;
+			}
+
+			// Match namespace, respecting wildcard '*'
+			if ( '*' !== $namespace && $namespace !== $element->namespace ) {
+				return false;
 			}
 		}
-
-		return false;
+		return true;
 	}
 
 	/**
@@ -3752,141 +3947,6 @@ class XMLProcessor {
 	 */
 	public function get_current_depth() {
 		return $this->stack_of_open_elements->count();
-	}
-
-	private function pop_open_element() {
-		return $this->stack_of_open_elements->pop();
-	}
-
-	private function push_open_element( $qualified_name ) {
-		/**
-		 * Before we push the element, we need to compute its:
-		 *
-		 * - local name
-		 * - namespace prefix
-		 * - namespace URI
-		 * - namespaces in current element's scope
-		 */
-
-		// All qualified names are validated at this point.
-		list( $tag_namespace_prefix, $tag_local_name ) = $this->parse_qualified_name( $qualified_name );
-
-		// Resolve namespaces:
-
-		/**
-		 * By default, inherit all namespaces from the parent element.
-		 */
-		$namespaces = $this->stack_of_open_elements->get_namespaces_in_scope();
-		foreach ( $this->attributes as $attribute ) {
-			/**
-			 * xmlns attribute is the default namespace
-			 * xmlns:<prefix> declares a namespace prefix scoped to the current element and its descendants
-			 *
-			 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#ns-decl
-			 */
-			if ( 'xmlns' === $attribute->name ) {
-				$value                                        = $this->get_attribute_value( $attribute );
-				$namespaces[ self::DEFAULT_NAMESPACE_PREFIX ] = $value;
-				continue;
-			}
-
-			if ( 'xmlns' === $attribute->namespace_prefix ) {
-				$value = $this->get_attribute_value( $attribute );
-
-				/**
-				 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#xmlReserved
-				 */
-				if ( 'xml' === $attribute->namespace_prefix && 'http://www.w3.org/XML/1998/namespace' !== $value ) {
-					$this->bail( 'The `xml` namespace prefix is by definition bound to the namespace name http://www.w3.org/XML/1998/namespace and must not be overridden.',
-						self::ERROR_SYNTAX );
-
-					return false;
-				}
-				/**
-				 * The attribute value in a namespace declaration for a prefix MAY be empty.
-				 * This has the effect, within the scope of the declaration, of removing any
-				 * association of the prefix with a namespace name. Further declarations MAY
-				 * re-declare the prefix again.
-				 */
-				if ( '' === $value ) {
-					unset( $namespaces[ $attribute->namespace_prefix ] );
-					continue;
-				}
-
-				$namespaces[ $attribute->local_name ] = $value;
-				continue;
-			}
-		}
-
-		// Validate namespaces for the element and its attributes:
-
-		/**
-		 * Validate the element namespace.
-		 */
-		if ( ! array_key_exists( $tag_namespace_prefix, $namespaces ) ) {
-			$this->bail(
-				sprintf(
-					'Namespace prefix "%s" does not resolve to any namespace in the current element\'s scope.',
-					$tag_namespace_prefix
-				),
-				self::ERROR_SYNTAX
-			);
-		}
-
-		/**
-		 * Let's assert:
-		 *
-		 * * All attributes have valid namespaces.
-		 * * No two attributes have the same (local name, namespace) pair.
-		 *
-		 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#uniqAttrs
-		 */
-		$namespaced_attributes = array();
-		foreach ( $this->attributes as $attribute ) {
-			list( $attribute_namespace_prefix, $attribute_local_name ) = $this->parse_qualified_name( $attribute->name );
-			if ( ! array_key_exists( $attribute_namespace_prefix, $namespaces ) ) {
-				$this->bail(
-					sprintf(
-						'Attribute "%s" has an invalid namespace prefix "%s".',
-						$attribute->name,
-						$attribute_namespace_prefix
-					),
-					self::ERROR_SYNTAX
-				);
-
-				return false;
-			}
-			$namespace_uri = $namespaces[ $attribute_namespace_prefix ];
-
-			/**
-			 * It looks supicious but it's safe – $local_name is guaranteed to not contain
-			 * curly braces at this point.
-			 */
-			$attribute_full_key = '{' . $namespace_uri . '}' . $attribute_local_name;
-			if ( isset( $namespaced_attributes[ $attribute_full_key ] ) ) {
-				$this->bail(
-					sprintf(
-						'Duplicate attribute "%s" with namespace "%s" found in the same element.',
-						$attribute_local_name,
-						$namespace_uri
-					),
-					self::ERROR_SYNTAX
-				);
-
-				return false;
-			}
-			$namespaced_attributes[ $attribute_full_key ] = true;
-		}
-
-		// Store attributes with their namespaces.
-		$this->attributes = $namespaced_attributes;
-
-		// Finally, push the element onto the stack.
-		$this->stack_of_open_elements->push(
-			new XMLElement( $tag_local_name, $tag_namespace_prefix, $namespaces[ $tag_namespace_prefix ], $namespaces )
-		);
-
-		return true;
 	}
 
 	/**

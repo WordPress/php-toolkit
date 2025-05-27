@@ -167,7 +167,7 @@ class EPubEntityReader implements EntityReader {
 			}
 			if ( $xml->matches_breadcrumbs( array( 'metadata', '*' ) ) ) {
 				$parsed['metadata'][] = array(
-					'tag'        => $xml->get_local_tag_name(),
+					'tag'        => $xml->get_tag_local_name(),
 					'attributes' => $parsed_entry,
 				);
 			} elseif ( $xml->matches_breadcrumbs( array( 'manifest', 'item' ) ) ) {

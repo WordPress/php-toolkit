@@ -68,5 +68,9 @@ class XMLElement {
 		$this->namespaces_in_scope = $namespaces_in_scope;
 		$this->qualified_name = $namespace_prefix ? $namespace_prefix . ':' . $local_name : $local_name;
 	}
+
+	public function get_full_name() {
+		return $this->namespace ? '{' . $this->namespace . '}' . $this->local_name : $this->local_name;
+	}
 	
 }

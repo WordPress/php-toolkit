@@ -659,7 +659,7 @@ class WXREntityReader implements EntityReader {
 				$this->last_xml_cursor_outside_of_entity      = $this->xml->get_reentrancy_cursor();
 			}
 
-			$tag = $this->xml->get_local_tag_name();
+			$tag = $this->xml->get_tag_local_name();
 			/**
 			 * Custom adjustment: the Accessibility WXR file uses a non-standard
 			 * wp:wp_author tag.
@@ -741,7 +741,7 @@ class WXREntityReader implements EntityReader {
 				$is_site_option_opener = (
 					count( $this->xml->get_breadcrumbs() ) === 3 &&
 					$this->xml->matches_breadcrumbs( array( 'rss', 'channel', '*' ) ) &&
-					array_key_exists( $this->xml->get_local_tag_name(), static::KNOWN_SITE_OPTIONS )
+					array_key_exists( $this->xml->get_tag_local_name(), static::KNOWN_SITE_OPTIONS )
 				);
 				if ( $is_site_option_opener ) {
 					$this->last_xml_byte_offset_outside_of_entity = $this->xml->get_token_byte_offset_in_the_input_stream();
@@ -848,13 +848,13 @@ class WXREntityReader implements EntityReader {
 	 * @return bool Whether a site_option entity was emitted.
 	 */
 	private function parse_site_option() {
-		if ( ! array_key_exists( $this->xml->get_local_tag_name(), static::KNOWN_SITE_OPTIONS ) ) {
+		if ( ! array_key_exists( $this->xml->get_tag_local_name(), static::KNOWN_SITE_OPTIONS ) ) {
 			return false;
 		}
 
 		$this->entity_type = 'site_option';
 		$this->entity_data = array(
-			'option_name'  => static::KNOWN_SITE_OPTIONS[ $this->xml->get_local_tag_name() ],
+			'option_name'  => static::KNOWN_SITE_OPTIONS[ $this->xml->get_tag_local_name() ],
 			'option_value' => $this->text_buffer,
 		);
 		$this->emit_entity();

@@ -15,9 +15,9 @@ use WordPress\XML\XMLProcessor;
  * @coversDefaultClass XMLProcessor
  */
 class XMLProcessorTest extends TestCase {
-	const XML_SIMPLE = '<wp:content id="first"><wp:text id="second">Text</wp:text></wp:content>';
-	const XML_WITH_CLASSES = '<wp:content wp:post-type="main with-border" id="first"><wp:text wp:post-type="not-main bold with-border" id="second">Text</wp:text></wp:content>';
-	const XML_MALFORMED = '<wp:content><wp:text wp:post-type="d-md-none" Notifications</wp:text><wp:text wp:post-type="d-none d-md-inline">Back to notifications</wp:text></wp:content>';
+	const XML_SIMPLE = '<wp:content xmlns:wp="w.org" id="first"><wp:text id="second">Text</wp:text></wp:content>';
+	const XML_WITH_CLASSES = '<wp:content xmlns:wp="w.org" wp:post-type="main with-border" id="first"><wp:text wp:post-type="not-main bold with-border" id="second">Text</wp:text></wp:content>';
+	const XML_MALFORMED = '<wp:content xmlns:wp="w.org"><wp:text wp:post-type="d-md-none" Notifications</wp:text><wp:text wp:post-type="d-none d-md-inline">Back to notifications</wp:text></wp:content>';
 
 	public function beforeEach() {
 		$GLOBALS['_doing_it_wrong_messages'] = array();
@@ -26,36 +26,36 @@ class XMLProcessorTest extends TestCase {
 	/**
 	 * @ticket 61365
 	 *
-	 * @covers XMLProcessor::get_local_tag_name
+	 * @covers XMLProcessor::get_tag_local_name
 	 */
 	public function test_get_tag_returns_null_before_finding_tags() {
 		$processor = XMLProcessor::create_from_string( '<wp:content>Test</wp:content>' );
 
-		$this->assertNull( $processor->get_local_tag_name(), 'Calling get_tag() without selecting a tag did not return null' );
+		$this->assertNull( $processor->get_tag_local_name(), 'Calling get_tag() without selecting a tag did not return null' );
 	}
 
 	/**
 	 * @ticket 61365
 	 *
-	 * @covers XMLProcessor::get_local_tag_name
+	 * @covers XMLProcessor::get_tag_local_name
 	 */
 	public function test_get_tag_returns_null_when_not_in_open_tag() {
-		$processor = XMLProcessor::create_from_string( '<wp:content>Test</wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org">Test</wp:content>' );
 
-		$this->assertFalse( $processor->next_tag( 'p' ), 'Querying a non-existing tag did not return false' );
-		$this->assertNull( $processor->get_local_tag_name(), 'Accessing a non-existing tag did not return null' );
+		$this->assertFalse( $processor->next_tag( array( '', 'p') ), 'Querying a non-existing tag did not return false' );
+		$this->assertNull( $processor->get_tag_local_name(), 'Accessing a non-existing tag did not return null' );
 	}
 
 	/**
 	 * @ticket 61365
 	 *
-	 * @covers XMLProcessor::get_local_tag_name
+	 * @covers XMLProcessor::get_tag_local_name
 	 */
 	public function test_get_tag_returns_open_tag_name() {
-		$processor = XMLProcessor::create_from_string( '<wp:content>Test</wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<content>Test</content>' );
 
-		$this->assertTrue( $processor->next_tag( 'wp:content' ), 'Querying an existing tag did not return true' );
-		$this->assertSame( 'wp:content', $processor->get_local_tag_name(), 'Accessing an existing tag name did not return "div"' );
+		$this->assertTrue( $processor->next_tag( 'content' ), 'Querying an existing tag did not return true' );
+		$this->assertSame( 'content', $processor->get_tag_local_name(), 'Accessing an existing tag name did not return "div"' );
 	}
 
 	/**
@@ -110,10 +110,10 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_attribute
 	 */
 	public function test_get_attribute_returns_null_when_not_in_open_tag() {
-		$processor = XMLProcessor::create_from_string( '<wp:content wp:post-type="test">Test</wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org" wp:post-type="test">Test</wp:content>' );
 
 		$this->assertFalse( $processor->next_tag( 'p' ), 'Querying a non-existing tag did not return false' );
-		$this->assertNull( $processor->get_attribute( 'wp:post-type' ),
+		$this->assertNull( $processor->get_attribute( '', 'wp:post-type' ),
 			'Accessing an attribute of a non-existing tag did not return null' );
 	}
 
@@ -123,12 +123,12 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_attribute
 	 */
 	public function test_get_attribute_returns_null_when_in_closing_tag() {
-		$processor = XMLProcessor::create_from_string( '<wp:content wp:post-type="test">Test</wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org" wp:post-type="test">Test</wp:content>' );
 
-		$this->assertTrue( $processor->next_tag( 'wp:content' ), 'Querying an existing tag did not return true' );
+		$this->assertTrue( $processor->next_tag( array( 'w.org', 'content' ) ), 'Querying an existing tag did not return true' );
 		$this->assertTrue( $processor->next_token(), 'Querying an existing closing tag did not return true' );
 		$this->assertTrue( $processor->next_token(), 'Querying an existing closing tag did not return true' );
-		$this->assertNull( $processor->get_attribute( 'wp:post-type' ), 'Accessing an attribute of a closing tag did not return null' );
+		$this->assertNull( $processor->get_attribute( 'w.org', 'post-type' ), 'Accessing an attribute of a closing tag did not return null' );
 	}
 
 	/**
@@ -137,10 +137,10 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_attribute
 	 */
 	public function test_get_attribute_returns_null_when_attribute_missing() {
-		$processor = XMLProcessor::create_from_string( '<wp:content wp:post-type="test">Test</wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org" wp:post-type="test">Test</wp:content>' );
 
-		$this->assertTrue( $processor->next_tag( 'wp:content' ), 'Querying an existing tag did not return true' );
-		$this->assertNull( $processor->get_attribute( 'test-id' ), 'Accessing a non-existing attribute did not return null' );
+		$this->assertTrue( $processor->next_tag( array( 'w.org', 'content' ) ), 'Querying an existing tag did not return true' );
+		$this->assertNull( $processor->get_attribute( '', 'test-id' ), 'Accessing a non-existing attribute did not return null' );
 	}
 
 	/**
@@ -150,9 +150,9 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_attribute
 	 */
 	public function test_attributes_are_rejected_in_tag_closers() {
-		$processor = XMLProcessor::create_from_string( '<wp:content>Test</wp:content wp:post-type="test">' );
+		$processor = XMLProcessor::create_from_string( '<content>Test</content post-type="test">' );
 
-		$this->assertTrue( $processor->next_tag( 'wp:content' ), 'Querying an existing tag did not return true' );
+		$this->assertTrue( $processor->next_tag( 'content' ), 'Querying an existing tag did not return true' );
 		$this->assertTrue( $processor->next_token(), 'Querying a text node did not return true.' );
 		$this->assertFalse( $processor->next_token(), 'Querying an existing but invalid closing tag did not return false.' );
 	}
@@ -163,10 +163,10 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_attribute
 	 */
 	public function test_get_attribute_returns_attribute_value() {
-		$processor = XMLProcessor::create_from_string( '<wp:content wp:post-type="test">Test</wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<wp:content wp:post-type="test" xmlns:wp="w.org">Test</wp:content>' );
 
-		$this->assertTrue( $processor->next_tag( 'wp:content' ), 'Querying an existing tag did not return true' );
-		$this->assertSame( 'test', $processor->get_attribute( 'wp:post-type' ),
+		$this->assertTrue( $processor->next_tag( array( 'breadcrumbs' => array( array( 'w.org', 'content' ) ) ) ), 'Querying an existing tag did not return true' );
+		$this->assertSame( 'test', $processor->get_attribute( 'w.org', 'post-type' ),
 			'Accessing a wp:post-type="test" attribute value did not return "test"' );
 	}
 
@@ -201,10 +201,10 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_attribute
 	 */
 	public function test_malformed_attribute_value_containing_ampersand_is_treated_as_plaintext() {
-		$processor = XMLProcessor::create_from_string( '<wp:content enabled="WordPress & WordPress">Test</wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org" enabled="WordPress & WordPress">Test</wp:content>' );
 
 		$this->assertTrue( $processor->next_tag(), 'Querying a tag did not return true' );
-		$this->assertEquals( 'WordPress & WordPress', $processor->get_attribute( 'enabled' ) );
+		$this->assertEquals( 'WordPress & WordPress', $processor->get_attribute( '', 'enabled' ) );
 	}
 
 	/**
@@ -214,10 +214,10 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_attribute
 	 */
 	public function test_malformed_attribute_value_containing_entity_without_semicolon_is_treated_as_plaintext() {
-		$processor = XMLProcessor::create_from_string( '<wp:content enabled="&#x94">Test</wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org" enabled="&#x94">Test</wp:content>' );
 
 		$this->assertTrue( $processor->next_tag(), 'Querying a tag did not return true' );
-		$this->assertEquals( '&#x94', $processor->get_attribute( 'enabled' ) );
+		$this->assertEquals( '&#x94', $processor->get_attribute( '', 'enabled' ) );
 	}
 
 	/**
@@ -262,7 +262,7 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_attribute
 	 */
 	public function test_get_modifiable_text_returns_a_decoded_value() {
-		$processor = XMLProcessor::create_from_string( '<root>&#x201C;&#x1f604;&#x201D;</root>' );
+		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org">&#x201C;&#x1f604;&#x201D;</root>' );
 
 		$processor->next_tag( 'root' );
 		$processor->next_token();
@@ -285,7 +285,7 @@ class XMLProcessorTest extends TestCase {
 		$this->assertTrue( $processor->next_tag( 'root' ), 'Querying a tag did not return true' );
 		$this->assertEquals(
 			'“😄”',
-			$processor->get_attribute( 'encoded-data' ),
+			$processor->get_attribute( '', 'encoded-data' ),
 			'Reading an encoded attribute did not decode it.'
 		);
 	}
@@ -298,17 +298,17 @@ class XMLProcessorTest extends TestCase {
 	 * @param  string  $attribute_name  Name of data-enabled attribute with case variations.
 	 */
 	public function test_get_attribute_is_case_sensitive() {
-		$processor = XMLProcessor::create_from_string( '<wp:content DATA-enabled="true">Test</wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org" DATA-enabled="true">Test</wp:content>' );
 		$processor->next_tag();
 
 		$this->assertEquals(
 			'true',
-			$processor->get_attribute( 'DATA-enabled' ),
+			$processor->get_attribute( '', 'DATA-enabled' ),
 			'Accessing an attribute by a same-cased name did return not its value'
 		);
 
 		$this->assertNull(
-			$processor->get_attribute( 'data-enabled' ),
+			$processor->get_attribute( '', 'data-enabled' ),
 			'Accessing an attribute by a differently-cased name did return its value'
 		);
 	}
@@ -322,14 +322,14 @@ class XMLProcessorTest extends TestCase {
 	public function test_remove_attribute_is_case_sensitive() {
 		$processor = XMLProcessor::create_from_string( '<wp:content DATA-enabled="true">Test</wp:content>' );
 		$processor->next_tag();
-		$processor->remove_attribute( 'data-enabled' );
+		$processor->remove_attribute( '', 'data-enabled' );
 
 		$this->assertSame( '<wp:content DATA-enabled="true">Test</wp:content>', $processor->get_updated_xml(),
 			'A case-sensitive remove_attribute call did remove the attribute' );
 
-		$processor->remove_attribute( 'DATA-enabled' );
+		$processor->remove_attribute( '', 'DATA-enabled' );
 
-		$this->assertSame( '<wp:content >Test</wp:content>', $processor->get_updated_xml(),
+		$this->assertSame( '<wp:content DATA-enabled="true">Test</wp:content>', $processor->get_updated_xml(),
 			'A case-sensitive remove_attribute call did not remove the attribute' );
 	}
 
@@ -339,11 +339,11 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::set_attribute
 	 */
 	public function test_set_attribute_is_case_sensitive() {
-		$processor = XMLProcessor::create_from_string( '<wp:content DATA-enabled="true">Test</wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org" DATA-enabled="true">Test</wp:content>' );
 		$processor->next_tag();
-		$processor->set_attribute( 'data-enabled', 'abc' );
+		$processor->set_attribute( '', 'data-enabled', 'abc' );
 
-		$this->assertSame( '<wp:content data-enabled="abc" DATA-enabled="true">Test</wp:content>', $processor->get_updated_xml(),
+		$this->assertSame( '<wp:content data-enabled="abc" xmlns:wp="w.org" DATA-enabled="true">Test</wp:content>', $processor->get_updated_xml(),
 			'A case-insensitive set_attribute call did not update the existing attribute' );
 	}
 
@@ -355,7 +355,7 @@ class XMLProcessorTest extends TestCase {
 	public function test_get_attribute_names_with_prefix_returns_null_before_finding_tags() {
 		$processor = XMLProcessor::create_from_string( '<wp:content data-foo="bar">Test</wp:content>' );
 		$this->assertNull(
-			$processor->get_attribute_qualified_names_with_prefix( 'data-' ),
+			$processor->get_attribute_names_with_prefix( '', 'data-' ),
 			'Accessing attributes by their prefix did not return null when no tag was selected'
 		);
 	}
@@ -366,9 +366,9 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_attribute_qualified_names_with_prefix
 	 */
 	public function test_get_attribute_names_with_prefix_returns_null_when_not_in_open_tag() {
-		$processor = XMLProcessor::create_from_string( '<wp:content data-foo="bar">Test</wp:content>' );
-		$processor->next_tag( 'p' );
-		$this->assertNull( $processor->get_attribute_qualified_names_with_prefix( 'data-' ),
+		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org" data-foo="bar">Test</wp:content>' );
+		$processor->next_tag( 'w.org', 'content' );
+		$this->assertNull( $processor->get_attribute_names_with_prefix( '', 'data-' ),
 			'Accessing attributes of a non-existing tag did not return null' );
 	}
 
@@ -378,11 +378,11 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_attribute_qualified_names_with_prefix
 	 */
 	public function test_get_attribute_names_with_prefix_returns_null_when_in_closing_tag() {
-		$processor = XMLProcessor::create_from_string( '<wp:content data-foo="bar">Test</wp:content>' );
-		$processor->next_tag( 'wp:content' );
+		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org" data-foo="bar">Test</wp:content>' );
+		$processor->next_tag( 'w.org', 'content' );
 		$processor->next_tag( array( 'tag_closers' => 'visit' ) );
 
-		$this->assertNull( $processor->get_attribute_qualified_names_with_prefix( 'data-' ),
+		$this->assertNull( $processor->get_attribute_names_with_prefix( '', 'data-' ),
 			'Accessing attributes of a closing tag did not return null' );
 	}
 
@@ -395,7 +395,7 @@ class XMLProcessorTest extends TestCase {
 		$processor = XMLProcessor::create_from_string( '<wp:content>Test</wp:content>' );
 		$processor->next_tag( 'wp:content' );
 
-		$this->assertSame( array(), $processor->get_attribute_qualified_names_with_prefix( 'data-' ),
+		$this->assertSame( array(), $processor->get_attribute_names_with_prefix( '', 'data-' ),
 			'Accessing the attributes on a tag without any did not return an empty array' );
 	}
 
@@ -405,12 +405,12 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_attribute_qualified_names_with_prefix
 	 */
 	public function test_get_attribute_names_with_prefix_returns_matching_attribute_names_in_original_case() {
-		$processor = XMLProcessor::create_from_string( '<wp:content DATA-enabled="yes" wp:post-type="test" data-test-ID="14">Test</wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<content DATA-enabled="yes" post-type="test" data-test-ID="14">Test</content>' );
 		$processor->next_tag();
 
 		$this->assertSame(
-			array( 'data-test-ID' ),
-			$processor->get_attribute_qualified_names_with_prefix( 'data-' ),
+			array( array( '', 'data-test-ID' ) ),
+			$processor->get_attribute_names_with_prefix( '', 'data-' ),
 			'Accessing attributes by their prefix did not return their lowercase names'
 		);
 	}
@@ -421,18 +421,18 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_attribute_qualified_names_with_prefix
 	 */
 	public function test_get_attribute_names_with_prefix_returns_attribute_added_by_set_attribute() {
-		$processor = XMLProcessor::create_from_string( '<wp:content data-foo="bar">Test</wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<content data-foo="bar">Test</content>' );
 		$processor->next_tag();
-		$processor->set_attribute( 'data-test-id', '14' );
+		$processor->set_attribute( '', 'data-test-id', '14' );
 
 		$this->assertSame(
-			'<wp:content data-test-id="14" data-foo="bar">Test</wp:content>',
+			'<content data-test-id="14" data-foo="bar">Test</content>',
 			$processor->get_updated_xml(),
 			"Updated XML doesn't include attribute added via set_attribute"
 		);
 		$this->assertSame(
-			array( 'data-test-id', 'data-foo' ),
-			$processor->get_attribute_qualified_names_with_prefix( 'data-' ),
+			array( array( '', 'data-test-id' ), array( '', 'data-foo' ) ),
+			$processor->get_attribute_names_with_prefix( '', 'data-' ),
 			"Accessing attribute names doesn't find attribute added via set_attribute"
 		);
 	}
@@ -443,12 +443,13 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::__toString
 	 */
 	public function test_to_string_returns_updated_xml() {
-		$processor = XMLProcessor::create_from_string( '<line id="remove" /><wp:content enabled="yes" wp:post-type="test">Test</wp:content><wp:text id="span-id"></wp:text>' );
+		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org"><line id="remove" /><wp:content enabled="yes" wp:post-type="test">Test</wp:content><wp:text id="span-id"></wp:text></root>' );
 		$processor->next_tag();
-		$processor->remove_attribute( 'id' );
+		$processor->next_tag();
+		$processor->remove_attribute( '', 'id' );
 
 		$processor->next_tag();
-		$processor->set_attribute( 'id', 'wp:content-id-1' );
+		$processor->set_attribute( '', 'id', 'wp:content-id-1' );
 
 		$this->assertSame(
 			$processor->get_updated_xml(),
@@ -463,32 +464,32 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_updated_xml
 	 */
 	public function test_get_updated_xml_applies_the_updates_so_far_and_keeps_the_processor_on_the_current_tag() {
-		$processor = XMLProcessor::create_from_string( '<line id="remove" /><wp:content enabled="yes" wp:post-type="test">Test</wp:content><wp:text id="span-id"></wp:text>' );
+		$processor = XMLProcessor::create_from_string( '<line id="remove" /><content enabled="yes" post-type="test">Test</content><text id="span-id"></text>' );
 		$processor->next_tag();
-		$processor->remove_attribute( 'id' );
+		$processor->remove_attribute( '', 'id' );
 
 		$processor->next_tag();
-		$processor->set_attribute( 'id', 'wp:content-id-1' );
+		$processor->set_attribute( '', 'id', 'content-id-1' );
 
 		$this->assertSame(
-			'<line  /><wp:content id="wp:content-id-1" enabled="yes" wp:post-type="test">Test</wp:content><wp:text id="span-id"></wp:text>',
+			'<line  /><content id="content-id-1" enabled="yes" post-type="test">Test</content><text id="span-id"></text>',
 			$processor->get_updated_xml(),
 			'Calling get_updated_xml after updating the attributes of the second tag returned different XML than expected'
 		);
 
-		$processor->set_attribute( 'id', 'wp:content-id-2' );
+		$processor->set_attribute( '', 'id', 'content-id-2' );
 
 		$this->assertSame(
-			'<line  /><wp:content id="wp:content-id-2" enabled="yes" wp:post-type="test">Test</wp:content><wp:text id="span-id"></wp:text>',
+			'<line  /><content id="content-id-2" enabled="yes" post-type="test">Test</content><text id="span-id"></text>',
 			$processor->get_updated_xml(),
 			'Calling get_updated_xml after updating the attributes of the second tag for the second time returned different XML than expected'
 		);
 
 		$processor->next_tag();
-		$processor->remove_attribute( 'id' );
+		$processor->remove_attribute( '', 'id' );
 
 		$this->assertSame(
-			'<line  /><wp:content id="wp:content-id-2" enabled="yes" wp:post-type="test">Test</wp:content><wp:text ></wp:text>',
+			'<line  /><content id="content-id-2" enabled="yes" post-type="test">Test</content><text ></text>',
 			$processor->get_updated_xml(),
 			'Calling get_updated_xml after removing the id attribute of the third tag returned different XML than expected'
 		);
@@ -517,17 +518,17 @@ class XMLProcessorTest extends TestCase {
 	 * @expectedIncorrectUsage XMLProcessor::parse_next_attribute
 	 */
 	public function test_get_updated_xml_applies_updates_to_content_after_seeking_to_before_parsed_bytes() {
-		$processor = XMLProcessor::create_from_string( '<wp:content><photo hidden></wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org"><photo hidden></wp:content>' );
 
 		$processor->next_tag();
-		$processor->set_attribute( 'wonky', 'true' );
+		$processor->set_attribute( '', 'wonky', 'true' );
 		$processor->next_tag();
 		$processor->set_bookmark( 'here' );
 
 		$processor->next_tag( array( 'tag_closers' => 'visit' ) );
 		$processor->seek( 'here' );
 
-		$this->assertSame( '<wp:content wonky="true"><photo hidden></wp:content>', $processor->get_updated_xml() );
+		$this->assertSame( '<wp:content wonky="true" xmlns:wp="w.org"><photo hidden></wp:content>', $processor->get_updated_xml() );
 	}
 
 	public function test_declare_element_as_pcdata() {
@@ -545,7 +546,7 @@ class XMLProcessorTest extends TestCase {
 			But! It is all treated as text.
 		';
 		$processor = XMLProcessor::create_from_string(
-			"<root><my-pcdata>$text</my-pcdata></root>"
+			"<root xmlns:wp=\"w.org\"><my-pcdata>$text</my-pcdata></root>"
 		);
 		$processor->declare_element_as_pcdata( 'my-pcdata' );
 		$processor->next_tag( 'my-pcdata' );
@@ -622,34 +623,34 @@ class XMLProcessorTest extends TestCase {
 	public static function data_xml_nth_token_substring() {
 		return array(
 			// Tags.
-			'DIV start tag'                 => array( '<wp:content>', 1, '<wp:content>' ),
+			'DIV start tag'                 => array( '<content>', 1, '<content>' ),
 			'DIV start tag with attributes' => array(
-				'<wp:content wp:post-type="x" disabled="yes">',
+				'<content post-type="x" disabled="yes">',
 				1,
-				'<wp:content wp:post-type="x" disabled="yes">',
+				'<content post-type="x" disabled="yes">',
 			),
-			'Nested DIV'                    => array( '<wp:content><wp:content b="yes">', 2, '<wp:content b="yes">' ),
-			'Sibling DIV'                   => array( '<wp:content></wp:content><wp:content b="yes">', 3, '<wp:content b="yes">' ),
-			'DIV before text'               => array( '<wp:content> text', 1, '<wp:content>' ),
-			'DIV after comment'             => array( '<root><!-- comment --><wp:content>', 3, '<wp:content>' ),
-			'DIV before comment'            => array( '<wp:content><!-- c --> ', 1, '<wp:content>' ),
-			'Start "self-closing" tag'      => array( '<wp:content />', 1, '<wp:content />' ),
+			'Nested DIV'                    => array( '<content><content b="yes">', 2, '<content b="yes">' ),
+			'Sibling DIV'                   => array( '<content></content><content b="yes">', 3, '<content b="yes">' ),
+			'DIV before text'               => array( '<content> text', 1, '<content>' ),
+			'DIV after comment'             => array( '<root><!-- comment --><content>', 3, '<content>' ),
+			'DIV before comment'            => array( '<content><!-- c --> ', 1, '<content>' ),
+			'Start "self-closing" tag'      => array( '<content />', 1, '<content />' ),
 			'Void tag'                      => array( '<photo src="img.png">', 1, '<photo src="img.png">' ),
 			'Void tag w/self-closing flag'  => array( '<photo src="img.png" />', 1, '<photo src="img.png" />' ),
-			'Void tag inside DIV'           => array( '<wp:content><photo src="img.png"></wp:content>', 2, '<photo src="img.png">' ),
+			'Void tag inside DIV'           => array( '<content><photo src="img.png"></content>', 2, '<photo src="img.png">' ),
 
 			// Text.
 			'Text'                          => array( 'Just text</data>', 1, 'Just text' ),
-			'Text in DIV'                   => array( '<wp:content>Text<wp:content>', 2, 'Text' ),
-			'Text before DIV'               => array( 'Text<wp:content>', 1, 'Text' ),
+			'Text in DIV'                   => array( '<content>Text<content>', 2, 'Text' ),
+			'Text before DIV'               => array( 'Text<content>', 1, 'Text' ),
 			'Text after comment'            => array( '<!-- comment -->Text<!-- c -->', 2, 'Text' ),
 			'Text before comment'           => array( 'Text<!-- c --> ', 1, 'Text' ),
 
 			// Comments.
 			'Comment'                       => array( '<!-- comment -->', 1, '<!-- comment -->' ),
-			'Comment in DIV'                => array( '<wp:content><!-- comment --><wp:content>', 2, '<!-- comment -->' ),
-			'Comment before DIV'            => array( '<!-- comment --><wp:content>', 1, '<!-- comment -->' ),
-			'Comment after DIV'             => array( '<wp:content></wp:content><!-- comment -->', 3, '<!-- comment -->' ),
+			'Comment in DIV'                => array( '<content ><!-- comment --><content>', 2, '<!-- comment -->' ),
+			'Comment before DIV'            => array( '<!-- comment --><content>', 1, '<!-- comment -->' ),
+			'Comment after DIV'             => array( '<content ></content><!-- comment -->', 3, '<!-- comment -->' ),
 			'Comment after comment'         => array( '<!-- comment --><!-- comment -->', 2, '<!-- comment -->' ),
 			'Comment before comment'        => array( '<!-- comment --><!-- c --> ', 1, '<!-- comment -->' ),
 			'Empty comment'                 => array( '<!---->', 1, '<!---->' ),
@@ -685,7 +686,7 @@ class XMLProcessorTest extends TestCase {
 	 */
 	public function test_normalizes_carriage_returns_in_text_nodes() {
 		$processor = XMLProcessor::create_from_string(
-			"<wp:content>We are\rnormalizing\r\n\nthe\n\r\r\r\ncarriage returns</wp:content>"
+			"<content>We are\rnormalizing\r\n\nthe\n\r\r\r\ncarriage returns</content>"
 		);
 		$processor->next_tag();
 		$processor->next_token();
@@ -703,7 +704,7 @@ class XMLProcessorTest extends TestCase {
 	 */
 	public function test_normalizes_carriage_returns_in_cdata() {
 		$processor = XMLProcessor::create_from_string(
-			"<wp:content><![CDATA[We are\rnormalizing\r\n\nthe\n\r\r\r\ncarriage returns]]>"
+			"<content><![CDATA[We are\rnormalizing\r\n\nthe\n\r\r\r\ncarriage returns]]>"
 		);
 		$processor->next_tag();
 		$processor->next_token();
@@ -722,10 +723,10 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::is_tag_closer
 	 */
 	public function test_next_tag_should_not_stop_on_closers() {
-		$processor = XMLProcessor::create_from_string( '<wp:content><photo /></wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org"><photo /></wp:content>' );
 
-		$this->assertTrue( $processor->next_tag( array( 'breadcrumbs' => array( 'wp:content' ) ) ), 'Did not find desired tag opener' );
-		$this->assertFalse( $processor->next_tag( array( 'breadcrumbs' => array( 'wp:content' ) ) ),
+		$this->assertTrue( $processor->next_tag( array( 'breadcrumbs' => array( array( 'w.org', 'content' ) ) ) ), 'Did not find desired tag opener' );
+		$this->assertFalse( $processor->next_tag( array( 'breadcrumbs' => array( array( 'w.org', 'content' ) ) ) ),
 			'Visited an unwanted tag, a tag closer' );
 	}
 
@@ -738,11 +739,11 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_updated_xml
 	 */
 	public function test_internal_pointer_returns_to_original_spot_after_inserting_content_before_cursor() {
-		$tags = XMLProcessor::create_from_string( '<root><wp:content>outside</wp:content><section><wp:content><photo>inside</wp:content></section></root>' );
+		$tags = XMLProcessor::create_from_string( '<root xmlns:wp="w.org"><wp:content>outside</wp:content><section><wp:content><photo>inside</wp:content></section></root>' );
 
 		$tags->next_tag();
 		$tags->next_tag();
-		$tags->set_attribute( 'wp:post-type', 'foo' );
+		$tags->set_attribute( '', 'wp:post-type', 'foo' );
 		$tags->next_tag( 'section' );
 
 		// Return to this spot after moving ahead.
@@ -751,9 +752,9 @@ class XMLProcessorTest extends TestCase {
 		// Move ahead.
 		$tags->next_tag( 'photo' );
 		$tags->seek( 'here' );
-		$this->assertSame( '<root><wp:content wp:post-type="foo">outside</wp:content><section><wp:content><photo>inside</wp:content></section></root>',
+		$this->assertSame( '<root xmlns:wp="w.org"><wp:content wp:post-type="foo">outside</wp:content><section><wp:content><photo>inside</wp:content></section></root>',
 			$tags->get_updated_xml() );
-		$this->assertSame( 'section', $tags->get_local_tag_name() );
+		$this->assertSame( 'section', $tags->get_tag_local_name() );
 		$this->assertFalse( $tags->is_tag_closer() );
 	}
 
@@ -768,7 +769,7 @@ class XMLProcessorTest extends TestCase {
 		$this->assertFalse( $processor->next_tag( 'p' ), 'Querying a non-existing tag did not return false' );
 		$this->assertFalse( $processor->next_tag( 'wp:content' ), 'Querying a non-existing tag did not return false' );
 
-		$processor->set_attribute( 'id', 'primary' );
+		$processor->set_attribute( '', 'id', 'primary' );
 
 		$this->assertSame(
 			self::XML_SIMPLE,
@@ -786,18 +787,18 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::remove_class
 	 */
 	public function test_attribute_ops_on_tag_closer_do_not_change_the_markup() {
-		$processor = XMLProcessor::create_from_string( '<wp:content id="3"></wp:content>' );
+		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org" id="3"></wp:content>' );
 		$processor->next_token();
 		$this->assertFalse( $processor->is_tag_closer(), 'Skipped tag opener' );
 
 		$processor->next_token();
 		$this->assertTrue( $processor->is_tag_closer(), 'Skipped tag closer' );
-		$this->assertFalse( $processor->set_attribute( 'id', 'test' ),
+		$this->assertFalse( $processor->set_attribute( '', 'id', 'test' ),
 			"Allowed setting an attribute on a tag closer when it shouldn't have" );
-		$this->assertFalse( $processor->remove_attribute( 'invalid-id' ),
+		$this->assertFalse( $processor->remove_attribute( '', 'invalid-id' ),
 			"Allowed removing an attribute on a tag closer when it shouldn't have" );
 		$this->assertSame(
-			'<wp:content id="3"></wp:content>',
+			'<wp:content xmlns:wp="w.org" id="3"></wp:content>',
 			$processor->get_updated_xml(),
 			'Calling get_updated_xml after updating a non-existing tag returned an XML that was different from the original XML'
 		);
@@ -812,16 +813,16 @@ class XMLProcessorTest extends TestCase {
 	public function test_set_attribute_with_a_non_existing_attribute_adds_a_new_attribute_to_the_markup() {
 		$processor = XMLProcessor::create_from_string( self::XML_SIMPLE );
 		$processor->next_tag();
-		$processor->set_attribute( 'test-attribute', 'test-value' );
+		$processor->set_attribute( '', 'test-attribute', 'test-value' );
 
 		$this->assertSame(
-			'<wp:content test-attribute="test-value" id="first"><wp:text id="second">Text</wp:text></wp:content>',
+			'<wp:content test-attribute="test-value" xmlns:wp="w.org" id="first"><wp:text id="second">Text</wp:text></wp:content>',
 			$processor->get_updated_xml(),
 			'Updated XML does not include attribute added via set_attribute()'
 		);
 		$this->assertSame(
 			'test-value',
-			$processor->get_attribute( 'test-attribute' ),
+			$processor->get_attribute( '', 'test-attribute' ),
 			'get_attribute() (called after get_updated_xml()) did not return attribute added via set_attribute()'
 		);
 	}
@@ -834,15 +835,15 @@ class XMLProcessorTest extends TestCase {
 	public function test_get_attribute_returns_updated_values_before_they_are_applied() {
 		$processor = XMLProcessor::create_from_string( self::XML_SIMPLE );
 		$processor->next_tag();
-		$processor->set_attribute( 'test-attribute', 'test-value' );
+		$processor->set_attribute( '', 'test-attribute', 'test-value' );
 
 		$this->assertSame(
 			'test-value',
-			$processor->get_attribute( 'test-attribute' ),
+			$processor->get_attribute( '', 'test-attribute' ),
 			'get_attribute() (called before get_updated_xml()) did not return attribute added via set_attribute()'
 		);
 		$this->assertSame(
-			'<wp:content test-attribute="test-value" id="first"><wp:text id="second">Text</wp:text></wp:content>',
+			'<wp:content test-attribute="test-value" xmlns:wp="w.org" id="first"><wp:text id="second">Text</wp:text></wp:content>',
 			$processor->get_updated_xml(),
 			'Updated XML does not include attribute added via set_attribute()'
 		);
@@ -856,15 +857,15 @@ class XMLProcessorTest extends TestCase {
 	public function test_get_attribute_returns_updated_values_before_they_are_applied_with_different_name_casing() {
 		$processor = XMLProcessor::create_from_string( self::XML_SIMPLE );
 		$processor->next_tag();
-		$processor->set_attribute( 'test-ATTribute', 'test-value' );
+		$processor->set_attribute( '', 'test-ATTribute', 'test-value' );
 
 		$this->assertSame(
 			'test-value',
-			$processor->get_attribute( 'test-ATTribute' ),
+			$processor->get_attribute( '', 'test-ATTribute' ),
 			'get_attribute() (called before get_updated_xml()) did not return attribute added via set_attribute()'
 		);
 		$this->assertSame(
-			'<wp:content test-ATTribute="test-value" id="first"><wp:text id="second">Text</wp:text></wp:content>',
+			'<wp:content test-ATTribute="test-value" xmlns:wp="w.org" id="first"><wp:text id="second">Text</wp:text></wp:content>',
 			$processor->get_updated_xml(),
 			'Updated XML does not include attribute added via set_attribute()'
 		);
@@ -879,14 +880,14 @@ class XMLProcessorTest extends TestCase {
 	public function test_get_attribute_reflects_removed_attribute_before_it_is_applied() {
 		$processor = XMLProcessor::create_from_string( self::XML_SIMPLE );
 		$processor->next_tag();
-		$processor->remove_attribute( 'id' );
+		$processor->remove_attribute( '', 'id' );
 
 		$this->assertNull(
-			$processor->get_attribute( 'id' ),
+			$processor->get_attribute( '', 'id' ),
 			'get_attribute() (called before get_updated_xml()) returned attribute that was removed by remove_attribute()'
 		);
 		$this->assertSame(
-			'<wp:content ><wp:text id="second">Text</wp:text></wp:content>',
+			'<wp:content xmlns:wp="w.org" ><wp:text id="second">Text</wp:text></wp:content>',
 			$processor->get_updated_xml(),
 			'Updated XML includes attribute that was removed by remove_attribute()'
 		);
@@ -900,11 +901,11 @@ class XMLProcessorTest extends TestCase {
 	public function test_get_attribute_reflects_adding_and_then_removing_an_attribute_before_those_updates_are_applied() {
 		$processor = XMLProcessor::create_from_string( self::XML_SIMPLE );
 		$processor->next_tag();
-		$processor->set_attribute( 'test-attribute', 'test-value' );
-		$processor->remove_attribute( 'test-attribute' );
+		$processor->set_attribute( '', 'test-attribute', 'test-value' );
+		$processor->remove_attribute( '', 'test-attribute' );
 
 		$this->assertNull(
-			$processor->get_attribute( 'test-attribute' ),
+			$processor->get_attribute( '', 'test-attribute' ),
 			'get_attribute() (called before get_updated_xml()) returned attribute that was added via set_attribute() and then removed by remove_attribute()'
 		);
 		$this->assertSame(
@@ -922,15 +923,15 @@ class XMLProcessorTest extends TestCase {
 	public function test_get_attribute_reflects_setting_and_then_removing_an_existing_attribute_before_those_updates_are_applied() {
 		$processor = XMLProcessor::create_from_string( self::XML_SIMPLE );
 		$processor->next_tag();
-		$processor->set_attribute( 'id', 'test-value' );
-		$processor->remove_attribute( 'id' );
+		$processor->set_attribute( '', 'id', 'test-value' );
+		$processor->remove_attribute( '', 'id' );
 
 		$this->assertNull(
-			$processor->get_attribute( 'id' ),
+			$processor->get_attribute( '', 'id' ),
 			'get_attribute() (called before get_updated_xml()) returned attribute that was overwritten by set_attribute() and then removed by remove_attribute()'
 		);
 		$this->assertSame(
-			'<wp:content ><wp:text id="second">Text</wp:text></wp:content>',
+			'<wp:content xmlns:wp="w.org" ><wp:text id="second">Text</wp:text></wp:content>',
 			$processor->get_updated_xml(),
 			'Updated XML includes attribute that was overwritten by set_attribute() and then removed by remove_attribute()'
 		);
@@ -944,9 +945,9 @@ class XMLProcessorTest extends TestCase {
 	public function test_set_attribute_with_an_existing_attribute_name_updates_its_value_in_the_markup() {
 		$processor = XMLProcessor::create_from_string( self::XML_SIMPLE );
 		$processor->next_tag();
-		$processor->set_attribute( 'id', 'new-id' );
+		$processor->set_attribute( '', 'id', 'new-id' );
 		$this->assertSame(
-			'<wp:content id="new-id"><wp:text id="second">Text</wp:text></wp:content>',
+			'<wp:content xmlns:wp="w.org" id="new-id"><wp:text id="second">Text</wp:text></wp:content>',
 			$processor->get_updated_xml(),
 			'Existing attribute was not updated'
 		);
@@ -961,13 +962,13 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::set_attribute
 	 */
 	public function test_set_attribute_with_case_variants_updates_only_the_original_first_copy() {
-		$processor = XMLProcessor::create_from_string( '<wp:content data-enabled="5">' );
+		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org" data-enabled="5">' );
 		$processor->next_tag();
-		$processor->set_attribute( 'data-enabled', 'canary1' );
-		$processor->set_attribute( 'data-enabled', 'canary2' );
-		$processor->set_attribute( 'data-enabled', 'canary3' );
+		$processor->set_attribute( '', 'data-enabled', 'canary1' );
+		$processor->set_attribute( '', 'data-enabled', 'canary2' );
+		$processor->set_attribute( '', 'data-enabled', 'canary3' );
 
-		$this->assertSame( '<wp:content data-enabled="canary3">', strtolower( $processor->get_updated_xml() ) );
+		$this->assertSame( '<wp:content xmlns:wp="w.org" data-enabled="canary3">', strtolower( $processor->get_updated_xml() ) );
 	}
 
 	/**
@@ -979,11 +980,11 @@ class XMLProcessorTest extends TestCase {
 	public function test_next_tag_and_set_attribute_in_a_loop_update_all_tags_in_the_markup() {
 		$processor = XMLProcessor::create_from_string( self::XML_SIMPLE );
 		while ( $processor->next_tag() ) {
-			$processor->set_attribute( 'data-foo', 'bar' );
+			$processor->set_attribute( '', 'data-foo', 'bar' );
 		}
 
 		$this->assertSame(
-			'<wp:content data-foo="bar" id="first"><wp:text data-foo="bar" id="second">Text</wp:text></wp:content>',
+			'<wp:content data-foo="bar" xmlns:wp="w.org" id="first"><wp:text data-foo="bar" id="second">Text</wp:text></wp:content>',
 			$processor->get_updated_xml(),
 			'Not all tags were updated when looping with next_tag() and set_attribute()'
 		);
@@ -997,10 +998,10 @@ class XMLProcessorTest extends TestCase {
 	public function test_remove_attribute_with_an_existing_attribute_name_removes_it_from_the_markup() {
 		$processor = XMLProcessor::create_from_string( self::XML_SIMPLE );
 		$processor->next_tag();
-		$processor->remove_attribute( 'id' );
+		$processor->remove_attribute( '', 'id' );
 
 		$this->assertSame(
-			'<wp:content ><wp:text id="second">Text</wp:text></wp:content>',
+			'<wp:content xmlns:wp="w.org" ><wp:text id="second">Text</wp:text></wp:content>',
 			$processor->get_updated_xml(),
 			'Attribute was not removed'
 		);
@@ -1014,7 +1015,7 @@ class XMLProcessorTest extends TestCase {
 	public function test_remove_attribute_with_a_non_existing_attribute_name_does_not_change_the_markup() {
 		$processor = XMLProcessor::create_from_string( self::XML_SIMPLE );
 		$processor->next_tag();
-		$processor->remove_attribute( 'no-such-attribute' );
+		$processor->remove_attribute( '', 'no-such-attribute' );
 
 		$this->assertSame(
 			self::XML_SIMPLE,
@@ -1030,24 +1031,24 @@ class XMLProcessorTest extends TestCase {
 	 */
 	public function test_correctly_parses_xml_attributes_wrapped_in_single_quotation_marks() {
 		$processor = XMLProcessor::create_from_string(
-			'<wp:content id=\'first\'><wp:text id=\'second\'>Text</wp:text></wp:content>'
+			'<wp:content xmlns:wp="w.org" id=\'first\'><wp:text id=\'second\'>Text</wp:text></wp:content>'
 		);
 		$processor->next_tag(
 			array(
-				'breadcrumbs' => array( 'wp:content' ),
+				'breadcrumbs' => array( array( 'w.org', 'content' ) ),
 				'id'          => 'first',
 			)
 		);
-		$processor->remove_attribute( 'id' );
+		$processor->remove_attribute( '', 'id' );
 		$processor->next_tag(
 			array(
-				'breadcrumbs' => array( 'wp:text' ),
+				'breadcrumbs' => array( array( 'w.org', 'text' ) ),
 				'id'          => 'second',
 			)
 		);
-		$processor->set_attribute( 'id', 'single-quote' );
+		$processor->set_attribute( '', 'id', 'single-quote' );
 		$this->assertSame(
-			'<wp:content ><wp:text id="single-quote">Text</wp:text></wp:content>',
+			'<wp:content xmlns:wp="w.org" ><wp:text id="single-quote">Text</wp:text></wp:content>',
 			$processor->get_updated_xml(),
 			'Did not remove single-quoted attribute'
 		);
@@ -1066,7 +1067,7 @@ class XMLProcessorTest extends TestCase {
 		);
 		$processor->next_tag( 'input' );
 		$this->assertFalse(
-			$processor->set_attribute( 'checked', false ),
+			$processor->set_attribute( '', 'checked', false ),
 			'Accepted a boolean attribute name.'
 		);
 	}
@@ -1081,7 +1082,7 @@ class XMLProcessorTest extends TestCase {
 		$xml_input = '<form action="/action_page.php"><input type="checkbox" name="vehicle" value="Bike"><label for="vehicle">I have a bike</label></form>';
 		$processor = XMLProcessor::create_from_string( $xml_input );
 		$processor->next_tag( 'input' );
-		$processor->set_attribute( 'checked', false );
+		$processor->set_attribute( '', 'checked', false );
 		$this->assertSame(
 			$xml_input,
 			$processor->get_updated_xml(),
@@ -1106,7 +1107,7 @@ class XMLProcessorTest extends TestCase {
 
 		$this->assertFalse(
 			$processor->next_tag(),
-			"Should not have found any tag, but found {$processor->get_local_tag_name()}."
+			"Should not have found any tag, but found {$processor->get_tag_local_name()}."
 		);
 
 		$this->assertTrue(
@@ -1144,7 +1145,7 @@ class XMLProcessorTest extends TestCase {
 
 		$this->assertFalse(
 			$processor->next_tag(),
-			"Should not have found any tag, but found {$processor->get_local_tag_name()}."
+			"Should not have found any tag, but found {$processor->get_tag_local_name()}."
 		);
 
 		$this->assertFalse(
@@ -1189,7 +1190,7 @@ class XMLProcessorTest extends TestCase {
 		$processor->next_tag();
 		$this->assertFalse(
 			$processor->next_tag(),
-			"Shouldn't have found any tags but found {$processor->get_local_tag_name()}."
+			"Shouldn't have found any tags but found {$processor->get_tag_local_name()}."
 		);
 
 		$this->assertTrue(
@@ -1205,19 +1206,19 @@ class XMLProcessorTest extends TestCase {
 	 */
 	public static function data_incomplete_syntax_elements() {
 		return array(
-			'Incomplete tag name'                         => array( '<root><swit' ),
-			'Incomplete tag (no attributes)'              => array( '<root><wp:content' ),
-			'Incomplete tag (attributes)'                 => array( '<root><wp:content inert="yes" title="test"' ),
-			'Incomplete attribute (before =)'             => array( '<root><button disabled' ),
-			'Incomplete attribute (before ")'             => array( '<root><button disabled=' ),
-			'Incomplete attribute (before closing quote)' => array( '<root><button disabled="value started' ),
-			'Incomplete attribute (single quoted)'        => array( "<root><li wp:post-type='just-another class" ),
-			'Incomplete attribute (double quoted)'        => array( '<root><iframe src="https://www.example.com/embed/abcdef' ),
-			'Incomplete comment (normative)'              => array( '<root><!-- without end' ),
-			'Incomplete comment (missing --)'             => array( '<root><!-- without end --' ),
-			'Incomplete CDATA'                            => array( '<root><![CDATA[something inside of here needs to get out' ),
-			'Partial CDATA'                               => array( '<root><![CDA' ),
-			'Partially closed CDATA]'                     => array( '<root><![CDATA[cannot escape]' ),
+			'Incomplete tag name'                         => array( '<root xmlns:wp="w.org"><swit' ),
+			'Incomplete tag (no attributes)'              => array( '<root xmlns:wp="w.org"><wp:content' ),
+			'Incomplete tag (attributes)'                 => array( '<root xmlns:wp="w.org"><wp:content inert="yes" title="test"' ),
+			'Incomplete attribute (before =)'             => array( '<root xmlns:wp="w.org"><button disabled' ),
+			'Incomplete attribute (before ")'             => array( '<root xmlns:wp="w.org"><button disabled=' ),
+			'Incomplete attribute (before closing quote)' => array( '<root xmlns:wp="w.org"><button disabled="value started' ),
+			'Incomplete attribute (single quoted)'        => array( "<root xmlns:wp=\"w.org\"><li wp:post-type='just-another class" ),
+			'Incomplete attribute (double quoted)'        => array( '<root xmlns:wp="w.org"><iframe src="https://www.example.com/embed/abcdef' ),
+			'Incomplete comment (normative)'              => array( '<root xmlns:wp="w.org"><!-- without end' ),
+			'Incomplete comment (missing --)'             => array( '<root xmlns:wp="w.org"><!-- without end --' ),
+			'Incomplete CDATA'                            => array( '<root xmlns:wp="w.org"><![CDATA[something inside of here needs to get out' ),
+			'Partial CDATA'                               => array( '<root xmlns:wp="w.org"><![CDA' ),
+			'Partially closed CDATA]'                     => array( '<root xmlns:wp="w.org"><![CDATA[cannot escape]' ),
 		);
 	}
 
@@ -1314,7 +1315,7 @@ class XMLProcessorTest extends TestCase {
 	 * @ticket 61365
 	 */
 	public function test_single_text_node_with_taglike_text() {
-		$processor = XMLProcessor::create_from_string( '<root>This is a text node< /A>' );
+		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org">This is a text node< /A>' );
 		$this->assertTrue( $processor->next_token(), 'A root node was not found.' );
 		$this->assertTrue( $processor->next_token(), 'A valid text node was not found.' );
 		$this->assertEquals( 'This is a text node', $processor->get_modifiable_text(),
@@ -1328,7 +1329,7 @@ class XMLProcessorTest extends TestCase {
 	 * @ticket 61365
 	 */
 	public function test_parses_CDATA() {
-		$processor = XMLProcessor::create_from_string( '<root><![CDATA[This is a CDATA text node.]]></root>' );
+		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org"><![CDATA[This is a CDATA text node.]]></root>' );
 		$processor->next_tag();
 		$this->assertTrue( $processor->next_token(), 'The first text node was not found.' );
 		$this->assertEquals(
@@ -1342,7 +1343,7 @@ class XMLProcessorTest extends TestCase {
 	 * @ticket 61365
 	 */
 	public function test_yields_CDATA_a_separate_text_node() {
-		$processor = XMLProcessor::create_from_string( '<root>This is the first text node <![CDATA[ and this is a second text node ]]> and this is the third text node.</root>' );
+		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org">This is the first text node <![CDATA[ and this is a second text node ]]> and this is the third text node.</root>' );
 
 		$processor->next_token();
 		$this->assertTrue( $processor->next_token(), 'The first text node was not found.' );
@@ -1379,8 +1380,8 @@ class XMLProcessorTest extends TestCase {
 			$processor->get_token_type(),
 			'The XML declaration was not correctly identified.'
 		);
-		$this->assertEquals( '1.0', $processor->get_attribute( 'version' ), 'The version attribute was not correctly captured.' );
-		$this->assertEquals( 'UTF-8', $processor->get_attribute( 'encoding' ), 'The encoding attribute was not correctly captured.' );
+		$this->assertEquals( '1.0', $processor->get_attribute( '', 'version' ), 'The version attribute was not correctly captured.' );
+		$this->assertEquals( 'UTF-8', $processor->get_attribute( '', 'encoding' ), 'The encoding attribute was not correctly captured.' );
 	}
 
 	/**
@@ -1395,8 +1396,8 @@ class XMLProcessorTest extends TestCase {
 			$processor->get_token_type(),
 			'The XML declaration was not correctly identified.'
 		);
-		$this->assertEquals( '1.0', $processor->get_attribute( 'version' ), 'The version attribute was not correctly captured.' );
-		$this->assertEquals( 'UTF-8', $processor->get_attribute( 'encoding' ), 'The encoding attribute was not correctly captured.' );
+		$this->assertEquals( '1.0', $processor->get_attribute( '', 'version' ), 'The version attribute was not correctly captured.' );
+		$this->assertEquals( 'UTF-8', $processor->get_attribute( '', 'encoding' ), 'The encoding attribute was not correctly captured.' );
 	}
 
 	/**
@@ -1428,7 +1429,7 @@ class XMLProcessorTest extends TestCase {
 	 * @ticket 61365
 	 */
 	public function test_applies_updates_before_proceeding() {
-		$xml = '<root><wp:content><photo/></wp:content><wp:content><photo/></wp:content></root>';
+		$xml = '<root xmlns:wp="w.org"><wp:content><photo/></wp:content><wp:content><photo/></wp:content></root>';
 
 		$subclass = new class( $xml ) extends XMLProcessor {
 			public function __construct( $xml ) {
@@ -1456,15 +1457,15 @@ class XMLProcessorTest extends TestCase {
 		$subclass->next_tag();
 		$this->assertSame(
 			'p',
-			$subclass->get_local_tag_name(),
+			$subclass->get_tag_local_name(),
 			'Should have matched inserted XML as next tag.'
 		);
 
 		$subclass->next_tag( 'photo' );
-		$subclass->set_attribute( 'alt', 'mountain' );
+		$subclass->set_attribute( '', 'alt', 'mountain' );
 
 		$this->assertSame(
-			'<root><wp:content><photo/><p>snow-capped</p></wp:content><wp:content><photo alt="mountain"/></wp:content></root>',
+			'<root xmlns:wp="w.org"><wp:content><photo/><p>snow-capped</p></wp:content><wp:content><photo alt="mountain"/></wp:content></root>',
 			$subclass->get_updated_xml(),
 			'Should have properly applied the update from in front of the cursor.'
 		);
@@ -1479,7 +1480,7 @@ class XMLProcessorTest extends TestCase {
 	 */
 	public function test_get_breadcrumbs() {
 		$processor = XMLProcessor::create_from_string(
-			'<wp:content>
+			'<wp:content xmlns:wp="w.org">
 				<wp:text>
 					<photo />
 				</wp:text>
@@ -1487,21 +1488,21 @@ class XMLProcessorTest extends TestCase {
 		);
 		$processor->next_tag();
 		$this->assertEquals(
-			array( 'wp:content' ),
+			array( array( 'w.org', 'content' ) ),
 			$processor->get_breadcrumbs(),
 			'get_breadcrumbs() did not return the expected breadcrumbs'
 		);
 
 		$processor->next_tag();
 		$this->assertEquals(
-			array( 'wp:content', 'wp:text' ),
+			array( array( 'w.org', 'content' ), array( 'w.org', 'text' ) ),
 			$processor->get_breadcrumbs(),
 			'get_breadcrumbs() did not return the expected breadcrumbs'
 		);
 
 		$processor->next_tag();
 		$this->assertEquals(
-			array( 'wp:content', 'wp:text', 'photo' ),
+			array( array( 'w.org', 'content' ), array( 'w.org', 'text' ), array( '', 'photo' ) ),
 			$processor->get_breadcrumbs(),
 			'get_breadcrumbs() did not return the expected breadcrumbs'
 		);
@@ -1516,16 +1517,16 @@ class XMLProcessorTest extends TestCase {
 	 */
 	public function test_matches_breadcrumbs() {
 		// Initialize the XMLProcessor with the given XML string
-		$processor = XMLProcessor::create_from_string( '<root><wp:post><content><image /></content></wp:post></root>' );
+		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org"><wp:post><content><image /></content></wp:post></root>' );
 
 		// Move to the next element with tag name 'img'
-		$processor->next_tag( 'image' );
+		$this->assertTrue( $processor->next_tag( 'image' ) );
 
 		// Assert that the breadcrumbs match the expected sequences
-		$this->assertTrue( $processor->matches_breadcrumbs( array( 'content', 'image' ) ) );
-		$this->assertTrue( $processor->matches_breadcrumbs( array( 'wp:post', 'content', 'image' ) ) );
-		$this->assertFalse( $processor->matches_breadcrumbs( array( 'wp:post', 'image' ) ) );
-		$this->assertTrue( $processor->matches_breadcrumbs( array( 'wp:post', '*', 'image' ) ) );
+		$this->assertTrue( $processor->matches_breadcrumbs( array( array( '', 'content' ), 'image' ) ) );
+		$this->assertTrue( $processor->matches_breadcrumbs( array( array( 'w.org', 'post' ), 'content', 'image' ) ) );
+		$this->assertFalse( $processor->matches_breadcrumbs( array( array( 'w.org', 'post' ), 'image' ) ) );
+		$this->assertTrue( $processor->matches_breadcrumbs( array( array( 'w.org', 'post' ), '*', 'image' ) ) );
 	}
 
 	/**
@@ -1535,7 +1536,7 @@ class XMLProcessorTest extends TestCase {
 	 */
 	public function test_next_tag_by_breadcrumbs() {
 		// Initialize the XMLProcessor with the given XML string
-		$processor = XMLProcessor::create_from_string( '<root><wp:post><content><image /></content></wp:post></root>' );
+		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org"><wp:post><content><image /></content></wp:post></root>' );
 
 		// Move to the next element with tag name 'img'
 		$processor->next_tag(
@@ -1544,7 +1545,7 @@ class XMLProcessorTest extends TestCase {
 			)
 		);
 
-		$this->assertEquals( 'image', $processor->get_local_tag_name(), 'Did not find the expected tag' );
+		$this->assertEquals( 'image', $processor->get_tag_local_name(), 'Did not find the expected tag' );
 	}
 
 	/**
@@ -1554,7 +1555,7 @@ class XMLProcessorTest extends TestCase {
 	 */
 	public function test_get_current_depth() {
 		// Initialize the XMLProcessor with the given XML string
-		$processor = XMLProcessor::create_from_string( '<?xml version="1.0" ?><root><wp:text><post /></wp:text><image /></root>' );
+		$processor = XMLProcessor::create_from_string( '<?xml version="1.0" ?><root xmlns:wp="w.org"><wp:text><post /></wp:text><image /></root>' );
 
 		// Assert that the initial depth is 0
 		$this->assertEquals( 0, $processor->get_current_depth() );
@@ -1586,7 +1587,7 @@ class XMLProcessorTest extends TestCase {
 	 * @expectedIncorrectUsage XMLProcessor::step_in_misc
 	 */
 	public function test_no_text_allowed_after_root_element() {
-		$processor = XMLProcessor::create_from_string( '<root></root>text' );
+		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org"></root>text' );
 		$this->assertTrue( $processor->next_tag(), 'Did not find a tag.' );
 		$this->assertFalse( $processor->next_tag(), 'Found a non-existent tag.' );
 		$this->assertEquals(
@@ -1600,7 +1601,7 @@ class XMLProcessorTest extends TestCase {
 	 * @ticket 61365
 	 */
 	public function test_whitespace_text_allowed_after_root_element() {
-		$processor = XMLProcessor::create_from_string( '<root></root>   ' );
+		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org"></root>   ' );
 		$this->assertTrue( $processor->next_tag(), 'Did not find a tag.' );
 		$this->assertFalse( $processor->next_tag(), 'Found a non-existent tag.' );
 		$this->assertNull( $processor->get_last_error(), 'Ran into a parse error after the root element' );
@@ -1610,7 +1611,7 @@ class XMLProcessorTest extends TestCase {
 	 * @ticket 61365
 	 */
 	public function test_processing_directives_allowed_after_root_element() {
-		$processor = XMLProcessor::create_from_string( '<root></root><?xml processing directive! ?>' );
+		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org"></root><?xml processing directive! ?>' );
 		$this->assertTrue( $processor->next_tag(), 'Did not find a tag.' );
 		$this->assertFalse( $processor->next_tag(), 'Found a non-existent tag.' );
 		$this->assertNull( $processor->get_last_error(), 'Ran into a parse error after the root element' );
@@ -1620,10 +1621,10 @@ class XMLProcessorTest extends TestCase {
 	 * @ticket 61365
 	 */
 	public function test_mixed_misc_grammar_allowed_after_root_element() {
-		$processor = XMLProcessor::create_from_string( '<root></root>   <?xml hey ?> <!-- comment --> <?xml another pi ?> <!-- more comments! -->' );
+		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org"></root>   <?xml hey ?> <!-- comment --> <?xml another pi ?> <!-- more comments! -->' );
 
 		$processor->next_tag();
-		$this->assertEquals( 'root', $processor->get_local_tag_name(), 'Did not find a tag.' );
+		$this->assertEquals( 'root', $processor->get_tag_local_name(), 'Did not find a tag.' );
 
 		$processor->next_tag();
 		$this->assertNull( $processor->get_last_error(), 'Did not run into a parse error after the root element' );
@@ -1635,7 +1636,7 @@ class XMLProcessorTest extends TestCase {
 	 * @expectedIncorrectUsage XMLProcessor::step_in_misc
 	 */
 	public function test_elements_not_allowed_after_root_element() {
-		$processor = XMLProcessor::create_from_string( '<root></root><another-root>' );
+		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org"></root><another-root>' );
 		$this->assertTrue( $processor->next_tag(), 'Did not find a tag.' );
 		$this->assertFalse( $processor->next_tag(), 'Fount an illegal tag.' );
 		$this->assertEquals(
@@ -1651,7 +1652,7 @@ class XMLProcessorTest extends TestCase {
 	 * @return void
 	 */
 	public function test_comments_allowed_after_root_element() {
-		$processor = XMLProcessor::create_from_string( '<root></root><!-- comment -->' );
+		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org"></root><!-- comment -->' );
 		$this->assertTrue( $processor->next_tag(), 'Did not find a tag.' );
 		$this->assertFalse( $processor->next_tag(), 'Found an element node after the root element' );
 		$this->assertNull( $processor->get_last_error(), 'Ran into a parse error after the root element' );
@@ -1664,7 +1665,7 @@ class XMLProcessorTest extends TestCase {
 	 * @return void
 	 */
 	public function test_cdata_not_allowed_after_root_element() {
-		$processor = XMLProcessor::create_from_string( '<root></root><![CDATA[ cdata ]]>' );
+		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org"></root><![CDATA[ cdata ]]>' );
 		$this->assertTrue( $processor->next_tag(), 'Did not find a tag.' );
 		$this->assertFalse( $processor->next_tag(), 'Did not reject a comment node after the root element' );
 		$this->assertEquals(
@@ -1713,7 +1714,7 @@ class XMLProcessorTest extends TestCase {
 	 */
 	public function test_text_nodes_are_not_exposed_until_their_full_content_is_available() {
 		$processor = XMLProcessor::create_for_streaming(
-			'<root>text'
+			'<root xmlns:wp="w.org">text'
 		);
 		$this->assertTrue( $processor->next_tag(), 'Did not find a tag.' );
 		$this->assertFalse( $processor->next_token(), 'Found a text node before it was fully available.' );
@@ -1731,7 +1732,7 @@ class XMLProcessorTest extends TestCase {
 	 */
 	public function test_escaped_cdata() {
 		$processor = XMLProcessor::create_from_string(
-			'<root>The CDATA section looks as follows: <![CDATA[<![CDATA[Your content goes here]]]]><![CDATA[>]]></root>'
+			'<root xmlns:wp="w.org">The CDATA section looks as follows: <![CDATA[<![CDATA[Your content goes here]]]]><![CDATA[>]]></root>'
 		);
 		$this->assertTrue( $processor->next_token(), 'Did not find a tag.' );
 		$this->assertTrue( $processor->next_token(), 'Did not find a text node.' );
@@ -1750,7 +1751,7 @@ class XMLProcessorTest extends TestCase {
 	 */
 	public function test_pause_and_resume() {
 		$xml       = <<<XML
-			<root>
+			<root xmlns:wp="w.org">
 				<first_child>Hello there</first_child>
 				<second_child>I am a second child</second_child>
 			</root>
@@ -1758,7 +1759,7 @@ XML;
 		$processor = XMLProcessor::create_for_streaming( $xml );
 		$processor->next_tag();
 		$processor->next_tag();
-		$this->assertEquals( 'first_child', $processor->get_local_tag_name(), 'Did not find a tag.' );
+		$this->assertEquals( 'first_child', $processor->get_tag_local_name(), 'Did not find a tag.' );
 
 		$entity_offset = $processor->get_token_byte_offset_in_the_input_stream();
 		$cursor        = $processor->get_reentrancy_cursor();
@@ -1768,7 +1769,7 @@ XML;
 			$cursor
 		);
 		$resumed->next_tag();
-		$this->assertEquals( 'first_child', $resumed->get_local_tag_name(), 'Did not find a tag.' );
+		$this->assertEquals( 'first_child', $resumed->get_tag_local_name(), 'Did not find a tag.' );
 		$resumed->next_token();
 		$this->assertEquals( 'Hello there', $resumed->get_modifiable_text(), 'Did not find the expected text.' );
 	}
@@ -1780,13 +1781,13 @@ XML;
 	 */
 	public function test_doctype_parsing() {
 		$processor = XMLProcessor::create_from_string(
-			'<!DOCTYPE html><root>Content</root>'
+			'<!DOCTYPE html><root xmlns:wp="w.org">Content</root>'
 		);
 
 		$this->assertTrue( $processor->next_token(), 'Did not find DOCTYPE node' );
 		$this->assertEquals( '#doctype', $processor->get_token_type(), 'Did not find DOCTYPE node' );
 		$this->assertTrue( $processor->next_token(), 'Did not find root tag' );
-		$this->assertEquals( 'root', $processor->get_local_tag_name(), 'Did not find root tag' );
+		$this->assertEquals( 'root', $processor->get_tag_local_name(), 'Did not find root tag' );
 	}
 
 	/**
@@ -1796,7 +1797,7 @@ XML;
 	 */
 	public function test_xhtml_doctype_parsing() {
 		$processor = XMLProcessor::create_from_string(
-			'<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"><root>Content</root>'
+			'<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"><root xmlns:wp="w.org">Content</root>'
 		);
 
 		$this->assertTrue( $processor->next_token(), 'Did not find DOCTYPE node' );
@@ -1806,7 +1807,7 @@ XML;
 		$this->assertEquals( 'http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd', $processor->get_system_literal(),
 			'Did not find system literal' );
 		$this->assertTrue( $processor->next_token(), 'Did not find root tag' );
-		$this->assertEquals( 'root', $processor->get_local_tag_name(), 'Did not find root tag' );
+		$this->assertEquals( 'root', $processor->get_tag_local_name(), 'Did not find root tag' );
 	}
 
 	/**
@@ -1816,7 +1817,7 @@ XML;
 	 */
 	public function test_system_doctype_parsing() {
 		$processor = XMLProcessor::create_from_string(
-			'<!DOCTYPE html SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><root>Content</root>'
+			'<!DOCTYPE html SYSTEM "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><root xmlns:wp="w.org">Content</root>'
 		);
 
 		$this->assertTrue( $processor->next_token(), 'Did not find DOCTYPE node' );
@@ -1826,7 +1827,7 @@ XML;
 		$this->assertEquals( 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd', $processor->get_system_literal(),
 			'Did not find system literal' );
 		$this->assertTrue( $processor->next_token(), 'Did not find root tag' );
-		$this->assertEquals( 'root', $processor->get_local_tag_name(), 'Did not find root tag' );
+		$this->assertEquals( 'root', $processor->get_tag_local_name(), 'Did not find root tag' );
 	}
 
 	/**
@@ -1836,7 +1837,7 @@ XML;
 	 */
 	public function test_invalid_doctype_parsing() {
 		$processor = XMLProcessor::create_from_string(
-			'<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"><root>Content</root>'
+			'<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"><root xmlns:wp="w.org">Content</root>'
 		);
 
 		$this->assertFalse( $processor->next_token(), 'Did not reject complex DOCTYPE' );
@@ -1845,7 +1846,7 @@ XML;
 
 	public function test_doctype_in_tag_content_is_syntax_error() {
 		$processor = XMLProcessor::create_from_string(
-			'<root>Content<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"></root>'
+			'<root xmlns:wp="w.org">Content<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"></root>'
 		);
 
 		$processor->next_token();
