@@ -36,9 +36,9 @@ class SocketClientTest extends AbstractClientTest {
         ]);
     }
 
-    public function test_dns_failure()                  {
+    public function test_dns_failure() {
         $this->expectClientError(new Request('http://nope.' . uniqid() . '/'), 300, [
-            'message' => ['unable to open a stream to http://nope.', 'Request timed out']
+            'message' => ['unable to open a stream to http://nope.', 'Request timed out', 'Invalid URL']
         ]);
     }
 

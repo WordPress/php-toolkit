@@ -26,7 +26,7 @@ class CurlClientTest extends AbstractClientTest {
 
     public function test_dns_failure()                  {
         $this->expectClientError(new Request('http://nope.' . uniqid() . '/'), 300, [
-            'message' => ['unable to open a stream to http://nope.', 'Request timed out', 'cURL error']
+            'message' => ['unable to open a stream to http://nope.', 'Request timed out', 'cURL error', 'Invalid URL']
         ]);
     }
 
