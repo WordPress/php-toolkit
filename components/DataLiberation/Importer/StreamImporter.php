@@ -452,7 +452,6 @@ class StreamImporter {
 			$entity = $this->get_current_entity();
 
 			$type = $entity->get_type();
-			var_dump( $type );
 
 			// Count entities by type.
 			if ( ! isset( $this->indexed_entities_counts[ $type ] ) ) {
@@ -1001,12 +1000,33 @@ class StreamImporter {
 	 * @TODO: What other asset types are there?
 	 */
 	protected function url_processor_matched_asset_url( BlockMarkupUrlProcessor $p ) {
-		if ( $p->get_tag() !== 'IMG' ) {
-			return false;
+		/**
+		 * Decide whether the URL is an asset URL worth downloading.
+		 * 
+		 * All URLs with an image-like extension are treated as images,
+		 * 
+		 * For example, the background image in the following block would be accepted:
+		 *
+		 *     <div style="background-image: url(https://example.com/image.jpg)">
+		 */
+		$path = $p->get_parsed_url()->pathname;
+		$extension = pathinfo( $path, PATHINFO_EXTENSION );
+		if ( ! in_array($extension, array('jpg', 'jpeg', 'png', 'gif', 'webp', 'svg') ) ) {
+			/**
+			 * Absent an extension, try to guess whether it's a static asset based
+			 * on its location in the document. For now, we only accept images.
+			 */
+			if ( $p->get_tag() !== 'IMG' ) {
+				return false;
+			}
+			if ( $p->get_inspected_attribute_name() !== 'src' ) {
+				return false;
+			}
 		}
-		if ( $p->get_inspected_attribute_name() !== 'src' ) {
-			return false;
-		}
+
+		/**
+		 * Finally, confirm it comes from one of the allowed media root URLs.
+		 */
 		foreach ( $this->source_media_root_urls as $source_media_root_url ) {
 			if ( is_child_url_of( $p->get_parsed_url(), $source_media_root_url ) ) {
 				return true;

@@ -85,7 +85,9 @@ class ImportContentStep implements StepInterface {
 $_SERVER['argv'] = [
 	'import-wxr.php',
 	'wxr',
-	getenv('WXR_PATH')
+	getenv('WXR_PATH'),
+	'--media-url',
+	'https://pd.w.org/'
 ];
 ?>
 PHP
