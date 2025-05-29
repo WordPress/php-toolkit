@@ -65,49 +65,31 @@ class ImportContentStep implements StepInterface {
 		}
 
 		$wxrPath = $runtime->saveToTemporaryFile( $resolved );
+		// @TODO: Make it work when Blueprints are running as phar archive
+		$import_script_path = __DIR__ . '/scripts/import-content.php';
+		if ( ! file_exists( $import_script_path ) ) {
+			throw new BlueprintExecutionException( sprintf(
+				'Import script %s does not exist.',
+				$import_script_path
+			) );
+		}
+
+		$importer_script = file_get_contents( $import_script_path );
 		$runtime->evalPhpCodeInSubProcess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
-require_once getenv('DOCROOT') . '/wp-admin/includes/admin.php';
-
-kses_remove_filters();
-$admin_id = get_users(array('role' => 'Administrator') )[0]->ID;
-wp_set_current_user( $admin_id );
-
-wp_set_current_user( $admin_id );
-$importer = new WXR_Importer( array(
-'fetch_attachments' => true,
-// @TODO: Support custom author
-'default_author' => $admin_id
-) );
-$logger = new WP_Importer_Logger_CLI();
-$importer->set_logger( $logger );
-// Slashes from the imported content are lost if we don't call wp_slash here.
-add_action( 'wp_insert_post_data', function( $data ) {
-return wp_slash($data);
-});
-
-// Ensure that Site Editor templates are associated with the correct taxonomy.
-add_filter( 'wp_import_post_terms', function ( $terms, $post_id ) {
-foreach ( $terms as $post_term ) {
-if ( 'wp_theme' !== $term['taxonomy'] ) {continue;}
-$post_term = get_term_by('slug', $term['slug'], $term['taxonomy'] );
-if ( ! $post_term ) {
-$post_term = wp_insert_term(
-$term['slug'],
-$term['taxonomy']
-);
-$term_id = $post_term['term_id'];
-} else {
-$term_id = $post_term->term_id;
-}
-wp_set_object_terms( $post_id, $term_id, $term['taxonomy']) ;
-}
-return $terms;
-}, 10, 2 );
-$result = $importer->import( getenv('WXR_PATH') );
+// @TODO: Just call a function here, do not go through CLI arguments.
+// @TODO: Establish a communication channel between the main process and the subprocess
+//        to report progress and errors.
+// @TODO: Enforce chrooting of the imported static files.
+$_SERVER['argv'] = [
+	'import-wxr.php',
+	'wxr',
+	getenv('WXR_PATH')
+];
+?>
 PHP
+			. $importer_script
 			,
 			[
 				'WXR_PATH' => $wxrPath,

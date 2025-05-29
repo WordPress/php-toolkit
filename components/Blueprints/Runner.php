@@ -632,7 +632,7 @@ class Runner {
 						);
 					}
 					$this->configuration->getLogger()->info( 'Loading importer libraries from ' . $libraries_phar_path );
-					$source = $this->createDataReference( new AbsoluteLocalPath( $libraries_phar_path ) );
+					$source = $this->createDataReference( new InlineFile( 'php-toolkit.phar', file_get_contents( $libraries_phar_path ) ) );
 				}
 				array_unshift( $plan, $this->createStepObject( 'writeFiles', [
 					'files' => [

@@ -33,6 +33,7 @@
 
 require __DIR__ . '/../../../vendor/autoload.php';
 
+use WordPress\CLI\CLI;
 use WordPress\Blueprints\DataReference\AbsoluteLocalPath;
 use WordPress\Blueprints\DataReference\DataReference;
 use WordPress\Blueprints\Exception\BlueprintExecutionException;
@@ -101,84 +102,6 @@ $commandConfigurations = [
 		'aliases'        => [],
 	],
 ];
-
-// -----------------------------------------------------------------------------
-//   Custom command‑line parser (POSIX‑ish but without getopt dependency)
-// -----------------------------------------------------------------------------
-function parseCommandArgsAndOptions( array $argv, array $optionDefs ): array {
-	$positionals = [];
-	$options     = [];
-	$short2long  = [];
-
-	// Initialise defaults & maps
-	foreach ( $optionDefs as $long => $def ) {
-		[ $short, , $default ] = $def;
-		$options[ $long ] = $default;
-		if ( $short ) {
-			$short2long[ $short ] = $long;
-		}
-	}
-
-	$i = 0; // Start from the first command argument
-	while ( $i < count( $argv ) ) {
-		$token = $argv[ $i ];
-
-		// Long option --foo or --foo=bar
-		if ( preg_match( '/^--([^=]+)(=(.*))?$/', $token, $m ) ) {
-			$long = $m[1];
-			if ( ! isset( $optionDefs[ $long ] ) ) {
-				throw new InvalidArgumentException( "Unknown option --$long" );
-			}
-			[ $short, $hasVal ] = $optionDefs[ $long ];
-			if ( $hasVal ) {
-				$val = $m[3] ?? ( $argv[ ++ $i ] ?? null );
-				if ( $val === null ) {
-					throw new InvalidArgumentException( "Option --$long requires a value" );
-				}
-				$options[ $long ] = $val;
-			} else {
-				$options[ $long ] = true;
-			}
-			$i ++;
-			continue;
-		}
-
-		// Short option(s): -abc or -e mysql or -e=mysql
-		if ( preg_match( '/^-([A-Za-z]{1,})(=(.*))?$/', $token, $m ) ) {
-			$bundle    = str_split( $m[1] );
-			$inlineVal = $m[3] ?? null;
-			foreach ( $bundle as $idx => $short ) {
-				if ( ! isset( $short2long[ $short ] ) ) {
-					throw new InvalidArgumentException( "Unknown option -$short" );
-				}
-				$long   = $short2long[ $short ];
-				$hasVal = $optionDefs[ $long ][1];
-				if ( $hasVal ) {
-					if ( $inlineVal !== null && $idx === 0 ) {
-						$options[ $long ] = $inlineVal;
-					} else {
-						$val = ( $idx === count( $bundle ) - 1 ) ? ( $argv[ ++ $i ] ?? null ) : null;
-						if ( $val === null ) {
-							throw new InvalidArgumentException( "Option -$short requires a value" );
-						}
-						$options[ $long ] = $val;
-					}
-					break; // value‑bearing short stops bundle processing
-				} else {
-					$options[ $long ] = true;
-				}
-			}
-			$i ++;
-			continue;
-		}
-
-		// Positional argument
-		$positionals[] = $token;
-		$i ++;
-	}
-
-	return [ $positionals, $options ];
-}
 
 // Get the command name from arguments, accounting for aliases
 function resolveCommand( $commandArg, array $commandConfigurations ): ?string {
@@ -509,7 +432,7 @@ try {
 	
 	// Parse command arguments and options
 	$commandArgv = array_slice( $_SERVER['argv'], 2 ); // Skip "php script.php command"
-	[ $positionalArgs, $options ] = parseCommandArgsAndOptions( $commandArgv, $commandConfigurations[ $command ]['options'] );
+	[ $positionalArgs, $options ] = CLI::parseCommandArgsAndOptions( $commandArgv, $commandConfigurations[ $command ]['options'] );
 	
 	// Dispatch to appropriate command handler
 	switch ( $command ) {

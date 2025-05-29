@@ -56,6 +56,7 @@
         ],
         "psr-4": {
             "WordPress\\Blueprints\\": "components/Blueprints/",
+            "WordPress\\CLI\\": "components/CLI/",
             "WordPress\\DataLiberation\\": "components/DataLiberation/",
             "Rowbot\\": "components/DataLiberation/vendor-patched/",
             "Brick\\": "components/DataLiberation/vendor-patched/",
