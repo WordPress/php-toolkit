@@ -1,0 +1,31 @@
+{
+	"$schema": "https://raw.githubusercontent.com/box-project/box/refs/heads/main/res/schema.json",
+	"main": "vendor/autoload.php",
+	"output": "dist/wordpress-libraries.phar",
+	"force-autodiscovery": false,
+	"compactors": [
+		"KevinGH\\Box\\Compactor\\Php"
+	],
+    "check-requirements": false,
+	"annotations": false,
+    "shebang": "#!/usr/bin/env php",
+	"compression": "GZ",
+    "finder": [
+          {
+            "notName": "/.*\\.md|.*\\.dist|Makefile|composer\\.json|composer\\.lock/",
+            "exclude": [
+                "untracked",
+                "test",
+                "test_old",
+                "tests",
+                "Tests",
+                "Test",
+                "vendor-bin"
+            ],
+            "in": "components"
+        }
+    ],
+	"directories": [
+        "vendor/composer"
+	]
+}

@@ -2,6 +2,7 @@
 
 namespace WordPress\DataLiberation\Importer;
 
+use InvalidArgumentException;
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\DataLiberation\BlockMarkup\BlockMarkupUrlProcessor;
 use WordPress\DataLiberation\EntityReader\EntityReaderIterator;
@@ -286,6 +287,9 @@ class StreamImporter {
 			// throw new DataLiberationException( 'The "source_site_url" option is required' );
 		}
 		if ( ! isset( $options['new_site_content_root_url'] ) ) {
+			if(!function_exists('get_site_url')) {
+				throw new InvalidArgumentException('Option "new_site_content_root_url" is required');
+			}
 			$options['new_site_content_root_url'] = get_site_url();
 		}
 
@@ -296,6 +300,9 @@ class StreamImporter {
 		$options['uploads_path'] = rtrim( $options['uploads_path'], '/' );
 
 		if ( ! isset( $options['new_media_root_url'] ) ) {
+			if(!function_exists('get_site_url')) {
+				throw new InvalidArgumentException('Option "new_media_root_url" is required');
+			}
 			$options['new_media_root_url'] = rtrim( get_site_url(), '/' ) . '/wp-content/uploads';
 		}
 		// Remove the trailing slash to make concatenation easier later.

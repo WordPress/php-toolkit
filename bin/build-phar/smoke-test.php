@@ -9,7 +9,9 @@ require_once __DIR__ . '/../../dist/wordpress-libraries.phar';
  */
 $c = WordPress\DataLiberation\Importer\StreamImporter::create_for_wxr_file(__DIR__ . '/nosuchfile.xml', [
     'uploads_path' => __DIR__ . '/uploads',
-    'new_site_url' => 'https://smoke-test.org'
+    'new_site_url' => 'https://smoke-test.org',
+	'new_site_content_root_url' => 'https://smoke-test.org',
+	'new_media_root_url' => 'https://smoke-test.org',
 ]);
 
 WordPress\DataLiberation\URL\WPURL::parse('https://example.com');

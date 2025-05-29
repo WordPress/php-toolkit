@@ -20,7 +20,7 @@ cd $PROJECT_DIR
 mkdir -p $BUILD_DIR
 rm $DIST_DIR/wordpress-libraries.* > /dev/null 2>&1 || true
 export BOX_BASE_PATH=$(type -a box | grep -v 'alias' | awk '{print $3}')
-php $BUILD_DIR/box.php compile -d $PROJECT_DIR -c $PROJECT_DIR/phar-box.json
+php $BUILD_DIR/box.php compile -d $PROJECT_DIR -c $PROJECT_DIR/phar-libraries.json
 php -d 'phar.readonly=0' $BUILD_DIR/truncate-composer-checks.php $DIST_DIR/wordpress-libraries.phar
 cd $DIST_DIR
 php $BUILD_DIR/smoke-test.php
