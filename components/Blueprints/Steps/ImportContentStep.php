@@ -44,7 +44,7 @@ class ImportContentStep implements StepInterface {
 				$this->importWxr( $runtime, $content_definition );
 			} elseif ( $content_definition['type'] === 'posts' ) {
 				$progress[ $i ]->setCaption( 'Importing a post ' );
-				$this->importPosts( $runtime, $content_definition );
+				$this->importPosts( $runtime, $content_definition['source'] );
 			} else {
 				throw new RuntimeException( 'Unsupported content type: ' . $content_definition['type'] );
 			}
@@ -64,7 +64,9 @@ class ImportContentStep implements StepInterface {
 			) );
 		}
 
+		// @TODO: Pass the data reference to the import script to enable streaming.
 		$wxrPath = $runtime->saveToTemporaryFile( $resolved );
+
 		// @TODO: Make it work when Blueprints are running as phar archive
 		$import_script_path = __DIR__ . '/scripts/import-content.php';
 		if ( ! file_exists( $import_script_path ) ) {
@@ -76,22 +78,21 @@ class ImportContentStep implements StepInterface {
 
 		$importer_script = file_get_contents( $import_script_path );
 		$runtime->evalPhpCodeInSubProcess(
+			$importer_script . 
 			<<<'PHP'
 <?php
-// @TODO: Just call a function here, do not go through CLI arguments.
 // @TODO: Establish a communication channel between the main process and the subprocess
 //        to report progress and errors.
 // @TODO: Enforce chrooting of the imported static files.
-$_SERVER['argv'] = [
-	'import-wxr.php',
-	'wxr',
-	getenv('WXR_PATH'),
-	'--media-url',
-	'https://pd.w.org/'
-];
+
+run_content_import([
+	'mode' => 'wxr',
+	'source' => getenv('WXR_PATH'),
+	// @TODO: Support arbitrary media URLs to enable fetching assets during import.
+	// 'media_url' => 'https://pd.w.org/'
+]);
 ?>
 PHP
-			. $importer_script
 			,
 			[
 				'WXR_PATH' => $wxrPath,
@@ -99,10 +100,14 @@ PHP
 		);
 	}
 
-	private function importPosts( Runtime $runtime, array $content_definition ): void {
-		$posts = $content_definition['source'];
-		if ( ! is_array( $posts ) ) {
-			throw new RuntimeException( 'Invalid posts data.' );
+	private function importPosts( Runtime $runtime, $post ): void {
+		// @TODO: Use the Data Liberation importer here.
+		$resolved = $runtime->resolve( $post );
+		if ( ! $resolved instanceof File ) {
+			throw new BlueprintExecutionException( sprintf(
+				'Imported content reference must be a file, but %s was a Directory.',
+				$post->get_human_readable_name()
+			) );
 		}
 
 		$runtime->evalPhpCodeInSubProcess(
@@ -110,12 +115,22 @@ PHP
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
 foreach (json_decode(getenv('POSTS'), true) as $post) {
-wp_insert_post(wp_slash($post));
+	$result = wp_insert_post(wp_slash($post));
+	if (is_wp_error($result)) {
+		throw new Exception( $result->get_error_message() );
+	}
 }
 PHP
 			,
 			[
-				'POSTS' => json_encode( $posts ),
+				'POSTS' => json_encode( [
+					[
+						'post_title'   => 'Test Post',
+						'post_content' => $resolved->getStream()->consume_all(),
+						'post_status'  => 'publish',
+						'post_type'    => 'post',
+					],
+				] ),
 			]
 		);
 	}
