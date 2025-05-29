@@ -618,10 +618,26 @@ class Runner {
 		}
 
 		foreach ( $plan as $step ) {
-			// @TODO: Make sure this doesn't get included twice in the execution plan.
+			// @TODO: Make sure this doesn't get included twice in the execution plan,
+			//        e.g. if the Blueprint specified this step manually.
 			if ( $step instanceof ImportContentStep ) {
-				array_unshift( $plan, $this->createStepObject( 'installPlugin', [
-					'source' => $this->createDataReference( 'https://playground.wordpress.net/wordpress-importer.zip' ),
+				if($this->configuration->isRunningAsPhar()) {
+					throw new InvalidArgumentException( '@TODO: Importing content is not supported when running as phar.' );
+				} else {
+					$libraries_phar_path = __DIR__ . '/../../dist/php-toolkit.phar';
+					if(!file_exists($libraries_phar_path)) {
+						throw new InvalidArgumentException(
+							'In development, you must run `bash bin/build-libraries-phar.sh` to bundle importer libraries before importing content via a Blueprint. '.
+							'It generates a `dist/php-toolkit.phar` file bundling all the libraries required for importing content.'
+						);
+					}
+					$this->configuration->getLogger()->info( 'Loading importer libraries from ' . $libraries_phar_path );
+					$source = $this->createDataReference( new AbsoluteLocalPath( $libraries_phar_path ) );
+				}
+				array_unshift( $plan, $this->createStepObject( 'writeFiles', [
+					'files' => [
+						'php-toolkit.phar' => $source,
+					],
 				] ) );
 				break;
 			}

@@ -19,9 +19,9 @@ use WordPress\DataLiberation\Importer\StreamImporter;
 use WordPress\HttpClient\Request;
 use WordPress\Markdown\MarkdownImporter;
 
-if(file_exists(__DIR__ . '/wordpress-libraries.phar')) {
+if(file_exists(__DIR__ . '/php-toolkit.phar')) {
     // Production – built and installed plugin
-	require_once __DIR__ . '/wordpress-libraries.phar';
+	require_once __DIR__ . '/php-toolkit.phar';
 } else {
 	// Development – plugin mounted in WordPress via Playground CLI mounts
 	require_once __DIR__ . '/../../vendor/autoload.php';

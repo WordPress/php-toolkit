@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../../dist/wordpress-libraries.phar';
+require_once __DIR__ . '/../../dist/php-toolkit.phar';
 
 /**
  * None of this will actually try to parse a file or import

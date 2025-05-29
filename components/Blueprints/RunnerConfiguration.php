@@ -235,4 +235,8 @@ class RunnerConfiguration {
 	public static function getPermissionCliFlag( string $permission ): string {
 		return $permission;
 	}
+
+	public function isRunningAsPhar(): bool {
+		return \Phar::running(false) !== '';
+	}
 }

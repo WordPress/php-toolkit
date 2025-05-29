@@ -1,7 +1,7 @@
 {
 	"$schema": "https://raw.githubusercontent.com/box-project/box/refs/heads/main/res/schema.json",
 	"main": "vendor/autoload.php",
-	"output": "dist/wordpress-libraries.phar",
+	"output": "dist/php-toolkit.phar",
 	"force-autodiscovery": false,
 	"compactors": [
 		"KevinGH\\Box\\Compactor\\Php"
