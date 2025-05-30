@@ -1,3 +1,9 @@
+# Repository Archived
+
+The development continues in https://github.com/WordPress/php-toolkit
+
+--
+
 ## PHP Toolkit
 
 Standalone PHP libraries for use in WordPress plugins and standalone PHP projects:
