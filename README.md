@@ -2,7 +2,7 @@
 
 The development continues in https://github.com/WordPress/php-toolkit
 
---
+---
 
 ## PHP Toolkit
 
