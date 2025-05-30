@@ -4,6 +4,7 @@ namespace WordPress\HttpClient;
 
 use WordPress\DataLiberation\URL\WPURL;
 use WordPress\HttpClient\ByteStream\RequestReadStream;
+use WordPress\HttpClient\Middleware\CacheMiddleware;
 use WordPress\HttpClient\Middleware\HttpMiddleware;
 use WordPress\HttpClient\Middleware\RedirectionMiddleware;
 use WordPress\HttpClient\Transport\CurlTransport;
@@ -50,9 +51,17 @@ class Client {
 				throw new HttpClientException( "Invalid transport: {$options['transport']}" );
 		}
 
+		$middleware = new HttpMiddleware( $this->state, array( 'transport' => $transport ) );
+		if(isset($options['cache_dir'])) {
+			$middleware = new CacheMiddleware( $this->state, $middleware, [
+				'cache_dir' => $options['cache_dir'],
+			] );
+		}
+
 		$this->middleware = new RedirectionMiddleware( 
-			new HttpMiddleware( array( 'state' => $this->state, 'transport' => $transport ) ),
-			array( 'client' => $this, 'state' => $this->state, 'max_redirects' => 5 )
+			$this->state,
+			$middleware,
+			array( 'client' => $this, 'max_redirects' => 5 )
 		);
 	}
 

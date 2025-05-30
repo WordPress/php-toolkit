@@ -27,8 +27,8 @@ class HttpMiddleware implements MiddlewareInterface {
 	 */
 	private $transport;
 
-	public function __construct( $options = array() ) {
-		$this->state = $options['state'];
+	public function __construct( $client_state, $options = array() ) {
+		$this->state = $client_state;
 		$this->transport = $options['transport'];
 	}
 

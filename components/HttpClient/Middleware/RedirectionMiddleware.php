@@ -34,10 +34,10 @@ class RedirectionMiddleware implements MiddlewareInterface {
 	 */
 	private $state;
 
-	public function __construct( $next_middleware, $options = array() ) {
+	public function __construct( $client_state, $next_middleware, $options = array() ) {
 		$this->next_middleware = $next_middleware;
 		$this->max_redirects = $options['max_redirects'] ?? 5;
-		$this->state = $options['state'];
+		$this->state = $client_state;
 		$this->client = $options['client'];
 	}
 
