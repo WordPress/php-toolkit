@@ -18,14 +18,14 @@ final class CacheMiddleware implements MiddlewareInterface {
 	 */
 	private $state;
 	
-	private string $dir;
+	private $dir;
 
 	/** @var array<string,array{req:Request,meta:array,file:resource|null,headerDone:bool,done:bool}> */
-	private array $replay = [];
+	private $replay = [];
 
 	/** writers keyed by spl_object_hash(req) */
-	private array $tempHandle = [];
-	private array $tempPath = [];
+	private $tempHandle = [];
+	private $tempPath = [];
 
 	public function __construct( $client_state, $next_middleware, $options = array() ) {
 		$this->next_middleware = $next_middleware;

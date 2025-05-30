@@ -3,6 +3,7 @@
 namespace WordPress\HttpClient\Tests;
 
 use PHPUnit\Framework\TestCase;
+use WordPress\Filesystem\LocalFilesystem;
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Middleware\CacheMiddleware;
 use WordPress\HttpClient\Request;
@@ -31,20 +32,7 @@ class CacheMiddlewareTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
-		// Clean up cache directory
-		$this->removeDirectory( $this->cache_dir );
-	}
-
-	private function removeDirectory( string $dir ): void {
-		if ( ! is_dir( $dir ) ) {
-			return;
-		}
-		$files = array_diff( scandir( $dir ), [ '.', '..' ] );
-		foreach ( $files as $file ) {
-			$path = $dir . '/' . $file;
-			is_dir( $path ) ? $this->removeDirectory( $path ) : unlink( $path );
-		}
-		rmdir( $dir );
+		LocalFilesystem::create($this->cache_dir)->rmdir('/', ['recursive' => true]);
 	}
 
 	public function test_cache_miss_forwards_to_next_middleware(): void {
