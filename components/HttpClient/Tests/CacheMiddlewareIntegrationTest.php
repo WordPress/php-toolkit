@@ -27,7 +27,15 @@ class CacheMiddlewareIntegrationTest extends TestCase {
 	}
 
 	private function removeDirectory( string $dir ): void {
-		LocalFilesystem::create($dir)->rmdir('/', ['recursive' => true]);
+		try {
+			LocalFilesystem::create($dir)->rmdir('/', ['recursive' => true]);
+		} catch ( \Exception $e ) {
+			// Ignore errors on windows – CI sometimes fails to remove the topmost directory
+			if(PHP_OS_FAMILY === 'Windows') {
+				return;
+			}
+			throw $e;
+		}
 	}
 
 	private function makeRequest( string $url, string $method = 'GET', array $headers = [] ): array {

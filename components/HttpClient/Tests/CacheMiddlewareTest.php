@@ -32,7 +32,15 @@ class CacheMiddlewareTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
-		LocalFilesystem::create($this->cache_dir)->rmdir('/', ['recursive' => true]);
+		try {
+			LocalFilesystem::create($this->cache_dir)->rmdir('/', ['recursive' => true]);
+		} catch ( \Exception $e ) {
+			// Ignore errors on windows – CI sometimes fails to remove the topmost directory
+			if(PHP_OS_FAMILY === 'Windows') {
+				return;
+			}
+			throw $e;
+		}
 	}
 
 	public function test_cache_miss_forwards_to_next_middleware(): void {
