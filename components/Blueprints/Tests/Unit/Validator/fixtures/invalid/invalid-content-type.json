@@ -1,0 +1,18 @@
+{
+	"version": 2,
+	"blueprintMeta": {
+		"name": "Invalid Blueprint - Wrong Content Type",
+		"description": "This blueprint has an invalid content type"
+	},
+	"content": [
+		{
+			"type": "invalid-type",
+			"source": [
+				{
+					"post_title": "Test Post",
+					"post_content": "This is a test post."
+				}
+			]
+		}
+	]
+}

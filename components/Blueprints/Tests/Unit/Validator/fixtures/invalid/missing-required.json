@@ -1,0 +1,10 @@
+{
+	"blueprintMeta": {
+		"name": "Invalid Blueprint - Missing Required Fields",
+		"description": "This blueprint is missing required fields version and content"
+	},
+	"siteLanguage": "en_US",
+	"wordpressVersion": "6.4",
+	"phpVersion": "8.0",
+	"activeTheme": "twentytwentythree"
+}

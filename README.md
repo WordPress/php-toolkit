@@ -1,196 +1,165 @@
-# WordPress Blueprints
+## PHP Toolkit
 
-Blueprints are JSON files used to create WordPress sites with specific settings, themes, plugins, content, and anything
-else that can be configured in WordPress. Here's what a Blueprint looks like:
+Standalone PHP libraries for use in WordPress plugins and standalone PHP projects:
+
+-   XMLProcessor – stream-parse XML files on any PHP installation (no libxml2 required).
+-   Git – a pure PHP implementation of Git client and server.
+-   HttpClient – a streaming, non-blocking, concurrent HTTP client library with no curl dependency.
+-   Zip – stream-parse and stream-write ZIP files with no libzip dependency.
+-   Data Liberation – generic streaming data importers to WordPress. Supports WXR, zipped markdown, remote git repos, rewriting URLs, and more.
+-   ByteStream – composable byte streaming utilities – readers, writers, filters.
+-   Markdown – convert between markdown and block markup with no dependencies.
+-   Filesystem – single API for working with local files, Git, Google drive, memory, etc.
+
+This fork consolidates a few earlier projects and explorations into a single composer package.
+
+### Using the Blueprints v2 runner
+
+The Blueprints v2 runner is an all-php CLI tool that runs Blueprints v1 and v2. To use it, download [blueprints.phar from the latest release](https://github.com/WordPress/php-toolkit/releases) and run it:
+
+```sh
+php blueprints.phar
+```
+
+From there, follow the help message for required arguments and options.
+
+If you want to use Blueprints as a library, you absolutely can. It is designed to be reusable,
+compatible with web and CLI environments on PHP 7.2+. There's not much technical documentation
+at this point but you can refer to the [blueprints.php file](https://github.com/WordPress/php-toolkit/blob/219dc4e846af270a5009e523244d0ec23baaa32a/components/Blueprints/bin/blueprint.php#L226) to see
+how the runner is implemented.
+
+### Using the libraries
+
+Use composer to install the libraries in a non-WordPress project.
+
+This is the minimal composer.json file you need to consume the libraries:
 
 ```json
 {
-  "plugins": [
-    "akismet",
-    "gutenberg"
-  ],
-  "themes": [
-    "twentynineteen"
-  ],
-  "settings": {
-    "blogname": "My Blog",
-    "blogdescription": "Just another WordPress site",
-    "permalink_structure": "/%postname%/"
-  },
-  "constants": {
-    "WP_DEBUG": true,
-    "WP_DEBUG_LOG": true
-  },
-  "steps": [
-    {
-      "step": "runPHP",
-      "content": "<?php require 'wp-load.php'; update_user_meta(1, 'test', 'value');"
-    }
-  ]
+	"name": "my-namespace/my-package",
+	"require": {
+		"WordPress/php-toolkit": "^v0.0.21-alpha"
+	},
+	"repositories": [
+		{
+			"type": "github",
+			"url": "https://github.com/WordPress/php-toolkit"
+		}
+	]
 }
 ```
 
-See the
-original [Getting started with Blueprints v1](https://wordpress.github.io/wordpress-playground/blueprints-api/index)
-page for more information.
+You can also lock it in to a specific commit or tag:
 
-## Let's build Version 2 of Blueprints together!
-
-Blueprints were initially built in TypeScript
-for [WordPress Playground](https://github.com/WordPress/wordpress-playground/),
-However, they [quickly proved useful for
-WordPress in general](https://github.com/WordPress/wordpress-playground/issues/1025).
-
-This repository explores
-a [PHP-based version 2 of Blueprints](https://github.com/WordPress/wordpress-playground/issues/1025) that can be
-used in any environment, be it a browser, Node.js, wp-cli, or a native PHP application. The plan is to create a robust,
-useful tool that will eventually be merged into WordPress core.
-
-Your feedback is not just welcome, but essential to the success of this project. Please:
-
-* Share your thoughts and ideas in the [Blueprints v2 Specification](https://github.com/WordPress/blueprints/issues/6)
-  issue – or any other issue that interests you
-* Start new discussions
-* Propose changes through comments and pull requests
-
-Your input and code contributions will help shape the future of Blueprints in WordPress.
-in discussions.
-
-# Technical bits
-
-## Setting Up the Project Locally
-
-To set up the WordPress/blueprints project locally, here's a few useful commands:
-
-Install [composer](https://getcomposer.org/). Once you have it, install the required dependencies via
-
-```shell
-composer install
+```json
+{
+	"require": {
+		"WordPress/php-toolkit": "dev-trunk#122b547"
+	}
+}
 ```
 
-### Run tests with
+For now, there is no way to cherry-pick just the one library you need. It's all or nothing.
 
-```shell
+Note that the composer.json example above downloads more files than the required minimum, e.g. markdowns, unit tests, the `plugins` directory, etc. That's about 50MB of code in total and, most likely, it's not a big deal for your project. If you want a smaller package, the Data Liberation plugin referenced above ships a minified phar file that's about ~500KB compressed.
+
+If you'd like to install just a single library, you'll need to contribute a PR to distribute each library as a separate package. Most likely, though, you don't really need that. If you have doubts, open a new issue and we'll figure it out together.
+
+### Design goals
+
+-   Build re-entrant data tools that can start, stop, resume, tolerate errors, accept alternative media files, posts etc. from the user.
+-   WordPress-first – Everything is built in PHP using WordPress coding standards. The divergences are strategic and minimal, such as the use of namespaces.
+-   Compatibility – Support for major WordPress versions, PHP version (7.2+), and Playground runtime (web, CLI, browser extension, desktop app, CI etc.).
+-   Dependency-free – No PHP extensions are required and only minimal Composer dependencies are allowed when absolutely necessary.
+-   Simple – The architectural role model is [WP_HTML_Processor](https://developer.wordpress.org/reference/classes/wp_html_processor/) – a **single class** that can parse nearly all HTML. There's no "Node", "Element", "Attribute" classes etc. Let's aim for the same here. Some OOP patterns are used when useful, but we're explicitly avoiding ideas like AbstractSingletonFactoryProxy.
+-   Extensibility – Playground should be able to benefit from, say, WASM markdown parser even if core WordPress cannot.
+-   Reusability – Each library should be framework-agnostic and usable outside of WordPress.
+
+### Development
+
+#### Testing
+
+To run the PHPUnit test suite, run:
+
+```sh
 composer test
 ```
 
-### Run Blueprints in a variety of ways
+#### Linting
 
-#### using the PHP Blueprint builder:
+To run the PHP_CodeSniffer linting suite, run:
 
-```shell
- php examples/blueprint_compiling.php
+```sh
+composer lint
 ```
 
-#### using a string containing a Blueprint (in JSON):
+To fix the linting errors, run:
 
-```shell
- php examples/json_string_compiling.php
+```sh
+composer lint-fix
 ```
 
-### Regenerate models files from JSON schema with
+#### Composer
 
-```shell
-composer global require jane-php/json-schema
-php src/WordPress/Blueprints/bin/autogenerate_models.php
+The root composer.json file is an amalgamation of composer.base.json all
+component composer.json files. To regenerate it, run:
+
+```sh
+bin/regenerate_composer.json.php
 ```
 
-## Building to .phar
+This will merge all the package-specific dependencies and the autoload rules into
+the root composer.json file.
 
-The Blueprints library is distributed as a .phar library. To build the .phar file, install box:
+### Windows compatibility
 
-```shell
-composer global require humbug/box
+Windows compatibility is achieved on a few different fronts:
+
+#### Newlines
+
+This repository comes with a `.gitattributes` file to ensure that the unit test
+files and fixtures are normalized to `\n` on checkout. It's important, because
+Windows uses `\r\n` for newlines in text files. Unix-based systems use `\n`.
+Without the `.gitattributes`, git on Windows would replace all the `\n` with `\r\n` 
+on checkout.
+
+The strings produced by the library uses `\n` for newlines where it can make
+that choice. For example, the `WXRWriter` class will separate XML tags with
+`\n` newlines to make sure the generated XML is consistent across platforms.
+
+#### Paths
+
+The `Filesystem` components makes a point of using Unix-style forward slashes
+as directory separators, even on Windows.
+
+As a library consumer, ensure all the local paths you pass to the library are
+using Unix-style forward slashes as directory separators. A simple str_replace
+will do the trick:
+
+```php
+if (DIRECTORY_SEPARATOR === '\\') {
+	$path = str_replace('\\', '/', $path);
+}
 ```
 
-And then run:
+The reason for using Unix-style forward slashes is care for data integrity.
+Windows understands both forward slashes and backslashes, so the replacement
+operation is safe there. On Unix, however, a backslash can be used as a part
+of a filename so it cannot be safely translated.
 
-```shell
-rm composer.lock
-rm -rf vendor
-COMPOSER=composer-web.json composer install --no-dev
-rm -rf vendor/pimple/pimple/ext/
-rm -rf vendor/symfony/*/*.md
-rm -rf vendor/symfony/*/composer.json
-rm -rf vendor/symfony/*/*.dist
-rm -rf vendor/*/*/LICENSE
-box compile
-```
+Importantly, do not just run this str_replace() on every possible path.
+`C:\my-dir\my-file.txt` is both, a valid Windows absolute path and a valid Unix
+filename and a relative path. Furthermore, `Filesystem` supports more filesystems
+than just local disk.
 
-Note that in box.json, the `"check-requirements"` option is set to `false`. Somehow, keeping it as `true` results in a
-.phar file
-that breaks HTTP requests in Playground. @TODO: Investigate why this is the case.
+Anytime you're handling paths, consider:
 
-To try the built .phar file, run:
+-   Which filesystem is this path related to? Local? Remote? Git?
+-   Which OS are you on? Windows? Unix?
 
-```shell
-rm -rf new-wp/* && USE_PHAR=1 php blueprint_compiling.php
-```
+If the answers are "local" and "Windows", you may need to apply the `str_replace()`
+slash normalization. Otherwise, just keep the path as it is.
 
-## Coding Standards
+The takeaway from this section is: **paths are difficult**.
 
-This project uses
-the [WordPress Coding Standards](https://developer.wordpress.org/coding-standards/wordpress-coding-standards/php/) and
-PHPCS to enforce them. To check the code for compliance, run:
-
-```shell
-composer run-script phpcs
-```
-
-To automatically fix the code to comply with the standards, run:
-
-```shell
-composer run-script phpcbf
-composer run-script phpcs-fix
-```
-
-## PHP 7.0 Compatibility
-
-This project is compatible with PHP >= 7.0.
-
-Part of the process is automated with [rector](https://github.com/rectorphp/rector),
-which transpiles the features added in PHP 7.2 and later to PHP 7.1. Unfortunately,
-that's as far as Rector goes.
-
-From there, manual transformations are required to bring the compatibility further down to PHP 7.0.
-
-### Automated part
-
-To transpile the code to PHP 7.1, run:
-
-```bash
-# Install rector:
-composer require rector/rector --ignore-platform-req=php
-
-# Transpile:
-php vendor/bin/rector process src
-```
-
-Unfortunately, Rector does not support downgrading to PHP 7.0 yet, so we need to do the
-last stretch manually.
-
-### Manual part
-
-Rector will downgrade PHP code to PHP 7.1 but not further. We need PHP 7.0 compat
-so here's a few additional regexps to run. Regexps are not, of course, reliable in
-the general case, but they seem to do the trick here.
-
-List of manual replacements
-
-* `: \?[a-zA-Z_0-9]+` -> (empty string) to remove the unsupported return type
-  from `function(): ?SchemaResolver {}` -> `function() {}`.
-* `: iterable` to fix `Fatal error: Generators may only declare a return type of Generator, Iterator or Traversable`.
-* `\?[a-zA-Z_0-9]+ \$` -> `$` to remove the unsupported nullable type from function signatures,
-  e.g. `function(?Schema $schema){}` -> `function($schema){}`.
-* `(protected|public|private) const` -> `const` as const visibility is not supported in PHP 7.0.
-* `: void` -> `` as `void` return type is unsupported in PHP 7.0.
-
-@TODO:
-
-* `[$ns, $name] = $this->parseName($name);` -> `list($ns, $name) = $this->parseName($name);`
-* `foreach ($data as [$cp, $chars]) {` -> `foreach ($data as list($cp, $chars)) {`
-* Find or write Rector rules for downgrading to PHP 7.0
-
-## License
-
-WordPress Blueprints are open-source software licensed under the GPL.
+For a fun read on the topic, check out this article: [Windows File Paths](https://www.fileside.app/blog/2023-03-17_windows-file-paths/).

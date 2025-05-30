@@ -1,0 +1,20 @@
+{
+	"version": 2,
+	"blueprintMeta": {
+		"name": "Invalid Blueprint - Wrong URL Format",
+		"description": "This blueprint has an invalid URL format",
+		"authorUrl": "example.com"
+	},
+	"activeTheme": "ftp://example.com/themes/custom-theme.zip",
+	"content": [
+		{
+			"type": "posts",
+			"source": [
+				{
+					"post_title": "URL Test",
+					"post_content": "This blueprint has invalid URL formats."
+				}
+			]
+		}
+	]
+}

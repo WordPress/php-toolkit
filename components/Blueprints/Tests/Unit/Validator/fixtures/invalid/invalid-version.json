@@ -1,0 +1,18 @@
+{
+	"version": 1,
+	"blueprintMeta": {
+		"name": "Invalid Blueprint - Wrong Version",
+		"description": "This blueprint has the wrong version (1 instead of 2)"
+	},
+	"content": [
+		{
+			"type": "posts",
+			"source": [
+				{
+					"post_title": "Invalid Version Test",
+					"post_content": "This blueprint has an invalid version."
+				}
+			]
+		}
+	]
+}

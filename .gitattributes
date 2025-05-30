@@ -1,0 +1,12 @@
+# Check out every test-related file using LF (\n) as the line ending.
+#
+# On Windows, test fixtures are normalized to CRLF (\r\n), but our code
+# often expects the result to use LF (\n). For example, WXRWriter
+# will always output documents using LF (\n) as the line ending.
+#
+# Let's make sure we use LF (\n) as the line ending in all test files
+# for consistent outcomes across different operating systems.
+**/Tests/**/* text eol=lf
+/examples export-ignore
+/plugins export-ignore
+/.github export-ignore

@@ -1,0 +1,116 @@
+{
+	"version": 2,
+	"blueprintMeta": {
+		"name": "Steps Showcase Blueprint",
+		"description": "A blueprint demonstrating various steps"
+	},
+	"content": [
+		{
+			"type": "posts",
+			"source": [
+				{
+					"post_title": "Steps Example",
+					"post_content": "This is a demo of steps."
+				}
+			]
+		}
+	],
+	"additionalStepsAfterExecution": [
+		{
+			"step": "activatePlugin",
+			"pluginPath": "hello-dolly/hello.php"
+		},
+		{
+			"step": "activateTheme",
+			"themeFolderName": "twentytwentythree"
+		},
+		{
+			"step": "cp",
+			"fromPath": "/tmp/source.txt",
+			"toPath": "wp-content/uploads/destination.txt"
+		},
+		{
+			"step": "defineConstants",
+			"constants": {
+				"CUSTOM_CONSTANT_1": "value1",
+				"CUSTOM_CONSTANT_2": "value2"
+			}
+		},
+		{
+			"step": "installPlugin",
+			"plugin": "woocommerce"
+		},
+		{
+			"step": "installTheme",
+			"source": "twentytwentyfour",
+			"activate": true,
+			"importStarterContent": true
+		},
+		{
+			"step": "mkdir",
+			"path": "wp-content/uploads/custom-directory"
+		},
+		{
+			"step": "mv",
+			"fromPath": "wp-content/uploads/source.txt",
+			"toPath": "wp-content/uploads/target.txt"
+		},
+		{
+			"step": "rm",
+			"path": "wp-content/uploads/temporary.txt"
+		},
+		{
+			"step": "rmdir",
+			"path": "wp-content/uploads/temp-dir"
+		},
+		{
+			"step": "runPHP",
+			"code": "echo 'Hello, World!';"
+		},
+		{
+			"step": "runSql",
+			"source": "./custom-queries.sql"
+		},
+		{
+			"step": "setSiteLanguage",
+			"language": "en_US"
+		},
+		{
+			"step": "setSiteOptions",
+			"options": {
+				"blogname": "My Updated Site Title",
+				"custom_option": "custom value"
+			}
+		},
+		{
+			"step": "unzip",
+			"zipFile": "https://example.com/archive.zip",
+			"extractToPath": "wp-content/uploads/extracted"
+		},
+		{
+			"step": "wp-cli",
+			"command": "plugin list --format=json"
+		},
+		{
+			"step": "writeFile",
+			"path": "wp-content/uploads/new-file.txt",
+			"content": {
+				"filename": "content.txt",
+				"content": "This is the content of the file."
+			}
+		},
+		{
+			"step": "writeFiles",
+			"files": {
+				"wp-content/uploads/file1.txt": {
+					"filename": "file1.txt",
+					"content": "Content of file 1"
+				},
+				"wp-content/uploads/file2.txt": {
+					"filename": "file2.txt",
+					"content": "Content of file 2"
+				}
+			}
+		}
+	]
+}

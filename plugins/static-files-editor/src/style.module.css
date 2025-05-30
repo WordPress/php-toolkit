@@ -1,0 +1,128 @@
+:global(#wpadminbar) {
+    display: none;
+}
+:global(.interface-interface-skeleton) {
+    top: 0;
+}
+:global(.editor-visual-editor.has-padding) {
+    padding: 0;
+}
+:global(.components-editor-notices__snackbar) {
+    /* Accommodate the mobile menu at the bottom of the screen */
+    bottom: 104px !important;
+}
+
+/**
+ * Hide the post editor UI elements that are not useful in the
+ * static files editor
+ */
+:global(.editor-preview-dropdown),
+:global(.components-dropdown:has([aria-label="Tools"])),
+:global([aria-label="View Local File"]),
+:global(.editor-header__post-preview-button.is-compact),
+:global(.editor-list-view-sidebar .block-editor-tabbed-sidebar__tablist-and-close-button),
+/** Hide the "Welcome to the block editor" modal */
+:global(.components-modal__screen-overlay:has(.components-modal__screen-overlay)) {
+    display: none !important;
+}
+
+/**
+ * Naively hide all the warnings just to get rid of the one
+ * that says "The backup of this post in your browser is not available."
+ */
+:global(.components-notice.is-warning.is-dismissible) {
+    display: none !important;
+}
+
+/**
+ * Mobile-specific styles
+ */
+@media (max-width: 768px) {
+	/**
+	 * Hide most widgets in the top editor bar – they're not that
+	 * useful for editing notes on mobile.
+	 */
+	/* Title bar */
+	:global(.editor-header__center),
+	/* List view toggle */
+	:global(.editor-document-tools),
+	/* Hamburger menu */
+	:global(.editor-header__settings > .components-dropdown-menu),
+	/* Block inspector toggle */
+	:global(.interface-pinned-items),
+	/* Save draft button */
+	:global(.editor-post-save-draft),
+	/* Block inserter toggle */
+	:global(.editor-document-tools__inserter-toggle) {
+		display: none !important;
+	}
+
+    /**
+     * Smaller gap between the post title and the top of the screen.
+     */
+    :global(.editor-visual-editor__post-title-wrapper) {
+        margin-top: 2rem !important;
+    }
+
+	/**
+	 * Stick the block toolbar to the virtual keyboard.
+	 * There's a corresponding JS fragment in index.tsx that
+	 * ensures the toolbar remains sticked to the keyboard as
+	 * the user scrolls and resizes the page.
+	 */
+	:global(.block-editor-block-contextual-toolbar) {
+		position: fixed;
+		top: auto;
+		bottom: 0;
+		z-index: 10000000;
+		box-shadow: 0 -1px 0 0 rgba(0,0,0,0.133) !important;
+	}
+}
+
+.inside-editor-toolbar {
+	width: 100%;
+    display: flex;
+	flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+	box-sizing: border-box;
+	padding: 10px;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.133) !important;
+}
+
+.editor-toolbar-left,
+.editor-toolbar-right {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 10px;
+}
+
+.file-picker-tree-container,
+.file-picker-tree-container > div {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.file-picker-tree-container > div > div[role='application'] {
+	flex-grow: 1;
+}
+
+@keyframes fadeInOut {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.2;
+    }
+}
+
+.icon-fade {
+    animation: fadeInOut 2s infinite;
+}
+
+.sync-button {
+	justify-content: center;
+	min-width: 120px;
+}

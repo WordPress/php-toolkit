@@ -1,0 +1,29 @@
+{
+	"name": "wordpress/markdown",
+	"description": "Markdown component for WordPress.",
+	"type": "library",
+    "authors": [
+        {
+            "name": "Adam Zielinski",
+            "email": "adam@adamziel.com"
+        },
+        {
+            "name": "WordPress Team",
+            "email": "wordpress@wordpress.org"
+        }
+    ],
+	"require": {
+		"php": ">=7.2"
+	},
+	"autoload": {
+		"classmap": [
+			"vendor-patched"
+		],
+		"psr-4": {
+			"WordPress\\Markdown\\": ""
+		},
+        "exclude-from-classmap": [
+            "/Tests/"
+        ]
+	}
+}

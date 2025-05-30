@@ -1,0 +1,4 @@
+This is another original text document.
+It has different initial content.
+Change A added this line.
+Change B added this other line. 

@@ -1,0 +1,76 @@
+{
+	"version": 2,
+	"blueprintMeta": {
+		"name": "Valid Blueprint - Post Types",
+		"description": "This blueprint has valid post type definitions"
+	},
+	"postTypes": {
+		"book": {
+			"label": "Books",
+			"labels": {
+				"name": "Books",
+				"singular_name": "Book",
+				"add_new": "Add New",
+				"add_new_item": "Add New Book",
+				"edit_item": "Edit Book"
+			},
+			"description": "Custom post type for books",
+			"public": true,
+			"hierarchical": false,
+			"exclude_from_search": false,
+			"publicly_queryable": true,
+			"show_ui": true,
+			"show_in_menu": true,
+			"show_in_admin_bar": true,
+			"show_in_nav_menus": true,
+			"show_in_rest": true,
+			"rest_base": "books",
+			"rest_namespace": "wp/v2",
+			"menu_icon": "dashicons-book",
+			"menu_position": 5,
+			"capability_type": "post",
+			"map_meta_cap": true,
+			"supports": [
+				"title",
+				"editor",
+				"thumbnail",
+				"excerpt",
+				"custom-fields"
+			],
+			"has_archive": true,
+			"rewrite": {
+				"slug": "books",
+				"with_front": true,
+				"pages": true,
+				"feeds": true
+			},
+			"query_var": "book",
+			"template": [
+				[
+					"core/heading",
+					{
+						"level": 2,
+						"content": "Book Details"
+					}
+				],
+				[
+					"core/paragraph"
+				]
+			],
+			"template_lock": "all"
+		},
+		"author": "/path/to/author-post-type.php"
+	},
+	"content": [
+		{
+			"type": "posts",
+			"source": [
+				{
+					"post_title": "Sample Book",
+					"post_content": "This is a sample book.",
+					"post_type": "book"
+				}
+			]
+		}
+	]
+}

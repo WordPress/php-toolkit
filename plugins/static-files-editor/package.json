@@ -1,0 +1,25 @@
+{
+    "name": "static-files-editor",
+    "version": "0.0.1",
+    "main": "index.js",
+    "scripts": {
+        "dev": "webpack serve --config webpack.config.js",
+        "build": "webpack -c webpack.config.js"
+    },
+    "dependencies": {
+        "@types/jest": "^29.5.14",
+        "@wordpress/block-serialization-default-parser": "^5.18.0",
+        "@wordpress/blocks": "^14.7.0",
+        "@wordpress/icons": "^10.16.0",
+        "@wordpress/scripts": "^30.9.0",
+        "classnames": "^2.5.1",
+        "diff": "^7.0.0",
+        "diff-match-patch": "^1.0.5",
+        "html-react-parser": "^5.2.2",
+        "parse5": "^7.2.1",
+        "parse5-sax-parser": "^7.0.0"
+    },
+    "devDependencies": {
+        "webpack-cli": "^6.0.1"
+    }
+}

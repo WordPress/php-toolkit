@@ -20,14 +20,33 @@ on:
 env:
   LOCAL_PHP: ${{ inputs.php }}-fpm
   PHPUNIT_CONFIG: ${{ inputs.phpunit-config }}
+  LC_ALL: en_US.UTF-8
+  LANG:   en_US.UTF-8
 
 jobs:
   phpunit-tests:
     name: ${{ inputs.os }}
     runs-on: ${{ inputs.os }}
-    timeout-minutes: 20
+    # These tests can really drag on Windows CI runner!
+    timeout-minutes: 60
 
     steps:
+      # Dev drive speeds up Windows CI tests from ~25 minutes to ~15 minutes
+      - name: Setup RAM Disk (Windows only)
+        uses: samypr100/setup-dev-drive@v3
+        with:
+          drive-size: 15GB
+        if: ${{ inputs.os == 'windows-latest' }}
+
+      - name: Create DEV_DRIVE/tmp and set TEMP and TMP (Windows only)
+        if: ${{ inputs.os == 'windows-latest' }}
+        run: |
+          echo "Setting TEMP and TMP to ${{ env.DEV_DRIVE }}\tmp"
+        env:
+          DEV_DRIVE: ${{ env.DEV_DRIVE }}
+          TEMP: ${{ env.DEV_DRIVE }}\tmp
+          TMP: ${{ env.DEV_DRIVE }}\tmp
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -36,15 +55,17 @@ jobs:
         with:
           php-version: '${{ inputs.php }}'
           tools: phpunit-polyfills
-          extensions: zip
+          extensions: zip, sqlite3, pdo, pdo_sqlite
+          ini-values: |
+            ${{ inputs.os == 'windows-latest' && format('sys_temp_dir={0}/tmp', env.DEV_DRIVE) || '' }}
 
-      - name: Install Composer dependencies
-        uses: ramsey/composer-install@v3
-        with:
-          ignore-cache: "yes"
-          composer-options: "--optimize-autoloader"
+      - name: Install Composer dependencies (using composer-ci-matrix-tests.json)
+        run: |
+          rm composer.lock
+          cp composer-ci-matrix-tests.json composer.json
+          composer install --no-interaction --no-progress --optimize-autoloader
 
       - name: Run PHPUnit tests
         # Explicitly use the composer-installed version of phpunit
         # because there have been conflicts with other versions during CI.
-        run: vendor/bin/phpunit tests --testdox
+        run: vendor/bin/phpunit --testdox

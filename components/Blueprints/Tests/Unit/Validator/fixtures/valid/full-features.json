@@ -1,0 +1,144 @@
+{
+	"version": 2,
+	"$schema": "https://raw.githubusercontent.com/WordPress/blueprints/trunk/blueprints/schema.json",
+	"blueprintMeta": {
+		"name": "Full Featured Blueprint",
+		"description": "A blueprint demonstrating most of the available features",
+		"version": "1.0.0",
+		"authors": [
+			"Test Author",
+			"Another Author"
+		],
+		"authorUrl": "https://example.com",
+		"donateLink": "https://example.com/donate",
+		"tags": [
+			"test",
+			"full-features",
+			"demo"
+		],
+		"license": "GPL-2.0"
+	},
+	"siteLanguage": "en_US",
+	"siteOptions": {
+		"blogname": "Full Featured Test Site",
+		"timezone_string": "America/New_York",
+		"permalink_structure": "/%postname%/"
+	},
+	"constants": {
+		"WP_DEBUG": true,
+		"WP_DEBUG_LOG": true,
+		"WP_DEBUG_DISPLAY": false,
+		"SCRIPT_DEBUG": true,
+		"CUSTOM_CONSTANT": "custom-value"
+	},
+	"wordpressVersion": "6.4",
+	"phpVersion": "8.0",
+	"activeTheme": "twentytwentythree",
+	"themes": [
+		"twentytwentyfour"
+	],
+	"plugins": [
+		"akismet",
+		{
+			"source": "woocommerce",
+			"active": true,
+			"activationOptions": {
+				"option1": "value1"
+			}
+		}
+	],
+	"postTypes": {
+		"book": {
+			"label": "Books",
+			"description": "Books post type",
+			"public": true,
+			"has_archive": true,
+			"show_in_rest": true,
+			"supports": [
+				"title",
+				"editor",
+				"author",
+				"thumbnail",
+				"excerpt",
+				"comments"
+			]
+		}
+	},
+	"fonts": {
+		"open-sans": {
+			"font_families": [
+				{
+					"font_family_settings": {
+						"name": "Open Sans",
+						"slug": "open-sans",
+						"fontFamily": "Open Sans, sans-serif"
+					},
+					"categories": [
+						"sans-serif"
+					]
+				}
+			]
+		}
+	},
+	"media": [
+		{
+			"source": "https://example.com/image.jpg",
+			"title": "Example Image",
+			"alt": "Example image alt text"
+		}
+	],
+	"content": [
+		{
+			"type": "posts",
+			"source": [
+				{
+					"post_title": "Sample Post",
+					"post_content": "This is a sample post content.",
+					"post_status": "publish",
+					"post_type": "post"
+				},
+				{
+					"post_title": "Sample Page",
+					"post_content": "This is a sample page content.",
+					"post_status": "publish",
+					"post_type": "page"
+				}
+			]
+		}
+	],
+	"users": [
+		{
+			"username": "editor",
+			"email": "editor@example.com",
+			"role": "editor",
+			"meta": {
+				"first_name": "Test",
+				"last_name": "Editor"
+			}
+		}
+	],
+	"roles": [
+		{
+			"name": "book_editor",
+			"capabilities": {
+				"read": "true",
+				"edit_books": "true",
+				"publish_books": "true"
+			}
+		}
+	],
+	"additionalStepsAfterExecution": [
+		{
+			"step": "writeFile",
+			"path": "wp-content/uploads/custom-file.txt",
+			"content": {
+				"filename": "custom-file.txt",
+				"content": "This is a custom file created by the Blueprint."
+			}
+		},
+		{
+			"step": "runPHP",
+			"code": "echo 'Blueprint execution completed!';"
+		}
+	]
+}

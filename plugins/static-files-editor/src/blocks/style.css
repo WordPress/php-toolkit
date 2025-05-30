@@ -1,0 +1,14 @@
+.diff-split-container > .block-editor-inner-blocks > .block-editor-block-list__layout {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 1rem;
+    box-sizing: border-box; /* Just to ensure width calculations are clean */
+}
+
+.diff-split-column {
+    flex: 1;
+    border: 1px solid #ccc;
+    padding: 0.75rem;
+    overflow-x: auto;
+}

@@ -1,0 +1,27 @@
+{
+	"version": 2,
+	"blueprintMeta": {
+		"name": "Invalid Blueprint - Wrong Plugin Format",
+		"description": "This blueprint has an invalid plugin format"
+	},
+	"plugins": [
+		123,
+		{
+			"active": true,
+			"activationOptions": {
+				"option1": "value1"
+			}
+		}
+	],
+	"content": [
+		{
+			"type": "posts",
+			"source": [
+				{
+					"post_title": "Invalid Plugin Format Test",
+					"post_content": "This blueprint has an invalid plugin format."
+				}
+			]
+		}
+	]
+}

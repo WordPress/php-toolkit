@@ -1,0 +1,66 @@
+{
+	"version": 2,
+	"blueprintMeta": {
+		"name": "Valid Blueprint - Additional Steps",
+		"description": "This blueprint has valid additional steps"
+	},
+	"content": [
+		{
+			"type": "posts",
+			"source": [
+				{
+					"post_title": "Sample Post",
+					"post_content": "This is a sample post."
+				}
+			]
+		}
+	],
+	"additionalStepsAfterExecution": [
+		{
+			"step": "activatePlugin",
+			"pluginPath": "woocommerce/woocommerce.php"
+		},
+		{
+			"step": "activateTheme",
+			"themeFolderName": "twentytwentythree"
+		},
+		{
+			"step": "cp",
+			"fromPath": "/source/file.php",
+			"toPath": "/destination/file.php"
+		},
+		{
+			"step": "defineConstants",
+			"constants": {
+				"WP_DEBUG": "true",
+				"SCRIPT_DEBUG": "false"
+			}
+		},
+		{
+			"step": "installPlugin",
+			"plugin": {
+				"source": "jetpack",
+				"active": true,
+				"activationOptions": {
+					"mode": "development"
+				}
+			}
+		},
+		{
+			"step": "runPHP",
+			"code": "<?php echo 'Hello World'; ?>"
+		},
+		{
+			"step": "setSiteOptions",
+			"options": {
+				"blogname": "My Test Site",
+				"permalink_structure": "/%postname%/"
+			}
+		},
+		{
+			"step": "writeFile",
+			"path": "/path/to/file.txt",
+			"content": "Hello World"
+		}
+	]
+}
