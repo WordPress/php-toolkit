@@ -123,7 +123,13 @@ class WXRWriter implements EntityWriter {
 	}
 
 	private function create_xml_tag( $tag_name, $content ) {
-		$xml = XMLProcessor::create_from_string( "<$tag_name>text</$tag_name>\n" );
+		$xml = XMLProcessor::create_from_string( "<$tag_name>text</$tag_name>\n", null, 'UTF-8', array(
+			'excerpt' => "http://wordpress.org/export/1.2/excerpt/",
+			'content' => "http://purl.org/rss/1.0/modules/content/",
+			'wfw' => "http://wellformedweb.org/CommentAPI/",
+			'dc' => "http://purl.org/dc/elements/1.1/",
+			'wp' => "http://wordpress.org/export/1.2/"
+		) );
 		$xml->next_token(); // Move to the opening tag
 		$xml->next_token(); // Move to the text node
 		$xml->set_modifiable_text( $content );

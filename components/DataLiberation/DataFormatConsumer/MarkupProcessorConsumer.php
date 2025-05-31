@@ -60,7 +60,7 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 							break;
 						}
 						$this->append_rich_text( htmlspecialchars( $this->markup_processor->get_modifiable_text() ) );
-						if ( in_array( $this->markup_processor->get_tag(), array( 'H1', 'H2', 'H3', 'H4', 'H5', 'H6' ) ) ) {
+						if ( in_array( $this->get_tag_name(), array( 'H1', 'H2', 'H3', 'H4', 'H5', 'H6' ) ) ) {
 							$this->on_title_candidate( $this->markup_processor->get_modifiable_text() );
 						}
 						break;
@@ -90,7 +90,11 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 
 	private function handle_tag() {
 		$html          = $this->markup_processor;
-		$tag           = strtoupper( $html->get_tag() );
+		if($html instanceof WP_HTML_Processor) {
+			$tag = strtoupper( $html->get_tag() );
+		} else {
+			$tag = strtoupper( $html->get_tag_local_name() );
+		}
 		$tag_lowercase = strtolower( $tag );
 
 		$is_void_tag = ! $html->expects_closer() && ! $html->is_tag_closer();
@@ -100,14 +104,14 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 					$this->on_title_candidate( $html->get_modifiable_text() );
 					break;
 				case 'META':
-					$key   = $html->get_attribute( 'name' );
-					$value = $html->get_attribute( 'content' );
+					$key   = $this->get_attribute( 'name' );
+					$value = $this->get_attribute( 'content' );
 					if ( ! array_key_exists( $key, $this->metadata ) ) {
 						if ( $key ) {
 							$this->metadata[ $key ] = array();
 						}
 					}
-					switch ( $html->get_attribute( 'type' ) ) {
+					switch ( $this->get_attribute( 'type' ) ) {
 						case 'integer':
 							$value = (int) $value;
 							break;
@@ -124,8 +128,8 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 					$template = new WP_HTML_Tag_Processor( '<img>' );
 					$template->next_tag();
 					foreach ( array( 'alt', 'title', 'src' ) as $attr ) {
-						if ( $html->get_attribute( $attr ) ) {
-							$template->set_attribute( $attr, $html->get_attribute( $attr ) );
+						if ( $this->get_attribute( $attr ) ) {
+							$template->set_attribute( $attr, $this->get_attribute( $attr ) );
 						}
 					}
 					/**
@@ -211,8 +215,8 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 				case 'A':
 					$template = new WP_HTML_Tag_Processor( '<a>' );
 					$template->next_tag();
-					if ( $html->get_attribute( 'href' ) ) {
-						$template->set_attribute( 'href', $html->get_attribute( 'href' ) );
+					if ( $this->get_attribute( 'href' ) ) {
+						$template->set_attribute( 'href', $this->get_attribute( 'href' ) );
 					}
 					/**
 					 *
@@ -294,6 +298,22 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 					}
 					break;
 			}
+		}
+	}
+
+	private function get_tag_name() {
+		if($this->markup_processor instanceof WP_HTML_Processor) {
+			return $this->markup_processor->get_tag();
+		} else {
+			return $this->markup_processor->get_tag_local_name();
+		}
+	}
+
+	private function get_attribute($key) {
+		if($this->markup_processor instanceof WP_HTML_Processor) {
+			return $this->markup_processor->get_attribute($key);
+		} else {
+			return $this->markup_processor->get_attribute('', $key);
 		}
 	}
 

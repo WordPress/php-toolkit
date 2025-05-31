@@ -16,6 +16,19 @@ class XMLStackOfOpenElements {
 	 */
 	private $stack = array();
 
+	private $document_namespaces = array(
+		'xml'   => 'http://www.w3.org/XML/1998/namespace', // Predefined, cannot be unbound or changed
+		'xmlns' => 'http://www.w3.org/2000/xmlns/',        // Reserved for xmlns attributes, not a real namespace for elements/attributes
+		''      => '', // Default namespace is initially empty (no namespace)
+	);
+
+	public function __construct($document_namespaces=array()) {
+		$this->document_namespaces = array_merge(
+			$document_namespaces,
+			$this->document_namespaces
+		);
+	}
+
 	/**
 	 * Pushes an XMLElement onto the stack.
 	 *
@@ -72,11 +85,7 @@ class XMLStackOfOpenElements {
 		$top = $this->top();
 		if ( null === $top ) {
 			// Namespaces defined by default in every XML document.
-			return array(
-				'xml'   => 'http://www.w3.org/XML/1998/namespace', // Predefined, cannot be unbound or changed
-				'xmlns' => 'http://www.w3.org/2000/xmlns/',        // Reserved for xmlns attributes, not a real namespace for elements/attributes
-				''      => '', // Default namespace is initially empty (no namespace)
-			);
+			return $this->document_namespaces;
 		}
 		return $top->namespaces_in_scope;
 	}

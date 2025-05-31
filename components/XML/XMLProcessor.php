@@ -720,8 +720,8 @@ class XMLProcessor {
 	 */
 	private $stack_of_open_elements;
 
-	public static function create_from_string( $xml, $cursor = null, $known_definite_encoding = 'UTF-8' ) {
-		$processor = static::create_for_streaming( $xml, $cursor, $known_definite_encoding );
+	public static function create_from_string( $xml, $cursor = null, $known_definite_encoding = 'UTF-8', $document_namespaces = array() ) {
+		$processor = static::create_for_streaming( $xml, $cursor, $known_definite_encoding, $document_namespaces );
 		if ( null === $processor ) {
 			return false;
 		}
@@ -730,11 +730,11 @@ class XMLProcessor {
 		return $processor;
 	}
 
-	public static function create_for_streaming( $xml = '', $cursor = null, $known_definite_encoding = 'UTF-8' ) {
+	public static function create_for_streaming( $xml = '', $cursor = null, $known_definite_encoding = 'UTF-8', $document_namespaces = array() ) {
 		if ( 'UTF-8' !== $known_definite_encoding ) {
 			return false;
 		}
-		$processor = new XMLProcessor( $xml, self::CONSTRUCTOR_UNLOCK_CODE );
+		$processor = new XMLProcessor( $xml, $document_namespaces, self::CONSTRUCTOR_UNLOCK_CODE );
 		if ( null !== $cursor && true !== $processor->initialize_from_cursor( $cursor ) ) {
 			return false;
 		}
@@ -840,7 +840,7 @@ class XMLProcessor {
 	 *
 	 * @see XMLProcessor::create_fragment()
 	 */
-	protected function __construct( $xml, $use_the_static_create_methods_instead = null ) {
+	protected function __construct( $xml, $document_namespaces, $use_the_static_create_methods_instead = null ) {
 		if ( self::CONSTRUCTOR_UNLOCK_CODE !== $use_the_static_create_methods_instead ) {
 			_doing_it_wrong(
 				__METHOD__,
@@ -853,7 +853,7 @@ class XMLProcessor {
 			);
 		}
 		$this->xml                    = $xml;
-		$this->stack_of_open_elements = new XMLStackOfOpenElements();
+		$this->stack_of_open_elements = new XMLStackOfOpenElements($document_namespaces);
 	}
 
 	/**
@@ -1567,13 +1567,7 @@ class XMLProcessor {
 	 *
 	 */
 	public function next_tag( $query_or_ns = null, $null_or_local_name = null ) {
-		if ( null !== $null_or_local_name ) {
-			$query = array( 'breadcrumbs' => array( $query_or_ns, $null_or_local_name ) );
-		} else {
-			$query = $query_or_ns;
-		}
-
-		if ( null === $query ) {
+		if ( null === $query_or_ns && null === $null_or_local_name ) {
 			while ( $this->step() ) {
 				if ( '#tag' !== $this->get_token_type() ) {
 					continue;
@@ -1587,8 +1581,14 @@ class XMLProcessor {
 			return false;
 		}
 
-		if ( is_string( $query ) ) {
-			$query = array( 'breadcrumbs' => array( $query ) );
+		if ( is_string( $query_or_ns ) ) {
+			if ( null === $null_or_local_name ) {
+				$query = array( 'breadcrumbs' => array( $query_or_ns, $null_or_local_name ) );
+			} else {
+				$query = array( 'breadcrumbs' => array( $query_or_ns ) );
+			}
+		} else {
+			$query = $query_or_ns;
 		}
 
 		if ( ! is_array( $query ) ) {
@@ -3919,9 +3919,9 @@ class XMLProcessor {
 			// Normalize crumb to [namespace, local_name]
 			if ( ! is_array( $crumb ) ) {
 				if ( '*' === $crumb ) {
-					$crumb = ['*','*'];
+					$crumb = ['*', '*'];
 				} else {
-					$crumb = array( '', $crumb );
+					$crumb = array( '*', $crumb );
 				}
 			}
 			list( $namespace, $local_name ) = $crumb;

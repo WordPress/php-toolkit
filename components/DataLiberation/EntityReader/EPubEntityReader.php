@@ -54,6 +54,7 @@ class EPubEntityReader implements EntityReader {
 				return false;
 			}
 
+			$this->remaining_html_files = [];
 			foreach ( $this->manifest['items'] as $item ) {
 				if ( $item['media-type'] !== 'application/xhtml+xml' ) {
 					continue;
@@ -137,11 +138,12 @@ class EPubEntityReader implements EntityReader {
 		$xml = XMLProcessor::create_from_string(
 			$this->zip->get_contents( 'META-INF/container.xml' )
 		);
-		if ( false === $xml->next_tag( 'rootfile' ) ) {
+		
+		if ( false === $xml->next_tag( ['urn:oasis:names:tc:opendocument:xmlns:container', 'rootfile'] ) ) {
 			return false;
 		}
 
-		$full_path = $xml->get_attribute( 'full-path' );
+		$full_path = $xml->get_attribute( '', 'full-path' );
 		if ( ! $full_path ) {
 			return false;
 		}
@@ -161,16 +163,16 @@ class EPubEntityReader implements EntityReader {
 		);
 		while ( $xml->next_tag() ) {
 			$parsed_entry = array();
-			$keys         = $xml->get_attribute_qualified_names_with_prefix( '' );
-			foreach ( $keys as $key ) {
-				$parsed_entry[ $key ] = $xml->get_attribute( $key );
+			$keys         = $xml->get_attribute_names_with_prefix( '', '' );
+			foreach ( $keys as list($ns, $key) ) {
+				$parsed_entry[ $key ] = $xml->get_attribute( $ns, $key );
 			}
-			if ( $xml->matches_breadcrumbs( array( 'metadata', '*' ) ) ) {
+			if ( $xml->matches_breadcrumbs( array( 'package', 'metadata', '*' ) ) ) {
 				$parsed['metadata'][] = array(
 					'tag'        => $xml->get_tag_local_name(),
 					'attributes' => $parsed_entry,
 				);
-			} elseif ( $xml->matches_breadcrumbs( array( 'manifest', 'item' ) ) ) {
+			} elseif ( $xml->matches_breadcrumbs( array( 'package', 'manifest', 'item' ) ) ) {
 				$parsed_entry['type'] = 'item';
 				$parsed['items'][]    = $parsed_entry;
 			}
