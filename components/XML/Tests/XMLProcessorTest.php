@@ -540,7 +540,7 @@ class XMLProcessorTest extends TestCase {
 	public function test_token_bookmark_span( string $xml, int $match_nth_token, string $expected_match ) {
 		$processor = new class( $xml ) extends XMLProcessor {
 			public function __construct( $xml ) {
-				parent::__construct( $xml, self::CONSTRUCTOR_UNLOCK_CODE );
+				parent::__construct( $xml, [], self::CONSTRUCTOR_UNLOCK_CODE );
 			}
 
 			/**
@@ -1367,7 +1367,7 @@ class XMLProcessorTest extends TestCase {
 
 		$subclass = new class( $xml ) extends XMLProcessor {
 			public function __construct( $xml ) {
-				parent::__construct( $xml, self::CONSTRUCTOR_UNLOCK_CODE );
+				parent::__construct( $xml, [], self::CONSTRUCTOR_UNLOCK_CODE );
 			}
 
 			/**

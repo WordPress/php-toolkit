@@ -840,7 +840,7 @@ class XMLProcessor {
 	 *
 	 * @see XMLProcessor::create_fragment()
 	 */
-	protected function __construct( $xml, $document_namespaces, $use_the_static_create_methods_instead = null ) {
+	protected function __construct( $xml, $document_namespaces=[], $use_the_static_create_methods_instead = null ) {
 		if ( self::CONSTRUCTOR_UNLOCK_CODE !== $use_the_static_create_methods_instead ) {
 			_doing_it_wrong(
 				__METHOD__,
