@@ -3914,7 +3914,11 @@ class XMLProcessor {
 
 			// Normalize crumb to [namespace, local_name]
 			if ( ! is_array( $crumb ) ) {
-				$crumb = array( '', $crumb );
+				if ( '*' === $crumb ) {
+					$crumb = ['*','*'];
+				} else {
+					$crumb = array( '', $crumb );
+				}
 			}
 			list( $namespace, $local_name ) = $crumb;
 

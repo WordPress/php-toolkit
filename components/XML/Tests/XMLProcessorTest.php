@@ -1465,6 +1465,31 @@ class XMLProcessorTest extends TestCase {
 	 *
 	 * @return void
 	 */
+	public function test_matches_breadcrumbs_wildcard_namespace() {
+		// Initialize the XMLProcessor with the given XML string
+		$processor = XMLProcessor::create_from_string(
+<<<XML
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss xmlns:wp="http://wordpress.org/export/1.2/">
+    <channel>
+        <wp:base_site_url>http://wordpress.com/</wp:base_site_url>
+	</channel>	
+</rss>	
+XML
+);
+
+		$this->assertTrue( $processor->next_tag() ); // rss
+		$this->assertTrue( $processor->next_tag() ); // channel
+		$this->assertTrue( $processor->next_tag() ); // wp:base_site_url
+
+		// '*' should match wp:base_site_url
+		$this->assertTrue( $processor->matches_breadcrumbs( array( 'rss', 'channel', '*' ) ), 'A wildcard breadcrumb segment did not match the namespaced wp:base_site_url tag.' );
+	}
+
+	/**
+	 *
+	 * @return void
+	 */
 	public function test_next_tag_by_breadcrumbs() {
 		// Initialize the XMLProcessor with the given XML string
 		$processor = XMLProcessor::create_from_string( '<root xmlns:wp="w.org"><wp:post><content><image /></content></wp:post></root>' );

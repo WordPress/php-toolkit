@@ -171,15 +171,7 @@ class WXREntityReader implements EntityReader {
 	 * @since WP_VERSION
 	 * @var int
 	 */
-	private $last_xml_byte_offset_outside_of_entity;
-
-	/**
-	 * The XML processor cursor of the last entity opener.
-	 *
-	 * @since WP_VERSION
-	 * @var string|null
-	 */
-	private $last_xml_cursor_outside_of_entity;
+	private $entity_opener_byte_offset;
 
 	/**
 	 * Whether the current entity has been emitted.
@@ -431,13 +423,13 @@ class WXREntityReader implements EntityReader {
 		 */
 		$xml_cursor                             = $this->xml->get_reentrancy_cursor();
 		$xml_cursor                             = json_decode( base64_decode( $xml_cursor ), true );
-		$xml_cursor['upstream_bytes_forgotten'] = $this->last_xml_byte_offset_outside_of_entity;
+		$xml_cursor['upstream_bytes_forgotten'] = $this->entity_opener_byte_offset;
 		$xml_cursor                             = base64_encode( json_encode( $xml_cursor ) );
 
 		return json_encode(
 			array(
 				'xml'             => $xml_cursor,
-				'upstream'        => $this->last_xml_byte_offset_outside_of_entity,
+				'upstream'        => $this->entity_opener_byte_offset,
 				'last_post_id'    => $this->last_post_id,
 				'last_comment_id' => $this->last_comment_id,
 			)
@@ -663,8 +655,7 @@ class WXREntityReader implements EntityReader {
 			}
 
 			if ( count( $breadcrumbs ) <= 2 && $this->xml->is_tag_opener() ) {
-				$this->last_xml_byte_offset_outside_of_entity = $this->xml->get_token_byte_offset_in_the_input_stream();
-				$this->last_xml_cursor_outside_of_entity      = $this->xml->get_reentrancy_cursor();
+				$this->entity_opener_byte_offset = $this->xml->get_token_byte_offset_in_the_input_stream();
 			}
 
 			$tag_with_namespace = $this->xml->get_tag_name_with_namespace();
@@ -697,8 +688,7 @@ class WXREntityReader implements EntityReader {
 				// the previous entity is finished.
 				if ( $this->xml->is_tag_opener() ) {
 					$this->set_entity_tag( $tag_with_namespace );
-					$this->last_xml_byte_offset_outside_of_entity = $this->xml->get_token_byte_offset_in_the_input_stream();
-					$this->last_xml_cursor_outside_of_entity      = $this->xml->get_reentrancy_cursor();
+					$this->entity_opener_byte_offset = $this->xml->get_token_byte_offset_in_the_input_stream();
 				}
 				continue;
 			}
@@ -753,8 +743,9 @@ class WXREntityReader implements EntityReader {
 					$this->xml->matches_breadcrumbs( array( 'rss', 'channel', '*' ) ) &&
 					array_key_exists( $this->xml->get_tag_name_with_namespace(), static::KNOWN_SITE_OPTIONS )
 				);
+				
 				if ( $is_site_option_opener ) {		
-					$this->last_xml_byte_offset_outside_of_entity = $this->xml->get_token_byte_offset_in_the_input_stream();
+					$this->entity_opener_byte_offset = $this->xml->get_token_byte_offset_in_the_input_stream();
 				}
 				continue;
 			}
