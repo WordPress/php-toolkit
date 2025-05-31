@@ -192,7 +192,10 @@ https://playground.internal/path-not-taken was the second best choice.
 		$importer->append_bytes(
 			<<<XML
             <?xml version="1.0" encoding="UTF-8"?>
-            <rss>
+            <rss xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+				 xmlns:content="http://purl.org/rss/1.0/modules/content/"
+				 xmlns:dc="http://purl.org/dc/elements/1.1/"
+				 xmlns:wp="http://wordpress.org/export/1.2/">
                 <channel>
                     <item>
                         <title>vneck-tee-2.jpg</title>
@@ -276,7 +279,10 @@ XML
 		$importer->append_bytes(
 			<<<XML
             <?xml version="1.0" encoding="UTF-8"?>
-            <rss>
+            <rss xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+				 xmlns:content="http://purl.org/rss/1.0/modules/content/"
+				 xmlns:dc="http://purl.org/dc/elements/1.1/"
+				 xmlns:wp="http://wordpress.org/export/1.2/">
                 <channel>
                     <wp:term>
                         <wp:term_id><![CDATA[9]]></wp:term_id>
@@ -312,7 +318,10 @@ XML
 		$importer->append_bytes(
 			<<<XML
             <?xml version="1.0" encoding="UTF-8"?>
-            <rss>
+            <rss xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+				 xmlns:content="http://purl.org/rss/1.0/modules/content/"
+				 xmlns:dc="http://purl.org/dc/elements/1.1/"
+				 xmlns:wp="http://wordpress.org/export/1.2/">
                 <channel>
                     <wp:category>
                         <wp:category_nicename>uncategorized</wp:category_nicename>
@@ -344,7 +353,10 @@ XML
 		$importer->append_bytes(
 			<<<XML
             <?xml version="1.0" encoding="UTF-8"?>
-            <rss>
+            <rss xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+				 xmlns:content="http://purl.org/rss/1.0/modules/content/"
+				 xmlns:dc="http://purl.org/dc/elements/1.1/"
+				 xmlns:wp="http://wordpress.org/export/1.2/">
                 <channel>
                     <wp:tag>
                         <wp:term_id>651</wp:term_id>
@@ -376,7 +388,10 @@ XML
 	public function test_tag_streaming() {
 		$wxr    = <<<XML
             <?xml version="1.0" encoding="UTF-8"?>
-            <rss>
+            <rss xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+				 xmlns:content="http://purl.org/rss/1.0/modules/content/"
+				 xmlns:dc="http://purl.org/dc/elements/1.1/"
+				 xmlns:wp="http://wordpress.org/export/1.2/">
                 <channel>
                     <wp:tag>
                         <wp:term_id>651</wp:term_id>
@@ -425,7 +440,10 @@ XML;
 		$wxr->append_bytes(
 			<<<XML
             <?xml version="1.0" encoding="UTF-8"?>
-            <rss>
+            <rss xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+				 xmlns:content="http://purl.org/rss/1.0/modules/content/"
+				 xmlns:dc="http://purl.org/dc/elements/1.1/"
+				 xmlns:wp="http://wordpress.org/export/1.2/">
                 <channel>
                     <item>
                         <title>My post!</title>
@@ -509,7 +527,10 @@ XML
 		$wxr->append_bytes(
 			<<<XML
             <?xml version="1.0" encoding="UTF-8"?>
-            <rss>
+            <rss xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+				 xmlns:content="http://purl.org/rss/1.0/modules/content/"
+				 xmlns:dc="http://purl.org/dc/elements/1.1/"
+				 xmlns:wp="http://wordpress.org/export/1.2/">
                 <channel>
                     <item>
                         <title>My post!</title>

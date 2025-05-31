@@ -3011,6 +3011,10 @@ class XMLProcessor {
 		return $this->element->namespace;
 	}
 
+	public function get_namespaces_in_scope() {
+		return $this->stack_of_open_elements->get_namespaces_in_scope();
+	}
+
 	/**
 	 * Returns the name from the DOCTYPE declaration.
 	 *
