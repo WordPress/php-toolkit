@@ -113,7 +113,7 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *     // Find the <wp:image> tag
  *     if ( $processor->next_tag( array( 'http://wordpress.org/export/1.2/', 'image' ) ) ) {
  *         // Get the namespace URI of the matched tag
- *         $ns = $processor->get_namespace(); // 'http://wordpress.org/export/1.2/'
+ *         $ns = $processor->get_tag_namespace(); // 'http://wordpress.org/export/1.2/'
  *         // Get the value of the 'src' attribute
  *         $src = $processor->get_attribute( $ns, 'src' );
  *         // Set a new attribute in the same namespace
@@ -923,21 +923,12 @@ class XMLProcessor {
 	}
 
 	/**
-	 * Indicates that all the XML document bytes have been provided.
-	 *
-	 * After calling this method, the processor will emit errors where
-	 * previously it would have entered the STATE_INCOMPLETE_INPUT state.
+	 * Forgets the XML bytes that have been processed and are no longer needed to
+	 * avoid high memory usage.
+	 * 
+	 * @return string The flushed bytes.
 	 */
-	public function input_finished() {
-		$this->expecting_more_input = false;
-		$this->parser_state         = self::STATE_READY;
-	}
-
-	public function is_expecting_more_input() {
-		return $this->expecting_more_input;
-	}
-
-	public function flush_processed_xml() {
+	private function flush_processed_xml() {
 		// Flush updates
 		$this->get_updated_xml();
 
@@ -964,6 +955,28 @@ class XMLProcessor {
 		$this->upstream_bytes_forgotten += $unreferenced_bytes;
 
 		return $flushed_bytes;
+	}
+
+	/**
+	 * Indicates that all the XML document bytes have been provided.
+	 *
+	 * After calling this method, the processor will emit errors where
+	 * previously it would have entered the STATE_INCOMPLETE_INPUT state.
+	 */
+	public function input_finished() {
+		$this->expecting_more_input = false;
+		$this->parser_state         = self::STATE_READY;
+	}
+
+	/**
+	 * Indicates if the processor is expecting more data bytes.
+	 * If not, the processor will expect the remaining XML bytes to form
+	 * a valid document and will not stop on incomplete input.
+	 * 
+	 * @return bool Whether the processor is expecting more data bytes.
+	 */
+	public function is_expecting_more_input() {
+		return $this->expecting_more_input;
 	}
 
 	/**
@@ -1093,7 +1106,7 @@ class XMLProcessor {
 			/**
 			 * By default, inherit all namespaces from the parent element.
 			 */
-			$namespaces = $this->get_namespaces_in_scope();
+			$namespaces = $this->get_tag_namespaces_in_scope();
 			foreach ( $this->qualified_attributes as $attribute ) {
 				/**
 				 * xmlns attribute is the default namespace
@@ -1203,6 +1216,7 @@ class XMLProcessor {
 					return false;
 				}
 				$namespaced_attributes[ $attribute_full_name ] = $attribute;
+				$attribute->namespace = $namespace_reference;
 			}
 
 			// Store attributes with their namespaces and discard the temporary
@@ -1262,7 +1276,7 @@ class XMLProcessor {
 		return true;
 	}
 
-	private function get_namespaces_in_scope() {
+	private function get_tag_namespaces_in_scope() {
 		$top = $this->top_element();
 		if ( null === $top ) {
 			// Namespaces defined by default in every XML document.
@@ -1279,7 +1293,7 @@ class XMLProcessor {
 	 *
 	 *     $p = new XMLProcessor( '<wp:content xmlns:xhtml="http://www.w3.org/1999/xhtml">Test</wp:content>' );
 	 *     $p->next_tag() === true;
-	 *     $p->get_namespace_prefix() === 'xhtml';
+	 *     $p->get_tag_namespace_prefix() === 'xhtml';
 	 * 
 	 *     $p = new XMLProcessor( '
 	 *         <wp:content 
@@ -1290,20 +1304,20 @@ class XMLProcessor {
 	 *         </wp:content>
 	 *     ' );
 	 *     $p->next_tag() === true;
-	 *     $p->get_namespace_prefix('http://wordpress.org/export/1.2/') === 'wp';
+	 *     $p->get_tag_namespace_prefix('http://wordpress.org/export/1.2/') === 'wp';
 	 *
 	 * @internal
 	 * @param string|null $namespace Fully-qualified namespace to return the prefix for.
 	 * @return string|null The namespace prefix of the matched tag, or null if not available.
 	 */
-	private function get_namespace_prefix($namespace=null) {
+	private function get_tag_namespace_prefix($namespace=null) {
 		if ( null === $namespace ) {
 			if ( self::STATE_MATCHED_TAG !== $this->parser_state ) {
 				return null;
 			}
 			return $this->element->namespace_prefix;
 		} else {
-			$namespaces_in_scope = $this->get_namespaces_in_scope();
+			$namespaces_in_scope = $this->get_tag_namespaces_in_scope();
 			foreach($namespaces_in_scope as $prefix => $uri) {
 				if($uri === $namespace) {
 					return $prefix;
@@ -1623,6 +1637,8 @@ class XMLProcessor {
 	 *      $processor->get_modifiable_text();
 	 *
 	 * @param  string  $element_name  The name of the element to declare as PCDATA.
+	 * 
+	 * @TODO: Reconsider whether this method is needed.
 	 *
 	 * @return void
 	 */
@@ -2875,14 +2891,17 @@ class XMLProcessor {
 	 *
 	 * Example:
 	 *
-	 *     $p = new XMLProcessor( '<content enabled class="test" data-test-id="14">Test</content>' );
+	 *     $p = new XMLProcessor(
+	 *        '<root xmlns:wp="http://www.w3.org/1999/xhtml">
+	 *            <content enabled="true" class="test" data-test-id="14" wp:enabled="true">Test</content>
+	 *         </root>'
+	 *     );
 	 *     $p->next_tag( array( 'class_name' => 'test' ) ) === true;
-	 *     $p->get_attribute_by_qualified_name( 'data-test-id' ) === '14';
-	 *     $p->get_attribute_by_qualified_name( 'enabled' ) === true;
-	 *     $p->get_attribute_by_qualified_name( 'aria-label' ) === null;
-	 *
-	 *     $p->next_tag() === false;
-	 *     $p->get_attribute_by_qualified_name( 'class' ) === null;
+	 *     $p->get_attribute( '', 'data-test-id' ) === '14';
+	 *     $p->get_attribute( '', 'enabled' ) === "true";
+	 *     $p->get_attribute( 'wp', 'enabled' ) === null;
+	 *     $p->get_attribute( 'http://www.w3.org/1999/xhtml', 'enabled' ) === "true";
+	 *     $p->get_attribute( 'aria-label' ) === null;
 	 *
 	 * @param  string  $namespace_reference  Full namespace of the requested attribute, e.g. "http://wordpress.org/export/1.2/"
 	 * @param  string  $local_name           Name of attribute whose value is requested, e.g. data-test-id
@@ -2975,25 +2994,47 @@ class XMLProcessor {
 	}
 
 	/**
-	 * Gets qualified names of all attributes matching a given prefix in the current tag.
+	 * Gets  names of all attributes matching a given namespace prefix and local name prefix in the current tag.
 	 *
-	 * Note that matching is case-sensitive. This is in accordance with the spec.
+	 * This method allows you to filter attributes by both their namespace prefix (e.g., 'wp') and the start of their local name (e.g., 'data-').
+	 * Matching is case-sensitive for both namespace and local name prefixes, in accordance with the XML specification.
 	 *
-	 * Example:
+	 * Each returned attribute is represented as a two-element array: [namespace_prefix, local_name].
 	 *
+	 * Examples:
+	 *
+	 *     // No namespace, local name prefix only
 	 *     $p = new XMLProcessor( '<content data-ENABLED="1" class="test" DATA-test-id="14">Test</content>' );
 	 *     $p->next_tag( array( 'class_name' => 'test' ) ) === true;
-	 *     $p->get_attribute_names_with_prefix( 'data-' ) === array( 'data-ENABLED' );
-	 *     $p->get_attribute_names_with_prefix( 'DATA-' ) === array( 'DATA-test-id' );
-	 *     $p->get_attribute_names_with_prefix( 'DAta-' ) === array();
+	 *     $p->get_attribute_names_with_prefix( '', 'data-' );
+	 *     // Returns: array( array( '', 'data-ENABLED' ), array( '', 'DATA-test-id' ) )
 	 *
-	 * @param  string  $prefix  Prefix of requested attribute names.
+	 *     // With namespace prefix
+	 *     $p = new XMLProcessor( '<content xmlns:wp="http://wordpress.org/export/1.2/" wp:data-foo="bar" wp:data-bar="baz" data-no-namespace="true" />' );
+	 *     $p->next_tag();
+	 *     $p->get_attribute_names_with_prefix( 'http://wordpress', 'data-' );
+	 *     // Returns: array( array( 'http://wordpress.org/export/1.2/', 'data-foo' ), array( 'http://wordpress.org/export/1.2/', 'data-bar' ) )
 	 *
-	 * @return array|null List of attribute names, or `null` when no tag opener is matched.
+	 *     // Empty string namespace prefix matches all attributes.
+	 *     $p->get_attribute_names_with_prefix( '', 'data-' );
+	 *     // Returns: array( array( 'http://wordpress.org/export/1.2/', 'data-foo' ), array( 'http://wordpress.org/export/1.2/', 'data-bar' ), array( '', 'data-no-namespace' ) )
+	 * 
+	 *     // Null namespace prefix matches attributes with no namespace.
+	 *     $p->get_attribute_names_with_prefix( null, 'data-' );
+	 *     // Returns: array( array( '', 'data-no-namespace' ) )
+	 *
+	 *     // No match for wrong namespace prefix
+	 *     $p->get_attribute_names_with_prefix( 'other', 'data-' );
+	 *     // Returns: array()
+	 *
+	 * @param  string $full_namespace_prefix   Prefix of the fully qualified namespace to match on (e.g., 'http://wordpress.org/'). Use '' for no namespace prefix.
+	 * @param  string $local_name_prefix       Local name prefix to match (e.g., 'data-').
+	 *
+	 * @return array|null List of [namespace, local_name] pairs, or `null` when no tag opener is matched.
 	 * @since WP_VERSION
 	 *
 	 */
-	public function get_attribute_names_with_prefix( $ns_prefix, $name_prefix ) {
+	public function get_attribute_names_with_prefix( $full_namespace_prefix, $local_name_prefix ) {
 		if (
 			self::STATE_MATCHED_TAG !== $this->parser_state ||
 			$this->is_closing_tag
@@ -3003,8 +3044,15 @@ class XMLProcessor {
 
 		$matches = array();
 		foreach ( $this->attributes as $attr ) {
-			if ( 0 === strncmp( $attr->local_name, $name_prefix, strlen( $name_prefix ) ) && 0 === strncmp( $attr->namespace_prefix, $ns_prefix, strlen( $ns_prefix ) ) ) {
-				$matches[] = [$attr->namespace_prefix, $attr->local_name];
+			if ( 
+				0 === strncmp( $attr->local_name, $local_name_prefix, strlen( $local_name_prefix ) ) && 
+				(
+				    // Distinguish between no namespace and empty namespace.
+				    (null === $full_namespace_prefix && '' === $attr->namespace) ||
+					(null !== $full_namespace_prefix && 0 === strncmp( $attr->namespace, $full_namespace_prefix, strlen( $full_namespace_prefix ) ) )
+				)
+			) {
+				$matches[] = [$attr->namespace, $attr->local_name];
 			}
 		}
 
@@ -3012,20 +3060,22 @@ class XMLProcessor {
 	}
 
 	/**
-	 * Returns the uppercase name of the matched tag.
+	 * Returns the local name of the matched tag.
 	 *
-	 * Example:
+	 * Example without namespaces:
 	 *
 	 *     $p = new XMLProcessor( '<content class="test">Test</content>' );
 	 *     $p->next_tag() === true;
-	 *     $p->get_qualified_tag() === 'DIV';
+	 *     $p->get_tag_local_name() === 'content';
+	 * 
+	 * Example with namespaces:
 	 *
-	 *     $p->next_tag() === false;
-	 *     $p->get_qualified_tag() === null;
-	 *
+	 *     $p = new XMLProcessor( '<root xmlns:wp="http://www.w3.org/1999/xhtml"><wp:content>Test</wp:content></root>' );
+	 *     $p->next_tag() === true;
+	 *     $p->get_tag_local_name() === 'content';
+	 * 
 	 * @return string|null Name of currently matched tag in input XML, or `null` if none found.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_tag_local_name() {
 		if ( null !== $this->element ) {
@@ -3043,7 +3093,24 @@ class XMLProcessor {
 		return $local_name;
 	}
 
-	public function get_tag_name_qualified() {
+	/**
+	 * Returns the namespace prefix and the local name of the matched tag.
+	 *
+	 * Example without namespaces:
+	 * 
+	 *     $p = new XMLProcessor( '<content>Test</content>' );
+	 *     $p->next_tag() === true;
+	 *     $p->get_tag_name_qualified() === 'content';
+	 * 
+	 * Example with namespaces:
+	 * 
+	 *     $p = new XMLProcessor( '<root xmlns:wp="http://www.w3.org/1999/xhtml"><wp:content>Test</wp:content></root>' );
+	 *     $p->next_tag() === true;
+	 *     $p->get_tag_name_qualified() === 'wp:content';
+	 * 
+	 * @return string|null The namespace prefix and the local name of the matched tag, or null if not available.
+	 */
+	private function get_tag_name_qualified() {
 		if ( null !== $this->element ) {
 			// Return cached name if we already have it.
 			return $this->element->qualified_name;
@@ -3061,8 +3128,20 @@ class XMLProcessor {
 		return $tag_name;
 	}
 
-	public function get_tag_name_with_namespace() {
-		$namespace = $this->get_namespace();
+	/**
+	 * Returns a string with the fully qualified namespace and local name of the matched tag
+	 * in the following format: "{namespace}local_name".
+	 *
+	 * Example:
+	 *
+	 *     $p = new XMLProcessor( '<root xmlns:wp="http://www.w3.org/1999/xhtml"><wp:content>Test</wp:content></root>' );
+	 *     $p->next_tag() === true;
+	 *     $p->get_tag_namespace_and_local_name() === '{http://www.w3.org/1999/xhtml"}content';
+	 *
+	 * @return string|null The namespace and local name of the matched tag, or null if not available.
+	 */
+	public function get_tag_namespace_and_local_name() {
+		$namespace = $this->get_tag_namespace();
 		if ( ! $namespace ) {
 			return $this->get_tag_local_name();
 		}
@@ -3078,11 +3157,11 @@ class XMLProcessor {
 	 *     $p = new XMLProcessor( '<root xmlns:wp="http://www.w3.org/1999/xhtml"><wp:content>Test</wp:content></root>' );
 	 *     $p->next_tag() === true;
 	 *     $p->next_tag() === true;
-	 *     $p->get_namespace() === 'http://www.w3.org/1999/xhtml';
+	 *     $p->get_tag_namespace() === 'http://www.w3.org/1999/xhtml';
 	 *
 	 * @return string|null The namespace reference of the matched tag, or null if not available.
 	 */
-	public function get_namespace() {
+	public function get_tag_namespace() {
 		if ( self::STATE_MATCHED_TAG !== $this->parser_state ) {
 			return null;
 		}
@@ -3484,7 +3563,7 @@ class XMLProcessor {
 		$value             = htmlspecialchars( $value, ENT_XML1, 'UTF-8' );
 
 		if($namespace !== '') {
-			$prefix = $this->get_namespace_prefix($namespace);
+			$prefix = $this->get_tag_namespace_prefix($namespace);
 			if(false === $prefix) {
 				$this->bail(
 					__( 'The namespace "%1$s" is not in the current element\'s scope.' ),
@@ -3958,9 +4037,12 @@ class XMLProcessor {
 	 *
 	 */
 	public function get_breadcrumbs() {
-		return array_map( function( $element ) {
-			return array( $element->namespace, $element->local_name );
-		}, $this->stack_of_open_elements );
+		return array_map(
+			function( $element ) {
+				return array( $element->namespace, $element->local_name );
+			},
+			$this->stack_of_open_elements
+		);
 	}
 
 	/**
@@ -4091,6 +4173,13 @@ class XMLProcessor {
 		return array( $namespace_prefix, $local_name );
 	}
 
+	/**
+	 * Asserts a qualified tag name is syntactically valid according to the
+	 * XML specification.
+	 *
+	 * @param  string  $qualified_name  The qualified name to validate.
+	 * @return bool Whether the qualified name is syntactically valid.
+	 */
 	private function validate_qualified_name( $qualified_name ) {
 		if ( substr_count( $qualified_name, ':' ) > 1 ) {
 			$this->bail(

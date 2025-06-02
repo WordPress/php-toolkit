@@ -410,6 +410,50 @@ class XMLProcessorTest extends TestCase {
 		);
 	}
 
+	public function test_get_attribute_names_with_prefix_with_namespace_and_local_name_prefix() {
+		// XML with two attributes in the wp namespace and one in no namespace
+		$xml = '<content xmlns:wp="http://wordpress.org/export/1.2/" wp:data-foo="bar" wp:data-bar="baz" data-foo="no-ns" />';
+		$processor = XMLProcessor::create_from_string( $xml );
+		$this->assertTrue( $processor->next_tag(), 'Querying a tag did not return true' );
+
+		// Should match only the wp:data-foo and wp:data-bar attributes
+		$result = $processor->get_attribute_names_with_prefix( 'http://wordpress.org/export/1.2/', 'data-' );
+		$this->assertSame(
+			array(
+				array( 'http://wordpress.org/export/1.2/', 'data-foo' ),
+				array( 'http://wordpress.org/export/1.2/', 'data-bar' ),
+			),
+			$result,
+			'get_attribute_names_with_prefix did not return the expected attributes for namespace and local name prefix'
+		);
+
+		// Should match only the no-namespace data-foo attribute
+		$result_no_ns = $processor->get_attribute_names_with_prefix( null, 'data-' );
+		$this->assertSame(
+			array(
+				array( '', 'data-foo' ),
+			),
+			$result_no_ns,
+			'get_attribute_names_with_prefix did not return the expected attributes for no namespace'
+		);
+
+		// Should return empty array for a namespace that does not exist
+		$result_none = $processor->get_attribute_names_with_prefix( 'http://notfound.org/', 'data-' );
+		$this->assertSame(
+			array(),
+			$result_none,
+			'get_attribute_names_with_prefix did not return empty array for non-existent namespace'
+		);
+
+		// Should return empty array for a prefix that does not match
+		$result_no_prefix = $processor->get_attribute_names_with_prefix( 'http://wordpress.org/export/1.2/', 'not-a-match-' );
+		$this->assertSame(
+			array(),
+			$result_no_prefix,
+			'get_attribute_names_with_prefix did not return empty array for non-matching prefix'
+		);
+	}
+
 	/**
 	 *
 	 * @covers XMLProcessor::__toString
@@ -1798,88 +1842,88 @@ XML;
 	/**
 	 *
 	 * @covers XMLProcessor::set_attribute
-	 * @covers XMLProcessor::get_namespace
+	 * @covers XMLProcessor::get_tag_namespace
 	 */
 	public function test_setting_the_default_namespace_applies_to_element_and_children() {
 		$processor = XMLProcessor::create_from_string( '<root xmlns="http://example.com/ns1" attr="val1"><child attr="val2"><grandchild /></child></root>' );
 
 		// Root element should be in the http://example.com/ns1 namespace.
 		$this->assertTrue( $processor->next_tag( array( 'http://example.com/ns1', 'root' ) ) );
-		$this->assertEquals( 'http://example.com/ns1', $processor->get_namespace() );
+		$this->assertEquals( 'http://example.com/ns1', $processor->get_tag_namespace() );
 		// The attribute without a namespace prefix isn't namespaced.
 		$this->assertEquals( 'val1', $processor->get_attribute( '', 'attr' ), 'Unprefixed attribute attr was not found in the default namespace.' );
 
 		// Child element
 		$this->assertTrue( $processor->next_tag( array( 'http://example.com/ns1', 'child' ) ) );
-		$this->assertEquals( 'http://example.com/ns1', $processor->get_namespace() );
+		$this->assertEquals( 'http://example.com/ns1', $processor->get_tag_namespace() );
 		$this->assertEquals( 'val2', $processor->get_attribute( '', 'attr' ), 'Unprefixed attribute attr was not found in the default namespace.' ); 
 
 		// Grandchild element
 		$this->assertTrue( $processor->next_tag( array( 'http://example.com/ns1', 'grandchild' ) ) );
-		$this->assertEquals( 'http://example.com/ns1', $processor->get_namespace() );
+		$this->assertEquals( 'http://example.com/ns1', $processor->get_tag_namespace() );
 	}
 
 	/**
 	 *
 	 * @covers XMLProcessor::set_attribute
-	 * @covers XMLProcessor::get_namespace
+	 * @covers XMLProcessor::get_tag_namespace
 	 */
 	public function test_search_by_namespace() {
 		$processor = XMLProcessor::create_from_string( '<root xmlns="http://example.com/ns1" attr="val1"><child xmlns="http://example.com/ns2" attr="val2"><grandchild /></child></root>' );
 
 		// Root element should be in the http://example.com/ns1 namespace.
 		$this->assertTrue( $processor->next_tag( array( 'http://example.com/ns1', 'root' ) ) );
-		$this->assertEquals( 'http://example.com/ns1', $processor->get_namespace() );
+		$this->assertEquals( 'http://example.com/ns1', $processor->get_tag_namespace() );
 		// The attribute without a namespace prefix isn't namespaced.
 		$this->assertEquals( 'val1', $processor->get_attribute( '', 'attr' ), 'Unprefixed attribute attr was not found in the default namespace.' );
 
 		// Child element
 		$this->assertTrue( $processor->next_tag( array( 'http://example.com/ns2', 'child' ) ) );
-		$this->assertEquals( 'http://example.com/ns2', $processor->get_namespace() );
+		$this->assertEquals( 'http://example.com/ns2', $processor->get_tag_namespace() );
 		$this->assertEquals( 'val2', $processor->get_attribute( '', 'attr' ), 'Unprefixed attribute attr was not found in the default namespace.' ); 
 
 		// Grandchild element
 		$this->assertTrue( $processor->next_tag( array( 'http://example.com/ns2', 'grandchild' ) ) );
-		$this->assertEquals( 'http://example.com/ns2', $processor->get_namespace() );
+		$this->assertEquals( 'http://example.com/ns2', $processor->get_tag_namespace() );
 	}
 
 	/**
 	 *
 	 * @covers XMLProcessor::set_attribute
-	 * @covers XMLProcessor::get_namespace
+	 * @covers XMLProcessor::get_tag_namespace
 	 */
 	public function test_overriding_the_default_namespace_applies_to_element_and_children() {
 		$processor = XMLProcessor::create_from_string( '<root xmlns="http://example.com/ns1"><child xmlns="http://example.com/ns2" attr="val"><grandchild /></child></root>' );
 		$this->assertTrue( $processor->next_tag(['*', 'child']) );
 		$this->assertEquals( 'child', $processor->get_tag_local_name() );
-		$this->assertEquals( 'http://example.com/ns2', $processor->get_namespace() );
+		$this->assertEquals( 'http://example.com/ns2', $processor->get_tag_namespace() );
 		$this->assertEquals( 'val', $processor->get_attribute( '', 'attr' ), 'Unprefixed attribute attr was not found in the default namespace.' ); // Unprefixed attributes are in no namespace.
 
 		$processor->next_tag();
 		$this->assertEquals( 'grandchild', $processor->get_tag_local_name() );
-		$this->assertEquals( 'http://example.com/ns2', $processor->get_namespace() );
+		$this->assertEquals( 'http://example.com/ns2', $processor->get_tag_namespace() );
 	}
 
 	/**
 	 *
 	 * @covers XMLProcessor::set_attribute
-	 * @covers XMLProcessor::get_namespace
+	 * @covers XMLProcessor::get_tag_namespace
 	 */
 	public function test_changing_default_namespace_to_empty_string_removes_namespace() {
 		$processor = XMLProcessor::create_from_string( '<root xmlns="http://example.com/ns1"><child xmlns="" attr="val"><grandchild /></child></root>' );
 
 		// Root element
 		$this->assertTrue( $processor->next_tag() );
-		$this->assertEquals( 'http://example.com/ns1', $processor->get_namespace() );
+		$this->assertEquals( 'http://example.com/ns1', $processor->get_tag_namespace() );
 
 		// Child element - default namespace removed
 		$this->assertTrue( $processor->next_tag() );
-		$this->assertEquals( '', $processor->get_namespace() ); // Empty string indicates no namespace.
+		$this->assertEquals( '', $processor->get_tag_namespace() ); // Empty string indicates no namespace.
 		$this->assertEquals( 'val', $processor->get_attribute( '', 'attr' ) ); // Unprefixed attributes are in no namespace.
 
 		// Grandchild element - inherits no namespace from parent
 		$this->assertTrue( $processor->next_tag() );
-		$this->assertEquals( '', $processor->get_namespace() ); // Empty string indicates no namespace.
+		$this->assertEquals( '', $processor->get_tag_namespace() ); // Empty string indicates no namespace.
 	}
 
 	/**
@@ -1912,7 +1956,7 @@ XML;
 	 *
 	 * @covers XMLProcessor::pause
 	 * @covers XMLProcessor::resume
-	 * @covers XMLProcessor::get_namespace
+	 * @covers XMLProcessor::get_tag_namespace
 	 * @covers XMLProcessor::get_breadcrumbs
 	 */
 	public function test_pause_and_resume_with_complex_namespaces_and_nesting() {
@@ -2108,7 +2152,7 @@ XML;
 		$this->assertTrue( $processor->next_tag() ); // admin:highlight
 		
 		$this->assertEquals( 'highlight', $processor->get_tag_local_name() );
-		$this->assertEquals( 'http://admin.example.com', $processor->get_namespace() );
+		$this->assertEquals( 'http://admin.example.com', $processor->get_tag_namespace() );
 		$this->assertEquals( 'yellow', $processor->get_attribute( '', 'color' ) );
 		
 		// TEST 1: Pause and resume 5 times at the same spot (admin:highlight)
@@ -2123,7 +2167,7 @@ XML;
 			
 			$this->assertTrue( $resumed->next_tag(), "Iteration $i: Failed to find tag after resume" );
 			$this->assertEquals( 'highlight', $resumed->get_tag_local_name(), "Iteration $i: Wrong tag name" );
-			$this->assertEquals( 'http://admin.example.com', $resumed->get_namespace(), "Iteration $i: Wrong namespace" );
+			$this->assertEquals( 'http://admin.example.com', $resumed->get_tag_namespace(), "Iteration $i: Wrong namespace" );
 			$this->assertEquals( 'yellow', $resumed->get_attribute( '', 'color' ), "Iteration $i: Wrong attribute value" );
 			
 			// Verify we can get the text content
@@ -2147,7 +2191,7 @@ XML;
 		
 		$this->assertTrue( $resumed->next_tag() );
 		$this->assertEquals( 'emphasis', $resumed->get_tag_local_name() );
-		$this->assertEquals( 'http://meta.example.com', $resumed->get_namespace() );
+		$this->assertEquals( 'http://meta.example.com', $resumed->get_tag_namespace() );
 		$this->assertTrue( $resumed->next_token() );
 		$this->assertEquals( 'emphasized text', $resumed->get_modifiable_text() );
 		
@@ -2168,7 +2212,7 @@ XML;
 		
 		$this->assertTrue( $resumed->next_tag() );
 		$this->assertEquals( 'code-line', $resumed->get_tag_local_name() );
-		$this->assertEquals( 'http://content.example.com', $resumed->get_namespace() );
+		$this->assertEquals( 'http://content.example.com', $resumed->get_tag_namespace() );
 		$this->assertEquals( '1', $resumed->get_attribute( '', 'number' ) );
 		$this->assertTrue( $resumed->next_token() );
 		$this->assertEquals( 'function example_function() {', $resumed->get_modifiable_text() );
@@ -2186,7 +2230,7 @@ XML;
 		
 		$this->assertTrue( $resumed->next_tag() );
 		$this->assertEquals( 'icon', $resumed->get_tag_local_name() );
-		$this->assertEquals( 'http://admin.example.com', $resumed->get_namespace() );
+		$this->assertEquals( 'http://admin.example.com', $resumed->get_tag_namespace() );
 		$this->assertTrue( $resumed->next_token() );
 		$this->assertEquals( '⚠️', $resumed->get_modifiable_text() );
 		
@@ -2205,7 +2249,7 @@ XML;
 		
 		$this->assertTrue( $resumed->next_tag() );
 		$this->assertEquals( 'engagement-metrics', $resumed->get_tag_local_name() );
-		$this->assertEquals( 'http://meta.example.com', $resumed->get_namespace() );
+		$this->assertEquals( 'http://meta.example.com', $resumed->get_tag_namespace() );
 		$this->assertEquals( '1500', $resumed->get_attribute( '', 'views' ) );
 		$this->assertEquals( '25', $resumed->get_attribute( '', 'likes' ) );
 		$this->assertEquals( '8', $resumed->get_attribute( '', 'shares' ) );
@@ -2262,7 +2306,7 @@ XML;
 		
 		$this->assertTrue( $resumed->next_tag() );
 		$this->assertEquals( 'name', $resumed->get_tag_local_name() );
-		$this->assertEquals( 'http://content.example.com', $resumed->get_namespace() );
+		$this->assertEquals( 'http://content.example.com', $resumed->get_tag_namespace() );
 		$this->assertTrue( $resumed->next_token() );
 		$this->assertEquals( 'Alice Johnson', $resumed->get_modifiable_text() );
 		
@@ -2326,7 +2370,7 @@ XML;
 			$found = false;
 			while ( $processor->next_tag() ) {
 				if ( $processor->get_tag_local_name() === $position['element'] && 
-					 $processor->get_namespace() === $position['namespace'] ) {
+					 $processor->get_tag_namespace() === $position['namespace'] ) {
 					$found = true;
 					break;
 				}
@@ -2336,7 +2380,7 @@ XML;
 			
 			// Verify we're at the expected element
 			$this->assertEquals( $position['element'], $processor->get_tag_local_name(), "Wrong element at position {$i}" );
-			$this->assertEquals( $position['namespace'], $processor->get_namespace(), "Wrong namespace at position {$i}" );
+			$this->assertEquals( $position['namespace'], $processor->get_tag_namespace(), "Wrong namespace at position {$i}" );
 			
 			// Test element-specific properties
 			if ( isset( $position['has_version_attr'] ) && $position['has_version_attr'] ) {
@@ -2356,7 +2400,7 @@ XML;
 			// The resumed processor should find the same element when next_tag() is called
 			$this->assertTrue( $resumed->next_tag(), "Failed to resume at position {$i}" );
 			$this->assertEquals( $position['element'], $resumed->get_tag_local_name(), "Wrong element after resume at position {$i}" );
-			$this->assertEquals( $position['namespace'], $resumed->get_namespace(), "Wrong namespace after resume at position {$i}" );
+			$this->assertEquals( $position['namespace'], $resumed->get_tag_namespace(), "Wrong namespace after resume at position {$i}" );
 			
 			// Verify element properties are preserved after resume
 			if ( isset( $position['has_version_attr'] ) && $position['has_version_attr'] ) {
@@ -2404,7 +2448,7 @@ XML;
 			// Verify we can resume at the same item element
 			$this->assertTrue( $resumed->next_tag(), "Stress cycle {$cycle}: Failed to resume" );
 			$this->assertEquals( 'item', $resumed->get_tag_local_name(), "Stress cycle {$cycle}: Wrong element" );
-			$this->assertEquals( '', $resumed->get_namespace(), "Stress cycle {$cycle}: Wrong namespace" );
+			$this->assertEquals( '', $resumed->get_tag_namespace(), "Stress cycle {$cycle}: Wrong namespace" );
 			
 			// Verify we can navigate to child elements after resume
 			$this->assertTrue( $resumed->next_tag( 'title' ), "Stress cycle {$cycle}: Failed to find title child" );
