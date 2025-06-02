@@ -379,8 +379,8 @@ class XMLProcessor {
 	/**
 	 * Specifies mode of operation of the parser at any given time.
 	 *
-	 * | State           | Meaning                                                                |
-	 * | ----------------|------------------------------------------------------------------------|
+	 * | State             | Meaning                                                              |
+	 * | ------------------|----------------------------------------------------------------------|
 	 * | *Ready*           | The parser is ready to run.                                          |
 	 * | *Complete*        | There is nothing left to parse.                                      |
 	 * | *Incomplete*      | The XML ended in the middle of a token; nothing more can be parsed.  |
@@ -735,13 +735,14 @@ class XMLProcessor {
 	protected $parser_context = self::IN_PROLOG_CONTEXT;
 
 	/**
-	 * Tracks open elements while scanning XML.
-	 *
-	 * @since WP_VERSION
-	 *
-	 * @var XMLStackOfOpenElements
+	 * Top-level namespaces for the currently parsed document.
 	 */
-	private $stack_of_open_elements;
+	private $document_namespaces;
+
+	/**
+	 * Tracks open elements and their namespaces while scanning XML.
+	 */
+	private $stack_of_open_elements = [];
 
 	public static function create_from_string( $xml, $cursor = null, $known_definite_encoding = 'UTF-8', $document_namespaces = array() ) {
 		$processor = static::create_for_streaming( $xml, $cursor, $known_definite_encoding, $document_namespaces );
@@ -781,7 +782,7 @@ class XMLProcessor {
 	 */
 	public function get_reentrancy_cursor() {
 		$stack_of_open_elements = [];
-		foreach ( $this->stack_of_open_elements->get_items() as $element ) {
+		foreach ( $this->stack_of_open_elements as $element ) {
 			$stack_of_open_elements[] = $element->to_array();
 		}
 
@@ -792,7 +793,8 @@ class XMLProcessor {
 					'upstream_bytes_forgotten' => $this->upstream_bytes_forgotten,
 					'parser_context'           => $this->parser_context,
 					'stack_of_open_elements'   => $stack_of_open_elements,
-					'expecting_more_input'     => $this->expecting_more_input
+					'expecting_more_input'     => $this->expecting_more_input,
+					'document_namespaces'      => $this->document_namespaces
 				)
 			)
 		);
@@ -837,10 +839,11 @@ class XMLProcessor {
 		// Assume the input stream will start from the last known byte offset.
 		$this->bytes_already_parsed     = 0;
 		$this->upstream_bytes_forgotten = $cursor['upstream_bytes_forgotten'];
-		$this->stack_of_open_elements   = new XMLStackOfOpenElements();
+		$this->stack_of_open_elements   = [];
 		foreach ( $cursor['stack_of_open_elements'] as $element ) {
-			$this->stack_of_open_elements->push( XMLElement::from_array( $element ) );
+			array_push( $this->stack_of_open_elements, XMLElement::from_array( $element ) );
 		}
+		$this->document_namespaces  = $cursor['document_namespaces'];
 		$this->parser_context       = $cursor['parser_context'];
 		$this->expecting_more_input = $cursor['expecting_more_input'];
 
@@ -876,7 +879,15 @@ class XMLProcessor {
 			);
 		}
 		$this->xml                    = $xml;
-		$this->stack_of_open_elements = new XMLStackOfOpenElements($document_namespaces);
+		$this->document_namespaces    = array_merge(
+			$document_namespaces,
+			// These initial namespaces cannot be overridden.
+			array(
+				'xml'   => 'http://www.w3.org/XML/1998/namespace', // Predefined, cannot be unbound or changed
+				'xmlns' => 'http://www.w3.org/2000/xmlns/',        // Reserved for xmlns attributes, not a real namespace for elements/attributes
+				''      => '', // Default namespace is initially empty (no namespace)
+			)
+		);
 	}
 
 	/**
@@ -1082,7 +1093,7 @@ class XMLProcessor {
 			/**
 			 * By default, inherit all namespaces from the parent element.
 			 */
-			$namespaces = $this->stack_of_open_elements->get_namespaces_in_scope();
+			$namespaces = $this->get_namespaces_in_scope();
 			foreach ( $this->qualified_attributes as $attribute ) {
 				/**
 				 * xmlns attribute is the default namespace
@@ -1249,6 +1260,69 @@ class XMLProcessor {
 		$this->qualified_attributes         = $attributes;
 
 		return true;
+	}
+
+	private function get_namespaces_in_scope() {
+		$top = $this->top_element();
+		if ( null === $top ) {
+			// Namespaces defined by default in every XML document.
+			return $this->document_namespaces;
+		}
+		return $top->namespaces_in_scope;
+	}
+
+	/**
+	 * Returns the namespace prefix of the matched tag or, when the $namespace
+	 * argument is given, the prefix of the requested fully-qualified namespace .
+	 *
+	 * Examples:
+	 *
+	 *     $p = new XMLProcessor( '<wp:content xmlns:xhtml="http://www.w3.org/1999/xhtml">Test</wp:content>' );
+	 *     $p->next_tag() === true;
+	 *     $p->get_namespace_prefix() === 'xhtml';
+	 * 
+	 *     $p = new XMLProcessor( '
+	 *         <wp:content 
+	 *             xmlns:xhtml="http://www.w3.org/1999/xhtml"
+	 *             xmlns:wp="http://wordpress.org/export/1.2/"
+	 *         >
+	 *             Test
+	 *         </wp:content>
+	 *     ' );
+	 *     $p->next_tag() === true;
+	 *     $p->get_namespace_prefix('http://wordpress.org/export/1.2/') === 'wp';
+	 *
+	 * @internal
+	 * @param string|null $namespace Fully-qualified namespace to return the prefix for.
+	 * @return string|null The namespace prefix of the matched tag, or null if not available.
+	 */
+	private function get_namespace_prefix($namespace=null) {
+		if ( null === $namespace ) {
+			if ( self::STATE_MATCHED_TAG !== $this->parser_state ) {
+				return null;
+			}
+			return $this->element->namespace_prefix;
+		} else {
+			$namespaces_in_scope = $this->get_namespaces_in_scope();
+			foreach($namespaces_in_scope as $prefix => $uri) {
+				if($uri === $namespace) {
+					return $prefix;
+				}
+			}
+			return false;
+		}
+	}
+
+	/**
+	 * Returns the top XMLElement on the stack without removing it.
+	 *
+	 * @return XMLElement|null Returns the top element, or null if stack is empty.
+	 */
+	private function top_element() {
+		if ( empty( $this->stack_of_open_elements ) ) {
+			return null;
+		}
+		return $this->stack_of_open_elements[ count( $this->stack_of_open_elements ) - 1 ];
 	}
 
 	/**
@@ -2997,25 +3071,6 @@ class XMLProcessor {
 	}
 
 	/**
-	 * Returns the namespace prefix of the matched tag.
-	 *
-	 * Example:
-	 *
-	 *     $p = new XMLProcessor( '<content xmlns:wp="http://www.w3.org/1999/xhtml">Test</content>' );
-	 *     $p->next_tag() === true;
-	 *     $p->get_namespace_prefix() === 'wp';
-	 *
-	 * @return string|null The namespace prefix of the matched tag, or null if not available.
-	 */
-	public function get_namespace_prefix() {
-		if ( self::STATE_MATCHED_TAG !== $this->parser_state ) {
-			return null;
-		}
-
-		return $this->element->namespace_prefix;
-	}
-
-	/**
 	 * Returns the namespace reference of the matched tag.
 	 *
 	 * Example:
@@ -3033,10 +3088,6 @@ class XMLProcessor {
 		}
 
 		return $this->element->namespace;
-	}
-
-	public function get_namespaces_in_scope() {
-		return $this->stack_of_open_elements->get_namespaces_in_scope();
 	}
 
 	/**
@@ -3433,7 +3484,7 @@ class XMLProcessor {
 		$value             = htmlspecialchars( $value, ENT_XML1, 'UTF-8' );
 
 		if($namespace !== '') {
-			$prefix = $this->stack_of_open_elements->get_namespace_prefix($namespace);
+			$prefix = $this->get_namespace_prefix($namespace);
 			if(false === $prefix) {
 				$this->bail(
 					__( 'The namespace "%1$s" is not in the current element\'s scope.' ),
@@ -3680,9 +3731,10 @@ class XMLProcessor {
 
 		if ( self::PROCESS_NEXT_NODE === $node_to_process ) {
 			if ( $this->is_empty_element() ) {
-				$this->stack_of_open_elements->pop();
+				array_pop( $this->stack_of_open_elements );
 			}
 		}
+		
 
 		try {
 			switch ( $this->parser_context ) {
@@ -3798,7 +3850,7 @@ class XMLProcessor {
 				// Update the stack of open elements
 				$tag_qname = $this->get_tag_name_qualified();
 				if ( $this->is_tag_closer() ) {
-					if(!$this->stack_of_open_elements->count()) {
+					if(!count($this->stack_of_open_elements)) {
 						$this->bail(
 							__( 'The closing tag "%1$s" did not match the opening tag "%2$s".' ),
 							$tag_qname,
@@ -3806,7 +3858,7 @@ class XMLProcessor {
 						);
 						return false;
 					}
-					$this->element = $this->stack_of_open_elements->pop();
+					$this->element = array_pop( $this->stack_of_open_elements );
 					$popped_qname = $this->element->qualified_name;
 					if ( $popped_qname !== $tag_qname ) {
 						$this->bail(
@@ -3819,12 +3871,12 @@ class XMLProcessor {
 							self::ERROR_SYNTAX
 						);
 					}
-					if ( $this->stack_of_open_elements->count() === 0 ) {
+					if ( count( $this->stack_of_open_elements ) === 0 ) {
 						$this->parser_context = self::IN_MISC_CONTEXT;
 					}
 				} else {
-					$this->stack_of_open_elements->push( $this->element );
-					$this->element = $this->stack_of_open_elements->top();
+					array_push( $this->stack_of_open_elements, $this->element );
+					$this->element = $this->top_element();
 				}
 
 				return true;
@@ -3908,7 +3960,7 @@ class XMLProcessor {
 	public function get_breadcrumbs() {
 		return array_map( function( $element ) {
 			return array( $element->namespace, $element->local_name );
-		}, $this->stack_of_open_elements->get_items() );
+		}, $this->stack_of_open_elements );
 	}
 
 	/**
@@ -3950,7 +4002,7 @@ class XMLProcessor {
 			return false;
 		}
 
-		$open_elements = $this->stack_of_open_elements->get_items();
+		$open_elements = $this->stack_of_open_elements;
 		$crumb_count   = count( $breadcrumbs );
 		$elem_count    = count( $open_elements );
 
@@ -4011,7 +4063,7 @@ class XMLProcessor {
 	 *
 	 */
 	public function get_current_depth() {
-		return $this->stack_of_open_elements->count();
+		return count( $this->stack_of_open_elements );
 	}
 
 	/**
