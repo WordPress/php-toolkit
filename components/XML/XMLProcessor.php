@@ -1695,10 +1695,10 @@ class XMLProcessor {
 		}
 
 		if ( is_string( $query_or_ns ) ) {
-			if ( null === $null_or_local_name ) {
-				$query = array( 'breadcrumbs' => array( $query_or_ns, $null_or_local_name ) );
+			if ( is_string( $null_or_local_name ) ) {
+				$query = array( 'breadcrumbs' => array( array( $query_or_ns, $null_or_local_name ) ) );
 			} else {
-				$query = array( 'breadcrumbs' => array( $query_or_ns ) );
+				$query = array( 'breadcrumbs' => array( array( '', $query_or_ns ) ) );
 			}
 		} else {
 			$query = $query_or_ns;

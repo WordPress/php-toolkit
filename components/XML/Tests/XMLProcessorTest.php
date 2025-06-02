@@ -345,6 +345,7 @@ class XMLProcessorTest extends TestCase {
 	public function test_get_attribute_names_with_prefix_returns_null_when_not_in_open_tag() {
 		$processor = XMLProcessor::create_from_string( '<wp:content xmlns:wp="w.org" data-foo="bar">Test</wp:content>' );
 		$processor->next_tag( 'w.org', 'content' );
+		$processor->next_token();
 		$this->assertNull( $processor->get_attribute_names_with_prefix( '', 'data-' ),
 			'Accessing attributes of a non-existing tag did not return null' );
 	}
@@ -687,6 +688,70 @@ class XMLProcessorTest extends TestCase {
 		$processor = XMLProcessor::create_from_string( self::XML_SIMPLE );
 
 		$this->assertFalse( $processor->next_tag( 'p' ), 'Querying a non-existing tag did not return false' );
+	}
+
+
+	/**
+	 * Data provider for test_next_tag_ns_and_array_equivalence.
+	 *
+	 * Provides XML snippets and tag queries (namespace, local name).
+	 *
+	 * @return array[]
+	 */
+	public function data_next_tag_ns_and_array_equivalence() {
+		return array(
+			'no namespace, simple tag' => array(
+				'<root><item>One</item><item>Two</item></root>',
+				'',
+				'item',
+			),
+			'with namespace, prefix' => array(
+				'<root xmlns:wp="http://wordpress.org/export/1.2/"><wp:content>Test</wp:content></root>',
+				'http://wordpress.org/export/1.2/',
+				'content',
+			),
+			'with namespace, multiple tags' => array(
+				'<root xmlns:foo="urn:foo"><foo:bar>1</foo:bar><foo:baz>2</foo:baz></root>',
+				'urn:foo',
+				'baz',
+			),
+			'no namespace, nested' => array(
+				'<root><section><item>Inner</item></section></root>',
+				'',
+				'item',
+			),
+			'with namespace, nested' => array(
+				'<root xmlns:ns="urn:ns"><section><ns:item>Inner</ns:item></section></root>',
+				'urn:ns',
+				'item',
+			),
+		);
+	}
+
+	/**
+	 * @dataProvider data_next_tag_ns_and_array_equivalence
+	 * @covers XMLProcessor::next_tag
+	 */
+	public function test_next_tag_ns_two_arguments( $xml, $namespace, $local_name ) {
+		$processor1 = XMLProcessor::create_from_string( $xml );
+		$result1 = $processor1->next_tag( $namespace, $local_name );
+		$this->assertTrue( $result1, 'next_tag($ns, $tag_name) did not find the tag' );
+		$this->assertSame( $local_name, $processor1->get_tag_local_name(), 'next_tag($ns, $tag_name) did not land on correct tag' );
+		$this->assertSame( $namespace, $processor1->get_tag_namespace(), 'next_tag($ns, $tag_name) did not land on correct namespace' );
+	}
+
+	/**
+	 * @dataProvider data_next_tag_ns_and_array_equivalence
+	 * @covers XMLProcessor::next_tag
+	 */
+	public function test_next_tag_array_query( $xml, $namespace, $local_name ) {
+		// Test using next_tag([$ns, $tag_name])
+		$processor2 = XMLProcessor::create_from_string( $xml );
+		$result2 = $processor2->next_tag( array( $namespace, $local_name ) );
+		$this->assertTrue( $result2, 'next_tag([$ns, $tag_name]) did not find the tag' );
+		$this->assertSame( $local_name, $processor2->get_tag_local_name(), 'next_tag([$ns, $tag_name]) did not land on correct tag' );
+		$this->assertSame( $namespace, $processor2->get_tag_namespace(), 'next_tag([$ns, $tag_name]) did not land on correct namespace' );
+
 	}
 
 	/**
