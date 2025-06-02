@@ -80,9 +80,9 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *
  * Example:
  *
- *     $tags = new XMLProcessor( $xml );
- *     if ( $tags->next_tag( 'option' ) ) {
- *         $tags->set_attribute( 'selected', 'yes' );
+ *     $processor = XMLProcessor::create_from_string( $xml );
+ *     if ( $processor->next_tag( 'option' ) ) {
+ *         $processor->set_attribute( '', 'selected', 'yes' );
  *     }
  *
  * ### Finding tags
@@ -95,27 +95,39 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *
  * If you want to _find whatever the next tag is_:
  *
- *     $tags->next_tag();
+ *     $processor->next_tag();
  *
  * | Goal                                                     | Query                                                    |
  * |----------------------------------------------------------|----------------------------------------------------------|
- * | Find any tag.                                            | `$tags->next_tag();`                                     |
- * | Find next image tag.                                     | `$tags->next_tag( array( 'tag_name' => 'image' ) );`     |
- * | Find next image tag (without passing the array).         | `$tags->next_tag( 'image' );`                            |
- * | Find next image tag in the "wp.org" namespace.           | `$tags->next_tag( array( 'wp.org', 'image' ) );`         |
+ * | Find any tag.                                            | `$processor->next_tag();`                                |
+ * | Find next image tag.                                     | `$processor->next_tag( array( 'tag_name' => 'image' ) );`|
+ * | Find next image tag (shorthand).                         | `$processor->next_tag( 'image' );`                       |
+ * | Find next image tag in the "wp.org" namespace.           | `$processor->next_tag( array( 'wp.org', 'image' ) );`    |
+ *
+ * #### Namespace Examples
+ *
+ * To work with namespaces, you can use the `breadcrumbs` query format, where each breadcrumb is a tuple of (namespace prefix, local name):
+ *
+ *     $xml = '<root xmlns:wp="http://wordpress.org/export/1.2/"><wp:image src="cat.jpg" /></root>';
+ *     $processor = XMLProcessor::create_from_string( $xml );
+ *     // Find the <wp:image> tag
+ *     if ( $processor->next_tag( array( 'http://wordpress.org/export/1.2/', 'image' ) ) ) {
+ *         // Get the namespace URI of the matched tag
+ *         $ns = $processor->get_namespace(); // 'http://wordpress.org/export/1.2/'
+ *         // Get the value of the 'src' attribute
+ *         $src = $processor->get_attribute( $ns, 'src' );
+ *         // Set a new attribute in the same namespace
+ *         $processor->set_attribute( $ns, 'alt', 'A cat' );
+ *     }
  *
  * If a tag was found meeting your criteria then `next_tag()`
  * will return `true` and you can proceed to modify it. If it
- * returns `false`, however, it failed to find the tag and
- * moved the cursor to the end of the file.
+ * returns `false`, it failed to find the tag and moved the cursor to the end of the file.
  *
  * Once the cursor reaches the end of the file the processor
  * is done and if you want to reach an earlier tag you will
  * need to recreate the processor and start over, as it's
- * unable to back up or move in reverse.
- *
- * See the section on bookmarks for an exception to this
- * no-backing-up rule.
+ * unable to back up or move in reverse (except via bookmarks).
  *
  * #### Custom queries
  *
@@ -128,17 +140,18 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *
  *     // Paint up to the first five `musician` or `actor` tags marked with the "jazzy" style.
  *     $remaining_count = 5;
- *     while ( $remaining_count > 0 && $tags->next_tag() ) {
+ *     while ( $remaining_count > 0 && $processor->next_tag() ) {
+ *         $tag = $processor->get_tag_local_name();
  *         if (
- *              ( 'musician' === $tags->get_qualified_tag() || 'actor' === $tags->get_qualified_tag() ) &&
- *              'jazzy' === $tags->get_attribute_by_qualified_name( 'data-style' )
+ *              ( 'musician' === $tag || 'actor' === $tag ) &&
+ *              'jazzy' === $processor->get_attribute( '', 'data-style' )
  *         ) {
- *             $tags->set_attribute( 'theme-style', 'theme-style-everest-jazz' );
+ *             $processor->set_attribute( '', 'theme-style', 'theme-style-everest-jazz' );
  *             $remaining_count--;
  *         }
  *     }
  *
- * `get_attribute_by_qualified_name()` will return `null` if the attribute wasn't present
+ * `get_attribute()` will return `null` if the attribute wasn't present
  * on the tag when it was called. It may return `""` (the empty string)
  * in cases where the attribute was present but its value was empty.
  * For boolean attributes, those whose name is present but no value is
@@ -159,7 +172,7 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *
  * Example:
  *
- *     $processor = new XMLProcessor( 'This <content is="a" partial="token' );
+ *     $processor = XMLProcessor::create_from_string( 'This <content is="a" partial="token' );
  *     false === $processor->next_tag();
  *
  * If a special element (see next section) is encountered but no closing tag
@@ -168,21 +181,21 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *
  * Example:
  *
- *     $processor = new XMLProcessor( '<style>// there could be more styling to come' );
+ *     $processor = XMLProcessor::create_from_string( '<style>// there could be more styling to come' );
  *     false === $processor->next_tag();
  *
- *     $processor = new XMLProcessor( '<style>// this is everything</style><content>' );
- *     true === $processor->next_tag( 'DIV' );
+ *     $processor = XMLProcessor::create_from_string( '<style>// this is everything</style><content>' );
+ *     true === $processor->next_tag( 'content' );
  *
  * #### Special elements
  *
  * All XML elements are handled in the same way, except when you mark
- * them as PCdata elements. These are special because their contents
- * is treated as text, even if it looks like XML tags.
+ * them as PCData elements. These are special because their contents
+ * are treated as text, even if it looks like XML tags.
  *
  * Example:
  *
- *    $processor = new XMLProcessor( '<root><post-content>Text inside</input></post-content><</root>' );
+ *    $processor = XMLProcessor::create_from_string( '<root><post-content>Text inside</input></post-content></root>' );
  *    $processor->declare_element_as_pcdata('post-content');
  *    $processor->next_tag('post-content');
  *    $processor->next_token();
@@ -197,9 +210,9 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *
  * Example:
  *
- *     if ( $tags->next_tag( 'user-group' ) ) {
- *         $tags->set_attribute( 'name', 'Content editors' );
- *         $tags->remove_attribute( 'data-test-id' );
+ *     if ( $processor->next_tag( 'user-group' ) ) {
+ *         $processor->set_attribute( '', 'name', 'Content editors' );
+ *         $processor->remove_attribute( '', 'data-test-id' );
  *     }
  *
  * If `set_attribute()` is called for an existing attribute it will
@@ -207,6 +220,18 @@ use function WordPress\Encoding\utf8_codepoint_at;
  * for a non-existing attribute has no effect on the document. Both
  * of these methods are safe to call without knowing if a given attribute
  * exists beforehand.
+ *
+ * #### Namespaced attribute example
+ * 
+ *     $processor = XMLProcessor::from_string( '<root xmlns:wp="http://wordpress.org/export/1.2/"><image /></root>' );
+ *
+ *     $ns = 'http://wordpress.org/export/1.2/';
+ *     if ( $processor->next_tag( 'image' ) ) {
+ *         $processor->set_attribute( $ns, 'src', 'cat.jpg' );
+ *     }
+ * 
+ *     echo $processor->get_modifiable_text();
+ *     // <root xmlns:wp="http://wordpress.org/export/1.2/"><image wp:src="cat.jpg" /></root>
  *
  * ### Bookmarks
  *
@@ -222,25 +247,24 @@ use function WordPress\Encoding\utf8_codepoint_at;
  * bookmark and update it frequently, such as within a loop.
  *
  *     $total_todos = 0;
- *     while ( $p->next_tag( array( 'tag_name' => 'todo-list' ) ) ) {
- *         $p->set_bookmark( 'list-start' );
- *         while ( $p->next_tag( array( 'tag_closers' => 'visit' ) ) ) {
- *             if ( 'todo' === $p->get_qualified_tag() && $p->is_tag_closer() ) {
- *                 $p->set_bookmark( 'list-end' );
- *                 $p->seek( 'list-start' );
- *                 $p->set_attribute( 'data-contained-todos', (string) $total_todos );
+ *     while ( $processor->next_tag( array( 'tag_name' => 'todo-list' ) ) ) {
+ *         $processor->set_bookmark( 'list-start' );
+ *         while ( $processor->next_tag() ) {
+ *             if ( 'todo' === $processor->get_tag_local_name() && $processor->is_tag_closer() ) {
+ *                 $processor->set_bookmark( 'list-end' );
+ *                 $processor->seek( 'list-start' );
+ *                 $processor->set_attribute( '', 'data-contained-todos', (string) $total_todos );
  *                 $total_todos = 0;
- *                 $p->seek( 'list-end' );
+ *                 $processor->seek( 'list-end' );
  *                 break;
  *             }
- *
- *             if ( 'todo-item' === $p->get_qualified_tag() && ! $p->is_tag_closer() ) {
+ *             if ( 'todo-item' === $processor->get_tag_local_name() && ! $processor->is_tag_closer() ) {
  *                 $total_todos++;
  *             }
  *         }
  *     }
  *
- * ## Tokens and finer-grained processing.
+ * ## Tokens and finer-grained processing
  *
  * It's possible to scan through every lexical token in the
  * XML document using the `next_token()` function. This
@@ -256,11 +280,9 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *              case '#text':
  *                  $text .= $processor->get_modifiable_text();
  *                  break;
- *
  *              case 'new-line':
  *                  $text .= "\n";
  *                  break;
- *
  *              case 'title':
  *                  $title = $processor->get_modifiable_text();
  *                  break;
@@ -268,9 +290,7 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *      }
  *      return trim( "# {$title}\n\n{$text}" );
  *
- * ### Tokens and _modifiable text_.
- *
- * #### Other tokens with modifiable text.
+ * ### Tokens and _modifiable text_
  *
  * There are also non-elements which are void/self-closing in nature and contain
  * modifiable text that is part of that individual syntax token itself.
@@ -288,7 +308,7 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *
  * ## Design and limitations
  *
- * The Tag Processor is designed to linearly scan XML documents and tokenize
+ * The XMLProcessor is designed to linearly scan XML documents and tokenize
  * XML tags and their attributes. It's designed to do this as efficiently as
  * possible without compromising parsing integrity. Therefore it will be
  * slower than some methods of modifying XML, such as those incorporating
@@ -301,26 +321,26 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *
  * The performance characteristics are maintained by avoiding tree construction.
  *
- * The Tag Processor's checks the most important aspects of XML integrity as it scans
- * through the document. It verifies that a single root element exists, that are
+ * The XMLProcessor checks the most important aspects of XML integrity as it scans
+ * through the document. It verifies that a single root element exists, that there are
  * no unclosed tags, and that each opener tag has a corresponding closer. It also
  * ensures no duplicate attributes exist on a single tag.
  *
- * At the same time, The Tag Processor also skips expensive validation of XML entities
- * in the document. The Tag Processor will initially pass through the invalid entity references
+ * At the same time, the XMLProcessor also skips expensive validation of XML entities
+ * in the document. The processor will initially pass through invalid entity references
  * and only fail when the developer attempts to read their value. If that doesn't happen,
  * the invalid values will be left untouched in the final document.
  *
- * Most operations within the Tag Processor are designed to minimize the difference
+ * Most operations within the XMLProcessor are designed to minimize the difference
  * between an input and output document for any given change. For example, the
- * `set_attribure` and `remove_attribute` methods preserve whitespace and the attribute
+ * `set_attribute` and `remove_attribute` methods preserve whitespace and the attribute
  * ordering within the element definition. An exception to this rule is that all attribute
  * updates store their values as double-quoted strings, meaning that attributes on input with
  * single-quoted or unquoted values will appear in the output with double-quotes.
  *
  * ### Text Encoding
  *
- * The Tag Processor assumes that the input XML document is encoded with a
+ * The XMLProcessor assumes that the input XML document is encoded with a
  * UTF-8 encoding and will refuse to process documents that declare other encodings.
  *
  * @since WP_VERSION
@@ -3259,11 +3279,10 @@ class XMLProcessor {
 	 *
 	 * Modifiable text is text content that may be read and changed without
 	 * changing the XML structure of the document around it. This includes
-	 * the contents of `#text` nodes in the XML as well as the inner
-	 * contents of XML comments, Processing Instructions, and others, even
-	 * though these nodes aren't part of a parsed DOM tree. They also contain
-	 * the contents of SCRIPT and STYLE tags, of TEXTAREA tags, and of any
-	 * other section in an XML document which cannot contain XML markup (DATA).
+	 * the contents of `#text` and `#cdata-section` nodes in the XML as well
+	 * as the inner contents of XML comments, Processing Instructions, and others.
+	 * They also contain of PCdata tags any other section in an XML document which
+	 * cannot contain XML markup (DATA).
 	 *
 	 * If a token has no modifiable text then an empty string is returned to
 	 * avoid needless crashing or type errors. An empty string does not mean
@@ -3322,6 +3341,22 @@ class XMLProcessor {
 		return $decoded;
 	}
 
+	/**
+	 * Updates the modifiable text for a matched token.
+	 *
+	 * Modifiable text is text content that may be read and changed without
+	 * changing the XML structure of the document around it. This includes
+	 * the contents of `#text` and `#cdata-section` nodes in the XML as well
+	 * as the inner contents of XML comments, Processing Instructions, and others.
+	 * They also contain of PCdata tags any other section in an XML document which
+	 * cannot contain XML markup (DATA).
+	 *
+	 * If a token has no modifiable text then false is returned to avoid needless
+	 * crashing or type errors.
+	 *
+	 * @param $new_value New modifiable text for the current node.
+	 * @return string
+	 */
 	public function set_modifiable_text( $new_value ) {
 		switch ( $this->parser_state ) {
 			case self::STATE_TEXT_NODE:
@@ -3329,7 +3364,7 @@ class XMLProcessor {
 				$this->lexical_updates[] = new WP_HTML_Text_Replacement(
 					$this->text_starts_at,
 					$this->text_length,
-					// @TODO This is naive, let's rethink this.
+					// @TODO: Audit this in details. Is this too naive? Or is it actually safe?
 					htmlspecialchars( $new_value, ENT_XML1, 'UTF-8' )
 				);
 
@@ -3339,7 +3374,7 @@ class XMLProcessor {
 				$this->lexical_updates[] = new WP_HTML_Text_Replacement(
 					$this->text_starts_at,
 					$this->text_length,
-					// @TODO This is naive, let's rethink this.
+					// @TODO: Audit this in details. Is this too naive? Or is it actually safe?
 					str_replace( ']]>', ']]&gt;', $new_value )
 				);
 
@@ -3381,6 +3416,13 @@ class XMLProcessor {
 
 			return false;
 		}
+		if ( 'xmlns' === $namespace ) {
+			$this->bail(
+				__( 'Setting attributes in the xmlns namespace is not yet supported by set_attribute().' ),
+				$namespace
+			);
+			return false;
+		}
 		if (
 			self::STATE_MATCHED_TAG !== $this->parser_state ||
 			$this->is_closing_tag
@@ -3394,7 +3436,7 @@ class XMLProcessor {
 			$prefix = $this->stack_of_open_elements->get_namespace_prefix($namespace);
 			if(false === $prefix) {
 				$this->bail(
-					__( 'The namespace "%1$s" is not in scope.' ),
+					__( 'The namespace "%1$s" is not in the current element\'s scope.' ),
 					$namespace
 				);
 				return false;
@@ -3457,7 +3499,8 @@ class XMLProcessor {
 	/**
 	 * Remove an attribute from the currently-matched tag.
 	 *
-	 * @param  string  $name  The attribute name to remove.
+	 * @param  string  $namespace  The attribute's namespace.
+	 * @param  string  $name       The attribute name to remove.
 	 *
 	 * @return bool Whether an attribute was removed.
 	 * @since WP_VERSION
