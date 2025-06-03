@@ -3,6 +3,7 @@
 namespace WordPress\Blueprints\Steps;
 
 use RuntimeException;
+use Symfony\Component\Process\Exception\ProcessFailedException;
 use WordPress\Blueprints\DataReference\File;
 use WordPress\Blueprints\Exception\BlueprintExecutionException;
 use WordPress\Blueprints\Process;
@@ -36,7 +37,7 @@ class ImportContentStep implements StepInterface {
 			if ( $content_definition['type'] === 'wxr' ) {
 				// @TODO: More useful captions – include the url
 				$progress[ $i ]->setCaption( 'Importing WXR file ' );
-				$this->importWxr( $runtime, $content_definition );
+				$this->importWxr( $runtime, $content_definition, $progress[ $i ] );
 			} elseif ( $content_definition['type'] === 'posts' ) {
 				$progress[ $i ]->setCaption( 'Importing a post ' );
 				$this->importPosts( $runtime, $content_definition['source'] );
@@ -50,7 +51,7 @@ class ImportContentStep implements StepInterface {
 		$progress->finish();
 	}
 
-	private function importWxr( Runtime $runtime, array $content_definition ): void {
+	private function importWxr( Runtime $runtime, array $content_definition, Tracker $progress ): void {
 		// @TODO: Make it work when Blueprints are running as phar archive
 		$import_script_path = __DIR__ . '/scripts/import-content.php';
 		if ( ! file_exists( $import_script_path ) ) {
@@ -65,9 +66,6 @@ class ImportContentStep implements StepInterface {
 			$importer_script . 
 			<<<'PHP'
 <?php
-// @TODO: Establish a communication channel between the main process and the subprocess
-//        to report progress and errors.
-
 run_content_import([
 	'mode' => 'wxr',
 	'execution_context_root' => getenv('EXECUTION_CONTEXT'),
@@ -87,17 +85,37 @@ PHP
 
 		$output = $import_process->getOutputStream(Process::OUTPUT_FILE);
 		foreach ( $this->output_lines( $output ) as $line ) {
+			$data = @json_decode($line, true);
+			if(!is_array($data)) {
+				// Non-JSON output is treated as a crash. We use a dedicated file pipe
+				// for communication and it should never contain a non-JSON line.
+				$import_process->stop();
+				throw new ProcessFailedException( $import_process );
+			}
 			// Report progress, errors, etc.
-			var_dump( $line );
+			switch($data['type'] ?? '**MISSING**') {
+				case 'progress':
+					$progress->set( $data['progress'], 'Importing WXR file: ' . $data['caption'] );
+					break;
+				case 'error':
+					throw new BlueprintExecutionException( $data['message'] );
+				default:
+					throw new BlueprintExecutionException( 'Unknown messagetype: ' . $data['type'] );
+			}
 		}
-		die();
+
+		if($import_process->getExitCode() !== 0) {
+			throw new ProcessFailedException( $import_process );
+		}
+
+		// @TODO: remove the Process::OUTPUT_FILE pipe
 	}
 
 	private function output_lines( ByteReadStream $output ) {
 		$buffer = '';
 		while ( !$output->reached_end_of_data() ) {
 			$bytes_ready = $output->pull(1024);
-			var_dump($bytes_ready);
+			// var_dump($bytes_ready);
 			if ( ! $bytes_ready ) {
 				continue;
 			}
