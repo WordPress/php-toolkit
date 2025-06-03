@@ -45,6 +45,7 @@ class WPCLIStep implements StepInterface {
 			'--allow-root',
 			substr($command, 3),
 		]);
-		$runtime->runShellCommand( $command );
+		$process = $runtime->startShellCommand( $command );
+		$process->mustRun();
 	}
 }

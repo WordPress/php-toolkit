@@ -124,7 +124,7 @@ PHP
 			// @TODO (low priority): Remove the WP-CLI dependency to lower the download size for blueprints.phar.
 			$progress['install_wordpress']->set( 0.7, 'Installing WordPress' );
 			$wp_cli_path = $runtime->getWpCliPath();
-			$runtime->runShellCommand( [
+			$process = $runtime->startShellCommand( [
 				'php',
 				$wp_cli_path,
 				'core',
@@ -139,6 +139,7 @@ PHP
 				'--admin_email=admin@example.com',
 				'--skip-email',
 			] );
+			$process->mustRun();
 		}
 		$progress->finish();
 	}

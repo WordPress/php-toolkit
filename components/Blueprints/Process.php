@@ -54,7 +54,7 @@ class ProcessOutputStream extends BaseByteReadStream {
 				$this->output_file_fp = fopen($this->output_file_path, 'r');
 				break;
 			default:
-				throw new \Exception('Invalid pipe name "' . $this->pipe . '"');
+				throw new \InvalidArgumentException('Invalid pipe name "' . $this->pipe . '"');
 		}
 
 	}

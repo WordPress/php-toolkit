@@ -5,7 +5,6 @@ use WordPress\Blueprints\DataReference\DataReferenceResolver;
 use WordPress\Blueprints\DataReference\Directory;
 use WordPress\Blueprints\DataReference\ExecutionContextPath;
 use WordPress\Blueprints\DataReference\File;
-use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\HttpClient\Client;
 use WordPress\DataLiberation\EntityReader\EPubEntityReader;
 use WordPress\DataLiberation\EntityReader\FilesystemEntityReader;
@@ -56,7 +55,7 @@ class PhpConsoleWriter implements ConsoleWriter {
     private $stdout;
 
     public function __construct() {
-        $this->stdout = fopen('php://stdout', 'w');
+        $this->stdout = fopen(getenv('OUTPUT_FILE') ?? 'php://stdout', 'w');
     }
 
     public function __destruct() {
@@ -75,8 +74,8 @@ class PhpConsoleWriter implements ConsoleWriter {
     }
 
     public function replaceLine(string $text): void {
-        $this->clearLine();
-        $this->write($text);
+        // $this->clearLine();
+        $this->write($text . "\n");
     }
 
     public function writeLines(array $lines, bool $replace = false): void {

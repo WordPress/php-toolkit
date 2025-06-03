@@ -3,7 +3,7 @@
 namespace WordPress\Blueprints;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Process\Process;
+use WordPress\Blueprints\Process;
 use WordPress\Blueprints\DataReference\DataReference;
 use WordPress\Blueprints\DataReference\DataReferenceResolver;
 use WordPress\Blueprints\DataReference\Directory;
@@ -228,19 +228,27 @@ class Runtime {
 		$input = null,
 		$timeout = 60
 	) {
-		return $this->withTemporaryFile( function ( $script_path ) use ( $code, $env, $input, $timeout ) {
-			file_put_contents( $script_path, $code );
-			return $this->evalPhpFileInSubProcess( $script_path, $env, $input, $timeout );
-		} );
+		$process = $this->createPhpSubProcess( $code, $env, $input, $timeout );
+		$process->mustRun();
+
+		return new EvalResult(
+			$process->getOutputStream(Process::OUTPUT_FILE)->consume_all(),
+			$process
+		);
 	}
 
-	public function evalPhpFileInSubProcess(
-		$script_path,
+	public function createPhpSubProcess(
+		$code,
 		$env = null,
 		$input = null,
 		$timeout = 60
 	) {
-		return $this->withTemporaryDirectory( function ( $tempDir ) use ( $script_path, $env, $input, $timeout ) {
+		return $this->withTemporaryFile( function ( $script_path ) use ( $code, $env, $input, $timeout ) {
+			file_put_contents( $script_path, $code );
+
+			// @TODO: Cleaning up the temporary directory is not done here.
+			$tempDir = $this->createTemporaryDirectory();
+
 			// Still put the script in a temporary file as the path may be refering
 			// to a file inside the currently executed .phar archive.
 			$actual_script_path = wp_join_unix_paths( $tempDir, 'script.php' );
@@ -260,33 +268,24 @@ class Runtime {
 				$phpBinary = 'php';
 			}
 
-			// try {
-				$process = $this->runShellCommand(
+			return $this->startShellCommand(
+				array(
+					$phpBinary,
+					$actual_script_path,
+				),
+				$this->configuration->getTargetSiteRoot(),
+				array_merge(
 					array(
-						$phpBinary,
-						$actual_script_path,
+						'DOCROOT'     => $this->configuration->getTargetSiteRoot(),
+						'OUTPUT_FILE' => $output_path,
 					),
-					$this->configuration->getTargetSiteRoot(),
-					array_merge(
-						array(
-							'DOCROOT'     => $this->configuration->getTargetSiteRoot(),
-							'OUTPUT_FILE' => $output_path,
-						),
-						$env ?? array()
-					),
-					$input,
-					$timeout
-				);
-			// } catch ( \Exception $e ) {
-			// 	throw new RuntimeException( sprintf(
-			// 		'PHP script	"%s" failed.',
-			// 		$script_path
-			// 	), 0, $e );
-			// }
-
-			return new EvalResult(
-				file_get_contents( $output_path ),
-				$process
+					$env ?? array()
+				),
+				$input,
+				$timeout,
+				[
+					'output_file_path' => $output_path,
+				]
 			);
 		} );
 	}
@@ -297,24 +296,21 @@ class Runtime {
 	 * @param  mixed[]|null  $env
 	 * @param  float  $timeout
 	 */
-	public function runShellCommand(
+	public function startShellCommand(
 		$command,
 		$cwd = null,
 		$env = null,
 		$input = null,
-		$timeout = 60
+		$timeout = 60,
+		$options = []
 	) {
-		$cwd = $cwd ?? $this->configuration->getTargetSiteRoot();
-
-		$process = new Process(
+		return new Process(
 			$command,
-			$cwd,
+			$cwd ?? $this->configuration->getTargetSiteRoot(),
 			$env,
 			$input,
-			$timeout
+			$timeout,
+			$options
 		);
-		$process->mustRun();
-
-		return $process;
 	}
 }

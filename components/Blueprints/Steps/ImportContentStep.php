@@ -5,8 +5,10 @@ namespace WordPress\Blueprints\Steps;
 use RuntimeException;
 use WordPress\Blueprints\DataReference\File;
 use WordPress\Blueprints\Exception\BlueprintExecutionException;
+use WordPress\Blueprints\Process;
 use WordPress\Blueprints\Progress\Tracker;
 use WordPress\Blueprints\Runtime;
+use WordPress\ByteStream\ReadStream\ByteReadStream;
 
 class ImportContentStep implements StepInterface {
 	/**
@@ -59,7 +61,7 @@ class ImportContentStep implements StepInterface {
 		}
 
 		$importer_script = file_get_contents( $import_script_path );
-		$runtime->evalPhpCodeInSubProcess(
+		$import_process = $runtime->createPhpSubProcess(
 			$importer_script . 
 			<<<'PHP'
 <?php
@@ -81,6 +83,35 @@ PHP
 				'EXECUTION_CONTEXT' => $runtime->getExecutionContextRoot(),
 			]
 		);
+		$import_process->start();
+
+		$output = $import_process->getOutputStream(Process::OUTPUT_FILE);
+		foreach ( $this->output_lines( $output ) as $line ) {
+			// Report progress, errors, etc.
+			var_dump( $line );
+		}
+		die();
+	}
+
+	private function output_lines( ByteReadStream $output ) {
+		$buffer = '';
+		while ( !$output->reached_end_of_data() ) {
+			$bytes_ready = $output->pull(1024);
+			var_dump($bytes_ready);
+			if ( ! $bytes_ready ) {
+				continue;
+			}
+			$buffer .= $output->consume( $bytes_ready );
+			while ( ( $newline_pos = strpos( $buffer, "\n" ) ) !== false ) {
+				$line = substr( $buffer, 0, $newline_pos + 1 );
+				yield $line;
+				$buffer = substr( $buffer, $newline_pos + 1 );
+			}
+		}
+		// Output any remaining data as the last line (if not empty)
+		if ( strlen( $buffer ) > 0 ) {
+			yield $buffer;
+		}
 	}
 
 	private function importPosts( Runtime $runtime, $post ): void {

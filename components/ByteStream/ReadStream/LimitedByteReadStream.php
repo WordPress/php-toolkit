@@ -42,6 +42,6 @@ class LimitedByteReadStream extends BaseByteReadStream {
 	}
 
 	protected function internal_close_reading(): void {
-		$this->upstream->close_writing();
+		$this->upstream->close_reading();
 	}
 }
