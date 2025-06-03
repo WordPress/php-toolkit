@@ -15,10 +15,10 @@ class WriteFilesStepTest extends StepTestCase {
 	public function testWriteFileWithStringData() {
 		// Create and run the step with string data
 		$step = new WriteFilesStep( [
-			'test_output.txt' => new InlineFile(
-				'test_output.txt',
-				'String content test'
-			),
+			'test_output.txt' => new InlineFile( [
+				'filename' => 'test_output.txt',
+				'content' => 'String content test'
+			] )
 		] );
 
 		$tracker = new Tracker();
@@ -62,10 +62,10 @@ class WriteFilesStepTest extends StepTestCase {
 	public function testCreatesDirectoryStructure() {
 		// Create and run the step with a nested path
 		$step = new WriteFilesStep( [
-			'nested/directory/structure/test.txt' => new InlineFile(
-				'nested/directory/structure/test.txt',
-				'Nested directory test'
-			),
+			'nested/directory/structure/test.txt' => new InlineFile( [
+				'filename' => 'nested/directory/structure/test.txt',
+				'content' => 'Nested directory test'
+			] )
 		] );
 
 		$tracker = new Tracker();

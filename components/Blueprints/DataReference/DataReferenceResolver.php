@@ -74,10 +74,17 @@ class DataReferenceResolver {
 	 */
 	public function resolve( DataReference $reference ) {
 		// TODO: Comment this. Make semantics clearer.
-		if ( isset( $this->resolvedDataReferences[ $reference->id ] ) ) {
-			return $this->resolvedDataReferences[ $reference->id ];
+		if ( ! isset( $this->resolvedDataReferences[ $reference->id ] ) ) {
+			$this->resolvedDataReferences[ $reference->id ] = $this->resolve_uncached( $reference );
 		}
+		return $this->resolvedDataReferences[ $reference->id ];
+	}
 
+	// @TODO: Clean up the semantics of this class. Resolve() and separate resolve_uncached() seem confusing. There's
+	//        a bunch of implicit behaviors related to caching. Ideally we would either have a self-contained resolution
+	//        method, or co-locate the resolution logic with the data reference classes and only use this class for
+	//        caching.
+	public function resolve_uncached( DataReference $reference ) {
 		$progress_tracker = $this->subTrackers[ $reference->id ] ?? new Tracker();
 
 		if ( $reference instanceof WordPressOrgPlugin ) {

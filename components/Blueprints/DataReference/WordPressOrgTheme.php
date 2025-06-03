@@ -15,30 +15,16 @@ class WordPressOrgTheme extends DataReference {
 	protected $version;
 
 	/**
-	 * Parse a WordPress.org theme reference into slug and version.
+	 * Create a WordPress.org theme reference.
 	 *
-	 * @param  string  $reference  The reference to parse.
-	 *
-	 * @return WordPressOrgTheme
+	 * @param  string  $reference  The reference to parse, e.g. "adventure" or "adventure@1.0.2"
 	 */
-	public static function from_blueprint_data( string $reference ) {
+	public function __construct( $reference ) {
 		$parts   = explode( '@', $reference );
-		$slug    = $parts[0];
-		$version = isset( $parts[1] ) ? $parts[1] : null;
+		$this->slug    = $parts[0];
+		$this->version = isset( $parts[1] ) ? $parts[1] : null;
 
-		return new self( $slug, $version );
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * @param  string  $slug  The theme slug.
-	 * @param  string|null  $version  The theme version.
-	 */
-	public function __construct( string $slug, ?string $version = null ) {
-		$this->slug    = $slug;
-		$this->version = $version;
-		parent::__construct();
+		parent::__construct($reference);
 	}
 
 	/**

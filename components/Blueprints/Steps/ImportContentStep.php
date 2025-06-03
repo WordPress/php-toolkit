@@ -56,17 +56,6 @@ class ImportContentStep implements StepInterface {
 	}
 
 	private function importWxr( Runtime $runtime, array $content_definition ): void {
-		$resolved = $runtime->resolve( $content_definition['source'] );
-		if ( ! $resolved instanceof File ) {
-			throw new BlueprintExecutionException( sprintf(
-				'Imported content reference must be a file, but %s was a Directory.',
-				$content_definition['source']->get_human_readable_name()
-			) );
-		}
-
-		// @TODO: Pass the data reference to the import script to enable streaming.
-		$wxrPath = $runtime->saveToTemporaryFile( $resolved );
-
 		// @TODO: Make it work when Blueprints are running as phar archive
 		$import_script_path = __DIR__ . '/scripts/import-content.php';
 		if ( ! file_exists( $import_script_path ) ) {
@@ -83,11 +72,11 @@ class ImportContentStep implements StepInterface {
 <?php
 // @TODO: Establish a communication channel between the main process and the subprocess
 //        to report progress and errors.
-// @TODO: Enforce chrooting of the imported static files.
 
 run_content_import([
 	'mode' => 'wxr',
-	'source' => getenv('WXR_PATH'),
+	'execution_context_root' => getenv('EXECUTION_CONTEXT'),
+	'source' => json_decode(getenv('DATA_SOURCE_DEFINITION'), true),
 	// @TODO: Support arbitrary media URLs to enable fetching assets during import.
 	// 'media_url' => 'https://pd.w.org/'
 ]);
@@ -95,7 +84,8 @@ run_content_import([
 PHP
 			,
 			[
-				'WXR_PATH' => $wxrPath,
+				'DATA_SOURCE_DEFINITION' => json_encode( $content_definition['source']->original_definition ),
+				'EXECUTION_CONTEXT' => $runtime->getExecutionContextRoot(),
 			]
 		);
 	}

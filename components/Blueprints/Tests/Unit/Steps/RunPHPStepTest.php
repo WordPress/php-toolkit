@@ -18,11 +18,13 @@ class RunPHPStepTest extends StepTestCase {
 		$output_file = wp_join_unix_paths( $this->runtime->getConfiguration()->getTargetSiteRoot(), 'output.txt' );
 		
 		$step = new RunPHPStep(new InlineFile(
-			'script.php',
-			<<<PHP
+			[
+				'filename' => 'script.php',
+				'content' => <<<PHP
 <?php 
 file_put_contents(getenv('DOCROOT') . '/output.txt', 'Hello World');
 PHP
+			]
 		));
 
 		$tracker = new Tracker();
@@ -42,14 +44,16 @@ PHP
 
 		$step = new RunPHPStep(
 			new InlineFile(
-				'script.php',
-				<<<PHP
+				[
+					'filename' => 'script.php',
+					'content' => <<<PHP
 <?php
 \$docroot = getenv('DOCROOT');
 \$test_file_path = \$docroot . '/test_file.txt';
 file_put_contents(\$test_file_path, 'This is a test file created by PHP');
 file_put_contents(\$docroot . '/output.txt', 'File created');
 PHP
+				]
 			)
 		);
 
@@ -70,8 +74,9 @@ PHP
 		
 		$step = new RunPHPStep(
 			new InlineFile(
-				'script.php',
-				<<<PHP
+				[
+					'filename' => 'script.php',
+					'content' => <<<PHP
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
 
@@ -81,6 +86,7 @@ update_option('test_option', 'test_value');
 // Write the option value to an output file
 file_put_contents(getenv('DOCROOT') . '/output.txt', get_option('test_option'));
 PHP
+				]
 			)
 		);
 
@@ -111,8 +117,9 @@ PHP
 		
 		$step = new RunPHPStep(
 			new InlineFile(
-				'script.php',
-				<<<PHP
+				[
+					'filename' => 'script.php',
+					'content' => <<<PHP
 <?php
 \$data = [
     'string' => 'Hello',
@@ -124,6 +131,7 @@ PHP
 
 file_put_contents(getenv('DOCROOT') . '/output.txt', json_encode(\$data));
 PHP
+				]
 			)
 		);
 
@@ -147,8 +155,12 @@ PHP
 	public function testRunPHPCodeWithSyntaxError() {
 		$step = new RunPHPStep(
 			new InlineFile(
-				'script.php',
-				'<?php echo "Missing semicolon" echo "Another string";'
+				[
+					'filename' => 'script.php',
+					'content' => <<<PHP
+<?php echo "Missing semicolon" echo "Another string";
+PHP
+				]
 			)
 		);
 

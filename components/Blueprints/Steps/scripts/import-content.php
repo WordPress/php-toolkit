@@ -2,8 +2,11 @@
 
 use WordPress\Blueprints\DataReference\DataReference;
 use WordPress\Blueprints\DataReference\DataReferenceResolver;
+use WordPress\Blueprints\DataReference\Directory;
+use WordPress\Blueprints\DataReference\ExecutionContextPath;
+use WordPress\Blueprints\DataReference\File;
 use WordPress\ByteStream\ReadStream\FileReadStream;
-use WordPress\HttpClient\Client\Client;
+use WordPress\HttpClient\Client;
 use WordPress\DataLiberation\EntityReader\EPubEntityReader;
 use WordPress\DataLiberation\EntityReader\FilesystemEntityReader;
 use WordPress\DataLiberation\EntityReader\WXREntityReader;
@@ -12,10 +15,7 @@ use WordPress\DataLiberation\Importer\ImportUtils;
 use WordPress\DataLiberation\Importer\RetryFrontloadingIterator;
 use WordPress\DataLiberation\Importer\StreamImporter;
 use WordPress\DataLiberation\URL\WPURL;
-use WordPress\Filesystem\Layer\ChrootLayer;
 use WordPress\Filesystem\LocalFilesystem;
-use WordPress\Git\GitFilesystem;
-use WordPress\Git\GitRepository;
 use WordPress\Zip\ZipFilesystem;
 
 use function WordPress\Filesystem\wp_join_unix_paths;
@@ -244,8 +244,18 @@ function run_content_import( $options ) {
 		bail_out( 'The "source" option is required.' );
 	}
 
+	if(!isset($options['execution_context_root'])) {
+		bail_out( 'The "execution_context_root" option is required.' );
+	}
+
 	$httpClient = new Client();
-	$content_source = DataReference::create($options['source']);
+	$content_source = DataReference::create($options['source'], [
+		ExecutionContextPath::class,
+	]);
+	$execution_context = LocalFilesystem::create($options['execution_context_root']);
+	$resolver = new DataReferenceResolver($httpClient);
+	$resolver->setExecutionContext($execution_context);
+	$resolved_source = $resolver->resolve_uncached($content_source);
 
 	$chrooted_fs     = null;
 	$source_site_url = null;
@@ -258,43 +268,15 @@ function run_content_import( $options ) {
 		$import_path_prefix = '/imported-content';
 		$source_site_url    = $options['source_site_url'];
 
-		if ( $options['mode'] === 'local_directory' ) {
-			$chrooted_fs = LocalFilesystem::create( $options['source'] );
-			$options['source_site_url'] = 'file:///';
-		} elseif ( $options['mode'] === 'git' ) {
-			if ( ! isset( $options['source'] ) ) {
-				bail_out( 'The "source" option is required.' );
-			}
-
-			$options['repo'] = $options['source'];
-			if ( ! str_ends_with( $options['repo'], '.git' ) ) {
-				bail_out( 'The "repo" option must end with ".git" when mode is "git".' );
-			}
-
-			if ( ! isset( $options['branch'] ) ) {
-				bail_out( 'The "branch" option is required when mode is "git".' );
-			}
-
-			$console_writer->write( "Sparse checkout of the git repository\n" );
-			$temp_dir  = sys_get_temp_dir() . '/import-static-' . uniqid();
-			$cache_fs  = LocalFilesystem::create( $temp_dir );
-			$docs_repo = new GitRepository( $cache_fs );
-			$docs_repo->add_remote( 'origin', $options['repo'] );
-			$remote       = $docs_repo->get_remote_client( 'origin' );
-			$path_in_repo = $options['path_in_repo'] ?? '';
-			$branch       = $options['branch'] ?? 'trunk';
-			$remote->fetch(
-				$branch,
-				array(
-					'path' => $path_in_repo,
-					'shallow' => true,
-				)
-			);
-			$docs_repo->set_branch_tip( 'refs/heads/' . $branch, $docs_repo->get_branch_tip( 'refs/remotes/origin/' . $branch ) );
-			$docs_repo->checkout( 'refs/heads/' . $branch );
-			$git_fs      = GitFilesystem::create( $docs_repo );
-			$chrooted_fs = new ChrootLayer( $git_fs, $path_in_repo );
+		if(!($resolved_source instanceof Directory)) {
+			bail_out( 'The "source" option must resolve to a directory.' );
 		}
+		$chrooted_fs = $resolved_source->filesystem;
+		if ( $options['mode'] === 'local_directory' ) {
+			// @TODO: Rethink this, consider which values should we choose for git repos.
+			$options['source_site_url'] = 'file:///';
+		}
+
 		$entity_reader_factory = function () use ( $chrooted_fs, $source_site_url, $index_file_pattern ) {
 			return new FilesystemEntityReader(
 				$chrooted_fs,
@@ -504,11 +486,12 @@ function run_content_import( $options ) {
 		if ( ! isset( $options['source'] ) ) {
 			help_message_and_die( 'The "wxr file" option is required.' );
 		}
-		$entity_reader_factory = function ( $cursor ) use ( $content_source, $httpClient ) {
-			// Create a new resolver each time to avoid caching the stream.
-			$resolver = new DataReferenceResolver($httpClient);
+		if(!($resolved_source instanceof File)) {
+			bail_out( 'The "source" option must resolve to a file.' );
+		}
+		$entity_reader_factory = function ( $cursor ) use ( $resolved_source ) {
 			return WXREntityReader::create(
-				$resolver->resolve($content_source)->getStream(),
+				$resolved_source->getStream(),
 				$cursor
 			);
 		};
@@ -516,9 +499,11 @@ function run_content_import( $options ) {
 		if ( ! isset( $options['source'] ) ) {
 			help_message_and_die( 'The "epub file" option is required.' );
 		}
-		$zip_fs                = ZipFilesystem::create(
-			uri_to_byte_stream( $options['source'] )
-		);
+
+		if(!($resolved_source instanceof File)) {
+			bail_out( 'The "source" option must resolve to a file.' );
+		}
+		$zip_fs = ZipFilesystem::create($resolved_source->getStream());
 		$entity_reader_factory = function ( $cursor = null ) use ( $zip_fs ) {
 			return new EPubEntityReader(
 				$zip_fs,
@@ -752,23 +737,6 @@ function data_liberation_import_step_customized( ImportSession $session, StreamI
 		$session->set_reentrancy_cursor( $importer->get_reentrancy_cursor() );
 	}
 	return false;
-}
-
-function uri_to_byte_stream( $uri ) {
-	if ( str_starts_with( $uri, 'http://' ) || str_starts_with( $uri, 'https://' ) ) {
-		$local_path = tempnam( sys_get_temp_dir(), 'wp-remote-file-' );
-		file_put_contents( $local_path, file_get_contents( $uri ) );
-		$uri = $local_path;
-
-		// @TODO: Use SeekableRequestReadStream here instead of
-		// pre-downloading the file to disk.
-		// $client = new Client();
-		// $response = $client->fetch($uri);
-	}
-	if ( file_exists( $uri ) ) {
-		return FileReadStream::from_path( $uri );
-	}
-	throw new \Exception( "Unknown resource type: $uri. If that's a local file, \033[1mplease provide an absolute path to the file\033[0m." );
 }
 
 

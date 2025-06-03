@@ -25,13 +25,31 @@ class InlineDirectory extends DataReference {
 	/**
 	 * Constructor.
 	 *
-	 * @param  string  $name  The directory name.
-	 * @param  array  $children  The directory children.
+	 * @param  array  $data  The blueprint data array.
 	 */
-	public function __construct( string $name, array $children ) {
-		$this->name     = $name;
+	public function __construct( array $data ) {
+		if ( ! isset( $data['directoryName'] ) || ! isset( $data['files'] ) || ! is_array( $data['files'] ) ) {
+			throw new InvalidArgumentException( 'Invalid inline directory data' );
+		}
+
+		$this->name = $data['directoryName'];
+		
+		$children = [];
+		foreach ( $data['files'] as $fileName => $child ) {
+			if ( is_string( $child ) ) {
+				$children[$fileName] = new InlineFile( [
+					'filename' => $fileName,
+					'content' => $child
+				] );
+			} elseif ( self::is_valid( $child ) ) {
+				$children[$fileName] = new self( $child );
+			} else {
+				throw new InvalidArgumentException( 'Invalid inline directory child' );
+			}
+		}
+		
 		$this->children = $children;
-		parent::__construct();
+		parent::__construct( $data );
 	}
 
 	/**
@@ -81,31 +99,6 @@ class InlineDirectory extends DataReference {
 		return new Directory( $this->as_filesystem(), $this->get_name() );
 	}
 
-	/**
-	 * Create an instance from an array.
-	 *
-	 * @param  array  $data  The array data.
-	 *
-	 * @return self The created instance.
-	 */
-	public static function from_blueprint_data( array $data ): self {
-		if ( ! isset( $data['directoryName'] ) || ! isset( $data['files'] ) || ! is_array( $data['files'] ) ) {
-			throw new InvalidArgumentException( 'Invalid inline directory data' );
-		}
-
-		$children = [];
-		foreach ( $data['files'] as $fileName => $child ) {
-			if ( is_string( $child ) ) {
-				$children[$fileName] = new InlineFile( $fileName, $child );
-			} elseif ( self::is_valid( $child ) ) {
-				$children[$fileName] = self::from_blueprint_data( $child );
-			} else {
-				throw new InvalidArgumentException( 'Invalid inline directory child' );
-			}
-		}
-
-		return new self( $data['directoryName'], $children );
-	}
 
 	/**
 	 * Check if an array represents a valid inline directory.

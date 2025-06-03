@@ -20,7 +20,7 @@ class ExecutionContextPath extends DataReference {
 	 */
 	public function __construct( string $path ) {
 		$this->path = $path;
-		parent::__construct();
+		parent::__construct($path);
 	}
 
 	/**

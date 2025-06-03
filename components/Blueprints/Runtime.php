@@ -62,6 +62,10 @@ class Runtime {
 	 * @var DataReference
 	 */
 	private $wpCliReference;
+	/**
+	 * @var string
+	 */
+	private $executionContextRoot;
 
 	public function __construct(
 		Filesystem $targetFs,
@@ -70,7 +74,8 @@ class Runtime {
 		Client $client,
 		array $blueprint,
 		string $tempRoot,
-		DataReference $wpCliReference
+		DataReference $wpCliReference,
+		string $executionContextRoot
 	) {
 		$this->targetFs       = $targetFs;
 		$this->configuration  = $configuration;
@@ -79,6 +84,11 @@ class Runtime {
 		$this->blueprint      = $blueprint;
 		$this->tempRoot       = $tempRoot;
 		$this->wpCliReference = $wpCliReference;
+		$this->executionContextRoot = $executionContextRoot;
+	}
+
+	public function getExecutionContextRoot(): string {
+		return $this->executionContextRoot;
 	}
 
 	public function getHttpClient(): Client {

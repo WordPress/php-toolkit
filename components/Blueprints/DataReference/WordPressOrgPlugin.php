@@ -15,30 +15,16 @@ class WordPressOrgPlugin extends DataReference {
 	protected $version;
 
 	/**
-	 * Parse a WordPress.org plugin reference into slug and version.
+	 * Create a WordPress.org plugin reference.
 	 *
-	 * @param  string  $reference  The reference to parse.
-	 *
-	 * @return WordPressOrgPlugin
+	 * @param  string  $reference  The reference to parse, e.g. "gutenberg" or "gutenberg@14.0.1"
 	 */
-	public static function from_blueprint_data( string $reference ) {
+	public function __construct( $reference ) {
 		$parts   = explode( '@', $reference );
-		$slug    = $parts[0];
-		$version = isset( $parts[1] ) ? $parts[1] : null;
+		$this->slug    = $parts[0];
+		$this->version = isset( $parts[1] ) ? $parts[1] : null;
 
-		return new self( $slug, $version );
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * @param  string  $slug  The plugin slug.
-	 * @param  string|null  $version  The plugin version.
-	 */
-	public function __construct( string $slug, ?string $version = null ) {
-		$this->slug    = $slug;
-		$this->version = $version;
-		parent::__construct();
+		parent::__construct($reference);
 	}
 
 	/**

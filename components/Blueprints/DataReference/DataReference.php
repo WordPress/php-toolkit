@@ -11,13 +11,20 @@ class DataReference {
 	 * @var int
 	 */
 	public $id;
+
+	/**
+	 * @var array
+	 */
+	public $original_definition;
+
 	/**
 	 * @var int
 	 */
 	private static $instanceCounter = 0;
 
-	public function __construct() {
+	public function __construct($original_definition = null) {
 		$this->id = self::$instanceCounter ++;
+		$this->original_definition = $original_definition;
 	}
 
 	static public function create( $reference, array $additional_reference_classes = [] ) {
@@ -29,11 +36,7 @@ class DataReference {
 		], $additional_reference_classes );
 		foreach ( $classes as $class ) {
 			if ( $class::is_valid( $reference ) ) {
-				if ( method_exists( $class, 'from_blueprint_data' ) ) {
-					return $class::from_blueprint_data( $reference );
-				} else {
-					return new $class( $reference );
-				}
+				return new $class( $reference );
 			}
 		}
 		throw new InvalidArgumentException(

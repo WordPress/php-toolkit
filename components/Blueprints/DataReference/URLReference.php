@@ -20,7 +20,7 @@ class URLReference extends DataReference {
 	 */
 	public function __construct( string $url ) {
 		$this->url = $url;
-		parent::__construct();
+		parent::__construct($url);
 	}
 
 	/**

@@ -24,10 +24,14 @@ class InlineFile extends DataReference {
 	 * @param  string  $filename  The filename.
 	 * @param  string  $content  The content.
 	 */
-	public function __construct( string $filename, string $content ) {
-		$this->filename = $filename;
-		$this->content  = $content;
-		parent::__construct();
+	public function __construct( array $definition ) {
+		if ( ! isset( $definition['filename'] ) || ! isset( $definition['content'] ) ) {
+			throw new InvalidArgumentException( 'Invalid inline file definition' );
+		}
+
+		$this->filename = $definition['filename'];
+		$this->content  = $definition['content'];
+		parent::__construct($definition);
 	}
 
 	/**
@@ -46,21 +50,6 @@ class InlineFile extends DataReference {
 	 */
 	public function get_content(): string {
 		return $this->content;
-	}
-
-	/**
-	 * Create an instance from an array.
-	 *
-	 * @param  array  $data  The array data.
-	 *
-	 * @return self The created instance.
-	 */
-	public static function from_blueprint_data( array $data ): self {
-		if ( ! isset( $data['filename'] ) || ! isset( $data['content'] ) ) {
-			throw new InvalidArgumentException( 'Invalid inline file data' );
-		}
-
-		return new self( $data['filename'], $data['content'] );
 	}
 
 	/**
