@@ -193,10 +193,6 @@ class RequestReadStream extends BaseByteReadStream {
 		);
 	}
 
-	public function close_reading(): void {
-		$this->is_closed = true;
-	}
-
 	protected function internal_close_reading(): void {
 		$latest_redirect = $this->request->latest_redirect();
 		if (

@@ -14,7 +14,7 @@ abstract class BaseByteReadStream implements ByteReadStream {
 	protected $buffer = '';
 	protected $offset_in_current_buffer = 0;
 	protected $bytes_already_forgotten = 0;
-	protected $is_closed = false;
+	protected $is_read_closed = false;
 	protected $expected_length = null;
 
 	public function length(): ?int {
@@ -29,7 +29,7 @@ abstract class BaseByteReadStream implements ByteReadStream {
 			default:
 				throw new ByteStreamException( 'Invalid pull mode' );
 		}
-		if ( $this->is_closed ) {
+		if ( $this->is_read_closed ) {
 			throw new ByteStreamException( 'Cannot pull() on a closed producer' );
 		}
 
@@ -155,7 +155,7 @@ abstract class BaseByteReadStream implements ByteReadStream {
 	}
 
 	public function reached_end_of_data(): bool {
-		if ( $this->is_closed ) {
+		if ( $this->is_read_closed ) {
 			return true;
 		}
 		if ( $this->count_consumable_bytes() > 0 ) {
@@ -173,7 +173,8 @@ abstract class BaseByteReadStream implements ByteReadStream {
 	}
 
 	public function close_reading(): void {
-		$this->is_closed = true;
+		$this->is_read_closed = true;
+		$this->internal_close_reading();
 	}
 
 	protected function internal_close_reading(): void {

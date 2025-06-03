@@ -10,7 +10,6 @@ class FileReadWriteStream extends BaseByteReadStream implements BytePipe {
 	private $file_pointer;
 
 	private $is_write_closed = false;
-	private $is_read_closed = false;
 
 	public static function from_path( string $path, bool $truncate = false ): self {
 		$mode         = $truncate ? 'w+b' : 'a+b';
@@ -81,7 +80,6 @@ class FileReadWriteStream extends BaseByteReadStream implements BytePipe {
 	}
 
 	protected function internal_close_reading(): void {
-		$this->is_read_closed = true;
 		$this->maybe_close_file_pointer();
 	}
 

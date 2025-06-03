@@ -19,6 +19,7 @@ new-wp
 test.txt
 secrets.php
 testing-grounds.php
+test-script.php
 plugins/git-repo/git-test-server-data
 *.secret.json
 plugins/static-files-editor/build

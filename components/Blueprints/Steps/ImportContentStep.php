@@ -8,13 +8,6 @@ use WordPress\Blueprints\Exception\BlueprintExecutionException;
 use WordPress\Blueprints\Progress\Tracker;
 use WordPress\Blueprints\Runtime;
 
-/**
- * Represents the 'importContent' step.
- * @TODO: Ditch the WXR_Importer plugin and adapt Data Liberation importer here.
- *        CLI importing logic is fleshed out in import-markdown-directory.php. This
- *        step could run a similar script as a subprocess and report the progress back
- *        using $progress tracker.
- */
 class ImportContentStep implements StepInterface {
 	/**
 	 * @var mixed[]
