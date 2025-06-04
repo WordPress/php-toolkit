@@ -165,24 +165,30 @@ class AttachmentDownloader {
 	}
 
 	public function poll() {
-		if ( ! $this->client->await_next_event() ) {
-			return false;
-		}
-		$event   = $this->client->get_event();
-		$request = $this->client->get_request();
-		// The request object we get from the client may be a redirect.
-		// Let's keep referring to the original request.
-		$original_url        = $request->original_request()->url;
-		$original_request_id = $request->original_request()->id;
+		while ( $this->client->await_next_event() ) {
+			$event   = $this->client->get_event();
+			$request = $this->client->get_request();
+			if ( Client::EVENT_FAILED === $event ) {
+				$this->on_failure( $request->url, $request->id, $request->error );
+				return true;
+			}
 
-		/**
-		 * @TODO: Whenever we get a redirect to a URL we've already processed,
-		 *        stop and emit a success event.
-		 */
+			// Only process responses this was the last request in the chain.
+			if ( $request->is_redirected() ) {
+				continue;
+			}
+			
+			// The request object we get from the client may be a redirect.
+			// Let's keep referring to the original request.
+			$original_url        = $request->original_request()->url;
+			$original_request_id = $request->original_request()->id;
 
-		switch ( $event ) {
-			case Client::EVENT_GOT_HEADERS:
-				if ( ! $request->is_redirected() ) {
+			/**
+			 * @TODO: Whenever we get a redirect to a URL we've already processed,
+			 *        stop and emit a success event.
+			 */
+			switch ( $event ) {
+				case Client::EVENT_GOT_HEADERS:
 					if ( file_exists( $this->output_paths[ $original_request_id ] . '.partial' ) ) {
 						unlink( $this->output_paths[ $original_request_id ] . '.partial' );
 					}
@@ -194,37 +200,29 @@ class AttachmentDownloader {
 							$this->progress[ $original_url ]['total'] = $request->response->get_header( 'Content-Length' );
 						}
 					}
-				}
-				break;
-			case Client::EVENT_BODY_CHUNK_AVAILABLE:
-				$chunk = $this->client->get_response_body_chunk();
-				if ( ! fwrite( $this->fps[ $original_request_id ], $chunk ) ) {
-					// @TODO: Don't echo the error message. Attach it to the import session instead for the user to review later on.
-					_doing_it_wrong( __METHOD__, sprintf( 'Failed to write to file: %s', $this->output_paths[ $original_request_id ] ),
-						'1.0' );
-				}
-				$this->progress[ $original_url ]['received'] += strlen( $chunk );
-				break;
-			case Client::EVENT_FAILED:
-				$this->on_failure( $original_url, $original_request_id, $request->error );
-				break;
-			case Client::EVENT_FINISHED:
-				if ( ! $request->is_redirected() ) {
-					// Only process if this was the last request in the chain.
-					$is_success = (
-						$request->response->status_code >= 200 &&
-						$request->response->status_code <= 299
-					);
-					if ( $is_success ) {
+					break;
+				case Client::EVENT_BODY_CHUNK_AVAILABLE:
+					$chunk = $this->client->get_response_body_chunk();
+					if ( ! fwrite( $this->fps[ $original_request_id ], $chunk ) ) {
+						// @TODO: Don't echo the error message. Attach it to the import session instead for the user to review later on.
+						_doing_it_wrong( __METHOD__, sprintf( 'Failed to write to file: %s', $this->output_paths[ $original_request_id ] ),
+							'1.0' );
+					}
+					$this->progress[ $original_url ]['received'] += strlen( $chunk );
+					break;
+				case Client::EVENT_FINISHED:
+					if ( $request->response->ok() ) {
 						$this->on_success( $original_url, $original_request_id );
 					} else {
 						$this->on_failure( $original_url, $original_request_id, 'http_error_' . $request->response->status_code );
 					}
-				}
-				break;
+					break;
+			}
+			
+			return true;
 		}
 
-		return true;
+		return false;
 	}
 
 	private function on_failure( $original_url, $original_request_id, $error = null ) {

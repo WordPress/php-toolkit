@@ -562,7 +562,21 @@ PHP
 					return 'site:' . $resource['path'];
 				case 'url':
 					// URLReference
-					return $resource['url'];
+					$url = $resource['url'];
+					// If it's a github.com URL, convert to raw.githubusercontent.com like WordPress Playground does
+					if (preg_match('#^https://github\.com/([^/]+)/([^/]+)/(?:blob|raw)/(.+)$#', $url, $matches)) {
+						// e.g. https://github.com/user/repo/blob/branch/path/to/file
+						//      => https://raw.githubusercontent.com/user/repo/branch/path/to/file
+						$user = $matches[1];
+						$repo = $matches[2];
+						$rest = $matches[3];
+						// The first segment of $rest is the branch/ref
+						$parts = explode('/', $rest, 2);
+						$ref = $parts[0];
+						$path = isset($parts[1]) ? $parts[1] : '';
+						$url = "https://raw.githubusercontent.com/$user/$repo/$ref/$path";
+					}
+					return $url;
 				case 'bundled':
 					// BundledReference – must start with
 					// ./ or /

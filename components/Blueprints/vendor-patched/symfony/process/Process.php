@@ -69,8 +69,8 @@ class Process implements IteratorAggregate {
 	private $fallbackStatus = array();
 	private $processInformation;
 	private $outputDisabled = false;
-	private $stdout;
-	private $stderr;
+	protected $stdout;
+	protected $stderr;
 	private $enhanceWindowsCompatibility = true;
 	private $enhanceSigchildCompatibility;
 	private $process;

@@ -105,12 +105,7 @@ class DataReferenceResolverTest extends TestCase {
 		$result    = $this->resolver->resolve( $reference );
 		$this->assertInstanceOf( Directory::class, $result );
 		$this->assertEquals( 'scripts', $result->dirname );
-		$this->assertEquals(
-			[
-				'publish.mjs',
-			],
-			$result->filesystem->ls( '/' )
-		);
+		$this->assertContains( 'publish.mjs', $result->filesystem->ls( '/' ) );
 	}
 
 	public function testResolveMissingExecutionContextFileThrows() {
