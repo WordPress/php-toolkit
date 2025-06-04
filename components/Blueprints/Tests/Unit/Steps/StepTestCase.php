@@ -75,11 +75,15 @@ class StepTestCase extends TestCase {
 			->setTargetSiteUrl( 'http://127.0.0.1:2456' );
 
 		$runner = new Runner( $config );
-		$runner->run();
+		try {
+			$runner->run();
+		} catch ( \WordPress\Filesystem\FilesystemException $e ) {
+			// Windows CI won't remove the temp directory, let's ignore that failure.
+		}
 		$this->runtime = $runner->runtime;
 		// Recreate the temp root directory – the runner cleans it up at the
 		// end of run().
-		mkdir( $this->runtime->getTempRoot() );
+		@mkdir( $this->runtime->getTempRoot() );
 	}
 
 	/**
