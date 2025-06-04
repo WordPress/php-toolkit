@@ -99,3 +99,13 @@ jobs:
                   asset_path: ./dist/blueprints.phar
                   asset_name: blueprints.phar
                   asset_content_type: application/phar
+
+            - name: Upload PHP toolkit .phar Asset
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.create_release.outputs.upload_url }}
+                  asset_path: ./dist/php-toolkit.phar
+                  asset_name: php-toolkit.phar
+                  asset_content_type: application/phar

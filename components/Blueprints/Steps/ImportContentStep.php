@@ -115,7 +115,6 @@ PHP
 		$buffer = '';
 		while ( !$output->reached_end_of_data() ) {
 			$bytes_ready = $output->pull(1024);
-			// var_dump($bytes_ready);
 			if ( ! $bytes_ready ) {
 				continue;
 			}
