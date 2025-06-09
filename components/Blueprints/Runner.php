@@ -194,6 +194,7 @@ class Runner {
 
 	public function run(): void {
 		$tempRoot = wp_unix_sys_get_temp_dir() . '/wp-blueprints-runtime-' . uniqid();
+
 		// TODO: Are there cases where we should not have these permissions?
 		mkdir( $tempRoot, 0777, true );
 
@@ -253,9 +254,14 @@ class Runner {
 			}
 			$progress['targetResolution']->finish();
 
+			do_action('blueprint.target_resolved');
+
 			$progress['data']->setCaption( 'Resolving data references' );
 			$this->assets->startEagerResolution( $this->dataReferencesToAutoResolve, $progress['data'] );
 			$this->executePlan( $progress['execution'], $plan, $this->runtime );
+
+			// @TODO: Assert WordPress is still correctly installed
+			
 			$progress->finish();
 		} finally {
 			// TODO: Optionally preserve workspace in case of error? Support resuming after error?

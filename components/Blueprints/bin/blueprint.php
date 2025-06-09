@@ -49,6 +49,189 @@ if ( PHP_OS_FAMILY === 'Windows' && function_exists( 'sapi_windows_vt100_support
 	@sapi_windows_vt100_support( STDOUT, true );
 }
 
+interface ProgressReporter {
+    /**
+     * Report progress update
+     * 
+     * @param float $progress Progress percentage (0-100)
+     * @param string $caption Progress caption/message
+     */
+    public function reportProgress(float $progress, string $caption): void;
+
+    /**
+     * Report an error
+     * 
+     * @param string $message Error message
+     * @param \Throwable|null $exception Optional exception details
+     */
+    public function reportError(string $message, ?\Throwable $exception = null): void;
+
+    /**
+     * Report completion
+     * 
+     * @param string $message Completion message
+     */
+    public function reportCompletion(string $message): void;
+
+    /**
+     * Close/cleanup the reporter
+     */
+    public function close(): void;
+}
+
+class TerminalProgressReporter implements ProgressReporter {
+    private $stdout;
+    private $lastProgress = -1;
+    private $lastCaption = '';
+    private $progressBarWidth = 50;
+
+    public function __construct() {
+        $this->stdout = fopen('php://stdout', 'w');
+    }
+
+    public function reportProgress(float $progress, string $caption): void {
+        // Don't repeat identical progress
+        if ($this->lastProgress === $progress && $this->lastCaption === $caption) {
+            return;
+        }
+
+        $this->lastProgress = $progress;
+        $this->lastCaption = $caption;
+
+        $percentage = min(100, max(0, $progress));
+        $filled = (int)round($this->progressBarWidth * ($percentage / 100));
+        $empty = $this->progressBarWidth - $filled;
+        
+        $bar = str_repeat('=', $filled);
+        if ($empty > 0 && $filled < $this->progressBarWidth) {
+            $bar .= '>';
+            $bar .= str_repeat(' ', $empty - 1);
+        } else {
+            $bar .= str_repeat(' ', $empty);
+        }
+
+        $status = sprintf(
+            "\r[%s] %3.1f%% - %s",
+            $bar,
+            $percentage,
+            $caption
+        );
+
+        if ($this->isTty()) {
+            // Clear line and write new progress
+            fwrite($this->stdout, "\r\033[K" . $status);
+        } else {
+            // Non-TTY, just write new line
+            fwrite($this->stdout, $status . "\n");
+        }
+        fflush($this->stdout);
+    }
+
+    public function reportError(string $message, ?\Throwable $exception = null): void {
+        $this->clearCurrentLine();
+        
+        $errorMsg = "\033[1;31mError:\033[0m " . $message;
+        if ($exception) {
+            $errorMsg .= " (" . $exception->getMessage() . ")";
+        }
+        
+        fwrite($this->stdout, $errorMsg . "\n");
+        fflush($this->stdout);
+    }
+
+    public function reportCompletion(string $message): void {
+        $this->clearCurrentLine();
+        fwrite($this->stdout, "\033[1;32m" . $message . "\033[0m\n");
+        fflush($this->stdout);
+    }
+
+    public function close(): void {
+        if ($this->stdout) {
+            fclose($this->stdout);
+        }
+    }
+
+    private function clearCurrentLine(): void {
+        if ($this->isTty()) {
+            fwrite($this->stdout, "\r\033[K");
+        }
+    }
+
+    private function isTty(): bool {
+        return stream_isatty($this->stdout);
+    }
+}
+
+class JsonProgressReporter implements ProgressReporter {
+    private $outputFile;
+
+    public function __construct() {
+        $outputPath = getenv('OUTPUT_FILE') ?: 'php://stdout';
+        $this->outputFile = fopen($outputPath, 'w');
+    }
+
+    public function reportProgress(float $progress, string $caption): void {
+        $this->writeJsonMessage([
+            'type' => 'progress',
+            'progress' => round($progress, 2),
+            'caption' => $caption
+        ]);
+    }
+
+    public function reportError(string $message, ?\Throwable $exception = null): void {
+        $errorData = [
+            'type' => 'error',
+            'message' => $message
+        ];
+
+        if ($exception) {
+            $errorData['details'] = [
+                'exception' => get_class($exception),
+                'message' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTraceAsString()
+            ];
+        }
+
+        $this->writeJsonMessage($errorData);
+    }
+
+    public function reportCompletion(string $message): void {
+        $this->writeJsonMessage([
+            'type' => 'completion',
+            'message' => $message
+        ]);
+    }
+
+    public function close(): void {
+        if ($this->outputFile) {
+            fclose($this->outputFile);
+        }
+    }
+
+    private function writeJsonMessage(array $data): void {
+        fwrite($this->outputFile, json_encode($data) . "\n");
+        fflush($this->outputFile);
+    }
+}
+
+function createProgressReporter(): ProgressReporter {
+	$reporter = apply_filters('blueprint.progress_reporter', null);
+	if ( $reporter ) {
+		return $reporter;
+	}
+
+    // Use JSON mode if OUTPUT_FILE is set or if we're not in a TTY
+    if (getenv('OUTPUT_FILE') || !stream_isatty(STDOUT)) {
+        return new JsonProgressReporter();
+    }
+    
+    return new TerminalProgressReporter();
+}
+
+$progressReporter = createProgressReporter();
+
 // -----------------------------------------------------------------------------
 //   Command and option definitions
 // -----------------------------------------------------------------------------
@@ -123,7 +306,7 @@ function resolveCommand( $commandArg, array $commandConfigurations ): ?string {
 // -----------------------------------------------------------------------------
 //   Command handlers
 // -----------------------------------------------------------------------------
-function handleExecCommand( array $positionalArgs, array $options, array $commandConfig ): void {
+function handleExecCommand( array $positionalArgs, array $options, array $commandConfig, ProgressReporter $progressReporter ): void {
 	// Check if help is requested for this command
 	if ( $options['help'] ) {
 		showCommandHelpMessage( 'exec', $commandConfig );
@@ -133,52 +316,49 @@ function handleExecCommand( array $positionalArgs, array $options, array $comman
 	// Validate required options
 	foreach ( $commandConfig['requiredOptions'] as $requiredOption ) {
 		if ( empty( $options[ $requiredOption ] ) ) {
-			echo "\033[31mError:\033[0m The --$requiredOption option is required for the exec command." . PHP_EOL;
+			$progressReporter->reportError("The --$requiredOption option is required for the exec command.");
 			exit( 1 );
 		}
 	}
 
 	// Validate required positional arguments
 	if ( empty( $positionalArgs ) ) {
-		echo "\033[31mError:\033[0m A Blueprint reference must be specified as a positional argument." . PHP_EOL;
+		$progressReporter->reportError("A Blueprint reference must be specified as a positional argument.");
 		exit( 1 );
 	}
 
 	try {
 		// Convert CLI arguments to RunnerConfiguration
 		$config = cliArgsToRunnerConfiguration( $positionalArgs, $options );
-		$config->setProgressObserver( new ProgressObserver( function ( $progress, $caption ) {
-			reportProgress( $progress, $caption );
+		$config->setProgressObserver( new ProgressObserver( function ( $progress, $caption ) use ( $progressReporter ) {
+			$progressReporter->reportProgress( $progress, $caption );
 		} ) );
 		$runner = new Runner( $config );
 
 		// Execute the Blueprint
 		if ( $config->getExecutionMode() === 'create-new-site' ) {
-			echo "\033[1;32mCreating a new site\033[0m\n";
+			$progressReporter->reportProgress(0, 'Creating a new site');
 		} else {
-			echo "\033[1;32mUpdating an existing site\033[0m\n";
+			$progressReporter->reportProgress(0, 'Updating an existing site');
 		}
-		echo sprintf( "  Site URL:  %s\n", $config->getTargetSiteUrl() );
-		echo sprintf( "  Site path: %s\n", $config->getTargetSiteRoot() );
-		echo sprintf( "  Blueprint: %s\n", $config->getBlueprint()->get_human_readable_name() );
-		echo PHP_EOL;
+		$progressReporter->reportProgress(0, sprintf("  Site URL:  %s", $config->getTargetSiteUrl()));
+		$progressReporter->reportProgress(0, sprintf("  Site path: %s", $config->getTargetSiteRoot()));
+		$progressReporter->reportProgress(0, sprintf("  Blueprint: %s", $config->getBlueprint()->get_human_readable_name()));
 		
 		$runner->run();
 		
-		echo PHP_EOL;
-		echo sprintf( "\033[32m✔ Blueprint successfully executed.\033[0m\n" );
+		$progressReporter->reportCompletion("Blueprint successfully executed.");
 	} catch ( PermissionsException $ex ) {
-		echo PHP_EOL . PHP_EOL;
 		$permission = $ex->getPermission();
 		$flag       = RunnerConfiguration::getPermissionCliFlag( $permission );
 
-		echo sprintf( "\033[31mPermission Error:\033[0m %s\n", $ex->getMessage() );
-		echo sprintf( "\033[33mTip:\033[0m Run with \033[1m--allow=%s\033[0m to grant this permission.\n", $flag );
+		$progressReporter->reportError(sprintf("Permission Error: %s", $ex->getMessage()));
+		$progressReporter->reportError(sprintf("Tip: Run with --allow=%s to grant this permission.", $flag));
 		exit( 1 );
 	}
 }
 
-function handleHelpCommand( array $positionalArgs, array $options, array $commandConfigurations ): void {
+function handleHelpCommand( array $positionalArgs, array $options, array $commandConfigurations, ProgressReporter $progressReporter ): void {
 	if ( ! empty( $positionalArgs ) ) {
 		$requestedCommand = $positionalArgs[0];
 		$resolvedCommand = resolveCommand( $requestedCommand, $commandConfigurations );
@@ -186,7 +366,7 @@ function handleHelpCommand( array $positionalArgs, array $options, array $comman
 		if ( $resolvedCommand !== null ) {
 			showCommandHelpMessage( $resolvedCommand, $commandConfigurations[ $resolvedCommand ] );
 		} else {
-			echo "\033[31mError:\033[0m Unknown command '$requestedCommand'.\n\n";
+			$progressReporter->reportError("Unknown command '$requestedCommand'.");
 			showGeneralHelpMessage( $commandConfigurations );
 		}
 	} else {
@@ -380,33 +560,6 @@ function showCommandHelpMessage( string $command, array $commandConfig ): void {
 	echo "\n";
 }
 
-function reportProgress( $progress, $caption ) {
-	static $lastLength = 0;
-	static $columns = null;
-	$output        = sprintf( "[%3d%%] %s", $progress, $caption );
-	$currentLength = strlen( $output );
-
-	// Get terminal width if possible
-	if ( null === $columns ) {
-		if ( function_exists( 'exec' ) && false !== exec( 'tput cols 2>/dev/null', $out ) ) {
-			$columns = (int) $out[0];
-		} elseif ( function_exists( 'shell_exec' ) && ( $shellColumns = shell_exec( 'tput cols 2>/dev/null' ) ) ) {
-			$columns = (int) $shellColumns;
-		}
-		if ( null === $columns ) {
-			$columns = 80;
-		}
-	}
-
-	// Truncate if longer than terminal width
-	if ( $currentLength > $columns - 1 ) {
-		$output        = substr( $output, 0, $columns - 4 ) . '...';
-		$currentLength = $columns - 1;
-	}
-
-	fprintf( STDERR, "\r%s%s", $output, $currentLength < $lastLength ? str_repeat( ' ', $lastLength - $currentLength ) : '' );
-	$lastLength = $currentLength;
-}
 
 // -----------------------------------------------------------------------------
 //   Main entry
@@ -425,7 +578,7 @@ try {
 	$command = resolveCommand( $commandArg, $commandConfigurations );
 	
 	if ( $command === null ) {
-		echo "\033[31mError:\033[0m Unknown command '$commandArg'.\n\n";
+		$progressReporter->reportError("Unknown command '$commandArg'.");
 		showGeneralHelpMessage( $commandConfigurations );
 		exit( 1 );
 	}
@@ -437,41 +590,40 @@ try {
 	// Dispatch to appropriate command handler
 	switch ( $command ) {
 		case 'exec':
-			handleExecCommand( $positionalArgs, $options, $commandConfigurations[ $command ] );
+			handleExecCommand( $positionalArgs, $options, $commandConfigurations[ $command ], $progressReporter );
 			break;
 		case 'help':
-			handleHelpCommand( $positionalArgs, $options, $commandConfigurations );
+			handleHelpCommand( $positionalArgs, $options, $commandConfigurations, $progressReporter );
 			break;
 		default:
-			echo "\033[31mError:\033[0m Command handler not implemented for '$command'.\n";
+			$progressReporter->reportError("Command handler not implemented for '$command'.");
 			exit( 1 );
 	}
 } catch ( BlueprintExecutionException $ex ) {
-	echo PHP_EOL;
 	if ( ! $ex->schemaError ) {
-		echo sprintf( "\033[31mError:\033[0m %s\n", $ex->getMessage() );
+		$progressReporter->reportError($ex->getMessage());
 		while ( $ex->getPrevious() ) {
 			$ex = $ex->getPrevious();
-			echo sprintf( "\033[31mCaused by:\033[0m %s\n", $ex->getMessage() );
+			$progressReporter->reportError("Caused by: " . $ex->getMessage());
 		}
 		exit( 1 );
 	}
 
-	echo sprintf( "\033[31mError:\033[0m %s See the validation errors below:\n", $ex->getMessage() );
+	$progressReporter->reportError($ex->getMessage() . " See the validation errors below:");
 	$lastPrettyPath = '';
 	$currentError   = $ex->schemaError;
 	while ( $currentError ) {
 		$prettyPath = $currentError->getPrettyPath();
 		if ( $prettyPath !== $lastPrettyPath ) {
-			echo sprintf( "\033[31m%s\033[0m: \n", $prettyPath );
+			$progressReporter->reportError($prettyPath . ":");
 		}
-		echo $currentError->message . PHP_EOL;
+		$progressReporter->reportError($currentError->message);
 		$currentError   = $currentError->getMostProbableCause();
 		$lastPrettyPath = $prettyPath;
 	}
 	exit( 1 );
 } catch ( Exception $ex ) {
-	echo sprintf( "\033[31mError:\033[0m %s\n", $ex->getMessage() );
-	echo "Try 'help' for usage.\n";
+	$progressReporter->reportError($ex->getMessage());
+	$progressReporter->reportError("Try 'help' for usage.");
 	exit( 1 );
 }
