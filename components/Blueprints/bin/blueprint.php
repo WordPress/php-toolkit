@@ -352,7 +352,7 @@ function handleExecCommand( array $positionalArgs, array $options, array $comman
 		$permission = $ex->getPermission();
 		$flag       = RunnerConfiguration::getPermissionCliFlag( $permission );
 
-		$progressReporter->reportError(sprintf("Permission Error: %s", $ex->getMessage()));
+		$progressReporter->reportError(sprintf("Permission Error: %s", $ex->getMessage()), $ex);
 		$progressReporter->reportError(sprintf("Tip: Run with --allow=%s to grant this permission.", $flag));
 		exit( 1 );
 	}
@@ -609,7 +609,7 @@ try {
 		exit( 1 );
 	}
 
-	$progressReporter->reportError($ex->getMessage() . " See the validation errors below:");
+	$progressReporter->reportError($ex->getMessage() . ' See the validation errors below:');
 	$lastPrettyPath = '';
 	$currentError   = $ex->schemaError;
 	while ( $currentError ) {
@@ -623,7 +623,6 @@ try {
 	}
 	exit( 1 );
 } catch ( Exception $ex ) {
-	$progressReporter->reportError($ex->getMessage());
-	$progressReporter->reportError("Try 'help' for usage.");
+	$progressReporter->reportError($ex->getMessage(), $ex);
 	exit( 1 );
 }
