@@ -227,8 +227,13 @@ class Runner {
 			$targetSiteFs   = LocalFilesystem::create( $this->configuration->getTargetSiteRoot() );
 			$wpCliReference = DataReference::create( 'https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar' );
 
-			$execution_context_root = $this->blueprintExecutionContext->get_meta()['root'];
-			assert(is_string($execution_context_root) && strlen($execution_context_root) > 0, 'Assertion failed: Execution context root was empty.');
+			$execution_context = $this->blueprintExecutionContext->get_meta();
+			if(
+				isset($execution_context['root']) &&
+				( !is_string($execution_context['root']) || strlen($execution_context['root']) === 0)
+			) {
+				throw new BlueprintExecutionException('Execution context was a local directory, but the Runner could not determine the root directory. This should never happen. Please report this as a bug.');
+			}
 
 			$this->runtime  = new Runtime(
 				$targetSiteFs,
@@ -238,7 +243,7 @@ class Runner {
 				$this->blueprintArray,
 				$tempRoot,
 				$wpCliReference,
-				$execution_context_root
+				$execution_context['root']
 			);
 			$this->progressObserver->setRuntime( $this->runtime );
 			$progress['wpCli']->setCaption( 'Downloading WP-CLI' );

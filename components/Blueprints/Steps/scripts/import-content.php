@@ -244,10 +244,6 @@ function run_content_import( $options ) {
 			bail_out( 'The "source" option is required.' );
 		}
 
-		if(!isset($options['execution_context_root'])) {
-			bail_out( 'The "execution_context_root" option is required.' );
-		}
-
 		// Set up progress stages
 		$mainTracker->split([
 			'setup' => ['ratio' => 10, 'caption' => 'Setting up import'],
@@ -263,9 +259,12 @@ function run_content_import( $options ) {
 		$content_source = DataReference::create($options['source'], [
 			ExecutionContextPath::class,
 		]);
-		$execution_context = LocalFilesystem::create($options['execution_context_root']);
 		$resolver = new DataReferenceResolver($httpClient);
-		$resolver->setExecutionContext($execution_context);
+		if(isset($options['execution_context_root']) && $options['execution_context_root'] !== '') {
+			$resolver->setExecutionContext(
+				LocalFilesystem::create($options['execution_context_root'])
+			);
+		}
 		$resolved_source = $resolver->resolve_uncached($content_source);
 
 		$setupTracker->set(30, 'Configuring import mode');

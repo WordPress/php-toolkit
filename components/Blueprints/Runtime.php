@@ -75,7 +75,7 @@ class Runtime {
 		array $blueprint,
 		string $tempRoot,
 		DataReference $wpCliReference,
-		string $executionContextRoot
+		?string $executionContextRoot=null
 	) {
 		$this->targetFs       = $targetFs;
 		$this->configuration  = $configuration;
@@ -87,7 +87,7 @@ class Runtime {
 		$this->executionContextRoot = $executionContextRoot;
 	}
 
-	public function getExecutionContextRoot(): string {
+	public function getExecutionContextRoot(): ?string {
 		return $this->executionContextRoot;
 	}
 
