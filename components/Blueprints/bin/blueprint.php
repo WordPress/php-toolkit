@@ -262,6 +262,18 @@ $commandConfigurations = [
 			'db-name'                     => [ null, true, 'wordpress', 'MySQL database' ],
 			'db-path'                     => [ 'p', true, 'wp.db', 'SQLite file path' ],
 			'truncate-new-site-directory' => [ 't', false, false, 'Delete target directory if it exists before execution' ],
+			/**
+			 * @TODO: Reuse this error message removed from the Playground repo:
+			 * 
+			 *			if (!blueprintMayReadAdjacentFiles) {
+			 *				throw new ReportableError(
+			 *					`Error: Blueprint contained tried to read a local file at path "${path}" (via a resource of type "bundled"). ` +
+			 *						`Playground restricts access to local resources by default as a security measure. \n\n` +
+			 *						`You can allow this Blueprint to read files from the same parent directory by explicitly adding the ` +
+			 *						`--blueprint-may-read-adjacent-files option to your command.`
+			 *				);
+			 *			}
+			 */
 			'allow'                       => [ null, true, null, 'Allowed permissions. One of: ' . implode( ', ', $supportedPermissions ) ],
 		] ),
 		'examples'        => [

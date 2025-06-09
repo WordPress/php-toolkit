@@ -476,6 +476,8 @@ class Runner {
 					$this->recommendedWpVersion = $wp_version['max'];
 					$max = WordPressVersion::fromString( $wp_version['max'] );
 					if ( ! $max ) {
+						// @TODO: Reuse this error message
+						// 'Unrecognized WordPress version. Please use "latest", a URL, or a numeric version such as "6.2", "6.0.1", "6.2-beta1", or "6.2-RC1"'
 						throw new BlueprintExecutionException( 'Invalid WordPress version string in wordpressVersion.max: ' . $wp_version['max'] );
 					}
 				}
