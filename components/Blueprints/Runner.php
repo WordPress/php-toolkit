@@ -52,6 +52,7 @@ use WordPress\Filesystem\InMemoryFilesystem;
 use WordPress\Filesystem\LocalFilesystem;
 use WordPress\HttpClient\ByteStream\RequestReadStream;
 use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
 use WordPress\Zip\ZipFilesystem;
 
 use function WordPress\Encoding\utf8_is_valid_byte_stream;
@@ -243,7 +244,7 @@ class Runner {
 				$this->blueprintArray,
 				$tempRoot,
 				$wpCliReference,
-				$execution_context['root']
+				isset($execution_context['root']) ? $execution_context['root'] : null
 			);
 			$this->progressObserver->setRuntime( $this->runtime );
 			$progress['wpCli']->setCaption( 'Downloading WP-CLI' );

@@ -231,8 +231,9 @@ class Runtime {
 		$process = $this->createPhpSubProcess( $code, $env, $input, $timeout );
 		$process->mustRun();
 
+		$output = $process->getOutputStream(Process::OUTPUT_FILE)->consume_all();
 		return new EvalResult(
-			$process->getOutputStream(Process::OUTPUT_FILE)->consume_all(),
+			$output,
 			$process
 		);
 	}

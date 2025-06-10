@@ -230,6 +230,7 @@ function createProgressReporter(): ProgressReporter {
     return new TerminalProgressReporter();
 }
 
+
 $progressReporter = createProgressReporter();
 
 // -----------------------------------------------------------------------------
