@@ -14,7 +14,7 @@ rm -rf $DIST_DIR
 mkdir -p $DIST_DIR
 
 cp -r $PROJECT_DIR/plugins/data-liberation $DIST_DIR
-cp $PROJECT_DIR/dist/wordpress-libraries.phar $DIST_DIR/data-liberation/wordpress-libraries.phar
+cp $PROJECT_DIR/dist/php-toolkit.phar $DIST_DIR/data-liberation/php-toolkit.phar
 cd $DIST_DIR
 zip -r data-liberation.zip data-liberation/
 cd $PROJECT_DIR
