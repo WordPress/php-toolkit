@@ -39,6 +39,7 @@ class Client {
 		if(empty($options['transport']) || $options['transport'] === 'auto') {
 			$options['transport'] = extension_loaded( 'curl' ) ? 'curl' : 'socket';
 		}
+		$options['transport'] = 'socket';
 
 		switch ( $options['transport'] ) {
 			case 'curl':
@@ -74,7 +75,10 @@ class Client {
 	 *
 	 * @return RequestReadStream
 	 */
-	public function fetch( Request $request, array $options = [] ) {
+	public function fetch( $request, array $options = [] ) {
+		if(is_string($request)) {
+			$request = new Request($request);
+		}
 		return new RequestReadStream(
 			$request,
 			array_merge( [ 'client' => $this ],

@@ -39,7 +39,7 @@ class LocalFilesystem implements Filesystem {
 
 		if ( ! is_dir( $root ) ) {
 			if ( false === mkdir( $root, 0755, true ) ) {
-				throw new FilesystemException( sprintf( 'Root directory did not exist and could not be created: %s', $root ) );
+				throw new FilesystemException( sprintf( 'Root directory did not exist and could not be created: %s', var_export($root, true) ) );
 			}
 		}
 

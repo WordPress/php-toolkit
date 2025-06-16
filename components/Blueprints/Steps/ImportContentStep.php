@@ -68,7 +68,7 @@ class ImportContentStep implements StepInterface {
 <?php
 run_content_import([
 	'mode' => 'wxr',
-	'execution_context_root' => getenv('EXECUTION_CONTEXT'),
+	'execution_context_root' => getenv('EXECUTION_CONTEXT') ? getenv('EXECUTION_CONTEXT') : null,
 	'source' => json_decode(getenv('DATA_SOURCE_DEFINITION'), true),
 	// @TODO: Support arbitrary media URLs to enable fetching assets during import.
 	// 'media_url' => 'https://pd.w.org/'
@@ -99,8 +99,11 @@ PHP
 					break;
 				case 'error':
 					throw new BlueprintExecutionException( $data['message'] );
+				case 'completion':
+					$progress->finish();
+					break;
 				default:
-					throw new BlueprintExecutionException( 'Unknown messagetype: ' . $data['type'] );
+					throw new BlueprintExecutionException( 'Unknown message type: ' . $data['type'] );
 			}
 		}
 

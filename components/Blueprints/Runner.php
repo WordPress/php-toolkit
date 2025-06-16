@@ -640,9 +640,9 @@ class Runner {
 			// @TODO: Make sure this doesn't get included twice in the execution plan,
 			//        e.g. if the Blueprint specified this step manually.
 			if ( $step instanceof ImportContentStep ) {
-				if($this->configuration->isRunningAsPhar()) {
-					throw new InvalidArgumentException( '@TODO: Importing content is not supported when running as phar.' );
-				} else {
+				// if($this->configuration->isRunningAsPhar()) {
+				// 	throw new InvalidArgumentException( '@TODO: Importing content is not supported when running as phar.' );
+				// } else {
 					$libraries_phar_path = __DIR__ . '/../../dist/php-toolkit.phar';
 					if(!file_exists($libraries_phar_path)) {
 						throw new InvalidArgumentException(
@@ -655,7 +655,7 @@ class Runner {
 						'filename' => 'php-toolkit.phar',
 						'content' => file_get_contents( $libraries_phar_path )
 					] ) );
-				}
+				// }
 				array_unshift( $plan, $this->createStepObject( 'writeFiles', [
 					'files' => [
 						'php-toolkit.phar' => $source,

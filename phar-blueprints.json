@@ -27,5 +27,8 @@
     ],
 	"directories": [
         "vendor/composer"
+	],
+	"files": [
+		"dist/php-toolkit.phar"
 	]
 }
