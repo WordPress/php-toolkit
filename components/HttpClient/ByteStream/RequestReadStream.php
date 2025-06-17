@@ -118,13 +118,29 @@ class RequestReadStream extends BaseByteReadStream {
 					$content_length = $response->get_header( 'Content-Length' );
 					if ( null !== $content_length ) {
 						/**
-						 * Set the content-length based on the header, but make sure it stays null
-						 * when the Content-Length header is not set.
+						 * Best-effort attempt to guess the content-length of the response.
 						 *
-						 * Important: Don't set the content-length to 0 if the header is missing! This
-						 * would tell the streaming machinery there's no body to consume.
+						 * Web servers often respond with a combination of Content-Length
+						 * and Content-Encoding. For example, a 16kb text file may be compressed
+						 * to 4kb with gzip and served with a Content-Encoding of `gzip` and a
+						 * Content-Length of 4KB.
+						 *
+						 * If we just use that value, we'd truncate a 16KB body stream with at a
+						 * Content-Length of 4KB.
+						 *
+						 * To correct that behavior, we're discarding the Content-Length header when
+						 * it's used alongside a compressed response stream.
 						 */
-						$this->remote_file_length = (int) $content_length;
+						if ( ! $response->get_header( 'Content-Encoding' ) ) {
+							/**
+							 * Set the content-length based on the header, but make sure it stays null
+							 * when the Content-Length header is not set.
+							 *
+							 * Important: Don't set the content-length to 0 if the header is missing! This
+							 * would tell the streaming machinery there's no body to consume.
+							 */
+							$this->remote_file_length = (int) $content_length;
+						}
 					}
 					if ( $stop_at_event === Client::EVENT_GOT_HEADERS ) {
 						return true;
