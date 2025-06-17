@@ -10,6 +10,7 @@ use WordPress\HttpClient\Client;
 use WordPress\DataLiberation\EntityReader\EPubEntityReader;
 use WordPress\DataLiberation\EntityReader\FilesystemEntityReader;
 use WordPress\DataLiberation\EntityReader\WXREntityReader;
+use WordPress\DataLiberation\Importer\EntityImporter;
 use WordPress\DataLiberation\Importer\ImportSession;
 use WordPress\DataLiberation\Importer\ImportUtils;
 use WordPress\DataLiberation\Importer\RetryFrontloadingIterator;
@@ -569,6 +570,7 @@ function run_content_import( $options ) {
 		$importer = StreamImporter::create(
 			$entity_reader_factory,
 			array(
+				'entity_sink' => new EntityImporter(),
 				'source_site_url' => $source_site_url,
 				'new_site_content_root_url' => NEW_SITE_CONTENT_ROOT,
 				'source_media_root_urls' => $options['media_url'] ?? array( $source_site_url ),
