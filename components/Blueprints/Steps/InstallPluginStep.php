@@ -154,7 +154,7 @@ if ( ! class_exists( '\WP_Upgrader_Skin', false ) ) {
 
 		public function feedback( $string, ...$args ) {
 			// For debugging
-			error_log( sprintf( $string, ...$args ) );
+			fwrite( STDERR, sprintf( $string, ...$args ) . "\n" );
 		}
 
 		public function header() {
@@ -191,41 +191,34 @@ $admins = get_users( array( 'role' => 'Administrator' ) );
 if ( ! empty( $admins ) ) {
 	wp_set_current_user( $admins[0]->ID );
 } else {
-	error_log( "No admin user found to perform plugin installation." );
+	fwrite( STDERR, "No admin user found to perform plugin installation." . "\n" );
 	exit( 1 );
 }
 
 $plugin_zip_path = getenv( 'PLUGIN_ZIP_PATH' );
 if ( ! $plugin_zip_path ) {
-	error_log( "PLUGIN_ZIP_PATH environment variable not set." );
+	fwrite( STDERR, "PLUGIN_ZIP_PATH environment variable not set." . "\n" );
 	exit( 1 );
 }
 
 if ( ! file_exists( $plugin_zip_path ) ) {
-	error_log( "Plugin zip file not found at " . $plugin_zip_path );
+	fwrite( STDERR, "Plugin zip file not found at " . $plugin_zip_path . "\n" );
 	exit( 1 );
 }
 
 // List files from the plugin zip
 $zip = new ZipArchive();
 if ( $zip->open( $plugin_zip_path ) !== true ) {
-	error_log( "Failed to open plugin zip file: " . $plugin_zip_path );
+	fwrite( STDERR, "Failed to open plugin zip file: " . $plugin_zip_path . "\n" );
 	exit( 1 );
 }
 
-error_log( "Plugin zip contents:" );
+fwrite( STDERR, "Plugin zip contents:" . "\n" );
 for ( $i = 0; $i < $zip->numFiles; $i ++ ) {
 	$filename = $zip->getNameIndex( $i );
 	$stats    = $zip->statIndex( $i );
 	$size     = $stats['size'];
 	$is_dir   = substr( $filename, - 1 ) === '/';
-
-	error_log( sprintf(
-		"%s%s (%s bytes)",
-		$filename,
-		$is_dir ? " [directory]" : "",
-		$size
-	) );
 }
 
 // Extract plugin slug from the zip file
@@ -244,7 +237,7 @@ $zip->close();
 // Make sure the destination directory is writable
 $wp_plugin_dir = WP_PLUGIN_DIR;
 if ( ! is_writable( $wp_plugin_dir ) ) {
-	error_log( "Plugin directory is not writable: " . $wp_plugin_dir );
+	fwrite( STDERR, "Plugin directory is not writable: " . $wp_plugin_dir . "\n" );
 	// Try to fix permissions
 	@chmod( $wp_plugin_dir, 0755 );
 	if ( ! is_writable( $wp_plugin_dir ) ) {
@@ -269,7 +262,7 @@ if ( ! empty( $plugin_slug ) ) {
 	// Create the directory
 	$GLOBALS['wp_filesystem']->mkdir( $target_directory );
 
-	error_log( "Created target directory: " . $target_directory );
+	fwrite( STDERR, "Created target directory: " . $target_directory . "\n" );
 }
 
 // Install the plugin
@@ -281,22 +274,22 @@ $result = $upgrader->install( $plugin_zip_path, array(
 // Check for filesystem errors
 if ( $GLOBALS['wp_filesystem']->errors->has_errors() ) {
 	foreach ( $GLOBALS['wp_filesystem']->errors->get_error_messages() as $message ) {
-		error_log( "Filesystem error: " . $message );
+		fwrite( STDERR, "Filesystem error: " . $message . "\n" );
 	}
 	exit( 1 );
 }
 
 if ( is_wp_error( $result ) ) {
-	error_log( "Failed to install plugin (1): " . $result->get_error_message() );
+	fwrite( STDERR, "Failed to install plugin (1): " . $result->get_error_message() . "\n" );
 	exit( 1 );
 }
 
 if ( $result === false || $result === null ) {
 	// Check skin for errors if $result is not specific.
 	if ( isset( $skin->result ) && is_wp_error( $skin->result ) ) {
-		error_log( "Failed to install plugin (2): " . $skin->result->get_error_message() );
+		fwrite( STDERR, "Failed to install plugin (2): " . $skin->result->get_error_message() . "\n" );
 	} else {
-		error_log( "Failed to install plugin for an unknown reason." );
+		fwrite( STDERR, "Failed to install plugin for an unknown reason." . "\n" );
 	}
 	exit( 1 );
 }
@@ -304,14 +297,14 @@ if ( $result === false || $result === null ) {
 // Installation successful, find the main plugin file.
 $plugin_folder_name = ! empty( $plugin_slug ) ? $plugin_slug : ( $upgrader->result['destination_name'] ?? null );
 if ( ! $plugin_folder_name ) {
-	error_log( "Could not determine plugin folder name after installation." );
+	fwrite( STDERR, "Could not determine plugin folder name after installation." . "\n" );
 	exit( 1 );
 }
 
 // Get all plugins within the newly installed folder.
 $plugins_in_folder = get_plugins( '/' . $plugin_folder_name );
 if ( empty( $plugins_in_folder ) ) {
-	error_log( "Could not find any plugin files in the installed folder: " . $plugin_folder_name );
+	fwrite( STDERR, "Could not find any plugin files in the installed folder: " . $plugin_folder_name . "\n" );
 	exit( 1 );
 }
 // The key of the first plugin entry is the relative path needed for activation.

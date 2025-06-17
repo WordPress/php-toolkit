@@ -115,8 +115,8 @@ class NewSiteResolver {
 				$wp_cli_path,
 				'core',
 				'install',
-				// @TODO: DOCROOT is empty in Playground CLI
-				// '--path=' . getenv('DOCROOT'),
+				'--path=' . getenv('DOCROOT'),
+
 				// For Docker compatibility. If we got this far, Blueprint runner was already
 				// allowed to run as root.
 				'--allow-root',
