@@ -321,7 +321,9 @@ class StreamImporter {
 	) {
 		$this->entity_reader_factory = $entity_reader_factory;
 		$this->options               = $options;
-		$this->set_source_site_url( $options['source_site_url'] );
+		if ( ! empty( $options['source_site_url'] ) ) {
+			$this->set_source_site_url( $options['source_site_url'] );
+		}
 
 		if ( isset( $options['source_media_root_urls'] ) ) {
 			foreach ( $options['source_media_root_urls'] as $source_media_root_url ) {
@@ -714,7 +716,7 @@ class StreamImporter {
 		return true;
 	}
 
-	protected function get_current_entity() {
+	public function get_current_entity() {
 		$entity = $this->entity_iterator->current();
 		$entity = apply_filters(
 			'data_liberation.stream_importer.preprocess_entity',

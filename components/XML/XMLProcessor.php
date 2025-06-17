@@ -878,7 +878,7 @@ class XMLProcessor {
 				'6.4.0'
 			);
 		}
-		$this->xml                    = $xml;
+		$this->xml                    = $xml ?? '';
 		$this->document_namespaces    = array_merge(
 			$document_namespaces,
 			// These initial namespaces cannot be overridden.

@@ -1,7 +1,12 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
+use WordPress\Blueprints\DataReference\DataReference;
+use WordPress\DataLiberation\EntityReader\WXREntityReader;
 use WordPress\DataLiberation\Importer\StreamImporter;
+use WordPress\HttpClient\ByteStream\RequestReadStream;
+use WordPress\HttpClient\ByteStream\SeekableRequestReadStream;
+use WordPress\HttpClient\Request;
 
 /**
  * Tests for the WPStreamImporter class.
@@ -12,7 +17,7 @@ class StreamImporterTest extends TestCase {
 		parent::setUp();
 
 		if ( ! isset( $_SERVER['SERVER_SOFTWARE'] ) || $_SERVER['SERVER_SOFTWARE'] !== 'PHP.wasm' ) {
-			$this->markTestSkipped( 'Test only runs in Playground' );
+			// $this->markTestSkipped( 'Test only runs in Playground' );
 		}
 	}
 
@@ -38,6 +43,82 @@ class StreamImporterTest extends TestCase {
 		$import = data_liberation_import( __DIR__ . '/wxr/small-export.xml' );
 
 		$this->assertTrue( $import );
+	}
+
+	/**
+	 *
+	 */
+	public function test_stylish_press_local_file() {
+		$uploads_path = sys_get_temp_dir() . '/uploads';
+		@mkdir( $uploads_path, 0777, true );
+
+		$sink = new class() {
+			public $imported_entities = [];
+			public $imported_attachments = [];
+
+			public function import_entity( $entity ) {
+				$this->imported_entities[] = $entity;
+				return true;
+			}
+			public function import_attachment( $filepath, $post_id = null ) {
+				$this->imported_attachments[] = $filepath;
+				return true;
+			}
+		};
+
+		$importer = StreamImporter::create_for_wxr_file( __DIR__ . '/wxr/stylish-press.xml', [
+			'new_site_content_root_url' => 'http://127.0.0.1:9400',
+			'new_media_root_url' => 'http://127.0.0.1:9400/wp-content/uploads',
+			'uploads_path' => $uploads_path,
+			'entity_sink' => $sink
+		] );
+		while ( $importer->next_step() || $importer->advance_to_next_stage() ) {
+			// noop
+		}
+		$this->assertCount( 10, $sink->imported_entities );
+	}
+
+	/**
+	 *
+	 */
+	public function test_stylish_press_remote_stream() {
+		$uploads_path = sys_get_temp_dir() . '/uploads';
+		@mkdir( $uploads_path, 0777, true );
+
+		$sink = new class() {
+			public $imported_entities = [];
+			public $imported_attachments = [];
+
+			public function import_entity( $entity ) {
+				$this->imported_entities[] = $entity;
+				return true;
+			}
+			public function import_attachment( $filepath, $post_id = null ) {
+				$this->imported_attachments[] = $filepath;
+				return true;
+			}
+		};
+
+		$entity_reader_factory = function ( $cursor ) {
+			$stream = new RequestReadStream(new Request(
+				'https://raw.githubusercontent.com/wordpress/blueprints/trunk/blueprints/stylish-press/site-content.wxr'
+			));
+			return WXREntityReader::create(
+				$stream,
+				$cursor
+			);
+		};
+
+		$importer = StreamImporter::create( $entity_reader_factory, [
+			'new_site_content_root_url' => 'http://127.0.0.1:9400',
+			'new_media_root_url' => 'http://127.0.0.1:9400/wp-content/uploads',
+			'uploads_path' => $uploads_path,
+			'entity_sink' => $sink
+		] );
+		while ( $importer->next_step() || $importer->advance_to_next_stage() ) {
+			// noop
+		}
+		$this->assertCount( 10, $sink->imported_entities );
 	}
 
 	public function test_frontloading() {

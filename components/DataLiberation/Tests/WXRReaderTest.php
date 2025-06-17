@@ -3,6 +3,9 @@
 use PHPUnit\Framework\TestCase;
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\DataLiberation\EntityReader\WXREntityReader;
+use WordPress\DataLiberation\ImportEntity;
+use WordPress\HttpClient\ByteStream\RequestReadStream;
+use WordPress\HttpClient\Request;
 
 class WXRReaderTest extends TestCase {
 
@@ -272,6 +275,99 @@ XML
 			),
 			$importer->get_entity()->get_data()
 		);
+	}
+
+	public function test_stylish_press_wxr_local() {
+		$importer = WXREntityReader::create();
+		$importer->append_bytes( file_get_contents( __DIR__ . '/wxr/stylish-press.xml' ) );
+		$importer->input_finished();
+		$this->assert_stylish_press_wxr( $importer );
+	}
+
+	public function test_stylish_press_wxr_remote() {
+		$importer = WXREntityReader::create();
+		$importer->connect_upstream(
+			new RequestReadStream(new Request(
+				'https://raw.githubusercontent.com/wordpress/blueprints/trunk/blueprints/stylish-press/site-content.wxr'
+			))
+		);
+		$this->assert_stylish_press_wxr( $importer );
+	}
+
+	private function assert_stylish_press_wxr( $importer ) {
+		$this->assertTrue( $importer->next_entity() );
+		$this->assert_entity_equals(
+			new ImportEntity( 'site_option', array(
+				'option_name'  => 'blogname',
+				'option_value' => 'Stylish Press',
+			) ),
+			$importer->get_entity()
+		);
+
+		$this->assertTrue( $importer->next_entity() );
+		$this->assert_entity_equals(
+			new ImportEntity( 'site_option', array(
+				'option_name'  => 'siteurl',
+				'option_value' => 'http://www.stylishpress.wordpress.org'
+			) ),
+			$importer->get_entity()
+		);
+
+		$this->assertTrue( $importer->next_entity() );
+		$this->assert_entity_equals(
+			new ImportEntity( 'site_option', array(
+				'option_name'  => 'home',
+				'option_value' => 'http://www.stylishpress.wordpress.org'
+			) ),
+			$importer->get_entity()
+		);
+
+		$this->assertTrue( $importer->next_entity() );
+		$this->assert_entity_equals(
+			new ImportEntity( 'user', array(
+				'ID'           => 1,
+				'user_login'   => 'admin',
+				'user_email'   => 'admin@stylishpress.wordpress.org',
+				'display_name' => 'Admin',
+				'first_name'   => 'John',
+				'last_name'    => 'Doe',
+			) ),
+			$importer->get_entity()
+		);
+
+		$this->assertTrue( $importer->next_entity() );
+		$entity = $importer->get_entity();
+		$this->assertEquals( 'post', $entity->get_type() );
+		$this->assertEquals( 'page', $entity->get_data()['post_type'] );
+		$this->assertEquals( 'home', $entity->get_data()['post_name'] );
+		$this->assertEquals( 'publish', $entity->get_data()['post_status'] );
+		$this->assertEquals( '1', $entity->get_data()['post_id'] );
+		$this->assertEquals( 'Homepage', $entity->get_data()['post_title'] );
+
+		$this->assertTrue( $importer->next_entity() );
+		$this->assert_entity_equals(
+			new ImportEntity( 'post_meta', array(
+				'meta_key'   => '_edit_last',
+				'meta_value' => '1',
+				'post_id' => 1
+			) ),
+			$importer->get_entity()
+		);
+
+		$this->assertTrue( $importer->next_entity() );
+
+		$entity = $importer->get_entity();
+		$this->assertEquals( 'post', $entity->get_type() );
+		$this->assertEquals( 'page', $entity->get_data()['post_type'] );
+		$this->assertEquals( 'the-stylish-story', $entity->get_data()['post_name'] );
+		$this->assertEquals( 'publish', $entity->get_data()['post_status'] );
+		$this->assertEquals( '2', $entity->get_data()['post_id'] );
+		$this->assertEquals( 'The Stylish Story', $entity->get_data()['post_title'] );
+	}
+
+	private function assert_entity_equals( $expected, $actual ) {
+		$this->assertEquals( $expected->get_type(), $actual->get_type() );
+		$this->assertEquals( $expected->get_data(), $actual->get_data() );
 	}
 
 	public function test_terms() {
