@@ -36,6 +36,7 @@ require __DIR__ . '/../../../vendor/autoload.php';
 use WordPress\CLI\CLI;
 use WordPress\Blueprints\DataReference\AbsoluteLocalPath;
 use WordPress\Blueprints\DataReference\DataReference;
+use WordPress\Blueprints\DataReference\ExecutionContextPath;
 use WordPress\Blueprints\Exception\BlueprintExecutionException;
 use WordPress\Blueprints\Exception\PermissionsException;
 use WordPress\Blueprints\Logger\CLILogger;
@@ -255,7 +256,7 @@ $commandConfigurations = [
 			'site-url'                    => [ 'u', true, null, 'Public site URL (https://example.com)' ],
 			'site-path'                   => [ null, true, null, 'Target directory with WordPress install context)' ],
 			'execution-context'           => [ 'x', true, null, 'Source directory with Blueprint context files' ],
-			'mode'                        => [ 'm', true, 'create-new-site', 'Execution mode (create|apply)' ],
+			'mode'                        => [ 'm', true, 'create-new-site', 'Execution mode (create-new-site|apply-to-existing-site)' ],
 			'db-engine'                   => [ 'd', true, 'mysql', 'Database engine (mysql|sqlite)' ],
 			'db-host'                     => [ null, true, '127.0.0.1', 'MySQL host' ],
 			'db-user'                     => [ null, true, 'root', 'MySQL user' ],
@@ -279,7 +280,7 @@ $commandConfigurations = [
 		] ),
 		'examples'        => [
 			'php blueprint.php exec my-blueprint.json --site-url https://mysite.test --site-path /var/www/mysite.com',
-			'php blueprint.php exec my-blueprint.json --execution-context /var/www --site-url https://mysite.test --mode apply --site-path ./site',
+			'php blueprint.php exec my-blueprint.json --execution-context /var/www --site-url https://mysite.test --mode apply-to-existing-site --site-path ./site',
 			'php blueprint.php exec my-blueprint.json --site-url https://mysite.test --site-path ./mysite --truncate-new-site-directory',
 		],
 		'aliases'         => [ 'run' ],
@@ -397,9 +398,10 @@ function cliArgsToRunnerConfiguration( array $positionalArgs, array $options ): 
 		$blueprint_reference = $positionalArgs[0];
 		$config->setBlueprint( DataReference::create( $blueprint_reference, [
 			AbsoluteLocalPath::class,
+			ExecutionContextPath::class,
 		] ) );
 	} catch ( InvalidArgumentException $e ) {
-		throw new InvalidArgumentException( "Invalid Blueprint reference: " . $positionalArgs[0] );
+		throw new InvalidArgumentException( sprintf( "Invalid Blueprint reference: %s. Hint: paths must start with ./ or /. URLs must start with http:// or https://.", $positionalArgs[0] ) );
 	}
 
 	if ( ! empty( $options['mode'] ) ) {
@@ -409,6 +411,9 @@ function cliArgsToRunnerConfiguration( array $positionalArgs, array $options ): 
 			$config->setExecutionMode( 'create-new-site' );
 		} elseif ( $mode === 'apply-to-existing-site' ) {
 			$config->setExecutionMode( 'apply-to-existing-site' );
+			if(!empty($options['wp'])) {
+				throw new InvalidArgumentException( "The --wp option cannot be used with --mode=apply-to-existing-site. The WordPress version is whatever the existing site has." );
+			}
 		} else {
 			throw new InvalidArgumentException( "Invalid execution mode: {$mode}. Supported modes are: create-new-site, apply-to-existing-site" );
 		}

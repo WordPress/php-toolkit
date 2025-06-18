@@ -52,7 +52,7 @@ class DataReferenceResolver {
 		$this->tmpRoot = $tmpRoot ?: wp_unix_sys_get_temp_dir();
 	}
 
-	public function setExecutionContext( Filesystem $executionContext ) {
+	public function setExecutionContext( ?Filesystem $executionContext ) {
 		$this->executionContext = $executionContext;
 	}
 

@@ -300,7 +300,14 @@ class Runner {
 			$blueprintString                 = $resolved->getStream()->consume_all();
 			$this->blueprintExecutionContext = LocalFilesystem::create( dirname( $reference->get_path() ) );
 		} else {
+			// For the purposes of Blueprint resolution, the execution context is the
+			// current working directory. This way, a path such as ./blueprint.json
+			// will mean "a blueprint.json file in the current working directory" and not
+			// "a ./blueprint.json path without a point of reference".
+			$this->assets->setExecutionContext( LocalFilesystem::create( getcwd() ) );
 			$resolved = $this->assets->resolve( $reference );
+			$this->assets->setExecutionContext( null );
+
 			if ( $resolved instanceof File ) {
 				$stream = $resolved->getStream();
 
@@ -388,6 +395,8 @@ class Runner {
 
 		$this->configuration->getLogger()->debug( 'Final resolved Blueprint: ' . json_encode( $this->blueprintArray, JSON_PRETTY_PRINT ) );
 
+		$this->blueprintArray = apply_filters( 'blueprint.resolved', $this->blueprintArray );
+
 		// Assert the Blueprint conforms to the latest JSON schema.
 		$v     = new HumanFriendlySchemaValidator(
 			json_decode( file_get_contents( __DIR__ . '/Versions/Version2/json-schema/schema-v2.json' ), true )
@@ -450,7 +459,7 @@ class Runner {
 		// WordPress Version Constraint
 		if ( isset( $this->blueprintArray['wordpressVersion'] ) ) {
 			$wp_version = $this->blueprintArray['wordpressVersion'];
-			$recommended = null;
+			$min = $max = $recommended = null;
 			if ( is_string( $wp_version ) ) {
 				$this->recommendedWpVersion = $wp_version;
 				$recommended = WordPressVersion::fromString( $wp_version );
@@ -499,6 +508,14 @@ class Runner {
 			// Note: In here's we're only checking if the version constraint is defined
 			// correctly. The actual version check for WordPress is done in
 			// NewSiteResolver and ExistingSiteResolver.
+		}
+
+		// Validate the override constraint if it was set
+		if ( $this->wpVersionConstraint ) {
+			$wpConstraintErrors = $this->wpVersionConstraint->validate();
+			if ( ! empty( $wpConstraintErrors ) ) {
+				throw new BlueprintExecutionException( 'Invalid WordPress version constraint from CLI override: ' . implode( '; ', $wpConstraintErrors ) );
+			}
 		}
 	}
 
@@ -934,14 +951,6 @@ PHP
 
 				return new WriteFilesStep( $files );
 
-			case 'runPHP':
-				return new RunPHPStep(
-					$this->createDataReference( [
-						'filename' => 'run-php.php',
-						'content'  => $data['code'],
-					] ),
-					$data['env'] ?? []
-				);
 			case 'unzip':
 				$zipFile = $this->createDataReference( $data['zipFile'], [ ExecutionContextPath::class ] );
 

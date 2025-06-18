@@ -46,7 +46,7 @@ class WordPressVersion implements Version {
 	 * @return $this|false|null
 	 */
 	static public function fromString( string $raw ) {
-		if(in_array($raw, ['beta','trunk'], true)) {
+		if(in_array($raw, ['beta','trunk','latest'], true)) {
 			return null;
 		}
 		if(substr($raw, 0, 8) === 'https://') {
