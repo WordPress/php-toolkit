@@ -114,7 +114,7 @@ class Runner {
 		$this->configuration = $configuration;
 		$this->validateConfiguration( $configuration );
 
-		$this->client      = new Client();
+		$this->client      = apply_filters('blueprint.http_client', new Client());
 		$this->mainTracker = new Tracker();
 
 		// Set up progress logging

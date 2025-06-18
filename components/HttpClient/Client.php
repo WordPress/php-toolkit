@@ -37,15 +37,14 @@ class Client {
 	public function __construct( $options = array() ) {
 		$this->state = new ClientState( $options );
 		if(empty($options['transport']) || $options['transport'] === 'auto') {
-			$options['transport'] = extension_loaded( 'curl' ) ? 'curl' : 'socket';
+			$options['transport'] = extension_loaded( 'curl' ) ? 'curl' : 'sockets';
 		}
-		$options['transport'] = 'socket';
 
 		switch ( $options['transport'] ) {
 			case 'curl':
 				$transport = new CurlTransport( $this->state );
 				break;
-			case 'socket':
+			case 'sockets':
 				$transport = new SocketTransport( $this->state );
 				break;
 			default:
