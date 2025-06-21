@@ -256,7 +256,7 @@ $commandConfigurations = [
 			'site-url'                    => [ 'u', true, null, 'Public site URL (https://example.com)' ],
 			'site-path'                   => [ null, true, null, 'Target directory with WordPress install context)' ],
 			'execution-context'           => [ 'x', true, null, 'Source directory with Blueprint context files' ],
-			'mode'                        => [ 'm', true, 'create-new-site', 'Execution mode (create-new-site|apply-to-existing-site)' ],
+			'mode'                        => [ 'm', true, Runner::EXECUTION_MODE_CREATE_NEW_SITE, sprintf( 'Execution mode (%s|%s)', Runner::EXECUTION_MODE_CREATE_NEW_SITE, Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ) ],
 			'db-engine'                   => [ 'd', true, 'mysql', 'Database engine (mysql|sqlite)' ],
 			'db-host'                     => [ null, true, '127.0.0.1', 'MySQL host' ],
 			'db-user'                     => [ null, true, 'root', 'MySQL user' ],
@@ -280,7 +280,7 @@ $commandConfigurations = [
 		] ),
 		'examples'        => [
 			'php blueprint.php exec my-blueprint.json --site-url https://mysite.test --site-path /var/www/mysite.com',
-			'php blueprint.php exec my-blueprint.json --execution-context /var/www --site-url https://mysite.test --mode apply-to-existing-site --site-path ./site',
+			sprintf( 'php blueprint.php exec my-blueprint.json --execution-context /var/www --site-url https://mysite.test --mode %s --site-path ./site', Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ),
 			'php blueprint.php exec my-blueprint.json --site-url https://mysite.test --site-path ./mysite --truncate-new-site-directory',
 		],
 		'aliases'         => [ 'run' ],
@@ -350,7 +350,7 @@ function handleExecCommand( array $positionalArgs, array $options, array $comman
 		$runner = new Runner( $config );
 
 		// Execute the Blueprint
-		if ( $config->getExecutionMode() === 'create-new-site' ) {
+		if ( $config->getExecutionMode() === Runner::EXECUTION_MODE_CREATE_NEW_SITE ) {
 			$progressReporter->reportProgress(0, 'Creating a new site');
 		} else {
 			$progressReporter->reportProgress(0, 'Updating an existing site');
@@ -405,24 +405,23 @@ function cliArgsToRunnerConfiguration( array $positionalArgs, array $options ): 
 	}
 
 	if ( ! empty( $options['mode'] ) ) {
-		// Accept 'create-new-site' or 'apply-to-existing-site' as CLI values, map to internal values
 		$mode = $options['mode'];
-		if ( $mode === 'create-new-site' ) {
-			$config->setExecutionMode( 'create-new-site' );
-		} elseif ( $mode === 'apply-to-existing-site' ) {
-			$config->setExecutionMode( 'apply-to-existing-site' );
+		if ( $mode === Runner::EXECUTION_MODE_CREATE_NEW_SITE ) {
+			$config->setExecutionMode( Runner::EXECUTION_MODE_CREATE_NEW_SITE );
+		} elseif ( $mode === Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ) {
+			$config->setExecutionMode( Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE );
 			if(!empty($options['wp'])) {
-				throw new InvalidArgumentException( "The --wp option cannot be used with --mode=apply-to-existing-site. The WordPress version is whatever the existing site has." );
+				throw new InvalidArgumentException( sprintf( "The --wp option cannot be used with --mode=%s. The WordPress version is whatever the existing site has.", Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ) );
 			}
 		} else {
-			throw new InvalidArgumentException( "Invalid execution mode: {$mode}. Supported modes are: create-new-site, apply-to-existing-site" );
+			throw new InvalidArgumentException( sprintf( "Invalid execution mode: '{$mode}'. Supported modes are: %s", implode( ', ', Runner::EXECUTION_MODES ) ) );
 		}
 	}
 
 	$targetSiteRoot         = $options['site-path'];
 	if ( $options['truncate-new-site-directory'] ) {
-		if ( $options['mode'] !== 'create-new-site' ) {
-			throw new InvalidArgumentException( "--truncate-new-site-directory can only be used with --mode=create-new-site" );
+		if ( $options['mode'] !== Runner::EXECUTION_MODE_CREATE_NEW_SITE ) {
+			throw new InvalidArgumentException( sprintf( "--truncate-new-site-directory can only be used with --mode=%s", Runner::EXECUTION_MODE_CREATE_NEW_SITE ) );
 		}
 		$absoluteTargetSiteRoot = realpath( $targetSiteRoot );
 		if ( false === $absoluteTargetSiteRoot) {

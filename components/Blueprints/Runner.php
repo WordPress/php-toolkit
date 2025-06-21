@@ -52,7 +52,6 @@ use WordPress\Filesystem\InMemoryFilesystem;
 use WordPress\Filesystem\LocalFilesystem;
 use WordPress\HttpClient\ByteStream\RequestReadStream;
 use WordPress\HttpClient\Client;
-use WordPress\HttpClient\Request;
 use WordPress\Zip\ZipFilesystem;
 
 use function WordPress\Encoding\utf8_is_valid_byte_stream;
@@ -60,6 +59,13 @@ use function WordPress\Filesystem\wp_unix_sys_get_temp_dir;
 use function WordPress\Zip\is_zip_file_stream;
 
 class Runner {
+	const EXECUTION_MODE_CREATE_NEW_SITE = 'create-new-site';
+	const EXECUTION_MODE_APPLY_TO_EXISTING_SITE = 'apply-to-existing-site';
+	const EXECUTION_MODES = [
+		self::EXECUTION_MODE_CREATE_NEW_SITE,
+		self::EXECUTION_MODE_APPLY_TO_EXISTING_SITE,
+	];
+	
 	/**
 	 * @var RunnerConfiguration
 	 */
@@ -135,17 +141,17 @@ class Runner {
 
 		// Validate execution mode
 		$mode = $config->getExecutionMode();
-		if ( ! in_array( $mode, [ 'create-new-site', 'apply-to-existing-site' ], true ) ) {
-			throw new BlueprintExecutionException( "Execution mode must be either 'create-new-site' or 'apply-to-existing-site'." );
+		if ( ! in_array( $mode, self::EXECUTION_MODES, true ) ) {
+			throw new BlueprintExecutionException( "Execution mode must be one of: " . implode( ', ', self::EXECUTION_MODES ) );
 		}
 
 		// Validate site URL
 		// Note: $options is not defined in this context, so we skip this block.
 		// If you want to validate the site URL, you should use $config->getTargetSiteUrl().
 		$siteUrl = $config->getTargetSiteUrl();
-		if ( $mode === 'create-new-site' ) {
+		if ( $mode === self::EXECUTION_MODE_CREATE_NEW_SITE ) {
 			if ( empty( $siteUrl ) ) {
-				throw new BlueprintExecutionException( "Site URL is required when the execution mode is 'create-new-site'." );
+				throw new BlueprintExecutionException( sprintf( "Site URL is required when the execution mode is '%s'.", self::EXECUTION_MODE_CREATE_NEW_SITE ) );
 			}
 		}
 		if ( ! empty( $siteUrl ) && ! filter_var( $siteUrl, FILTER_VALIDATE_URL ) ) {
@@ -253,7 +259,7 @@ class Runner {
 			], $progress['wpCli'] );
 
 			$progress['targetResolution']->setCaption( 'Resolving target site' );
-			if ( $this->configuration->getExecutionMode() === 'apply-to-existing-site' ) {
+			if ( $this->configuration->getExecutionMode() === self::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ) {
 				ExistingSiteResolver::resolve( $this->runtime, $progress['targetResolution'], $this->wpVersionConstraint );
 			} else {
 				NewSiteResolver::resolve( $this->runtime, $progress['targetResolution'], $this->wpVersionConstraint, $this->recommendedWpVersion );

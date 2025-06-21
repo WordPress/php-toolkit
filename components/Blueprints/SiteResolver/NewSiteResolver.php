@@ -67,6 +67,10 @@ class NewSiteResolver {
 
 		// If SQLite integration zip provided, unzip into appropriate folder
 		if ( $runtime->getConfiguration()->getDatabaseEngine() === 'sqlite' ) {
+			/*
+			 * @TODO: Ensure DB_NAME gets defined in wp-config.php before installing the SQLite plugin.
+			 */
+
 			$progress['resolve_assets']->setCaption( 'Downloading SQLite integration plugin' );
 			$resolved = $runtime->resolve( $assets['sqlite-integration'] );
 			if ( ! $resolved instanceof File ) {
@@ -115,7 +119,7 @@ class NewSiteResolver {
 				$wp_cli_path,
 				'core',
 				'install',
-				'--path=' . getenv('DOCROOT'),
+				'--path=' . $runtime->getConfiguration()->getTargetSiteRoot(),
 
 				// For Docker compatibility. If we got this far, Blueprint runner was already
 				// allowed to run as root.
@@ -149,7 +153,8 @@ class NewSiteResolver {
 			require $wp_load;
 
 			append_output( function_exists('is_blog_installed') && is_blog_installed() ? '1' : '0' );
-PHP,
+PHP
+			,
 			[
 				'DOCROOT' => getenv('DOCROOT'),
 			],

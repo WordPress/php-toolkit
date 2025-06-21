@@ -23,7 +23,7 @@ class RunnerConfiguration {
 	/**
 	 * @var string
 	 */
-	private $mode = 'create-new-site';    // or apply-to-existing-site
+	private $mode = Runner::EXECUTION_MODE_CREATE_NEW_SITE;
 	/**
 	 * @var string
 	 */
