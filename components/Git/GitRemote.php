@@ -533,8 +533,11 @@ class GitRemote {
 
 		$response = $reader->await_response();
 		if ( $response->status_code > 299 || $response->status_code < 200 ) {
-			$reader->pull( 100 );
-			throw new GitRemoteException( 'HTTP request failed with status code ' . $response->status_code . '. First 100 body bytes: ' . $reader->peek( 100 ) );
+			// GitHub sometimes responds with 100 status code when the request is successful.
+			if ( $response->status_code !== 100 ) {
+				$reader->pull( 100 );
+				throw new GitRemoteException( 'HTTP request failed with status code ' . $response->status_code . '. First 100 body bytes: ' . $reader->peek( 100 ) );
+			}
 		}
 
 		return $reader;
