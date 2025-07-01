@@ -215,18 +215,7 @@ class V1ToV2Transpiler {
 						$this->logger->warning( 'The `enableMultisite` step is not supported by the Blueprint v2 schema and will be ignored.' );
 						break;
 					case 'importWordPressFiles':
-						if ( isset( $v1step['progress'] ) ) {
-							$this->logger->warning( 'The `progress` option is not supported on importWordPressFiles step and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
-						}
-						if ( isset( $v1step['pathInZip'] ) ) {
-							$this->logger->warning( 'The `pathInZip` option is not supported on importWordPressFiles step. The entire step will be ignored.' );
-						} else {
-							/**
-							 * wordPressFilesZip refers to a zip file with a full WordPress installation.
-							 * It's relevant for the target site resolution stage, not as a step.
-							 */
-							$v2['wordpressVersion'] = self::convertV1ResourceToV2Reference( $v1step['wordPressFilesZip'] );
-						}
+						$this->logger->warning( 'The `importWordPressFiles` step is not supported by the Blueprint v2 schema. The entire step will be ignored.' );
 						break;
 					case 'runWpInstallationWizard':
 						$this->logger->warning( 'The `runWpInstallationWizard` step is not supported by the Blueprint v2 schema. Provide your WordPress export URL in the top-level "wordpressVersion" key and the runner will handle the installation automatically.' );

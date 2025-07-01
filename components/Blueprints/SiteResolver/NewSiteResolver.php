@@ -156,7 +156,7 @@ class NewSiteResolver {
 PHP
 			,
 			[
-				'DOCROOT' => getenv('DOCROOT'),
+				'DOCROOT' => $runtime->getConfiguration()->getTargetSiteRoot(),
 			],
 			null,
 			5

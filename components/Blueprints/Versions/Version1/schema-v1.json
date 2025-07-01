@@ -144,6 +144,10 @@
 					"description": "User to log in as. If true, logs the user in as admin/password."
 				},
 				"phpExtensionBundles": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
 					"deprecated": "No longer used. Feel free to remove it from your Blueprint."
 				},
 				"steps": {
