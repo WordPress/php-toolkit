@@ -861,6 +861,4 @@ described below. On a successful merge, the runner **MUST** execute the merged B
 
 ## Areas intentionally not covered by this proposal
 
-- Multisite configuration – it may require a separate schema and is left for a future iteration of the Blueprint
-  standard.
 - Content import format – it is a separate, nuanced topic that warrants a dedicated proposal.
