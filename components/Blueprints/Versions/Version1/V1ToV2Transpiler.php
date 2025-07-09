@@ -210,9 +210,13 @@ class V1ToV2Transpiler {
 						$this->logger->warning( 'The `defineSiteUrl` step is not supported by the Blueprint v2 schema. Use the runner configuration to set the site URL instead.' );
 						break;
 					case 'enableMultisite':
-						// @TODO: Support this step in v3. Multisites will require a separate schema
-						//        that defines what's related to which site.
-						$this->logger->warning( 'The `enableMultisite` step is not supported by the Blueprint v2 schema and will be ignored.' );
+						$v2step = [
+							'step' => 'enableMultisite',
+						];
+						if ( isset( $v1step['wpCliPath'] ) ) {
+							$v2step['wpCliPath'] = $v1step['wpCliPath'];
+						}
+						$v2steps[] = $v2step;
 						break;
 					case 'importWordPressFiles':
 						if ( isset( $v1step['progress'] ) ) {

@@ -1449,6 +1449,14 @@ type DefineConstantsStep = {
 	constants: WordPressConstants;
 };
 
+type EnableMultisiteStep = {
+	step: 'enableMultisite';
+	/**
+	 * Optional path to the WP-CLI executable.
+	 */
+	wpCliPath?: string;
+};
+
 type ImportContentStep = {
 	step: 'importContent';
 	content: ContentDefinition[];
@@ -1572,6 +1580,7 @@ type Step =
 	| ActivateThemeStep
 	| CpStep
 	| DefineConstantsStep
+	| EnableMultisiteStep
 	| ImportContentStep
 	| ImportMediaStep
 	| ImportThemeStarterContentStep
