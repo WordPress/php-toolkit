@@ -1,4 +1,6 @@
 <?php
+
+namespace WordPress\HTML;
 /**
  * HTML API: WP_HTML_Active_Formatting_Elements class
  *

@@ -160,7 +160,7 @@ function parse_blocks( $input ) {
 	if ( function_exists( '\\parse_blocks' ) ) {
 		return call_user_func_array( '\\parse_blocks', func_get_args() );
 	}
-	$parser = new \WP_Block_Parser();
+	$parser = new \WordPress\BlockParser\WP_Block_Parser();
 
 	return $parser->parse( $input );
 }

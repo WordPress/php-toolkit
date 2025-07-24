@@ -153,7 +153,7 @@ class FilesystemEntityReaderTest extends TestCase {
 	}
 
 	private function normalize_markup( $markup ) {
-		return WP_HTML_Processor::create_fragment(
+		return \WordPress\HTML\WP_HTML_Processor::create_fragment(
 			preg_replace( '/\s+/', ' ', trim( $markup ) )
 		)->serialize();
 	}

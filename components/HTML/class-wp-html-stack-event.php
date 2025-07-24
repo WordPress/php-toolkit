@@ -1,4 +1,6 @@
 <?php
+
+namespace WordPress\HTML;
 /**
  * HTML API: WP_HTML_Stack_Event class
  *

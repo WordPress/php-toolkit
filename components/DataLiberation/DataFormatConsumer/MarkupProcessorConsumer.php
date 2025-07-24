@@ -6,8 +6,8 @@ use WordPress\DataLiberation\BlockMarkup\BlockObject;
 use WordPress\DataLiberation\DataLiberationException;
 use WordPress\DataLiberation\Importer\ImportUtils;
 use WordPress\XML\XMLProcessor;
-use WP_HTML_Processor;
-use WP_HTML_Tag_Processor;
+use WordPress\HTML\WP_HTML_Processor;
+use WordPress\HTML\WP_HTML_Tag_Processor;
 
 /**
  * Creates block markup from a WP_HTML_Processor or WP_XML_Processor instance.

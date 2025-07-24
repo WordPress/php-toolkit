@@ -2,8 +2,8 @@
 
 namespace WordPress\DataLiberation\BlockMarkup;
 
-use WP_Block_Parser_Error;
-use WP_HTML_Tag_Processor;
+use WordPress\BlockParser\WP_Block_Parser_Error;
+use WordPress\HTML\WP_HTML_Tag_Processor;
 
 /**
  * A processor class capable of reading and rewriting block markup.

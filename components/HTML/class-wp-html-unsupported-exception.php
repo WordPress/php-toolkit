@@ -1,4 +1,8 @@
 <?php
+
+namespace WordPress\HTML;
+use Exception;
+
 /**
  * HTML API: WP_HTML_Unsupported_Exception class
  *

@@ -3,7 +3,7 @@
 namespace WordPress\DataLiberation\DataFormatProducer;
 
 use WordPress\DataLiberation\DataFormatConsumer\BlocksWithMetadata;
-use WP_HTML_Tag_Processor;
+use WordPress\HTML\WP_HTML_Tag_Processor;
 
 /**
  * Turns Block Markup + Metadata into a metadata-annotated Block Markup.

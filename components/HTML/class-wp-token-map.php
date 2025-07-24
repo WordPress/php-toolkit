@@ -1,5 +1,7 @@
 <?php
 
+namespace WordPress\HTML;
+
 use function WordPress\Polyfill\_doing_it_wrong;
 use function WordPress\Polyfill\__;
 

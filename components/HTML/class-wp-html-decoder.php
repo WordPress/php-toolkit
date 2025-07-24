@@ -1,5 +1,7 @@
 <?php
 
+namespace WordPress\HTML;
+
 /**
  * HTML API: WP_HTML_Decoder class
  *
