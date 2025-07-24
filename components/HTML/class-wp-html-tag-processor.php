@@ -1,4 +1,11 @@
 <?php
+
+use function WordPress\Polyfill\esc_attr;
+use function WordPress\Polyfill\esc_url;
+use function WordPress\Polyfill\wp_kses_uri_attributes;
+use function WordPress\Polyfill\__;
+use function WordPress\Polyfill\_doing_it_wrong;
+
 /**
  * HTML API: WP_HTML_Tag_Processor class
  *

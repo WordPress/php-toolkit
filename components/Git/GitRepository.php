@@ -14,6 +14,7 @@ use WordPress\Merge\MergeStrategy;
 use function WordPress\Filesystem\wp_unix_dirname;
 use function WordPress\Filesystem\wp_join_unix_paths;
 use function WordPress\Filesystem\wp_unix_path_resolve_dots;
+use function WordPress\Polyfill\_doing_it_wrong;
 
 class GitRepository {
 

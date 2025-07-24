@@ -1,5 +1,8 @@
 <?php
 
+use function WordPress\Polyfill\_doing_it_wrong;
+use function WordPress\Polyfill\__;
+
 /**
  * Class for efficiently looking up and mapping string keys to string values, with limits.
  *

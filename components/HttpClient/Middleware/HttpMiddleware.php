@@ -4,12 +4,11 @@ namespace WordPress\HttpClient\Middleware;
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\ClientState;
-use WordPress\HttpClient\HttpClientException;
 use WordPress\HttpClient\Request;
 use WordPress\HttpClient\Connection;
-use WordPress\HttpClient\Transport\CurlTransport;
-use WordPress\HttpClient\Transport\SocketTransport;
 use WordPress\HttpClient\Transport\TransportInterface;
+
+use function WordPress\Polyfill\apply_filters;
 
 class HttpMiddleware implements MiddlewareInterface {
 

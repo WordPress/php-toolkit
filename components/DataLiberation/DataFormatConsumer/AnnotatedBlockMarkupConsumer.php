@@ -3,6 +3,8 @@
 namespace WordPress\DataLiberation\DataFormatConsumer;
 
 use WP_HTML_Processor;
+use function WordPress\Polyfill\parse_blocks;
+use function WordPress\Polyfill\serialize_block;
 
 /**
  * Converts a metadata-annotated block markup into block markup+metadata pair.

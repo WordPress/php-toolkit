@@ -24,6 +24,10 @@ namespace WordPress\DataLiberation\Importer;
 use InvalidArgumentException;
 use WordPress\DataLiberation\DataLiberationException;
 use WordPress\DataLiberation\ImportEntity;
+use function WordPress\Polyfill\_doing_it_wrong;
+use function WordPress\Polyfill\__;
+use function WordPress\Polyfill\apply_filters;
+use function WordPress\Polyfill\do_action;
 
 class EntityImporter {
 

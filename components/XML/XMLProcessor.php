@@ -6,6 +6,8 @@ use WP_HTML_Span;
 use WP_HTML_Text_Replacement;
 
 use function WordPress\Encoding\utf8_codepoint_at;
+use function WordPress\Polyfill\_doing_it_wrong;
+use function WordPress\Polyfill\__;
 
 /**
  * XML API: XMLProcessor class

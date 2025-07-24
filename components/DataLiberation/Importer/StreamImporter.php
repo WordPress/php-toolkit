@@ -11,6 +11,9 @@ use WordPress\DataLiberation\URL\WPURL;
 use WordPress\HttpClient\ByteStream\RequestReadStream;
 
 use function WordPress\DataLiberation\URL\is_child_url_of;
+use function WordPress\Polyfill\_doing_it_wrong;
+use function WordPress\Polyfill\apply_filters;
+use function WordPress\Polyfill\do_action;
 
 /**
  * Idea:

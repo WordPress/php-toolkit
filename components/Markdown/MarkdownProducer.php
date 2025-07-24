@@ -5,6 +5,8 @@ namespace WordPress\Markdown;
 use WordPress\DataLiberation\DataFormatConsumer\BlocksWithMetadata;
 use WordPress\DataLiberation\DataFormatProducer\DataFormatProducer;
 use WordPress\DataLiberation\DataLiberationHTMLProcessor;
+use function WordPress\Polyfill\parse_blocks;
+use function WordPress\Polyfill\serialize_block;
 
 /**
  * Converts WordPress blocks and metadata to Markdown with frontmatter.
@@ -283,7 +285,7 @@ class MarkdownProducer implements DataFormatProducer {
 				$markdown   = array();
 				$markdown[] = '';
 				$markdown[] = '```block';
-				$markdown[] = \serialize_block( $block );
+				$markdown[] = serialize_block( $block );
 				$markdown[] = '```';
 				$markdown[] = '';
 				return implode( "\n", $markdown );

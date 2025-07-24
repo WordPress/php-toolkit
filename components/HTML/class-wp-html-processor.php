@@ -1,4 +1,8 @@
 <?php
+use function WordPress\Polyfill\__;
+use function WordPress\Polyfill\_doing_it_wrong;
+use function WordPress\Polyfill\wp_trigger_error;
+
 /**
  * HTML API: WP_HTML_Processor class
  *
