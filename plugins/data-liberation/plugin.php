@@ -27,6 +27,7 @@ if(file_exists(__DIR__ . '/php-toolkit.phar')) {
 	require_once __DIR__ . '/../../vendor/autoload.php';
 }
 
+include __DIR__ . '/basic-ui/admin-page.php';
 
 /**
  * Don't run KSES on the attribute values during the import.
