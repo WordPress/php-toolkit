@@ -193,3 +193,66 @@
 [27-Jul-2025 22:57:35 UTC] running cron job
 [27-Jul-2025 22:57:35 UTC] running fake indexing
 [27-Jul-2025 22:57:35 UTC] [next-import-step] after do_action
+[28-Jul-2025 18:13:50 UTC] Array
+(
+    [name] => test-utw-post-meta-import.xml
+    [size] => 3991
+    [uploaded_at] => 1753726430
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[28-Jul-2025 18:13:50 UTC] [ng_importer__import] running cron job
+[28-Jul-2025 18:13:50 UTC] running cron job
+[28-Jul-2025 18:13:50 UTC] running fake indexing
+[28-Jul-2025 18:20:56 UTC] Array
+(
+    [name] => valid-wxr-1.0.xml
+    [size] => 14900
+    [uploaded_at] => 1753726856
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[28-Jul-2025 18:21:20 UTC] [ng_importer__import] running cron job
+[28-Jul-2025 18:21:20 UTC] running cron job
+[28-Jul-2025 18:21:20 UTC] running fake indexing
+[28-Jul-2025 18:37:03 UTC] Array
+(
+    [name] => valid-wxr-1.0.xml
+    [size] => 14900
+    [uploaded_at] => 1753727823
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[28-Jul-2025 18:37:03 UTC] [ng_importer__import] running cron job
+[28-Jul-2025 18:37:03 UTC] running cron job
+[28-Jul-2025 18:37:03 UTC] running fake indexing
+[28-Jul-2025 18:37:05 UTC] [ng_importer__import] running cron job
+[28-Jul-2025 18:37:05 UTC] running cron job
+[28-Jul-2025 18:37:05 UTC] running fake indexing
+[28-Jul-2025 18:56:55 UTC] Array
+(
+    [name] => valid-wxr-1.0.xml
+    [size] => 14900
+    [uploaded_at] => 1753729015
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[28-Jul-2025 18:56:55 UTC] [ng_importer__import] running cron job
+[28-Jul-2025 18:56:55 UTC] running cron job
+[28-Jul-2025 18:56:55 UTC] running fake indexing
+[28-Jul-2025 19:01:52 UTC] Array
+(
+    [name] => valid-wxr-1.1.xml
+    [size] => 7328
+    [uploaded_at] => 1753729312
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[28-Jul-2025 19:01:52 UTC] [ng_importer__import] running cron job
+[28-Jul-2025 19:01:52 UTC] running cron job
+[28-Jul-2025 19:01:52 UTC] running fake indexing

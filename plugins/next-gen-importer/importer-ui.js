@@ -38,6 +38,9 @@ const { state, actions } = store('custom-importer', {
 		importTotal: 0,
 		importError: '',
 		importStatusMessage: '',
+		importStage: '', // 'downloading' or 'inserting'
+		importErrors: [], // Array of error objects
+		importFinished: false,
 		
 		// Computed states for stage visibility
 		get isSelectStage() {
@@ -60,6 +63,25 @@ const { state, actions } = store('custom-importer', {
 		},
 		get hasAuthorsInFile() {
 			return state.authorsInFile && state.authorsInFile.length > 0;
+		},
+		get hasImportErrors() {
+			return state.importErrors && state.importErrors.length > 0;
+		},
+		get importStageLabel() {
+			if (state.importStage === 'downloading') {
+				return 'Downloading images...';
+			} else if (state.importStage === 'inserting') {
+				return 'Inserting entities...';
+			}
+			return 'Processing...';
+		},
+		get importProgressLabel() {
+			if (state.importStage === 'downloading') {
+				return `Downloaded ${state.importProgress}% of images`;
+			} else if (state.importStage === 'inserting') {
+				return `Processed ${state.importProgress} / ${state.importTotal} entities`;
+			}
+			return `Progress: ${state.importProgress} / ${state.importTotal}`;
 		}
 	},
 	
@@ -331,31 +353,19 @@ const { state, actions } = store('custom-importer', {
         
         // Start the import process
         startImport: async () => {
-        	if (!state.uploadedFileId) {
-        		return;
-        	}
-        	
         	state.importing = true;
         	state.currentStage = 'import';
         	state.importError = '';
         	state.importStatusMessage = 'Starting import...';
+        	state.importErrors = [];
+        	state.importFinished = false;
         	
         	const formData = new FormData();
         	formData.append('action', 'start_import');
-        	formData.append('file_id', state.uploadedFileId);
         	formData.append('download_attachments', state.downloadAttachments ? '1' : '0');
         	formData.append('allowed_domains', state.allowedDomains);
+        	formData.append('author_mappings', JSON.stringify(state.authorMappings));
         	formData.append('_ajax_nonce', window.importerInitialState?.importNonce || '');
-        	
-        	// Add author mappings
-        	Object.keys(state.authorMappings).forEach(authorLogin => {
-        		const mapping = state.authorMappings[authorLogin];
-        		if (mapping.type === 'existing' && mapping.userId) {
-        			formData.append(`existing_user[${authorLogin}]`, mapping.userId);
-        		} else if (mapping.type === 'new' && mapping.newLogin) {
-        			formData.append(`new_user[${authorLogin}]`, mapping.newLogin);
-        		}
-        	});
         	
         	try {
         		const response = await fetch(ajaxurl, { method: 'POST', body: formData });
@@ -367,9 +377,10 @@ const { state, actions } = store('custom-importer', {
         			return;
         		}
         		
-        		state.importTotal = result.data.total || 0;
+        		state.importTotal = result.data.total || 100;
         		state.importProgress = result.data.progress || 0;
-        		state.importStatusMessage = 'Import in progress...';
+        		state.importStage = result.data.stage || 'downloading';
+        		state.importStatusMessage = result.data.message || 'Import in progress...';
         		
         		// Begin polling for progress
         		actions.pollImportProgress();
@@ -389,15 +400,24 @@ const { state, actions } = store('custom-importer', {
         		if (!data.success) {
         			state.importError = data.data?.error || 'Import error occurred';
         			state.importing = false;
+        			state.importFinished = true;
         			return;
         		}
         		
         		const status = data.data;
-        		state.importProgress = status.count || 0;
+        		state.importProgress = status.progress || 0;
         		state.importTotal = status.total || 0;
+        		state.importStage = status.stage || 'unknown';
+        		
+        		// Update errors if any
+        		if (status.errors && status.errors.length > 0) {
+        			state.importErrors = status.errors;
+        			actions.renderImportErrors();
+        		}
         		
         		if (status.finished) {
         			state.importing = false;
+        			state.importFinished = true;
         			state.importStatusMessage = status.message || 'Import completed successfully!';
         		} else {
         			setTimeout(() => actions.pollImportProgress(), 1000);
@@ -406,7 +426,27 @@ const { state, actions } = store('custom-importer', {
         	} catch (error) {
         		state.importError = 'Error fetching progress: ' + error.message;
         		state.importing = false;
+        		state.importFinished = true;
         	}
+        },
+        
+        // Render import errors in the error log
+        renderImportErrors: () => {
+        	const container = document.getElementById('import-error-list');
+        	if (!container || !state.importErrors.length) return;
+        	
+        	let html = '';
+        	state.importErrors.forEach((error, index) => {
+        		const timestamp = error.timestamp ? new Date(error.timestamp * 1000).toLocaleTimeString() : '';
+        		html += `
+        			<div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #dcdcde;">
+        				<span style="color: #d63638;">✕</span>
+        				<strong>${error.type || 'Error'}:</strong> ${error.message}
+        				${timestamp ? `<span style="color: #646970; font-size: 11px; float: right;">${timestamp}</span>` : ''}
+        			</div>
+        		`;
+        	});
+        	container.innerHTML = html;
         },
         
         // Cancel import
@@ -419,19 +459,81 @@ const { state, actions } = store('custom-importer', {
         				_ajax_nonce: window.importerInitialState?.importNonce || ''
         			})
         		});
+        	} catch (error) {
+        		console.error('Error canceling import:', error);
         	} finally {
+        		// Reset to select stage and show error message in dropzone
+        		state.currentStage = 'select';
         		state.importing = false;
-        		state.importStatusMessage = 'Import canceled';
+        		state.importFinished = false;
+        		state.uploadError = 'Import was canceled.';
+        		
+        		// Clear import-related state
+        		state.importProgress = 0;
+        		state.importTotal = 0;
+        		state.importError = '';
+        		state.importStatusMessage = '';
+        		state.importStage = '';
+        		state.importErrors = [];
+        		
+        		// Keep file selection state so user can start again
+        		// state.hasSelectedFile and selectedFile info remain intact
+        		
+        		// Clear UI elements
+        		const authorMappingsContainer = document.getElementById('author-mappings');
+        		if (authorMappingsContainer) {
+        			authorMappingsContainer.innerHTML = '';
+        		}
+        		
+        		const errorContainer = document.getElementById('import-error-list');
+        		if (errorContainer) {
+        			errorContainer.innerHTML = '';
+        		}
+        		
+        		// Clean up server-side asynchronously
+        	}
+        },
+        
+        // Manually trigger import step (for debugging when cron is not working)
+        triggerImportStep: async () => {
+        	try {
+        		const response = await fetch('/wp-content/plugins/next-gen-importer/next-import-step.php?action=run_import');
+        		console.log('Triggered import step manually');
+        		// Continue polling for updates
+        		setTimeout(() => actions.pollImportProgress(), 500);
+        	} catch (error) {
+        		console.error('Error triggering import step:', error);
         	}
         },
         
         // Cancel current import/indexing process
         cancelCurrentImport: () => {
         	console.log('Cancel button clicked');
-        	// First reset the UI state immediately
-        	actions.resetImporter();
         	
-        	// Then clean up server-side asynchronously
+        	// Reset to select stage and show cancellation message
+        	state.currentStage = 'select';
+        	state.uploading = false;
+        	state.uploadProgress = 0;
+        	state.uploadError = 'Operation was canceled.';
+        	
+        	// Clear indexing/import state
+        	state.fileDetails = null;
+        	state.importState = null;
+        	state.importing = false;
+        	state.importProgress = 0;
+        	state.importTotal = 0;
+        	state.importError = '';
+        	state.importStatusMessage = '';
+        	state.importStage = '';
+        	state.importErrors = [];
+        	state.importFinished = false;
+        	state.authorMappings = {};
+        	state.authorsInFile = [];
+        	
+        	// Keep file selection state so user can start again
+        	// state.hasSelectedFile and selectedFile info remain intact
+        	
+        	// Clean up server-side asynchronously
         	const formData = new FormData();
         	formData.append('action', 'cancel_current_import');
         	formData.append('_ajax_nonce', window.importerInitialState?.importNonce || '');
@@ -467,6 +569,9 @@ const { state, actions } = store('custom-importer', {
         	state.importTotal = 0;
         	state.importError = '';
         	state.importStatusMessage = '';
+        	state.importStage = '';
+        	state.importErrors = [];
+        	state.importFinished = false;
         	state.authorMappings = {};
         	state.authorsInFile = [];
         	
@@ -479,6 +584,12 @@ const { state, actions } = store('custom-importer', {
         	const authorMappingsContainer = document.getElementById('author-mappings');
         	if (authorMappingsContainer) {
         		authorMappingsContainer.innerHTML = '';
+        	}
+        	
+        	// Clear error log
+        	const errorContainer = document.getElementById('import-error-list');
+        	if (errorContainer) {
+        		errorContainer.innerHTML = '';
         	}
         },
         
