@@ -5,8 +5,8 @@ let selectedFile = null;  // will hold the selected file
 
 const { state, actions } = store('custom-importer', {
 	state: {
-		// UI stages: 'select', 'upload', 'configure', 'import'
-		currentStage: 'select',
+		// UI stages: 'select', 'upload', 'indexing', 'configure', 'import'
+		currentStage: window.importerInitialState?.currentStage || 'select',
 		
 		// File selection state
 		hasSelectedFile: false,
@@ -22,11 +22,15 @@ const { state, actions } = store('custom-importer', {
 		uploadError: '',
 		uploadedFileId: null,
 		
+		// File processing state
+		fileDetails: window.importerInitialState?.fileDetails || null,
+		importState: window.importerInitialState?.importState || null,
+		
 		// Import configuration state
 		downloadAttachments: true,
 		allowedDomains: '',
 		authorMappings: {},
-		authorsInFile: [],
+		authorsInFile: window.importerInitialState?.authorsInFile || [],
 		
 		// Import execution state
 		importing: false,
@@ -44,6 +48,9 @@ const { state, actions } = store('custom-importer', {
 		},
 		get showUploadProgress() {
 			return state.currentStage === 'upload' || state.uploading;
+		},
+		get showIndexing() {
+			return state.currentStage === 'indexing';
 		},
 		get showImportConfiguration() {
 			return state.currentStage === 'configure';
@@ -109,73 +116,90 @@ const { state, actions } = store('custom-importer', {
         
         // Upload the selected file
         uploadFile: async () => {
-        	if (!selectedFile) {
-        		return;
-        	}
-        	
-        	state.uploading = true;
-        	state.currentStage = 'upload';
-        	state.uploadProgress = 0;
-        	state.uploadError = '';
-        	
-        	const formData = new FormData();
-        	formData.append('action', 'upload_import_file');
-        	formData.append('import_file', selectedFile);
-        	formData.append('_ajax_nonce', window.importerInitialState?.uploadNonce || '');
-        	
-        	try {
-        		const xhr = new XMLHttpRequest();
-        		
-        		// Track upload progress
-        		xhr.upload.addEventListener('progress', (event) => {
-        			if (event.lengthComputable) {
-        				state.uploadProgress = Math.round((event.loaded / event.total) * 100);
-        			}
-        		});
-        		
-        		// Handle response
-        		xhr.addEventListener('load', () => {
-        			state.uploading = false;
-        			
-        			if (xhr.status === 200) {
-        				try {
-        					const response = JSON.parse(xhr.responseText);
-        					if (response.success) {
-        						state.uploadedFileId = response.data.file_id;
-        						state.authorsInFile = response.data.authors || [];
-        						state.currentStage = 'configure';
-        						
-        						// Initialize author mappings and render the UI
-        						actions.initializeAuthorMappings();
-        						actions.renderAuthorMappings();
-        					} else {
-        						state.uploadError = response.data?.error || 'Upload failed';
-        						state.currentStage = 'select';
-        					}
-        				} catch (e) {
-        					state.uploadError = 'Invalid server response';
-        					state.currentStage = 'select';
-        				}
-        			} else {
-        				state.uploadError = `Upload failed with status ${xhr.status}`;
-        				state.currentStage = 'select';
-        			}
-        		});
-        		
-        		xhr.addEventListener('error', () => {
-        			state.uploading = false;
-        			state.uploadError = 'Network error during upload';
-        			state.currentStage = 'select';
-        		});
-        		
-        		xhr.open('POST', ajaxurl);
-        		xhr.send(formData);
-        		
-        	} catch (error) {
-        		state.uploading = false;
-        		state.uploadError = 'Error: ' + error.message;
-        		state.currentStage = 'select';
-        	}
+            if (!selectedFile) {
+                return;
+            }
+            state.uploading = true;
+            state.currentStage = 'upload';
+            state.uploadProgress = 0;
+            state.uploadError = '';
+
+            const formData = new FormData();
+            formData.append('action', 'upload_import_file');
+            formData.append('import_file', selectedFile);
+            formData.append('_ajax_nonce', window.importerInitialState?.uploadNonce || '');
+
+            try {
+                // Using XHR over fetch() to get progress events in all browsers. Safari doesn't
+                // support monitoring upload progress via fetch() ReadableStream.
+                const xhr = new XMLHttpRequest();
+                xhr.upload.addEventListener('progress', (event) => {
+                    if (event.lengthComputable) {
+                        state.uploadProgress = Math.round((event.loaded / event.total) * 100);
+                    }
+                });
+                xhr.addEventListener('load', () => {
+                    state.uploading = false;
+                    if (xhr.status === 200) {
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.success) {
+                                // Show file details and state, transition to indexing stage
+                                state.fileDetails = response.data.file;
+                                state.fileDetails.sizeFormatted = actions.formatFileSize(response.data.file.size);
+                                state.importState = response.data.state;
+                                state.currentStage = 'indexing';
+                                actions.pollImportState();
+                            } else {
+                                state.uploadError = response.data?.error || 'Upload failed';
+                                state.currentStage = 'select';
+                            }
+                        } catch (e) {
+                            state.uploadError = 'Invalid server response';
+                            state.currentStage = 'select';
+                        }
+                    } else {
+                        state.uploadError = `Upload failed with status ${xhr.status}`;
+                        state.currentStage = 'select';
+                    }
+                });
+                xhr.addEventListener('error', () => {
+                    state.uploading = false;
+                    state.uploadError = 'Network error during upload';
+                    state.currentStage = 'select';
+                });
+                xhr.open('POST', ajaxurl);
+                xhr.send(formData);
+            } catch (error) {
+                state.uploading = false;
+                state.uploadError = 'Error: ' + error.message;
+                state.currentStage = 'select';
+            }
+        },
+
+        // Poll the server for import state and authors
+        pollImportState: async () => {
+            try {
+                const res = await fetch(`${ajaxurl}?action=get_import_state`);
+                const data = await res.json();
+                if (!data.success) {
+                    state.importState = data.data?.error || 'Unknown error';
+                    return;
+                }
+                state.fileDetails = data.data.file;
+                state.importState = data.data.state;
+                if (data.data.authors && Array.isArray(data.data.authors) && data.data.authors.length > 0) {
+                    state.authorsInFile = data.data.authors;
+                    state.currentStage = 'configure';
+                    actions.initializeAuthorMappings();
+                    actions.renderAuthorMappings();
+                } else {
+                    // Keep polling until authors are available
+                    setTimeout(() => { withScope(actions.pollImportState); }, 1500);
+                }
+            } catch (err) {
+                state.importState = 'Error fetching import state: ' + err.message;
+            }
         },
         
         // Initialize author mappings for authors found in file
@@ -383,6 +407,23 @@ const { state, actions } = store('custom-importer', {
         	}
         },
         
+        // Cancel current import/indexing process
+        cancelCurrentImport: async () => {
+        	try {
+        		const formData = new FormData();
+        		formData.append('action', 'cancel_current_import');
+        		formData.append('_ajax_nonce', window.importerInitialState?.importNonce || '');
+        		
+        		await fetch(ajaxurl, {
+        			method: 'POST',
+        			body: formData
+        		});
+        	} finally {
+        		// Reset to initial state
+        		actions.resetImporter();
+        	}
+        },
+        
         // Reset to start over
         resetImporter: () => {
         	selectedFile = null;
@@ -426,6 +467,34 @@ const { state, actions } = store('custom-importer', {
         }
     }
 });
+
+// Initialize state from server if available (for page refresh scenarios)
+if (window.importerInitialState?.fileDetails) {
+    // Format file size if not already formatted
+    if (!state.fileDetails.sizeFormatted) {
+        state.fileDetails.sizeFormatted = actions.formatFileSize(state.fileDetails.size);
+    }
+    
+    // Set up selected file state if we have file details
+    state.hasSelectedFile = true;
+    state.selectedFileName = state.fileDetails.name;
+    state.selectedFileSize = state.fileDetails.size;
+    state.selectedFileSizeFormatted = state.fileDetails.sizeFormatted;
+    
+    // If we're in indexing stage, start polling
+    if (state.currentStage === 'indexing') {
+        actions.pollImportState();
+    }
+    
+    // If we have authors and are in configure stage, initialize mappings
+    if (state.currentStage === 'configure' && state.authorsInFile.length > 0) {
+        actions.initializeAuthorMappings();
+        // Use setTimeout to ensure DOM is ready
+        setTimeout(() => {
+            actions.renderAuthorMappings();
+        }, 100);
+    }
+}
 
 // Make the store available globally for the dynamically generated HTML
 window.customImporterStore = { state, actions };

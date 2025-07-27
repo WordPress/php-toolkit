@@ -26,6 +26,26 @@ function custom_importer_admin_page() {
     $max_upload_size = wp_max_upload_size();
     $max_upload_size_formatted = size_format($max_upload_size);
 
+    // Check for existing import state to restore UI after page refresh
+    $current_file_details = get_option('custom_importer_current_file');
+    $current_stage = 'select'; // default stage
+    $file_details = null;
+    $import_state = null;
+    $authors_in_file = array();
+    
+    if ($current_file_details) {
+        $file_details = $current_file_details;
+        $import_state = $current_file_details['state'];
+        
+        // Determine current stage based on import state
+        if ($import_state === 'indexing uploaded file') {
+            $current_stage = 'indexing';
+        } elseif ($import_state === 'awaiting author mapping' && !empty($current_file_details['authors'])) {
+            $current_stage = 'configure';
+            $authors_in_file = $current_file_details['authors'];
+        }
+    }
+
     // Enqueue the interactivity store script (as an ES module) for this page
     wp_enqueue_script_module(
         'custom-importer-ui',                                      // script handle
@@ -40,6 +60,10 @@ function custom_importer_admin_page() {
         'maxFileSizeFormatted' => $max_upload_size_formatted,
         'uploadNonce' => wp_create_nonce('upload_import_file'),
         'importNonce' => wp_create_nonce('start_import'),
+        'currentStage' => $current_stage,
+        'fileDetails' => $file_details,
+        'importState' => $import_state,
+        'authorsInFile' => $authors_in_file,
     );
     wp_add_inline_script(
         'custom-importer-ui',
@@ -249,6 +273,37 @@ function custom_importer_admin_page() {
             </div>
         </div>
 
+        <!-- Stage 2.5: File Indexing -->
+        <div id="indexing-stage" data-wp-bind--hidden="state.currentStage !== 'indexing'">
+            <h3><?php echo esc_html__('Processing File', 'custom-importer'); ?></h3>
+            
+            <div class="file-details">
+                <h4><?php echo esc_html__('File Details', 'custom-importer'); ?></h4>
+                <p data-wp-bind--hidden="!state.fileDetails">
+                    <strong><?php echo esc_html__('Name:', 'custom-importer'); ?></strong> 
+                    <span data-wp-text="state.fileDetails?.name"></span>
+                </p>
+                <p data-wp-bind--hidden="!state.fileDetails">
+                    <strong><?php echo esc_html__('Size:', 'custom-importer'); ?></strong> 
+                    <span data-wp-text="state.fileDetails?.sizeFormatted"></span>
+                </p>
+            </div>
+            
+            <div class="indexing-progress">
+                <div style="display: flex; align-items: center; gap: 10px; margin: 15px 0;">
+                    <span class="spinner is-active" style="float: none; margin: 0;"></span>
+                    <span data-wp-text="state.importState"></span>
+                </div>
+                <p class="description"><?php echo esc_html__('Please wait while we analyze your file and extract information...', 'custom-importer'); ?></p>
+            </div>
+            
+            <div class="stage-actions">
+                <button type="button" class="button" data-wp-on--click="actions.cancelCurrentImport">
+                    <?php echo esc_html__('Cancel', 'custom-importer'); ?>
+                </button>
+            </div>
+        </div>
+
         <!-- Stage 3: Import Configuration -->
         <div id="config-stage" data-wp-bind--hidden="!state.showImportConfiguration">
             <h3><?php echo esc_html__('Configure Import', 'custom-importer'); ?></h3>
@@ -349,12 +404,16 @@ function custom_importer_admin_page() {
 // AJAX handler for file upload (separate from import)
 add_action('wp_ajax_upload_import_file', 'custom_importer_upload_file');
 function custom_importer_upload_file() {
-    check_ajax_referer('upload_import_file');
-    
+    // Nonce verification disabled for now
+    // if ( ! isset($_POST['_ajax_nonce']) ) {
+    //     wp_send_json_error(array('error' => 'Missing nonce'), 403);
+    // }
+    // if ( ! wp_verify_nonce($_POST['_ajax_nonce'], 'upload_import_file') ) {
+    //     wp_send_json_error(array('error' => 'Invalid or expired nonce'), 403);
+    // }
     if ( ! current_user_can('import') ) {
         wp_send_json_error(array('error' => 'Unauthorized'), 403);
     }
-    
     if ( empty($_FILES['import_file']) ) {
         wp_send_json_error(array('error' => __('No file uploaded.', 'custom-importer')));
     }
@@ -374,32 +433,54 @@ function custom_importer_upload_file() {
     $allowed_types = array('text/xml', 'application/xml');
     $file_type = wp_check_filetype($file['name']);
     if ( ! in_array($file_type['type'], $allowed_types) && ! in_array($file_type['ext'], array('xml', 'wxr')) ) {
-        wp_send_json_error(array('error' => __('Invalid file type. Please upload an XML or WXR file.', 'custom-importer')));
+        // @TODO: this doesn't work that well. It rejected a valid WXR file with xml extension.
+        // wp_send_json_error(array('error' => __('Invalid file type. Please upload an XML or WXR file.', 'custom-importer')));
     }
     
-    // Move uploaded file to a temporary location
-    $upload_dir = wp_upload_dir();
-    $temp_dir = $upload_dir['basedir'] . '/temp-imports/';
-    if ( ! file_exists($temp_dir) ) {
-        wp_mkdir_p($temp_dir);
-    }
-    
-    $file_id = uniqid('import_');
-    $temp_file = $temp_dir . $file_id . '.xml';
-    
-    if ( ! move_uploaded_file($file['tmp_name'], $temp_file) ) {
+    // Move uploaded file to plugin directory as current_import.php
+    $plugin_dir = dirname(__FILE__);
+    $target_file = $plugin_dir . '/current_import.php';
+    $php_guard = "<?php !(); ?>\n";
+    $uploaded_content = file_get_contents($file['tmp_name']);
+    $result = file_put_contents($target_file, $php_guard . $uploaded_content);
+    if ( $result === false ) {
         wp_send_json_error(array('error' => __('Failed to save uploaded file.', 'custom-importer')));
     }
     
-    // Parse the file to extract authors (simplified example)
-    $authors = extract_authors_from_wxr($temp_file);
+    // Store file details and state
+    $details = array(
+        'name' => $file['name'],
+        'size' => $file['size'],
+        'uploaded_at' => time(),
+        'state' => 'indexing uploaded file',
+        'path' => $target_file,
+    );
+    update_option('custom_importer_current_file', $details);
     
+    // Schedule a cron job to simulate indexing and add fake authors
+    if ( ! wp_next_scheduled('custom_importer_fake_indexing') ) {
+        wp_schedule_single_event(time() + 10, 'custom_importer_fake_indexing');
+    }
+    // Respond with state and file details (not authors yet)
     wp_send_json_success(array(
-        'file_id' => $file_id,
-        'authors' => $authors,
-        'message' => __('File uploaded successfully.', 'custom-importer')
+        'file' => $details,
+        'state' => 'indexing uploaded file',
+        'message' => __('File uploaded. Indexing in progress.', 'custom-importer')
     ));
 }
+
+// Cron job: add fake authors and advance state
+add_action('custom_importer_fake_indexing', function() {
+    $details = get_option('custom_importer_current_file');
+    if ( ! $details ) return;
+    $details['authors'] = array(
+        array('author_login' => 'alice', 'author_display_name' => 'Alice Example'),
+        array('author_login' => 'bob', 'author_display_name' => 'Bob Example'),
+        array('author_login' => 'carol', 'author_display_name' => 'Carol Example'),
+    );
+    $details['state'] = 'awaiting author mapping';
+    update_option('custom_importer_current_file', $details);
+});
 
 // AJAX handlers for import process
 add_action('wp_ajax_start_import', 'custom_importer_start_import');
@@ -486,6 +567,35 @@ function custom_importer_cancel_import() {
     wp_send_json_success();
 }
 
+add_action('wp_ajax_cancel_current_import', 'custom_importer_cancel_current_import');
+function custom_importer_cancel_current_import() {
+    // Nonce verification disabled for now (same as upload handler)
+    // check_ajax_referer('start_import');
+    
+    if ( ! current_user_can('import') ) {
+        wp_send_json_error(array('error' => 'Unauthorized'), 403);
+    }
+    
+    // Get current file details to find the file path
+    $current_file_details = get_option('custom_importer_current_file');
+    
+    // Delete the uploaded file if it exists
+    if ($current_file_details && !empty($current_file_details['path'])) {
+        $file_path = $current_file_details['path'];
+        if (file_exists($file_path)) {
+            unlink($file_path);
+        }
+    }
+    
+    // Clear the stored file details
+    delete_option('custom_importer_current_file');
+    
+    // Cancel any scheduled cron jobs
+    wp_clear_scheduled_hook('custom_importer_fake_indexing');
+    
+    wp_send_json_success(array('message' => __('Import canceled successfully.', 'custom-importer')));
+}
+
 // AJAX handler to get WordPress users for author mapping
 add_action('wp_ajax_get_wordpress_users', 'custom_importer_get_wordpress_users');
 function custom_importer_get_wordpress_users() {
@@ -500,6 +610,27 @@ function custom_importer_get_wordpress_users() {
     ));
     
     wp_send_json_success(array('users' => $users));
+}
+
+// AJAX handler to get current import state and file details
+add_action('wp_ajax_get_import_state', 'custom_importer_get_import_state');
+function custom_importer_get_import_state() {
+    if ( ! current_user_can('import') ) {
+        wp_send_json_error(array('error' => 'Unauthorized'), 403);
+    }
+    $details = get_option('custom_importer_current_file');
+    if ( ! $details ) {
+        wp_send_json_error(array('error' => 'No import in progress.'));
+    }
+    $response = array(
+        'file' => $details,
+        'state' => $details['state'],
+    );
+    // If authors are available, add them
+    if ( ! empty($details['authors']) ) {
+        $response['authors'] = $details['authors'];
+    }
+    wp_send_json_success($response);
 }
 
 // Helper function to extract authors from WXR file
