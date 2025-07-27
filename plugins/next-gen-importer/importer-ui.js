@@ -1,5 +1,5 @@
 // importer-ui.js - Interactivity API store for the importer UI (ES Module)
-import { store, getContext, withScope } from '@wordpress/interactivity';
+import { store, getContext, getElement } from '@wordpress/interactivity';
 
 let selectedFile = null;  // will hold the selected file
 
@@ -39,24 +39,27 @@ const { state, actions } = store('custom-importer', {
 		importError: '',
 		importStatusMessage: '',
 		
-		// Computed states
-		get canUpload() {
-			return state.hasSelectedFile && !state.uploading && state.currentStage === 'select';
+		// Computed states for stage visibility
+		get isSelectStage() {
+			return state.currentStage === 'select';
 		},
-		get showFileDetails() {
-			return state.hasSelectedFile && state.currentStage === 'select';
+		get isUploadStage() {
+			return state.currentStage === 'upload';
 		},
-		get showUploadProgress() {
-			return state.currentStage === 'upload' || state.uploading;
-		},
-		get showIndexing() {
+		get isIndexingStage() {
 			return state.currentStage === 'indexing';
 		},
-		get showImportConfiguration() {
+		get isConfigureStage() {
 			return state.currentStage === 'configure';
 		},
-		get showImportProgress() {
-			return state.currentStage === 'import' || state.importing;
+		get isImportStage() {
+			return state.currentStage === 'import';
+		},
+		get canUpload() {
+			return state.hasSelectedFile && !state.uploading;
+		},
+		get hasAuthorsInFile() {
+			return state.authorsInFile && state.authorsInFile.length > 0;
 		}
 	},
 	
@@ -116,11 +119,12 @@ const { state, actions } = store('custom-importer', {
         
         // Upload the selected file
         uploadFile: async () => {
-            if (!selectedFile) {
+            if (!selectedFile || state.uploading) {
                 return;
             }
-            state.uploading = true;
+            // Immediately transition to upload stage
             state.currentStage = 'upload';
+            state.uploading = true;
             state.uploadProgress = 0;
             state.uploadError = '';
 
@@ -146,7 +150,12 @@ const { state, actions } = store('custom-importer', {
                             if (response.success) {
                                 // Show file details and state, transition to indexing stage
                                 state.fileDetails = response.data.file;
-                                state.fileDetails.sizeFormatted = actions.formatFileSize(response.data.file.size);
+                                // Update the selected file info for the indexing stage
+                                if (state.fileDetails) {
+                                    state.selectedFileName = state.fileDetails.name;
+                                    state.selectedFileSize = state.fileDetails.size;
+                                    state.selectedFileSizeFormatted = actions.formatFileSize(state.fileDetails.size);
+                                }
                                 state.importState = response.data.state;
                                 state.currentStage = 'indexing';
                                 actions.pollImportState();
@@ -180,6 +189,11 @@ const { state, actions } = store('custom-importer', {
         // Poll the server for import state and authors
         pollImportState: async () => {
             try {
+                // @TODO: Rethink this. It's pushing us forward with certainty when wp-cron is
+                //        not available or there's another cronjob still holding the lock.
+                //        Is it okay to just run this without awaiting? It might take 20-30s after all.
+                fetch(`/wp-content/plugins/next-gen-importer/next-import-step.php`);
+
                 const res = await fetch(`${ajaxurl}?action=get_import_state`);
                 const data = await res.json();
                 if (!data.success) {
@@ -187,6 +201,10 @@ const { state, actions } = store('custom-importer', {
                     return;
                 }
                 state.fileDetails = data.data.file;
+                // Ensure file size is formatted
+                if (state.fileDetails && !state.fileDetails.sizeFormatted) {
+                    state.fileDetails.sizeFormatted = actions.formatFileSize(state.fileDetails.size);
+                }
                 state.importState = data.data.state;
                 if (data.data.authors && Array.isArray(data.data.authors) && data.data.authors.length > 0) {
                     state.authorsInFile = data.data.authors;
@@ -195,7 +213,7 @@ const { state, actions } = store('custom-importer', {
                     actions.renderAuthorMappings();
                 } else {
                     // Keep polling until authors are available
-                    setTimeout(() => { withScope(actions.pollImportState); }, 1500);
+                    setTimeout(() => actions.pollImportState(), 1500);
                 }
             } catch (err) {
                 state.importState = 'Error fetching import state: ' + err.message;
@@ -382,7 +400,7 @@ const { state, actions } = store('custom-importer', {
         			state.importing = false;
         			state.importStatusMessage = status.message || 'Import completed successfully!';
         		} else {
-        			setTimeout(() => { withScope(actions.pollImportProgress); }, 1000);
+        			setTimeout(() => actions.pollImportProgress(), 1000);
         		}
         		
         	} catch (error) {
@@ -408,20 +426,26 @@ const { state, actions } = store('custom-importer', {
         },
         
         // Cancel current import/indexing process
-        cancelCurrentImport: async () => {
-        	try {
-        		const formData = new FormData();
-        		formData.append('action', 'cancel_current_import');
-        		formData.append('_ajax_nonce', window.importerInitialState?.importNonce || '');
-        		
-        		await fetch(ajaxurl, {
-        			method: 'POST',
-        			body: formData
-        		});
-        	} finally {
-        		// Reset to initial state
-        		actions.resetImporter();
-        	}
+        cancelCurrentImport: () => {
+        	console.log('Cancel button clicked');
+        	// First reset the UI state immediately
+        	actions.resetImporter();
+        	
+        	// Then clean up server-side asynchronously
+        	const formData = new FormData();
+        	formData.append('action', 'cancel_current_import');
+        	formData.append('_ajax_nonce', window.importerInitialState?.importNonce || '');
+        	
+        	fetch(ajaxurl, {
+        		method: 'POST',
+        		body: formData
+        	}).then(response => response.json())
+        	  .then(result => {
+        		console.log('Cancel response:', result);
+        	  })
+        	  .catch(error => {
+        		console.error('Cancel error:', error);
+        	  });
         },
         
         // Reset to start over
@@ -436,6 +460,8 @@ const { state, actions } = store('custom-importer', {
         	state.uploadProgress = 0;
         	state.uploadError = '';
         	state.uploadedFileId = null;
+        	state.fileDetails = null;
+        	state.importState = null;
         	state.importing = false;
         	state.importProgress = 0;
         	state.importTotal = 0;
@@ -470,16 +496,18 @@ const { state, actions } = store('custom-importer', {
 
 // Initialize state from server if available (for page refresh scenarios)
 if (window.importerInitialState?.fileDetails) {
-    // Format file size if not already formatted
-    if (!state.fileDetails.sizeFormatted) {
+    // Ensure fileDetails object exists and format file size if not already formatted
+    if (state.fileDetails && !state.fileDetails.sizeFormatted) {
         state.fileDetails.sizeFormatted = actions.formatFileSize(state.fileDetails.size);
     }
     
     // Set up selected file state if we have file details
-    state.hasSelectedFile = true;
-    state.selectedFileName = state.fileDetails.name;
-    state.selectedFileSize = state.fileDetails.size;
-    state.selectedFileSizeFormatted = state.fileDetails.sizeFormatted;
+    if (state.fileDetails) {
+        state.hasSelectedFile = true;
+        state.selectedFileName = state.fileDetails.name;
+        state.selectedFileSize = state.fileDetails.size;
+        state.selectedFileSizeFormatted = state.fileDetails.sizeFormatted || actions.formatFileSize(state.fileDetails.size);
+    }
     
     // If we're in indexing stage, start polling
     if (state.currentStage === 'indexing') {
@@ -498,3 +526,13 @@ if (window.importerInitialState?.fileDetails) {
 
 // Make the store available globally for the dynamically generated HTML
 window.customImporterStore = { state, actions };
+
+// Debug: Log current stage for troubleshooting
+console.log('Initial state:', {
+    currentStage: state.currentStage,
+    fileDetails: state.fileDetails,
+    importState: state.importState,
+    hasFileDetails: !!window.importerInitialState?.fileDetails
+});
+
+

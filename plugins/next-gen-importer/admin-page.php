@@ -65,14 +65,11 @@ function custom_importer_admin_page() {
         'importState' => $import_state,
         'authorsInFile' => $authors_in_file,
     );
-    wp_add_inline_script(
-        'custom-importer-ui',
-        'window.importerInitialState = ' . json_encode($initial_state) . ';',
-        'before'
-    );
-
     // Output the admin page HTML (server-rendered)
     ?>
+    <script>
+        window.importerInitialState = <?php echo json_encode($initial_state); ?>;
+    </script>
     <div class="wrap" data-wp-interactive="custom-importer">
         <h1><?php echo esc_html__('Import Content', 'custom-importer'); ?></h1>
         <p><?php echo esc_html__('Upload an export file to import content into this site.', 'custom-importer'); ?></p>
@@ -194,10 +191,14 @@ function custom_importer_admin_page() {
             font-size: 13px;
             margin-top: 10px;
         }
+        /* Ensure hidden stages are properly hidden */
+        [data-wp-bind--hidden][hidden] {
+            display: none !important;
+        }
         </style>
 
         <!-- Stage 1: File Selection -->
-        <div id="file-selection-stage" data-wp-bind--hidden="state.currentStage !== 'select'">
+        <div id="file-selection-stage" <?php echo $current_stage !== 'select' ? 'hidden' : ''; ?> data-wp-bind--hidden="!state.isSelectStage">
             <!-- Drag-and-drop file upload area -->
             <div id="drop-zone" class="drag-drop-area" 
                  data-wp-class--has-file="state.hasSelectedFile"
@@ -261,7 +262,7 @@ function custom_importer_admin_page() {
         </div>
 
         <!-- Stage 2: File Upload Progress -->
-        <div id="upload-stage" data-wp-bind--hidden="!state.showUploadProgress">
+        <div id="upload-stage" hidden data-wp-bind--hidden="!state.isUploadStage">
             <h3><?php echo esc_html__('Uploading File', 'custom-importer'); ?></h3>
             
             <div class="upload-progress">
@@ -274,18 +275,18 @@ function custom_importer_admin_page() {
         </div>
 
         <!-- Stage 2.5: File Indexing -->
-        <div id="indexing-stage" data-wp-bind--hidden="state.currentStage !== 'indexing'">
+        <div id="indexing-stage" <?php echo $current_stage !== 'indexing' ? 'hidden' : ''; ?> data-wp-bind--hidden="!state.isIndexingStage">
             <h3><?php echo esc_html__('Processing File', 'custom-importer'); ?></h3>
             
             <div class="file-details">
                 <h4><?php echo esc_html__('File Details', 'custom-importer'); ?></h4>
-                <p data-wp-bind--hidden="!state.fileDetails">
+                <p>
                     <strong><?php echo esc_html__('Name:', 'custom-importer'); ?></strong> 
-                    <span data-wp-text="state.fileDetails?.name"></span>
+                    <span data-wp-text="state.selectedFileName"></span>
                 </p>
-                <p data-wp-bind--hidden="!state.fileDetails">
+                <p>
                     <strong><?php echo esc_html__('Size:', 'custom-importer'); ?></strong> 
-                    <span data-wp-text="state.fileDetails?.sizeFormatted"></span>
+                    <span data-wp-text="state.selectedFileSizeFormatted"></span>
                 </p>
             </div>
             
@@ -305,7 +306,7 @@ function custom_importer_admin_page() {
         </div>
 
         <!-- Stage 3: Import Configuration -->
-        <div id="config-stage" data-wp-bind--hidden="!state.showImportConfiguration">
+        <div id="config-stage" <?php echo $current_stage !== 'configure' ? 'hidden' : ''; ?> data-wp-bind--hidden="!state.isConfigureStage">
             <h3><?php echo esc_html__('Configure Import', 'custom-importer'); ?></h3>
             
             <div class="import-config">
@@ -339,7 +340,7 @@ function custom_importer_admin_page() {
                     <p><?php esc_html_e( "If a new user is created by WordPress, a new password will be randomly generated and the new user's role will be set as subscriber. Manually changing the new user's details will be necessary.", 'custom-importer' ); ?></p>
 
                     <!-- Dynamic author mappings will be populated by JavaScript -->
-                    <div id="author-mappings" data-wp-bind--hidden="state.authorsInFile.length === 0">
+                    <div id="author-mappings" data-wp-bind--hidden="!state.hasAuthorsInFile">
                         <!-- This will be populated dynamically based on state.authorsInFile -->
                     </div>
                 </div>
@@ -356,7 +357,7 @@ function custom_importer_admin_page() {
         </div>
 
         <!-- Stage 4: Import Progress -->
-        <div id="import-stage" data-wp-bind--hidden="!state.showImportProgress">
+        <div id="import-stage" hidden data-wp-bind--hidden="!state.isImportStage">
             <h3><?php echo esc_html__('Import Progress', 'custom-importer'); ?></h3>
             
             <div class="upload-progress">
@@ -456,11 +457,15 @@ function custom_importer_upload_file() {
         'path' => $target_file,
     );
     update_option('custom_importer_current_file', $details);
+    error_log(print_r($details, true));
     
-    // Schedule a cron job to simulate indexing and add fake authors
-    if ( ! wp_next_scheduled('custom_importer_fake_indexing') ) {
-        wp_schedule_single_event(time() + 10, 'custom_importer_fake_indexing');
+    // Trigger wp-cron to kick off the import process. Do not wait for the request
+    // to complete.
+    if ( ! wp_next_scheduled('ng_importer__import') ) {
+        error_log('scheduling fake indexing');
+        wp_schedule_event(time() - 61, 'ng_importer__every_1_minute', 'ng_importer__import');
     }
+
     // Respond with state and file details (not authors yet)
     wp_send_json_success(array(
         'file' => $details,
@@ -469,10 +474,70 @@ function custom_importer_upload_file() {
     ));
 }
 
+if(array_key_exists('trigger_import', $_GET)) {
+    error_log('triggering import via GET');
+    do_action('ng_importer__import');
+}
+
+
+// in your plugin/theme
+
+add_filter('cron_schedules', function($s) {
+    $s['ng_importer__every_1_minute'] = [
+      'interval' => 1,
+      'display'  => 'Every 1 minute'
+    ];
+    return $s;
+});
+  
+// Hook to log error on init for debugging
+add_action('init', 'custom_importer_debug_init');
+function custom_importer_debug_init() {
+    if(str_ends_with($_SERVER['REQUEST_URI'], '/wp-cron.php')) {
+        error_log('Custom Importer: Init hook triggered' . $_SERVER['REQUEST_URI']);
+        // $crons = wp_get_ready_cron_jobs();
+        // error_log(var_dump(isset($crons), true));
+        // $crons = _get_cron_array();
+        // error_log(print_r($crons, true));
+
+    }
+}
+
+
+register_activation_hook(__FILE__, function() {
+    if (! wp_next_scheduled('ng_importer__import')) {
+        wp_schedule_event(time() - 1, 'ng_importer__every_1_minute', 'ng_importer__import');
+    }
+});
+  
+register_deactivation_hook(__FILE__, function() {
+    $ts = wp_next_scheduled('ng_importer__import');
+    if ($ts) wp_unschedule_event($ts, 'ng_importer__import');
+});
+  
+add_action('ng_importer__import', function() {
+    error_log('[ng_importer__import] running cron job');
+
+    $lock_key = 'ng_importer__import_lock';
+    if ( get_transient($lock_key) ) return;
+    set_transient($lock_key, 1, 25);
+
+    try {
+        error_log('running cron job');
+    } finally {
+        delete_transient($lock_key);
+    }
+});
+
+
+
 // Cron job: add fake authors and advance state
-add_action('custom_importer_fake_indexing', function() {
+function ng_importer__import() {
+    error_log('running fake indexing');
     $details = get_option('custom_importer_current_file');
-    if ( ! $details ) return;
+    if ( ! $details ) {
+        return;
+    }
     $details['authors'] = array(
         array('author_login' => 'alice', 'author_display_name' => 'Alice Example'),
         array('author_login' => 'bob', 'author_display_name' => 'Bob Example'),
@@ -480,7 +545,10 @@ add_action('custom_importer_fake_indexing', function() {
     );
     $details['state'] = 'awaiting author mapping';
     update_option('custom_importer_current_file', $details);
-});
+}
+add_action('ng_importer__import', 'ng_importer__import');
+
+
 
 // AJAX handlers for import process
 add_action('wp_ajax_start_import', 'custom_importer_start_import');
@@ -591,7 +659,8 @@ function custom_importer_cancel_current_import() {
     delete_option('custom_importer_current_file');
     
     // Cancel any scheduled cron jobs
-    wp_clear_scheduled_hook('custom_importer_fake_indexing');
+    error_log('clearing scheduled cron jobs');
+    wp_clear_scheduled_hook('ng_importer__import');
     
     wp_send_json_success(array('message' => __('Import canceled successfully.', 'custom-importer')));
 }

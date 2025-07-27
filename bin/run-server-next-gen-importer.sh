@@ -7,5 +7,7 @@ npx @wp-playground/cli@latest \
     --mount=`pwd`/plugins/next-gen-importer:/wordpress/wp-content/plugins/next-gen-importer \
     --blueprint=./blueprint-next-gen-importer.json \
     --mount=`pwd`/vendor:/wordpress/wp-content/vendor \
-    --mount=`pwd`/components:/wordpress/wp-content/components
+    --mount=`pwd`/components:/wordpress/wp-content/components \
+    --mount=`pwd`/debug.log:/wordpress/wp-content/debug.log \
+    --mount=`pwd`/wp-cron.php:/wordpress/wp-cron.php
     

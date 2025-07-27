@@ -1,0 +1,195 @@
+[27-Jul-2025 22:41:52 UTC] clearing scheduled cron jobs
+[27-Jul-2025 22:41:55 UTC] Array
+(
+    [name] => valid-wxr-1.1.xml
+    [size] => 7328
+    [uploaded_at] => 1753656115
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[27-Jul-2025 22:41:55 UTC] scheduling fake indexing
+[27-Jul-2025 22:41:55 UTC] requesting wp-cronhttp://127.0.0.1:9400/wp-cron.php
+[27-Jul-2025 22:41:55 UTC] Custom Importer: Init hook triggered/wp-cron.php
+[27-Jul-2025 22:41:55 UTC] Not running cron because another cron is still holding the lock 56.805999994278 seconds left
+[27-Jul-2025 22:42:02 UTC] clearing scheduled cron jobs
+[27-Jul-2025 22:42:05 UTC] Array
+(
+    [name] => theme-unit-test-data.xml
+    [size] => 714557
+    [uploaded_at] => 1753656125
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[27-Jul-2025 22:42:05 UTC] scheduling fake indexing
+[27-Jul-2025 22:42:05 UTC] requesting wp-cronhttp://127.0.0.1:9400/wp-cron.php
+[27-Jul-2025 22:42:05 UTC] Custom Importer: Init hook triggered/wp-cron.php
+[27-Jul-2025 22:42:05 UTC] Not running cron because another cron is still holding the lock 46.428999900818 seconds left
+[27-Jul-2025 22:42:37 UTC] clearing scheduled cron jobs
+[27-Jul-2025 22:42:44 UTC] Array
+(
+    [name] => valid-wxr-1.0.xml
+    [size] => 14900
+    [uploaded_at] => 1753656164
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[27-Jul-2025 22:42:44 UTC] scheduling fake indexing
+[27-Jul-2025 22:42:44 UTC] requesting wp-cronhttp://127.0.0.1:9400/wp-cron.php
+[27-Jul-2025 22:42:44 UTC] Custom Importer: Init hook triggered/wp-cron.php
+[27-Jul-2025 22:42:44 UTC] Not running cron because another cron is still holding the lock 7.4230000972748 seconds left
+[27-Jul-2025 22:42:52 UTC] clearing scheduled cron jobs
+[27-Jul-2025 22:42:55 UTC] Array
+(
+    [name] => valid-wxr-1.0.xml
+    [size] => 14900
+    [uploaded_at] => 1753656175
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[27-Jul-2025 22:42:55 UTC] scheduling fake indexing
+[27-Jul-2025 22:42:55 UTC] requesting wp-cronhttp://127.0.0.1:9400/wp-cron.php
+[27-Jul-2025 22:42:56 UTC] Custom Importer: Init hook triggered/wp-cron.php
+[27-Jul-2025 22:42:56 UTC] Running cron!
+[27-Jul-2025 22:42:56 UTC] running cron job
+[27-Jul-2025 22:42:56 UTC] running cron job
+[27-Jul-2025 22:42:56 UTC] running fake indexing
+[27-Jul-2025 22:43:25 UTC] Array
+(
+    [name] => valid-wxr-1.1.xml
+    [size] => 7328
+    [uploaded_at] => 1753656205
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[27-Jul-2025 22:43:25 UTC] requesting wp-cronhttp://127.0.0.1:9400/wp-cron.php
+[27-Jul-2025 22:43:25 UTC] Custom Importer: Init hook triggered/wp-cron.php
+[27-Jul-2025 22:43:25 UTC] Not running cron because another cron is still holding the lock 45.588999986649 seconds left
+[27-Jul-2025 22:44:00 UTC] clearing scheduled cron jobs
+[27-Jul-2025 22:44:03 UTC] Array
+(
+    [name] => valid-wxr-1.0.xml
+    [size] => 14900
+    [uploaded_at] => 1753656243
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[27-Jul-2025 22:44:03 UTC] scheduling fake indexing
+[27-Jul-2025 22:44:03 UTC] requesting wp-cronhttp://127.0.0.1:9400/wp-cron.php
+[27-Jul-2025 22:44:03 UTC] Custom Importer: Init hook triggered/wp-cron.php
+[27-Jul-2025 22:44:03 UTC] Not running cron because another cron is still holding the lock 7.7730000019073 seconds left
+[27-Jul-2025 22:44:08 UTC] clearing scheduled cron jobs
+[27-Jul-2025 22:44:11 UTC] Array
+(
+    [name] => valid-wxr-1.1.xml
+    [size] => 7328
+    [uploaded_at] => 1753656251
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[27-Jul-2025 22:44:11 UTC] scheduling fake indexing
+[27-Jul-2025 22:44:11 UTC] requesting wp-cronhttp://127.0.0.1:9400/wp-cron.php
+[27-Jul-2025 22:44:12 UTC] Custom Importer: Init hook triggered/wp-cron.php
+[27-Jul-2025 22:44:12 UTC] Running cron!
+[27-Jul-2025 22:44:12 UTC] running cron job
+[27-Jul-2025 22:44:12 UTC] running cron job
+[27-Jul-2025 22:44:12 UTC] running fake indexing
+[27-Jul-2025 22:47:00 UTC] Array
+(
+    [name] => valid-wxr-1.1.xml
+    [size] => 7328
+    [uploaded_at] => 1753656420
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[27-Jul-2025 22:47:00 UTC] requesting wp-cronhttp://127.0.0.1:9400/wp-cron.php
+[27-Jul-2025 22:48:34 UTC] clearing scheduled cron jobs
+[27-Jul-2025 22:48:37 UTC] Array
+(
+    [name] => valid-wxr-1.0.xml
+    [size] => 14900
+    [uploaded_at] => 1753656517
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[27-Jul-2025 22:48:37 UTC] scheduling fake indexing
+[27-Jul-2025 22:48:37 UTC] requesting wp-cronhttp://127.0.0.1:9400/wp-cron.php
+[27-Jul-2025 22:49:57 UTC] clearing scheduled cron jobs
+[27-Jul-2025 22:50:00 UTC] Array
+(
+    [name] => valid-wxr-1.0.xml
+    [size] => 14900
+    [uploaded_at] => 1753656600
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[27-Jul-2025 22:50:00 UTC] scheduling fake indexing
+[27-Jul-2025 22:50:00 UTC] requesting wp-cron:http://127.0.0.1:9400/wp-admin/?trigger_import=1
+[27-Jul-2025 22:50:01 UTC] triggering import via GET
+[27-Jul-2025 22:50:01 UTC] triggering import via GET
+[27-Jul-2025 22:52:04 UTC] clearing scheduled cron jobs
+[27-Jul-2025 22:52:07 UTC] Array
+(
+    [name] => valid-wxr-1.0.xml
+    [size] => 14900
+    [uploaded_at] => 1753656727
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[27-Jul-2025 22:52:07 UTC] scheduling fake indexing
+[27-Jul-2025 22:52:07 UTC] requesting wp-cron:http://127.0.0.1:9400/wp-content/plugins/next-gen-importer/next-import-step.php
+[27-Jul-2025 22:56:18 UTC] Array
+(
+    [name] => valid-wxr-1.0.xml
+    [size] => 14900
+    [uploaded_at] => 1753656978
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[27-Jul-2025 22:56:18 UTC] scheduling fake indexing
+[27-Jul-2025 22:56:44 UTC] [next-import-step] running next import step
+[27-Jul-2025 22:56:46 UTC] [next-import-step] running next import step
+[27-Jul-2025 22:56:48 UTC] [next-import-step] running next import step
+[27-Jul-2025 22:57:21 UTC] clearing scheduled cron jobs
+[27-Jul-2025 22:57:24 UTC] Array
+(
+    [name] => valid-wxr-1.1.xml
+    [size] => 7328
+    [uploaded_at] => 1753657044
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[27-Jul-2025 22:57:24 UTC] scheduling fake indexing
+[27-Jul-2025 22:57:24 UTC] [next-import-step] running next import step
+[27-Jul-2025 22:57:24 UTC] [next-import-step] before do_action
+[27-Jul-2025 22:57:24 UTC] [ng_importer__import] running cron job
+[27-Jul-2025 22:57:24 UTC] running cron job
+[27-Jul-2025 22:57:24 UTC] running fake indexing
+[27-Jul-2025 22:57:24 UTC] [next-import-step] after do_action
+[27-Jul-2025 22:57:35 UTC] Array
+(
+    [name] => valid-wxr-1.0.xml
+    [size] => 14900
+    [uploaded_at] => 1753657055
+    [state] => indexing uploaded file
+    [path] => /wordpress/wp-content/plugins/next-gen-importer/current_import.php
+)
+
+[27-Jul-2025 22:57:35 UTC] [next-import-step] running next import step
+[27-Jul-2025 22:57:35 UTC] [next-import-step] before do_action
+[27-Jul-2025 22:57:35 UTC] [ng_importer__import] running cron job
+[27-Jul-2025 22:57:35 UTC] running cron job
+[27-Jul-2025 22:57:35 UTC] running fake indexing
+[27-Jul-2025 22:57:35 UTC] [next-import-step] after do_action
