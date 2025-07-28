@@ -65,12 +65,43 @@ function custom_importer_admin_page() {
         'importState' => $import_state,
         'authorsInFile' => $authors_in_file,
     );
+
+	wp_interactivity_state(
+		'custom-importer',
+		array_merge(
+			$initial_state,
+			array(
+                'isSelectStage' => function () {
+					$state = wp_interactivity_state( 'custom-importer' );
+					return $state['importState'] === 'select';
+				},
+                'isUploadStage' => function () {
+                    $state = wp_interactivity_state( 'custom-importer' );
+                    return $state['importState'] === 'uploading file';
+                },
+				'isIndexingStage' => function () {
+					$state = wp_interactivity_state( 'custom-importer' );
+					return $state['importState'] === 'indexing uploaded file';
+				},
+                'isConfigureStage' => function () {
+                    $state = wp_interactivity_state( 'custom-importer' );
+                    return $state['importState'] === 'configure';
+                },
+				'isImportStage' => function () {
+					$state = wp_interactivity_state( 'custom-importer' );
+					return $state['importState'] === 'inserting entities';
+				},
+			)
+		)
+	);
+
     // Output the admin page HTML (server-rendered)
+    ob_start();
     ?>
     <script>
         window.importerInitialState = <?php echo json_encode($initial_state); ?>;
     </script>
-    <div class="wrap" data-wp-interactive="custom-importer">
+    <div class="wrap" data-wp-interactive="custom-importer" data-wp-init--refresh="callbacks.continuouslyTriggerNextImportStep">
         <h1><?php echo esc_html__('Import Content', 'custom-importer'); ?></h1>
         <p><?php echo esc_html__('Upload an export file to import content into this site.', 'custom-importer'); ?></p>
 
@@ -192,13 +223,13 @@ function custom_importer_admin_page() {
             margin-top: 10px;
         }
         /* Ensure hidden stages are properly hidden */
-        [data-wp-bind--hidden][hidden] {
+        [data-wp-class--hidden][hidden] {
             display: none !important;
         }
         </style>
 
         <!-- Stage 1: File Selection -->
-        <div id="file-selection-stage" <?php echo $current_stage !== 'select' ? 'hidden' : ''; ?> data-wp-bind--hidden="!state.isSelectStage">
+        <div id="file-selection-stage" data-wp-class--hidden="!state.isSelectStage">
             <!-- Drag-and-drop file upload area -->
             <div id="drop-zone" class="drag-drop-area" 
                  data-wp-class--has-file="state.hasSelectedFile"
@@ -209,7 +240,7 @@ function custom_importer_admin_page() {
                 <input type="file" name="import_file" id="import_file" accept=".xml,.wxr" style="display:none;" data-wp-on--change="actions.handleFileInputChange">
                 
                 <!-- Initial state (no file selected) -->
-                <div class="drop-zone-initial" data-wp-bind--hidden="state.hasSelectedFile">
+                <div class="drop-zone-initial" data-wp-class--hidden="state.hasSelectedFile">
                     <span class="dashicons dashicons-upload" style="font-size: 48px; color: #999;"></span>
                     <p style="margin: 10px 0 0 0; font-size: 16px; color: #50575e;">
                         <?php echo esc_html__('Drag & drop a file here, or click to select a file', 'custom-importer'); ?>
@@ -217,7 +248,7 @@ function custom_importer_admin_page() {
                 </div>
                 
                 <!-- File selected state -->
-                <div class="drop-zone-file-info" data-wp-bind--hidden="!state.hasSelectedFile">
+                <div class="drop-zone-file-info" data-wp-class--hidden="!state.hasSelectedFile">
                     <span class="dashicons dashicons-media-document" style="font-size: 48px; color: #00a32a;"></span>
                     <h4><?php echo esc_html__('File Selected', 'custom-importer'); ?></h4>
                     <p>
@@ -241,7 +272,7 @@ function custom_importer_admin_page() {
             </div>
 
             <!-- File size warning -->
-            <div class="error-message" data-wp-bind--hidden="!state.isFileTooBig">
+            <div class="error-message" data-wp-class--hidden="!state.isFileTooBig">
                 <?php printf(
                     esc_html__('This file is too large. Maximum allowed size is %s.', 'custom-importer'),
                     $max_upload_size_formatted
@@ -249,10 +280,10 @@ function custom_importer_admin_page() {
             </div>
 
             <!-- Upload error -->
-            <div class="error-message" data-wp-bind--hidden="!state.uploadError" data-wp-text="state.uploadError"></div>
+            <div class="error-message" data-wp-class--hidden="!state.uploadError" data-wp-text="state.uploadError"></div>
 
             <!-- Upload button -->
-            <div class="stage-actions" data-wp-bind--hidden="!state.hasSelectedFile">
+            <div class="stage-actions" data-wp-class--hidden="!state.hasSelectedFile">
                 <button type="button" class="button button-primary button-large" 
                         data-wp-on--click="actions.uploadFile"
                         data-wp-bind--disabled="!state.canUpload">
@@ -262,7 +293,7 @@ function custom_importer_admin_page() {
         </div>
 
         <!-- Stage 2: File Upload Progress -->
-        <div id="upload-stage" hidden data-wp-bind--hidden="!state.isUploadStage">
+        <div id="upload-stage" hidden data-wp-class--hidden="!state.isUploadStage">
             <h3><?php echo esc_html__('Uploading File', 'custom-importer'); ?></h3>
             
             <div class="upload-progress">
@@ -275,7 +306,7 @@ function custom_importer_admin_page() {
         </div>
 
         <!-- Stage 2.5: File Indexing -->
-        <div id="indexing-stage" <?php echo $current_stage !== 'indexing' ? 'hidden' : ''; ?> data-wp-bind--hidden="!state.isIndexingStage">
+        <div id="indexing-stage" data-wp-class--hidden="!state.isIndexingStage">
             <h3><?php echo esc_html__('Processing File', 'custom-importer'); ?></h3>
             
             <div class="file-details">
@@ -306,7 +337,7 @@ function custom_importer_admin_page() {
         </div>
 
         <!-- Stage 3: Import Configuration -->
-        <div id="config-stage" <?php echo $current_stage !== 'configure' ? 'hidden' : ''; ?> data-wp-bind--hidden="!state.isConfigureStage">
+        <div id="config-stage" data-wp-class--hidden="!state.isConfigureStage">
             <h3><?php echo esc_html__('Configure Import', 'custom-importer'); ?></h3>
             
             <div class="import-config">
@@ -322,7 +353,7 @@ function custom_importer_admin_page() {
                         </label>
                     </p>
                     
-                    <div data-wp-bind--hidden="!state.downloadAttachments">
+                    <div data-wp-class--hidden="!state.downloadAttachments">
                         <label>
                             <?php echo esc_html__('Allowed Media Domains:', 'custom-importer'); ?>
                             <input type="text" class="regular-text" placeholder="example.com, cdn.example.com"
@@ -340,7 +371,7 @@ function custom_importer_admin_page() {
                     <p><?php esc_html_e( "If a new user is created by WordPress, a new password will be randomly generated and the new user's role will be set as subscriber. Manually changing the new user's details will be necessary.", 'custom-importer' ); ?></p>
 
                     <!-- Dynamic author mappings will be populated by JavaScript -->
-                    <div id="author-mappings" data-wp-bind--hidden="!state.hasAuthorsInFile">
+                    <div id="author-mappings" data-wp-class--hidden="!state.hasAuthorsInFile">
                         <!-- This will be populated dynamically based on state.authorsInFile -->
                     </div>
                 </div>
@@ -357,18 +388,18 @@ function custom_importer_admin_page() {
         </div>
 
         <!-- Stage 4: Import Progress -->
-        <div id="import-stage" hidden data-wp-bind--hidden="!state.isImportStage">
+        <div id="import-stage" hidden data-wp-class--hidden="!state.isImportStage">
             <h3><?php echo esc_html__('Import Progress', 'custom-importer'); ?></h3>
             
             <!-- Stage indicator -->
-            <div class="import-stage-indicator" data-wp-bind--hidden="state.importFinished">
+            <div class="import-stage-indicator" data-wp-class--hidden="state.importFinished">
                 <p><strong><?php echo esc_html__('Current Stage:', 'custom-importer'); ?></strong> 
                     <span data-wp-text="state.importStageLabel"></span>
                 </p>
             </div>
             
             <!-- Progress bar -->
-            <div class="upload-progress" data-wp-bind--hidden="state.importFinished">
+            <div class="upload-progress" data-wp-class--hidden="state.importFinished">
                 <progress data-wp-bind--value="state.importProgress" data-wp-bind--max="state.importTotal"></progress>
                 <p>
                     <span data-wp-text="state.importProgressLabel"></span>
@@ -376,7 +407,7 @@ function custom_importer_admin_page() {
             </div>
             
             <!-- Error log -->
-            <div class="import-errors" data-wp-bind--hidden="!state.hasImportErrors">
+            <div class="import-errors" data-wp-class--hidden="!state.hasImportErrors">
                 <h4><?php echo esc_html__('Import Errors', 'custom-importer'); ?></h4>
                 <div class="error-log" style="max-height: 200px; overflow-y: auto; background: #f6f7f7; border: 1px solid #dcdcde; padding: 10px; border-radius: 4px;">
                     <div id="import-error-list">
@@ -386,27 +417,17 @@ function custom_importer_admin_page() {
             </div>
             
             <!-- Status and error messages -->
-            <div class="error-message" data-wp-bind--hidden="!state.importError" data-wp-text="state.importError"></div>
-            <div class="success-message" data-wp-bind--hidden="!state.importStatusMessage" data-wp-text="state.importStatusMessage"></div>
+            <div class="error-message" data-wp-class--hidden="!state.importError" data-wp-text="state.importError"></div>
+            <div class="success-message" data-wp-class--hidden="!state.importStatusMessage" data-wp-text="state.importStatusMessage"></div>
             
             <!-- Actions -->
-            <div class="stage-actions" data-wp-bind--hidden="state.importFinished">
+            <div class="stage-actions" data-wp-class--hidden="state.importFinished">
                 <button type="button" class="button" data-wp-on--click="actions.cancelImport">
                     <?php echo esc_html__('Cancel Import', 'custom-importer'); ?>
-                </button> 
-                <?php
-                // Trigger import step manually if cron is not working
-                if ( isset($_GET['manual_import']) ) {
-                    ?>
-                    <button type="button" class="button" data-wp-on--click="actions.triggerImportStep">
-                        <?php echo esc_html__('Trigger Next Step (Debug)', 'custom-importer'); ?>
-                    </button>
-                    <?php
-                }
-                ?>
+                </button>
             </div>
             
-            <div class="stage-actions" data-wp-bind--hidden="!state.importFinished">
+            <div class="stage-actions" data-wp-class--hidden="!state.importFinished">
                 <button type="button" class="button button-primary" data-wp-on--click="actions.resetImporter">
                     <?php echo esc_html__('Import Another File', 'custom-importer'); ?>
                 </button>
@@ -415,6 +436,8 @@ function custom_importer_admin_page() {
 
     </div>  <!-- end .wrap -->
     <?php
+	$html = ob_get_clean();
+	echo wp_interactivity_process_directives( $html );
 }
 
 // AJAX handler for file upload (separate from import)

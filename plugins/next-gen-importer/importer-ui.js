@@ -85,6 +85,30 @@ const { state, actions } = store('custom-importer', {
 		}
 	},
 	
+    callbacks: {
+        /**
+         * Continuously ask the server to do the next import step once the import is running.
+         *
+         * Why not just rely on wp-cron?
+         * 
+         * Because we want a snappy user experience when the user is interacting with the UI.
+         * wp-cron may not move us forward for the next 10 or 60 minutes. It runs at most once
+         * a minute, it could be preoccupied with other tasks, etc. We still schedule a wp-cron
+         * task, but we also have a dedicated endpoint that performs the next step immediately.
+         * It safe to run anytime and doesn't conflict with a concurrent wp-cron task.
+         */
+        async continuouslyTriggerNextImportStep() {
+            console.log('continuouslyTriggerNextImportStep');
+            while (true) {
+                if (state.isIndexingStage || state.isImportStage) {
+                    await fetch(`/wp-content/plugins/next-gen-importer/next-import-step.php?action=run_import`);
+                }
+                await actions.pollImportProgress();
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+        }
+    },
+
     actions: {
         // Trigger file input dialog on click of drop zone
         triggerFileInput: () => {
@@ -180,7 +204,6 @@ const { state, actions } = store('custom-importer', {
                                 }
                                 state.importState = response.data.state;
                                 state.currentStage = 'indexing';
-                                actions.pollImportState();
                             } else {
                                 state.uploadError = response.data?.error || 'Upload failed';
                                 state.currentStage = 'select';
@@ -211,11 +234,6 @@ const { state, actions } = store('custom-importer', {
         // Poll the server for import state and authors
         pollImportState: async () => {
             try {
-                // @TODO: Rethink this. It's pushing us forward with certainty when wp-cron is
-                //        not available or there's another cronjob still holding the lock.
-                //        Is it okay to just run this without awaiting? It might take 20-30s after all.
-                fetch(`/wp-content/plugins/next-gen-importer/next-import-step.php`);
-
                 const res = await fetch(`${ajaxurl}?action=get_import_state`);
                 const data = await res.json();
                 if (!data.success) {
@@ -233,9 +251,6 @@ const { state, actions } = store('custom-importer', {
                     state.currentStage = 'configure';
                     actions.initializeAuthorMappings();
                     actions.renderAuthorMappings();
-                } else {
-                    // Keep polling until authors are available
-                    setTimeout(() => actions.pollImportState(), 1500);
                 }
             } catch (err) {
                 state.importState = 'Error fetching import state: ' + err.message;
@@ -382,9 +397,6 @@ const { state, actions } = store('custom-importer', {
         		state.importStage = result.data.stage || 'downloading';
         		state.importStatusMessage = result.data.message || 'Import in progress...';
         		
-        		// Begin polling for progress
-        		actions.pollImportProgress();
-        		
         	} catch (error) {
         		state.importError = 'Error starting import: ' + error.message;
         		state.importing = false;
@@ -419,8 +431,6 @@ const { state, actions } = store('custom-importer', {
         			state.importing = false;
         			state.importFinished = true;
         			state.importStatusMessage = status.message || 'Import completed successfully!';
-        		} else {
-        			setTimeout(() => actions.pollImportProgress(), 1000);
         		}
         		
         	} catch (error) {
@@ -491,18 +501,6 @@ const { state, actions } = store('custom-importer', {
         		}
         		
         		// Clean up server-side asynchronously
-        	}
-        },
-        
-        // Manually trigger import step (for debugging when cron is not working)
-        triggerImportStep: async () => {
-        	try {
-        		const response = await fetch('/wp-content/plugins/next-gen-importer/next-import-step.php?action=run_import');
-        		console.log('Triggered import step manually');
-        		// Continue polling for updates
-        		setTimeout(() => actions.pollImportProgress(), 500);
-        	} catch (error) {
-        		console.error('Error triggering import step:', error);
         	}
         },
         
@@ -618,11 +616,6 @@ if (window.importerInitialState?.fileDetails) {
         state.selectedFileName = state.fileDetails.name;
         state.selectedFileSize = state.fileDetails.size;
         state.selectedFileSizeFormatted = state.fileDetails.sizeFormatted || actions.formatFileSize(state.fileDetails.size);
-    }
-    
-    // If we're in indexing stage, start polling
-    if (state.currentStage === 'indexing') {
-        actions.pollImportState();
     }
     
     // If we have authors and are in configure stage, initialize mappings
