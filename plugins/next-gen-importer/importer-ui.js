@@ -5,8 +5,8 @@ let selectedFile = null;  // will hold the selected file
 
 const { state, actions } = store('custom-importer', {
 	state: {
-		// UI stages: 'select', 'upload', 'indexing', 'configure', 'import'
-		currentStage: window.importerInitialState?.currentStage || 'select',
+		// Import state - single source of truth
+		importState: window.importerInitialState?.importState || 'idle',
 		
 		// File selection state
 		hasSelectedFile: false,
@@ -20,43 +20,38 @@ const { state, actions } = store('custom-importer', {
 		uploading: false,
 		uploadProgress: 0,
 		uploadError: '',
-		uploadedFileId: null,
 		
-		// File processing state
+		// File and import data
 		fileDetails: window.importerInitialState?.fileDetails || null,
-		importState: window.importerInitialState?.importState || null,
+		authorsInFile: window.importerInitialState?.authorsInFile || [],
 		
 		// Import configuration state
 		downloadAttachments: true,
 		allowedDomains: '',
 		authorMappings: {},
-		authorsInFile: window.importerInitialState?.authorsInFile || [],
 		
 		// Import execution state
-		importing: false,
-		importProgress: 0,
-		importTotal: 0,
-		importError: '',
-		importStatusMessage: '',
-		importStage: '', // 'downloading' or 'inserting'
-		importErrors: [], // Array of error objects
-		importFinished: false,
+		importProgress: window.importerInitialState?.importProgress || 0,
+		importTotal: window.importerInitialState?.importTotal || 0,
+		importError: window.importerInitialState?.importError || '',
+		importStatusMessage: window.importerInitialState?.importStatusMessage || '',
+		importErrors: window.importerInitialState?.importErrors || [],
 		
 		// Computed states for stage visibility
 		get isSelectStage() {
-			return state.currentStage === 'select';
+			return state.importState === 'idle';
 		},
 		get isUploadStage() {
-			return state.currentStage === 'upload';
+			return state.importState === 'uploading';
 		},
 		get isIndexingStage() {
-			return state.currentStage === 'indexing';
+			return state.importState === 'indexing';
 		},
 		get isConfigureStage() {
-			return state.currentStage === 'configure';
+			return state.importState === 'configure';
 		},
 		get isImportStage() {
-			return state.currentStage === 'import';
+			return ['downloading', 'inserting', 'completed'].includes(state.importState);
 		},
 		get canUpload() {
 			return state.hasSelectedFile && !state.uploading;
@@ -68,18 +63,22 @@ const { state, actions } = store('custom-importer', {
 			return state.importErrors && state.importErrors.length > 0;
 		},
 		get importStageLabel() {
-			if (state.importStage === 'downloading') {
+			if (state.importState === 'downloading') {
 				return 'Downloading images...';
-			} else if (state.importStage === 'inserting') {
+			} else if (state.importState === 'inserting') {
 				return 'Inserting entities...';
+			} else if (state.importState === 'completed') {
+				return 'Import completed';
 			}
 			return 'Processing...';
 		},
 		get importProgressLabel() {
-			if (state.importStage === 'downloading') {
+			if (state.importState === 'downloading') {
 				return `Downloaded ${state.importProgress}% of images`;
-			} else if (state.importStage === 'inserting') {
+			} else if (state.importState === 'inserting') {
 				return `Processed ${state.importProgress} / ${state.importTotal} entities`;
+			} else if (state.importState === 'completed') {
+				return 'Import completed successfully';
 			}
 			return `Progress: ${state.importProgress} / ${state.importTotal}`;
 		}
@@ -103,7 +102,7 @@ const { state, actions } = store('custom-importer', {
                 if (state.isIndexingStage || state.isImportStage) {
                     await fetch(`/wp-content/plugins/next-gen-importer/next-import-step.php?action=run_import`);
                 }
-                await actions.pollImportProgress();
+                await actions.nextImportStep();
                 await new Promise((resolve) => setTimeout(resolve, 1000));
             }
         }
@@ -169,15 +168,13 @@ const { state, actions } = store('custom-importer', {
                 return;
             }
             // Immediately transition to upload stage
-            state.currentStage = 'upload';
+            state.importState = 'uploading';
             state.uploading = true;
             state.uploadProgress = 0;
             state.uploadError = '';
 
             const formData = new FormData();
-            formData.append('action', 'upload_import_file');
             formData.append('import_file', selectedFile);
-            formData.append('_ajax_nonce', window.importerInitialState?.uploadNonce || '');
 
             try {
                 // Using XHR over fetch() to get progress events in all browsers. Safari doesn't
@@ -193,65 +190,76 @@ const { state, actions } = store('custom-importer', {
                     if (xhr.status === 200) {
                         try {
                             const response = JSON.parse(xhr.responseText);
-                            if (response.success) {
-                                // Show file details and state, transition to indexing stage
-                                state.fileDetails = response.data.file;
-                                // Update the selected file info for the indexing stage
-                                if (state.fileDetails) {
-                                    state.selectedFileName = state.fileDetails.name;
-                                    state.selectedFileSize = state.fileDetails.size;
-                                    state.selectedFileSizeFormatted = actions.formatFileSize(state.fileDetails.size);
-                                }
-                                state.importState = response.data.state;
-                                state.currentStage = 'indexing';
-                            } else {
-                                state.uploadError = response.data?.error || 'Upload failed';
-                                state.currentStage = 'select';
+                            // Check if it's a REST API error
+                            if (response.code && response.message) {
+                                state.uploadError = response.message || 'Upload failed';
+                                state.importState = 'idle';
+                                return;
+                            }
+                            
+                            // Update state directly with complete state from server
+                            Object.assign(state, response);
+                            
+                            // Update the selected file info for the UI
+                            if (state.fileDetails) {
+                                state.selectedFileName = state.fileDetails.name;
+                                state.selectedFileSize = state.fileDetails.size;
+                                state.selectedFileSizeFormatted = actions.formatFileSize(state.fileDetails.size);
                             }
                         } catch (e) {
                             state.uploadError = 'Invalid server response';
-                            state.currentStage = 'select';
+                            state.importState = 'idle';
                         }
                     } else {
                         state.uploadError = `Upload failed with status ${xhr.status}`;
-                        state.currentStage = 'select';
+                        state.importState = 'idle';
                     }
                 });
                 xhr.addEventListener('error', () => {
                     state.uploading = false;
                     state.uploadError = 'Network error during upload';
-                    state.currentStage = 'select';
+                    state.importState = 'idle';
                 });
-                xhr.open('POST', ajaxurl);
+                
+                xhr.open('POST', `${window.importerInitialState.restUrl}upload`);
+                xhr.setRequestHeader('X-WP-Nonce', window.importerInitialState.restNonce);
                 xhr.send(formData);
             } catch (error) {
                 state.uploading = false;
                 state.uploadError = 'Error: ' + error.message;
-                state.currentStage = 'select';
+                state.importState = 'idle';
             }
         },
 
-        // Poll the server for import state and authors
-        pollImportState: async () => {
+        // Consolidated next import step action
+        nextImportStep: async () => {
             try {
-                const res = await fetch(`${ajaxurl}?action=get_import_state`);
+                const res = await fetch(`${window.importerInitialState.restUrl}next-step`, {
+                    headers: {
+                        'X-WP-Nonce': window.importerInitialState.restNonce
+                    }
+                });
                 const data = await res.json();
-                if (!data.success) {
-                    state.importState = data.data?.error || 'Unknown error';
+                
+                // Check for REST API error
+                if (data.code && data.message) {
+                    state.importState = data.message || 'Unknown error';
                     return;
                 }
-                state.fileDetails = data.data.file;
-                // Ensure file size is formatted
-                if (state.fileDetails && !state.fileDetails.sizeFormatted) {
-                    state.fileDetails.sizeFormatted = actions.formatFileSize(state.fileDetails.size);
-                }
-                state.importState = data.data.state;
-                if (data.data.authors && Array.isArray(data.data.authors) && data.data.authors.length > 0) {
-                    state.authorsInFile = data.data.authors;
-                    state.currentStage = 'configure';
+                
+                // Update state directly with the complete state from server
+                Object.assign(state, data);
+                
+                // Handle stage-specific UI updates
+                if (state.importState === 'configure' && state.authorsInFile.length > 0) {
                     actions.initializeAuthorMappings();
                     actions.renderAuthorMappings();
                 }
+                
+                if (['downloading', 'inserting', 'completed'].includes(state.importState) && state.importErrors.length > 0) {
+                    actions.renderImportErrors();
+                }
+                
             } catch (err) {
                 state.importState = 'Error fetching import state: ' + err.message;
             }
@@ -334,12 +342,20 @@ const { state, actions } = store('custom-importer', {
         // Fetch WordPress users for author mapping dropdown
         fetchWordPressUsers: async () => {
         	try {
-        		const response = await fetch(`${ajaxurl}?action=get_wordpress_users`);
+        		const response = await fetch(`${window.importerInitialState.restUrl}users`, {
+                    headers: {
+                        'X-WP-Nonce': window.importerInitialState.restNonce
+                    }
+                });
         		const data = await response.json();
-        		if (data.success) {
-        			return data.data.users || [];
+        		
+        		// Check for REST API error
+        		if (data.code && data.message) {
+        			console.error('Error fetching users:', data.message);
+        			return [];
         		}
-        		return [];
+        		
+        		return data.users || [];
         	} catch (error) {
         		console.error('Error fetching users:', error);
         		return [];
@@ -368,77 +384,44 @@ const { state, actions } = store('custom-importer', {
         
         // Start the import process
         startImport: async () => {
-        	state.importing = true;
-        	state.currentStage = 'import';
-        	state.importError = '';
+        	// Set temporary loading state
         	state.importStatusMessage = 'Starting import...';
-        	state.importErrors = [];
-        	state.importFinished = false;
         	
-        	const formData = new FormData();
-        	formData.append('action', 'start_import');
-        	formData.append('download_attachments', state.downloadAttachments ? '1' : '0');
-        	formData.append('allowed_domains', state.allowedDomains);
-        	formData.append('author_mappings', JSON.stringify(state.authorMappings));
-        	formData.append('_ajax_nonce', window.importerInitialState?.importNonce || '');
+        	const requestBody = {
+        		download_attachments: state.downloadAttachments ? '1' : '0',
+        		allowed_domains: state.allowedDomains,
+        		author_mappings: JSON.stringify(state.authorMappings)
+        	};
         	
         	try {
-        		const response = await fetch(ajaxurl, { method: 'POST', body: formData });
+        		const response = await fetch(`${window.importerInitialState.restUrl}start`, {
+        			method: 'POST',
+        			headers: {
+        				'Content-Type': 'application/json',
+        				'X-WP-Nonce': window.importerInitialState.restNonce
+        			},
+        			body: JSON.stringify(requestBody)
+        		});
+        		
         		const result = await response.json();
         		
-        		if (!result.success) {
-        			state.importError = result.data?.error || 'Failed to start import';
-        			state.importing = false;
+        		// Check for REST API error
+        		if (result.code && result.message) {
+        			state.importError = result.message || 'Failed to start import';
+        			state.importState = 'idle';
         			return;
         		}
         		
-        		state.importTotal = result.data.total || 100;
-        		state.importProgress = result.data.progress || 0;
-        		state.importStage = result.data.stage || 'downloading';
-        		state.importStatusMessage = result.data.message || 'Import in progress...';
+        		// Update state directly with complete state from server
+        		Object.assign(state, result);
         		
         	} catch (error) {
         		state.importError = 'Error starting import: ' + error.message;
-        		state.importing = false;
+        		state.importState = 'idle';
         	}
         },
         
-        // Poll for import progress
-        pollImportProgress: async () => {
-        	try {
-        		const res = await fetch(`${ajaxurl}?action=get_import_progress`);
-        		const data = await res.json();
-        		
-        		if (!data.success) {
-        			state.importError = data.data?.error || 'Import error occurred';
-        			state.importing = false;
-        			state.importFinished = true;
-        			return;
-        		}
-        		
-        		const status = data.data;
-        		state.importProgress = status.progress || 0;
-        		state.importTotal = status.total || 0;
-        		state.importStage = status.stage || 'unknown';
-        		
-        		// Update errors if any
-        		if (status.errors && status.errors.length > 0) {
-        			state.importErrors = status.errors;
-        			actions.renderImportErrors();
-        		}
-        		
-        		if (status.finished) {
-        			state.importing = false;
-        			state.importFinished = true;
-        			state.importStatusMessage = status.message || 'Import completed successfully!';
-        		}
-        		
-        	} catch (error) {
-        		state.importError = 'Error fetching progress: ' + error.message;
-        		state.importing = false;
-        		state.importFinished = true;
-        	}
-        },
+
         
         // Render import errors in the error log
         renderImportErrors: () => {
@@ -462,20 +445,17 @@ const { state, actions } = store('custom-importer', {
         // Cancel import
         cancelImport: async () => {
         	try {
-        		await fetch(ajaxurl, {
+        		await fetch(`${window.importerInitialState.restUrl}cancel`, {
         			method: 'POST',
-        			body: new URLSearchParams({ 
-        				action: 'cancel_import',
-        				_ajax_nonce: window.importerInitialState?.importNonce || ''
-        			})
+        			headers: {
+        				'X-WP-Nonce': window.importerInitialState.restNonce
+        			}
         		});
         	} catch (error) {
         		console.error('Error canceling import:', error);
         	} finally {
-        		// Reset to select stage and show error message in dropzone
-        		state.currentStage = 'select';
-        		state.importing = false;
-        		state.importFinished = false;
+        		// Reset to idle state and show error message in dropzone
+        		state.importState = 'idle';
         		state.uploadError = 'Import was canceled.';
         		
         		// Clear import-related state
@@ -483,7 +463,6 @@ const { state, actions } = store('custom-importer', {
         		state.importTotal = 0;
         		state.importError = '';
         		state.importStatusMessage = '';
-        		state.importStage = '';
         		state.importErrors = [];
         		
         		// Keep file selection state so user can start again
@@ -508,23 +487,19 @@ const { state, actions } = store('custom-importer', {
         cancelCurrentImport: () => {
         	console.log('Cancel button clicked');
         	
-        	// Reset to select stage and show cancellation message
-        	state.currentStage = 'select';
+        	// Reset to idle state and show cancellation message
+        	state.importState = 'idle';
         	state.uploading = false;
         	state.uploadProgress = 0;
         	state.uploadError = 'Operation was canceled.';
         	
         	// Clear indexing/import state
         	state.fileDetails = null;
-        	state.importState = null;
-        	state.importing = false;
         	state.importProgress = 0;
         	state.importTotal = 0;
         	state.importError = '';
         	state.importStatusMessage = '';
-        	state.importStage = '';
         	state.importErrors = [];
-        	state.importFinished = false;
         	state.authorMappings = {};
         	state.authorsInFile = [];
         	
@@ -532,13 +507,11 @@ const { state, actions } = store('custom-importer', {
         	// state.hasSelectedFile and selectedFile info remain intact
         	
         	// Clean up server-side asynchronously
-        	const formData = new FormData();
-        	formData.append('action', 'cancel_current_import');
-        	formData.append('_ajax_nonce', window.importerInitialState?.importNonce || '');
-        	
-        	fetch(ajaxurl, {
+        	fetch(`${window.importerInitialState.restUrl}cancel-current`, {
         		method: 'POST',
-        		body: formData
+        		headers: {
+        			'X-WP-Nonce': window.importerInitialState.restNonce
+        		}
         	}).then(response => response.json())
         	  .then(result => {
         		console.log('Cancel response:', result);
@@ -555,21 +528,16 @@ const { state, actions } = store('custom-importer', {
         	state.selectedFileName = '';
         	state.selectedFileSize = 0;
         	state.selectedFileSizeFormatted = '';
-        	state.currentStage = 'select';
+        	state.importState = 'idle';
         	state.uploading = false;
         	state.uploadProgress = 0;
         	state.uploadError = '';
-        	state.uploadedFileId = null;
         	state.fileDetails = null;
-        	state.importState = null;
-        	state.importing = false;
         	state.importProgress = 0;
         	state.importTotal = 0;
         	state.importError = '';
         	state.importStatusMessage = '';
-        	state.importStage = '';
         	state.importErrors = [];
-        	state.importFinished = false;
         	state.authorMappings = {};
         	state.authorsInFile = [];
         	
@@ -619,7 +587,7 @@ if (window.importerInitialState?.fileDetails) {
     }
     
     // If we have authors and are in configure stage, initialize mappings
-    if (state.currentStage === 'configure' && state.authorsInFile.length > 0) {
+    if (state.importState === 'configure' && state.authorsInFile.length > 0) {
         actions.initializeAuthorMappings();
         // Use setTimeout to ensure DOM is ready
         setTimeout(() => {
@@ -631,11 +599,10 @@ if (window.importerInitialState?.fileDetails) {
 // Make the store available globally for the dynamically generated HTML
 window.customImporterStore = { state, actions };
 
-// Debug: Log current stage for troubleshooting
+// Debug: Log current state for troubleshooting
 console.log('Initial state:', {
-    currentStage: state.currentStage,
-    fileDetails: state.fileDetails,
     importState: state.importState,
+    fileDetails: state.fileDetails,
     hasFileDetails: !!window.importerInitialState?.fileDetails
 });
 
