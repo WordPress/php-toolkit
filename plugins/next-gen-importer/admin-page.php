@@ -46,7 +46,7 @@ function default_importer_state() {
         'importTotal' => 0,
         'importErrors' => array(),
         'importStatusMessage' => '',
-        'importError' => ''
+        'importError' => '',
     );
 }
 
@@ -62,12 +62,22 @@ function custom_importer_get_state() {
 /**
  * Update the importer state
  */
-function update_custom_importer_update_state($updates) {
+function update_importer_state_properties($updates) {
     $state = custom_importer_get_state();
     $state = array_merge($state, $updates);
     update_option('custom_importer_state', $state);
     return $state;
 }
+
+/**
+ * Update the importer state
+ */
+function update_importer_state($new_state) {
+    update_option('custom_importer_state', $new_state);
+    return $new_state;
+}
+
+
 
 // Callback to render the Importer admin page
 function custom_importer_admin_page() {
@@ -84,9 +94,9 @@ function custom_importer_admin_page() {
 
     // Enqueue the interactivity store script (as an ES module) for this page
     wp_enqueue_script_module(
-        'custom-importer-ui',                                      // script handle
-        plugin_dir_url(__FILE__) . 'importer-ui.js',               // module script file
-        array('@wordpress/interactivity'),                        // ensure the Interactivity API is available
+        'custom-importer-ui',
+        plugin_dir_url(__FILE__) . 'importer-ui.js',
+        array('@wordpress/interactivity'),
         '1.0.0'
     );
     
@@ -101,11 +111,20 @@ function custom_importer_admin_page() {
         $current_state
     );
 
+    // @TODO: What if we have 100s of users? Do an autocompleted input field.
+    $wp_users = get_users(array(
+        'fields' => array('ID', 'display_name', 'user_login'),
+        'role__in' => array('editor', 'administrator'),
+    ));
+
 	wp_interactivity_state(
 		'custom-importer',
 		array_merge(
 			$initial_state,
 			array(
+                'wordpressUsers' => array_map(function($user) {
+                    return array('ID' => $user->ID, 'label' => $user->display_name . ' (' . $user->user_login . ')');
+                }, $wp_users),
                 'isSelectStage' => function () {
 					$state = custom_importer_get_state();
 					return $state['importState'] === 'idle';
@@ -129,6 +148,27 @@ function custom_importer_admin_page() {
                 'isCompletedStage' => function () {
                     $state = custom_importer_get_state();
                     return $state['importState'] === 'completed';
+                },
+
+
+                'hasAuthorsInFile' => function () {
+                    $state = custom_importer_get_state();
+                    return count($state['authorsInFile']) > 0;
+                },
+                'isAuthorMappingKeep' => function () {
+                    $state = custom_importer_get_state();
+					$context = wp_interactivity_get_context();
+                    return $state['authorMappings'][$context['author']['author_login']]['type'] === 'keep';
+                },
+                'isAuthorMappingNew' => function () {
+                    $state = custom_importer_get_state();
+					$context = wp_interactivity_get_context();
+                    return $state['authorMappings'][$context['author']['author_login']]['type'] === 'new';
+                },
+                'isAuthorMappingExisting' => function () {
+                    $state = custom_importer_get_state();
+					$context = wp_interactivity_get_context();
+                    return $state['authorMappings'][$context['author']['author_login']]['type'] === 'existing';
                 },
 			)
 		)
@@ -264,73 +304,85 @@ function custom_importer_admin_page() {
             margin-top: 10px;
         }
         /* Ensure hidden stages are properly hidden */
-        [data-wp-class--hidden][hidden] {
+        [data-wp-class--hidden].hidden {
             display: none !important;
         }
         </style>
 
         <!-- Stage 1: File Selection -->
         <div id="file-selection-stage" data-wp-class--hidden="!state.isSelectStage">
-            <!-- Drag-and-drop file upload area -->
-            <div id="drop-zone" class="drag-drop-area" 
-                 data-wp-class--has-file="state.hasSelectedFile"
-                 data-wp-on--click="actions.triggerFileInput" 
-                 data-wp-on--dragover="actions.handleDragOver" 
-                 data-wp-on--dragleave="actions.handleDragLeave" 
-                 data-wp-on--drop="actions.handleFileDrop">
-                <input type="file" name="import_file" id="import_file" accept=".xml,.wxr" style="display:none;" data-wp-on--change="actions.handleFileInputChange">
-                
-                <!-- Initial state (no file selected) -->
-                <div class="drop-zone-initial" data-wp-class--hidden="state.hasSelectedFile">
-                    <span class="dashicons dashicons-upload" style="font-size: 48px; color: #999;"></span>
-                    <p style="margin: 10px 0 0 0; font-size: 16px; color: #50575e;">
-                        <?php echo esc_html__('Drag & drop a file here, or click to select a file', 'custom-importer'); ?>
-                    </p>
+            <form
+                data-wp-on--submit="actions.uploadFile"
+                method="post"
+                enctype="multipart/form-data"
+                action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
+            >
+                <?php wp_nonce_field( 'custom_importer_upload_file' ); ?>
+                <input type="hidden" name="action" value="custom_importer_upload_file">
+
+                <!-- Drag-and-drop file upload area -->
+                <div id="drop-zone" class="drag-drop-area" 
+                    data-wp-class--has-file="state.hasSelectedFile"
+                    data-wp-on--click="actions.triggerFileInput" 
+                    data-wp-on--dragover="actions.handleDragOver" 
+                    data-wp-on--dragleave="actions.handleDragLeave" 
+                    data-wp-on--drop="actions.handleFileDrop">
+                    <input type="file" name="import_file" id="import_file" accept=".xml,.wxr" style="display:none;" data-wp-on--change="actions.handleFileInputChange">
+                    
+                    <!-- Initial state (no file selected) -->
+                    <div class="drop-zone-initial" data-wp-class--hidden="state.hasSelectedFile">
+                        <span class="dashicons dashicons-upload" style="font-size: 48px; color: #999;"></span>
+                        <p style="margin: 10px 0 0 0; font-size: 16px; color: #50575e;">
+                            <?php echo esc_html__('Drag & drop a file here, or click to select a file', 'custom-importer'); ?>
+                        </p>
+                    </div>
+                    
+                    <!-- File selected state -->
+                    <div class="drop-zone-file-info" data-wp-class--hidden="!state.hasSelectedFile">
+                        <h4>
+                            <span class="dashicons dashicons-media-document" style="font-size: 24px; width: auto; color: #00a32a;"></span>
+                            <?php echo esc_html__('File Selected', 'custom-importer'); ?>
+                        </h4>
+                        <p>
+                            <strong><?php echo esc_html__('Name:', 'custom-importer'); ?></strong> 
+                            <span data-wp-text="state.selectedFileName"></span>
+                        </p>
+                        <p>
+                            <strong><?php echo esc_html__('Size:', 'custom-importer'); ?></strong> 
+                            <span data-wp-text="state.selectedFileSizeFormatted"></span>
+                        </p>
+                        <p class="change-file-link">
+                            <a href="#" onclick="event.stopPropagation(); document.getElementById('import_file').click(); return false;">
+                                <?php echo esc_html__('Choose a different file', 'custom-importer'); ?>
+                            </a>
+                        </p>
+                    </div>
                 </div>
                 
-                <!-- File selected state -->
-                <div class="drop-zone-file-info" data-wp-class--hidden="!state.hasSelectedFile">
-                    <span class="dashicons dashicons-media-document" style="font-size: 48px; color: #00a32a;"></span>
-                    <h4><?php echo esc_html__('File Selected', 'custom-importer'); ?></h4>
-                    <p>
-                        <strong><?php echo esc_html__('Name:', 'custom-importer'); ?></strong> 
-                        <span data-wp-text="state.selectedFileName"></span>
-                    </p>
-                    <p>
-                        <strong><?php echo esc_html__('Size:', 'custom-importer'); ?></strong> 
-                        <span data-wp-text="state.selectedFileSizeFormatted"></span>
-                    </p>
-                    <p class="change-file-link">
-                        <a href="#" onclick="event.stopPropagation(); document.getElementById('import_file').click(); return false;">
-                            <?php echo esc_html__('Choose a different file', 'custom-importer'); ?>
-                        </a>
-                    </p>
+                <div class="file-size-info">
+                    <?php printf(esc_html__('Maximum file size: %s', 'custom-importer'), $max_upload_size_formatted); ?>
                 </div>
-            </div>
-            
-            <div class="file-size-info">
-                <?php printf(esc_html__('Maximum file size: %s', 'custom-importer'), $max_upload_size_formatted); ?>
-            </div>
 
-            <!-- File size warning -->
-            <div class="error-message" data-wp-class--hidden="!state.isFileTooBig">
-                <?php printf(
-                    esc_html__('This file is too large. Maximum allowed size is %s.', 'custom-importer'),
-                    $max_upload_size_formatted
-                ); ?>
-            </div>
+                <!-- File size warning -->
+                <div class="error-message" data-wp-class--hidden="!state.isFileTooBig">
+                    <?php printf(
+                        esc_html__('This file is too large. Maximum allowed size is %s.', 'custom-importer'),
+                        $max_upload_size_formatted
+                    ); ?>
+                </div>
 
-            <!-- Upload error -->
-            <div class="error-message" data-wp-class--hidden="!state.uploadError" data-wp-text="state.uploadError"></div>
+                <!-- Upload error -->
+                <div class="error-message" data-wp-class--hidden="!state.uploadError" data-wp-text="state.uploadError"></div>
 
-            <!-- Upload button -->
-            <div class="stage-actions" data-wp-class--hidden="!state.hasSelectedFile">
-                <button type="button" class="button button-primary button-large" 
-                        data-wp-on--click="actions.uploadFile"
-                        data-wp-bind--disabled="!state.canUpload">
-                    <?php echo esc_html__('Upload File', 'custom-importer'); ?>
-                </button>
-            </div>
+                <!-- Upload button -->
+                <div class="stage-actions" data-wp-class--hidden="!state.hasSelectedFile">
+                    <button type="submit" class="button button-primary button-large" 
+                            data-wp-on--click="actions.uploadFile"
+                            data-wp-bind--disabled="!state.canUpload">
+                        <?php echo esc_html__('Upload File', 'custom-importer'); ?>
+                    </button>
+                </div>
+            </form>
         </div>
 
         <!-- Stage 2: File Upload Progress -->
@@ -379,53 +431,122 @@ function custom_importer_admin_page() {
 
         <!-- Stage 3: Import Configuration -->
         <div id="config-stage" data-wp-class--hidden="!state.isConfigureStage">
-            <h3><?php echo esc_html__('Configure Import', 'custom-importer'); ?></h3>
-            
-            <div class="import-config">
-                <!-- Download Attachments Section -->
-                <div class="config-section">
-                    <h4><?php echo esc_html__('Download Attachments', 'custom-importer'); ?></h4>
-                    <p>
-                        <label>
-                            <input type="checkbox" 
-                                   data-wp-bind--checked="state.downloadAttachments"
-                                   data-wp-on--change="actions.setDownloadAttachments">
-                            <?php echo esc_html__('Download and import file attachments', 'custom-importer'); ?>
-                        </label>
-                    </p>
-                    
-                    <div data-wp-class--hidden="!state.downloadAttachments">
-                        <label>
-                            <?php echo esc_html__('Allowed Media Domains:', 'custom-importer'); ?>
-                            <input type="text" class="regular-text" placeholder="example.com, cdn.example.com"
-                                   data-wp-bind--value="state.allowedDomains"
-                                   data-wp-on--input="actions.setAllowedDomains">
-                        </label>
-                        <p class="description"><?php echo esc_html__('Only download media from these domains (comma-separated).', 'custom-importer'); ?></p>
+            <form
+                data-wp-on--submit="actions.startImport"
+                method="post"
+                enctype="multipart/form-data"
+                action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"
+            >
+                <?php wp_nonce_field( 'custom_importer_start_import' ); ?>
+                <input type="hidden" name="action" value="custom_importer_start_import">
+                <h3><?php echo esc_html__('Configure Import', 'custom-importer'); ?></h3>
+                
+                <div class="import-config">
+                    <!-- Download Attachments Section -->
+                    <div class="config-section">
+                        <h4><?php echo esc_html__('Download Attachments', 'custom-importer'); ?></h4>
+                        <p>
+                            <label>
+                                <input type="checkbox" 
+                                    data-wp-bind--checked="state.downloadAttachments"
+                                    data-wp-on--change="actions.setDownloadAttachments">
+                                <?php echo esc_html__('Download and import file attachments', 'custom-importer'); ?>
+                            </label>
+                        </p>
+                        
+                        <div data-wp-class--hidden="!state.downloadAttachments">
+                            <label>
+                                <?php echo esc_html__('Allowed Media Domains:', 'custom-importer'); ?>
+                                <input type="text" class="regular-text" placeholder="example.com, cdn.example.com"
+                                    data-wp-bind--value="state.allowedDomains"
+                                    data-wp-on--input="actions.setAllowedDomains"
+                                    name="allowed_domains">
+                            </label>
+                            <p class="description"><?php echo esc_html__('Only download media from these domains (comma-separated).', 'custom-importer'); ?></p>
+                        </div>
+                    </div>
+
+                    <!-- Author Assignment Section -->
+                    <div class="config-section">
+                        <h4><?php echo esc_html__('Assign Authors', 'custom-importer'); ?></h4>
+                        <p><?php esc_html_e( 'To make it simpler for you to edit and save the imported content, you may want to reassign the author of the imported item to an existing user of this site, such as your primary administrator account.', 'custom-importer' ); ?></p>
+                        <p><?php esc_html_e( "If a new user is created by WordPress, a new password will be randomly generated and the new user's role will be set as subscriber. Manually changing the new user's details will be necessary.", 'custom-importer' ); ?></p>
+
+                        <!-- Author mappings using Interactivity API -->
+                        <div id="author-mappings" data-wp-class--hidden="!state.hasAuthorsInFile">
+                            <ol class="import-authors">
+                                <template data-wp-each--author="state.authorsInFile">
+                                    <li class="author-mapping">
+                                        <p>
+                                            <strong>Import author:</strong>
+                                            <span data-wp-text="context.author.author_display_name"></span> 
+                                            (<span data-wp-text="context.author.author_login"></span>)
+                                        </p>
+                                        
+                                        <p>
+                                            <label data-wp-context='{ "mappingType": "keep"}'>
+                                                <input type="radio" 
+                                                    value="keep" 
+                                                    data-wp-bind--name="author_mapping_type"
+                                                    data-wp-bind--checked="state.isAuthorMappingKeep"
+                                                    data-wp-on--change="actions.setAuthorMappingType">
+                                                Keep original author
+                                            </label>
+                                        </p>
+                                        
+                                        <p>
+                                            <label data-wp-context='{ "mappingType": "new" }'>
+                                                <input type="radio" 
+                                                    value="new"
+                                                    data-wp-bind--name="author_mapping_type"
+                                                    data-wp-bind--checked="state.isAuthorMappingNew"
+                                                    data-wp-on--change="actions.setAuthorMappingType">
+                                                Create new user with login name:
+                                                <input type="text" 
+                                                    class="regular-text" 
+                                                    style="margin-left: 10px;"
+                                                    data-wp-bind--value="state.getAuthorMappingNewLogin"
+                                                    data-wp-on--input="actions.setAuthorMappingNewLogin"
+                                                    placeholder="New username">
+                                            </label>
+                                        </p>
+                                        
+                                        <p>
+                                            <label data-wp-context='{"mappingType": "existing"}'>
+                                                <input type="radio" 
+                                                    value="existing"
+                                                    data-wp-bind--name="author_mapping_type"
+                                                    data-wp-bind--checked="state.isAuthorMappingExisting"
+                                                    data-wp-on--change="actions.setAuthorMappingType">
+                                                Assign posts to an existing user:
+                                                <select style="margin-left: 10px;"
+                                                        data-wp-bind--value="state.getAuthorMappingUserId"
+                                                        data-wp-on--change="actions.setAuthorMappingUserId"
+                                                        data-wp-context='{"authorLogin": context.author.author_login}'>
+                                                    <option value="">— Select —</option>
+                                                    <template data-wp-each--user="state.wordpressUsers">
+                                                        <option data-wp-bind--value="context.user.ID"
+                                                                data-wp-text="context.user.label"></option>
+                                                    </template>
+                                                </select>
+                                            </label>
+                                        </p>
+                                    </li>
+                                </template>
+                            </ol>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Author Assignment Section -->
-                <div class="config-section">
-                    <h4><?php echo esc_html__('Assign Authors', 'custom-importer'); ?></h4>
-                    <p><?php esc_html_e( 'To make it simpler for you to edit and save the imported content, you may want to reassign the author of the imported item to an existing user of this site, such as your primary administrator account.', 'custom-importer' ); ?></p>
-                    <p><?php esc_html_e( "If a new user is created by WordPress, a new password will be randomly generated and the new user's role will be set as subscriber. Manually changing the new user's details will be necessary.", 'custom-importer' ); ?></p>
-
-                    <!-- Dynamic author mappings will be populated by JavaScript -->
-                    <div id="author-mappings" data-wp-class--hidden="!state.hasAuthorsInFile">
-                        <!-- This will be populated dynamically based on state.authorsInFile -->
-                    </div>
+                <div class="stage-actions">
+                    <button type="submit" class="button button-primary" data-wp-on--click="actions.startImport">
+                        <?php echo esc_html__('Start Import', 'custom-importer'); ?>
+                    </button>
+                    <button type="button" class="button" data-wp-on--click="actions.cancelCurrentImport">
+                        <?php echo esc_html__('Choose Different File', 'custom-importer'); ?>
+                    </button>
                 </div>
-            </div>
-
-            <div class="stage-actions">
-                <button type="button" class="button button-primary" data-wp-on--click="actions.startImport">
-                    <?php echo esc_html__('Start Import', 'custom-importer'); ?>
-                </button>
-                <button type="button" class="button" data-wp-on--click="actions.cancelCurrentImport">
-                    <?php echo esc_html__('Choose Different File', 'custom-importer'); ?>
-                </button>
-            </div>
+            </form>
         </div>
 
         <!-- Stage 4: Import Progress -->
@@ -447,6 +568,11 @@ function custom_importer_admin_page() {
                 </p>
             </div>
             
+            <!-- Actions -->
+            <button type="button" class="button" data-wp-on--click="actions.cancelCurrentImport">
+                <?php echo esc_html__('Cancel Import', 'custom-importer'); ?>
+            </button>
+
             <!-- Error log -->
             <div class="import-errors" data-wp-class--hidden="!state.hasImportErrors">
                 <h4><?php echo esc_html__('Import Errors', 'custom-importer'); ?></h4>
@@ -462,11 +588,6 @@ function custom_importer_admin_page() {
             <!-- Status and error messages -->
             <div class="error-message" data-wp-class--hidden="!state.importError" data-wp-text="state.importError"></div>
             <div class="success-message" data-wp-class--hidden="!state.importStatusMessage" data-wp-text="state.importStatusMessage"></div>
-            
-            <!-- Actions -->
-            <button type="button" class="button" data-wp-on--click="actions.cancelImport">
-                <?php echo esc_html__('Cancel Import', 'custom-importer'); ?>
-            </button>
         </div>
 
         <!-- Stage 5: Import Completed -->
@@ -518,28 +639,10 @@ add_action('rest_api_init', function () {
         }
     ));
 
-    // Cancel import endpoint
+    // Cancel current import endpoint
     register_rest_route('custom-importer/v1', '/cancel', array(
         'methods' => 'POST',
-        'callback' => 'custom_importer_cancel_import_rest',
-        'permission_callback' => function () {
-            return current_user_can('import');
-        }
-    ));
-
-    // Cancel current import endpoint
-    register_rest_route('custom-importer/v1', '/cancel-current', array(
-        'methods' => 'POST',
         'callback' => 'custom_importer_cancel_current_import_rest',
-        'permission_callback' => function () {
-            return current_user_can('import');
-        }
-    ));
-
-    // Get WordPress users endpoint
-    register_rest_route('custom-importer/v1', '/users', array(
-        'methods' => 'GET',
-        'callback' => 'custom_importer_get_wordpress_users_rest',
         'permission_callback' => function () {
             return current_user_can('import');
         }
@@ -551,7 +654,7 @@ function custom_importer_upload_file_rest($request) {
     if ( empty($_FILES['import_file']) ) {
         return new WP_Error('no_file', __('No file uploaded.', 'custom-importer'), array('status' => 400));
     }
-    
+
     $file = $_FILES['import_file'];
     
     // Validate file size
@@ -566,9 +669,12 @@ function custom_importer_upload_file_rest($request) {
     // Validate file type
     $allowed_types = array('text/xml', 'application/xml');
     $file_type = wp_check_filetype($file['name']);
-    if ( ! in_array($file_type['type'], $allowed_types) && ! in_array($file_type['ext'], array('xml', 'wxr')) ) {
+    if ( 
+        (false !== $file_type['type'] && ! in_array($file_type['type'], $allowed_types)) && 
+        (false !== $file_type['ext'] && ! in_array($file_type['ext'], array('xml', 'wxr')))
+    ) {
         // @TODO: this doesn't work that well. It rejected a valid WXR file with xml extension.
-        // return new WP_Error('invalid_file_type', __('Invalid file type. Please upload an XML or WXR file.', 'custom-importer'), array('status' => 400));
+        return new WP_Error('invalid_file_type', __('Invalid file type. Please upload an XML or WXR file.', 'custom-importer'), array('status' => 400));
     }
     
     // Move uploaded file to plugin directory as current_import.php
@@ -589,7 +695,7 @@ function custom_importer_upload_file_rest($request) {
         'path' => $target_file,
     );
     
-    $updated_state = update_custom_importer_update_state(array(
+    $updated_state = update_importer_state(array(
         'importState' => 'indexing',
         'fileDetails' => $file_details,
         'authorsInFile' => array(),
@@ -599,15 +705,6 @@ function custom_importer_upload_file_rest($request) {
         'importStatusMessage' => '',
         'importError' => ''
     ));
-    
-    error_log(print_r($updated_state, true));
-    
-    // Trigger wp-cron to kick off the import process
-    if ( ! wp_next_scheduled('ng_importer_next_import_step') ) {
-        error_log('scheduling fake indexing');
-        wp_schedule_event(time() - 61, 'ng_importer__every_1_minute', 'ng_importer_next_import_step');
-    }
-
     // Return the complete updated state
     return rest_ensure_response($updated_state);
 }
@@ -638,12 +735,18 @@ function do_ng_importer_next_import_step() {
     switch ($state['importState']) {
         case 'indexing':
             // Add fake authors and advance to configure stage
-            update_custom_importer_update_state(array(
+            update_importer_state_properties(array(
                 'importState' => 'configure',
+                'downloadAttachments' => true,
                 'authorsInFile' => array(
                     array('author_login' => 'alice', 'author_display_name' => 'Alice Example'),
                     array('author_login' => 'bob', 'author_display_name' => 'Bob Example'),
                     array('author_login' => 'carol', 'author_display_name' => 'Carol Example'),
+                ),
+                'authorMappings' => array(
+                    'alice' => array('type' => 'keep', 'userId' => ''),
+                    'bob' => array('type' => 'keep', 'userId' => ''),
+                    'carol' => array('type' => 'keep', 'userId' => ''),
                 )
             ));
             break;
@@ -660,20 +763,20 @@ function do_ng_importer_next_import_step() {
                     'timestamp' => time()
                 );
                 
-                update_custom_importer_update_state(array(
+                update_importer_state_properties(array(
                     'importProgress' => $progress,
                     'importErrors' => $errors
                 ));
             } else {
                 if ( $progress >= 100 ) {
                     // Move to next stage
-                    update_custom_importer_update_state(array(
+                    update_importer_state_properties(array(
                         'importState' => 'inserting',
                         'importProgress' => 0,
                         'importTotal' => 150,
                     ));
                 } else {
-                    update_custom_importer_update_state(array(
+                    update_importer_state_properties(array(
                         'importProgress' => $progress
                     ));
                 }
@@ -691,14 +794,14 @@ function do_ng_importer_next_import_step() {
                     'timestamp' => time()
                 );
                 
-                update_custom_importer_update_state(array(
+                update_importer_state_properties(array(
                     'importProgress' => $progress,
                     'importErrors' => $errors
                 ));
             } else {
                 if ( $progress >= $state['importTotal'] ) {
                     // Import complete
-                    update_custom_importer_update_state(array(
+                    update_importer_state_properties(array(
                         'importProgress' => $state['importTotal'],
                         'importState' => 'completed',
                         'importStatusMessage' => sprintf('Import completed successfully! Processed %d items with %d errors.', 
@@ -706,11 +809,8 @@ function do_ng_importer_next_import_step() {
                             count($state['importErrors'])
                         )
                     ));
-                    
-                    // Clear the cron job
-                    wp_clear_scheduled_hook('ng_importer__run_import');
                 } else {
-                    update_custom_importer_update_state(array(
+                    update_importer_state_properties(array(
                         'importProgress' => $progress
                     ));
                 }
@@ -751,7 +851,7 @@ function custom_importer_start_import_rest($request) {
     }
     
     // Update state to import stage
-    $updated_state = update_custom_importer_update_state(array(
+    $updated_state = update_importer_state_properties(array(
         'importState' => 'downloading',
         'importProgress' => 0,
         'importTotal' => 100,
@@ -764,37 +864,18 @@ function custom_importer_start_import_rest($request) {
         )
     ));
     
-    // Trigger the import process via cron
-    if ( ! wp_next_scheduled('ng_importer__run_import') ) {
-        wp_schedule_event(time(), 'ng_importer__every_1_minute', 'ng_importer__run_import');
-    }
-    
     return rest_ensure_response($updated_state);
 }
 
 // Consolidated REST API handler for next import step
-function custom_importer_next_step_rest($request) {
+function custom_importer_next_step_rest() {
     // Get current state and return it directly
     $current_state = custom_importer_get_state();
     return rest_ensure_response($current_state);
 }
 
-// REST API handler for canceling import
-function custom_importer_cancel_import_rest($request) {
-    // Update state to cancelled
-    $updated_state = update_custom_importer_update_state(array(
-        'importState' => 'completed',
-        'importStatusMessage' => 'Import cancelled by user.'
-    ));
-    
-    // Clear the import cron job
-    wp_clear_scheduled_hook('ng_importer__run_import');
-    
-    return rest_ensure_response($updated_state);
-}
-
 // REST API handler for canceling current import
-function custom_importer_cancel_current_import_rest($request) {
+function custom_importer_cancel_current_import_rest() {
     $state = custom_importer_get_state();
     
     // Delete the uploaded file if it exists
@@ -806,60 +887,18 @@ function custom_importer_cancel_current_import_rest($request) {
     }
     
     // Reset to initial state
-    $reset_state = update_custom_importer_update_state(array(
-        'importState' => 'idle',
-        'fileDetails' => null,
-        'authorsInFile' => array(),
-        'importProgress' => 0,
-        'importTotal' => 0,
-        'importErrors' => array(),
-        'importStatusMessage' => 'Import canceled successfully.',
-        'importError' => ''
+    $reset_state = update_option('custom_importer_state', array_merge(
+        default_importer_state(),
+        array(
+            'importState' => 'idle',
+            'importStatusMessage' => 'Import canceled successfully.',
+            'importError' => ''
+        )
     ));
     
     // Cancel any scheduled cron jobs
     error_log('clearing scheduled cron jobs');
     wp_clear_scheduled_hook('ng_importer_next_import_step');
-    wp_clear_scheduled_hook('ng_importer__run_import');
     
     return rest_ensure_response($reset_state);
 }
-
-// REST API handler to get WordPress users for author mapping
-function custom_importer_get_wordpress_users_rest($request) {
-    $users = get_users(array(
-        'fields' => array('ID', 'display_name', 'user_login'),
-        'orderby' => 'display_name',
-        'order' => 'ASC'
-    ));
-    
-    return rest_ensure_response(array('users' => $users));
-}
-
-
-
-// Helper function to extract authors from WXR file
-function extract_authors_from_wxr($file_path) {
-    // This is a simplified example - you'd want more robust XML parsing
-    $content = file_get_contents($file_path);
-    $authors = array();
-    
-    // Use SimpleXML or DOMDocument for proper parsing in real implementation
-    if (preg_match_all('/<wp:author_login><!\[CDATA\[(.*?)\]\]><\/wp:author_login>/', $content, $login_matches) &&
-        preg_match_all('/<wp:author_display_name><!\[CDATA\[(.*?)\]\]><\/wp:author_display_name>/', $content, $name_matches)) {
-        
-        $logins = array_unique($login_matches[1]);
-        $names = array_unique($name_matches[1]);
-        
-        foreach ($logins as $i => $login) {
-            $authors[] = array(
-                'author_login' => $login,
-                'author_display_name' => isset($names[$i]) ? $names[$i] : $login
-            );
-        }
-    }
-    
-    return $authors;
-}
-
-
