@@ -144,11 +144,16 @@ const { state, actions } = store('custom-importer', {
 					state.importState === 'indexing' ||
 					state.importState === 'downloading' ||
 					state.importState === 'inserting'
-				) {
-					const response = await fetch(
-						`/wp-content/plugins/next-gen-importer/next-import-step.php?action=run_import`
-					);
-					const nextState = await response.json();
+                ) {                    
+                    const response = await fetch(
+                        `${window.importerInitialState.restUrl}next-step`,
+                        {
+                            headers: {
+                                'X-WP-Nonce': window.importerInitialState.restNonce,
+                            },
+                        }
+                    );
+                    const nextState = await response.json();
 					Object.assign(state, nextState);
 				}
 
@@ -295,42 +300,6 @@ const { state, actions } = store('custom-importer', {
 			}
 		},
 
-		// Consolidated next import step action
-		nextImportStep: async () => {
-			try {
-				const res = await fetch(
-					`${window.importerInitialState.restUrl}next-step`,
-					{
-						headers: {
-							'X-WP-Nonce': window.importerInitialState.restNonce,
-						},
-					}
-				);
-				const data = await res.json();
-
-				// Check for REST API error
-				if (data.code && data.message) {
-					state.importState = data.message || 'Unknown error';
-					return;
-				}
-
-				// Update state directly with the complete state from server
-				Object.assign(state, data);
-
-				if (
-					['downloading', 'inserting', 'completed'].includes(
-						state.importState
-					) &&
-					state.importErrors.length > 0
-				) {
-					actions.renderImportErrors();
-				}
-			} catch (err) {
-				state.importState =
-					'Error fetching import state: ' + err.message;
-			}
-		},
-
 		// Set author mapping new login value
 		setAuthorMappingNewLogin: (event) => {
 			const context = getContext();
@@ -446,7 +415,7 @@ const { state, actions } = store('custom-importer', {
 
 			// Clear indexing/import state
 			state.fileDetails = null;
-			state.importProgress = 0;
+			state.importProgress = 0;/users
 			state.importTotal = 0;
 			state.importError = '';
 			state.importStatusMessage = '';

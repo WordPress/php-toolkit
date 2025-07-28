@@ -633,7 +633,7 @@ add_action('rest_api_init', function () {
     // Consolidated next import step endpoint
     register_rest_route('custom-importer/v1', '/next-step', array(
         'methods' => 'GET',
-        'callback' => 'custom_importer_next_step_rest',
+        'callback' => 'ng_importer_next_import_step',
         'permission_callback' => function () {
             return current_user_can('import');
         }
@@ -677,9 +677,9 @@ function custom_importer_upload_file_rest($request) {
         return new WP_Error('invalid_file_type', __('Invalid file type. Please upload an XML or WXR file.', 'custom-importer'), array('status' => 400));
     }
     
-    // Move uploaded file to plugin directory as current_import.php
+    // Move uploaded file to plugin directory as last-uploaded-import-file.php
     $plugin_dir = dirname(__FILE__);
-    $target_file = $plugin_dir . '/current_import.php';
+    $target_file = $plugin_dir . '/last-uploaded-import-file.php';
     $php_guard = "<?php !(); ?>\n";
     $uploaded_content = file_get_contents($file['tmp_name']);
     $result = file_put_contents($target_file, $php_guard . $uploaded_content);
@@ -865,13 +865,6 @@ function custom_importer_start_import_rest($request) {
     ));
     
     return rest_ensure_response($updated_state);
-}
-
-// Consolidated REST API handler for next import step
-function custom_importer_next_step_rest() {
-    // Get current state and return it directly
-    $current_state = custom_importer_get_state();
-    return rest_ensure_response($current_state);
 }
 
 // REST API handler for canceling current import
