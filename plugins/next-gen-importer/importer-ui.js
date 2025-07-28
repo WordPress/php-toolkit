@@ -51,8 +51,11 @@ const { state, actions } = store('custom-importer', {
 			return state.importState === 'configure';
 		},
 		get isImportStage() {
-			return ['downloading', 'inserting', 'completed'].includes(state.importState);
-		},
+			return ['downloading', 'inserting'].includes(state.importState);
+        },
+        get isCompletedStage() {
+            return state.importState === 'completed';
+        },
 		get canUpload() {
 			return state.hasSelectedFile && !state.uploading;
 		},
@@ -99,10 +102,11 @@ const { state, actions } = store('custom-importer', {
         async continuouslyTriggerNextImportStep() {
             console.log('continuouslyTriggerNextImportStep');
             while (true) {
-                if (state.isIndexingStage || state.isImportStage) {
-                    await fetch(`/wp-content/plugins/next-gen-importer/next-import-step.php?action=run_import`);
-                }
-                await actions.nextImportStep();
+                const response = await fetch(`/wp-content/plugins/next-gen-importer/next-import-step.php?action=run_import`);
+                const nextState = await response.json();
+
+                Object.assign(state, nextState);
+
                 await new Promise((resolve) => setTimeout(resolve, 1000));
             }
         }
@@ -456,7 +460,7 @@ const { state, actions } = store('custom-importer', {
         	} finally {
         		// Reset to idle state and show error message in dropzone
         		state.importState = 'idle';
-        		state.uploadError = 'Import was canceled.';
+        		// state.uploadError = 'Import was canceled.';
         		
         		// Clear import-related state
         		state.importProgress = 0;
@@ -490,8 +494,10 @@ const { state, actions } = store('custom-importer', {
         	// Reset to idle state and show cancellation message
         	state.importState = 'idle';
         	state.uploading = false;
-        	state.uploadProgress = 0;
-        	state.uploadError = 'Operation was canceled.';
+            state.uploadProgress = 0;
+            state.hasSelectedFile = false;
+            state.selectFile = null;
+        	// state.uploadError = 'Operation was canceled.';
         	
         	// Clear indexing/import state
         	state.fileDetails = null;

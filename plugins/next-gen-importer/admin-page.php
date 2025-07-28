@@ -16,6 +16,27 @@ add_action('admin_init', function () {
     );
 });
 
+add_filter('cron_schedules', function($s) {
+    $s['ng_importer__every_1_minute'] = [
+      'interval' => 1,
+      'display'  => 'Every 1 minute'
+    ];
+    return $s;
+});
+
+register_activation_hook(__FILE__, function() {
+    if (! wp_next_scheduled('ng_importer_next_import_step')) {
+        wp_schedule_event(time() - 1, 'ng_importer__every_1_minute', 'ng_importer_next_import_step');
+    }
+});
+  
+register_deactivation_hook(__FILE__, function() {
+    $ts = wp_next_scheduled('ng_importer_next_import_step');
+    if ($ts) {
+        wp_unschedule_event($ts, 'ng_importer_next_import_step');
+    }
+});
+
 function default_importer_state() {
     return array(
         'importState' => 'idle',
@@ -103,8 +124,12 @@ function custom_importer_admin_page() {
                 },
 				'isImportStage' => function () {
 					$state = custom_importer_get_state();
-					return in_array($state['importState'], ['downloading', 'inserting', 'completed']);
+					return in_array($state['importState'], ['downloading', 'inserting']);
 				},
+                'isCompletedStage' => function () {
+                    $state = custom_importer_get_state();
+                    return $state['importState'] === 'completed';
+                },
 			)
 		)
 	);
@@ -116,8 +141,10 @@ function custom_importer_admin_page() {
         window.importerInitialState = <?php echo json_encode($initial_state); ?>;
     </script>
     <div class="wrap" data-wp-interactive="custom-importer" data-wp-init--refresh="callbacks.continuouslyTriggerNextImportStep">
-        <h1><?php echo esc_html__('Import Content', 'custom-importer'); ?></h1>
-        <p><?php echo esc_html__('Upload an export file to import content into this site.', 'custom-importer'); ?></p>
+        <div data-wp-class--hidden="state.isCompletedStage">
+            <h1><?php echo esc_html__('Import Content', 'custom-importer'); ?></h1>
+            <p><?php echo esc_html__('Upload an export file to import content into this site.', 'custom-importer'); ?></p>
+        </div>
 
         <!-- Inline styles for the interface -->
         <style>
@@ -307,7 +334,7 @@ function custom_importer_admin_page() {
         </div>
 
         <!-- Stage 2: File Upload Progress -->
-        <div id="upload-stage" hidden data-wp-class--hidden="!state.isUploadStage">
+        <div id="upload-stage" data-wp-class--hidden="!state.isUploadStage">
             <h3><?php echo esc_html__('Uploading File', 'custom-importer'); ?></h3>
             
             <div class="upload-progress">
@@ -395,14 +422,14 @@ function custom_importer_admin_page() {
                 <button type="button" class="button button-primary" data-wp-on--click="actions.startImport">
                     <?php echo esc_html__('Start Import', 'custom-importer'); ?>
                 </button>
-                <button type="button" class="button" data-wp-on--click="actions.resetImporter">
+                <button type="button" class="button" data-wp-on--click="actions.cancelCurrentImport">
                     <?php echo esc_html__('Choose Different File', 'custom-importer'); ?>
                 </button>
             </div>
         </div>
 
         <!-- Stage 4: Import Progress -->
-        <div id="import-stage" hidden data-wp-class--hidden="!state.isImportStage">
+        <div id="import-stage" data-wp-class--hidden="!state.isImportStage">
             <h3><?php echo esc_html__('Import Progress', 'custom-importer'); ?></h3>
             
             <!-- Stage indicator -->
@@ -424,9 +451,11 @@ function custom_importer_admin_page() {
             <div class="import-errors" data-wp-class--hidden="!state.hasImportErrors">
                 <h4><?php echo esc_html__('Import Errors', 'custom-importer'); ?></h4>
                 <div class="error-log" style="max-height: 200px; overflow-y: auto; background: #f6f7f7; border: 1px solid #dcdcde; padding: 10px; border-radius: 4px;">
-                    <div id="import-error-list">
-                        <!-- Errors will be populated dynamically -->
-                    </div>
+                    <ul id="import-error-list">
+                        <template data-wp-each--error="state.importErrors">
+                            <li data-wp-text="context.error.message"></li>
+                        </template>
+                    </ul>
                 </div>
             </div>
             
@@ -435,15 +464,21 @@ function custom_importer_admin_page() {
             <div class="success-message" data-wp-class--hidden="!state.importStatusMessage" data-wp-text="state.importStatusMessage"></div>
             
             <!-- Actions -->
-            <div class="stage-actions" data-wp-class--hidden="state.importState === 'completed'">
-                <button type="button" class="button" data-wp-on--click="actions.cancelImport">
-                    <?php echo esc_html__('Cancel Import', 'custom-importer'); ?>
-                </button>
-            </div>
-            
-            <div class="stage-actions" data-wp-class--hidden="state.importState !== 'completed'">
-                <button type="button" class="button button-primary" data-wp-on--click="actions.resetImporter">
-                    <?php echo esc_html__('Import Another File', 'custom-importer'); ?>
+            <button type="button" class="button" data-wp-on--click="actions.cancelImport">
+                <?php echo esc_html__('Cancel Import', 'custom-importer'); ?>
+            </button>
+        </div>
+
+        <!-- Stage 5: Import Completed -->
+        <div id="import-completed-stage" data-wp-class--hidden="!state.isCompletedStage">
+            <h1><?php echo esc_html__('Import Completed', 'custom-importer'); ?></h1>
+            <p>
+                <?php echo esc_html__('The import has completed successfully.', 'custom-importer'); ?>
+            </p>
+            <!-- @TODO: Import summary -->
+            <div class="stage-actions">
+                <button type="button" class="button button-primary" data-wp-on--click="actions.cancelCurrentImport">
+                    <?php echo esc_html__('Start a new import', 'custom-importer'); ?>
                 </button>
             </div>
         </div>
@@ -568,114 +603,54 @@ function custom_importer_upload_file_rest($request) {
     error_log(print_r($updated_state, true));
     
     // Trigger wp-cron to kick off the import process
-    if ( ! wp_next_scheduled('ng_importer__import') ) {
+    if ( ! wp_next_scheduled('ng_importer_next_import_step') ) {
         error_log('scheduling fake indexing');
-        wp_schedule_event(time() - 61, 'ng_importer__every_1_minute', 'ng_importer__import');
+        wp_schedule_event(time() - 61, 'ng_importer__every_1_minute', 'ng_importer_next_import_step');
     }
 
     // Return the complete updated state
     return rest_ensure_response($updated_state);
 }
 
-if(array_key_exists('trigger_import', $_GET)) {
-    error_log('triggering import via GET');
-    do_action('ng_importer__import');
-}
 
+add_action('ng_importer_next_import_step', 'ng_importer_next_import_step');
+function ng_importer_next_import_step() {
+    error_log('[ng_importer_next_import_step] running cron job');
 
-// in your plugin/theme
-
-add_filter('cron_schedules', function($s) {
-    $s['ng_importer__every_1_minute'] = [
-      'interval' => 1,
-      'display'  => 'Every 1 minute'
-    ];
-    return $s;
-});
-  
-// Hook to log error on init for debugging
-add_action('init', 'custom_importer_debug_init');
-function custom_importer_debug_init() {
-    if(str_ends_with($_SERVER['REQUEST_URI'], '/wp-cron.php')) {
-        error_log('Custom Importer: Init hook triggered' . $_SERVER['REQUEST_URI']);
-        // $crons = wp_get_ready_cron_jobs();
-        // error_log(var_dump(isset($crons), true));
-        // $crons = _get_cron_array();
-        // error_log(print_r($crons, true));
-
-    }
-}
-
-
-register_activation_hook(__FILE__, function() {
-    if (! wp_next_scheduled('ng_importer__import')) {
-        wp_schedule_event(time() - 1, 'ng_importer__every_1_minute', 'ng_importer__import');
-    }
-});
-  
-register_deactivation_hook(__FILE__, function() {
-    $ts = wp_next_scheduled('ng_importer__import');
-    if ($ts) wp_unschedule_event($ts, 'ng_importer__import');
-});
-  
-add_action('ng_importer__import', function() {
-    error_log('[ng_importer__import] running cron job');
-
-    $lock_key = 'ng_importer__import_lock';
+    $lock_key = 'ng_importer_next_import_step_lock';
     if ( get_transient($lock_key) ) return;
     set_transient($lock_key, 1, 25);
+
+    do_ng_importer_next_import_step();
 
     try {
         error_log('running cron job');
     } finally {
         delete_transient($lock_key);
     }
-});
-
+}
 
 
 // Cron job: add fake authors and advance state
-function ng_importer__import() {
-    error_log('running fake indexing');
+function do_ng_importer_next_import_step() {
     $state = custom_importer_get_state();
-    
-    if ($state['importState'] !== 'indexing') {
-        return;
-    }
-    
-    // Add fake authors and advance to configure stage
-    update_custom_importer_update_state(array(
-        'importState' => 'configure',
-        'authorsInFile' => array(
-            array('author_login' => 'alice', 'author_display_name' => 'Alice Example'),
-            array('author_login' => 'bob', 'author_display_name' => 'Bob Example'),
-            array('author_login' => 'carol', 'author_display_name' => 'Carol Example'),
-        )
-    ));
-}
-add_action('ng_importer__import', 'ng_importer__import');
 
-// Cron job: run the actual import process (download images, insert entities)
-function ng_importer__run_import() {
-    error_log('[ng_importer__run_import] running import job');
-    
-    $lock_key = 'ng_importer__run_import_lock';
-    if ( get_transient($lock_key) ) return;
-    set_transient($lock_key, 1, 25);
-    
-    try {
-        $state = custom_importer_get_state();
-        
-        if ( ! in_array($state['importState'], ['downloading', 'inserting']) ) {
-            error_log('No active import found');
-            return;
-        }
-        
-        // Simulate import stages
-        if ( $state['importState'] === 'downloading' ) {
+    switch ($state['importState']) {
+        case 'indexing':
+            // Add fake authors and advance to configure stage
+            update_custom_importer_update_state(array(
+                'importState' => 'configure',
+                'authorsInFile' => array(
+                    array('author_login' => 'alice', 'author_display_name' => 'Alice Example'),
+                    array('author_login' => 'bob', 'author_display_name' => 'Bob Example'),
+                    array('author_login' => 'carol', 'author_display_name' => 'Carol Example'),
+                )
+            ));
+            break;
+        case 'downloading':
             // Simulate downloading images
             $progress = $state['importProgress'] + 10;
-            
+
             // Add some sample errors for demo
             if ( $progress === 30 || $progress === 70 ) {
                 $errors = $state['importErrors'];
@@ -703,7 +678,8 @@ function ng_importer__run_import() {
                     ));
                 }
             }
-        } elseif ( $state['importState'] === 'inserting' ) {
+            break;
+        case 'inserting':
             $progress = $state['importProgress'] + 15;
             
             // Add some sample errors for demo
@@ -739,13 +715,12 @@ function ng_importer__run_import() {
                     ));
                 }
             }
-        }
-        
-    } finally {
-        delete_transient($lock_key);
+            break;
+        default:
+            error_log('No active import found');
+            break;
     }
 }
-add_action('ng_importer__run_import', 'ng_importer__run_import');
 
 
 // REST API handler for starting import
@@ -781,7 +756,6 @@ function custom_importer_start_import_rest($request) {
         'importProgress' => 0,
         'importTotal' => 100,
         'importErrors' => array(),
-        'importStatusMessage' => __('Import started successfully.', 'custom-importer'),
         'importError' => '',
         'importConfig' => array(
             'download_attachments' => $download_attach,
@@ -845,7 +819,7 @@ function custom_importer_cancel_current_import_rest($request) {
     
     // Cancel any scheduled cron jobs
     error_log('clearing scheduled cron jobs');
-    wp_clear_scheduled_hook('ng_importer__import');
+    wp_clear_scheduled_hook('ng_importer_next_import_step');
     wp_clear_scheduled_hook('ng_importer__run_import');
     
     return rest_ensure_response($reset_state);

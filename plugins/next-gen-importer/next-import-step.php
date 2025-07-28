@@ -14,12 +14,5 @@ if (!is_user_logged_in() || !current_user_can('import')) {
 // Check action parameter
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
-if ($action === 'run_import') {
-    // Trigger the import cron job manually
-    do_action('ng_importer__run_import');
-    echo json_encode(array('success' => true, 'message' => 'Import step triggered'));
-} else {
-    // Trigger the indexing cron job
-    do_action('ng_importer__import');
-    echo json_encode(array('success' => true, 'message' => 'Indexing step triggered'));
-}
+ng_importer_next_import_step();
+echo json_encode(custom_importer_get_state());
