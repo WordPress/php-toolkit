@@ -95,7 +95,11 @@ const { state, actions } = store('custom-importer', {
 				return false;
 			}
 			const { author } = context;
-			return state.authorMappings[author.author_login]?.type === 'keep';
+			// Default to "keep" if no mapping is found.
+			if(!state.authorMappings[author.author_login]) {
+				return true;
+			}
+			return state.authorMappings[author.author_login].type === 'keep';
 		},
 		get isAuthorMappingNew() {
 			const context = getContext();
@@ -139,22 +143,59 @@ const { state, actions } = store('custom-importer', {
 		 * It safe to run anytime and doesn't conflict with a concurrent wp-cron task.
 		 */
 		async continuouslyTriggerNextImportStep() {
+			// @TODO: Resolve race conditions between:
+			//        * UI actions and periodic state updates.
+
+			setTimeout(async () => {
+				while(true) {
+					if (
+						state.importState === 'indexing' ||
+						state.importState === 'downloading' ||
+						state.importState === 'inserting'
+					) {
+						try {
+							const response = await fetch(
+								`${window.importerInitialState.restUrl}state`,
+								{
+									headers: {
+										'X-WP-Nonce': window.importerInitialState.restNonce,
+									},
+								}
+							);
+							const nextState = await response.json();
+							Object.assign(state, nextState);
+						} catch (e) {
+							console.error('Error fetching state:', e);
+						}
+					}
+					await new Promise((resolve) => setTimeout(resolve, 1000));
+				}
+
+				await new Promise((resolve) => setTimeout(resolve, 1000));
+			}, 0);
+
 			while (true) {
+				console.log('state.importState', state.importState);
 				if (
 					state.importState === 'indexing' ||
 					state.importState === 'downloading' ||
 					state.importState === 'inserting'
                 ) {                    
-                    const response = await fetch(
-                        `${window.importerInitialState.restUrl}next-step`,
-                        {
-                            headers: {
-                                'X-WP-Nonce': window.importerInitialState.restNonce,
-                            },
-                        }
-                    );
-                    const nextState = await response.json();
-					Object.assign(state, nextState);
+					try {
+						const response = await fetch(
+							`${window.importerInitialState.restUrl}next-step`,
+							{
+								headers: {
+									'X-WP-Nonce': window.importerInitialState.restNonce,
+								},
+							}
+						);
+						const nextState = await response.json();
+						// Object.assign(state, nextState);
+					} catch (e) {
+						console.error('Error executing the next import step:', e);
+						await new Promise((resolve) => setTimeout(resolve, 5000));
+					}
 				}
 
 				await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -415,7 +456,7 @@ const { state, actions } = store('custom-importer', {
 
 			// Clear indexing/import state
 			state.fileDetails = null;
-			state.importProgress = 0;/users
+			state.importProgress = 0;
 			state.importTotal = 0;
 			state.importError = '';
 			state.importStatusMessage = '';

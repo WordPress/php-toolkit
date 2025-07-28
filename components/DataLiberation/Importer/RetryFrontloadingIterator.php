@@ -20,6 +20,7 @@ class RetryFrontloadingIterator implements Iterator {
 	/**
 	 * @return mixed
 	 */
+	#[\ReturnTypeWillChange]
 	public function current() {
 		if ( ! $this->current ) {
 			return null;
@@ -34,6 +35,7 @@ class RetryFrontloadingIterator implements Iterator {
 		);
 	}
 
+	#[\ReturnTypeWillChange]
 	public function next(): void {
 		if ( empty( $this->placeholders ) ) {
 			$this->query_next_page();
@@ -45,6 +47,7 @@ class RetryFrontloadingIterator implements Iterator {
 	/**
 	 * @return mixed
 	 */
+	#[\ReturnTypeWillChange]
 	public function key() {
 		if ( ! $this->current ) {
 			return null;
@@ -53,6 +56,7 @@ class RetryFrontloadingIterator implements Iterator {
 		return $this->current->ID;
 	}
 
+	#[\ReturnTypeWillChange]
 	public function valid(): bool {
 		if ( $this->rewound ) {
 			$this->next();
@@ -61,6 +65,7 @@ class RetryFrontloadingIterator implements Iterator {
 		return null !== $this->current;
 	}
 
+	#[\ReturnTypeWillChange]
 	public function rewind(): void {
 		$this->placeholders    = array();
 		$this->last_id_on_page = null;
@@ -106,7 +111,7 @@ class RetryFrontloadingIterator implements Iterator {
 		);
 
 		foreach ( $this->placeholders as $placeholder ) {
-			$placeholder->meta = get_all_post_meta_flat( $placeholder->ID );
+			$placeholder->meta = ImportUtils::get_all_post_meta_flat( $placeholder->ID );
 		}
 	}
 }

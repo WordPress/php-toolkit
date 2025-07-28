@@ -6,6 +6,9 @@
  * Version: 1.0.0
  */
 
+use WordPress\DataLiberation\Importer\ImportSession;
+use WordPress\DataLiberation\Importer\StreamImporter;
+
 add_action('admin_init', function () {
     // Register a new importer in Tools -> Import
     register_importer(
@@ -37,46 +40,53 @@ register_deactivation_hook(__FILE__, function() {
     }
 });
 
-function default_importer_state() {
-    return array(
-        'importState' => 'idle',
-        'fileDetails' => null,
-        'authorsInFile' => array(),
-        'importProgress' => 0,
-        'importTotal' => 0,
-        'importErrors' => array(),
-        'importStatusMessage' => '',
-        'importError' => '',
-    );
-}
-
 /**
  * Get or initialize the complete importer state
  */
 function custom_importer_get_state() {
-    $state = get_option('custom_importer_state', default_importer_state());
-    
-    return $state;
+    $session = ImportSession::get_active();
+    if ( ! $session ) {
+        return array(
+            'importState' => 'idle',
+            'authorsInFile' => array(),
+            'downloadAttachments' => false,
+            'allowedDomains' => '',
+            'authorMappings' => array(),
+        );
+    }
+    $state = array(
+        'authorsInFile' => array_values($session->get_meta_by_key('authorsInFile')),
+        'downloadAttachments' => $session->get_meta_by_key('downloadAttachments'),
+        'allowedDomains' => $session->get_meta_by_key('allowedDomains'),
+        'authorMappings' => $session->get_meta_by_key('authorMappings') ?? [],
+        // ...$session->get_metadata(),
+    );
+    switch ($session->get_stage()) {
+        case StreamImporter::STAGE_INITIAL:
+        case StreamImporter::STAGE_INDEX_ENTITIES:
+            $state['importState'] = 'indexing';
+            return $state;
+        case StreamImporter::STAGE_CONFIGURE_IMPORT:
+            $state['importState'] = 'configure';
+            return $state;
+        case StreamImporter::STAGE_FRONTLOAD_ASSETS:
+            $state['importState'] = 'downloading';
+            $state['importProgress'] = $session->count_unfinished_frontloading_stubs();
+            $state['importTotal'] = $session->count_frontloading_stubs();
+            return $state;
+        case StreamImporter::STAGE_IMPORT_ENTITIES:
+            $state['importState'] = 'inserting';
+            $state['importProgress'] = $session->count_imported_entities();
+            $state['importTotal'] = $session->get_total_number_of_entities();
+            return $state;
+        case StreamImporter::STAGE_FINISHED:
+            $state['importState'] = 'completed';
+            // Stats
+            $state['entitiesCounts'] = $session->count_imported_entities();
+            $state['frontloadingStats'] = $session->get_frontloading_stats();
+            return $state;
+    }
 }
-
-/**
- * Update the importer state
- */
-function update_importer_state_properties($updates) {
-    $state = custom_importer_get_state();
-    $state = array_merge($state, $updates);
-    update_option('custom_importer_state', $state);
-    return $state;
-}
-
-/**
- * Update the importer state
- */
-function update_importer_state($new_state) {
-    update_option('custom_importer_state', $new_state);
-    return $new_state;
-}
-
 
 
 // Callback to render the Importer admin page
@@ -158,17 +168,30 @@ function custom_importer_admin_page() {
                 'isAuthorMappingKeep' => function () {
                     $state = custom_importer_get_state();
 					$context = wp_interactivity_get_context();
-                    return $state['authorMappings'][$context['author']['author_login']]['type'] === 'keep';
+                    $login = $context['author']['author_login'];
+                    if(!isset($state['authorMappings'][$login])) {
+                        // Default to "keep" if no mapping is found.
+                        return true;
+                    }
+                    return $state['authorMappings'][$login]['type'] === 'keep';
                 },
                 'isAuthorMappingNew' => function () {
                     $state = custom_importer_get_state();
 					$context = wp_interactivity_get_context();
-                    return $state['authorMappings'][$context['author']['author_login']]['type'] === 'new';
+                    $login = $context['author']['author_login'];
+                    if(!isset($state['authorMappings'][$login])) {
+                        return false;
+                    }
+                    return $state['authorMappings'][$login]['type'] === 'new';
                 },
                 'isAuthorMappingExisting' => function () {
                     $state = custom_importer_get_state();
 					$context = wp_interactivity_get_context();
-                    return $state['authorMappings'][$context['author']['author_login']]['type'] === 'existing';
+                    $login = $context['author']['author_login'];
+                    if(!isset($state['authorMappings'][$login])) {
+                        return false;
+                    }
+                    return $state['authorMappings'][$login]['type'] === 'existing';
                 },
 			)
 		)
@@ -596,7 +619,38 @@ function custom_importer_admin_page() {
             <p>
                 <?php echo esc_html__('The import has completed successfully.', 'custom-importer'); ?>
             </p>
-            <!-- @TODO: Import summary -->
+            <p>
+                <?php echo esc_html__('Import summary:', 'custom-importer'); ?>
+            </p>
+            <p>
+                <ul>
+                    <li>
+                        <strong><?php echo esc_html__('Media files:', 'custom-importer'); ?></strong>
+                        <ul style="margin-left: 20px;margin-top: 5px;">
+                            <li>
+                                <span data-wp-text="state.frontloadingStats.succeeded"></span>
+                                <?php echo esc_html__('downloaded', 'custom-importer'); ?>
+                            </li>
+                            <li>
+                                <span data-wp-text="state.frontloadingStats.unfinished"></span>
+                                <?php echo esc_html__('failed to download', 'custom-importer'); ?>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong><?php echo esc_html__('Imported entities:', 'custom-importer'); ?></strong>
+                        <ul style="margin-left: 20px;margin-top: 5px;">
+                            <template data-wp-each--entity="state.entitiesCounts">
+                                <li>
+                                    <span data-wp-text="context.entity.label"></span>:
+                                    <span data-wp-text="context.entity.imported"></span>
+                                </li>
+                            </template>
+                        </ul>
+                    </li>
+                    <!-- TODO: Display all the errors. Potentially paginated. -->
+                </ul>
+            </p>
             <div class="stage-actions">
                 <button type="button" class="button button-primary" data-wp-on--click="actions.cancelCurrentImport">
                     <?php echo esc_html__('Start a new import', 'custom-importer'); ?>
@@ -612,6 +666,15 @@ function custom_importer_admin_page() {
 
 // Register REST API routes for the importer
 add_action('rest_api_init', function () {
+    // Get state endpoint
+    register_rest_route('custom-importer/v1', '/state', array(
+        'methods' => 'GET',
+        'callback' => 'custom_importer_get_state_rest',
+        'permission_callback' => function () {
+            return current_user_can('import');
+        }
+    ));
+
     // Upload file endpoint
     register_rest_route('custom-importer/v1', '/upload', array(
         'methods' => 'POST',
@@ -624,7 +687,7 @@ add_action('rest_api_init', function () {
     // Start import endpoint
     register_rest_route('custom-importer/v1', '/start', array(
         'methods' => 'POST',
-        'callback' => 'custom_importer_start_import_rest',
+        'callback' => 'custom_importer_save_config',
         'permission_callback' => function () {
             return current_user_can('import');
         }
@@ -648,6 +711,11 @@ add_action('rest_api_init', function () {
         }
     ));
 });
+
+// REST API handler for getting state
+function custom_importer_get_state_rest() {
+    return rest_ensure_response(custom_importer_get_state());
+}
 
 // REST API handler for file upload
 function custom_importer_upload_file_rest($request) {
@@ -686,6 +754,14 @@ function custom_importer_upload_file_rest($request) {
     if ( $result === false ) {
         return new WP_Error('save_failed', __('Failed to save uploaded file.', 'custom-importer'), array('status' => 500));
     }
+
+    // Create an import session for the uploaded file – to be used by the ng-import-next-step.php job.
+    // @TODO: Harmonize this with the interactivity API state
+    $session = ImportSession::create(array(
+        'data_source' => 'wxr_file',
+        'file_name' => $target_file,
+    ));
+    $session->set_meta_by_key('authorsInFile', array());
     
     // Update state with file details
     $file_details = array(
@@ -694,19 +770,10 @@ function custom_importer_upload_file_rest($request) {
         'uploaded_at' => time(),
         'path' => $target_file,
     );
+    $session->set_meta_by_key('fileDetails', $file_details);
     
-    $updated_state = update_importer_state(array(
-        'importState' => 'indexing',
-        'fileDetails' => $file_details,
-        'authorsInFile' => array(),
-        'importProgress' => 0,
-        'importTotal' => 0,
-        'importErrors' => array(),
-        'importStatusMessage' => '',
-        'importError' => ''
-    ));
     // Return the complete updated state
-    return rest_ensure_response($updated_state);
+    return rest_ensure_response(custom_importer_get_state());
 }
 
 
@@ -718,121 +785,31 @@ function ng_importer_next_import_step() {
     if ( get_transient($lock_key) ) return;
     set_transient($lock_key, 1, 25);
 
-    do_ng_importer_next_import_step();
-
     try {
-        error_log('running cron job');
+        do_ng_importer_next_import_step();
     } finally {
         delete_transient($lock_key);
     }
+    return custom_importer_get_state();
 }
 
-
-// Cron job: add fake authors and advance state
-function do_ng_importer_next_import_step() {
-    $state = custom_importer_get_state();
-
-    switch ($state['importState']) {
-        case 'indexing':
-            // Add fake authors and advance to configure stage
-            update_importer_state_properties(array(
-                'importState' => 'configure',
-                'downloadAttachments' => true,
-                'authorsInFile' => array(
-                    array('author_login' => 'alice', 'author_display_name' => 'Alice Example'),
-                    array('author_login' => 'bob', 'author_display_name' => 'Bob Example'),
-                    array('author_login' => 'carol', 'author_display_name' => 'Carol Example'),
-                ),
-                'authorMappings' => array(
-                    'alice' => array('type' => 'keep', 'userId' => ''),
-                    'bob' => array('type' => 'keep', 'userId' => ''),
-                    'carol' => array('type' => 'keep', 'userId' => ''),
-                )
-            ));
-            break;
-        case 'downloading':
-            // Simulate downloading images
-            $progress = $state['importProgress'] + 10;
-
-            // Add some sample errors for demo
-            if ( $progress === 30 || $progress === 70 ) {
-                $errors = $state['importErrors'];
-                $errors[] = array(
-                    'type' => 'download_failed',
-                    'message' => sprintf('Failed to download image: https://example.com/image%d.jpg - Connection timeout', $progress),
-                    'timestamp' => time()
-                );
-                
-                update_importer_state_properties(array(
-                    'importProgress' => $progress,
-                    'importErrors' => $errors
-                ));
-            } else {
-                if ( $progress >= 100 ) {
-                    // Move to next stage
-                    update_importer_state_properties(array(
-                        'importState' => 'inserting',
-                        'importProgress' => 0,
-                        'importTotal' => 150,
-                    ));
-                } else {
-                    update_importer_state_properties(array(
-                        'importProgress' => $progress
-                    ));
-                }
-            }
-            break;
-        case 'inserting':
-            $progress = $state['importProgress'] + 15;
-            
-            // Add some sample errors for demo
-            if ( $progress === 45 || $progress === 90 ) {
-                $errors = $state['importErrors'];
-                $errors[] = array(
-                    'type' => 'insert_failed',
-                    'message' => sprintf('Failed to insert post ID %d: Duplicate title detected', $progress),
-                    'timestamp' => time()
-                );
-                
-                update_importer_state_properties(array(
-                    'importProgress' => $progress,
-                    'importErrors' => $errors
-                ));
-            } else {
-                if ( $progress >= $state['importTotal'] ) {
-                    // Import complete
-                    update_importer_state_properties(array(
-                        'importProgress' => $state['importTotal'],
-                        'importState' => 'completed',
-                        'importStatusMessage' => sprintf('Import completed successfully! Processed %d items with %d errors.', 
-                            $state['importTotal'], 
-                            count($state['importErrors'])
-                        )
-                    ));
-                } else {
-                    update_importer_state_properties(array(
-                        'importProgress' => $progress
-                    ));
-                }
-            }
-            break;
-        default:
-            error_log('No active import found');
-            break;
-    }
-}
 
 
 // REST API handler for starting import
-function custom_importer_start_import_rest($request) {
-    $state = custom_importer_get_state();
+function custom_importer_save_config($request) {
+    $active_import = ng_importer_get_active();
+    if ( ! $active_import ) {
+        return new WP_Error('no_active_import', __('No active import session.', 'custom-importer'), array('status' => 400));
+    }
+    $importer = $active_import['importer'];
+    $session = $active_import['session'];
     
     // Check if we have a file and are in configure stage
-    if (!$state['fileDetails'] || $state['importState'] !== 'configure') {
-        return new WP_Error('invalid_state', __('No file available for import or not in configure stage.', 'custom-importer'), array('status' => 400));
+    if ($session->get_stage() !== StreamImporter::STAGE_CONFIGURE_IMPORT) {
+        return new WP_Error('invalid_state', __('Not in configure stage. ' . $session->get_stage(), 'custom-importer'), array('status' => 400));
     }
     
-    $file_path = $state['fileDetails']['path'];
+    $file_path = $session->get_meta_by_key('fileDetails')['path'];
     if ( ! file_exists($file_path) ) {
         return new WP_Error('file_not_found', __('Import file not found.', 'custom-importer'), array('status' => 404));
     }
@@ -850,21 +827,20 @@ function custom_importer_start_import_rest($request) {
         $author_mappings = $author_mappings_raw;
     }
     
-    // Update state to import stage
-    $updated_state = update_importer_state_properties(array(
-        'importState' => 'downloading',
-        'importProgress' => 0,
-        'importTotal' => 100,
-        'importErrors' => array(),
-        'importError' => '',
-        'importConfig' => array(
-            'download_attachments' => $download_attach,
-            'allowed_domains'      => $allowed_domains,
-            'author_mappings'      => $author_mappings
-        )
-    ));
-    
-    return rest_ensure_response($updated_state);
+    $session->set_meta_by_key('downloadAttachments', $download_attach);
+    $session->set_meta_by_key('allowedDomains', $allowed_domains);
+    $session->set_meta_by_key('authorMappings', $author_mappings);
+
+    // No-op for STAGE_CONFIGURE_IMPORT. It only tells the importer what's the
+    // next stage.
+    $importer->next_step();
+    if ( ! $importer->advance_to_next_stage() ) {
+        return new WP_Error('advance_to_next_stage_failed', __('Failed to advance to next import stage.', 'custom-importer'), array('status' => 500));
+    }
+    $session->set_stage( $importer->get_stage() );
+    $session->set_reentrancy_cursor( $importer->get_reentrancy_cursor() );
+
+    return rest_ensure_response(custom_importer_get_state());
 }
 
 // REST API handler for canceling current import
@@ -872,7 +848,7 @@ function custom_importer_cancel_current_import_rest() {
     $state = custom_importer_get_state();
     
     // Delete the uploaded file if it exists
-    if ($state['fileDetails'] && !empty($state['fileDetails']['path'])) {
+    if (isset($state['fileDetails']) && !empty($state['fileDetails']['path'])) {
         $file_path = $state['fileDetails']['path'];
         if (file_exists($file_path)) {
             unlink($file_path);
@@ -880,18 +856,10 @@ function custom_importer_cancel_current_import_rest() {
     }
     
     // Reset to initial state
-    $reset_state = update_option('custom_importer_state', array_merge(
-        default_importer_state(),
-        array(
-            'importState' => 'idle',
-            'importStatusMessage' => 'Import canceled successfully.',
-            'importError' => ''
-        )
-    ));
-    
-    // Cancel any scheduled cron jobs
-    error_log('clearing scheduled cron jobs');
-    wp_clear_scheduled_hook('ng_importer_next_import_step');
-    
-    return rest_ensure_response($reset_state);
+    $session = ImportSession::get_active();
+    if($session) {
+        $session->archive();
+    }
+
+    return rest_ensure_response(custom_importer_get_state());
 }

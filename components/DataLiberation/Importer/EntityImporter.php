@@ -24,6 +24,8 @@ namespace WordPress\DataLiberation\Importer;
 use InvalidArgumentException;
 use WordPress\DataLiberation\DataLiberationException;
 use WordPress\DataLiberation\ImportEntity;
+use WP_Error;
+
 use function WordPress\Polyfill\_doing_it_wrong;
 use function WordPress\Polyfill\__;
 use function WordPress\Polyfill\apply_filters;
@@ -769,7 +771,7 @@ class EntityImporter {
 	 */
 	protected function process_attachment( $post, $meta ) {
 		if ( ! isset( $post['local_file_path'] ) || ! file_exists( $post['local_file_path'] ) ) {
-			throw new DataLiberationException( 'attachment_processing_error', __( 'File does not exist', 'wordpress-importer' ) );
+			return new WP_Error( 'attachment_processing_error', __( 'File does not exist', 'wordpress-importer' ) );
 		}
 
 		// try to use _wp_attached file for upload folder placement to ensure the same location as the export site
@@ -788,7 +790,7 @@ class EntityImporter {
 
 		$info = wp_check_filetype( $post['local_file_path'] );
 		if ( ! $info ) {
-			throw new DataLiberationException( 'attachment_processing_error', __( 'Invalid file type', 'wordpress-importer' ) );
+			return new WP_Error( 'attachment_processing_error', __( 'Invalid file type', 'wordpress-importer' ) );
 		}
 
 		$post['post_mime_type'] = $info['type'];
@@ -1225,7 +1227,7 @@ class Logger {
 	 * @param  string  $message  Message to log
 	 */
 	public function warning( $message ) {
-		echo( '[WARNING] ' . $message );
+		// echo( '[WARNING] ' . $message );
 	}
 
 	/**
@@ -1234,7 +1236,7 @@ class Logger {
 	 * @param  string  $message  Message to log
 	 */
 	public function error( $message ) {
-		echo( '[ERROR] ' . $message );
+		// echo( '[ERROR] ' . $message );
 	}
 
 	/**

@@ -4,10 +4,9 @@
 #        production as possible.
 npx @wp-playground/cli@latest \
     server \
+    --php=8.2 \
     --mount=`pwd`/plugins/next-gen-importer:/wordpress/wp-content/plugins/next-gen-importer \
     --blueprint=./blueprint-next-gen-importer.json \
-    --mount=`pwd`/vendor:/wordpress/wp-content/vendor \
-    --mount=`pwd`/components:/wordpress/wp-content/components \
-    --mount=`pwd`/debug.log:/wordpress/wp-content/debug.log \
-    --mount=`pwd`/wp-cron.php:/wordpress/wp-cron.php
+    --mount=`pwd`:/wordpress/wp-content/data-liberation \
+    --mount=`pwd`/debug.log:/wordpress/wp-content/debug.log
     

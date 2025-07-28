@@ -1,48 +1,2063 @@
-[28-Jul-2025 22:41:28 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:28 UTC] running cron job
-[28-Jul-2025 22:41:30 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:30 UTC] running cron job
-[28-Jul-2025 22:41:31 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:31 UTC] running cron job
-[28-Jul-2025 22:41:32 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:32 UTC] running cron job
-[28-Jul-2025 22:41:32 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:32 UTC] running cron job
-[28-Jul-2025 22:41:33 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:33 UTC] running cron job
-[28-Jul-2025 22:41:34 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:34 UTC] running cron job
-[28-Jul-2025 22:41:34 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:34 UTC] running cron job
-[28-Jul-2025 22:41:35 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:35 UTC] running cron job
-[28-Jul-2025 22:41:36 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:36 UTC] running cron job
-[28-Jul-2025 22:41:37 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:37 UTC] running cron job
-[28-Jul-2025 22:41:38 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:38 UTC] running cron job
-[28-Jul-2025 22:41:39 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:39 UTC] running cron job
-[28-Jul-2025 22:41:40 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:40 UTC] running cron job
-[28-Jul-2025 22:41:40 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:40 UTC] running cron job
-[28-Jul-2025 22:41:41 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:41 UTC] running cron job
-[28-Jul-2025 22:41:43 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:43 UTC] running cron job
-[28-Jul-2025 22:41:44 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:44 UTC] running cron job
-[28-Jul-2025 22:41:45 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:45 UTC] running cron job
-[28-Jul-2025 22:41:45 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:45 UTC] running cron job
-[28-Jul-2025 22:41:46 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:46 UTC] running cron job
-[28-Jul-2025 22:41:48 UTC] clearing scheduled cron jobs
-[28-Jul-2025 22:41:59 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:41:59 UTC] running cron job
-[28-Jul-2025 22:42:29 UTC] clearing scheduled cron jobs
-[28-Jul-2025 22:43:26 UTC] [ng_importer_next_import_step] running cron job
-[28-Jul-2025 22:43:26 UTC] running cron job
+[28-Jul-2025 23:16:11 UTC] [ng_importer_next_import_step] running cron job
+[28-Jul-2025 23:16:11 UTC] running cron job
+[28-Jul-2025 23:16:12 UTC] clearing scheduled cron jobs
+[28-Jul-2025 23:16:29 UTC] [ng_importer_next_import_step] running cron job
+[28-Jul-2025 23:16:30 UTC] PHP Fatal error:  Uncaught Exception: Serialization of 'Closure' is not allowed in /wordpress/wp-includes/functions.php:631
+Stack trace:
+#0 /wordpress/wp-includes/functions.php(631): serialize(Object(WordPress\HttpClient\HttpError))
+#1 /wordpress/wp-includes/meta.php(262): maybe_serialize(Object(WordPress\HttpClient\HttpError))
+#2 /wordpress/wp-includes/post.php(2697): update_metadata('post', 18, 'last_error', Object(WordPress\HttpClient\HttpError), '')
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/ImportSession.php(531): update_post_meta(18, 'last_error', Object(WordPress\HttpClient\HttpError))
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(109): WordPress\DataLiberation\Importer\ImportSession->bump_frontloading_progress(Array, Array)
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(730): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-includes/functions.php on line 631
+[28-Jul-2025 23:17:53 UTC] [ng_importer_next_import_step] running cron job
+[28-Jul-2025 23:17:53 UTC] PHP Fatal error:  Uncaught Error: Call to a member function __toString() on null in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/ImportSession.php:531
+Stack trace:
+#0 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(109): WordPress\DataLiberation\Importer\ImportSession->bump_frontloading_progress(Array, Array)
+#1 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(730): do_ng_importer_next_import_step()
+#2 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#3 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#4 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#5 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#6 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#7 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#8 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#9 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#10 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#11 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#12 /wordpress/wp-blog-header.php(16): wp()
+#13 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#14 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/ImportSession.php on line 531
+[28-Jul-2025 23:18:02 UTC] [ng_importer_next_import_step] running cron job
+[28-Jul-2025 23:18:14 UTC] clearing scheduled cron jobs
+[29-Jul-2025 21:03:00 UTC] PHP Warning:  Undefined array key "authorsInFile" in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 167
+[29-Jul-2025 21:03:00 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.hasAuthorsInFile" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 21:05:05 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:05:05 UTC] running cron job
+[29-Jul-2025 21:05:05 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:1228) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1896
+[29-Jul-2025 21:05:05 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:1228) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1920
+[29-Jul-2025 21:05:42 UTC] PHP Warning:  Undefined array key "fileDetails" in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 800
+[29-Jul-2025 21:05:42 UTC] clearing scheduled cron jobs
+[29-Jul-2025 21:05:42 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:800) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1896
+[29-Jul-2025 21:05:42 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:800) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1920
+[29-Jul-2025 21:05:42 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:800) in /wordpress/wp-includes/rest-api.php on line 784
+[29-Jul-2025 21:05:42 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:800) in /wordpress/wp-includes/rest-api.php on line 785
+[29-Jul-2025 21:05:42 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:800) in /wordpress/wp-includes/rest-api.php on line 786
+[29-Jul-2025 21:05:42 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:800) in /wordpress/wp-includes/rest-api.php on line 787
+[29-Jul-2025 21:11:25 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:11:26 UTC] running cron job
+[29-Jul-2025 21:12:19 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:12:19 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 21:12:19 UTC] running cron job
+[29-Jul-2025 21:13:11 UTC] PHP Fatal error:  Uncaught TypeError: array_merge(): Argument #2 must be of type array, null given in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:121
+Stack trace:
+#0 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(121): array_merge(Array, NULL)
+#1 /wordpress/wp-admin/admin.php(365): custom_importer_admin_page()
+#2 {main}
+  thrown in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 121
+[29-Jul-2025 21:16:36 UTC] PHP Warning:  Undefined array key "fileDetails" in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 802
+[29-Jul-2025 21:16:36 UTC] clearing scheduled cron jobs
+[29-Jul-2025 21:16:36 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:802) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1896
+[29-Jul-2025 21:16:36 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:802) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1920
+[29-Jul-2025 21:16:36 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:802) in /wordpress/wp-includes/rest-api.php on line 784
+[29-Jul-2025 21:16:36 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:802) in /wordpress/wp-includes/rest-api.php on line 785
+[29-Jul-2025 21:16:36 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:802) in /wordpress/wp-includes/rest-api.php on line 786
+[29-Jul-2025 21:16:36 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:802) in /wordpress/wp-includes/rest-api.php on line 787
+[29-Jul-2025 21:16:59 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:16:59 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 21:17:01 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:17:01 UTC] Current entity: 
+[29-Jul-2025 21:17:01 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 21:19:05 UTC] clearing scheduled cron jobs
+[29-Jul-2025 21:19:09 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:19:09 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 21:19:10 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:19:10 UTC] Current entity: 
+[29-Jul-2025 21:19:10 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 21:19:56 UTC] clearing scheduled cron jobs
+[29-Jul-2025 21:20:00 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:20:00 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 21:20:01 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:20:01 UTC] Current entity: 
+[29-Jul-2025 21:20:01 UTC] Get indexed entities counts: Array
+(
+    [site_option] => 3
+    [category] => 5
+    [tag] => 4
+    [post] => 6
+    [comment] => 1
+    [post_meta] => 13
+)
+
+[29-Jul-2025 21:20:01 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 21:20:52 UTC] clearing scheduled cron jobs
+[29-Jul-2025 21:20:55 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:20:55 UTC] PHP Fatal error:  Uncaught Error: Call to a member function current() on null in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php:723
+Stack trace:
+#0 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(92): WordPress\DataLiberation\Importer\StreamImporter->get_current_entity()
+#1 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(741): do_ng_importer_next_import_step()
+#2 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#3 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#4 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#5 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#6 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#7 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#8 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#9 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#10 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#11 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#12 /wordpress/wp-blog-header.php(16): wp()
+#13 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#14 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php on line 723
+[29-Jul-2025 21:21:20 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:21:20 UTC] Current entity: 
+[29-Jul-2025 21:21:20 UTC] Get indexed entities counts: Array
+(
+)
+
+[29-Jul-2025 21:21:20 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 21:21:21 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:21:21 UTC] Current entity: 
+[29-Jul-2025 21:21:21 UTC] Get indexed entities counts: Array
+(
+)
+
+[29-Jul-2025 21:21:21 UTC] Current entity: 
+[29-Jul-2025 21:21:21 UTC] Get indexed entities counts: Array
+(
+    [site_option] => 3
+    [user] => 1
+    [category] => 1
+    [tag] => 1
+    [term] => 1
+    [post] => 2
+    [comment] => 1
+    [post_meta] => 1
+)
+
+[29-Jul-2025 21:21:21 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 21:22:11 UTC] clearing scheduled cron jobs
+[29-Jul-2025 21:22:15 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:22:15 UTC] Current entity: 
+[29-Jul-2025 21:22:15 UTC] Get indexed entities counts: Array
+(
+)
+
+[29-Jul-2025 21:22:15 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 21:22:16 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:22:16 UTC] Current entity: 
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => site_option
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [option_name] => siteurl
+            [option_value] => http://localhost/
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [site_option] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => site_option
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [option_name] => home
+            [option_value] => http://localhost/
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [site_option] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => category
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [slug] => alpha
+            [parent] => 
+            [name] => alpha
+            [description] => The alpha category
+            [taxonomy] => category
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [site_option] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => category
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [slug] => beta
+            [parent] => 
+            [name] => beta
+            [taxonomy] => category
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [category] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => category
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [slug] => parent
+            [parent] => 
+            [name] => parent
+            [taxonomy] => category
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [category] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => category
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [slug] => uncategorized
+            [parent] => 
+            [name] => Uncategorized
+            [taxonomy] => category
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [category] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => category
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [slug] => child
+            [parent] => parent
+            [name] => child
+            [taxonomy] => category
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [category] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => tag
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [slug] => chicken
+            [name] => chicken
+            [taxonomy] => post_tag
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [category] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => tag
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [slug] => face
+            [name] => face
+            [taxonomy] => post_tag
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [tag] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => tag
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [slug] => news
+            [name] => news
+            [taxonomy] => post_tag
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [tag] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => tag
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [slug] => roar
+            [name] => roar
+            [taxonomy] => post_tag
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [tag] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [post_title] => Hello world!
+            [link] => http://localhost/?p=1
+            [post_published_at] => Wed, 20 Oct 2010 14:08:20 +0000
+            [post_author] => admin
+            [terms] => Array
+                (
+                    [0] => Array
+                        (
+                            [taxonomy] => category
+                            [slug] => uncategorized
+                            [description] => Uncategorized
+                        )
+
+                )
+
+            [guid] => http://localhost/?p=1
+            [post_excerpt] => 
+            [post_content] => 
+                Welcome to WordPress. This is your first post. Edit or delete it, then start blogging!
+            [post_id] => 1
+            [post_date] => 2010-10-20 14:08:20
+            [post_date_gmt] => 2010-10-20 14:08:20
+            [comment_status] => open
+            [ping_status] => open
+            [post_name] => hello-world
+            [post_status] => publish
+            [post_parent] => 0
+            [menu_order] => 0
+            [post_type] => post
+            [post_password] => 
+            [is_sticky] => 0
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [tag] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => comment
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [comment_id] => 1
+            [comment_author] => Mr WordPress
+            [comment_author_email] => 
+            [comment_author_url] => http://wordpress.org/
+            [comment_author_IP] => 
+            [comment_date] => 2010-10-20 14:08:20
+            [comment_date_gmt] => 2010-10-20 14:08:20
+            [comment_content] => 
+                    Hi, this is a comment.<br />To delete a comment, just log in and view the post&#039;s comments. There you will have the option to edit or delete them.
+            [comment_approved] => 1
+            [comment_type] => 
+            [comment_parent] => 0
+            [comment_user_id] => 0
+            [post_id] => 1
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [post_title] => About
+            [link] => http://localhost/?page_id=2
+            [post_published_at] => Wed, 20 Oct 2010 14:08:20 +0000
+            [post_author] => admin
+            [guid] => http://localhost/?page_id=2
+            [post_excerpt] => 
+            [post_content] => 
+                This is an example of a WordPress page, you could edit this to put information about yourself or your site so readers know where you are coming from. You can create as many pages like this one or sub-pages as you like and manage all of your content inside of WordPress.
+            [post_id] => 2
+            [post_date] => 2010-10-20 14:08:20
+            [post_date_gmt] => 2010-10-20 14:08:20
+            [comment_status] => open
+            [ping_status] => open
+            [post_name] => about
+            [post_status] => publish
+            [post_parent] => 0
+            [menu_order] => 0
+            [post_type] => page
+            [post_password] => 
+            [is_sticky] => 0
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [comment] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post_meta
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [meta_key] => _wp_page_template
+            [meta_value] => default
+            [post_id] => 2
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [post_title] => Alpha post
+            [link] => http://localhost/?p=4
+            [post_published_at] => Wed, 20 Oct 2010 14:09:37 +0000
+            [post_author] => admin
+            [terms] => Array
+                (
+                    [0] => Array
+                        (
+                            [taxonomy] => category
+                            [slug] => alpha
+                            [description] => alpha
+                        )
+
+                    [1] => Array
+                        (
+                            [taxonomy] => tag
+                            [slug] => news
+                            [description] => news
+                        )
+
+                    [2] => Array
+                        (
+                            [taxonomy] => tag
+                            [slug] => roar
+                            [description] => roar
+                        )
+
+                )
+
+            [guid] => http://localhost/?p=4
+            [post_excerpt] => 
+            [post_content] => Tagged in roar, news
+            [post_id] => 4
+            [post_date] => 2010-10-20 14:09:37
+            [post_date_gmt] => 2010-10-20 14:09:37
+            [comment_status] => open
+            [ping_status] => open
+            [post_name] => alpha-post
+            [post_status] => publish
+            [post_parent] => 0
+            [menu_order] => 0
+            [post_type] => post
+            [post_password] => 
+            [is_sticky] => 0
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post_meta] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post_meta
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [meta_key] => _edit_last
+            [meta_value] => 1
+            [post_id] => 4
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post_meta
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [meta_key] => _edit_lock
+            [meta_value] => 1287583778
+            [post_id] => 4
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post_meta] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post_meta
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [meta_key] => _wp_old_slug
+            [meta_value] => 
+            [post_id] => 4
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post_meta] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [post_title] => Child post
+            [link] => http://localhost/?p=6
+            [post_published_at] => Wed, 20 Oct 2010 14:10:09 +0000
+            [post_author] => admin
+            [terms] => Array
+                (
+                    [0] => Array
+                        (
+                            [taxonomy] => tag
+                            [slug] => chicken
+                            [description] => chicken
+                        )
+
+                    [1] => Array
+                        (
+                            [taxonomy] => category
+                            [slug] => child
+                            [description] => child
+                        )
+
+                    [2] => Array
+                        (
+                            [taxonomy] => tag
+                            [slug] => face
+                            [description] => face
+                        )
+
+                )
+
+            [guid] => http://localhost/?p=6
+            [post_excerpt] => 
+            [post_content] => Tagged in face, chicken
+            [post_id] => 6
+            [post_date] => 2010-10-20 14:10:09
+            [post_date_gmt] => 2010-10-20 14:10:09
+            [comment_status] => open
+            [ping_status] => open
+            [post_name] => child-post
+            [post_status] => publish
+            [post_parent] => 0
+            [menu_order] => 0
+            [post_type] => post
+            [post_password] => 
+            [is_sticky] => 0
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post_meta] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post_meta
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [meta_key] => _edit_last
+            [meta_value] => 1
+            [post_id] => 6
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post_meta
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [meta_key] => _edit_lock
+            [meta_value] => 1287583809
+            [post_id] => 6
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post_meta] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post_meta
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [meta_key] => _wp_old_slug
+            [meta_value] => 
+            [post_id] => 6
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post_meta] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [post_title] => Child page
+            [link] => http://localhost/?page_id=8
+            [post_published_at] => Wed, 20 Oct 2010 14:10:35 +0000
+            [post_author] => admin
+            [guid] => http://localhost/?page_id=8
+            [post_excerpt] => 
+            [post_content] => Should have lower ID than parent!
+            [post_id] => 8
+            [post_date] => 2010-10-20 14:10:35
+            [post_date_gmt] => 2010-10-20 14:10:35
+            [comment_status] => open
+            [ping_status] => closed
+            [post_name] => child-post
+            [post_status] => publish
+            [post_parent] => 10
+            [menu_order] => 0
+            [post_type] => page
+            [post_password] => 
+            [is_sticky] => 0
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post_meta] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post_meta
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [meta_key] => _edit_last
+            [meta_value] => 1
+            [post_id] => 8
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post_meta
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [meta_key] => _edit_lock
+            [meta_value] => 1287583856
+            [post_id] => 8
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post_meta] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post_meta
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [meta_key] => _wp_page_template
+            [meta_value] => default
+            [post_id] => 8
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post_meta] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [post_title] => Parent page
+            [link] => http://localhost/?page_id=10
+            [post_published_at] => Wed, 20 Oct 2010 14:10:44 +0000
+            [post_author] => admin
+            [guid] => http://localhost/?page_id=10
+            [post_excerpt] => 
+            [post_content] => woop
+            [post_id] => 10
+            [post_date] => 2010-10-20 14:10:44
+            [post_date_gmt] => 2010-10-20 14:10:44
+            [comment_status] => open
+            [ping_status] => open
+            [post_name] => parent-page
+            [post_status] => publish
+            [post_parent] => 0
+            [menu_order] => 0
+            [post_type] => page
+            [post_password] => 
+            [is_sticky] => 0
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post_meta] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post_meta
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [meta_key] => _edit_lock
+            [meta_value] => 1287583844
+            [post_id] => 10
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post_meta
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [meta_key] => _edit_last
+            [meta_value] => 1
+            [post_id] => 10
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post_meta] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: WordPress\DataLiberation\ImportEntity Object
+(
+    [type:WordPress\DataLiberation\ImportEntity:private] => post_meta
+    [data:WordPress\DataLiberation\ImportEntity:private] => Array
+        (
+            [meta_key] => _wp_page_template
+            [meta_value] => default
+            [post_id] => 10
+        )
+
+)
+
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post_meta] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Current entity: 
+[29-Jul-2025 21:22:16 UTC] Get indexed entities counts: Array
+(
+    [post_meta] => 1
+)
+
+[29-Jul-2025 21:22:16 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 21:31:08 UTC] clearing scheduled cron jobs
+[29-Jul-2025 21:32:19 UTC] clearing scheduled cron jobs
+[29-Jul-2025 21:32:21 UTC] clearing scheduled cron jobs
+[29-Jul-2025 21:33:30 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:33:30 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 21:33:31 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:33:31 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 21:34:08 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.isAuthorMappingKeep" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 21:34:08 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.isAuthorMappingNew" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 21:34:08 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.isAuthorMappingExisting" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 21:34:08 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.isAuthorMappingKeep" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 21:34:08 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.isAuthorMappingNew" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 21:34:08 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.isAuthorMappingExisting" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 21:36:24 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.isAuthorMappingKeep" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 21:36:24 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.isAuthorMappingNew" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 21:36:24 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.isAuthorMappingExisting" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 21:36:24 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.isAuthorMappingKeep" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 21:36:24 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.isAuthorMappingNew" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 21:36:24 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.isAuthorMappingExisting" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 21:36:43 UTC] isAuthorMappingKeep: Array
+(
+    [author] => Array
+        (
+            [author_display_name] => john
+            [author_login] => john
+        )
+
+    [mappingType] => keep
+)
+
+[29-Jul-2025 21:36:43 UTC] isAuthorMappingKeep: Array
+(
+    [authorsInFile] => Array
+        (
+            [0] => Array
+                (
+                    [author_display_name] => john
+                    [author_login] => john
+                )
+
+            [1] => Array
+                (
+                    [author_display_name] => Mr WordPress
+                    [author_login] => Mr WordPress
+                )
+
+        )
+
+    [downloadAttachments] => 
+    [allowedDomains] => 
+    [authorMappings] => 
+    [post_id] => 19
+    [cursor] => {"stage":"#configure_import","next_stage":null,"resume_at_entity":null,"source_site_url":"http:\/\/localhost\/","site_url_mapping":[{"from":"http:\/\/localhost\/","to":"http:\/\/127.0.0.1:9400\/"}],"site_url_mapping_candidates":[]}
+    [data_source] => wxr_file
+    [source_url] => 
+    [attachment_id] => 
+    [importState] => configure
+)
+
+[29-Jul-2025 21:38:30 UTC] PHP Warning:  Undefined array key "fileDetails" in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 768
+[29-Jul-2025 21:39:12 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method WordPress\DataLiberation\Importer\ImportSession::get_state() in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:772
+Stack trace:
+#0 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): custom_importer_save_config(Object(WP_REST_Request))
+#1 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#2 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#3 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#4 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#5 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#6 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#7 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#8 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#9 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#10 /wordpress/wp-blog-header.php(16): wp()
+#11 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#12 {main}
+  thrown in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 772
+[29-Jul-2025 21:40:01 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:40:01 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 21:40:02 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:40:02 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 21:40:29 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:40:29 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 21:40:30 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:40:30 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 21:40:32 UTC] PHP Warning:  Undefined array key "fileDetails" in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 776
+[29-Jul-2025 21:40:32 UTC] PHP Warning:  Trying to access array offset on null in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 776
+[29-Jul-2025 21:40:32 UTC] PHP Deprecated:  file_exists(): Passing null to parameter #1 ($filename) of type string is deprecated in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 777
+[29-Jul-2025 21:40:46 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:40:46 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 21:40:47 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:40:47 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 21:41:16 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:41:16 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 21:41:17 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:41:17 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 21:43:57 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:43:57 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 21:43:58 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:43:58 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 21:44:00 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:44:01 UTC] Advanced to next stage, stopping. #finished
+[29-Jul-2025 21:44:01 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:1228) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1896
+[29-Jul-2025 21:44:01 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:1228) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1920
+[29-Jul-2025 21:45:52 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:45:52 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 21:45:54 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:45:54 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 21:45:56 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:45:56 UTC] Advanced to next stage, stopping. #finished
+[29-Jul-2025 21:53:53 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:53:53 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 21:53:54 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:53:59 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 21:54:03 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:54:07 UTC] PHP Warning:  Header may not contain more than a single header, new line detected in /wordpress/wp-includes/rest-api.php on line 765
+[29-Jul-2025 21:54:10 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 21:54:10 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-includes/rest-api.php:765) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1896
+[29-Jul-2025 21:54:10 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-includes/rest-api.php:765) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1920
+[29-Jul-2025 21:58:04 UTC] PHP Warning:  Array to string conversion in /wordpress/wp-includes/formatting.php on line 1096
+[29-Jul-2025 21:58:05 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:58:05 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function WordPress\DataLiberation\Importer\get_all_post_meta_flat() in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/RetryFrontloadingIterator.php:114
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/RetryFrontloadingIterator.php(41): WordPress\DataLiberation\Importer\RetryFrontloadingIterator->query_next_page()
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/RetryFrontloadingIterator.php(62): WordPress\DataLiberation\Importer\RetryFrontloadingIterator->next()
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityIteratorChain.php(58): WordPress\DataLiberation\Importer\RetryFrontloadingIterator->valid()
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityIteratorChain.php(52): WordPress\DataLiberation\Importer\EntityIteratorChain->get_iterator()
+#4 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(632): WordPress\DataLiberation\Importer\EntityIteratorChain->valid()
+#5 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(380): WordPress\DataLiberation\Importer\StreamImporter->frontload_next_entity()
+#6 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#7 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(796): do_ng_importer_next_import_step()
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#10 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#11 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#12 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#13 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#14 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#15 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#16 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#17 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#18 /wordpress/wp-blog-header.php(16): wp()
+#19 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#20 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/RetryFrontloadingIterator.php on line 114
+[29-Jul-2025 21:58:51 UTC] PHP Warning:  Array to string conversion in /wordpress/wp-includes/formatting.php on line 1096
+[29-Jul-2025 21:58:51 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:58:51 UTC] PHP Warning:  Undefined array key "current_url" in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/RetryFrontloadingIterator.php on line 32
+[29-Jul-2025 21:58:51 UTC] PHP Warning:  Undefined array key "original_url" in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/RetryFrontloadingIterator.php on line 33
+[29-Jul-2025 21:58:51 UTC] PHP Fatal error:  Uncaught TypeError: WordPress\DataLiberation\Importer\StreamImporter::enqueue_attachment_download(): Argument #1 ($raw_url) must be of type string, null given, called in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php on line 680 and defined in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php:913
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(680): WordPress\DataLiberation\Importer\StreamImporter->enqueue_attachment_download(NULL, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(380): WordPress\DataLiberation\Importer\StreamImporter->frontload_next_entity()
+#2 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#3 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(796): do_ng_importer_next_import_step()
+#4 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#5 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#8 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#9 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#10 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#11 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#12 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#13 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#14 /wordpress/wp-blog-header.php(16): wp()
+#15 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#16 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php on line 913
+[29-Jul-2025 21:59:10 UTC] PHP Warning:  Array to string conversion in /wordpress/wp-includes/formatting.php on line 1096
+[29-Jul-2025 21:59:10 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:59:31 UTC] PHP Warning:  Array to string conversion in /wordpress/wp-includes/formatting.php on line 1096
+[29-Jul-2025 21:59:32 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:59:35 UTC] PHP Warning:  Array to string conversion in /wordpress/wp-includes/formatting.php on line 1096
+[29-Jul-2025 21:59:35 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 21:59:46 UTC] PHP Warning:  Array to string conversion in /wordpress/wp-includes/formatting.php on line 1096
+[29-Jul-2025 21:59:46 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:04:52 UTC] PHP Warning:  Array to string conversion in /wordpress/wp-includes/formatting.php on line 1096
+[29-Jul-2025 22:04:52 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:04:52 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:04:53 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:04:53 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:04:55 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:04:55 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:04:56 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:04:56 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:04:57 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:04:57 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:04:58 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:04:58 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:04:59 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:04:59 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:00 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:00 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:01 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:01 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:02 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:02 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:03 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:03 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:04 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:04 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:05 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:06 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:07 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:07 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:08 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:08 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:09 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:09 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:10 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:10 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:11 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:11 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:12 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:12 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:13 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:13 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:14 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:14 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:15 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:15 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:16 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:17 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:18 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:18 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:19 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:19 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:20 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:20 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:21 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:21 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:22 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:22 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:23 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:23 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:24 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:24 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:25 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:25 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:26 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:26 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:28 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:28 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:29 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:29 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:30 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:30 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:31 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:31 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:32 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:32 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:34 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:35 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:36 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:37 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:38 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:38 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:40 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:41 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:42 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:42 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:44 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:44 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:45 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:45 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:46 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:46 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:48 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:48 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:49 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:49 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:50 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:50 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:51 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:51 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:52 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:52 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:53 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:53 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:54 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:54 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:55 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:55 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:56 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:56 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:58 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:58 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:05:59 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:05:59 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:00 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:00 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:01 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:01 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:02 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:02 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:03 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:03 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:04 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:04 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:05 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:05 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:06 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:06 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:09 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:09 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:10 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:11 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:13 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:13 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:14 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:14 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:15 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:15 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:16 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:16 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:17 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:17 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:18 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:19 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:20 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:20 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:21 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:21 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:22 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:22 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:23 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:23 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:24 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:24 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:25 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:25 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:26 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:26 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:27 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:27 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:29 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:30 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:31 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:31 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:33 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:34 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:35 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:35 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:37 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:38 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:39 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:40 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:41 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:41 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:43 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:44 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:45 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:46 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:47 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:48 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:49 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:50 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:51 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:51 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:52 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:52 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:53 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:53 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:54 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:55 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:56 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:57 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:06:58 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:06:59 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:00 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:01 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:02 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:02 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:04 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:05 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:06 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:07 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:08 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:09 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:10 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:11 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:13 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:13 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:14 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:15 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:16 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:17 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:18 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:19 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:20 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:21 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:22 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:23 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:24 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:25 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:26 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:27 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:28 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:29 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:30 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:30 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:31 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:32 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:33 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:34 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:35 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:36 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:37 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:38 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:39 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:39 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:07:40 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:07:40 UTC] Not all frontloading stubs resolved. 22 stubs remaining
+[29-Jul-2025 22:08:18 UTC] PHP Warning:  Undefined array key "authorsInFile" in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 165
+[29-Jul-2025 22:08:18 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.hasAuthorsInFile" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 22:11:07 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:11:07 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 22:11:08 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:11:13 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 22:11:19 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:11:24 UTC] PHP Warning:  Header may not contain more than a single header, new line detected in /wordpress/wp-includes/rest-api.php on line 765
+[29-Jul-2025 22:11:27 UTC] Not all frontloading stubs resolved. 22 unfinished, 1 awaiting download, 17 succeeded
+[29-Jul-2025 22:11:27 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-includes/rest-api.php:765) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1896
+[29-Jul-2025 22:11:27 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-includes/rest-api.php:765) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1920
+[29-Jul-2025 22:12:50 UTC] PHP Warning:  Undefined array key "authorsInFile" in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 165
+[29-Jul-2025 22:12:50 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.hasAuthorsInFile" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 22:12:50 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:12:50 UTC] Not all frontloading stubs resolved. 22 unfinished, 1 awaiting download, 17 succeeded
+[29-Jul-2025 22:12:52 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:13:21 UTC] PHP Warning:  Undefined array key "authorsInFile" in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 165
+[29-Jul-2025 22:13:21 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.hasAuthorsInFile" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 22:13:21 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:13:21 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 22:13:23 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:13:27 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 22:13:29 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:13:30 UTC] PHP Warning:  Header may not contain more than a single header, new line detected in /wordpress/wp-includes/rest-api.php on line 765
+[29-Jul-2025 22:13:31 UTC] Not all frontloading stubs resolved. 22 unfinished, 1 awaiting download, 17 succeeded
+[29-Jul-2025 22:13:32 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:14:56 UTC] PHP Warning:  Undefined array key "authorsInFile" in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 165
+[29-Jul-2025 22:14:56 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.hasAuthorsInFile" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 22:14:56 UTC] PHP Warning:  Array to string conversion in /wordpress/wp-includes/formatting.php on line 1096
+[29-Jul-2025 22:14:56 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:14:56 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:14:58 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:14:58 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:14:59 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:14:59 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:00 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:00 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:01 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:01 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:02 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:02 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:04 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:04 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:06 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:06 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:08 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:08 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:09 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:09 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:10 UTC] PHP Warning:  Undefined array key "authorsInFile" in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 165
+[29-Jul-2025 22:15:10 UTC] PHP Notice:  Function WP_Interactivity_API::evaluate was called <strong>incorrectly</strong>. Uncaught error executing a derived state callback with path "state.hasAuthorsInFile" and namespace "custom-importer". Please see <a href="https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/">Debugging in WordPress</a> for more information. (This message was added in version 6.6.0.) in /wordpress/wp-includes/functions.php on line 6121
+[29-Jul-2025 22:15:10 UTC] PHP Warning:  Array to string conversion in /wordpress/wp-includes/formatting.php on line 1096
+[29-Jul-2025 22:15:11 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:11 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:17 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:17 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:23 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:23 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:29 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:29 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:35 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:35 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:41 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:41 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:47 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:47 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:53 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:15:53 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:15:59 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:16:00 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:16:06 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:16:06 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:16:13 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:16:13 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:16:20 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:16:21 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:16:28 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:16:28 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:16:36 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:16:37 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:16:44 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:16:45 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:16:52 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:16:53 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:17:00 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:17:01 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:17:08 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:17:08 UTC] PHP Fatal error:  Uncaught WordPress\DataLiberation\DataLiberationException: File does not exist in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:772
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(584): WordPress\DataLiberation\Importer\EntityImporter->process_attachment(Array, Array)
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(130): WordPress\DataLiberation\Importer\EntityImporter->import_post(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(97): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(788): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 772
+[29-Jul-2025 22:17:15 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 22:17:15 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:15 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:15 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:15 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:16 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:16 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:16 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:16 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:16 UTC] PHP Notice:  exif_read_data(524cc4d50fc4ec19fbedfe82639911f8.jpg): Potentially invalid endianess, trying again with different endianness before imminent failure. in /wordpress/wp-admin/includes/image.php on line 940
+[29-Jul-2025 22:17:16 UTC] PHP Warning:  exif_read_data(524cc4d50fc4ec19fbedfe82639911f8.jpg): Illegal IFD size: 2 + 0x534F*12 = 0x3E7B6 &gt; 0x2EE0 in /wordpress/wp-admin/includes/image.php on line 940
+[29-Jul-2025 22:17:16 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:16 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:17 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:18 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:18 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:20 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:20 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:20 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:20 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:20 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:20 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:20 UTC] PHP Warning:  Undefined variable $comments in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:20 UTC] PHP Warning:  Undefined variable $terms in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 612
+[29-Jul-2025 22:17:23 UTC] Advanced to next stage, stopping. #finished
+[29-Jul-2025 22:17:23 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:612) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1896
+[29-Jul-2025 22:17:23 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:612) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1920
+[29-Jul-2025 22:25:00 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method WordPress\DataLiberation\Importer\ImportSession::get_frontloading_stats() in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php:86
+Stack trace:
+#0 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(103): custom_importer_get_state()
+#1 /wordpress/wp-admin/admin.php(365): custom_importer_admin_page()
+#2 {main}
+  thrown in /wordpress/wp-content/plugins/next-gen-importer/admin-page.php on line 86

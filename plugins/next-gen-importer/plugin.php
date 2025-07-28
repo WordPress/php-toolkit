@@ -17,7 +17,8 @@ if(file_exists(__DIR__ . '/php-toolkit.phar')) {
 	require_once __DIR__ . '/php-toolkit.phar';
 } else {
 	// Development – plugin mounted in WordPress via Playground CLI mounts
-	require_once __DIR__ . '/../../vendor/autoload.php';
+	require_once __DIR__ . '/../../data-liberation/vendor/autoload.php';
 }
 
-include __DIR__ . '/admin-page.php';
+require_once __DIR__ . '/ng-import-next-step.php';
+require_once __DIR__ . '/admin-page.php';

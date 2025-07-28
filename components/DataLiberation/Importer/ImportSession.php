@@ -187,6 +187,14 @@ class ImportSession {
 		);
 	}
 
+	public function get_meta_by_key($key) {
+		return get_post_meta( $this->post_id, $key, true );
+	}
+
+	public function set_meta_by_key($key, $value) {
+		update_post_meta( $this->post_id, $key, $value );
+	}
+
 	public function get_data_source() {
 		return get_post_meta( $this->post_id, 'data_source', true );
 	}
@@ -298,6 +306,19 @@ class ImportSession {
 		}
 	}
 
+	public function count_frontloading_stubs() {
+		global $wpdb;
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM $wpdb->posts
+				 WHERE post_type = 'frontloading_stub'
+				 AND post_parent = %d",
+				$this->post_id
+			)
+		);
+	}
+
 	public function count_awaiting_frontloading_stubs() {
 		global $wpdb;
 
@@ -330,6 +351,30 @@ class ImportSession {
 		);
 	}
 
+	public function count_succeeded_frontloading_stubs() {
+		global $wpdb;
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM $wpdb->posts
+				 WHERE post_type = 'frontloading_stub'
+				 AND post_parent = %d
+				 AND post_status = %s",
+				$this->post_id,
+				self::FRONTLOAD_STATUS_SUCCEEDED
+			)
+		);
+	}
+
+	public function get_frontloading_stats() {
+		return array(
+			'awaiting_download' => $this->count_awaiting_frontloading_stubs(),
+			'unfinished' => $this->count_unfinished_frontloading_stubs(),
+			'succeeded' => $this->count_succeeded_frontloading_stubs(),
+			'total' => $this->count_frontloading_stubs(),
+		);
+	}
+
 	public function mark_frontloading_errors_as_ignored() {
 		global $wpdb;
 		$wpdb->update(
@@ -337,7 +382,7 @@ class ImportSession {
 			array( 'post_status' => self::FRONTLOAD_STATUS_IGNORED ),
 			array(
 				'post_type' => 'frontloading_stub',
-				// 'post_status !=' => self::FRONTLOAD_STATUS_SUCCEEDED,
+				'post_status !=' => self::FRONTLOAD_STATUS_SUCCEEDED,
 			)
 		);
 	}
@@ -374,7 +419,7 @@ class ImportSession {
 		);
 		update_meta_cache( 'post', $ids );
 		foreach ( $posts as $post ) {
-			$post->meta = get_all_post_meta_flat( $post->ID );
+			$post->meta = ImportUtils::get_all_post_meta_flat( $post->ID );
 		}
 
 		return $posts;
@@ -528,7 +573,7 @@ class ImportSession {
 				continue;
 			}
 
-			update_post_meta( $placeholder->ID, 'last_error', $event->error );
+			update_post_meta( $placeholder->ID, 'last_error', $event->error ? $event->error->__toString() : null );
 
 			$attempts     = get_post_meta( $placeholder->ID, 'attempts', true );
 			$new_attempts = $attempts;
