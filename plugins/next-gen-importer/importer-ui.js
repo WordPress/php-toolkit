@@ -80,7 +80,7 @@ const { state, actions } = store('custom-importer', {
 		},
 		get importProgressLabel() {
 			if (state.importState === 'downloading') {
-				return `Downloaded ${state.importProgress}% of images`;
+				return `Downloaded ${state.importProgress} / ${state.importTotal} images`;
 			} else if (state.importState === 'inserting') {
 				return `Processed ${state.importProgress} / ${state.importTotal} entities`;
 			} else if (state.importState === 'completed') {
@@ -376,8 +376,6 @@ const { state, actions } = store('custom-importer', {
 		// Start the import process
 		startImport: async (event) => {
 			event?.preventDefault();
-			// Set temporary loading state
-			state.importStatusMessage = 'Starting import...';
 
 			const requestBody = {
 				download_attachments: state.downloadAttachments ? '1' : '0',

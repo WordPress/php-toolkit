@@ -591,9 +591,7 @@ function custom_importer_admin_page() {
         </div>
 
         <!-- Stage 4: Import Progress -->
-        <div id="import-stage" data-wp-class--hidden="!state.isImportStage">
-            <h3><?php echo esc_html__('Import Progress', 'custom-importer'); ?></h3>
-            
+        <div id="import-stage" data-wp-class--hidden="!state.isImportStage">            
             <!-- Stage indicator -->
             <div class="import-stage-indicator" data-wp-class--hidden="state.importState === 'completed'">
                 <p><strong><?php echo esc_html__('Current Stage:', 'custom-importer'); ?></strong> 
