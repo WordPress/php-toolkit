@@ -69,7 +69,6 @@ class EntityImporter {
 	protected $tags = array();
 	protected $base_url = '';
 
-	protected $logger;
 	protected $options = array();
 
 	// NEW STYLE
@@ -80,6 +79,12 @@ class EntityImporter {
 
 	protected $url_remap = array();
 	protected $featured_images = array();
+	protected $missing_menu_items = array();
+
+	/**
+	 * Events collection
+	 */
+	protected $events = array();
 
 	/**
 	 * Constructor
@@ -107,7 +112,6 @@ class EntityImporter {
 		$this->mapping['term_id']   = array();
 		$this->requires_remapping   = $empty_types;
 		$this->exists               = $empty_types;
-		$this->logger               = $options['logger'] ?? new EchoLogger();
 
 		$this->options = wp_parse_args(
 			$options,
@@ -124,7 +128,32 @@ class EntityImporter {
 		require_once ABSPATH . 'wp-admin/includes/media.php';
 	}
 
+	/**
+	 * Get all collected events
+	 *
+	 * @return array
+	 */
+	public function get_events() {
+		return $this->events;
+	}
+
+	/**
+	 * Add an event to the collection
+	 *
+	 * @param string $entity_type
+	 * @param string $type
+	 * @param string $message
+	 * @param array $entity_data
+	 * @param mixed $error
+	 */
+	protected function append_event( $entity_type, $type, $message, $entity_data = null, $error = null ) {
+		$this->events[] = new EntityImporterEvent( $entity_type, $type, $message, $entity_data, $error );
+	}
+
 	public function import_entity( ImportEntity $entity ) {
+		// Clear events before importing each entity.
+		$this->events = array();
+
 		$type = $entity->get_type();
 		$data = $entity->get_data();
 		switch ( $entity->get_type() ) {
@@ -150,12 +179,15 @@ class EntityImporter {
 	}
 
 	public function import_site_option( $data ) {
-		$this->logger->info(
+		$this->append_event(
+			'site_option',
+			EntityImporterEvent::SUCCESS,
 			sprintf(
 			/* translators: %s: option name */
 				__( 'Imported site option "%s"', 'wordpress-importer' ),
 				$data['option_name']
-			)
+			),
+			$data
 		);
 
 		update_option( $data['option_name'], $data['option_value'] );
@@ -223,13 +255,17 @@ class EntityImporter {
 
 		$user_id = wp_insert_user( wp_slash( $userdata ) );
 		if ( is_wp_error( $user_id ) ) {
-			$this->logger->error(
+			$this->append_event(
+				'user',
+				EntityImporterEvent::FAILURE,
 				sprintf(
 				/* translators: %s: user login */
 					__( 'Failed to import user "%s": %s', 'wordpress-importer' ),
 					$userdata['user_login'],
 					$user_id->get_error_message()
-				)
+				),
+				$data,
+				$user_id
 			);
 
 			/**
@@ -248,20 +284,15 @@ class EntityImporter {
 		}
 		$this->mapping['user_slug'][ $original_slug ] = $user_id;
 
-		$this->logger->info(
+		$this->append_event(
+			'user',
+			EntityImporterEvent::SUCCESS,
 			sprintf(
 			/* translators: %s: user login */
 				__( 'Imported user "%s"', 'wordpress-importer' ),
 				$userdata['user_login']
-			)
-		);
-		$this->logger->debug(
-			sprintf(
-			/* translators: 1: original user ID, 2: new user ID */
-				__( 'User %1$d remapped to %2$d', 'wordpress-importer' ),
-				$original_id,
-				$user_id
-			)
+			),
+			$data
 		);
 
 		// TODO: Implement meta handling once WXR includes it
@@ -301,6 +332,18 @@ class EntityImporter {
 
 			$this->mapping['term'][ $mapping_key ]    = $existing;
 			$this->mapping['term_id'][ $original_id ] = $existing;
+
+			$this->append_event(
+				'term',
+				EntityImporterEvent::SKIPPED,
+				sprintf(
+				/* translators: 1: term name, 2: taxonomy name */
+					__( 'Term "%1$s" (%2$s) already exists', 'wordpress-importer' ),
+					$data['name'],
+					$data['taxonomy']
+				),
+				$data
+			);
 
 			return false;
 		}
@@ -343,14 +386,18 @@ class EntityImporter {
 
 		$result = wp_insert_term( $data['name'], $data['taxonomy'], $termdata );
 		if ( is_wp_error( $result ) ) {
-			$this->logger->warning(
+			$this->append_event(
+				'term',
+				EntityImporterEvent::FAILURE,
 				sprintf(
 				/* translators: 1: taxonomy name, 2: term name */
 					__( 'Failed to import %1$s %2$s: %3$s', 'wordpress-importer' ),
 					$data['taxonomy'],
 					$data['name'],
 					$result->get_error_message()
-				)
+				),
+				$data,
+				$result
 			);
 			do_action( 'wp_import_insert_term_failed', $result, $data );
 
@@ -371,21 +418,16 @@ class EntityImporter {
 		$this->mapping['term'][ $mapping_key ]    = $term_id;
 		$this->mapping['term_id'][ $original_id ] = $term_id;
 
-		$this->logger->info(
+		$this->append_event(
+			'term',
+			EntityImporterEvent::SUCCESS,
 			sprintf(
 			/* translators: 1: term name, 2: taxonomy name */
 				__( 'Imported "%1$s" (%2$s)', 'wordpress-importer' ),
 				$data['name'],
 				$data['taxonomy']
-			)
-		);
-		$this->logger->debug(
-			sprintf(
-			/* translators: 1: original term ID, 2: new term ID */
-				__( 'Term %1$d remapped to %2$d', 'wordpress-importer' ),
-				$original_id,
-				$term_id
-			)
+			),
+			$data
 		);
 
 		do_action( 'wp_import_insert_term', $term_id, $data );
@@ -467,19 +509,21 @@ class EntityImporter {
 		 */
 		$data = apply_filters( 'wxr_importer_pre_process_post', $data );
 		if ( empty( $data ) ) {
-			$this->logger->debug( 'Skipping post, empty data' );
+			$this->append_event( 'post', EntityImporterEvent::SKIPPED, 'Skipping post, empty data', $data );
 
 			return false;
 		}
 
 		$meta = array();
+		$comments = array();
+		$terms = array();
 
 		$original_id = isset( $data['post_id'] ) ? (int) $data['post_id'] : 0;
 		$parent_id   = isset( $data['post_parent'] ) ? (int) $data['post_parent'] : 0;
 
 		// Have we already processed this?
 		if ( isset( $this->mapping['post'][ $original_id ] ) ) {
-			$this->logger->debug( 'Skipping post, already processed' );
+			$this->append_event( 'post', EntityImporterEvent::SKIPPED, 'Skipping post, already processed', $data );
 
 			return;
 		}
@@ -488,13 +532,16 @@ class EntityImporter {
 		$post_type_object = get_post_type_object( $post_type );
 		// Is this type even valid?
 		if ( ! $post_type_object ) {
-			$this->logger->warning(
+			$this->append_event(
+				'post',
+				EntityImporterEvent::FAILURE,
 				sprintf(
 				/* translators: 1: post title, 2: post type */
 					__( 'Failed to import "%1$s": Invalid post type %2$s', 'wordpress-importer' ),
 					$data['post_title'],
 					$post_type
-				)
+				),
+				$data
 			);
 
 			return false;
@@ -502,13 +549,16 @@ class EntityImporter {
 
 		$post_exists = $this->post_exists( $data );
 		if ( $post_exists ) {
-			$this->logger->info(
+			$this->append_event(
+				'post',
+				EntityImporterEvent::SKIPPED,
 				sprintf(
 				/* translators: 1: post type name, 2: post title */
 					__( '%1$s "%2$s" already exists.', 'wordpress-importer' ),
 					$post_type_object->labels->singular_name,
 					$data['post_title']
-				)
+				),
+				$data
 			);
 
 			/**
@@ -590,14 +640,18 @@ class EntityImporter {
 		}
 
 		if ( is_wp_error( $post_id ) ) {
-			$this->logger->error(
+			$this->append_event(
+				'post',
+				EntityImporterEvent::FAILURE,
 				sprintf(
 				/* translators: 1: post title, 2: post type name */
 					__( 'Failed to import "%1$s" (%2$s): %3$s', 'wordpress-importer' ),
 					$data['post_title'],
 					$post_type_object->labels->singular_name,
 					$post_id->get_error_message()
-				)
+				),
+				$data,
+				$post_id
 			);
 
 			/**
@@ -627,21 +681,16 @@ class EntityImporter {
 		}
 		$this->mark_post_exists( $data, $post_id );
 
-		$this->logger->info(
+		$this->append_event(
+			'post',
+			EntityImporterEvent::SUCCESS,
 			sprintf(
 			/* translators: 1: post title, 2: post type name */
 				__( 'Imported "%1$s" (%2$s)', 'wordpress-importer' ),
 				$data['post_title'] ?? '',
 				$post_type_object->labels->singular_name
-			)
-		);
-		$this->logger->debug(
-			sprintf(
-			/* translators: 1: original post ID, 2: new post ID */
-				__( 'Post %1$d remapped to %2$d', 'wordpress-importer' ),
-				$original_id,
-				$post_id
-			)
+			),
+			$data
 		);
 
 		/**
@@ -714,8 +763,6 @@ class EntityImporter {
 		$original_object_id = get_post_meta( $post_id, '_menu_item_object_id', true );
 		$object_id          = null;
 
-		$this->logger->debug( sprintf( 'Processing menu item %s', $item_type ) );
-
 		$requires_remapping = false;
 		switch ( $item_type ) {
 			case 'taxonomy':
@@ -743,8 +790,7 @@ class EntityImporter {
 
 			default:
 				// associated object is missing or not imported yet, we'll retry later
-				$this->missing_menu_items[] = $item;
-				$this->logger->debug( 'Unknown menu item type' );
+				$this->missing_menu_items[] = $data;
 				break;
 		}
 
@@ -757,7 +803,6 @@ class EntityImporter {
 			return;
 		}
 
-		$this->logger->debug( sprintf( 'Menu item %d mapped to %d', $original_object_id, $object_id ) );
 		update_post_meta( $post_id, '_menu_item_object_id', wp_slash( $object_id ) );
 	}
 
@@ -1192,66 +1237,5 @@ class EntityImporter {
 		}
 
 		return $a['comment_id'] - $b['comment_id'];
-	}
-}
-
-/**
- * @TODO how to treat this? Should this class even exist?
- *       how does WordPress handle different levels? It
- *       seems useful for usage in wp-cli, Blueprints,
- *       and other non-web environments.
- */
-// phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound
-interface EntityImporterLogger {
-	public function debug( $message );
-	public function info( $message );
-	public function warning( $message );
-	public function error( $message );
-	public function notice( $message );
-}
-class EchoLogger implements EntityImporterLogger {
-	/**
-	 * Log a debug message.
-	 *
-	 * @param  string  $message  Message to log
-	 */
-	public function debug( $message ) {
-		// echo( '[DEBUG] ' . $message );
-	}
-
-	/**
-	 * Log an info message.
-	 *
-	 * @param  string  $message  Message to log
-	 */
-	public function info( $message ) {
-		echo( '[INFO] ' . $message );
-	}
-
-	/**
-	 * Log a warning message.
-	 *
-	 * @param  string  $message  Message to log
-	 */
-	public function warning( $message ) {
-		echo( '[WARNING] ' . $message );
-	}
-
-	/**
-	 * Log an error message.
-	 *
-	 * @param  string  $message  Message to log
-	 */
-	public function error( $message ) {
-		echo( '[ERROR] ' . $message );
-	}
-
-	/**
-	 * Log a notice message.
-	 *
-	 * @param  string  $message  Message to log
-	 */
-	public function notice( $message ) {
-		echo( '[NOTICE] ' . $message );
 	}
 }

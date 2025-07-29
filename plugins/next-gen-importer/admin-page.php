@@ -178,7 +178,6 @@ function custom_importer_admin_page() {
                     return $state['importState'] === 'completed';
                 },
 
-
                 'hasAuthorsInFile' => function () {
                     $state = custom_importer_get_state();
                     return count($state['authorsInFile']) > 0;

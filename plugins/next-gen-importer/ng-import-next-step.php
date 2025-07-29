@@ -1,13 +1,11 @@
 <?php
 
+use WordPress\DataLiberation\Importer\StreamImporter;
+use WordPress\DataLiberation\Importer\RetryFrontloadingIterator;
+use WordPress\DataLiberation\EntityReader\WXREntityReader;
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\DataLiberation\DataLiberationException;
-use WordPress\DataLiberation\EntityReader\WXREntityReader;
-use WordPress\DataLiberation\Importer\EntityImporter;
-use WordPress\DataLiberation\Importer\EntityImporterLogger;
 use WordPress\DataLiberation\Importer\ImportSession;
-use WordPress\DataLiberation\Importer\RetryFrontloadingIterator;
-use WordPress\DataLiberation\Importer\StreamImporter;
 
 // Cron job: add fake authors and advance state
 function ng_importer_get_active() {
@@ -38,28 +36,6 @@ function ng_importer_get_active() {
 		},
 		array(
 			'index_batch_size' => 1,
-			'entity_sink' => new EntityImporter(array(
-				'logger' => new class($session) implements EntityImporterLogger {
-					private $session;
-					public function __construct($session) {
-						$this->session = $session;
-					}
-					public function debug( $message ) {
-					}
-					public function info( $message ) {
-						$this->session->append_to_log_file('[INFO] ' . $message);
-					}
-					public function warning( $message ) {
-						$this->session->append_to_log_file('[WARNING] ' . $message);
-					}
-					public function error( $message ) {
-						$this->session->append_to_log_file('[ERROR] ' . $message);
-					}
-					public function notice( $message ) {
-						$this->session->append_to_log_file('[NOTICE] ' . $message);
-					}
-				}
-			))
 		),
 		$import['cursor'] ?? null
 	);
@@ -115,8 +91,6 @@ function do_ng_importer_next_import_step() {
 			break;
 		}
 
-		// error_log('Current entity: ' . print_r($importer->get_current_entity(), true));
-		// error_log('Get indexed entities counts: ' . print_r($importer->get_indexed_entities_counts(), true));
 		$authorsInFile = $session->get_meta_by_key('authorsInFile') ?? [];
 		if ( true !== $importer->next_step() ) {
 			$session->set_reentrancy_cursor( $importer->get_reentrancy_cursor() );
@@ -126,18 +100,15 @@ function do_ng_importer_next_import_step() {
 				if ( StreamImporter::STAGE_FRONTLOAD_ASSETS === $importer->get_stage() ) {
 					$resolved_all_failures = $session->count_unfinished_frontloading_stubs() === 0;
 					if ( ! $resolved_all_failures ) {
-						error_log(
+						// Advance anyway.
+						// @TODO: Give the user a chance to retry, provide different assets files etc.
+						$session->append_to_log_file(
 							sprintf(
-								'Not all frontloading stubs resolved. %d unfinished, %d awaiting download, %d succeeded',
+								'Proceeding without downloading all the media files. %d could not be downloaded, %d succeeded',
 								$session->count_unfinished_frontloading_stubs(),
-								$session->count_awaiting_frontloading_stubs(),
 								$session->count_succeeded_frontloading_stubs()
 							)
 						);
-						// Advance anyway.
-						// @TODO: Tell the user about all the errors.
-						// @TODO: Give the user a chance to retry, provide different assets files etc.
-						// break;
 					}
 				}
 			}
@@ -153,7 +124,6 @@ function do_ng_importer_next_import_step() {
 			) {
 				continue;
 			}
-			error_log('Advanced to next stage, stopping. ' . $importer->get_stage());
 			return;
 		}
 
@@ -215,7 +185,8 @@ function do_ng_importer_next_import_step() {
 				break;
 			case StreamImporter::STAGE_IMPORT_ENTITIES:
 				$session->bump_imported_entities_counts(
-					$importer->get_imported_entities_counts()
+					$importer->get_imported_entities_counts(),
+					$importer->get_entity_sink_events()
 				);
 				break;
 		}

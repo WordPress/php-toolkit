@@ -356,3 +356,23 @@ Stack trace:
 [29-Jul-2025 23:25:19 UTC] Advanced to next stage, stopping. #finished
 [29-Jul-2025 23:25:19 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-admin/includes/image.php:940) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1896
 [29-Jul-2025 23:25:19 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-admin/includes/image.php:940) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1920
+[29-Jul-2025 23:44:13 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:44:13 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 23:44:14 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:44:19 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 23:44:22 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:44:27 UTC] PHP Notice:  exif_read_data(524cc4d50fc4ec19fbedfe82639911f8.jpg): Potentially invalid endianess, trying again with different endianness before imminent failure. in /wordpress/wp-admin/includes/image.php on line 940
+[29-Jul-2025 23:44:27 UTC] PHP Warning:  exif_read_data(524cc4d50fc4ec19fbedfe82639911f8.jpg): Illegal IFD size: 2 + 0x534F*12 = 0x3E7B6 &gt; 0x2EE0 in /wordpress/wp-admin/includes/image.php on line 940
+[29-Jul-2025 23:44:35 UTC] Advanced to next stage, stopping. #finished
+[29-Jul-2025 23:44:35 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-admin/includes/image.php:940) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1896
+[29-Jul-2025 23:44:35 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-admin/includes/image.php:940) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1920
+[29-Jul-2025 23:45:59 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:45:59 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 23:46:00 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:46:05 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 23:46:09 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:46:14 UTC] PHP Notice:  exif_read_data(524cc4d50fc4ec19fbedfe82639911f8.jpg): Potentially invalid endianess, trying again with different endianness before imminent failure. in /wordpress/wp-admin/includes/image.php on line 940
+[29-Jul-2025 23:46:14 UTC] PHP Warning:  exif_read_data(524cc4d50fc4ec19fbedfe82639911f8.jpg): Illegal IFD size: 2 + 0x534F*12 = 0x3E7B6 &gt; 0x2EE0 in /wordpress/wp-admin/includes/image.php on line 940
+[29-Jul-2025 23:46:22 UTC] Advanced to next stage, stopping. #finished
+[29-Jul-2025 23:46:22 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-admin/includes/image.php:940) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1896
+[29-Jul-2025 23:46:22 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-admin/includes/image.php:940) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1920

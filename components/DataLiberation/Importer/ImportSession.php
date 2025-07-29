@@ -269,7 +269,7 @@ class ImportSession {
 	 *
 	 * @param  array  $newly_imported_entities  The new progress data with keys: posts, comments, terms, attachments, users
 	 */
-	public function bump_imported_entities_counts( $newly_imported_entities ) {
+	public function bump_imported_entities_counts( $newly_imported_entities, $events = array() ) {
 		foreach ( $newly_imported_entities as $field => $count ) {
 			if ( ! in_array( $field, static::PROGRESS_ENTITIES, true ) ) {
 				_doing_it_wrong(
@@ -304,6 +304,10 @@ class ImportSession {
 			);
 			$wpdb->query($sql);
 			*/
+		}
+
+		foreach ( $events as $event ) {
+			$this->append_to_log_file( '[' . $event->type . '] ' . $event->message );
 		}
 	}
 
@@ -623,7 +627,6 @@ class ImportSession {
 				case AttachmentDownloaderEvent::FAILURE:
 					$new_status   = self::FRONTLOAD_STATUS_ERROR;
 					$new_attempts = $attempts + 1;
-					$this->append_to_log_file(sprintf('Failed to download asset %s: %s', $url, $event->error ? $event->error->__toString() : 'Unknown error'));
 					break;
 			}
 
@@ -679,11 +682,13 @@ class ImportSession {
 		if ( $stage === $this->get_stage() ) {
 			return;
 		}
+		$old_stage = $this->get_stage();
 		if ( StreamImporter::STAGE_FINISHED === $stage ) {
 			update_post_meta( $this->post_id, 'finished_at', time() );
 		}
 		update_post_meta( $this->post_id, 'current_stage', $stage );
 		$this->cached_stage = $stage;
+		$this->append_to_log_file(sprintf('Stage advanced from %s to %s', $old_stage, $stage));
 	}
 
 	public function get_started_at() {

@@ -910,6 +910,15 @@ class StreamImporter {
 		return $this->imported_entities_counts;
 	}
 
+	/**
+	 * Get entity importer events
+	 *
+	 * @return array
+	 */
+	public function get_entity_sink_events() {
+		return $this->entity_sink ? $this->entity_sink->get_events() : array();
+	}
+
 	protected function enqueue_attachment_download( string $raw_url, $options = array() ) {
 		$output_filename = $this->new_asset_filename(
 			$options['original_url'] ?? $raw_url,
