@@ -2,10 +2,10 @@
 
 namespace WordPress\DataLiberation\Importer;
 
+use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\DataLiberation\DataLiberationException;
 use WP_Query;
 
-use function get_all_post_meta_flat;
 use function is_wp_error;
 use function WordPress\Polyfill\_doing_it_wrong;
 
@@ -95,6 +95,7 @@ class ImportSession {
 					'file_name'     => $args['file_name'] ?? null,
 					'source_url'    => $args['source_url'] ?? null,
 					'attachment_id' => $args['attachment_id'] ?? null,
+					'log_file'      => $args['log_file'] ?? null,
 				),
 			),
 			true
@@ -387,6 +388,39 @@ class ImportSession {
 		);
 	}
 
+	public function append_to_log_file($message) {
+		$path = $this->ensure_log_file_exists();
+		if(!$path) {
+			return false;
+		}
+		file_put_contents($path, $message . "\n", FILE_APPEND);
+		return true;
+	}
+
+	public function stream_log_file() {
+		$path = $this->ensure_log_file_exists();
+		if(!$path) {
+			return false;
+		}
+		$stream = FileReadStream::from_path($path);
+		// @TODO: Create a 'PrivateFileReadStream', or so, that automatically
+		//        inserts / skips the initial PHP guard.
+		$stream->seek(strlen("<?php !(); ?>\n"));
+		return $stream;
+	}
+
+	private function ensure_log_file_exists() {
+		$log_file = $this->get_meta_by_key('log_file');
+		if(!$log_file) {
+			return false;
+		}
+		if(!file_exists($log_file)) {
+			$php_guard = "<?php !(); ?>\n";
+			file_put_contents($log_file, $php_guard);
+		}
+		return $log_file;
+	}
+
 	public function get_frontloading_stubs( $options = array() ) {
 		$query = new WP_Query(
 			array(
@@ -589,6 +623,7 @@ class ImportSession {
 				case AttachmentDownloaderEvent::FAILURE:
 					$new_status   = self::FRONTLOAD_STATUS_ERROR;
 					$new_attempts = $attempts + 1;
+					$this->append_to_log_file(sprintf('Failed to download asset %s: %s', $url, $event->error ? $event->error->__toString() : 'Unknown error'));
 					break;
 			}
 

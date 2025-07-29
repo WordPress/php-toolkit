@@ -107,7 +107,7 @@ function do_ng_importer_next_import_step() {
 								'Not all frontloading stubs resolved. %d unfinished, %d awaiting download, %d succeeded',
 								$session->count_unfinished_frontloading_stubs(),
 								$session->count_awaiting_frontloading_stubs(),
-								$session->count_succeeded_frontloaded_assets()
+								$session->count_succeeded_frontloading_stubs()
 							)
 						);
 						// Advance anyway.

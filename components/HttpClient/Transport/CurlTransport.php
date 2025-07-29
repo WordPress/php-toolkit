@@ -145,6 +145,7 @@ class CurlTransport implements TransportInterface {
         }
         // Basic curl settings for the request
         curl_setopt( $ch, CURLOPT_URL, $request->url );
+		error_log('curl_setopt( $ch, CURLOPT_URL, ' . $request->url . ' );');
         curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, false );
 		// Redirects are handled in the Client.
         curl_setopt( $ch, CURLOPT_MAXREDIRS, 0 );

@@ -175,7 +175,6 @@ const { state, actions } = store('custom-importer', {
 			}, 0);
 
 			while (true) {
-				console.log('state.importState', state.importState);
 				if (
 					state.importState === 'indexing' ||
 					state.importState === 'downloading' ||

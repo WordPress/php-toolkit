@@ -6,8 +6,12 @@
  * Version: 1.0.0
  */
 
+use WordPress\ByteStream\ReadStream\FileReadStream;
+use WordPress\ByteStream\WriteStream\FileWriteStream;
 use WordPress\DataLiberation\Importer\ImportSession;
 use WordPress\DataLiberation\Importer\StreamImporter;
+
+use function WordPress\Filesystem\pipe_stream;
 
 add_action('admin_init', function () {
     // Register a new importer in Tools -> Import
@@ -54,11 +58,25 @@ function custom_importer_get_state() {
             'authorMappings' => array(),
         );
     }
+    $logs = [];
+    $log_stream = $session->stream_log_file();
+    if($log_stream) {
+        // Get the first 64KB of the log file.
+        $bytes_to_read = $log_stream->pull(64 * 1024);
+        $log_content = $log_stream->consume($bytes_to_read);
+        $logs = explode("\n", $log_content);
+        if($log_stream->length() > $log_stream->tell()) {
+            $logs[] = "... " . ($log_stream->length() - $log_stream->tell()) . " bytes more ...";
+            // @TODO: Add a button to download the entire log
+        }
+        $log_stream->close_reading();
+    }
     $state = array(
         'authorsInFile' => array_values($session->get_meta_by_key('authorsInFile')),
         'downloadAttachments' => $session->get_meta_by_key('downloadAttachments'),
         'allowedDomains' => $session->get_meta_by_key('allowedDomains'),
         'authorMappings' => $session->get_meta_by_key('authorMappings') ?? [],
+        'logs' => $logs,
         // ...$session->get_metadata(),
     );
     switch ($session->get_stage()) {
@@ -595,22 +613,22 @@ function custom_importer_admin_page() {
             <button type="button" class="button" data-wp-on--click="actions.cancelCurrentImport">
                 <?php echo esc_html__('Cancel Import', 'custom-importer'); ?>
             </button>
-
-            <!-- Error log -->
-            <div class="import-errors" data-wp-class--hidden="!state.hasImportErrors">
-                <h4><?php echo esc_html__('Import Errors', 'custom-importer'); ?></h4>
-                <div class="error-log" style="max-height: 200px; overflow-y: auto; background: #f6f7f7; border: 1px solid #dcdcde; padding: 10px; border-radius: 4px;">
-                    <ul id="import-error-list">
-                        <template data-wp-each--error="state.importErrors">
-                            <li data-wp-text="context.error.message"></li>
-                        </template>
-                    </ul>
-                </div>
-            </div>
             
             <!-- Status and error messages -->
             <div class="error-message" data-wp-class--hidden="!state.importError" data-wp-text="state.importError"></div>
             <div class="success-message" data-wp-class--hidden="!state.importStatusMessage" data-wp-text="state.importStatusMessage"></div>
+
+            <!-- Error log -->
+            <div class="import-errors">
+                <h4><?php echo esc_html__('Import Logs', 'custom-importer'); ?></h4>
+                <div class="error-log" style="max-height: 200px; overflow-y: auto; background: #f6f7f7; border: 1px solid #dcdcde; padding: 10px; border-radius: 4px;">
+                    <ul id="import-error-list">
+                        <template data-wp-each--log="state.logs">
+                            <li data-wp-text="context.log"></li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
         </div>
 
         <!-- Stage 5: Import Completed -->
@@ -651,6 +669,18 @@ function custom_importer_admin_page() {
                     <!-- TODO: Display all the errors. Potentially paginated. -->
                 </ul>
             </p>
+
+            <div class="import-errors">
+                <h4><?php echo esc_html__('Import Logs', 'custom-importer'); ?></h4>
+                <div class="error-log" style="max-height: 200px; overflow-y: auto; background: #f6f7f7; border: 1px solid #dcdcde; padding: 10px; border-radius: 4px;">
+                    <ul id="import-error-list">
+                        <template data-wp-each--log="state.logs">
+                            <li data-wp-text="context.log"></li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
+            
             <div class="stage-actions">
                 <button type="button" class="button button-primary" data-wp-on--click="actions.cancelCurrentImport">
                     <?php echo esc_html__('Start a new import', 'custom-importer'); ?>
@@ -748,11 +778,23 @@ function custom_importer_upload_file_rest($request) {
     // Move uploaded file to plugin directory as last-uploaded-import-file.php
     $plugin_dir = dirname(__FILE__);
     $target_file = $plugin_dir . '/last-uploaded-import-file.php';
+    
+    $uploaded_data_stream = FileReadStream::from_path($file['tmp_name']);
+    $target_file_stream = FileWriteStream::from_path($target_file);
     $php_guard = "<?php !(); ?>\n";
-    $uploaded_content = file_get_contents($file['tmp_name']);
-    $result = file_put_contents($target_file, $php_guard . $uploaded_content);
-    if ( $result === false ) {
+    $target_file_stream->append_bytes($php_guard);
+    try {
+        pipe_stream($uploaded_data_stream, $target_file_stream);
+    } catch (Exception $e) {
         return new WP_Error('save_failed', __('Failed to save uploaded file.', 'custom-importer'), array('status' => 500));
+    } finally {
+        $target_file_stream->close_writing();
+        $uploaded_data_stream->close_reading();
+    }
+    
+    $log_file = $plugin_dir . '/last-import-session-log.php';
+    if(file_exists($log_file)) {
+        @unlink($log_file);
     }
 
     // Create an import session for the uploaded file – to be used by the ng-import-next-step.php job.
@@ -760,6 +802,7 @@ function custom_importer_upload_file_rest($request) {
     $session = ImportSession::create(array(
         'data_source' => 'wxr_file',
         'file_name' => $target_file,
+        'log_file' => $log_file,
     ));
     $session->set_meta_by_key('authorsInFile', array());
     

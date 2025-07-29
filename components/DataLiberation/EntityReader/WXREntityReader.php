@@ -820,7 +820,11 @@ class WXREntityReader implements EntityReader {
 				$this->entity_data['terms'][] = array(
 					'taxonomy'    => $this->last_opener_attributes['domain'],
 					'slug'        => $this->last_opener_attributes['nicename'],
-					'description' => $this->text_buffer,
+					/**
+					 * trim() – in XML, trailing whitespace in text nodes must be ignored.
+					 * @TODO: Only trim text nodes, not CDATA sections.
+					 */
+					'description' => trim( $this->text_buffer ),
 				);
 				$this->text_buffer            = '';
 				continue;
@@ -839,8 +843,12 @@ class WXREntityReader implements EntityReader {
 				continue;
 			}
 
-			$key                       = $this->KNOWN_ENITIES[ $this->entity_tag ]['fields'][ $tag_with_namespace ];
-			$this->entity_data[ $key ] = $this->text_buffer;
+			$key = $this->KNOWN_ENITIES[ $this->entity_tag ]['fields'][ $tag_with_namespace ];
+			/**
+			 * trim() – in XML, trailing whitespace in text nodes must be ignored.
+			 * @TODO: Only trim text nodes, not CDATA sections.
+			 */
+			$this->entity_data[ $key ] = trim( $this->text_buffer );
 			$this->text_buffer         = '';
 		} while ( $this->xml->next_token() );
 
