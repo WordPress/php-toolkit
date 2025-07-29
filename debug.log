@@ -53,3 +53,276 @@
 [29-Jul-2025 23:03:17 UTC] Advanced to next stage, stopping. #finished
 [29-Jul-2025 23:03:17 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-admin/includes/image.php:940) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1896
 [29-Jul-2025 23:03:17 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-admin/includes/image.php:940) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1920
+[29-Jul-2025 23:15:37 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:15:37 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 23:15:38 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:15:42 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 23:15:47 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:15:49 UTC] PHP Fatal error:  Uncaught ArgumentCountError: 3 arguments are required, 2 given in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:227
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(227): sprintf('Failed to impor...', 'a11yteam')
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(144): WordPress\DataLiberation\Importer\EntityImporter->import_user(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(121): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(832): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 227
+[29-Jul-2025 23:15:56 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:15:56 UTC] PHP Fatal error:  Uncaught ArgumentCountError: 3 arguments are required, 2 given in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:227
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(227): sprintf('Failed to impor...', 'a11yteam')
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(144): WordPress\DataLiberation\Importer\EntityImporter->import_user(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(121): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(832): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 227
+[29-Jul-2025 23:16:02 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:16:02 UTC] PHP Fatal error:  Uncaught ArgumentCountError: 3 arguments are required, 2 given in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:227
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(227): sprintf('Failed to impor...', 'a11yteam')
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(144): WordPress\DataLiberation\Importer\EntityImporter->import_user(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(121): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(832): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 227
+[29-Jul-2025 23:16:08 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:16:08 UTC] PHP Fatal error:  Uncaught ArgumentCountError: 3 arguments are required, 2 given in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:227
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(227): sprintf('Failed to impor...', 'a11yteam')
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(144): WordPress\DataLiberation\Importer\EntityImporter->import_user(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(121): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(832): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 227
+[29-Jul-2025 23:16:14 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:16:15 UTC] PHP Fatal error:  Uncaught ArgumentCountError: 3 arguments are required, 2 given in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:227
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(227): sprintf('Failed to impor...', 'a11yteam')
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(144): WordPress\DataLiberation\Importer\EntityImporter->import_user(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(121): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(832): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 227
+[29-Jul-2025 23:16:21 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:16:21 UTC] PHP Fatal error:  Uncaught ArgumentCountError: 3 arguments are required, 2 given in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:227
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(227): sprintf('Failed to impor...', 'a11yteam')
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(144): WordPress\DataLiberation\Importer\EntityImporter->import_user(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(121): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(832): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 227
+[29-Jul-2025 23:16:27 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:16:28 UTC] PHP Fatal error:  Uncaught ArgumentCountError: 3 arguments are required, 2 given in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:227
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(227): sprintf('Failed to impor...', 'a11yteam')
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(144): WordPress\DataLiberation\Importer\EntityImporter->import_user(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(121): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(832): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 227
+[29-Jul-2025 23:16:34 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:16:34 UTC] PHP Fatal error:  Uncaught ArgumentCountError: 3 arguments are required, 2 given in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:227
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(227): sprintf('Failed to impor...', 'a11yteam')
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(144): WordPress\DataLiberation\Importer\EntityImporter->import_user(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(121): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(832): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 227
+[29-Jul-2025 23:16:41 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:16:41 UTC] PHP Fatal error:  Uncaught ArgumentCountError: 3 arguments are required, 2 given in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:227
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(227): sprintf('Failed to impor...', 'a11yteam')
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(144): WordPress\DataLiberation\Importer\EntityImporter->import_user(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(121): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(832): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 227
+[29-Jul-2025 23:16:47 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:16:48 UTC] PHP Fatal error:  Uncaught ArgumentCountError: 3 arguments are required, 2 given in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:227
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(227): sprintf('Failed to impor...', 'a11yteam')
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(144): WordPress\DataLiberation\Importer\EntityImporter->import_user(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(121): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(832): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 227
+[29-Jul-2025 23:16:54 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:16:55 UTC] PHP Fatal error:  Uncaught ArgumentCountError: 3 arguments are required, 2 given in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php:227
+Stack trace:
+#0 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(227): sprintf('Failed to impor...', 'a11yteam')
+#1 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php(144): WordPress\DataLiberation\Importer\EntityImporter->import_user(Array)
+#2 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(874): WordPress\DataLiberation\Importer\EntityImporter->import_entity(Object(WordPress\DataLiberation\ImportEntity))
+#3 /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/StreamImporter.php(387): WordPress\DataLiberation\Importer\StreamImporter->import_next_entity()
+#4 /wordpress/wp-content/plugins/next-gen-importer/ng-import-next-step.php(121): WordPress\DataLiberation\Importer\StreamImporter->next_step()
+#5 /wordpress/wp-content/plugins/next-gen-importer/admin-page.php(832): do_ng_importer_next_import_step()
+#6 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1292): ng_importer_next_import_step(Object(WP_REST_Request))
+#7 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(1125): WP_REST_Server->respond_to_request(Object(WP_REST_Request), '/custom-importe...', Array, NULL)
+#8 /wordpress/wp-includes/rest-api/class-wp-rest-server.php(439): WP_REST_Server->dispatch(Object(WP_REST_Request))
+#9 /wordpress/wp-includes/rest-api.php(459): WP_REST_Server->serve_request('/custom-importe...')
+#10 /wordpress/wp-includes/class-wp-hook.php(324): rest_api_loaded(Object(WP))
+#11 /wordpress/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters('', Array)
+#12 /wordpress/wp-includes/plugin.php(565): WP_Hook->do_action(Array)
+#13 /wordpress/wp-includes/class-wp.php(418): do_action_ref_array('parse_request', Array)
+#14 /wordpress/wp-includes/class-wp.php(818): WP->parse_request('')
+#15 /wordpress/wp-includes/functions.php(1342): WP->main('')
+#16 /wordpress/wp-blog-header.php(16): wp()
+#17 /wordpress/index.php(17): require('/wordpress/wp-b...')
+#18 {main}
+  thrown in /wordpress/wp-content/data-liberation/components/DataLiberation/Importer/EntityImporter.php on line 227
+[29-Jul-2025 23:17:02 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:17:05 UTC] PHP Notice:  exif_read_data(524cc4d50fc4ec19fbedfe82639911f8.jpg): Potentially invalid endianess, trying again with different endianness before imminent failure. in /wordpress/wp-admin/includes/image.php on line 940
+[29-Jul-2025 23:17:05 UTC] PHP Warning:  exif_read_data(524cc4d50fc4ec19fbedfe82639911f8.jpg): Illegal IFD size: 2 + 0x534F*12 = 0x3E7B6 &gt; 0x2EE0 in /wordpress/wp-admin/includes/image.php on line 940
+[29-Jul-2025 23:17:12 UTC] Advanced to next stage, stopping. #finished
+[29-Jul-2025 23:17:12 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-admin/includes/image.php:940) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1896
+[29-Jul-2025 23:17:12 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-admin/includes/image.php:940) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1920
+[29-Jul-2025 23:18:15 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:18:15 UTC] Advanced to next stage, stopping. #index_entities
+[29-Jul-2025 23:18:16 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:18:21 UTC] Advanced to next stage, stopping. #configure_import
+[29-Jul-2025 23:18:27 UTC] [ng_importer_next_import_step] running cron job
+[29-Jul-2025 23:18:32 UTC] PHP Notice:  exif_read_data(524cc4d50fc4ec19fbedfe82639911f8.jpg): Potentially invalid endianess, trying again with different endianness before imminent failure. in /wordpress/wp-admin/includes/image.php on line 940
+[29-Jul-2025 23:18:32 UTC] PHP Warning:  exif_read_data(524cc4d50fc4ec19fbedfe82639911f8.jpg): Illegal IFD size: 2 + 0x534F*12 = 0x3E7B6 &gt; 0x2EE0 in /wordpress/wp-admin/includes/image.php on line 940
+[29-Jul-2025 23:18:39 UTC] Advanced to next stage, stopping. #finished
+[29-Jul-2025 23:18:39 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-admin/includes/image.php:940) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1896
+[29-Jul-2025 23:18:39 UTC] PHP Warning:  Cannot modify header information - headers already sent by (output started at /wordpress/wp-admin/includes/image.php:940) in /wordpress/wp-includes/rest-api/class-wp-rest-server.php on line 1920

@@ -3,6 +3,8 @@
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\DataLiberation\DataLiberationException;
 use WordPress\DataLiberation\EntityReader\WXREntityReader;
+use WordPress\DataLiberation\Importer\EntityImporter;
+use WordPress\DataLiberation\Importer\EntityImporterLogger;
 use WordPress\DataLiberation\Importer\ImportSession;
 use WordPress\DataLiberation\Importer\RetryFrontloadingIterator;
 use WordPress\DataLiberation\Importer\StreamImporter;
@@ -35,7 +37,29 @@ function ng_importer_get_active() {
 			return WXREntityReader::create( $stream, $cursor );
 		},
 		array(
-			'index_batch_size' => 1
+			'index_batch_size' => 1,
+			'entity_sink' => new EntityImporter(array(
+				'logger' => new class($session) implements EntityImporterLogger {
+					private $session;
+					public function __construct($session) {
+						$this->session = $session;
+					}
+					public function debug( $message ) {
+					}
+					public function info( $message ) {
+						$this->session->append_to_log_file('[INFO] ' . $message);
+					}
+					public function warning( $message ) {
+						$this->session->append_to_log_file('[WARNING] ' . $message);
+					}
+					public function error( $message ) {
+						$this->session->append_to_log_file('[ERROR] ' . $message);
+					}
+					public function notice( $message ) {
+						$this->session->append_to_log_file('[NOTICE] ' . $message);
+					}
+				}
+			))
 		),
 		$import['cursor'] ?? null
 	);

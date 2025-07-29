@@ -107,7 +107,7 @@ class EntityImporter {
 		$this->mapping['term_id']   = array();
 		$this->requires_remapping   = $empty_types;
 		$this->exists               = $empty_types;
-		$this->logger               = new Logger();
+		$this->logger               = $options['logger'] ?? new EchoLogger();
 
 		$this->options = wp_parse_args(
 			$options,
@@ -226,11 +226,11 @@ class EntityImporter {
 			$this->logger->error(
 				sprintf(
 				/* translators: %s: user login */
-					__( 'Failed to import user "%s"', 'wordpress-importer' ),
-					$userdata['user_login']
+					__( 'Failed to import user "%s": %s', 'wordpress-importer' ),
+					$userdata['user_login'],
+					$user_id->get_error_message()
 				)
 			);
-			$this->logger->debug( $user_id->get_error_message() );
 
 			/**
 			 * User processing failed.
@@ -346,12 +346,12 @@ class EntityImporter {
 			$this->logger->warning(
 				sprintf(
 				/* translators: 1: taxonomy name, 2: term name */
-					__( 'Failed to import %1$s %2$s', 'wordpress-importer' ),
+					__( 'Failed to import %1$s %2$s: %3$s', 'wordpress-importer' ),
 					$data['taxonomy'],
-					$data['name']
+					$data['name'],
+					$result->get_error_message()
 				)
 			);
-			$this->logger->debug( $result->get_error_message() );
 			do_action( 'wp_import_insert_term_failed', $result, $data );
 
 			/**
@@ -593,12 +593,12 @@ class EntityImporter {
 			$this->logger->error(
 				sprintf(
 				/* translators: 1: post title, 2: post type name */
-					__( 'Failed to import "%1$s" (%2$s)', 'wordpress-importer' ),
+					__( 'Failed to import "%1$s" (%2$s): %3$s', 'wordpress-importer' ),
 					$data['post_title'],
-					$post_type_object->labels->singular_name
+					$post_type_object->labels->singular_name,
+					$post_id->get_error_message()
 				)
 			);
-			$this->logger->debug( $post_id->get_error_message() );
 
 			/**
 			 * Post processing failed.
@@ -1202,7 +1202,14 @@ class EntityImporter {
  *       and other non-web environments.
  */
 // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound
-class Logger {
+interface EntityImporterLogger {
+	public function debug( $message );
+	public function info( $message );
+	public function warning( $message );
+	public function error( $message );
+	public function notice( $message );
+}
+class EchoLogger implements EntityImporterLogger {
 	/**
 	 * Log a debug message.
 	 *
@@ -1218,7 +1225,7 @@ class Logger {
 	 * @param  string  $message  Message to log
 	 */
 	public function info( $message ) {
-		// echo( '[INFO] ' . $message );
+		echo( '[INFO] ' . $message );
 	}
 
 	/**
@@ -1227,7 +1234,7 @@ class Logger {
 	 * @param  string  $message  Message to log
 	 */
 	public function warning( $message ) {
-		// echo( '[WARNING] ' . $message );
+		echo( '[WARNING] ' . $message );
 	}
 
 	/**
@@ -1236,7 +1243,7 @@ class Logger {
 	 * @param  string  $message  Message to log
 	 */
 	public function error( $message ) {
-		// echo( '[ERROR] ' . $message );
+		echo( '[ERROR] ' . $message );
 	}
 
 	/**
@@ -1245,6 +1252,6 @@ class Logger {
 	 * @param  string  $message  Message to log
 	 */
 	public function notice( $message ) {
-		// echo( '[NOTICE] ' . $message );
+		echo( '[NOTICE] ' . $message );
 	}
 }
