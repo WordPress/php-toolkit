@@ -5,6 +5,7 @@ use WordPress\DataLiberation\Importer\RetryFrontloadingIterator;
 use WordPress\DataLiberation\EntityReader\WXREntityReader;
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\DataLiberation\DataLiberationException;
+use WordPress\DataLiberation\Importer\EntityImporter;
 use WordPress\DataLiberation\Importer\ImportSession;
 
 // Cron job: add fake authors and advance state
@@ -26,6 +27,9 @@ function ng_importer_get_active() {
 		error_log('Failed to get the WXR file path: ' . $wxr_path);
 		throw new DataLiberationException( 'Failed to get the WXR file path' );
 	}
+	// Get author mappings from session
+	$author_mappings = $session->get_meta_by_key('authorMappings') ?? [];
+	
 	$importer = StreamImporter::create(
 		function ( $cursor = null ) use ( $wxr_path ) {
 			$stream = FileReadStream::from_path( $wxr_path );
@@ -36,6 +40,7 @@ function ng_importer_get_active() {
 		},
 		array(
 			'index_batch_size' => 1,
+			'entity_sink' => new EntityImporter( array( 'user_slug_mapping' => $author_mappings ) ),
 		),
 		$import['cursor'] ?? null
 	);

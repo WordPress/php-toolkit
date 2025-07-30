@@ -128,6 +128,14 @@ const { state, actions } = store('custom-importer', {
 			const { author } = context;
 			return state.authorMappings[author.author_login]?.newLogin || '';
 		},
+		get authorMappingRadioName() {
+			const context = getContext();
+			if (!context) {
+				return '';
+			}
+			const { author } = context;
+			return `author_mapping_type[${author.author_login}]`;
+		},
 	},
 
 	callbacks: {

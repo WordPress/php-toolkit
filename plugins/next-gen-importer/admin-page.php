@@ -210,6 +210,11 @@ function custom_importer_admin_page() {
                     }
                     return $state['authorMappings'][$login]['type'] === 'existing';
                 },
+                'authorMappingRadioName' => function () {
+                    $context = wp_interactivity_get_context();
+                    $login = $context['author']['author_login'];
+                    return 'author_mapping_type[' . $login . ']';
+                },
 			)
 		)
 	);
@@ -527,7 +532,7 @@ function custom_importer_admin_page() {
                                             <label data-wp-context='{ "mappingType": "keep"}'>
                                                 <input type="radio" 
                                                     value="keep" 
-                                                    data-wp-bind--name="author_mapping_type"
+                                                    data-wp-bind--name="state.authorMappingRadioName"
                                                     data-wp-bind--checked="state.isAuthorMappingKeep"
                                                     data-wp-on--change="actions.setAuthorMappingType">
                                                 Keep original author
@@ -538,7 +543,7 @@ function custom_importer_admin_page() {
                                             <label data-wp-context='{ "mappingType": "new" }'>
                                                 <input type="radio" 
                                                     value="new"
-                                                    data-wp-bind--name="author_mapping_type"
+                                                    data-wp-bind--name="state.authorMappingRadioName"
                                                     data-wp-bind--checked="state.isAuthorMappingNew"
                                                     data-wp-on--change="actions.setAuthorMappingType">
                                                 Create new user with login name:
@@ -555,7 +560,7 @@ function custom_importer_admin_page() {
                                             <label data-wp-context='{"mappingType": "existing"}'>
                                                 <input type="radio" 
                                                     value="existing"
-                                                    data-wp-bind--name="author_mapping_type"
+                                                    data-wp-bind--name="state.authorMappingRadioName"
                                                     data-wp-bind--checked="state.isAuthorMappingExisting"
                                                     data-wp-on--change="actions.setAuthorMappingType">
                                                 Assign posts to an existing user:

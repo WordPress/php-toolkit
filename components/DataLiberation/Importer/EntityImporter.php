@@ -108,7 +108,7 @@ class EntityImporter {
 		);
 
 		$this->mapping              = $empty_types;
-		$this->mapping['user_slug'] = array();
+		$this->mapping['user_slug'] = $this->options['user_slug_mapping'] ?? array();
 		$this->mapping['term_id']   = array();
 		$this->requires_remapping   = $empty_types;
 		$this->exists               = $empty_types;
