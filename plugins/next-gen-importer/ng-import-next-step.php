@@ -147,17 +147,19 @@ function do_ng_importer_next_import_step() {
 					switch($entity->get_type()) {
 						case 'post':
 							$login = $data['post_author'] ?? '';
-							$authorsInFile[$login] = [
-								'author_display_name' => $login,
-								'author_login' => $login,
-							];
+							if ( $login ) {
+								$authorsInFile[$login] = [
+									'author_display_name' => $login,
+									'author_login' => $login,
+								];
+							}
 							break;
 						case 'comment':
-							$login = $data['comment_author'] ?? '';
-							$authorsInFile[$login] = [
-								'author_display_name' => $login,
-								'author_login' => $login,
-							];
+							// $login = $data['comment_author'] ?? '';
+							// $authorsInFile[$login] = [
+							// 	'author_display_name' => $login,
+							// 	'author_login' => $login,
+							// ];
 							break;
 					}
 					// @TODO: This is fine for small imports (e.g. up to 10k authors),

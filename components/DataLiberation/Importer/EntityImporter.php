@@ -6,6 +6,9 @@
  * * Handle missing fields. Some WXR files have comments, but no author information.
  *   Some others have posts, but no content. What should the importer do in these
  *   cases?
+ *     * How to import comments without authors?
+ * * Remove all instances of "setting a temporary value to re-map later." Just stream-import
+ *   everything so that it doesn't have to be revisited.
  * * Performant deduplication by GUID. When a post with a given GUID is found, let's
  *   make a decision:
  *   - Skip importing the new one
@@ -17,12 +20,13 @@
  *   * Ignore the ones from WXR?
  * * Don't run any blocking downloads of attachments here. We're only inserting
  *   the data at this point. All the downloads have already been processed by now.
+ * * Add unit tests for this class.
+ * * Rename this to WordPressDBEntityWriter
  */
 
 namespace WordPress\DataLiberation\Importer;
 
 use InvalidArgumentException;
-use WordPress\DataLiberation\DataLiberationException;
 use WordPress\DataLiberation\ImportEntity;
 use WP_Error;
 
@@ -33,42 +37,6 @@ use function WordPress\Polyfill\do_action;
 
 class EntityImporter {
 
-	/**
-	 * Version of WXR we're importing.
-	 *
-	 * Defaults to 1.0 for compatibility. Typically overridden by a
-	 * `<wp:wxr_version>` tag at the start of the file.
-	 *
-	 * @var string
-	 */
-	protected $version = '1.0';
-
-	/**
-	 * Regular expression for checking if a post references an attachment
-	 *
-	 * Note: This is a quick, weak check just to exclude text-only posts. More
-	 * vigorous checking is done later to verify.
-	 *
-	 * @TODO: Move to WP_HTML_Processor
-	 */
-	const REGEX_HAS_ATTACHMENT_REFS = '!
-		(
-			# Match anything with an image or attachment class
-			class=[\'"].*?\b(wp-image-\d+|attachment-[\w\-]+)\b
-		|
-			# Match anything that looks like an upload URL
-			src=[\'"][^\'"]*(
-				[0-9]{4}/[0-9]{2}/[^\'"]+\.(jpg|jpeg|png|gif)
-			|
-				content/uploads[^\'"]+
-			)[\'"]
-		)!ix';
-
-	// information to import from WXR file
-	protected $categories = array();
-	protected $tags = array();
-	protected $base_url = '';
-
 	protected $options = array();
 
 	// NEW STYLE
@@ -76,9 +44,6 @@ class EntityImporter {
 	protected $requires_remapping = array();
 	protected $exists = array();
 	protected $user_slug_override = array();
-
-	protected $url_remap = array();
-	protected $featured_images = array();
 	protected $missing_menu_items = array();
 
 	/**
@@ -945,11 +910,6 @@ class EntityImporter {
 
 			update_post_meta( $post_id, $key, $value );
 			do_action( 'import_post_meta', $post_id, $key, $value );
-
-			// if the post has a featured image, take note of this in case of remap
-			if ( '_thumbnail_id' === $key ) {
-				$this->featured_images[ $post_id ] = (int) $value;
-			}
 		}
 
 		return true;
