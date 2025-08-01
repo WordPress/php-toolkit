@@ -24,6 +24,7 @@ use WordPress\Blueprints\Steps\ActivatePluginStep;
 use WordPress\Blueprints\Steps\ActivateThemeStep;
 use WordPress\Blueprints\Steps\CpStep;
 use WordPress\Blueprints\Steps\DefineConstantsStep;
+use WordPress\Blueprints\Steps\EnableMultisiteStep;
 use WordPress\Blueprints\Steps\Exception;
 use WordPress\Blueprints\Steps\ImportContentStep;
 use WordPress\Blueprints\Steps\ImportMediaStep;
@@ -673,6 +674,8 @@ class Runner {
 				return new CpStep( $data['fromPath'], $data['toPath'] );
 			case 'defineConstants':
 				return new DefineConstantsStep( $data['constants'] );
+			case 'enableMultisite':
+				return new EnableMultisiteStep();
 			case 'importContent':
 				/**
 				 * Flatten the content declaration from
