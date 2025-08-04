@@ -44,6 +44,7 @@ class Client {
 			case 'curl':
 				$transport = new CurlTransport( $this->state );
 				break;
+			case 'socket':
 			case 'sockets':
 				$transport = new SocketTransport( $this->state );
 				break;
