@@ -2958,7 +2958,6 @@ class XMLProcessor {
 		}
 
 		$text = substr( $this->xml, $this->text_starts_at, $this->text_length );
-
 		/*
 		 * > the XML processor must behave as if it normalized all line breaks in external parsed
 		 * > entities (including the document entity) on input, before parsing, by translating both

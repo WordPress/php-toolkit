@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit bootstrap="bootstrap.php"
          colors="true"
-		 stopOnFailure="true">
+         stopOnFailure="false">
     <testsuites>
         <!--
 			Blueprints tests are slow so we'll run them last.
@@ -13,6 +13,9 @@
         </testsuite>
         <testsuite name="Blueprints Test Suite">
             <directory>components/Blueprints/Tests</directory>
+        </testsuite>
+        <testsuite name="Plugins Test Suite">
+            <directory>plugins/*/tests</directory>
         </testsuite>
     </testsuites>
 </phpunit>

@@ -258,11 +258,13 @@ class WXREntityReader implements EntityReader {
 
 	/**
 	 * Mapping of WXR tags to their corresponding entity types and field mappings.
+	 * The final field names correspond with array keys accepted by their related
+	 * wp_insert_* functions.
 	 *
 	 * @since WP_VERSION
 	 * @var array
 	 */
-	const KNOWN_ENITIES = array(
+	const DEFAULT_ENTITY_MAP = array(
 		'wp:comment'     => array(
 			'type'   => 'comment',
 			'fields' => array(
@@ -363,7 +365,9 @@ class WXREntityReader implements EntityReader {
 		),
 	);
 
-	public static function create( ?ByteReadStream $upstream = null, $cursor = null ) {
+	private $entity_map = self::DEFAULT_ENTITY_MAP;
+
+	public static function create( ?ByteReadStream $upstream = null, $cursor = null, $entity_map = null ) {
 		$xml_cursor = null;
 		if ( null !== $cursor ) {
 			$cursor = json_decode( $cursor, true );
@@ -380,7 +384,7 @@ class WXREntityReader implements EntityReader {
 		}
 
 		$xml    = XMLProcessor::create_for_streaming( '', $xml_cursor );
-		$reader = new WXREntityReader( $xml );
+		$reader = new WXREntityReader( $xml, $entity_map );
 		if ( null !== $cursor ) {
 			$reader->last_post_id    = $cursor['last_post_id'];
 			$reader->last_comment_id = $cursor['last_comment_id'];
@@ -410,8 +414,11 @@ class WXREntityReader implements EntityReader {
 	 * @since WP_VERSION
 	 *
 	 */
-	protected function __construct( XMLProcessor $xml ) {
+	protected function __construct( XMLProcessor $xml, $entity_map = null ) {
 		$this->xml = $xml;
+		if ( null !== $entity_map ) {
+			$this->entity_map = $entity_map;
+		}
 	}
 
 	public function get_reentrancy_cursor() {
@@ -467,11 +474,11 @@ class WXREntityReader implements EntityReader {
 		if ( null === $this->entity_tag ) {
 			return false;
 		}
-		if ( ! array_key_exists( $this->entity_tag, static::KNOWN_ENITIES ) ) {
+		if ( ! array_key_exists( $this->entity_tag, $this->entity_map ) ) {
 			return false;
 		}
 
-		return static::KNOWN_ENITIES[ $this->entity_tag ]['type'];
+		return $this->entity_map[ $this->entity_tag ]['type'];
 	}
 
 	/**
@@ -677,7 +684,7 @@ class WXREntityReader implements EntityReader {
 			 * finished, emit it, and start processing the new entity the next
 			 * time this function is called.
 			 */
-			if ( array_key_exists( $tag, static::KNOWN_ENITIES ) ) {
+			if ( array_key_exists( $tag, $this->entity_map ) ) {
 				if ( $this->entity_type && ! $this->entity_finished ) {
 					$this->emit_entity();
 
@@ -812,11 +819,11 @@ class WXREntityReader implements EntityReader {
 			 * The WXR format is extensible so this reader could potentially
 			 * support registering custom handlers for unknown tags in the future.
 			 */
-			if ( ! isset( static::KNOWN_ENITIES[ $this->entity_tag ]['fields'][ $tag ] ) ) {
+			if ( ! isset( $this->entity_map[ $this->entity_tag ]['fields'][ $tag ] ) ) {
 				continue;
 			}
 
-			$key                       = static::KNOWN_ENITIES[ $this->entity_tag ]['fields'][ $tag ];
+			$key                       = $this->entity_map[ $this->entity_tag ]['fields'][ $tag ];
 			$this->entity_data[ $key ] = $this->text_buffer;
 			$this->text_buffer         = '';
 		} while ( $this->xml->next_token() );
@@ -926,8 +933,8 @@ class WXREntityReader implements EntityReader {
 	 */
 	private function set_entity_tag( string $tag ) {
 		$this->entity_tag = $tag;
-		if ( array_key_exists( $tag, static::KNOWN_ENITIES ) ) {
-			$this->entity_type = static::KNOWN_ENITIES[ $tag ]['type'];
+		if ( array_key_exists( $tag, $this->entity_map ) ) {
+			$this->entity_type = $this->entity_map[ $tag ]['type'];
 		}
 	}
 
