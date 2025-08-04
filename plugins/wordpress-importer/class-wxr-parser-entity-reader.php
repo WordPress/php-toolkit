@@ -12,6 +12,7 @@ class WXR_Parser_Entity_Reader {
 	public $base_url      = '';
 	public $base_blog_url = '';
 	public $version       = '';
+	private $current_post_index = -1;
 
 	private $entity_map = array(
 		'wp:comment'     => array(
@@ -127,6 +128,7 @@ class WXR_Parser_Entity_Reader {
 		$this->categories = array();
 		$this->tags = array();
 		$this->terms = array();
+		$this->current_post_index = -1;
 
 		// The WXR version is not available in the entity reader, so we have to parse it manually.
 		$xml = file_get_contents( $file );
@@ -167,7 +169,55 @@ class WXR_Parser_Entity_Reader {
 							'author_id' => count($this->authors) + 1,
 						);
 					}
+					
+					// Convert inline category terms to match other parsers' structure
+					if ( isset( $data['terms'] ) ) {
+						foreach ( $data['terms'] as &$term ) {
+							// WXREntityReader uses 'taxonomy' and 'description', but other parsers use 'domain' and 'name'
+							if ( isset( $term['taxonomy'] ) ) {
+								$term['domain'] = $term['taxonomy'];
+								unset( $term['taxonomy'] );
+							}
+							if ( isset( $term['description'] ) ) {
+								$term['name'] = $term['description'];
+								unset( $term['description'] );
+							}
+						}
+					}
+					
 					$this->posts[] = $data;
+					// Track the current post index for associating comments and post meta
+					$this->current_post_index = count( $this->posts ) - 1;
+					break;
+				case 'comment':
+					// Associate comment with the last post
+					if ( $this->current_post_index >= 0 ) {
+						if ( ! isset( $this->posts[ $this->current_post_index ]['comments'] ) ) {
+							$this->posts[ $this->current_post_index ]['comments'] = array();
+						}
+						$this->posts[ $this->current_post_index ]['comments'][] = $data;
+					}
+					break;
+				case 'comment_meta':
+					// Associate comment meta with the last comment of the last post
+					if ( $this->current_post_index >= 0 && 
+						 isset( $this->posts[ $this->current_post_index ]['comments'] ) && 
+						 count( $this->posts[ $this->current_post_index ]['comments'] ) > 0 ) {
+						$last_comment_index = count( $this->posts[ $this->current_post_index ]['comments'] ) - 1;
+						if ( ! isset( $this->posts[ $this->current_post_index ]['comments'][ $last_comment_index ]['commentmeta'] ) ) {
+							$this->posts[ $this->current_post_index ]['comments'][ $last_comment_index ]['commentmeta'] = array();
+						}
+						$this->posts[ $this->current_post_index ]['comments'][ $last_comment_index ]['commentmeta'][] = $data;
+					}
+					break;
+				case 'post_meta':
+					// Associate post meta with the last post
+					if ( $this->current_post_index >= 0 ) {
+						if ( ! isset( $this->posts[ $this->current_post_index ]['postmeta'] ) ) {
+							$this->posts[ $this->current_post_index ]['postmeta'] = array();
+						}
+						$this->posts[ $this->current_post_index ]['postmeta'][] = $data;
+					}
 					break;
 				case 'site_option':
 					if ( 'home' === $data['option_name'] ) {
