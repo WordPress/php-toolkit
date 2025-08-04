@@ -9,6 +9,12 @@
  *     * How to import comments without authors?
  * * Remove all instances of "setting a temporary value to re-map later." Just stream-import
  *   everything so that it doesn't have to be revisited.
+ *   * If a child post is seen before the parent post, we need to handle that. Either:
+ *      * Skip the child post and communicate we need one more pass to import the parent
+ *      * Create a placeholder post in lieu of the parent post. Then, when the parent post is seen,
+ *        update the placeholder post with the parent post's data.
+ *      * Apply topological sort in the caller (e.g. in MySQL, in SQLite, or by appending to a temporary file)
+ *      * Run another pass to UPDATE specific database entries and connect the posts with each other. Risky!
  * * Performant deduplication by GUID. When a post with a given GUID is found, let's
  *   make a decision:
  *   - Skip importing the new one
