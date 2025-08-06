@@ -8,45 +8,6 @@ use WordPress\Blueprints\Steps\DefineConstantsStep;
 
 class DefineConstantsStepTest extends StepTestCase {
 	/**
-	 * Sample wp-config.php content for testing
-	 */
-	const SAMPLE_WP_CONFIG = <<<'PHP'
-<?php
-/**
- * The base configuration for WordPress
- */
-
-// ** Database settings - You can get this info from your web host ** //
-/** The name of the database for WordPress */
-define('DB_NAME', 'test_db');
-
-/** Database username */
-define('DB_USER', 'root');
-
-/** Database password */
-define('DB_PASSWORD', 'password');
-
-/** Database hostname */
-define('DB_HOST', 'localhost');
-
-/** Database charset to use in creating database tables. */
-define('DB_CHARSET', 'utf8');
-
-/** The database collate type. Don't change this if in doubt. */
-define('DB_COLLATE', '');
-
-define('WP_DEBUG', false);
-
-/**
- * WordPress Database Table prefix.
- */
-$table_prefix = 'wp_';
-
-/** Sets up WordPress vars and included files. */
-require_once ABSPATH . 'wp-settings.php';
-PHP;
-
-	/**
 	 * Test updating existing constants
 	 */
 	public function testUpdateExistingConstants() {
@@ -70,6 +31,156 @@ PHP;
 		$step      = new DefineConstantsStep( $constants );
 		$step->run( $this->runtime, new Tracker() );
 		$this->assertWordPressConstants( $constants );
+	}
+
+	public function testAddNewConstantsToEmptyWpConfig() {
+		$this->runtime->getTargetFilesystem()->put_contents( 'wp-config.php', "<?php\n" );
+		$constants = [
+			'WP_MEMORY_LIMIT'            => '256M',
+			'AUTOMATIC_UPDATER_DISABLED' => true,
+		];
+		$step      = new DefineConstantsStep( $constants );
+		$step->run( $this->runtime, new Tracker() );
+		$this->assertWordPressConstants( $constants );
+
+		$this->assertSame(
+			"<?php\n\ndefine( 'WP_MEMORY_LIMIT', '256M' );\ndefine( 'AUTOMATIC_UPDATER_DISABLED', true );\n\n",
+			$this->runtime->getTargetFilesystem()->get_contents( 'wp-config.php' )
+		);
+
+		$this->runtime->getTargetFilesystem()->rm( 'wp-config.php' );
+	}
+
+	public function testAddNewConstantsToWpConfigWithEditingComment() {
+		$this->runtime->getTargetFilesystem()->put_contents(
+			'wp-config.php',
+			<<<'PHP'
+<?php
+
+$table_prefix = 'wp_';
+define( 'WP_DEBUG', true );
+
+/* That's all, stop editing! */
+
+/** Sets up WordPress vars and included files. */
+require_once ABSPATH . 'wp-settings.php';
+PHP
+		);
+		$constants = [
+			'WP_MEMORY_LIMIT'            => '256M',
+			'AUTOMATIC_UPDATER_DISABLED' => true,
+		];
+		$step      = new DefineConstantsStep( $constants );
+		$step->run( $this->runtime, new Tracker() );
+		$this->assertWordPressConstants( $constants );
+
+		$this->assertSame(
+			<<<'PHP'
+<?php
+
+$table_prefix = 'wp_';
+define( 'WP_DEBUG', true );
+
+
+define( 'WP_MEMORY_LIMIT', '256M' );
+define( 'AUTOMATIC_UPDATER_DISABLED', true );
+
+/* That's all, stop editing! */
+
+/** Sets up WordPress vars and included files. */
+require_once ABSPATH . 'wp-settings.php';
+PHP
+			,
+			$this->runtime->getTargetFilesystem()->get_contents( 'wp-config.php' )
+		);
+	}
+
+	public function testAddNewConstantsToWpConfigWithSetupWpSettingsComment() {
+		$this->runtime->getTargetFilesystem()->put_contents(
+			'wp-config.php',
+			<<<'PHP'
+<?php
+
+$table_prefix = 'wp_';
+define( 'WP_DEBUG', true );
+
+/** Sets up WordPress vars and included files. */
+require_once ABSPATH . 'wp-settings.php';
+PHP
+		);
+		$constants = [
+			'WP_MEMORY_LIMIT'            => '256M',
+			'AUTOMATIC_UPDATER_DISABLED' => true,
+		];
+		$step      = new DefineConstantsStep( $constants );
+		$step->run( $this->runtime, new Tracker() );
+		$this->assertWordPressConstants( $constants );
+
+		$this->assertSame(
+			<<<'PHP'
+<?php
+
+$table_prefix = 'wp_';
+define( 'WP_DEBUG', true );
+
+
+define( 'WP_MEMORY_LIMIT', '256M' );
+define( 'AUTOMATIC_UPDATER_DISABLED', true );
+
+/** Sets up WordPress vars and included files. */
+require_once ABSPATH . 'wp-settings.php';
+PHP
+			,
+			$this->runtime->getTargetFilesystem()->get_contents( 'wp-config.php' )
+		);
+	}
+
+	public function testAddNewConstantsToWpConfigWithRequireWpSettings() {
+		$this->runtime->getTargetFilesystem()->put_contents(
+			'wp-config.php',
+			<<<'PHP'
+<?php
+$table_prefix = 'wp_';
+define( 'WP_DEBUG', true );
+require_once ABSPATH . 'wp-settings.php';
+PHP
+		);
+		$constants = [
+			'WP_MEMORY_LIMIT'            => '256M',
+			'AUTOMATIC_UPDATER_DISABLED' => true,
+		];
+		$step      = new DefineConstantsStep( $constants );
+		$step->run( $this->runtime, new Tracker() );
+		$this->assertWordPressConstants( $constants );
+
+		$this->assertSame(
+			<<<'PHP'
+<?php
+$table_prefix = 'wp_';
+define( 'WP_DEBUG', true );
+
+define( 'WP_MEMORY_LIMIT', '256M' );
+define( 'AUTOMATIC_UPDATER_DISABLED', true );
+
+require_once ABSPATH . 'wp-settings.php';
+PHP
+			,
+			$this->runtime->getTargetFilesystem()->get_contents( 'wp-config.php' )
+		);
+	}
+
+	public function testAddNewConstantsToInvalidWpConfig() {
+		$this->runtime->getTargetFilesystem()->put_contents( 'wp-config.php', '' );
+		$constants = [
+			'WP_MEMORY_LIMIT'            => '256M',
+			'AUTOMATIC_UPDATER_DISABLED' => true,
+		];
+
+		$this->expectException( Exception::class );
+		$this->expectExceptionMessage( 'Blueprint Error: wp-config.php file is not a valid PHP file.' );
+
+		$step = new DefineConstantsStep( $constants );
+		$step->run( $this->runtime, new Tracker() );
 	}
 
 	/**
@@ -139,7 +250,7 @@ $results = [];
 $constants = json_decode(getenv('CONSTANTS'), true);
 
 foreach ($constants as $name => $expected_value) {
-$results[$name] = defined($name) ? constant($name) : null;
+	$results[$name] = defined($name) ? constant($name) : null;
 }
 
 append_output( json_encode($results) );
