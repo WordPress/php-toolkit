@@ -3874,7 +3874,11 @@ class XMLProcessor {
 				$text        = $this->get_modifiable_text();
 				$whitespaces = strspn( $text, " \t\n\r" );
 				if ( strlen( $text ) !== $whitespaces ) {
-					$this->bail( 'Unexpected token type in prolog stage.', self::ERROR_SYNTAX );
+					// @TODO: Only look for this in the 2 initial bytes of the document:
+					if(substr($text, 0, 2) == "\xFF\xFE") {
+						$this->bail( 'Unexpected UTF-16 BOM byte sequence (0xFFFE) in the document. XMLProcessor only supports UTF-8.', self::ERROR_SYNTAX );
+					}
+					$this->bail( 'Unexpected non-whitespace text token in prolog stage.', self::ERROR_SYNTAX );
 				}
 
 				return $this->step();
