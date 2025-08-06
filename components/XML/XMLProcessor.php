@@ -1127,12 +1127,22 @@ class XMLProcessor {
 					/**
 					 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#xmlReserved
 					 */
-					if ( 'xml' === $attribute->namespace_prefix && 'http://www.w3.org/XML/1998/namespace' !== $value ) {
+					if ( 'xml' === $attribute->local_name && 'http://www.w3.org/XML/1998/namespace' !== $value ) {
 						$this->bail( 'The `xml` namespace prefix is by definition bound to the namespace name http://www.w3.org/XML/1998/namespace and must not be overridden.',
 							self::ERROR_SYNTAX );
 
 						return false;
 					}
+
+					/**
+					 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#xmlReserved
+					 */
+					if ( 'xmlns' === $attribute->local_name) {
+						$this->bail( 'The `xmlns` namespace prefix must not be overridden.', self::ERROR_SYNTAX );
+
+						return false;
+					}
+
 					/**
 					 * The attribute value in a namespace declaration for a prefix MAY be empty.
 					 * This has the effect, within the scope of the declaration, of removing any
@@ -2494,62 +2504,60 @@ class XMLProcessor {
 				$offset + $name_byte_length,
 				$bytes_parsed
 			);
-
 			if (
 				null === $codepoint ||
 				! $this->is_valid_name_codepoint( $codepoint, $name_byte_length === 0 )
 			) {
 				break;
 			}
-
+			$codepoint = null;
 			$name_byte_length += $bytes_parsed;
 		}
 
 		return $name_byte_length;
 	}
 
-	private function is_valid_name_codepoint( $codepoint, $test_as_first_character = false ) {
+	private function is_valid_name_codepoint( $codepoint, $is_first_character = false ) {
 		// Test against the NameStartChar pattern:
 		// NameStartChar ::= ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
 		// See https://www.w3.org/TR/xml/#NT-Name
 		if (
 			// :
-			58 === $codepoint ||
+			( 0x3A <= $codepoint && $codepoint <= 0x3A ) ||
 			// _
-			95 === $codepoint ||
+			( 0x5F <= $codepoint && $codepoint <= 0x5F ) ||
 			// A-Z
-			( 65 <= $codepoint && 90 >= $codepoint ) ||
+			( 0x41 <= $codepoint && $codepoint <= 0x5A ) ||
 			// a-z
-			( 97 <= $codepoint && 122 >= $codepoint ) ||
+			( 0x61 <= $codepoint && $codepoint <= 0x7A ) ||
 			// [#xC0-#xD6]
-			( 192 <= $codepoint && 214 >= $codepoint ) ||
+			( 0xC0 <= $codepoint && $codepoint <= 0xD6 ) ||
 			// [#xD8-#xF6]
-			( 216 <= $codepoint && 246 >= $codepoint ) ||
+			( 0xD8 <= $codepoint && $codepoint <= 0xF6 ) ||
 			// [#xF8-#x2FF]
-			( 248 <= $codepoint && 511 >= $codepoint ) ||
+			( 0xF8 <= $codepoint && $codepoint <= 0x2FF ) ||
 			// [#x370-#x37D]
-			( 560 <= $codepoint && 573 >= $codepoint ) ||
+			( 0x370 <= $codepoint && $codepoint <= 0x37D ) ||
 			// [#x37F-#x1FFF]
-			( 895 <= $codepoint && 4095 >= $codepoint ) ||
+			( 0x37F <= $codepoint && $codepoint <= 0x1FFF ) ||
 			// [#x200C-#x200D]
-			( 5120 <= $codepoint && 5125 >= $codepoint ) ||
+			( 0x200C <= $codepoint && $codepoint <= 0x200D ) ||
 			// [#x2070-#x218F]
-			( 8304 <= $codepoint && 8575 >= $codepoint ) ||
+			( 0x2070 <= $codepoint && $codepoint <= 0x218F ) ||
 			// [#x2C00-#x2FEF]
-			( 11264 <= $codepoint && 12287 >= $codepoint ) ||
+			( 0x2C00 <= $codepoint && $codepoint <= 0x2FEF ) ||
 			// [#x3001-#xD7FF]
-			( 12288 <= $codepoint && 55295 >= $codepoint ) ||
+			( 0x3001 <= $codepoint && $codepoint <= 0xD7FF ) ||
 			// [#xF900-#xFDCF]
-			( 60160 <= $codepoint && 60671 >= $codepoint ) ||
+			( 0xF900 <= $codepoint && $codepoint <= 0xFDCF ) ||
 			// [#xFDF0-#xFFFD]
-			( 65536 <= $codepoint && 65543 >= $codepoint ) ||
+			( 0xFDF0 <= $codepoint && $codepoint <= 0xFFFD ) ||
 			// [#x10000-#xEFFFF]
-			( 1048576 <= $codepoint && 1114111 >= $codepoint )
+			( 0x10000 <= $codepoint && $codepoint <= 0xEFFFF )
 		) {
 			return true;
 		}
-
-		if ( $test_as_first_character ) {
+		if ( $is_first_character ) {
 			return false;
 		}
 
@@ -2566,9 +2574,9 @@ class XMLProcessor {
 			// #xB7
 			183 === $codepoint ||
 			// [#x0300-#x036F]
-			( 480 <= $codepoint && 559 >= $codepoint ) ||
+			( 0x0300 <= $codepoint && $codepoint <= 0x036F ) ||
 			// [#x203F-#x2040]
-			( 5151 <= $codepoint && 5152 >= $codepoint )
+			( 0x203F <= $codepoint && $codepoint <= 0x2040 )
 		);
 	}
 

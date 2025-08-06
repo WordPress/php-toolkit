@@ -93,8 +93,8 @@ class XMLDecoder {
 					'gt;'   => '>',
 					'quot;' => '"',
 				) as $name => $substitution ) {
-					if ( 0 === substr_compare( $text, $name, $next_character_reference_at, strlen( $name ) ) ) {
-						$decoded .= substr( $text, $was_at, $start_of_potential_reference - $was_at ) . $substitution;
+					if ( 0 === substr_compare( $text, $name, $start_of_potential_reference_at, strlen( $name ) ) ) {
+						$decoded .= substr( $text, $was_at, $next_character_reference_at - $was_at ) . $substitution;
 						$at       = $start_of_potential_reference_at + strlen( $name );
 						$was_at   = $at;
 						continue 2;
