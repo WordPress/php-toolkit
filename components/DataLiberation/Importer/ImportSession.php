@@ -7,6 +7,7 @@ use WP_Query;
 
 use function get_all_post_meta_flat;
 use function is_wp_error;
+use function WordPress\Polyfill\_doing_it_wrong;
 
 /**
  * Manages import session data in the WordPress database.

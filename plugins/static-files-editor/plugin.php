@@ -1072,7 +1072,7 @@ class WP_Static_Files_Editor_Plugin {
 				break;
 			case 'html':
 				$converter = new AnnotatedBlockMarkupConsumer(
-					WP_HTML_Processor::create_fragment( $content )
+					\WordPress\HTML\WP_HTML_Processor::create_fragment( $content )
 				);
 				break;
 			case 'md':

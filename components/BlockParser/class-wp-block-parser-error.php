@@ -1,4 +1,7 @@
 <?php
+namespace WordPress\BlockParser;
+use Exception;
+
 /**
  * @package WordPress
  */

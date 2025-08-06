@@ -15,7 +15,7 @@ class HTMLEntityReaderTest extends TestCase {
 <h1>It is our pleasure to announce that WordPress 6.8 was released</h1>
 <p>Last week, WordPress 6.8 was released.</p>
 HTML;
-		$html_processor   = WP_HTML_Processor::create_fragment( $html );
+		$html_processor   = \WordPress\HTML\WP_HTML_Processor::create_fragment( $html );
 		$producer         = new MarkupProcessorConsumer( $html_processor );
 		$blocks_with_meta = $producer->consume();
 
@@ -70,7 +70,7 @@ HTML
 	}
 
 	private function normalize_markup( $markup ) {
-		$processor  = WP_HTML_Processor::create_fragment( $markup );
+		$processor  = \WordPress\HTML\WP_HTML_Processor::create_fragment( $markup );
 		$serialized = $processor->serialize();
 
 		return $serialized;

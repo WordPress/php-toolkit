@@ -4,7 +4,6 @@ use PHPUnit\Framework\TestCase;
 
 use function WordPress\Filesystem\wp_join_unix_paths;
 use function WordPress\Filesystem\wp_unix_dirname;
-use ValueError;
 
 class FunctionsTest extends TestCase {
 	public function testBasicPathJoining() {

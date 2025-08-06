@@ -242,10 +242,42 @@ class GitRemote {
 
 		$commit                = $this->repository->read_object( $remote_commit_hash )->as_commit();
 		$subpath               = trim( $path, '/' );
-		$requested_tree_oid    = $this->repository->find_hash_by_path( $subpath, $commit->hash );
+		$parent_path           = dirname( $subpath );
+		if( $parent_path === '.' || $parent_path === '' ) {
+			$parent_path = '/';
+		}
+
+		$descentant_blobs_oids = [];
+		if( $parent_path !== '/' ) {
+			$parent_tree_oid = $this->repository->find_hash_by_path( $parent_path, $commit->hash );
+			$parent_tree     = $this->repository->read_object( $parent_tree_oid )->as_tree();
+			$parent_tree_entries = $parent_tree->entries;
+			$object_name = basename( $subpath );
+			foreach( $parent_tree_entries as $entry ) {
+				if( $entry->name === $object_name ) {
+					$requested_object_oid = $entry->hash;
+					break;
+				}
+			}
+
+			// If the object is not found, it is a blob. Trees are always fetched.
+			if ( ! $this->repository->has_object( $requested_object_oid ) ) {
+				return [$requested_object_oid];
+			}
+
+			$object = $this->repository->read_object( $requested_object_oid );
+			if( $object->get_object_type_name() === 'blob' ) {
+				// Requested object is a blob and, since we've just read it, it isn't
+				// missing. We're done.
+				return [];
+			}
+		}
+
+		// Requested object is a tree, we need to compute all its descendants
+		$requested_object_oid  = $this->repository->find_hash_by_path( $subpath, $commit->hash );
 		$descentant_blobs_oids = get_all_descendant_oids_in_tree(
 			$this->repository,
-			$requested_tree_oid,
+			$requested_object_oid,
 			array(
 				'object_types' => array(
 					TreeEntry::FILE_MODE_REGULAR_EXECUTABLE,
@@ -365,7 +397,7 @@ class GitRemote {
 			// Make double sure we have all the relevant objects from the remote commit.
 			// @TODO: investigate why sometimes the root tree is missing and address the
 			// root cause instead of plugging the hole with a bandaid.
-			if ( ! isset( $options['path'] ) || $options['path'] === '/' || $options['path'] === '' ) {
+			if ( ! isset( $options['path'] ) || $options['path'] === '/' || $options['path'] === '' ) { 
 				if ( ! $this->repository->has_all_objects_from_commit( $remote_head ) ) {
 					$this->git_upload_pack(
 						array(

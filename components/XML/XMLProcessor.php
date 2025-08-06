@@ -2,10 +2,12 @@
 
 namespace WordPress\XML;
 
-use WP_HTML_Span;
-use WP_HTML_Text_Replacement;
+use WordPress\HTML\WP_HTML_Span;
+use WordPress\HTML\WP_HTML_Text_Replacement;
 
 use function WordPress\Encoding\utf8_codepoint_at;
+use function WordPress\Polyfill\_doing_it_wrong;
+use function WordPress\Polyfill\__;
 
 /**
  * XML API: XMLProcessor class
@@ -624,7 +626,7 @@ class XMLProcessor {
 	 *     // sourced from the lazily-parsed XML recognizer.
 	 *     $start  = $attributes['src']->start;
 	 *     $length = $attributes['src']->length;
-	 *     $modifications[] = new WP_HTML_Text_Replacement( $start, $length, $new_value );
+	 *     $modifications[] = new \WordPress\HTML\WP_HTML_Text_Replacement( $start, $length, $new_value );
 	 *
 	 *     // Correspondingly, something like this will appear in this array.
 	 *     $lexical_updates = array(
@@ -3504,7 +3506,7 @@ class XMLProcessor {
 		switch ( $this->parser_state ) {
 			case self::STATE_TEXT_NODE:
 			case self::STATE_COMMENT:
-				$this->lexical_updates[] = new WP_HTML_Text_Replacement(
+				$this->lexical_updates[] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 					$this->text_starts_at,
 					$this->text_length,
 					// @TODO: Audit this in details. Is this too naive? Or is it actually safe?
@@ -3514,7 +3516,7 @@ class XMLProcessor {
 				return true;
 
 			case self::STATE_CDATA_NODE:
-				$this->lexical_updates[] = new WP_HTML_Text_Replacement(
+				$this->lexical_updates[] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 					$this->text_starts_at,
 					$this->text_length,
 					// @TODO: Audit this in details. Is this too naive? Or is it actually safe?
@@ -3611,7 +3613,7 @@ class XMLProcessor {
 			 *     Result: <content id="new"/>
 			 */
 			$existing_attribute             = $this->attributes[ $name ];
-			$this->lexical_updates[ $name ] = new WP_HTML_Text_Replacement(
+			$this->lexical_updates[ $name ] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 				$existing_attribute->start,
 				$existing_attribute->length,
 				$updated_attribute
@@ -3629,7 +3631,7 @@ class XMLProcessor {
 			 *
 			 *     Result: <content id="new"/>
 			 */
-			$this->lexical_updates[ $name ] = new WP_HTML_Text_Replacement(
+			$this->lexical_updates[ $name ] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 				$this->tag_name_starts_at + $this->tag_name_length,
 				0,
 				' ' . $updated_attribute
@@ -3686,7 +3688,7 @@ class XMLProcessor {
 		 *
 		 *    Result: <content />
 		 */
-		$this->lexical_updates[ $name ] = new WP_HTML_Text_Replacement(
+		$this->lexical_updates[ $name ] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 			$this->attributes[ $name ]->start,
 			$this->attributes[ $name ]->length,
 			''
@@ -4490,5 +4492,5 @@ class XMLProcessor {
 	 *
 	 * @access private
 	 */
-	const CONSTRUCTOR_UNLOCK_CODE = 'Use WP_HTML_Processor::create_fragment() instead of calling the class constructor directly.';
+	const CONSTRUCTOR_UNLOCK_CODE = 'Use \WordPress\HTML\WP_HTML_Processor::create_fragment() instead of calling the class constructor directly.';
 }

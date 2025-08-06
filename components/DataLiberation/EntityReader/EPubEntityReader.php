@@ -8,6 +8,7 @@ use WordPress\Filesystem\Filesystem;
 use WordPress\XML\XMLProcessor;
 
 use function WordPress\Filesystem\wp_join_unix_paths;
+use function WordPress\Polyfill\_doing_it_wrong;
 
 /**
  * https://www.w3.org/AudioVideo/ebook/

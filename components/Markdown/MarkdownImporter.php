@@ -7,6 +7,8 @@ use WordPress\DataLiberation\EntityReader\FilesystemEntityReader;
 use WordPress\DataLiberation\Importer\StreamImporter;
 use WordPress\Filesystem\LocalFilesystem;
 
+use function WordPress\Polyfill\_doing_it_wrong;
+
 class MarkdownImporter extends StreamImporter {
 
 	public static function create_for_markdown_directory( $markdown_directory, $options = array(), $cursor = null ) {

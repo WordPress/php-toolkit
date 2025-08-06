@@ -14,6 +14,7 @@ use WordPress\Merge\MergeStrategy;
 use function WordPress\Filesystem\wp_unix_dirname;
 use function WordPress\Filesystem\wp_join_unix_paths;
 use function WordPress\Filesystem\wp_unix_path_resolve_dots;
+use function WordPress\Polyfill\_doing_it_wrong;
 
 class GitRepository {
 
@@ -356,6 +357,7 @@ class GitRepository {
 		if (
 			strpos( $branch_name, '/' ) !== false &&
 			strncmp( $branch_name, 'refs/heads/', strlen( 'refs/heads/' ) ) !== 0 &&
+			strncmp( $branch_name, 'refs/tags/', strlen( 'refs/tags/' ) ) !== 0 &&
 			strncmp( $branch_name, 'refs/remotes/', strlen( 'refs/remotes/' ) ) !== 0
 		) {
 			_doing_it_wrong( __METHOD__, 'Invalid ref name: ' . $branch_name, '1.0.0' );
