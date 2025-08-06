@@ -314,35 +314,35 @@ function rewrite_wp_config_to_define_constants( $content, $constants = array() )
 
 	// Add any constants that weren't found in the file
 	if ( count( $constants ) ) {
-        // First try to find the "That's all, stop editing!" comment.
+		// First try to find the "That's all, stop editing!" comment.
 		$anchor = find_first_token_index( $output, T_COMMENT, "That's all, stop editing!" );
 
-        // If not found, try the "Absolute path to the WordPress directory." doc comment.
+		// If not found, try the "Absolute path to the WordPress directory." doc comment.
 		if ( null === $anchor ) {
 			$anchor = find_first_token_index( $output, T_DOC_COMMENT, "Absolute path to the WordPress directory." );
 		}
 
-        // If not found, try the "Sets up WordPress vars and included files." doc comment.
+		// If not found, try the "Sets up WordPress vars and included files." doc comment.
 		if ( null === $anchor ) {
 			$anchor = find_first_token_index( $output, T_DOC_COMMENT, "Sets up WordPress vars and included files." );
 		}
 
-        // If not found, try "require_once ABSPATH . 'wp-settings.php';".
-        if ( null === $anchor ) {
-            $require_anchor = find_first_token_index( $output, T_REQUIRE_ONCE );
-            if ( null !== $require_anchor ) {
-                $abspath = $output[$require_anchor + 2] ?? null;
-                $path    = $output[$require_anchor + 6] ?? null;
-                if (
-                    ( is_array( $abspath ) && $abspath[1] === 'ABSPATH' )
-                    && ( is_array( $path ) && $path[1] === "'wp-settings.php'" )
-                ) {
-                    $anchor = $require_anchor;
-                }
-            }
-        }
+		// If not found, try "require_once ABSPATH . 'wp-settings.php';".
+		if ( null === $anchor ) {
+			$require_anchor = find_first_token_index( $output, T_REQUIRE_ONCE );
+			if ( null !== $require_anchor ) {
+				$abspath = $output[$require_anchor + 2] ?? null;
+				$path    = $output[$require_anchor + 6] ?? null;
+				if (
+					( is_array( $abspath ) && $abspath[1] === 'ABSPATH' )
+					&& ( is_array( $path ) && $path[1] === "'wp-settings.php'" )
+				) {
+					$anchor = $require_anchor;
+				}
+			}
+		}
 
-        // If not found, fall back to the PHP opening tag.
+		// If not found, fall back to the PHP opening tag.
 		if ( null === $anchor ) {
 			$open_tag_anchor = find_first_token_index( $output, T_OPEN_TAG );
 			if ( null !== $open_tag_anchor ) {
@@ -351,21 +351,21 @@ function rewrite_wp_config_to_define_constants( $content, $constants = array() )
 		}
 
 		// If we still don't have an anchor, the file is not a valid PHP file.
-        if ( null === $anchor ) {
-            error_log( "Blueprint Error: wp-config.php file is not a valid PHP file." );
-            exit( 1 );
-        }
+		if ( null === $anchor ) {
+			error_log( "Blueprint Error: wp-config.php file is not a valid PHP file." );
+			exit( 1 );
+		}
 
 		// Ensure surrounding newlines when not already present.
-        $prev = $output[ $anchor - 1 ] ?? null;
-        $prev = is_array( $prev ) ? $prev[1] : $prev;
-        $next = $output[ $anchor ] ?? null;
-        $next = is_array( $next ) ? $next[1] : $next;
+		$prev = $output[ $anchor - 1 ] ?? null;
+		$prev = is_array( $prev ) ? $prev[1] : $prev;
+		$next = $output[ $anchor ] ?? null;
+		$next = is_array( $next ) ? $next[1] : $next;
 
-        $no_prefix = $prev && "\n\n" === substr( $prev, -2 );
-        $no_suffix = $next && "\n\n" === substr( $next, 0, 2 );
+		$no_prefix = $prev && "\n\n" === substr( $prev, -2 );
+		$no_suffix = $next && "\n\n" === substr( $next, 0, 2 );
 
-        // Add the new constants.
+		// Add the new constants.
 		$new_constants = array( "\n" );
 		foreach ( $constants as $name => $path ) {
 			$new_constants[] = 'define( ';
@@ -374,7 +374,7 @@ function rewrite_wp_config_to_define_constants( $content, $constants = array() )
 			$new_constants[] = var_export( $path, true );
 			$new_constants[] = " );\n";
 		}
-        $new_constants[] = "\n";
+		$new_constants[] = "\n";
 
 		$output = array_merge(
 			array_slice( $output, 0, $anchor ),
