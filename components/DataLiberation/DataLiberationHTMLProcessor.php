@@ -2,8 +2,8 @@
 
 namespace WordPress\DataLiberation;
 
-use WP_HTML_Processor;
-use WP_HTML_Tag_Processor;
+use WordPress\HTML\WP_HTML_Processor;
+use WordPress\HTML\WP_HTML_Tag_Processor;
 
 class DataLiberationHTMLProcessor extends WP_HTML_Processor {
 

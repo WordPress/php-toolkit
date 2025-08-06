@@ -1486,7 +1486,7 @@ class XMLProcessorTest extends TestCase {
 			 */
 			public function insert_after( $new_xml ) {
 				$this->set_bookmark( 'here' );
-				$this->lexical_updates[] = new WP_HTML_Text_Replacement(
+				$this->lexical_updates[] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 					$this->bookmarks['here']->start + $this->bookmarks['here']->length,
 					0,
 					$new_xml

@@ -11,6 +11,9 @@ use WordPress\DataLiberation\URL\WPURL;
 use WordPress\HttpClient\ByteStream\RequestReadStream;
 
 use function WordPress\DataLiberation\URL\is_child_url_of;
+use function WordPress\Polyfill\_doing_it_wrong;
+use function WordPress\Polyfill\apply_filters;
+use function WordPress\Polyfill\do_action;
 
 /**
  * Idea:
@@ -94,7 +97,7 @@ class StreamImporter {
 
 	const STAGE_INITIAL = '#initial';
 	const STAGE_INDEX_ENTITIES = '#index_entities';
-	const STAGE_TOPOLOGICAL_SORT = '#topological_sort';
+	const STAGE_CONFIGURE_IMPORT = '#configure_import';
 	const STAGE_FRONTLOAD_ASSETS = '#frontload_assets';
 	const STAGE_IMPORT_ENTITIES = '#import_entities';
 	const STAGE_FINISHED = '#finished';
@@ -102,7 +105,7 @@ class StreamImporter {
 	const STAGES_IN_ORDER = array(
 		self::STAGE_INITIAL,
 		self::STAGE_INDEX_ENTITIES,
-		self::STAGE_TOPOLOGICAL_SORT,
+		self::STAGE_CONFIGURE_IMPORT,
 		self::STAGE_FRONTLOAD_ASSETS,
 		self::STAGE_IMPORT_ENTITIES,
 		self::STAGE_FINISHED,
@@ -321,7 +324,9 @@ class StreamImporter {
 	) {
 		$this->entity_reader_factory = $entity_reader_factory;
 		$this->options               = $options;
-		$this->set_source_site_url( $options['source_site_url'] );
+		if(isset($options['source_site_url'])) {
+			$this->set_source_site_url( $options['source_site_url'] );
+		}
 
 		if ( isset( $options['source_media_root_urls'] ) ) {
 			foreach ( $options['source_media_root_urls'] as $source_media_root_url ) {
@@ -361,10 +366,10 @@ class StreamImporter {
 				if ( true === $this->index_next_entities() ) {
 					return true;
 				}
-				$this->next_stage = self::STAGE_TOPOLOGICAL_SORT;
+				$this->next_stage = self::STAGE_CONFIGURE_IMPORT;
 
 				return false;
-			case self::STAGE_TOPOLOGICAL_SORT:
+			case self::STAGE_CONFIGURE_IMPORT:
 				// @TODO: Different modes:
 				// 1. skip, reprocess
 				// 2. sort topologically
@@ -714,7 +719,10 @@ class StreamImporter {
 		return true;
 	}
 
-	protected function get_current_entity() {
+	public function get_current_entity() {
+		if(!$this->entity_iterator) {
+			return null;
+		}
 		$entity = $this->entity_iterator->current();
 		$entity = apply_filters(
 			'data_liberation.stream_importer.preprocess_entity',
@@ -900,6 +908,15 @@ class StreamImporter {
 
 	public function get_imported_entities_counts() {
 		return $this->imported_entities_counts;
+	}
+
+	/**
+	 * Get entity importer events
+	 *
+	 * @return array
+	 */
+	public function get_entity_sink_events() {
+		return $this->entity_sink ? $this->entity_sink->get_events() : array();
 	}
 
 	protected function enqueue_attachment_download( string $raw_url, $options = array() ) {

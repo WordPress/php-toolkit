@@ -18,7 +18,7 @@ class MarkupProcessorConsumerTest extends TestCase {
 <h1>WordPress 6.8 was released</h1>
 <p>Last week, WordPress 6.8 was released. This release includes a new default theme, a new block editor experience, and a new block library. It also includes a new block editor experience, and a new block library.</p>
 HTML;
-		$consumer          = new MarkupProcessorConsumer( new WP_HTML_Processor( $html ) );
+		$consumer          = new MarkupProcessorConsumer( \WordPress\HTML\WP_HTML_Processor::create_fragment( $html ) );
 		$blocks_with_meta  = $consumer->consume();
 		$metadata          = $blocks_with_meta->get_all_metadata();
 		$expected_metadata = array(
@@ -37,14 +37,14 @@ HTML;
 	 * @dataProvider provider_test_conversion
 	 */
 	public function test_html_to_blocks_conversion( $html, $expected ) {
-		$consumer         = new MarkupProcessorConsumer( new WP_HTML_Processor( $html ) );
+		$consumer         = new MarkupProcessorConsumer( \WordPress\HTML\WP_HTML_Processor::create_fragment( $html ) );
 		$blocks_with_meta = $consumer->consume();
 
 		$this->assertEquals( $this->normalize_markup( $expected ), $this->normalize_markup( $blocks_with_meta->get_block_markup() ) );
 	}
 
 	private function normalize_markup( $markup ) {
-		$processor  = WP_HTML_Processor::create_fragment( $markup );
+		$processor  = \WordPress\HTML\WP_HTML_Processor::create_fragment( $markup );
 		$serialized = $processor->serialize();
 		$serialized = trim(
 			str_replace(
@@ -137,7 +137,7 @@ HTML
 
 	public function test_html_to_blocks_excerpt() {
 		$this->markTestSkipped( 'Skipping this test because of outdated fixture.' );
-		// $consumer         = new MarkupProcessorConsumer( WP_HTML_Processor::create_fragment( $input ) );
+		// $consumer         = new MarkupProcessorConsumer( \WordPress\HTML\WP_HTML_Processor::create_fragment( $input ) );
 		// $blocks_with_meta = $consumer->consume();
 		// $blocks           = $blocks_with_meta->get_block_markup();
 

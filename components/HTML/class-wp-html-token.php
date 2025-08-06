@@ -1,4 +1,6 @@
 <?php
+
+namespace WordPress\HTML;
 /**
  * HTML API: WP_HTML_Token class
  *
@@ -88,14 +90,13 @@ class WP_HTML_Token {
 	/**
 	 * Constructor - creates a reference to a token in some external HTML string.
 	 *
-	 * @param  string|null  $bookmark_name  Name of bookmark corresponding to location in HTML where token is found,
-	 *                                             or `null` for markers and nodes without a bookmark.
-	 * @param  string  $node_name  Name of node token represents; if uppercase, an HTML element; if lowercase, a special value like "marker".
-	 * @param  bool  $has_self_closing_flag  Whether the source token contains the self-closing flag, regardless of whether it's valid.
-	 * @param  callable|null  $on_destroy  Optional. Function to call when destroying token, useful for releasing the bookmark.
-	 *
 	 * @since 6.4.0
 	 *
+	 * @param string|null   $bookmark_name         Name of bookmark corresponding to location in HTML where token is found,
+	 *                                             or `null` for markers and nodes without a bookmark.
+	 * @param string        $node_name             Name of node token represents; if uppercase, an HTML element; if lowercase, a special value like "marker".
+	 * @param bool          $has_self_closing_flag Whether the source token contains the self-closing flag, regardless of whether it's valid.
+	 * @param callable|null $on_destroy            Optional. Function to call when destroying token, useful for releasing the bookmark.
 	 */
 	public function __construct( ?string $bookmark_name, string $node_name, bool $has_self_closing_flag, ?callable $on_destroy = null ) {
 		$this->bookmark_name         = $bookmark_name;
@@ -122,6 +123,6 @@ class WP_HTML_Token {
 	 * @since 6.4.2
 	 */
 	public function __wakeup() {
-		throw new LogicException( __CLASS__ . ' should never be unserialized' );
+		throw new \LogicException( __CLASS__ . ' should never be unserialized' );
 	}
 }

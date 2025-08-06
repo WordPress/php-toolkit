@@ -18,7 +18,7 @@ use WordPress\DataLiberation\BlockMarkup\BlockObject;
 use WordPress\DataLiberation\DataFormatConsumer\BlocksWithMetadata;
 use WordPress\DataLiberation\DataFormatConsumer\DataFormatConsumer;
 use WordPress\DataLiberation\Importer\ImportUtils;
-use WP_HTML_Tag_Processor;
+use WordPress\HTML\WP_HTML_Tag_Processor;
 
 /**
  * Transforms markdown with frontmatter into a block markup and metadata pair.

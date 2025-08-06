@@ -1,0 +1,16 @@
+{
+	"login": true,
+	"constants": {
+		"WP_DEBUG": true,
+		"WP_DEBUG_LOG": "/wordpress/wp-content/debug.log",
+		"WP_DEBUG_DISPLAY": true,
+		"DISABLE_WP_CRON": false
+	},
+	"plugins": ["wp-crontrol"],
+    "steps": [
+        {
+            "step": "activatePlugin",
+            "pluginPath": "next-gen-importer/plugin.php"
+        }
+    ]
+}

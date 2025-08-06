@@ -7,7 +7,7 @@ use WordPress\ByteStream\NotEnoughDataException;
 
 abstract class BaseByteReadStream implements ByteReadStream {
 
-	const CHUNK_SIZE = 100;// 64 * 1024;
+	const CHUNK_SIZE = 64 * 1024;
 
 	protected $buffer_size = 2048;
 

@@ -2,7 +2,7 @@
 
 namespace WordPress\XML;
 
-use WP_HTML_Decoder;
+use WordPress\HTML\WP_HTML_Decoder;
 
 /**
  * XML API: WP_XML_Decoder class

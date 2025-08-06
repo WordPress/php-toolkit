@@ -12,7 +12,7 @@ use WordPress\Filesystem\Filesystem;
 use WordPress\Filesystem\Visitor\FilesystemVisitor;
 use WordPress\Markdown\MarkdownConsumer;
 use WordPress\XML\XMLProcessor;
-use WP_HTML_Processor;
+use WordPress\HTML\WP_HTML_Processor;
 
 use function WordPress\Filesystem\wp_join_unix_paths;
 
@@ -277,7 +277,7 @@ class FilesystemEntityReader implements EntityReader {
 						$result    = $converter->consume();
 						break;
 					case 'html':
-						$converter = new MarkupProcessorConsumer( WP_HTML_Processor::create_fragment( $content ) );
+						$converter = new MarkupProcessorConsumer( \WordPress\HTML\WP_HTML_Processor::create_fragment( $content ) );
 						$result    = $converter->consume();
 						break;
 					default:

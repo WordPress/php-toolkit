@@ -2,11 +2,12 @@
 
 namespace WordPress\DataLiberation\Importer;
 
+use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\DataLiberation\DataLiberationException;
 use WP_Query;
 
-use function get_all_post_meta_flat;
 use function is_wp_error;
+use function WordPress\Polyfill\_doing_it_wrong;
 
 /**
  * Manages import session data in the WordPress database.
@@ -94,6 +95,7 @@ class ImportSession {
 					'file_name'     => $args['file_name'] ?? null,
 					'source_url'    => $args['source_url'] ?? null,
 					'attachment_id' => $args['attachment_id'] ?? null,
+					'log_file'      => $args['log_file'] ?? null,
 				),
 			),
 			true
@@ -186,6 +188,14 @@ class ImportSession {
 		);
 	}
 
+	public function get_meta_by_key($key) {
+		return get_post_meta( $this->post_id, $key, true );
+	}
+
+	public function set_meta_by_key($key, $value) {
+		update_post_meta( $this->post_id, $key, $value );
+	}
+
 	public function get_data_source() {
 		return get_post_meta( $this->post_id, 'data_source', true );
 	}
@@ -259,7 +269,7 @@ class ImportSession {
 	 *
 	 * @param  array  $newly_imported_entities  The new progress data with keys: posts, comments, terms, attachments, users
 	 */
-	public function bump_imported_entities_counts( $newly_imported_entities ) {
+	public function bump_imported_entities_counts( $newly_imported_entities, $events = array() ) {
 		foreach ( $newly_imported_entities as $field => $count ) {
 			if ( ! in_array( $field, static::PROGRESS_ENTITIES, true ) ) {
 				_doing_it_wrong(
@@ -295,6 +305,23 @@ class ImportSession {
 			$wpdb->query($sql);
 			*/
 		}
+
+		foreach ( $events as $event ) {
+			$this->append_to_log_file( '[' . $event->type . '] ' . $event->message );
+		}
+	}
+
+	public function count_frontloading_stubs() {
+		global $wpdb;
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM $wpdb->posts
+				 WHERE post_type = 'frontloading_stub'
+				 AND post_parent = %d",
+				$this->post_id
+			)
+		);
 	}
 
 	public function count_awaiting_frontloading_stubs() {
@@ -329,6 +356,30 @@ class ImportSession {
 		);
 	}
 
+	public function count_succeeded_frontloading_stubs() {
+		global $wpdb;
+
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM $wpdb->posts
+				 WHERE post_type = 'frontloading_stub'
+				 AND post_parent = %d
+				 AND post_status = %s",
+				$this->post_id,
+				self::FRONTLOAD_STATUS_SUCCEEDED
+			)
+		);
+	}
+
+	public function get_frontloading_stats() {
+		return array(
+			'awaiting_download' => $this->count_awaiting_frontloading_stubs(),
+			'unfinished' => $this->count_unfinished_frontloading_stubs(),
+			'succeeded' => $this->count_succeeded_frontloading_stubs(),
+			'total' => $this->count_frontloading_stubs(),
+		);
+	}
+
 	public function mark_frontloading_errors_as_ignored() {
 		global $wpdb;
 		$wpdb->update(
@@ -336,9 +387,42 @@ class ImportSession {
 			array( 'post_status' => self::FRONTLOAD_STATUS_IGNORED ),
 			array(
 				'post_type' => 'frontloading_stub',
-				// 'post_status !=' => self::FRONTLOAD_STATUS_SUCCEEDED,
+				'post_status !=' => self::FRONTLOAD_STATUS_SUCCEEDED,
 			)
 		);
+	}
+
+	public function append_to_log_file($message) {
+		$path = $this->ensure_log_file_exists();
+		if(!$path) {
+			return false;
+		}
+		file_put_contents($path, $message . "\n", FILE_APPEND);
+		return true;
+	}
+
+	public function stream_log_file() {
+		$path = $this->ensure_log_file_exists();
+		if(!$path) {
+			return false;
+		}
+		$stream = FileReadStream::from_path($path);
+		// @TODO: Create a 'PrivateFileReadStream', or so, that automatically
+		//        inserts / skips the initial PHP guard.
+		$stream->seek(strlen("<?php !(); ?>\n"));
+		return $stream;
+	}
+
+	private function ensure_log_file_exists() {
+		$log_file = $this->get_meta_by_key('log_file');
+		if(!$log_file) {
+			return false;
+		}
+		if(!file_exists($log_file)) {
+			$php_guard = "<?php !(); ?>\n";
+			file_put_contents($log_file, $php_guard);
+		}
+		return $log_file;
 	}
 
 	public function get_frontloading_stubs( $options = array() ) {
@@ -373,7 +457,7 @@ class ImportSession {
 		);
 		update_meta_cache( 'post', $ids );
 		foreach ( $posts as $post ) {
-			$post->meta = get_all_post_meta_flat( $post->ID );
+			$post->meta = ImportUtils::get_all_post_meta_flat( $post->ID );
 		}
 
 		return $posts;
@@ -527,7 +611,7 @@ class ImportSession {
 				continue;
 			}
 
-			update_post_meta( $placeholder->ID, 'last_error', $event->error );
+			update_post_meta( $placeholder->ID, 'last_error', $event->error ? $event->error->__toString() : null );
 
 			$attempts     = get_post_meta( $placeholder->ID, 'attempts', true );
 			$new_attempts = $attempts;
@@ -598,11 +682,13 @@ class ImportSession {
 		if ( $stage === $this->get_stage() ) {
 			return;
 		}
+		$old_stage = $this->get_stage();
 		if ( StreamImporter::STAGE_FINISHED === $stage ) {
 			update_post_meta( $this->post_id, 'finished_at', time() );
 		}
 		update_post_meta( $this->post_id, 'current_stage', $stage );
 		$this->cached_stage = $stage;
+		$this->append_to_log_file(sprintf('Stage advanced from %s to %s', $old_stage, $stage));
 	}
 
 	public function get_started_at() {

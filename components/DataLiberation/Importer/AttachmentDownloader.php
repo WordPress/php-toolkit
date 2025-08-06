@@ -8,6 +8,7 @@ use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
 
 use function WordPress\Filesystem\wp_join_unix_paths;
+use function WordPress\Polyfill\_doing_it_wrong;
 
 class AttachmentDownloader {
 	private $client;
