@@ -34,7 +34,7 @@ class DefineConstantsStepTest extends StepTestCase {
 	}
 
 	public function testAddNewConstantsToEmptyWpConfig() {
-		$this->runtime->getTargetFilesystem()->put_contents( 'wp-config.php', '<?php' );
+		$this->runtime->getTargetFilesystem()->put_contents( 'wp-config.php', "<?php\n" );
 		$constants = [
 			'WP_MEMORY_LIMIT'            => '256M',
 			'AUTOMATIC_UPDATER_DISABLED' => true,
@@ -44,7 +44,7 @@ class DefineConstantsStepTest extends StepTestCase {
 		$this->assertWordPressConstants( $constants );
 
 		$this->assertSame(
-			"<?php\ndefine( 'WP_MEMORY_LIMIT', '256M' );\ndefine( 'AUTOMATIC_UPDATER_DISABLED', true );\n\n",
+			"<?php\n\ndefine( 'WP_MEMORY_LIMIT', '256M' );\ndefine( 'AUTOMATIC_UPDATER_DISABLED', true );\n\n",
 			$this->runtime->getTargetFilesystem()->get_contents( 'wp-config.php' )
 		);
 
