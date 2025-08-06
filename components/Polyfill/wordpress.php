@@ -220,3 +220,9 @@ if ( ! function_exists( 'serialize_block_attributes' ) ) {
 		return $encoded_attributes;
 	}
 }
+
+if(!function_exists('wp_read_audio_metadata')) {
+	function wp_read_audio_metadata($file) {
+		return array();
+	}
+}

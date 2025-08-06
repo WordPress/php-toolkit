@@ -103,7 +103,7 @@ class EntityImporter {
 		$this->exists               = $empty_types;
 		$this->logger               = new Logger();
 
-		$this->options = wp_parse_args(
+		$this->options = array_merge(
 			$options,
 			array(
 				'prefill_existing_posts'    => true,
@@ -115,7 +115,9 @@ class EntityImporter {
 		);
 
 		// Load the function wp_read_audio_metadata
-		require_once ABSPATH . 'wp-admin/includes/media.php';
+		if(!function_exists('wp_read_audio_metadata')) {
+			require_once ABSPATH . 'wp-admin/includes/media.php';
+		}
 	}
 
 	public function import_entity( ImportEntity $entity ) {
