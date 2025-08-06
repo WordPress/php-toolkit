@@ -1,4 +1,5 @@
 <?php
+namespace WordPress\BlockParser;
 /**
  * Block Serialization Parser
  *

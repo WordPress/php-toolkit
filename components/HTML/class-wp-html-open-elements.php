@@ -1,4 +1,9 @@
 <?php
+
+namespace WordPress\HTML;
+use Closure;
+use LogicException;
+
 /**
  * HTML API: WP_HTML_Open_Elements class
  *

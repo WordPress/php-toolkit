@@ -1,5 +1,7 @@
 <?php
 
+namespace WordPress\HTML;
+
 /**
  * Auto-generated class for looking up HTML named character references.
  *

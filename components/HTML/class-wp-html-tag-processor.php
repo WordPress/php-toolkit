@@ -1,4 +1,13 @@
 <?php
+
+namespace WordPress\HTML;
+
+use function WordPress\Polyfill\esc_attr;
+use function WordPress\Polyfill\esc_url;
+use function WordPress\Polyfill\wp_kses_uri_attributes;
+use function WordPress\Polyfill\__;
+use function WordPress\Polyfill\_doing_it_wrong;
+
 /**
  * HTML API: WP_HTML_Tag_Processor class
  *
@@ -790,7 +799,7 @@ class WP_HTML_Tag_Processor {
 	 *     // sourced from the lazily-parsed HTML recognizer.
 	 *     $start  = $attributes['src']->start;
 	 *     $length = $attributes['src']->length;
-	 *     $modifications[] = new WP_HTML_Text_Replacement( $start, $length, $new_value );
+	 *     $modifications[] = new \WordPress\HTML\WP_HTML_Text_Replacement( $start, $length, $new_value );
 	 *
 	 *     // Correspondingly, something like this will appear in this array.
 	 *     $lexical_updates = array(
@@ -3725,7 +3734,7 @@ class WP_HTML_Tag_Processor {
 	 */
 	public function set_modifiable_text( string $plaintext_content ): bool {
 		if ( self::STATE_TEXT_NODE === $this->parser_state ) {
-			$this->lexical_updates['modifiable text'] = new WP_HTML_Text_Replacement(
+			$this->lexical_updates['modifiable text'] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 				$this->text_starts_at,
 				$this->text_length,
 				htmlspecialchars( $plaintext_content, ENT_QUOTES | ENT_HTML5 )
@@ -3744,7 +3753,7 @@ class WP_HTML_Tag_Processor {
 				return false;
 			}
 
-			$this->lexical_updates['modifiable text'] = new WP_HTML_Text_Replacement(
+			$this->lexical_updates['modifiable text'] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 				$this->text_starts_at,
 				$this->text_length,
 				$plaintext_content
@@ -3773,7 +3782,7 @@ class WP_HTML_Tag_Processor {
 					return false;
 				}
 
-				$this->lexical_updates['modifiable text'] = new WP_HTML_Text_Replacement(
+				$this->lexical_updates['modifiable text'] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 					$this->text_starts_at,
 					$this->text_length,
 					$plaintext_content
@@ -3790,7 +3799,7 @@ class WP_HTML_Tag_Processor {
 					$plaintext_content
 				);
 
-				$this->lexical_updates['modifiable text'] = new WP_HTML_Text_Replacement(
+				$this->lexical_updates['modifiable text'] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 					$this->text_starts_at,
 					$this->text_length,
 					$plaintext_content
@@ -3816,7 +3825,7 @@ class WP_HTML_Tag_Processor {
 				 * @todo It would be useful to prefix a multiline replacement text
 				 *       with a newline, but not necessary. This is for aesthetics.
 				 */
-				$this->lexical_updates['modifiable text'] = new WP_HTML_Text_Replacement(
+				$this->lexical_updates['modifiable text'] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 					$this->text_starts_at,
 					$this->text_length,
 					$plaintext_content
@@ -3950,7 +3959,7 @@ class WP_HTML_Tag_Processor {
 			 *     Result: <div id="new"/>
 			 */
 			$existing_attribute                        = $this->attributes[ $comparable_name ];
-			$this->lexical_updates[ $comparable_name ] = new WP_HTML_Text_Replacement(
+			$this->lexical_updates[ $comparable_name ] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 				$existing_attribute->start,
 				$existing_attribute->length,
 				$updated_attribute
@@ -3968,7 +3977,7 @@ class WP_HTML_Tag_Processor {
 			 *
 			 *     Result: <div id="new"/>
 			 */
-			$this->lexical_updates[ $comparable_name ] = new WP_HTML_Text_Replacement(
+			$this->lexical_updates[ $comparable_name ] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 				$this->tag_name_starts_at + $this->tag_name_length,
 				0,
 				' ' . $updated_attribute
@@ -4048,7 +4057,7 @@ class WP_HTML_Tag_Processor {
 		 *
 		 *    Result: <div />
 		 */
-		$this->lexical_updates[ $name ] = new WP_HTML_Text_Replacement(
+		$this->lexical_updates[ $name ] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 			$this->attributes[ $name ]->start,
 			$this->attributes[ $name ]->length,
 			''
@@ -4056,7 +4065,7 @@ class WP_HTML_Tag_Processor {
 
 		// Removes any duplicated attributes if they were also present.
 		foreach ( $this->duplicate_attributes[ $name ] ?? array() as $attribute_token ) {
-			$this->lexical_updates[] = new WP_HTML_Text_Replacement(
+			$this->lexical_updates[] = new \WordPress\HTML\WP_HTML_Text_Replacement(
 				$attribute_token->start,
 				$attribute_token->length,
 				''

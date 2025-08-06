@@ -69,7 +69,9 @@
             "WordPress\\Zip\\": "components/Zip/",
             "WordPress\\HttpServer\\": "components/HttpServer/",
             "WordPress\\CORSProxy\\": "components/CORSProxy/",
-            "WordPress\\Git\\": "components/Git/"
+            "WordPress\\Git\\": "components/Git/",
+            "WordPress\\HTML\\": "components/HTML/",
+            "WordPress\\BlockParser\\": "components/BlockParser/"
         }
     },
     "scripts": {

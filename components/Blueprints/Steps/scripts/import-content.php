@@ -20,6 +20,7 @@ use WordPress\Filesystem\LocalFilesystem;
 use WordPress\Zip\ZipFilesystem;
 
 use function WordPress\Filesystem\wp_join_unix_paths;
+use function WordPress\Filesystem\add_filter;
 
 require_once getenv('DOCROOT') . '/wp-load.php';
 require_once getenv('DOCROOT') . '/php-toolkit.phar';

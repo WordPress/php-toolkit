@@ -67,7 +67,7 @@ MD;
 	}
 
 	private function normalize_markup( $markup ) {
-		$processor  = WP_HTML_Processor::create_fragment( $markup );
+		$processor  = \WordPress\HTML\WP_HTML_Processor::create_fragment( $markup );
 		$serialized = $processor->serialize();
 		$serialized = trim(
 			str_replace(

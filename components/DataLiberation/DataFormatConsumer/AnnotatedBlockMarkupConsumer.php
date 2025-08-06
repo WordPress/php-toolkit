@@ -2,7 +2,9 @@
 
 namespace WordPress\DataLiberation\DataFormatConsumer;
 
-use WP_HTML_Processor;
+use WordPress\HTML\WP_HTML_Processor;
+use function WordPress\Polyfill\parse_blocks;
+use function WordPress\Polyfill\serialize_block;
 
 /**
  * Converts a metadata-annotated block markup into block markup+metadata pair.
@@ -48,7 +50,7 @@ class AnnotatedBlockMarkupConsumer implements DataFormatConsumer {
 			$metadata     = array();
 			foreach ( parse_blocks( $this->original_html ) as $block ) {
 				if ( $block['blockName'] === null ) {
-					$html_converter = new MarkupProcessorConsumer( WP_HTML_Processor::create_fragment( $block['innerHTML'] ) );
+					$html_converter = new MarkupProcessorConsumer( \WordPress\HTML\WP_HTML_Processor::create_fragment( $block['innerHTML'] ) );
 					$result         = $html_converter->consume();
 					$block_markup   .= $result->get_block_markup() . "\n";
 					$metadata       = array_merge( $metadata, $result->get_all_metadata() );

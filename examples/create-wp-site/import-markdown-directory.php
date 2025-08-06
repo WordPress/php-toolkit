@@ -19,6 +19,8 @@ use WordPress\Zip\ZipFilesystem;
 
 use function WordPress\DataLiberation\URL\is_child_url_of;
 use function WordPress\Filesystem\wp_join_unix_paths;
+use function WordPress\Polyfill\add_action;
+use function WordPress\Polyfill\add_filter;
 
 if ( file_exists( '/wordpress/wp-load.php' ) ) {
 	require_once '/wordpress/wp-load.php';

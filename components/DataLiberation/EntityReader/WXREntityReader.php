@@ -6,6 +6,7 @@ use WordPress\ByteStream\ReadStream\ByteReadStream;
 use WordPress\DataLiberation\ImportEntity;
 use WordPress\XML\XMLProcessor;
 use WordPress\XML\XMLUnsupportedException;
+use function WordPress\Polyfill\_doing_it_wrong;
 
 /**
  * Data Liberation API: WP_WXR_Entity_Reader class

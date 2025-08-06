@@ -1,4 +1,10 @@
 <?php
+
+namespace WordPress\HTML;
+use function WordPress\Polyfill\__;
+use function WordPress\Polyfill\_doing_it_wrong;
+use function WordPress\Polyfill\wp_trigger_error;
+
 /**
  * HTML API: WP_HTML_Processor class
  *
@@ -39,7 +45,7 @@
  *
  * Example:
  *
- *     $processor = WP_HTML_Processor::create_fragment( $html );
+ *     $processor = \WordPress\HTML\WP_HTML_Processor::create_fragment( $html );
  *     if ( $processor->next_tag( array( 'breadcrumbs' => array( 'DIV', 'FIGURE', 'IMG' ) ) ) ) {
  *         $processor->add_class( 'responsive-image' );
  *     }
@@ -48,7 +54,7 @@
  *
  * Breadcrumbs represent the stack of open elements from the root
  * of the document or fragment down to the currently-matched node,
- * if one is currently selected. Call WP_HTML_Processor::get_breadcrumbs()
+ * if one is currently selected. Call \WordPress\HTML\WP_HTML_Processor::get_breadcrumbs()
  * to inspect the breadcrumbs for a matched tag.
  *
  * Breadcrumbs can specify nested HTML structure and are equivalent
@@ -175,7 +181,7 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 *
 	 * @since 6.4.0
 	 *
-	 * @see WP_HTML_Processor::$release_internal_bookmark_on_destruct
+	 * @see \WordPress\HTML\WP_HTML_Processor::$release_internal_bookmark_on_destruct
 	 *
 	 * @var int
 	 */
@@ -369,7 +375,7 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 *
 	 * @since 6.4.0
 	 *
-	 * @see WP_HTML_Processor::create_fragment()
+	 * @see \WordPress\HTML\WP_HTML_Processor::create_fragment()
 	 *
 	 */
 	public function __construct( $html, $use_the_static_create_methods_instead = null ) {
@@ -379,9 +385,9 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 			_doing_it_wrong(
 				__METHOD__,
 				sprintf(
-				/* translators: %s: WP_HTML_Processor::create_fragment(). */
+				/* translators: %s: \WordPress\HTML\WP_HTML_Processor::create_fragment(). */
 					__( 'Call %s to create an HTML Processor instead of calling the constructor directly.' ),
-					'<code>WP_HTML_Processor::create_fragment()</code>'
+					'<code>\WordPress\HTML\WP_HTML_Processor::create_fragment()</code>'
 				),
 				'6.4.0'
 			);
@@ -477,9 +483,9 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 *
 	 * Example
 	 *
-	 *     $processor = WP_HTML_Processor::create_fragment( '<template><strong><button><em><p><em>' );
+	 *     $processor = \WordPress\HTML\WP_HTML_Processor::create_fragment( '<template><strong><button><em><p><em>' );
 	 *     false === $processor->next_tag();
-	 *     WP_HTML_Processor::ERROR_UNSUPPORTED === $processor->get_last_error();
+	 *     \WordPress\HTML\WP_HTML_Processor::ERROR_UNSUPPORTED === $processor->get_last_error();
 	 *
 	 * @return string|null The last error, if one exists, otherwise null.
 	 * @see self::ERROR_UNSUPPORTED
@@ -685,7 +691,7 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 *
 	 * Example:
 	 *
-	 *     $p = WP_HTML_Processor::create_fragment( '<div></div>' );
+	 *     $p = \WordPress\HTML\WP_HTML_Processor::create_fragment( '<div></div>' );
 	 *     $p->next_tag( array( 'tag_name' => 'div', 'tag_closers' => 'visit' ) );
 	 *     $p->is_tag_closer() === false;
 	 *
@@ -729,7 +735,7 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 *
 	 * Example:
 	 *
-	 *     $processor = WP_HTML_Processor::create_fragment( '<div><span><figure><img></figure></span></div>' );
+	 *     $processor = \WordPress\HTML\WP_HTML_Processor::create_fragment( '<div><span><figure><img></figure></span></div>' );
 	 *     $processor->next_tag( 'img' );
 	 *     true  === $processor->matches_breadcrumbs( array( 'figure', 'img' ) );
 	 *     true  === $processor->matches_breadcrumbs( array( 'span', 'figure', 'img' ) );
@@ -1002,7 +1008,7 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 *
 	 * Example
 	 *
-	 *     $processor = WP_HTML_Processor::create_fragment( '<p><strong><em><img></em></strong></p>' );
+	 *     $processor = \WordPress\HTML\WP_HTML_Processor::create_fragment( '<p><strong><em><img></em></strong></p>' );
 	 *     $processor->next_tag( 'IMG' );
 	 *     $processor->get_breadcrumbs() === array( 'HTML', 'BODY', 'P', 'STRONG', 'EM', 'IMG' );
 	 *
@@ -1016,7 +1022,7 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 *
 	 * Example:
 	 *
-	 *     $processor = WP_HTML_Processor::create_fragment( '<div><p></p></div>' );
+	 *     $processor = \WordPress\HTML\WP_HTML_Processor::create_fragment( '<div><p></p></div>' );
 	 *     // The processor starts in the BODY context, meaning it has depth from the start: HTML > BODY.
 	 *     2 === $processor->get_current_depth();
 	 *
@@ -1045,8 +1051,8 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 *
 	 * This method assumes that the given HTML snippet is found in BODY context.
 	 * For normalizing full documents or fragments found in other contexts, create
-	 * a new processor using {@see WP_HTML_Processor::create_fragment} or
-	 * {@see WP_HTML_Processor::create_full_parser} and call {@see WP_HTML_Processor::serialize}
+	 * a new processor using {@see \WordPress\HTML\WP_HTML_Processor::create_fragment} or
+	 * {@see \WordPress\HTML\WP_HTML_Processor::create_full_parser} and call {@see \WordPress\HTML\WP_HTML_Processor::serialize}
 	 * on the created instances.
 	 *
 	 * Many aspects of an input HTML fragment may be changed during normalization.
@@ -1063,13 +1069,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 *
 	 * Example:
 	 *
-	 *     echo WP_HTML_Processor::normalize( '<a href=#anchor v=5 href="/" enabled>One</a another v=5><!--' );
+	 *     echo \WordPress\HTML\WP_HTML_Processor::normalize( '<a href=#anchor v=5 href="/" enabled>One</a another v=5><!--' );
 	 *     // <a href="#anchor" v="5" enabled>One</a>
 	 *
-	 *     echo WP_HTML_Processor::normalize( '<div></p>fun<table><td>cell</div>' );
+	 *     echo \WordPress\HTML\WP_HTML_Processor::normalize( '<div></p>fun<table><td>cell</div>' );
 	 *     // <div><p></p>fun<table><tbody><tr><td>cell</td></tr></tbody></table></div>
 	 *
-	 *     echo WP_HTML_Processor::normalize( '<![CDATA[invalid comment]]> syntax < <> "oddities"' );
+	 *     echo \WordPress\HTML\WP_HTML_Processor::normalize( '<![CDATA[invalid comment]]> syntax < <> "oddities"' );
 	 *     // <!--[CDATA[invalid comment]]--> syntax &lt; &lt;&gt; &quot;oddities&quot;
 	 *
 	 * @param  string  $html  Input HTML to normalize.
@@ -1085,7 +1091,7 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	/**
 	 * Returns normalized HTML for a fragment by serializing it.
 	 *
-	 * This differs from {@see WP_HTML_Processor::normalize} in that it starts with
+	 * This differs from {@see \WordPress\HTML\WP_HTML_Processor::normalize} in that it starts with
 	 * a specific HTML Processor, which _must_ not have already started scanning;
 	 * it must be in the initial ready state and will be in the completed state once
 	 * serialization is complete.
@@ -1104,15 +1110,15 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 *
 	 * Example:
 	 *
-	 *     $processor = WP_HTML_Processor::create_fragment( '<a href=#anchor v=5 href="/" enabled>One</a another v=5><!--' );
+	 *     $processor = \WordPress\HTML\WP_HTML_Processor::create_fragment( '<a href=#anchor v=5 href="/" enabled>One</a another v=5><!--' );
 	 *     echo $processor->serialize();
 	 *     // <a href="#anchor" v="5" enabled>One</a>
 	 *
-	 *     $processor = WP_HTML_Processor::create_fragment( '<div></p>fun<table><td>cell</div>' );
+	 *     $processor = \WordPress\HTML\WP_HTML_Processor::create_fragment( '<div></p>fun<table><td>cell</div>' );
 	 *     echo $processor->serialize();
 	 *     // <div><p></p>fun<table><tbody><tr><td>cell</td></tr></tbody></table></div>
 	 *
-	 *     $processor = WP_HTML_Processor::create_fragment( '<![CDATA[invalid comment]]> syntax < <> "oddities"' );
+	 *     $processor = \WordPress\HTML\WP_HTML_Processor::create_fragment( '<![CDATA[invalid comment]]> syntax < <> "oddities"' );
 	 *     echo $processor->serialize();
 	 *     // <!--[CDATA[invalid comment]]--> syntax &lt; &lt;&gt; &quot;oddities&quot;
 	 *
@@ -1282,13 +1288,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'initial' insertion mode.
 	 *
 	 * This internal function performs the 'initial' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#the-initial-insertion-mode
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0
 	 *
@@ -1356,13 +1362,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'before html' insertion mode.
 	 *
 	 * This internal function performs the 'before html' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#the-before-html-insertion-mode
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0
 	 *
@@ -1456,13 +1462,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'before head' insertion mode.
 	 *
 	 * This internal function performs the 'before head' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#the-before-head-insertion-mode
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0 Stub implementation.
 	 *
@@ -1556,13 +1562,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in head' insertion mode.
 	 *
 	 * This internal function performs the 'in head' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-inhead
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0
 	 *
@@ -1785,13 +1791,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in head noscript' insertion mode.
 	 *
 	 * This internal function performs the 'in head noscript' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-inheadnoscript
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0 Stub implementation.
 	 *
@@ -1889,13 +1895,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'after head' insertion mode.
 	 *
 	 * This internal function performs the 'after head' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#the-after-head-insertion-mode
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0 Stub implementation.
 	 *
@@ -2038,13 +2044,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in body' insertion mode.
 	 *
 	 * This internal function performs the 'in body' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-inbody
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.4.0
 	 *
@@ -3093,13 +3099,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in table' insertion mode.
 	 *
 	 * This internal function performs the 'in table' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-intable
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0
 	 *
@@ -3360,13 +3366,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in table text' insertion mode.
 	 *
 	 * This internal function performs the 'in table text' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-intabletext
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0 Stub implementation.
 	 *
@@ -3379,13 +3385,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in caption' insertion mode.
 	 *
 	 * This internal function performs the 'in caption' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-incaption
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0
 	 *
@@ -3464,13 +3470,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in column group' insertion mode.
 	 *
 	 * This internal function performs the 'in column group' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-incolgroup
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0
 	 *
@@ -3576,13 +3582,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in table body' insertion mode.
 	 *
 	 * This internal function performs the 'in table body' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-intbody
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0
 	 *
@@ -3684,13 +3690,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in row' insertion mode.
 	 *
 	 * This internal function performs the 'in row' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-intr
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0
 	 *
@@ -3799,13 +3805,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in cell' insertion mode.
 	 *
 	 * This internal function performs the 'in cell' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-intd
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0
 	 *
@@ -3907,13 +3913,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in select' insertion mode.
 	 *
 	 * This internal function performs the 'in select' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-inselect
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0
 	 *
@@ -4091,13 +4097,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in select in table' insertion mode.
 	 *
 	 * This internal function performs the 'in select in table' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-inselectintable
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0
 	 *
@@ -4158,13 +4164,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in template' insertion mode.
 	 *
 	 * This internal function performs the 'in template' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-intemplate
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0 Stub implementation.
 	 *
@@ -4293,13 +4299,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'after body' insertion mode.
 	 *
 	 * This internal function performs the 'after body' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-afterbody
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0 Stub implementation.
 	 *
@@ -4377,13 +4383,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in frameset' insertion mode.
 	 *
 	 * This internal function performs the 'in frameset' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-inframeset
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0 Stub implementation.
 	 *
@@ -4499,13 +4505,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'after frameset' insertion mode.
 	 *
 	 * This internal function performs the 'after frameset' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-afterframeset
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0 Stub implementation.
 	 *
@@ -4579,13 +4585,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'after after body' insertion mode.
 	 *
 	 * This internal function performs the 'after after body' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#the-after-after-body-insertion-mode
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0 Stub implementation.
 	 *
@@ -4643,13 +4649,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'after after frameset' insertion mode.
 	 *
 	 * This internal function performs the 'after after frameset' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#the-after-after-frameset-insertion-mode
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0 Stub implementation.
 	 *
@@ -4711,13 +4717,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * Parses next element in the 'in foreign content' insertion mode.
 	 *
 	 * This internal function performs the 'in foreign content' insertion mode
-	 * logic for the generalized WP_HTML_Processor::step() function.
+	 * logic for the generalized \WordPress\HTML\WP_HTML_Processor::step() function.
 	 *
 	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-inforeign
-	 * @see WP_HTML_Processor::step
+	 * @see \WordPress\HTML\WP_HTML_Processor::step
 	 *
 	 * @since 6.7.0 Stub implementation.
 	 *
@@ -5212,7 +5218,7 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 *
 	 * Example:
 	 *
-	 *     $p = WP_HTML_Processor::create_fragment( '<div enabled class="test" data-test-id="14">Test</div>' );
+	 *     $p = \WordPress\HTML\WP_HTML_Processor::create_fragment( '<div enabled class="test" data-test-id="14">Test</div>' );
 	 *     $p->next_token() === true;
 	 *     $p->get_attribute( 'data-test-id' ) === '14';
 	 *     $p->get_attribute( 'enabled' ) === true;
@@ -5345,7 +5351,7 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 *
 	 * Example:
 	 *
-	 *     $p = WP_HTML_Processor::create_fragment( "<div class='free &lt;egg&lt;\tlang-en'>" );
+	 *     $p = \WordPress\HTML\WP_HTML_Processor::create_fragment( "<div class='free &lt;egg&lt;\tlang-en'>" );
 	 *     $p->next_tag();
 	 *     foreach ( $p->class_list() as $class_name ) {
 	 *         echo "{$class_name} ";
@@ -5691,7 +5697,7 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * @since 6.4.0
 	 * @since 6.7.0 Full spec support.
 	 *
-	 * @see WP_HTML_Processor::generate_implied_end_tags
+	 * @see \WordPress\HTML\WP_HTML_Processor::generate_implied_end_tags
 	 * @see https://html.spec.whatwg.org/#generate-implied-end-tags
 	 */
 	private function generate_implied_end_tags_thoroughly(): void {
@@ -6567,5 +6573,5 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 *
 	 * @access private
 	 */
-	const CONSTRUCTOR_UNLOCK_CODE = 'Use WP_HTML_Processor::create_fragment() instead of calling the class constructor directly.';
+	const CONSTRUCTOR_UNLOCK_CODE = 'Use \WordPress\HTML\WP_HTML_Processor::create_fragment() instead of calling the class constructor directly.';
 }
