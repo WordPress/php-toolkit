@@ -2475,6 +2475,7 @@ class XMLProcessor {
 	 * @return int
 	 */
 	private function parse_name( $offset ) {
+		static $i = 0;
 		$name_byte_length = 0;
 		while ( true ) {
 			/**
@@ -2505,7 +2506,11 @@ class XMLProcessor {
 				$bytes_parsed
 			);
 			if (
+				// Byte sequence is not a valid UTF-8 codepoint.
+				( $codepoint === 0xFFFD && $bytes_parsed === 0) || 
+				// No codepoint at the given offset.
 				null === $codepoint ||
+				// The codepoint is not a valid part of an XML NameChar or NameStartChar.
 				! $this->is_valid_name_codepoint( $codepoint, $name_byte_length === 0 )
 			) {
 				break;
@@ -3821,13 +3826,12 @@ class XMLProcessor {
 				array_pop( $this->stack_of_open_elements );
 			}
 		}
-		
 
 		try {
 			switch ( $this->parser_context ) {
 				case self::IN_PROLOG_CONTEXT:
 					return $this->step_in_prolog( $node_to_process );
-				case self::IN_ELEMENT_CONTEXT:
+				case self::IN_ELEMENT_CONTEXT:			
 					return $this->step_in_element( $node_to_process );
 				case self::IN_MISC_CONTEXT:
 					return $this->step_in_misc( $node_to_process );

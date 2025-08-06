@@ -60,11 +60,11 @@ class W3CXMLConformanceTest extends TestCase {
 		
 		try {
 			$processor = XMLProcessor::create_from_string($xml_content);
-			
+
 			// Process through all tokens to trigger any parsing errors
 			if ($processor !== false) {
 				while ($processor->next_token()) {
-					// Just iterate through tokens
+					// twiddle thumbs
 				}
 			}
 			
@@ -72,10 +72,6 @@ class W3CXMLConformanceTest extends TestCase {
 				case 'valid':
 					$this->assertNotFalse($processor, 
 						"Valid XML should parse successfully [{$test_id}]: {$description}");
-						if($processor->get_last_error()) {
-							var_dump($test_file);
-							var_dump($processor->get_exception()->getMessage());
-						}
 					$this->assertNull($processor->get_last_error(), 
 						"Valid XML should not produce errors [{$test_id}]: {$description}");
 					break;
