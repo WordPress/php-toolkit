@@ -17,7 +17,8 @@
 	},
 	"autoload": {
 		"files": [
-			"utf8_decoder.php"
+			"utf8_decoder.php",
+			"utf8_encoder.php"
 		],
 		"exclude-from-classmap": [
 			"/Tests/"
