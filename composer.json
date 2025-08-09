@@ -1,5 +1,5 @@
 {
-    "name": "wordpress/components",
+    "name": "wordpress/php-toolkit",
     "type": "library",
     "description": "WordPress Components",
     "keywords": [
