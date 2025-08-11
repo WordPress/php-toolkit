@@ -182,6 +182,12 @@ class Runner {
 		}
 	}
 
+	public function parseBlueprint(): Blueprint {
+		$blueprint_string = $this->loadBlueprint();
+		$parser           = new BlueprintParser( $this->configuration );
+		return $parser->parse( $blueprint_string );
+	}
+
 	public function run(): void {
 		$tempRoot = wp_unix_sys_get_temp_dir() . '/wp-blueprints-runtime-' . uniqid();
 

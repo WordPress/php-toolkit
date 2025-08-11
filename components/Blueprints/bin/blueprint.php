@@ -286,6 +286,17 @@ $commandConfigurations = [
 		'aliases'         => [ 'run' ],
 		'requiredOptions' => [ 'site-path', 'site-url', 'mode' ],
 	],
+	'info' => [
+		'description'     => 'Show detailed information about a WordPress Blueprint',
+		'positionalArgs'  => [
+			'blueprint' => 'Path / URL / DataReference to the blueprint (required)',
+		],
+		'options'         => array_merge( $commonOptions, [] ),
+		'examples'        => [
+			'php blueprint.php info my-blueprint.json',
+		],
+		'aliases'         => [ 'explain', 'inspect' ],
+	],
 	'help' => [
 		'description'    => 'Show help for WordPress Blueprint Runner CLI',
 		'positionalArgs' => [
@@ -369,6 +380,46 @@ function handleExecCommand( array $positionalArgs, array $options, array $comman
 		$progressReporter->reportError(sprintf("Permission Error: %s", $ex->getMessage()), $ex);
 		$progressReporter->reportError(sprintf("Tip: Run with --allow=%s to grant this permission.", $flag));
 		exit( 1 );
+	}
+}
+
+function handleInfoCommand( array $positionalArgs, array $options, array $commandConfig, ProgressReporter $progressReporter ): void {
+	// Check if help is requested for this command
+	if ( $options['help'] ) {
+		showCommandHelpMessage( 'info', $commandConfig );
+		exit( 0 );
+	}
+
+	// Convert CLI arguments to RunnerConfiguration
+	$defaults = [ 'site-path' => '.', 'site-url' => '', 'mode' => Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE, 'db-engine' => 'sqlite', 'truncate-new-site-directory' => false ];
+	$config = cliArgsToRunnerConfiguration( $positionalArgs, $options + $defaults );
+	$config->setProgressObserver( new ProgressObserver( function ( $progress, $caption ) use ( $progressReporter ) {
+		$progressReporter->reportProgress( $progress, $caption );
+	} ) );
+	$runner = new Runner( $config );
+
+	try {
+		$blueprint       = $runner->parseBlueprint();
+		$blueprint_array = $blueprint->getBlueprintArray();
+
+		echo "BLUEPRINT:\n\n";
+		foreach ( $blueprint_array as $key => $value ) {
+			echo sprintf("  %s: %s\n", $key, json_encode( $value, JSON_UNESCAPED_SLASHES ) );
+		}
+
+		echo "\n";
+		echo "EXECUTION PLAN:\n\n";
+		foreach ( $blueprint->getExecutionPlan() as $i => $step ) {
+			echo sprintf("  [%d] %s\n", $i + 1, $step['name']);
+			foreach ( $step['args'] as $key => $value ) {
+				echo '        ' . $key . ': ' . json_encode( $value, JSON_UNESCAPED_SLASHES ) . "\n";
+			}
+			echo "\n";
+		}
+
+		exit( $blueprint->isValid() ? 0 : 1 );
+	} catch ( InvalidArgumentException $e ) {
+		throw new InvalidArgumentException( sprintf( "Invalid Blueprint reference: %s. Hint: paths must start with ./ or /. URLs must start with http:// or https://.", $positionalArgs[0] ) );
 	}
 }
 
@@ -619,6 +670,9 @@ try {
 	switch ( $command ) {
 		case 'exec':
 			handleExecCommand( $positionalArgs, $options, $commandConfigurations[ $command ], $progressReporter );
+			break;
+		case 'info':
+			handleInfoCommand( $positionalArgs, $options, $commandConfigurations[ $command ], $progressReporter );
 			break;
 		case 'help':
 			handleHelpCommand( $positionalArgs, $options, $commandConfigurations, $progressReporter );
