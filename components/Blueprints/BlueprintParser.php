@@ -78,12 +78,26 @@ class BlueprintParser {
         // Create the execution plan.
         $execution_plan = $this->createExecutionPlan( $blueprint_array );
 
+        // Collect errors from the plan.
+        $errors = [];
+        foreach ( $execution_plan as $step ) {
+            if ( isset( $step['errors'] ) && count( $step['errors'] ) > 0 ) {
+                $errors[$step['key']] = array_merge(
+                    $errors[$step['key']] ?? [],
+                    $step['errors']
+                );
+            } else {
+                unset( $step['errors'] );
+            }
+        }
+
         return new Blueprint(
             $blueprint_string,
             $blueprint_array,
             $php_version_constraint,
             $wp_version_constraint,
-            $execution_plan
+            $execution_plan,
+            $errors
         );
     }
 
@@ -313,8 +327,10 @@ class BlueprintParser {
 
     private function buildConstantsStep( array $constants ): array {
         return [
+            'key'    => 'constants',
             'name'   => 'defineConstants',
             'args'   => [ 'constants' => $constants ],
+            'errors' => [],
         ];
     }
 
@@ -322,8 +338,10 @@ class BlueprintParser {
         // Ensure siteUrl is not included as per schema Omit<>
         unset( $site_options['siteUrl'] );
         return [
+            'key'    => 'siteOptions',
             'name'   => 'setSiteOptions',
             'args'   => [ 'options' => $site_options ],
+            'errors' => [],
         ];
     }
 
@@ -339,14 +357,17 @@ class BlueprintParser {
         }
 
         return [
+            'key'    => 'muPlugins',
             'name'   => 'writeFiles',
             'args'   => [ 'files' => $files ],
+            'errors' => [],
         ];
     }
 
     private function buildThemeStep( $theme ): array {
         if ( is_string( $theme ) ) {
             $step = [
+                'key'  => 'themes',
                 'name' => 'installTheme',
                 'args' => [
                     'source'               => $theme,
@@ -357,6 +378,7 @@ class BlueprintParser {
         } elseif ( is_array( $theme ) && isset( $theme['source'] ) && is_string( $theme['source'] ) ) {
             // Pass through the raw definition for extensibility.
             $step = [
+                'key'  => 'themes',
                 'name' => 'installTheme',
                 'args' => [
                     'source'               => $theme['source'],
@@ -369,6 +391,8 @@ class BlueprintParser {
             throw new InvalidArgumentException( 'Invalid theme reference format in "themes" array.' );
         }
 
+        $error = $this->validateDataSource( $step['args']['source'], 'wp-content/themes/*' );
+        $step['errors'] = $error ? [$error] : [];
         return $step;
     }
 
@@ -377,7 +401,9 @@ class BlueprintParser {
             $theme = [ 'source' => $theme ];
         }
         $theme['active'] = true;
-        return $this->buildThemeStep( $theme );
+        $step = $this->buildThemeStep( $theme );
+        $step['key'] = 'activeTheme';
+        return $step;
     }
 
     private function buildPluginStep( $plugin ): array {
@@ -385,65 +411,113 @@ class BlueprintParser {
             $plugin = [ 'source' => $plugin ];
         }
 
+        $error = $this->validateDataSource( $plugin['source'], 'wp-content/plugins/*' );
         return [
+            'key'    => 'plugins',
             'name'   => 'installPlugin',
             'args'   => $plugin,
+            'errors' => $error ? [$error] : [],
         ];
     }
 
     private function buildMediaStep( $media ): array {
+        $errors = [];
+        foreach ( $media as $media_def ) {
+            $source = is_array( $media_def ) ? $media_def['source'] : $media_def;
+            $error = $this->validateDataSource( $source, 'wp-content/uploads/*' );
+            if ( $error ) {
+                $errors[] = $error;
+            }
+        }
+
         return [
+            'key'    => 'media',
             'name'   => 'importMedia',
             'args'   => [ 'media' => $media ],
+            'errors' => $errors,
         ];
     }
 
     private function buildSiteLanguageStep( $site_language ): array {
         return [
+            'key'    => 'siteLanguage',
             'name'   => 'setSiteLanguage',
             'args'   => [ 'language' => $site_language ],
+            'errors' => [],
         ];
     }
 
     private function buildRolesStep( $roles ): array {
         return [
+            'key'    => 'roles',
             'name'   => 'createRoles',
             'args'   => [ 'roles' => $roles ],
+            'errors' => [],
         ];
     }
 
     private function buildUsersStep( $users ): array {
         return [
+            'key'    => 'users',
             'name'   => 'createUsers',
             'args'   => [ 'users' => $users ],
+            'errors' => [],
         ];
     }
 
     private function buildPostTypesStep( $post_types ): array {
         return [
+            'key'    => 'postTypes',
             'name'   => 'createPostTypes',
             'args'   => [ 'postTypes' => $post_types ],
+            'errors' => [],
         ];
     }
 
     private function buildContentStep( $content ): array {
         // @TODO: Consider splitting this into multiple importContent steps,
         //        one per piece of content.
+        $errors = [];
+        foreach ( $content as $content_def ) {
+            if ( 'posts' === $content_def['type'] ) {
+                if ( isset( $content_def['source'] ) ) {
+                    $sources = $content_def['source'];
+                } else {
+                    $sources = $content_def;
+                }
+
+                if ( ! is_array( $sources ) ) {
+                    $sources = [ $sources ];
+                }
+
+                foreach ( $sources as $source ) {
+                    $error = $this->validateDataSource( $source, 'wp-content/content/posts/*' );
+                    if ( $error ) {
+                        $errors[] = $error;
+                    }
+                }
+            }
+        }
+
         return [
+            'key'    => 'content',
             'name'   => 'importContent',
             'args'   => [ 'content' => $content ],
+            'errors' => $errors,
         ];
     }
 
     private function buildAdditionalStepsAfterExecution( $step_data ): array {
         return [
+            'key'    => 'additionalStepsAfterExecution',
             'name'   => $step_data['step'],
             'args'   => $step_data,
+            'errors' => [],
         ];
     }
 
     private function validateDataSource( string $source, string $allowed_pattern ): ?string {
-        if ( strlen( $source ) === 0 ) {
+        if ( 0 === strlen( $source ) ) {
             return 'Source must be a non-empty string.';
         }
 
@@ -456,9 +530,9 @@ class BlueprintParser {
         $byte_1 = $source[0];
         $byte_2 = $source[1] ?? null;
         if ( str_contains( $source, '/' ) ) {
-            if ( $byte_1 === '/' ) {
+            if ( '/' === $byte_1 ) {
                 $source = substr( $source, 1 );
-            } elseif ( $byte_1 === '.' && $byte_2 === '/' ) {
+            } elseif ( '.' === $byte_1 && '/' === $byte_2 ) {
                 $source = substr( $source, 2 );
             }
 

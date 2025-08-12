@@ -402,6 +402,17 @@ function handleInfoCommand( array $positionalArgs, array $options, array $comman
 		$blueprint       = $runner->parseBlueprint();
 		$blueprint_array = $blueprint->getBlueprintArray();
 
+		if ( ! $blueprint->isValid() ) {
+			echo "ERRORS FOUND:\n\n";
+			foreach ( $blueprint->getErrors() as $step => $errors ) {
+				echo sprintf("  %s:\n", $step);
+				foreach ( $errors as $error ) {
+					echo sprintf("    %s\n", $error);
+				}
+			}
+			echo "\n";
+		}
+
 		echo "BLUEPRINT:\n\n";
 		foreach ( $blueprint_array as $key => $value ) {
 			echo sprintf("  %s: %s\n", $key, json_encode( $value, JSON_UNESCAPED_SLASHES ) );
