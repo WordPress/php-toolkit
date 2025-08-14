@@ -82,10 +82,16 @@ class BlueprintParser {
         $errors = [];
         foreach ( $execution_plan as $step ) {
             if ( isset( $step['errors'] ) && count( $step['errors'] ) > 0 ) {
-                $errors[$step['key']] = array_merge(
-                    $errors[$step['key']] ?? [],
-                    $step['errors']
-                );
+                $key = $step['key'];
+                foreach ( $step['errors'] as $error ) {
+                    if ( ! isset( $errors[$key] ) ) {
+                        $errors[$key] = [];
+                    }
+                    $errors[$key][] = [
+                        'line'    => $this->estimateJsonLine( $blueprint_string, $key ),
+                        'message' => $error,
+                    ];
+                }
             } else {
                 unset( $step['errors'] );
             }
@@ -545,6 +551,61 @@ class BlueprintParser {
             }
         }
 
+        return null;
+    }
+
+    /**
+     * Detect on which line a top-level JSON key is defined in the input string.
+     * This is a simple helper that only supports top-level keys in a top-level
+     * JSON object. It could be extended to support more cases in the future.
+     */
+    private function estimateJsonLine( string $json, string $key ): ?int {
+        $inside_quotes     = false;
+        $expect_object_key = false;
+        $line_number       = 1;
+        $nesting_level     = 0;
+        $value             = '';
+        for ( $i = 0; $i < strlen( $json ); $i++ ) {
+            $byte = $json[$i];
+
+            // Inside quotes, only collect the value.
+            if ( $inside_quotes ) {
+                $prev_byte = $json[$i - 1] ?? null;
+                if ( '"' === $byte && '\\' !== $prev_byte ) {
+                    $inside_quotes = false;
+                    if ( $expect_object_key && $value === $key && 1 === $nesting_level ) {
+                        return $line_number;
+                    }
+                }
+                $value .= $byte;
+                continue;
+            }
+
+            // Outside quotes, " starts a new value.
+            if ( '"' === $byte ) {
+                $inside_quotes = true;
+                $value = '';
+                continue;
+            }
+
+            // Outside quotes, "{" starts a new nesting level and "}" closes it.
+            if ( '{' === $byte ) {
+                $nesting_level++;
+                $expect_object_key = true;
+            } elseif ( '}' === $byte ) {
+                $nesting_level--;
+            }
+
+            if ( ':' === $byte ) {
+                $expect_object_key = false;
+            } elseif ( ',' === $byte ) {
+                $expect_object_key = true;
+            }
+
+            if ( "\n" === $byte ) {
+                $line_number++;
+            }
+        }
         return null;
     }
 }

@@ -407,7 +407,11 @@ function handleInfoCommand( array $positionalArgs, array $options, array $comman
 			foreach ( $blueprint->getErrors() as $step => $errors ) {
 				echo sprintf("  %s:\n", $step);
 				foreach ( $errors as $error ) {
-					echo sprintf("    %s\n", $error);
+					echo sprintf(
+						"    %s%s\n",
+						$error['message'],
+						$error['line'] ? sprintf( " (%s:%d)", $positionalArgs[0], $error['line'] ) : ''
+					);
 				}
 			}
 			echo "\n";
