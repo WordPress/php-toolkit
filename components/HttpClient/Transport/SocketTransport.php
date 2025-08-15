@@ -249,7 +249,9 @@ class SocketTransport implements TransportInterface {
 	protected function enable_crypto( array $requests ) {
 		foreach ( $this->stream_select( $requests, static::STREAM_SELECT_WRITE ) as $request ) {
 			@stream_set_timeout( $this->state->connections[ $request->id ]->http_socket, 1 );
-			$enabled_crypto = stream_socket_enable_crypto(
+
+			// Use @ to suppress warnings. They're collected by error_get_last().
+			$enabled_crypto = @stream_socket_enable_crypto(
 				$this->state->connections[ $request->id ]->http_socket,
 				true,
 				STREAM_CRYPTO_METHOD_TLS_CLIENT
