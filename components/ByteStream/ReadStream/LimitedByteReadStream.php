@@ -40,8 +40,4 @@ class LimitedByteReadStream extends BaseByteReadStream {
 	protected function seek_outside_of_buffer( int $target_offset ): void {
 		$this->upstream->seek( $this->initial_offset + $target_offset );
 	}
-
-	protected function internal_close_reading(): void {
-		$this->upstream->close_reading();
-	}
 }
