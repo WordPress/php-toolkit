@@ -178,6 +178,7 @@ class ClientState {
 		$connection = $this->connections[ $request->id ];
 		if (
 			$request->state === Request::STATE_RECEIVING_BODY ||
+			$request->state === Request::STATE_RECEIVED ||
 			$request->state === Request::STATE_FINISHED
 		) {
 			return $connection->consume_buffer();
