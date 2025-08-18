@@ -25,6 +25,9 @@ class Connection {
 	}
 
 	public function time_elapsed_ms() {
-		return (microtime( true ) - $this->started_at) * 1000;
+		if ( null === $this->started_at ) {
+			return 0;
+		}
+		return ( microtime( true ) - $this->started_at ) * 1000;
 	}
 }

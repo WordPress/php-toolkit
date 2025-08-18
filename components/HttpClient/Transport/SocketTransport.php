@@ -55,7 +55,7 @@ class SocketTransport implements TransportInterface {
 		]) as $request ) {
 			$time_elapsed_ms = $this->state->connections[ $request->id ]->time_elapsed_ms();
 			if ( $time_elapsed_ms > $this->state->request_timeout_ms ) {
-				$this->set_error( $request, new HttpError( sprintf( 'Request timed out after %s seconds.', $time_elapsed_ms ) ) );
+				$this->set_error( $request, new HttpError( sprintf( 'Request timed out after %d ms.', (int) $time_elapsed_ms ) ) );
 			}
 		}
 
@@ -156,7 +156,7 @@ class SocketTransport implements TransportInterface {
 				'tcp://' . $host . ':' . $port,
 				$errno,
 				$errstr,
-				$this->state->request_timeout_ms,
+				$this->state->request_timeout_ms / 1000,
 				STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT,
 				$context
 			);
