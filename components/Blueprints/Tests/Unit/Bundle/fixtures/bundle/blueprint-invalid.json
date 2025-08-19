@@ -1,0 +1,28 @@
+{
+	"version": 2,
+	"muPlugins": [
+	],
+	"plugins": [
+		"./wp-content/invalid/invalid-plugin-file.php",
+		"./wp-content/invalid/invalid-plugin-dir",
+		"./wp-content/plugins/non-existent-plugin-file.php",
+		"./wp-content/plugins/non-existent-plugin-dir",
+		"./wp-content/plugins/non-existent-plugin-zip.zip",
+		"./wp-content/plugins/invalid-plugin-file.txt",
+		"./wp-content/plugins/invalid-plugin-file.php"
+	],
+	"themes": [
+		"./wp-content/invalid/invalid-theme-dir",
+		"./wp-content/invalid/invalid-theme-zip-dir.zip",
+		"./wp-content/themes/non-existent-theme-dir",
+		"./wp-content/themes/non-existent-theme-zip.zip",
+		"./wp-content/themes/invalid-theme-file.php",
+		"./wp-content/themes/invalid-theme-dir",
+		"./wp-content/themes/invalid-theme-zip-dir.zip"
+	],
+	"media": [
+		"./wp-content/invalid/invalid-media-file.jpg"
+	],
+	"content": [
+	]
+}

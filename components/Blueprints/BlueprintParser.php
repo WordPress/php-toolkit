@@ -19,8 +19,14 @@ class BlueprintParser {
      */
     private $configuration;
 
+    /**
+     * @var BundleValidator
+     */
+    private $bundle_validator;
+
     public function __construct( RunnerConfiguration $configuration ) {
         $this->configuration = $configuration;
+        $this->bundle_validator = new BundleValidator( $configuration );
     }
 
     public function parse( string $blueprint_string ): Blueprint {
@@ -397,7 +403,7 @@ class BlueprintParser {
             throw new InvalidArgumentException( 'Invalid theme reference format in "themes" array.' );
         }
 
-        $error = $this->validateDataSource( $step['args']['source'], 'wp-content/themes/*' );
+        $error = $this->bundle_validator->validate_theme_source( $step['args']['source'] );
         $step['errors'] = $error ? [$error] : [];
         return $step;
     }
@@ -417,7 +423,10 @@ class BlueprintParser {
             $plugin = [ 'source' => $plugin ];
         }
 
-        $error = $this->validateDataSource( $plugin['source'], 'wp-content/plugins/*' );
+        $error = null;
+        if ( isset( $plugin['source'] ) ) {
+            $error = $this->bundle_validator->validate_plugin_source( $plugin['source'] );
+        }
         return [
             'key'    => 'plugins',
             'name'   => 'installPlugin',
@@ -430,7 +439,7 @@ class BlueprintParser {
         $errors = [];
         foreach ( $media as $media_def ) {
             $source = is_array( $media_def ) ? $media_def['source'] : $media_def;
-            $error = $this->validateDataSource( $source, 'wp-content/uploads/*' );
+            $error  = $this->bundle_validator->validate_media_source( $source );
             if ( $error ) {
                 $errors[] = $error;
             }
@@ -497,7 +506,7 @@ class BlueprintParser {
                 }
 
                 foreach ( $sources as $source ) {
-                    $error = $this->validateDataSource( $source, 'wp-content/content/posts/*' );
+                    $error = $this->bundle_validator->validate_content_source( $source );
                     if ( $error ) {
                         $errors[] = $error;
                     }
@@ -520,38 +529,6 @@ class BlueprintParser {
             'args'   => $step_data,
             'errors' => [],
         ];
-    }
-
-    private function validateDataSource( string $source, string $allowed_pattern ): ?string {
-        if ( 0 === strlen( $source ) ) {
-            return 'Source must be a non-empty string.';
-        }
-
-        // 1. Absolute URL.
-        if ( str_contains( $source, '://' ) ) {
-            return null;
-        }
-
-        // 2. Bundle-relative path.
-        $byte_1 = $source[0];
-        $byte_2 = $source[1] ?? null;
-        if ( str_contains( $source, '/' ) ) {
-            if ( '/' === $byte_1 ) {
-                $source = substr( $source, 1 );
-            } elseif ( '.' === $byte_1 && '/' === $byte_2 ) {
-                $source = substr( $source, 2 );
-            }
-
-            if ( ! fnmatch( $allowed_pattern, $source ) ) {
-                return sprintf(
-                    'Invalid path "%s". Expected to match "%s".',
-                    $source,
-                    $allowed_pattern
-                );
-            }
-        }
-
-        return null;
     }
 
     /**
