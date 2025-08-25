@@ -205,6 +205,7 @@ class RequestReadStream extends BaseByteReadStream {
 		return (
 			Request::STATE_FINISHED === $this->request->latest_redirect()->state &&
 			! $this->client->has_pending_event( $this->request, Client::EVENT_BODY_CHUNK_AVAILABLE ) &&
+			! $this->client->has_pending_event( $this->request, Client::EVENT_FINISHED ) &&
 			strlen( $this->buffer ) === $this->offset_in_current_buffer
 		);
 	}

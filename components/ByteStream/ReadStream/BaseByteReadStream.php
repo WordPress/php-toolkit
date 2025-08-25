@@ -174,8 +174,7 @@ abstract class BaseByteReadStream implements ByteReadStream {
 
 	public function close_reading(): void {
 		$this->is_read_closed = true;
-		// @TODO: Closing the underlying stream here breaks the tests. Why?
-		// $this->internal_close_reading();
+		$this->internal_close_reading();
 	}
 
 	protected function internal_close_reading(): void {

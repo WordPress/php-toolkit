@@ -131,7 +131,7 @@ class SocketTransportTest extends ClientTestBase {
             $client->enqueue( $request );
 
             $error_occurred = false;
-            while ( $client->await_next_event( [ 'requests' => [ $request ], 'timeout_ms' => 2000 ] ) ) {
+            while ( $client->await_next_event( [ 'requests' => [ $request ] ] ) ) {
                 switch ( $client->get_event() ) {
                     case Client::EVENT_FAILED:
                         $error_occurred = true;
@@ -145,21 +145,15 @@ class SocketTransportTest extends ClientTestBase {
     }
 
 	public function errorProvider() {
-		$cases = [
+		return [
 			'Broken Connection' => [ 'broken-connection', ['Connection closed while reading response headers.', 'Request timed out'] ],
 			'Invalid Response' => [ 'invalid-response', 'Malformed HTTP headers received from the server.' ],
 			'Unsupported Encoding' => [ 'unsupported-encoding', 'Unsupported transfer encoding received from the server: unsupported' ],
 			'Incomplete Status Line' => [ 'incomplete-status-line', 'Malformed HTTP headers received from the server.' ],
 			'Early EOF Headers' => [ 'early-eof-headers', ['Connection closed while reading response headers.', 'Request timed out' ]],
+			'Timeout' => [ 'timeout', 'Request timed out' ],
+			'Timeout Read Body' => [ 'timeout-read-body', 'Request timed out' ],
 		];
-
-		// @TODO: Support these tests on PHP < 8.0
-		if(PHP_VERSION_ID >= 80000) {
-			$cases['Timeout'] = [ 'timeout', 'Request timed out' ]; // Client-side timeout
-			// @TODO: Fix this test. It's flaky between OSes and PHP versions.
-			// $cases['Timeout Read Body'] = [ 'timeout-read-body', 'Request timed out' ]; // Timeout during body read
-		}
-		return $cases;
 	}
 
     protected function getClientSpecificErrorMessages(): array {
