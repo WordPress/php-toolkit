@@ -105,10 +105,9 @@ class SeekableRequestReadStream implements ByteReadStream {
 	public function consume_all(): string {
 		while ( ! $this->remote->reached_end_of_data() ) {
 			$pulled = $this->remote->pull( BaseByteReadStream::CHUNK_SIZE );
-			if ( 0 === $pulled ) {
-				break;
+			if ( $pulled > 0 ) {
+				$this->cache->append_bytes( $this->remote->consume( $pulled ) );
 			}
-			$this->cache->append_bytes( $this->remote->consume( $pulled ) );
 		}
 		$this->cache->close_writing();
 

@@ -3,6 +3,7 @@
 namespace WordPress\HttpClient\Tests;
 
 use PHPUnit\Framework\TestCase;
+use WordPress\ByteStream\ByteStreamException;
 use WordPress\HttpClient\ByteStream\SeekableRequestReadStream;
 use WordPress\HttpClient\Request;
 
@@ -85,9 +86,12 @@ class SeekableRequestReadStreamTest extends TestCase {
 	public function testCloseReading() {
 		$this->withServer(function($url) {
 			$stream = $this->createStream($url);
-			$stream->pull( 10 );
+			// At the moment, cancelling "RequestReadStream" is not implemented.
+			// Therefore, we won't pull any data and will expect an exception.
+			// $stream->pull( 10 );
+			$this->expectException( ByteStreamException::class );
+			$this->expectExceptionMessage( 'Cancelling the request is not implemented yet' );
 			$stream->close_reading();
-			$this->expectNotToPerformAssertions(); // No exception means pass
 		});
 	}
 }

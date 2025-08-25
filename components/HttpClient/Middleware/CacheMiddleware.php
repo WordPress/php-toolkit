@@ -61,13 +61,15 @@ final class CacheMiddleware implements MiddlewareInterface {
 
 	public function await_next_event( $requests_ids ): bool {
 		/* serve cached replay first */
-		foreach ( $this->replay as $id => $context ) {
-			if ( $context['done'] ) {
-				fclose( $context['file'] );
-				unset( $this->replay[ $id ] );
-				continue;
-			}
+		$id = array_keys( $this->replay )[0] ?? null;
+		if ( null !== $id ) {
 			$this->fromCache( $id );
+
+			// When done, close the file handle and clean up the replay entry.
+			if ( $this->replay[ $id ]['done'] ) {
+				fclose( $this->replay[ $id ]['file'] );
+				unset( $this->replay[ $id ] );
+			}
 			return true;
 		}
 		
@@ -413,9 +415,18 @@ final class CacheMiddleware implements MiddlewareInterface {
 		if ( $fp = @fopen( $metaFile, 'c' ) ) {
 			flock( $fp, LOCK_EX );
 		}
+
 		// Delete cache files if they exist
 		@unlink( $bodyFile );
+		if ( 'Windows' === PHP_OS_FAMILY && PHP_VERSION_ID < 70300 && isset( $fp ) && $fp ) {
+			// On Windows, PHP 7.2 or earlier can't "unlink()" files with handles in use.
+			// In that case, we need to first release the lock, and then unlink the file.
+			flock( $fp, LOCK_UN );
+			fclose( $fp );
+			unset( $fp );
+		}
 		@unlink( $metaFile );
+
 		// Also remove any temp files for this entry
 		foreach ( glob( $bodyFile . '.tmp*' ) as $tmp ) {
 			@unlink( $tmp );
