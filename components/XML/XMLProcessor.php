@@ -25,10 +25,9 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *
  * ### Possible future direction for this module
  *
- * The final goal is to support both 1.0 and 1.1 depending on the
- * initial processing instruction (<?xml version="1.0" ?>). We're
- * starting with 1.0, however, because most that's what most WXR
- * files declare.
+ * XMLProcessor only aims to support XML 1.0, which is mostly well-defined and
+ * supported across the web. There are no plans to extend the parsing logic to XML 1.1,
+ * which is a more complex specification and not so widely supported.
  *
  * @TODO: Include the cursor string in internal bookmarks and use it for seeking.
  *
