@@ -342,6 +342,31 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *
  * The XMLProcessor assumes that the input XML document is encoded with a
  * UTF-8 encoding and will refuse to process documents that declare other encodings.
+ * 
+ * ### Namespaces
+ *
+ * Namespaces are first-class citizens in the XMLProcessor. Methods such as `set_attribute()` and `remove_attribute()`
+ * require the full namespace URI, not just the local name. The XML specification treats the local
+ * name as a mere syntax sugar. The actual matching is always done on the fully qualified namespace name.
+ *
+ * Example:
+ *
+ *     $processor = XMLProcessor::from_string( '<root xmlns:wp="http://wordpress.org/export/1.2/"><wp:image src="cat.jpg" /></root>' );
+ *     $processor->next_tag( 'image' );
+ *     $local_name = $processor->get_tag_local_name(); // 'image'
+ *     $ns = $processor->get_tag_namespace(); // 'http://wordpress.org/export/1.2/'
+ *     echo $processor->get_tag_namespace_and_local_name(); // '{http://wordpress.org/export/1.2/}image'
+ *
+ * #### Internal representation of names
+ *
+ * Internally, the XMLProcessor stores names using the following format:
+ * 
+ *     {namespace}local_name
+ * 
+ * It's safe, because the "{" and "}" bytes cannot be used in tag names or attribute names:
+ * 
+ *     [4]   	NameStartChar  ::=   	":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
+ *     [4a]   	NameChar	   ::=   	NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F] | [#x203F-#x2040]
  *
  * @since WP_VERSION
  */

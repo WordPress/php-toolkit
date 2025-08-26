@@ -94,7 +94,7 @@ abstract class BaseByteReadStream implements ByteReadStream {
 			if ( $this->reached_end_of_data() ) {
 				return $body;
 			}
-			$consumable = $this->pull( 64 * 1024 );
+			$consumable = $this->pull( self::CHUNK_SIZE );
 			$body       .= $this->consume( $consumable );
 		}
 	}
