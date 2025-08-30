@@ -20,7 +20,7 @@ class MemoryPipe extends BaseByteReadStream implements ByteWriteStream {
 			// to clean up old data as we stream it.
 			// If we did clean up old data, we would lose the ability to seek() to
 			// the beginning of the buffer.
-			$this->buffer_size = PHP_INT_MAX;
+			$this->max_lookbehind_bytes = PHP_INT_MAX;
 		} elseif ( null !== $expected_length ) {
 			$this->expected_length = $expected_length;
 		}

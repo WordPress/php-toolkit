@@ -106,7 +106,7 @@ class FileReadWriteStreamTest extends TestCase {
 		$stream->seek( 0 );
 		$stream->pull( 3000, FileReadWriteStream::PULL_EXACTLY );
 		$stream->consume( 3000 );
-		// After consuming, buffer should be trimmed to buffer_size (2048)
+		// After consuming, buffer should be trimmed to max_lookbehind_bytes (2048)
 		$reflection = new ReflectionClass( $stream );
 		$bufferProp = $reflection->getProperty( 'buffer' );
 		$bufferProp->setAccessible( true );

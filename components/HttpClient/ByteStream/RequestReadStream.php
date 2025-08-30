@@ -45,8 +45,8 @@ class RequestReadStream extends BaseByteReadStream {
 		}
 		$this->client  = $options['client'] ?? new Client();
 		$this->request = $request;
-		if ( isset( $options['buffer_size'] ) ) {
-			$this->buffer_size = $options['buffer_size'];
+		if ( isset( $options['max_lookbehind_bytes'] ) ) {
+			$this->max_lookbehind_bytes = $options['max_lookbehind_bytes'];
 		}
 		if ( isset( $options['progress_tracker'] ) ) {
 			$this->progress_tracker = $options['progress_tracker'];
