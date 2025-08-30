@@ -21,7 +21,7 @@ use function WordPress\Encoding\utf8_codepoint_at;
  * * Well-formed
  * * UTF-8 encoded
  * * Not standalone (so can use external entities)
- * * No DTD, DOCTYPE, ATTLIST, ENTITY, or conditional sections
+ * * No DTD, DOCTYPE, ATTLIST, ENTITY, or conditional sections (will fail on them)
  *
  * ### Possible future direction for this module
  *
@@ -34,7 +34,7 @@ use function WordPress\Encoding\utf8_codepoint_at;
  * @TODO: Track specific error states, expose informative messages, line
  *        numbers, indexes, and other debugging info.
  *
- * @TODO: Skip over the following syntax elements:
+ * @TODO: Skip over the following syntax elements instead of failing:
  *        * <!DOCTYPE, see https://www.w3.org/TR/xml/#sec-prolog-dtd
  *        * <!ATTLIST, see https://www.w3.org/TR/xml/#attdecls
  *        * <!ENTITY, see https://www.w3.org/TR/xml/#sec-entity-decl
