@@ -7,7 +7,7 @@ use WordPress\ByteStream\NotEnoughDataException;
 
 abstract class BaseByteReadStream implements ByteReadStream {
 
-	const CHUNK_SIZE = 64 * 1024;
+	const CHUNK_SIZE_BYTES = 64 * 1024; // 64kb
 
 	protected $buffer_size = 2048;
 
@@ -21,7 +21,7 @@ abstract class BaseByteReadStream implements ByteReadStream {
 		return $this->expected_length;
 	}
 
-	public function pull( $n = self::CHUNK_SIZE, $mode = self::PULL_NO_MORE_THAN ): int {
+	public function pull( $n = self::CHUNK_SIZE_BYTES, $mode = self::PULL_NO_MORE_THAN ): int {
 		switch ( $mode ) {
 			case self::PULL_NO_MORE_THAN:
 			case self::PULL_EXACTLY:
@@ -83,7 +83,7 @@ abstract class BaseByteReadStream implements ByteReadStream {
 	}
 
 	protected function pull_no_more_than( $n ): int {
-		$this->buffer .= $this->internal_pull( self::CHUNK_SIZE );
+		$this->buffer .= $this->internal_pull( self::CHUNK_SIZE_BYTES );
 
 		return min( $n, $this->count_consumable_bytes() );
 	}
@@ -94,7 +94,7 @@ abstract class BaseByteReadStream implements ByteReadStream {
 			if ( $this->reached_end_of_data() ) {
 				return $body;
 			}
-			$consumable = $this->pull( self::CHUNK_SIZE );
+			$consumable = $this->pull( self::CHUNK_SIZE_BYTES );
 			$body       .= $this->consume( $consumable );
 		}
 	}

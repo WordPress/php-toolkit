@@ -33,7 +33,7 @@ class SeekableRequestReadStream implements ByteReadStream {
 
 	private function pipe_until( int $offset ): void {
 		while ( $this->cache->length() === null || $this->cache->length() < $offset ) {
-			$pulled = $this->remote->pull( BaseByteReadStream::CHUNK_SIZE );
+			$pulled = $this->remote->pull( BaseByteReadStream::CHUNK_SIZE_BYTES );
 			if ( 0 === $pulled ) {
 				break;
 			}
@@ -104,7 +104,7 @@ class SeekableRequestReadStream implements ByteReadStream {
 
 	public function consume_all(): string {
 		while ( ! $this->remote->reached_end_of_data() ) {
-			$pulled = $this->remote->pull( BaseByteReadStream::CHUNK_SIZE );
+			$pulled = $this->remote->pull( BaseByteReadStream::CHUNK_SIZE_BYTES );
 			if ( $pulled > 0 ) {
 				$this->cache->append_bytes( $this->remote->consume( $pulled ) );
 			}
