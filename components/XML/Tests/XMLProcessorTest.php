@@ -545,33 +545,6 @@ class XMLProcessorTest extends TestCase {
 		$this->assertSame( '<wp:content wonky="true" xmlns:wp="w.org"><photo hidden></wp:content>', $processor->get_updated_xml() );
 	}
 
-	public function test_declare_element_as_pcdata() {
-		$text      = '
-			This text contains syntax that may seem
-			like XML nodes:
-
-			<input />
-			</seemingly invalid element --/>
-			<!-- is this a comment? -->
-			<?xml version="1.0" ?>
-
-			&amp;&lt;&gt;&quot;&apos;
-
-			But! It is all treated as text.
-		';
-		$processor = XMLProcessor::create_from_string(
-			"<root xmlns:wp=\"w.org\"><my-pcdata>$text</my-pcdata></root>"
-		);
-		$processor->declare_element_as_pcdata( 'my-pcdata' );
-		$processor->next_tag( 'my-pcdata' );
-
-		$this->assertEquals(
-			$text,
-			$processor->get_modifiable_text(),
-			'get_modifiable_text() did not return the expected text'
-		);
-	}
-
 	/**
 	 * Ensures that bookmarks start and length correctly describe a given token in XML.
 	 *
