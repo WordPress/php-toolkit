@@ -171,7 +171,7 @@ class SetSiteLanguageStep implements StepInterface {
 				// @see Runtime for more details on these options
 				'progress_tracker' => $progress[ $k ],
 				'eagerly_enqueue'  => true,
-				'buffer_size'      => 100 * 1024 * 1024,
+				'max_lookbehind_bytes'      => 100 * 1024 * 1024,
 			] );
 		}
 

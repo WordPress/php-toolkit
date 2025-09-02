@@ -7,21 +7,58 @@ use WordPress\ByteStream\NotEnoughDataException;
 
 abstract class BaseByteReadStream implements ByteReadStream {
 
-	const CHUNK_SIZE = 64 * 1024;
+	const CHUNK_SIZE_BYTES = 64 * 1024; // 64kb
 
-	protected $buffer_size = 2048;
+	/**
+	 * The maximum number of consumed bytes to keep in memory.
+	 *
+	 * For example:
+	 * 
+	 *     The quick brown fox jumps over the lazy dog.
+	 *     ^-------------------^
+	 *         consumed bytes
+	 * 
+	 * Say the maximum lookbehind bytes is 4. Then the byte stream will forget about
+	 * all consumed bytes except the last 4:
+	 * 
+	 *     fox jumps over the lazy dog.
+	 *     ^--^
+	 *       consumed but retained for seek()-ing backwards.
+	 */
+	protected $max_lookbehind_bytes = 2048;
 
+	/**
+	 * The remaining unconsumed bytes.
+	 */
 	protected $buffer = '';
+
+	/**
+	 * How many bytes have already been consumed in the current **buffer**.
+	 */
 	protected $offset_in_current_buffer = 0;
+
+	/**
+	 * How many bytes have already been forgotten in the current **stream**.
+	 */
 	protected $bytes_already_forgotten = 0;
+
+	/**
+	 * Whether the stream has been closed for reading.
+	 */
 	protected $is_read_closed = false;
+
+	/**
+	 * How many bytes are expected in the stream. Optional.
+	 *
+	 * When it's null, the stream is unbounded and length() will also return null.
+	 */
 	protected $expected_length = null;
 
 	public function length(): ?int {
 		return $this->expected_length;
 	}
 
-	public function pull( $n = self::CHUNK_SIZE, $mode = self::PULL_NO_MORE_THAN ): int {
+	public function pull( $n = self::CHUNK_SIZE_BYTES, $mode = self::PULL_NO_MORE_THAN ): int {
 		switch ( $mode ) {
 			case self::PULL_NO_MORE_THAN:
 			case self::PULL_EXACTLY:
@@ -83,7 +120,7 @@ abstract class BaseByteReadStream implements ByteReadStream {
 	}
 
 	protected function pull_no_more_than( $n ): int {
-		$this->buffer .= $this->internal_pull( self::CHUNK_SIZE );
+		$this->buffer .= $this->internal_pull( self::CHUNK_SIZE_BYTES );
 
 		return min( $n, $this->count_consumable_bytes() );
 	}
@@ -94,7 +131,7 @@ abstract class BaseByteReadStream implements ByteReadStream {
 			if ( $this->reached_end_of_data() ) {
 				return $body;
 			}
-			$consumable = $this->pull( 64 * 1024 );
+			$consumable = $this->pull( self::CHUNK_SIZE_BYTES );
 			$body       .= $this->consume( $consumable );
 		}
 	}
@@ -115,8 +152,8 @@ abstract class BaseByteReadStream implements ByteReadStream {
 		}
 		$bytes                          = substr( $this->buffer, $this->offset_in_current_buffer, $n );
 		$this->offset_in_current_buffer += $n;
-		if ( $this->offset_in_current_buffer > $this->buffer_size ) {
-			$overflow                       = $this->offset_in_current_buffer - $this->buffer_size;
+		if ( $this->offset_in_current_buffer > $this->max_lookbehind_bytes ) {
+			$overflow                       = $this->offset_in_current_buffer - $this->max_lookbehind_bytes;
 			$this->offset_in_current_buffer -= $overflow;
 			$this->bytes_already_forgotten  += $overflow;
 			$this->buffer                   = substr( $this->buffer, $overflow );

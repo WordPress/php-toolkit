@@ -111,7 +111,7 @@ class DataReferenceResolver {
 					 *
 					 * @TODO: Support ZIPs >= 100MB.
 					 */
-					'buffer_size'      => 100 * 1024 * 1024,
+					'max_lookbehind_bytes'      => 100 * 1024 * 1024,
 					'progress_tracker' => $progress_tracker,
 					'eagerly_enqueue'  => true,
 				)
