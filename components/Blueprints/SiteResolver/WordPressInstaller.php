@@ -86,84 +86,84 @@ class WordPressInstaller {
 		$tracker->set( 0.7, 'Installing WordPress' );
 		$runtime->evalPhpCodeInSubProcess(
 			<<<'PHP'
-			<?php
-			$docroot     = getenv('DOCROOT');
-			$site_url    = getenv('SITE_URL');
-			$title       = getenv('TITLE');
-			$admin_user  = getenv('ADMIN_USER');
-			$admin_pass  = getenv('ADMIN_PASS');
-			$admin_email = getenv('ADMIN_EMAIL');
-			$skip_email  = getenv('SKIP_EMAIL') === '1';
-			$host = null; $port = null; $scheme = null;
-			if ($site_url) {
-				$parts = @parse_url($site_url);
-				$host = $parts['host'] ?? null;
-				$port = $parts['port'] ?? null;
-				$scheme = $parts['scheme'] ?? null;
-			}
+<?php
+$docroot     = getenv('DOCROOT');
+$site_url    = getenv('SITE_URL');
+$title       = getenv('TITLE');
+$admin_user  = getenv('ADMIN_USER');
+$admin_pass  = getenv('ADMIN_PASS');
+$admin_email = getenv('ADMIN_EMAIL');
+$skip_email  = getenv('SKIP_EMAIL') === '1';
+$host = null; $port = null; $scheme = null;
+if ($site_url) {
+	$parts = @parse_url($site_url);
+	$host = $parts['host'] ?? null;
+	$port = $parts['port'] ?? null;
+	$scheme = $parts['scheme'] ?? null;
+}
 
-			if (!file_exists($docroot . '/wp-load.php')) {
-				fwrite(STDERR, "Blueprint Error: wp-load.php not found in DOCROOT\n");
-				exit(1);
-			}
+if (!file_exists($docroot . '/wp-load.php')) {
+	fwrite(STDERR, "Blueprint Error: wp-load.php not found in DOCROOT\n");
+	exit(1);
+}
 
-			// Ensure WordPress runs in installing context and suppress emails reliably
-			if (!defined('WP_INSTALLING')) {
-				define('WP_INSTALLING', true);
-			}
-			if ($site_url && !defined('WP_HOME')) {
-				define('WP_HOME', rtrim($site_url, '/'));
-			}
-			if ($site_url && !defined('WP_SITEURL')) {
-				define('WP_SITEURL', rtrim($site_url, '/'));
-			}
-			// Normalize web server globals to avoid platform-specific behavior
-			if ($host) {
-				$_SERVER['HTTP_HOST'] = $host . ($port ? ":$port" : '');
-				$_SERVER['SERVER_NAME'] = $host;
-			}
-			if ($scheme) {
-				$_SERVER['HTTPS'] = ($scheme === 'https') ? 'on' : 'off';
-				$_SERVER['SERVER_PORT'] = ($scheme === 'https') ? '443' : '80';
-				$_SERVER['REQUEST_SCHEME'] = $scheme;
-			}
-			if (!isset($_SERVER['REQUEST_URI'])) {
-				$_SERVER['REQUEST_URI'] = '/';
-			}
-			if (!isset($_SERVER['SERVER_PROTOCOL'])) {
-				$_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
-			}
-			if (!isset($_SERVER['REMOTE_ADDR'])) {
-				$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
-			}
-			if (!isset($_SERVER['SCRIPT_NAME'])) {
-				$_SERVER['SCRIPT_NAME'] = '/index.php';
-			}
-			if (!isset($_SERVER['DOCUMENT_ROOT'])) {
-				$_SERVER['DOCUMENT_ROOT'] = $docroot;
-			}
-			if (!isset($_SERVER['SCRIPT_FILENAME'])) {
-				$_SERVER['SCRIPT_FILENAME'] = $docroot . '/index.php';
-			}
-			require $docroot . '/wp-load.php';
-			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-			if ($skip_email) {
-				// Short-circuit wp_mail completely (introduced in WP 5.5)
-				if (function_exists('add_filter')) {
-					add_filter('pre_wp_mail', '__return_false');
-					add_filter('send_password_change_email', '__return_false');
-				}
-			}
-			wp_install($title, $admin_user, $admin_email, /*public*/ true, '', $admin_pass);
-			if ($site_url) {
-				$site_url = rtrim($site_url, '/');
-				update_option('siteurl', $site_url);
-				update_option('home', $site_url);
-			}
-			if (function_exists('flush_rewrite_rules')) {
-				flush_rewrite_rules(false);
-			}
-			PHP
+// Ensure WordPress runs in installing context and suppress emails reliably
+if (!defined('WP_INSTALLING')) {
+	define('WP_INSTALLING', true);
+}
+if ($site_url && !defined('WP_HOME')) {
+	define('WP_HOME', rtrim($site_url, '/'));
+}
+if ($site_url && !defined('WP_SITEURL')) {
+	define('WP_SITEURL', rtrim($site_url, '/'));
+}
+// Normalize web server globals to avoid platform-specific behavior
+if ($host) {
+	$_SERVER['HTTP_HOST'] = $host . ($port ? ":$port" : '');
+	$_SERVER['SERVER_NAME'] = $host;
+}
+if ($scheme) {
+	$_SERVER['HTTPS'] = ($scheme === 'https') ? 'on' : 'off';
+	$_SERVER['SERVER_PORT'] = ($scheme === 'https') ? '443' : '80';
+	$_SERVER['REQUEST_SCHEME'] = $scheme;
+}
+if (!isset($_SERVER['REQUEST_URI'])) {
+	$_SERVER['REQUEST_URI'] = '/';
+}
+if (!isset($_SERVER['SERVER_PROTOCOL'])) {
+	$_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+}
+if (!isset($_SERVER['REMOTE_ADDR'])) {
+	$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+}
+if (!isset($_SERVER['SCRIPT_NAME'])) {
+	$_SERVER['SCRIPT_NAME'] = '/index.php';
+}
+if (!isset($_SERVER['DOCUMENT_ROOT'])) {
+	$_SERVER['DOCUMENT_ROOT'] = $docroot;
+}
+if (!isset($_SERVER['SCRIPT_FILENAME'])) {
+	$_SERVER['SCRIPT_FILENAME'] = $docroot . '/index.php';
+}
+require $docroot . '/wp-load.php';
+require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+if ($skip_email) {
+	// Short-circuit wp_mail completely (introduced in WP 5.5)
+	if (function_exists('add_filter')) {
+		add_filter('pre_wp_mail', '__return_false');
+		add_filter('send_password_change_email', '__return_false');
+	}
+}
+wp_install($title, $admin_user, $admin_email, /*public*/ true, '', $admin_pass);
+if ($site_url) {
+	$site_url = rtrim($site_url, '/');
+	update_option('siteurl', $site_url);
+	update_option('home', $site_url);
+}
+if (function_exists('flush_rewrite_rules')) {
+	flush_rewrite_rules(false);
+}
+PHP
 			,
 			[
 				'DOCROOT'     => $runtime->getConfiguration()->getTargetSiteRoot(),
