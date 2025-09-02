@@ -263,6 +263,12 @@ $commandConfigurations = [
 			'db-pass'                     => [ null, true, '', 'MySQL password' ],
 			'db-name'                     => [ null, true, 'wordpress', 'MySQL database' ],
 			'db-path'                     => [ 'p', true, 'wp.db', 'SQLite file path' ],
+			// WordPress install options (used when creating a new site)
+			'wp-title'                    => [ null, true, 'WordPress Site', 'Site title used during installation' ],
+			'wp-admin-user'               => [ null, true, 'admin', 'Administrator username used during installation' ],
+			'wp-admin-pass'               => [ null, true, 'password', 'Administrator password used during installation' ],
+			'wp-admin-email'              => [ null, true, 'admin@example.com', 'Administrator email used during installation' ],
+			'wp-skip-email'               => [ null, false, false, 'Skip sending emails during installation' ],
 			'truncate-new-site-directory' => [ 't', false, false, 'Delete target directory if it exists before execution' ],
 			/**
 			 * @TODO: Reuse this error message removed from the Playground repo:
@@ -450,6 +456,23 @@ function cliArgsToRunnerConfiguration( array $positionalArgs, array $options ): 
 	}
 	$config->setTargetSiteRoot( $absoluteTargetSiteRoot );
 	$config->setTargetSiteUrl( $options['site-url'] );
+
+	// Install options
+	if ( ! empty( $options['wp-title'] ) ) {
+		$config->setInstallSiteTitle( $options['wp-title'] );
+	}
+	if ( ! empty( $options['wp-admin-user'] ) ) {
+		$config->setInstallAdminUser( $options['wp-admin-user'] );
+	}
+	if ( ! empty( $options['wp-admin-pass'] ) ) {
+		$config->setInstallAdminPassword( $options['wp-admin-pass'] );
+	}
+	if ( ! empty( $options['wp-admin-email'] ) ) {
+		$config->setInstallAdminEmail( $options['wp-admin-email'] );
+	}
+	if ( ! empty( $options['wp-skip-email'] ) ) {
+		$config->setInstallSkipEmail( true );
+	}
 
 	// Set database engine
 	if ( ! empty( $options['db-engine'] ) ) {
