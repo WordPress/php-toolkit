@@ -56,8 +56,15 @@ class RunnerConfiguration {
 	 */
 	private $sqliteIntegrationPlugin;
 
+	/**
+	 * @var DataReference|null
+	 * Reference to the WP-CLI phar file, if configured.
+	 */
+	private $wpCliReference;
+
 	public function __construct() {
 		$this->sqliteIntegrationPlugin = DataReference::create( 'https://downloads.wordpress.org/plugin/sqlite-database-integration.zip' );
+		$this->wpCliReference          = DataReference::create( 'https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar' );
 		$this->logger                  = new NoopLogger();
 		$this->permissions             = [
 			self::PERMISSION_LOCAL_FILESYSTEM_ACCESS => false,
@@ -201,6 +208,28 @@ class RunnerConfiguration {
 	 */
 	public function getSqliteIntegrationPlugin(): ?DataReference {
 		return $this->sqliteIntegrationPlugin;
+	}
+
+	/**
+	 * Set a custom DataReference for the WP-CLI phar file.
+	 *
+	 * @param  DataReference  $ref
+	 *
+	 * @return self
+	 */
+	public function setWpCliReference( DataReference $ref ): self {
+		$this->wpCliReference = $ref;
+
+		return $this;
+	}
+
+	/**
+	 * Get the DataReference for the WP-CLI phar file.
+	 *
+	 * @return DataReference
+	 */
+	public function getWpCliReference(): DataReference {
+		return $this->wpCliReference;
 	}
 
 	/**
