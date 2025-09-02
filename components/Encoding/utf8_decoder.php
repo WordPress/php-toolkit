@@ -2,7 +2,7 @@
 
 namespace WordPress\Encoding;
 
-/**
+/*
  * UTF-8 decoding pipeline by Dennis Snell (@dmsnell), originally
  * proposed in https://github.com/WordPress/wordpress-develop/pull/6883.
  *
@@ -50,7 +50,7 @@ function utf8_is_valid_byte_stream( string $bytes, int $starting_byte = 0, ?int 
 	$state         = UTF8_DECODER_ACCEPT;
 	$last_start_at = $starting_byte;
 
-	for ( $at = $starting_byte, $end = strlen( $bytes ); $at < $end && UTF8_DECODER_REJECT !== $state; $at ++ ) {
+	for ( $at = $starting_byte, $end = strlen( $bytes ); $at < $end && UTF8_DECODER_REJECT !== $state; $at++ ) {
 		if ( UTF8_DECODER_ACCEPT === $state ) {
 			$last_start_at = $at;
 		}
@@ -88,7 +88,7 @@ function utf8_code_point_count( string $bytes, ?int &$first_error_byte_at = null
 	$count         = 0;
 	$code_point    = 0;
 
-	for ( $at = 0, $end = strlen( $bytes ); $at < $end && UTF8_DECODER_REJECT !== $state; $at ++ ) {
+	for ( $at = 0, $end = strlen( $bytes ); $at < $end && UTF8_DECODER_REJECT !== $state; $at++ ) {
 		if ( UTF8_DECODER_ACCEPT === $state ) {
 			$last_start_at = $at;
 		}
@@ -96,7 +96,7 @@ function utf8_code_point_count( string $bytes, ?int &$first_error_byte_at = null
 		$state = utf8_decoder_apply_byte( $bytes[ $at ], $state, $code_point );
 
 		if ( UTF8_DECODER_ACCEPT === $state ) {
-			++ $count;
+			++$count;
 		}
 	}
 
@@ -199,28 +199,29 @@ function utf8_substr( string $text, int $from = 0, ?int $length = null ): string
 		$decoder_state = utf8_decoder_apply_byte( $text[ $position_in_input ], $decoder_state );
 
 		if ( UTF8_DECODER_ACCEPT === $decoder_state ) {
-			++ $position_in_input;
+			++$position_in_input;
 
 			if ( $seen_code_points >= $from ) {
-				++ $sliced_code_points;
+				++$sliced_code_points;
 				$buffer .= substr( $text, $code_point_at, $position_in_input - $code_point_at );
 			}
 
-			++ $seen_code_points;
+			++$seen_code_points;
 			$code_point_at = $position_in_input;
 		} elseif ( UTF8_DECODER_REJECT === $decoder_state ) {
-			$buffer .= "\u{FFFD}";
+			// "\u{FFFD}" is not supported in PHP 5.6.
+			$buffer .= "\xEF\xBF\xBD";
 
 			// Skip to the start of the next code point.
 			while ( UTF8_DECODER_REJECT === $decoder_state && $position_in_input < $end_byte ) {
-				$decoder_state = utf8_decoder_apply_byte( $text[ ++ $position_in_input ], UTF8_DECODER_ACCEPT );
+				$decoder_state = utf8_decoder_apply_byte( $text[ ++$position_in_input ], UTF8_DECODER_ACCEPT );
 			}
 
-			++ $seen_code_points;
+			++$seen_code_points;
 			$code_point_at = $position_in_input;
 			$decoder_state = UTF8_DECODER_ACCEPT;
 		} else {
-			++ $position_in_input;
+			++$position_in_input;
 		}
 	}
 
@@ -257,14 +258,15 @@ function utf8_codepoint_at( string $text, int $byte_offset = 0, &$matched_bytes 
 		$decoder_state = utf8_decoder_apply_byte( $text[ $position_in_input ], $decoder_state );
 
 		if ( UTF8_DECODER_ACCEPT === $decoder_state ) {
-			++ $position_in_input;
+			++$position_in_input;
 			$codepoint = utf8_ord( substr( $text, $code_point_at, $position_in_input - $code_point_at ) );
 			break;
 		} elseif ( UTF8_DECODER_REJECT === $decoder_state ) {
-			$codepoint = utf8_ord( "\u{FFFD}" );
+			// "\u{FFFD}" is not supported in PHP 5.6.
+			$codepoint = utf8_ord( "\xEF\xBF\xBD" );
 			break;
 		} else {
-			++ $position_in_input;
+			++$position_in_input;
 		}
 	}
 
