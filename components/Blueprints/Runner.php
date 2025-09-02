@@ -233,7 +233,7 @@ class Runner {
 
 			$progress['targetResolution']->setCaption( 'Resolving target site' );
 			$targetSiteFs   = LocalFilesystem::create( $this->configuration->getTargetSiteRoot() );
-			$wpCliReference = DataReference::create( 'https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar' );
+			$wpCliReference = $this->configuration->getWpCliReference();
 
 			$execution_context = $this->blueprintExecutionContext->get_meta();
 			if(
