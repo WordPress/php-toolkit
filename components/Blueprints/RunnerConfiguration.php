@@ -35,6 +35,26 @@ class RunnerConfiguration {
 	/**
 	 * @var string
 	 */
+	private $installSiteTitle = 'WordPress Site';
+	/**
+	 * @var string
+	 */
+	private $installAdminUser = 'admin';
+	/**
+	 * @var string
+	 */
+	private $installAdminPassword = 'password';
+	/**
+	 * @var string
+	 */
+	private $installAdminEmail = 'admin@example.com';
+	/**
+	 * @var bool
+	 */
+	private $installSkipEmail = false;
+	/**
+	 * @var string
+	 */
 	private $databaseEngine = 'mysql';
 	/**
 	 * @var mixed[]
@@ -125,6 +145,56 @@ class RunnerConfiguration {
 
 	public function getTargetSiteUrl(): string {
 		return $this->siteUrl;
+	}
+
+	public function setInstallSiteTitle( string $t ): self {
+		$this->installSiteTitle = $t;
+
+		return $this;
+	}
+
+	public function getInstallSiteTitle(): string {
+		return $this->installSiteTitle;
+	}
+
+	public function setInstallAdminUser( string $u ): self {
+		$this->installAdminUser = $u;
+
+		return $this;
+	}
+
+	public function getInstallAdminUser(): string {
+		return $this->installAdminUser;
+	}
+
+	public function setInstallAdminPassword( string $p ): self {
+		$this->installAdminPassword = $p;
+
+		return $this;
+	}
+
+	public function getInstallAdminPassword(): string {
+		return $this->installAdminPassword;
+	}
+
+	public function setInstallAdminEmail( string $e ): self {
+		$this->installAdminEmail = $e;
+
+		return $this;
+	}
+
+	public function getInstallAdminEmail(): string {
+		return $this->installAdminEmail;
+	}
+
+	public function setInstallSkipEmail( bool $skip ): self {
+		$this->installSkipEmail = $skip;
+
+		return $this;
+	}
+
+	public function getInstallSkipEmail(): bool {
+		return $this->installSkipEmail;
 	}
 
 	/**

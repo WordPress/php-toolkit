@@ -11,6 +11,7 @@ use WordPress\Blueprints\VersionStrings\VersionConstraint;
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
 use WordPress\Zip\ZipFilesystem;
+use WordPress\Blueprints\SiteResolver\WordPressInstaller;
 
 use function WordPress\Filesystem\copy_between_filesystems;
 use function WordPress\Filesystem\wp_join_unix_paths;
@@ -110,28 +111,16 @@ class NewSiteResolver {
 				}
 			}
 
-			// Perform installation using WP-CLI
-			// @TODO (low priority): Remove the WP-CLI dependency to lower the download size for blueprints.phar.
-			$progress['install_wordpress']->set( 0.7, 'Installing WordPress' );
-			$wp_cli_path = $runtime->getWpCliPath();
-			$process = $runtime->startShellCommand( [
-				'php',
-				$wp_cli_path,
-				'core',
-				'install',
-				'--path=' . $runtime->getConfiguration()->getTargetSiteRoot(),
-
-				// For Docker compatibility. If we got this far, Blueprint runner was already
-				// allowed to run as root.
-				'--allow-root',
-				'--url=' . $runtime->getConfiguration()->getTargetSiteUrl(),
-				'--title=WordPress Site',
-				'--admin_user=admin',
-				'--admin_password=password',
-				'--admin_email=admin@example.com',
-				'--skip-email',
+			// Perform core installation without WP-CLI by invoking WordPressInternals
+			$installer = new WordPressInstaller();
+			$installer->install( $runtime, $progress['install_wordpress'], [
+				'site_url'       => $runtime->getConfiguration()->getTargetSiteUrl(),
+				'title'          => $runtime->getConfiguration()->getInstallSiteTitle(),
+				'admin_user'     => $runtime->getConfiguration()->getInstallAdminUser(),
+				'admin_password' => $runtime->getConfiguration()->getInstallAdminPassword(),
+				'admin_email'    => $runtime->getConfiguration()->getInstallAdminEmail(),
+				'skip_email'     => $runtime->getConfiguration()->getInstallSkipEmail(),
 			] );
-			$process->mustRun();
 
 			if ( ! self::isWordPressInstalled( $runtime, $progress ) ) {
 				// @TODO: This breaks in Playground CLI

@@ -253,7 +253,24 @@ class Runtime {
 			// Still put the script in a temporary file as the path may be refering
 			// to a file inside the currently executed .phar archive.
 			$actual_script_path = wp_join_unix_paths( $tempDir, 'script.php' );
-			$code = '<?php function append_output( $output ) { file_put_contents( getenv("OUTPUT_FILE"), $output, FILE_APPEND ); } $_SERVER["HTTP_HOST"] = "localhost"; ?>';
+			$code = '<?php '
+				. 'function append_output( $output ) { file_put_contents( getenv("OUTPUT_FILE"), $output, FILE_APPEND ); } '
+				. 'if (!isset($_SERVER["HTTP_HOST"])) { $_SERVER["HTTP_HOST"] = "localhost"; } '
+				. 'if (!isset($_SERVER["SERVER_NAME"])) { $_SERVER["SERVER_NAME"] = $_SERVER["HTTP_HOST"]; } '
+				. 'if (!isset($_SERVER["REQUEST_URI"])) { $_SERVER["REQUEST_URI"] = "/"; } '
+				. 'if (!isset($_SERVER["SERVER_PROTOCOL"])) { $_SERVER["SERVER_PROTOCOL"] = "HTTP/1.1"; } '
+				. 'if (!isset($_SERVER["REMOTE_ADDR"])) { $_SERVER["REMOTE_ADDR"] = "127.0.0.1"; } '
+				. 'if (!isset($_SERVER["REQUEST_METHOD"])) { $_SERVER["REQUEST_METHOD"] = "GET"; } '
+				. 'if (!isset($_SERVER["HTTPS"])) { $_SERVER["HTTPS"] = "off"; } '
+				. 'if (!isset($_SERVER["SERVER_PORT"])) { $_SERVER["SERVER_PORT"] = "80"; } '
+				. 'if (!isset($_SERVER["SCRIPT_NAME"])) { $_SERVER["SCRIPT_NAME"] = "/index.php"; } '
+				. '$__docroot = getenv("DOCROOT"); '
+				. 'if ($__docroot) { '
+				. '  if (!isset($_SERVER["DOCUMENT_ROOT"])) { $_SERVER["DOCUMENT_ROOT"] = $__docroot; } '
+				. '  if (!isset($_SERVER["SCRIPT_FILENAME"])) { $_SERVER["SCRIPT_FILENAME"] = $__docroot . "/index.php"; } '
+				. '} '
+				. 'unset($__docroot); '
+				. '?>';
 			$code .= file_get_contents( $script_path );
 			file_put_contents( $actual_script_path, $code );
 
