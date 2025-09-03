@@ -283,7 +283,7 @@ class WP_HTML_Decoder {
 			}
 
 			$digits     = substr( $text, $digits_at + $zero_count, $digit_count );
-			$code_point = intval( $digits, $numeric_base );
+			$codepoint = intval( $digits, $numeric_base );
 
 			/*
 			 * Noncharacters, 0x0D, and non-ASCII-whitespace control characters.
@@ -316,7 +316,7 @@ class WP_HTML_Decoder {
 			 * > the first column, and set the character reference code to
 			 * > the number in the second column of that row.
 			 */
-			if ( $code_point >= 0x80 && $code_point <= 0x9F ) {
+			if ( $codepoint >= 0x80 && $codepoint <= 0x9F ) {
 				$windows_1252_mapping = array(
 					0x20AC, // 0x80 -> EURO SIGN (€).
 					0x81,   // 0x81 -> (no change).
@@ -352,12 +352,12 @@ class WP_HTML_Decoder {
 					0x0178, // 0x9F -> LATIN CAPITAL LETTER Y WITH DIAERESIS (Ÿ).
 				);
 
-				$code_point = $windows_1252_mapping[ $code_point - 0x80 ];
+				$codepoint = $windows_1252_mapping[ $codepoint - 0x80 ];
 			}
 
 			$match_byte_length = $end_of_span - $at;
 
-			return self::code_point_to_utf8_bytes( $code_point );
+			return self::codepoint_to_utf8_bytes( $codepoint );
 		}
 
 		/** Tracks inner parsing within the named character reference. */
@@ -422,12 +422,12 @@ class WP_HTML_Decoder {
 	 *
 	 * Example:
 	 *
-	 *     '🅰' === WP_HTML_Decoder::code_point_to_utf8_bytes( 0x1f170 );
+	 *     '🅰' === WP_HTML_Decoder::codepoint_to_utf8_bytes( 0x1f170 );
 	 *
 	 *     // Half of a surrogate pair is an invalid code point.
-	 *     '�' === WP_HTML_Decoder::code_point_to_utf8_bytes( 0xd83c );
+	 *     '�' === WP_HTML_Decoder::codepoint_to_utf8_bytes( 0xd83c );
 	 *
-	 * @param  int  $code_point  Which code point to convert.
+	 * @param  int  $codepoint  Which code point to convert.
 	 *
 	 * @return string Converted code point, or `�` if invalid.
 	 * @since 6.6.0
@@ -435,40 +435,40 @@ class WP_HTML_Decoder {
 	 * @see https://www.rfc-editor.org/rfc/rfc3629 For the UTF-8 standard.
 	 *
 	 */
-	public static function code_point_to_utf8_bytes( $code_point ): string {
+	public static function codepoint_to_utf8_bytes( $codepoint ): string {
 		// Pre-check to ensure a valid code point.
 		if (
-			$code_point <= 0 ||
-			( $code_point >= 0xD800 && $code_point <= 0xDFFF ) ||
-			$code_point > 0x10FFFF
+			$codepoint <= 0 ||
+			( $codepoint >= 0xD800 && $codepoint <= 0xDFFF ) ||
+			$codepoint > 0x10FFFF
 		) {
 			return '�';
 		}
 
-		if ( $code_point <= 0x7F ) {
-			return chr( $code_point );
+		if ( $codepoint <= 0x7F ) {
+			return chr( $codepoint );
 		}
 
-		if ( $code_point <= 0x7FF ) {
-			$byte1 = chr( ( $code_point >> 6 ) | 0xC0 );
-			$byte2 = chr( $code_point & 0x3F | 0x80 );
+		if ( $codepoint <= 0x7FF ) {
+			$byte1 = chr( ( $codepoint >> 6 ) | 0xC0 );
+			$byte2 = chr( $codepoint & 0x3F | 0x80 );
 
 			return "{$byte1}{$byte2}";
 		}
 
-		if ( $code_point <= 0xFFFF ) {
-			$byte1 = chr( ( $code_point >> 12 ) | 0xE0 );
-			$byte2 = chr( ( $code_point >> 6 ) & 0x3F | 0x80 );
-			$byte3 = chr( $code_point & 0x3F | 0x80 );
+		if ( $codepoint <= 0xFFFF ) {
+			$byte1 = chr( ( $codepoint >> 12 ) | 0xE0 );
+			$byte2 = chr( ( $codepoint >> 6 ) & 0x3F | 0x80 );
+			$byte3 = chr( $codepoint & 0x3F | 0x80 );
 
 			return "{$byte1}{$byte2}{$byte3}";
 		}
 
 		// Any values above U+10FFFF are eliminated above in the pre-check.
-		$byte1 = chr( ( $code_point >> 18 ) | 0xF0 );
-		$byte2 = chr( ( $code_point >> 12 ) & 0x3F | 0x80 );
-		$byte3 = chr( ( $code_point >> 6 ) & 0x3F | 0x80 );
-		$byte4 = chr( $code_point & 0x3F | 0x80 );
+		$byte1 = chr( ( $codepoint >> 18 ) | 0xF0 );
+		$byte2 = chr( ( $codepoint >> 12 ) & 0x3F | 0x80 );
+		$byte3 = chr( ( $codepoint >> 6 ) & 0x3F | 0x80 );
+		$byte4 = chr( $codepoint & 0x3F | 0x80 );
 
 		return "{$byte1}{$byte2}{$byte3}{$byte4}";
 	}
