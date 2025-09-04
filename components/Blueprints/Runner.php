@@ -42,11 +42,6 @@ use WordPress\Blueprints\Steps\SetSiteOptionsStep;
 use WordPress\Blueprints\Steps\UnzipStep;
 use WordPress\Blueprints\Steps\WPCLIStep;
 use WordPress\Blueprints\Steps\WriteFilesStep;
-use WordPress\Blueprints\Validator\HumanFriendlySchemaValidator;
-use WordPress\Blueprints\Versions\Version1\V1ToV2Transpiler;
-use WordPress\Blueprints\VersionStrings\PHPVersion;
-use WordPress\Blueprints\VersionStrings\VersionConstraint;
-use WordPress\Blueprints\VersionStrings\WordPressVersion;
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\Filesystem\Filesystem;
 use WordPress\Filesystem\InMemoryFilesystem;
@@ -55,7 +50,6 @@ use WordPress\HttpClient\ByteStream\RequestReadStream;
 use WordPress\HttpClient\Client;
 use WordPress\Zip\ZipFilesystem;
 
-use function WordPress\Encoding\utf8_is_valid_byte_stream;
 use function WordPress\Filesystem\wp_unix_sys_get_temp_dir;
 use function WordPress\Zip\is_zip_file_stream;
 
@@ -92,18 +86,6 @@ class Runner {
 	 * @var mixed[]
 	 */
 	private $dataReferencesToAutoResolve = [];
-	/**
-	 * @var VersionConstraint|null
-	 */
-	private $phpVersionConstraint;
-	/**
-	 * @var VersionConstraint|null
-	 */
-	private $wpVersionConstraint;
-	/**
-	 * @var string
-	 */
-	private $recommendedWpVersion = 'latest';
 	/**
 	 * @var Tracker
 	 */
@@ -200,6 +182,12 @@ class Runner {
 		}
 	}
 
+	public function parseBlueprint(): Blueprint {
+		$blueprint_string = $this->loadBlueprint();
+		$parser           = new BlueprintParser( $this->configuration );
+		return $parser->parse( $blueprint_string );
+	}
+
 	public function run(): void {
 		$tempRoot = wp_unix_sys_get_temp_dir() . '/wp-blueprints-runtime-' . uniqid();
 
@@ -223,12 +211,22 @@ class Runner {
 			$this->assets = new DataReferenceResolver( $this->client );
 
 			$progress['blueprint']->setCaption( 'Loading Blueprint data' );
-			$this->loadBlueprint();
-			$this->validateBlueprint();
+			$blueprintString = $this->loadBlueprint();
+
+			// Parse the blueprint string.
+			$parser    = new BlueprintParser( $this->configuration );
+			$blueprint = $parser->parse( $blueprintString );
+			if ( ! $blueprint->isValid() ) {
+				throw new BlueprintExecutionException( 'Invalid blueprint: ' . implode( ', ', $blueprint->getErrors() ) );
+			}
+
+			// Initialize steps based on the execution plan.
+			$plan = [];
+			foreach ( $blueprint->getExecutionPlan() as $step ) {
+				$plan[] = $this->createStepObject( $step['name'], $step['args'] );
+			}
+
 			$this->assets->setExecutionContext( $this->blueprintExecutionContext );
-			// Create the execution plan early on to surface any errors before
-			// making the user wait for any downloads or site resolution.
-			$plan = $this->createExecutionPlan();
 			$progress['blueprint']->finish();
 
 			$progress['targetResolution']->setCaption( 'Resolving target site' );
@@ -248,7 +246,7 @@ class Runner {
 				$this->configuration,
 				$this->assets,
 				$this->client,
-				$this->blueprintArray,
+				$blueprint,
 				$tempRoot,
 				$wpCliReference,
 				isset($execution_context['root']) ? $execution_context['root'] : null
@@ -259,11 +257,19 @@ class Runner {
 				'wp-cli' => $wpCliReference,
 			], $progress['wpCli'] );
 
+			// Get recommended WordPress version.
+			$wp_version_constraint = $blueprint->getWpVersionConstraint();
+			if ( null === $wp_version_constraint ) {
+				$recommended_wp_version = 'latest';
+			} else {
+				$recommended_wp_version = (string) $wp_version_constraint->getRecommended();
+			}
+
 			$progress['targetResolution']->setCaption( 'Resolving target site' );
 			if ( $this->configuration->getExecutionMode() === self::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ) {
-				ExistingSiteResolver::resolve( $this->runtime, $progress['targetResolution'], $this->wpVersionConstraint );
+				ExistingSiteResolver::resolve( $this->runtime, $progress['targetResolution'], $wp_version_constraint );
 			} else {
-				NewSiteResolver::resolve( $this->runtime, $progress['targetResolution'], $this->wpVersionConstraint, $this->recommendedWpVersion );
+				NewSiteResolver::resolve( $this->runtime, $progress['targetResolution'], $wp_version_constraint, $recommended_wp_version );
 			}
 			$progress['targetResolution']->finish();
 
@@ -363,333 +369,7 @@ class Runner {
 			}
 		}
 
-		// Validate the Blueprint string we've just loaded.
-
-		// **UTF-8 Encoding:** Assert the Blueprint input is UTF-8 encoded.
-		$is_valid_utf8 = false;
-		if ( function_exists( 'mb_check_encoding' ) ) {
-			$is_valid_utf8 = mb_check_encoding( $blueprintString, 'UTF-8' );
-		} else {
-			$is_valid_utf8 = utf8_is_valid_byte_stream( $blueprintString );
-		}
-
-		if ( ! $is_valid_utf8 ) {
-			throw new BlueprintExecutionException( 'Blueprint must be encoded as UTF-8.' );
-		}
-
-		// **JSON Validity:** Assert the input is a valid JSON document.
-		$this->blueprintArray = json_decode( $blueprintString, true );
-		if ( json_last_error() !== JSON_ERROR_NONE ) {
-			throw new BlueprintExecutionException( 'Blueprint must be a valid JSON document.' );
-		}
-
-		if ( ! is_array( $this->blueprintArray ) ) {
-			throw new BlueprintExecutionException( 'Blueprint must be an array.' );
-		}
-	}
-
-	private function validateBlueprint(): void {
-		if ( ! isset( $this->blueprintArray['version'] ) ) {
-			$error = V1ToV2Transpiler::validate_v1_blueprint( $this->blueprintArray );
-			if ( $error ) {
-				throw new BlueprintExecutionException( 'Invalid Blueprint v1 provided.', 0, null, $error );
-			}
-			$this->configuration->getLogger()->debug( 'Blueprint v1 detected. Transpiling to v2...' );
-
-			$transpiler           = new V1ToV2Transpiler( $this->configuration->getLogger() );
-			$this->blueprintArray = $transpiler->upgrade( $this->blueprintArray );
-		}
-
-		$this->configuration->getLogger()->debug( 'Final resolved Blueprint: ' . json_encode( $this->blueprintArray, JSON_PRETTY_PRINT ) );
-
-		$this->blueprintArray = apply_filters( 'blueprint.resolved', $this->blueprintArray );
-
-		// Assert the Blueprint conforms to the latest JSON schema.
-		$v     = new HumanFriendlySchemaValidator(
-			json_decode( file_get_contents( __DIR__ . '/Versions/Version2/json-schema/schema-v2.json' ), true )
-		);
-		$error = $v->validate( $this->blueprintArray );
-		if ( $error ) {
-			throw new BlueprintExecutionException( 'Blueprint does not conform to the schema.', 0, null, $error );
-		}
-
-		// PHP Version Constraint
-		if ( isset( $this->blueprintArray['phpVersion'] ) ) {
-			$min = $max = $recommended = null;
-
-			$php_version = $this->blueprintArray['phpVersion'];
-			if ( is_string( $php_version ) ) {
-				$parsed_version = PHPVersion::fromString( $php_version );
-				if ( ! $parsed_version ) {
-					throw new BlueprintExecutionException( 'Invalid PHP version string in phpVersion: ' . $php_version );
-				}
-				$recommended = $parsed_version;
-			} else {
-				if ( isset( $php_version['min'] ) ) {
-					$min = PHPVersion::fromString( $php_version['min'] );
-					if ( ! $min ) {
-						throw new BlueprintExecutionException( 'Invalid PHP version string in phpVersion.min: ' . $php_version['min'] );
-					}
-				}
-				if ( isset( $php_version['max'] ) ) {
-					$max = PHPVersion::fromString( $php_version['max'] );
-					if ( ! $max ) {
-						throw new BlueprintExecutionException( 'Invalid PHP version string in phpVersion.max: ' . $php_version['max'] );
-					}
-				}
-				if ( isset( $php_version['recommended'] ) ) {
-					$recommended = PHPVersion::fromString( $php_version['recommended'] );
-					if ( ! $recommended ) {
-						throw new BlueprintExecutionException( 'Invalid PHP version string in phpVersion.recommended: ' . $php_version['recommended'] );
-					}
-				}
-			}
-			$this->phpVersionConstraint = new VersionConstraint( $min, $max, $recommended );
-			$phpConstraintErrors        = $this->phpVersionConstraint->validate();
-			if ( ! empty( $phpConstraintErrors ) ) {
-				throw new BlueprintExecutionException( 'Invalid PHP version constraint: ' . implode( '; ', $phpConstraintErrors ) );
-			}
-
-			// Confirm the environment satisfies the PHP version constraint.
-			$currentPhpVersion = PHPVersion::fromString( PHP_VERSION );
-			if ( ! $this->phpVersionConstraint->satisfiedBy( $currentPhpVersion ) ) {
-				throw new BlueprintExecutionException(
-					sprintf(
-						'PHP version requirement not satisfied. Blueprint requires %s, but current version is %s',
-						$this->phpVersionConstraint->__toString(),
-						$currentPhpVersion
-					)
-				);
-			}
-		}
-
-		// WordPress Version Constraint
-		if ( isset( $this->blueprintArray['wordpressVersion'] ) ) {
-			$wp_version = $this->blueprintArray['wordpressVersion'];
-			$min = $max = $recommended = null;
-			if ( is_string( $wp_version ) ) {
-				$this->recommendedWpVersion = $wp_version;
-				$recommended = WordPressVersion::fromString( $wp_version );
-				if ( false === $recommended ) {
-					throw new BlueprintExecutionException( 'Invalid WordPress version string in wordpressVersion: ' . $wp_version );
-				}
-			} else {
-				if ( isset( $wp_version['min'] ) ) {
-					if ( $wp_version['min'] === 'latest' ) {
-						throw new BlueprintExecutionException(
-							'Setting wordpressVersion.min to "latest" is not allowed and probably not what you want. Either set wordPressVersion.recommended to "latest" or set wordPressVersion.min to a specific version string instead.'
-						);
-					}
-					$min = WordPressVersion::fromString( $wp_version['min'] );
-					if ( ! $min ) {
-						throw new BlueprintExecutionException( 'Invalid WordPress version string in wordpressVersion.min: ' . $wp_version['min'] );
-					}
-				}
-				// Latest version is implicitly the default and it's only for resolving
-				// the WordPress version to install. It's not used for version checks on
-				// existing sites and VersionConstraint doesn't support it. It doesn't have
-				// enough information anyway – the meaning of "latest" changes over time.
-				if ( isset( $wp_version['max'] ) && $wp_version['max'] !== 'latest' ) {
-					$this->recommendedWpVersion = $wp_version['max'];
-					$max = WordPressVersion::fromString( $wp_version['max'] );
-					if ( ! $max ) {
-						// @TODO: Reuse this error message
-						// 'Unrecognized WordPress version. Please use "latest", a URL, or a numeric version such as "6.2", "6.0.1", "6.2-beta1", or "6.2-RC1"'
-						throw new BlueprintExecutionException( 'Invalid WordPress version string in wordpressVersion.max: ' . $wp_version['max'] );
-					}
-				}
-				if ( isset( $wp_version['recommended'] ) && $wp_version['recommended'] !== 'latest' ) {
-					$this->recommendedWpVersion = $wp_version['recommended'];
-					$recommended = WordPressVersion::fromString( $wp_version['recommended'] );
-					if ( false === $recommended ) {
-						throw new BlueprintExecutionException( 'Invalid WordPress version string in wordpressVersion.recommended: ' . $wp_version['recommended'] );
-					}
-				}
-			}
-
-			$this->wpVersionConstraint = new VersionConstraint( $min, $max, $recommended );
-			$wpConstraintErrors        = $this->wpVersionConstraint->validate();
-			if ( ! empty( $wpConstraintErrors ) ) {
-				throw new BlueprintExecutionException( 'Invalid WordPress version constraint: ' . implode( '; ', $wpConstraintErrors ) );
-			}
-			// Note: In here's we're only checking if the version constraint is defined
-			// correctly. The actual version check for WordPress is done in
-			// NewSiteResolver and ExistingSiteResolver.
-		}
-
-		// Validate the override constraint if it was set
-		if ( $this->wpVersionConstraint ) {
-			$wpConstraintErrors = $this->wpVersionConstraint->validate();
-			if ( ! empty( $wpConstraintErrors ) ) {
-				throw new BlueprintExecutionException( 'Invalid WordPress version constraint from CLI override: ' . implode( '; ', $wpConstraintErrors ) );
-			}
-		}
-	}
-
-	private function createExecutionPlan(): array {
-		$validated_array = $this->blueprintArray;
-		// --- Process Declarative Properties into Steps (in order) ---
-
-		$plan = [];
-		// 1. constants
-		if ( ! empty( $validated_array['constants'] ) && is_array( $validated_array['constants'] ) ) {
-			$plan[] = $this->createStepObject( 'defineConstants', [ 'constants' => $validated_array['constants'] ] );
-		}
-
-		// 2. siteOptions
-		if ( ! empty( $validated_array['siteOptions'] ) && is_array( $validated_array['siteOptions'] ) ) {
-			// Ensure siteUrl is not included as per schema Omit<>
-			unset( $validated_array['siteOptions']['siteUrl'] );
-			if ( ! empty( $validated_array['siteOptions'] ) ) {
-				$plan[] = $this->createStepObject( 'setSiteOptions', [ 'options' => $validated_array['siteOptions'] ] );
-			}
-		}
-
-		// 3. muPlugins - Install via writeFiles step
-		if ( ! empty( $validated_array['muPlugins'] ) && is_array( $validated_array['muPlugins'] ) ) {
-			$files = [];
-			foreach ( $validated_array['muPlugins'] as $pluginPath => $pluginContent ) {
-				if ( is_string( $pluginPath ) && is_string( $pluginContent ) ) {
-					$files[ '/wp-content/mu-plugins/' . $pluginPath ] = $pluginContent;
-				} elseif ( is_string( $pluginContent ) ) {
-					// Handle numeric keys
-					$files[ '/wp-content/mu-plugins/' . basename( $pluginContent ) ] = $pluginContent;
-				}
-			}
-			if ( ! empty( $files ) ) {
-				$plan[] = $this->createStepObject( 'writeFiles', [ 'files' => $files ] );
-			}
-		}
-
-		// 4. themes (install non-active)
-		if ( ! empty( $validated_array['themes'] ) && is_array( $validated_array['themes'] ) ) {
-			foreach ( $validated_array['themes'] as $themeRef ) {
-				if ( is_string( $themeRef ) ) {
-					$plan[] = $this->createStepObject( 'installTheme', [
-						'source'               => $themeRef,
-						'active'               => false,
-						'importStarterContent' => false,
-					] );
-				} elseif ( is_array( $themeRef ) && isset( $themeRef['source'] ) && is_string( $themeRef['source'] ) ) {
-					// Pass through the raw definition for extensibility.
-					$plan[] = $this->createStepObject( 'installTheme', [
-						'source'               => $themeRef['source'],
-						'active'               => $themeRef['active'] ?? false,
-						'importStarterContent' => $themeRef['importStarterContent'] ?? false,
-						'targetDirectoryName'  => $themeRef['targetDirectoryName'] ?? null,
-					] );
-				} else {
-					throw new InvalidArgumentException( 'Invalid theme reference format in "themes" array.' );
-				}
-			}
-		}
-
-		// 5. activeTheme (install and activate)
-		if ( isset( $validated_array['activeTheme'] ) ) {
-			$themeRef = $validated_array['activeTheme'];
-			if ( is_string( $themeRef ) ) {
-				$plan[] = $this->createStepObject( 'installTheme', [
-					'source'               => $themeRef,
-					'active'               => true,
-					'importStarterContent' => false,
-				] );
-			} elseif ( is_array( $themeRef ) && isset( $themeRef['source'] ) && is_string( $themeRef['source'] ) ) {
-				$plan[] = $this->createStepObject( 'installTheme', [
-					'source'               => $themeRef['source'],
-					'active'               => true,
-					'importStarterContent' => $themeRef['importStarterContent'] ?? false,
-					'targetDirectoryName'  => $themeRef['targetDirectoryName'] ?? null,
-				] );
-			} else {
-				throw new InvalidArgumentException( 'Invalid theme reference format for "activeTheme".' );
-			}
-		}
-
-		// 6. plugins
-		if ( ! empty( $validated_array['plugins'] ) && is_array( $validated_array['plugins'] ) ) {
-			foreach ( $validated_array['plugins'] as $pluginDef ) {
-				if ( is_string( $pluginDef ) ) {
-					$pluginDef = [
-						'source' => $pluginDef,
-					];
-				}
-				$plan[] = $this->createStepObject( 'installPlugin', $pluginDef );
-			}
-		}
-
-		// 7. fonts – not directly supported; use RunPHP placeholders.
-		if ( ! empty( $validated_array['fonts'] ) && is_array( $validated_array['fonts'] ) ) {
-			throw new InvalidArgumentException( 'Your Blueprint contains a "fonts" property that is not supported yet.' );
-		}
-
-		// 8. media – Import media files
-		if ( ! empty( $validated_array['media'] ) && is_array( $validated_array['media'] ) ) {
-			$plan[] = $this->createStepObject( 'importMedia', [ 'media' => $validated_array['media'] ] );
-		}
-
-		// 9. siteLanguage
-		if ( ! empty( $validated_array['siteLanguage'] ) && is_string( $validated_array['siteLanguage'] ) ) {
-			$plan[] = $this->createStepObject( 'setSiteLanguage', [ 'language' => $validated_array['siteLanguage'] ] );
-		}
-
-		// 10. roles - create custom roles using WordPress role management
-		if ( ! empty( $validated_array['roles'] ) && is_array( $validated_array['roles'] ) ) {
-			$plan[] = $this->createStepObject( 'createRoles', [ 'roles' => $validated_array['roles'] ] );
-		}
-
-		// 11. users - create users using WordPress user management
-		if ( ! empty( $validated_array['users'] ) && is_array( $validated_array['users'] ) ) {
-			$plan[] = $this->createStepObject( 'createUsers', [ 'users' => $validated_array['users'] ] );
-		}
-
-		// 12. postTypes – generate one MU-plugin per post type, skipping those already registered.
-		if ( ! empty( $validated_array['postTypes'] ) && is_array( $validated_array['postTypes'] ) ) {
-			$plan[] = $this->createStepObject( 'createPostTypes', [ 'postTypes' => $validated_array['postTypes'] ] );
-		}
-
-		// 13. content imports
-		if ( ! empty( $validated_array['content'] ) && is_array( $validated_array['content'] ) ) {
-			// @TODO: Consider splitting this into multiple importContent steps, one per piece of content.
-			$plan[] = $this->createStepObject( 'importContent', [ 'content' => $validated_array['content'] ] );
-		}
-
-		// 14. additionalStepsAfterExecution
-		if ( ! empty( $validated_array['additionalStepsAfterExecution'] ) && is_array( $validated_array['additionalStepsAfterExecution'] ) ) {
-			foreach ( $validated_array['additionalStepsAfterExecution'] as $stepData ) {
-				$plan[] = $this->createStepObject( $stepData['step'], $stepData );
-			}
-		}
-
-		foreach ( $plan as $step ) {
-			// @TODO: Make sure this doesn't get included twice in the execution plan,
-			//        e.g. if the Blueprint specified this step manually.
-			if ( $step instanceof ImportContentStep ) {
-				// if($this->configuration->isRunningAsPhar()) {
-				// 	throw new InvalidArgumentException( '@TODO: Importing content is not supported when running as phar.' );
-				// } else {
-					$libraries_phar_path = __DIR__ . '/../../dist/php-toolkit.phar';
-					if(!file_exists($libraries_phar_path)) {
-						throw new InvalidArgumentException(
-							'In development, you must run `bash bin/build-libraries-phar.sh` to bundle importer libraries before importing content via a Blueprint. '.
-							'It generates a `dist/php-toolkit.phar` file bundling all the libraries required for importing content.'
-						);
-					}
-					$this->configuration->getLogger()->info( 'Loading importer libraries from ' . $libraries_phar_path );
-					$source = $this->createDataReference( new InlineFile( [
-						'filename' => 'php-toolkit.phar',
-						'content' => file_get_contents( $libraries_phar_path )
-					] ) );
-				// }
-				array_unshift( $plan, $this->createStepObject( 'writeFiles', [
-					'files' => [
-						'php-toolkit.phar' => $source,
-					],
-				] ) );
-				break;
-			}
-		}
-
-		return $plan;
+		return $blueprintString;
 	}
 
 	/**

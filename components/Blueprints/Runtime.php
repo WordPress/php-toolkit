@@ -51,7 +51,7 @@ class Runtime {
 	 */
 	private $client;
 	/**
-	 * @var mixed[]
+	 * @var Blueprint
 	 */
 	private $blueprint;
 	/**
@@ -72,7 +72,7 @@ class Runtime {
 		RunnerConfiguration $configuration,
 		DataReferenceResolver $assets,
 		Client $client,
-		array $blueprint,
+		Blueprint $blueprint,
 		string $tempRoot,
 		DataReference $wpCliReference,
 		?string $executionContextRoot=null
@@ -95,7 +95,7 @@ class Runtime {
 		return $this->client;
 	}
 
-	public function getBlueprint(): array {
+	public function getBlueprint(): Blueprint {
 		return $this->blueprint;
 	}
 

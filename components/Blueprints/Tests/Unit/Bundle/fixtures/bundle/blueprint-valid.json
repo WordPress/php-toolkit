@@ -1,0 +1,47 @@
+{
+	"version": 2,
+	"muPlugins": [
+		"./wp-content/mu-plugins/mu-plugin-file.php",
+        "./wp-content/mu-plugins/mu-plugin-dir",
+        "./wp-content/mu-plugins/mu-plugin-zip-file.zip",
+        "./wp-content/mu-plugins/mu-plugin-zip-dir.zip",
+		{
+			"filename": "mu-plugin-inline.php",
+			"content": "<?php /*\n * Plugin Name: MU Plugin Inline\n */ ?>"
+		}
+	],
+	"plugins": [
+		"./wp-content/plugins/plugin-file.php",
+		"./wp-content/plugins/plugin-dir",
+		"./wp-content/plugins/plugin-zip-file.zip",
+		"./wp-content/plugins/plugin-zip-dir.zip",
+		{
+			"filename": "plugin-inline.php",
+			"content": "<?php /*\n * Plugin Name: Plugin Inline\n */ ?>"
+		}
+	],
+	"themes": [
+		"./wp-content/themes/theme-dir",
+		"./wp-content/themes/theme-zip-dir.zip"
+	],
+	"media": [
+		"./wp-content/uploads/image.jpg"
+	],
+	"content": [
+		{
+			"type": "posts",
+			"source": "./wp-content/content/posts/test.xml"
+		},
+		{
+			"type": "posts",
+			"source": "./wp-content/content/invalid/test.xml"
+		},
+		{
+			"type": "posts",
+			"source": [
+				"./wp-content/content/posts/test.xml",
+				"./wp-content/content/invalid/test.xml"
+			]
+		}
+	]
+}
