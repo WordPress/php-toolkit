@@ -6,6 +6,8 @@ use WordPress\Blueprints\Progress\Tracker;
 use WordPress\Blueprints\Steps\RmStep;
 use WordPress\Filesystem\FilesystemException;
 
+require_once __DIR__ . '/StepTestCase.php';
+
 class RmStepTest extends StepTestCase {
 
 	public function testRemoveFile() {

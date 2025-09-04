@@ -6,6 +6,8 @@ use Exception;
 use WordPress\Blueprints\Progress\Tracker;
 use WordPress\Blueprints\Steps\DefineConstantsStep;
 
+require_once __DIR__ . '/StepTestCase.php';
+
 class DefineConstantsStepTest extends StepTestCase {
 	/**
 	 * Test updating existing constants

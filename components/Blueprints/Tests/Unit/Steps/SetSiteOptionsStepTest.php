@@ -5,6 +5,8 @@ namespace WordPress\Blueprints\Tests\Unit\Steps;
 use WordPress\Blueprints\Progress\Tracker;
 use WordPress\Blueprints\Steps\SetSiteOptionsStep;
 
+require_once __DIR__ . '/StepTestCase.php';
+
 class SetSiteOptionsStepTest extends StepTestCase {
 	/**
 	 * Helper to verify options in WordPress

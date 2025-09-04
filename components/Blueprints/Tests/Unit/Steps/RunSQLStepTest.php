@@ -7,6 +7,8 @@ use WordPress\Blueprints\DataReference\ExecutionContextPath;
 use WordPress\Blueprints\Progress\Tracker;
 use WordPress\Blueprints\Steps\RunSqlStep;
 
+require_once __DIR__ . '/StepTestCase.php';
+
 class RunSQLStepTest extends StepTestCase {
 	/**
 	 * Test running a simple SQL query

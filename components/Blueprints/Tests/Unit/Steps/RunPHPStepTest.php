@@ -9,6 +9,8 @@ use WordPress\Blueprints\Steps\RunPHPStep;
 
 use function WordPress\Filesystem\wp_join_unix_paths;
 
+require_once __DIR__ . '/StepTestCase.php';
+
 class RunPHPStepTest extends StepTestCase {
 
 	/**

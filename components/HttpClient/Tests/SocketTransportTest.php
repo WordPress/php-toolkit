@@ -5,6 +5,8 @@ namespace WordPress\HttpClient\Tests;
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
 
+require_once __DIR__ . '/ClientTestBase.php';
+
 class SocketTransportTest extends ClientTestBase {
 
     public function test_unsupported_encoding() {

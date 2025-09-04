@@ -7,6 +7,8 @@ use WordPress\Blueprints\Exception\BlueprintExecutionException;
 use WordPress\Blueprints\Progress\Tracker;
 use WordPress\Blueprints\Steps\EnableMultisiteStep;
 
+require_once __DIR__ . '/StepTestCase.php';
+
 class EnableMultisiteStepTest extends StepTestCase {
 	public function setUp(): void {
 		parent::setUp();

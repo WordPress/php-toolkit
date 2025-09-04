@@ -6,6 +6,8 @@ use WordPress\Blueprints\Progress\Tracker;
 use WordPress\Blueprints\Steps\RmDirStep;
 use WordPress\Filesystem\FilesystemException;
 
+require_once __DIR__ . '/StepTestCase.php';
+
 class RmDirStepTest extends StepTestCase {
 
 	public function testRemoveEmptyDirectory() {

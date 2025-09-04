@@ -6,6 +6,8 @@ use WordPress\Blueprints\Progress\Tracker;
 use WordPress\Blueprints\Steps\CpStep;
 use WordPress\Filesystem\FilesystemException;
 
+require_once __DIR__ . '/StepTestCase.php';
+
 class CpStepTest extends StepTestCase {
 	public function testCopyFile() {
 		$this->runtime->getTargetFilesystem()->put_contents( 'source_file.txt', 'test content' );

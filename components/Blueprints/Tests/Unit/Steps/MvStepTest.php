@@ -6,6 +6,8 @@ use WordPress\Blueprints\Progress\Tracker;
 use WordPress\Blueprints\Steps\MvStep;
 use WordPress\Filesystem\FilesystemException;
 
+require_once __DIR__ . '/StepTestCase.php';
+
 class MvStepTest extends StepTestCase {
 
 	public function testMoveFile() {

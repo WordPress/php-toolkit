@@ -8,6 +8,8 @@ use WordPress\Blueprints\DataReference\InlineFile;
 use WordPress\Blueprints\Progress\Tracker;
 use WordPress\Blueprints\Steps\WriteFilesStep;
 
+require_once __DIR__ . '/StepTestCase.php';
+
 class WriteFilesStepTest extends StepTestCase {
 	/**
 	 * Test writing a file with string data

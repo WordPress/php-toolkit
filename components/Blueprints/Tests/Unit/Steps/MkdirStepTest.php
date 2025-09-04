@@ -7,6 +7,8 @@ use WordPress\Blueprints\Progress\Tracker;
 use WordPress\Blueprints\Steps\MkdirStep;
 use WordPress\Filesystem\FilesystemException;
 
+require_once __DIR__ . '/StepTestCase.php';
+
 class MkdirStepTest extends StepTestCase {
 
 	public function testCreateDirectoryWhenUsingRelativePath() {

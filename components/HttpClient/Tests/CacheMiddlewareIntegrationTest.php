@@ -7,6 +7,8 @@ use WordPress\Filesystem\LocalFilesystem;
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
 
+require_once __DIR__ . '/WithServerTrait.php';
+
 class CacheMiddlewareIntegrationTest extends TestCase {
 
 	use WithServerTrait;

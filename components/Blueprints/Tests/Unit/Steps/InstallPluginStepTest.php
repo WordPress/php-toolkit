@@ -11,6 +11,8 @@ use ZipArchive;
 
 use function WordPress\Filesystem\wp_join_unix_paths;
 
+require_once __DIR__ . '/StepTestCase.php';
+
 class InstallPluginStepTest extends StepTestCase {
 	const PLUGIN_FILE_CONTENT = <<<'PHP'
 <?php

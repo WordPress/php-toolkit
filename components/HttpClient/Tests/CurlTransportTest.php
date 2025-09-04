@@ -6,6 +6,8 @@ use WordPress\HttpClient\Client;
 use WordPress\HttpClient\HttpError;
 use WordPress\HttpClient\Request;
 
+require_once __DIR__ . '/ClientTestBase.php';
+
 class CurlTransportTest extends ClientTestBase {
 
     public function test_unsupported_encoding() {
