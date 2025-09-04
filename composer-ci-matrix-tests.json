@@ -35,11 +35,23 @@
         ],
         "classmap": [
             "components/BlockParser/",
+            "components/Blueprints/",
             "components/Blueprints/vendor-patched/",
+            "components/CLI/",
+            "components/DataLiberation/",
             "components/DataLiberation/vendor-patched/",
+            "components/Filesystem/",
+            "components/Git/",
+            "components/HTML/./",
+            "components/HttpClient/",
+            "components/HttpServer/",
+            "components/Markdown/",
             "components/Markdown/vendor-patched",
+            "components/Merge/",
             "components/Merge/vendor-patched",
-            "components/HTML/./"
+            "components/ByteStream/",
+            "components/XML/",
+            "components/Zip/"
         ],
         "files": [
             "components/DataLiberation/URL/functions.php",
@@ -52,20 +64,9 @@
             "components/Git/functions.php"
         ],
         "psr-4": {
-            "WordPress\\Blueprints\\": "components/Blueprints/",
-            "WordPress\\DataLiberation\\": "components/DataLiberation/",
             "Rowbot\\": "components/DataLiberation/vendor-patched/",
             "Brick\\": "components/DataLiberation/vendor-patched/",
-            "WordPress\\HttpClient\\": "components/HttpClient/",
-            "WordPress\\Merge\\": "components/Merge/",
-            "WordPress\\Markdown\\": "components/Markdown/",
-            "WordPress\\Filesystem\\": "components/Filesystem/",
-            "WordPress\\XML\\": "components/XML/",
-            "WordPress\\ByteStream\\": "components/ByteStream/",
-            "WordPress\\Zip\\": "components/Zip/",
-            "WordPress\\HttpServer\\": "components/HttpServer/",
-            "WordPress\\CORSProxy\\": "components/CORSProxy/",
-            "WordPress\\Git\\": "components/Git/"
+            "WordPress\\CORSProxy\\": "components/CORSProxy/"
         }
     },
     "scripts": {
