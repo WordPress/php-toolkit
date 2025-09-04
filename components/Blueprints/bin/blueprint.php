@@ -286,6 +286,19 @@ $commandConfigurations = [
 		'aliases'         => [ 'run' ],
 		'requiredOptions' => [ 'site-path', 'site-url', 'mode' ],
 	],
+	'explain' => [
+		'description'     => 'Explain a Blueprint and its bundled wp-content directory (if present)',
+		'positionalArgs'  => [
+			'blueprint' => 'Path / URL / DataReference to the blueprint (required)',
+		],
+		'options'         => array_merge( $commonOptions, [
+			'execution-context' => [ 'x', true, null, 'Source directory with Blueprint context files' ],
+		] ),
+		'examples'        => [
+			'php blueprint.php explain my-blueprint.json',
+		],
+		'aliases'         => [ 'inspect', 'describe' ],
+	],
 	'help' => [
 		'description'    => 'Show help for WordPress Blueprint Runner CLI',
 		'positionalArgs' => [
@@ -372,6 +385,154 @@ function handleExecCommand( array $positionalArgs, array $options, array $comman
 	}
 }
 
+function handleExplainCommand( array $positionalArgs, array $options, array $commandConfig, ProgressReporter $progressReporter ): void {
+    if ( $options['help'] ) {
+        showCommandHelpMessage( 'explain', $commandConfig );
+        exit(0);
+    }
+
+    if ( empty( $positionalArgs ) ) {
+        $progressReporter->reportError("A Blueprint reference must be specified as a positional argument.");
+        exit(1);
+    }
+
+    try {
+        $config = cliArgsToRunnerConfiguration( $positionalArgs, array_merge($options, [
+            // explain does not execute; use create-new-site default just to set required fields
+            'site-path' => getcwd(),
+            'site-url'  => 'https://example.test',
+            'mode'      => \WordPress\Blueprints\Runner::EXECUTION_MODE_CREATE_NEW_SITE,
+        ]) );
+
+        // Use a quiet logger
+        $config->setLogger( new \WordPress\Blueprints\Logger\CLILogger( 'php://stdout', \WordPress\Blueprints\Logger\CLILogger::VERBOSITY_INFO ) );
+
+        $runner = new \WordPress\Blueprints\Runner( $config );
+
+        // Load and validate blueprint JSON
+        $refMethod = new \ReflectionClass($runner);
+        $methodLoad = $refMethod->getMethod('loadBlueprint');
+        $methodLoad->setAccessible(true);
+        $methodLoad->invoke($runner);
+        $methodValidate = $refMethod->getMethod('validateBlueprint');
+        $methodValidate->setAccessible(true);
+        $methodValidate->invoke($runner);
+
+        // Summarize blueprint.json
+        $bpArrayProp = (function() { return $this->blueprintArray; })->call($runner);
+        $bpSummary = \WordPress\Blueprints\Validator\BlueprintValidator::summarizeBlueprintArray($bpArrayProp);
+
+        // Validate and summarize (do not throw in explain)
+        $fs = $runner->getExecutionContext();
+        $validator = new \WordPress\Blueprints\Validator\BlueprintValidator($bpArrayProp, $fs);
+        $report = $validator->validate();
+        $bundleError = !empty($report['errors']) ? $report['errors'][0] : null;
+        $bundleSummary = $report['bundle'];
+
+        // Output summary in a human-friendly, aligned way
+        $progressReporter->reportProgress(0, 'Blueprint summary');
+
+        $isValid = empty($report['errors']);
+        fwrite(STDOUT, "Blueprint explain\n");
+        fwrite(STDOUT, "==================\n\n");
+        fwrite(STDOUT, sprintf("Status: %s\n\n", $isValid ? 'VALID' : sprintf('INVALID (%d issue%s)', count($report['errors']), count($report['errors']) === 1 ? '' : 's')));
+
+        $kv = function(string $label, $value, int $width = 22) {
+            if (is_array($value)) { $value = json_encode($value); }
+            fwrite(STDOUT, sprintf("  %-{$width}s %s\n", $label . ':', (string)$value));
+        };
+        $section = function(string $title) {
+            fwrite(STDOUT, $title . "\n");
+            fwrite(STDOUT, str_repeat('-', strlen($title)) . "\n");
+        };
+        $list = function(string $title, array $items) {
+            fwrite(STDOUT, sprintf("  %-22s \n", $title . ':'));
+            foreach ($items as $it) { fwrite(STDOUT, "    - $it\n"); }
+        };
+
+        // Blueprint.json section
+        $section('Blueprint.json');
+        $kv('version', $bpSummary['version'] ?? 'n/a');
+        $kv('constants', $bpSummary['constantsCount']);
+        $kv('siteOptions', $bpSummary['siteOptionsCount']);
+        $kv('muPlugins', $bpSummary['muPluginsCount']);
+        $list('themes', $bpSummary['themes']);
+        $kv('activeTheme', is_string($bpSummary['activeTheme']) ? $bpSummary['activeTheme'] : (is_null($bpSummary['activeTheme']) ? 'n/a' : json_encode($bpSummary['activeTheme'])));
+        $list('plugins', $bpSummary['plugins']);
+        $kv('media', $bpSummary['mediaCount']);
+        $kv('siteLanguage', $bpSummary['siteLanguage'] ?? 'n/a');
+        $kv('roles', $bpSummary['rolesCount']);
+        $kv('users', $bpSummary['usersCount']);
+        $kv('postTypes', $bpSummary['postTypesCount']);
+        $kv('content declarations', $bpSummary['contentCount']);
+        fwrite(STDOUT, "\n");
+
+        // Bundled wp-content section
+        $section('Bundled wp-content');
+        $kv('present', $bundleSummary['hasWpContent'] ? 'yes' : 'no');
+        if ($bundleSummary['hasWpContent']) {
+            $list('plugins', $bundleSummary['plugins']);
+            $list('mu-plugins', $bundleSummary['muPlugins']);
+            $list('themes', $bundleSummary['themes']);
+            // Languages
+            fwrite(STDOUT, sprintf("  %-22s \n", 'languages:'));
+            foreach ($bundleSummary['languages']['root'] as $f) { fwrite(STDOUT, "    - $f\n"); }
+            foreach (['plugins','themes'] as $scope) {
+                foreach ($bundleSummary['languages'][$scope] as $slug => $files) {
+                    fwrite(STDOUT, sprintf("    - %s/%s:\n", $scope, $slug));
+                    foreach ($files as $f) { fwrite(STDOUT, "      - $f\n"); }
+                }
+            }
+            // Uploads
+            $list('uploads/fonts', $bundleSummary['uploads']['fonts']);
+            $kv('uploads (other entries)', $bundleSummary['uploads']['otherCount']);
+            // Content
+            fwrite(STDOUT, sprintf("  %-22s \n", 'content:'));
+            foreach ($bundleSummary['content']['sql'] as $f) { fwrite(STDOUT, "    - SQL: $f\n"); }
+            foreach ($bundleSummary['content']['wxr'] as $f) { fwrite(STDOUT, "    - WXR: $f\n"); }
+            if (!empty($bundleSummary['content']['posts'])) {
+                fwrite(STDOUT, "    - posts:\n");
+                $printTree = function($node, $prefix = '      ') use (&$printTree) {
+                    if (is_array($node)) {
+                        foreach ($node as $key => $value) {
+                            if (is_array($value)) {
+                                fwrite(STDOUT, $prefix . $key . "/\n");
+                                $printTree($value, $prefix . '  ');
+                            } else {
+                                fwrite(STDOUT, $prefix . $value . "\n");
+                            }
+                        }
+                    }
+                };
+                $printTree($bundleSummary['content']['posts']);
+            }
+        }
+
+        // Issues section (if any)
+        if (!$isValid) {
+            fwrite(STDOUT, "\n");
+            $section('Issues');
+            $i = 1;
+            foreach ($report['errors'] as $err) {
+                fwrite(STDOUT, sprintf("  %d) %s\n", $i++, $err->getPrettyPath()));
+                fwrite(STDOUT, sprintf("     - %s\n", $err->message));
+                $cause = $err->getMostProbableCause();
+                $depth = 0;
+                while ($cause && $depth < 5) { // limit depth for readability
+                    fwrite(STDOUT, sprintf("       Cause: %s\n", $cause->message));
+                    $cause = $cause->getMostProbableCause();
+                    $depth++;
+                }
+            }
+        }
+
+        fwrite(STDOUT, "\n");
+        $progressReporter->reportCompletion('Explain finished.');
+    } catch ( \Exception $ex ) {
+        $progressReporter->reportError($ex->getMessage(), $ex);
+        exit(1);
+    }
+}
 function handleHelpCommand( array $positionalArgs, array $options, array $commandConfigurations, ProgressReporter $progressReporter ): void {
 	if ( ! empty( $positionalArgs ) ) {
 		$requestedCommand = $positionalArgs[0];
@@ -419,7 +580,7 @@ function cliArgsToRunnerConfiguration( array $positionalArgs, array $options ): 
 	}
 
 	$targetSiteRoot         = $options['site-path'];
-	if ( $options['truncate-new-site-directory'] ) {
+	if ( isset($options['truncate-new-site-directory']) && $options['truncate-new-site-directory'] ) {
 		if ( $options['mode'] !== Runner::EXECUTION_MODE_CREATE_NEW_SITE ) {
 			throw new InvalidArgumentException( sprintf( "--truncate-new-site-directory can only be used with --mode=%s", Runner::EXECUTION_MODE_CREATE_NEW_SITE ) );
 		}
@@ -620,6 +781,9 @@ try {
 		case 'exec':
 			handleExecCommand( $positionalArgs, $options, $commandConfigurations[ $command ], $progressReporter );
 			break;
+        case 'explain':
+            handleExplainCommand( $positionalArgs, $options, $commandConfigurations[ $command ], $progressReporter );
+            break;
 		case 'help':
 			handleHelpCommand( $positionalArgs, $options, $commandConfigurations, $progressReporter );
 			break;
