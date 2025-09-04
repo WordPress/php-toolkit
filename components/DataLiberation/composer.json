@@ -17,16 +17,12 @@
 	},
 	"autoload": {
 		"classmap": [
+			"./",
 			"vendor-patched/"
 		],
 		"files": [
 			"URL/functions.php"
 		],
-		"psr-4": {
-			"WordPress\\DataLiberation\\": "",
-			"Rowbot\\": "vendor-patched/",
-			"Brick\\": "vendor-patched/"
-		},
 		"exclude-from-classmap": [
 			"/Tests/"
 		]

@@ -44,7 +44,8 @@
             "components/Merge/vendor-patched",
             "components/HTML/./",
             "components/ByteStream/",
-            "components/XML/"
+            "components/XML/",
+            "components/DataLiberation/"
         ],
         "files": [
             "components/DataLiberation/URL/functions.php",
@@ -60,7 +61,6 @@
         "psr-4": {
             "WordPress\\Blueprints\\": "components/Blueprints/",
             "WordPress\\CLI\\": "components/CLI/",
-            "WordPress\\DataLiberation\\": "components/DataLiberation/",
             "Rowbot\\": "components/DataLiberation/vendor-patched/",
             "Brick\\": "components/DataLiberation/vendor-patched/",
             "WordPress\\HttpClient\\": "components/HttpClient/",
