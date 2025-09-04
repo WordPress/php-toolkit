@@ -16,9 +16,9 @@
 		"php": ">=7.2"
 	},
 	"autoload": {
-		"psr-4": {
-			"WordPress\\XML\\": ""
-		},
+		"classmap": [
+			"./"
+		],
 		"exclude-from-classmap": [
 			"/Tests/"
 		]
