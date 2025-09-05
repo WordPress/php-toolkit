@@ -44,7 +44,6 @@
         <exclude name="Generic.Commenting.DocComment.ShortNotCapital"/>
         <exclude name="Generic.PHP.DiscourageGoto.Found"/>
         <exclude name="PSR12.Files.FileHeader.IncorrectOrder"/>
-        <exclude name="Squiz.Commenting.BlockComment.CloserSameLine"/>
         <exclude name="Squiz.Commenting.BlockComment.NoEmptyLineAfter"/>
         <exclude name="Squiz.Commenting.BlockComment.NoEmptyLineBefore"/>
         <exclude name="Squiz.Commenting.ClassComment.Missing"/>

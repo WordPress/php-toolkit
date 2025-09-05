@@ -362,7 +362,8 @@ class EntityImporter {
 				// Wipe the parent for now.
 				$data['parent'] = 0;
 			}
-		}*/
+		}
+		*/
 
 		foreach ( $data as $key => $value ) {
 			if ( ! isset( $allowed[ $key ] ) ) {
