@@ -212,8 +212,8 @@ class WP_Block_Parser {
 				$stack_top                        = array_pop( $this->stack );
 				$html                             = substr( $this->document, $stack_top->prev_offset,
 					$start_offset - $stack_top->prev_offset );
-				$stack_top->block->inner_html      .= $html;
-				$stack_top->block->inner_content[] = $html;
+				$stack_top->block->innerHTML      .= $html;
+				$stack_top->block->innerContent[] = $html;
 				$stack_top->prev_offset           = $start_offset + $token_length;
 
 				$this->add_inner_block(
@@ -358,15 +358,15 @@ class WP_Block_Parser {
 	 */
 	public function add_inner_block( WP_Block_Parser_Block $block, $token_start, $token_length, $last_offset = null ) {
 		$parent                       = $this->stack[ count( $this->stack ) - 1 ];
-		$parent->block->inner_blocks[] = (array) $block;
+		$parent->block->innerBlocks[] = (array) $block;
 		$html                         = substr( $this->document, $parent->prev_offset, $token_start - $parent->prev_offset );
 
 		if ( ! empty( $html ) ) {
-			$parent->block->inner_html      .= $html;
-			$parent->block->inner_content[] = $html;
+			$parent->block->innerHTML      .= $html;
+			$parent->block->innerContent[] = $html;
 		}
 
-		$parent->block->inner_content[] = null;
+		$parent->block->innerContent[] = null;
 		$parent->prev_offset           = $last_offset ? $last_offset : $token_start + $token_length;
 	}
 
@@ -387,8 +387,8 @@ class WP_Block_Parser {
 			: substr( $this->document, $prev_offset );
 
 		if ( ! empty( $html ) ) {
-			$stack_top->block->inner_html      .= $html;
-			$stack_top->block->inner_content[] = $html;
+			$stack_top->block->innerHTML      .= $html;
+			$stack_top->block->innerContent[] = $html;
 		}
 
 		if ( isset( $stack_top->leading_html_start ) ) {
