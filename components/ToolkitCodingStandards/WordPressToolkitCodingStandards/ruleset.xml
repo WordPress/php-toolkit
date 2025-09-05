@@ -2,6 +2,6 @@
 <ruleset name="WordPressToolkitCodingStandards">
     <description>Local custom sniffs for WordPress toolkit.</description>
     <rule ref="WordPressToolkitCodingStandards.PHP.EnforceYodaComparison"/>
+    <rule ref="WordPressToolkitCodingStandards.Commenting.InlineCommentPunctuation"/>
 </ruleset>
-
 
