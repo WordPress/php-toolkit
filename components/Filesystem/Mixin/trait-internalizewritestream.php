@@ -10,7 +10,7 @@ trait InternalizeWriteStream {
 	/**
 	 * Start streaming a file.
 	 *
-	 * @param  string  $path  The path to the file.
+	 * @param  string $path  The path to the file.
 	 *
 	 * @return ByteWriteStream The stream.
 	 * @example

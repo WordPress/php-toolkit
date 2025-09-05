@@ -32,7 +32,7 @@ class Crawler {
 	private $responses = array();
 
 	/**
-	 * @param  string  $base_url  The starting URL to crawl
+	 * @param  string $base_url  The starting URL to crawl
 	 * @param  array  $options  Client options
 	 */
 	public function __construct( $base_url, array $options = array() ) {

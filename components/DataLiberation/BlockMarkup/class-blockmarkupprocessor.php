@@ -99,7 +99,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	public function get_token_type(): ?string {
 		switch ( $this->parser_state ) {
 			case self::STATE_COMMENT:
-				if ( null !== $this->block_name ) {
+				if ( $this->block_name !== null ) {
 					return '#block-comment';
 				}
 
@@ -126,7 +126,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	 * @return string|false The inner HTML content of the block or false if not a block opener.
 	 */
 	public function skip_and_get_block_inner_html() {
-		if ( '#block-comment' !== $this->get_token_type() ) {
+		if ( $this->get_token_type() !== '#block-comment' ) {
 			return false;
 		}
 
@@ -134,7 +134,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 			return false;
 		}
 
-		if ( false === WP_HTML_Tag_Processor::set_bookmark( 'block-start' ) ) {
+		if ( WP_HTML_Tag_Processor::set_bookmark( 'block-start' ) === false ) {
 			return false;
 		}
 
@@ -149,7 +149,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 			}
 		}
 
-		if ( false === WP_HTML_Tag_Processor::set_bookmark( 'block-end' ) ) {
+		if ( WP_HTML_Tag_Processor::set_bookmark( 'block-end' ) === false ) {
 			WP_HTML_Tag_Processor::release_bookmark( 'block-start' );
 
 			return false;
@@ -203,7 +203,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	 * @return string|false The block name (e.g. 'core/paragraph') or false if not at a block
 	 */
 	public function get_block_name() {
-		if ( null === $this->block_name ) {
+		if ( $this->block_name === null ) {
 			return false;
 		}
 
@@ -216,7 +216,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	 * @return array|false The block attributes or false if not at a block
 	 */
 	public function get_block_attributes() {
-		if ( null === $this->block_attributes ) {
+		if ( $this->block_attributes === null ) {
 			return false;
 		}
 
@@ -226,12 +226,12 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	/**
 	 * Gets a specific attribute value from the current block
 	 *
-	 * @param  string  $attribute_name  The name of the attribute to get
+	 * @param  string $attribute_name  The name of the attribute to get
 	 *
 	 * @return mixed|false The attribute value or false if not found
 	 */
 	public function get_block_attribute( $attribute_name ) {
-		if ( null === $this->block_attributes ) {
+		if ( $this->block_attributes === null ) {
 			return false;
 		}
 
@@ -242,12 +242,12 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	 * Overwrites all the block attributes of the currently matched block
 	 * opener.
 	 *
-	 * @param  array  $attributes  The new attributes to set
+	 * @param  array $attributes  The new attributes to set
 	 *
 	 * @return bool Whether the attributes were successfully set
 	 */
 	public function set_block_attributes( $attributes ) {
-		if ( '#block-comment' !== $this->get_token_type() ) {
+		if ( $this->get_token_type() !== '#block-comment' ) {
 			return false;
 		}
 		if ( $this->is_block_closer() ) {
@@ -294,13 +294,13 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 		}
 		$this->get_updated_html();
 
-		$this->block_name                = null;
-		$this->block_attributes          = null;
-		$this->block_attribute_paths     = null;
-		$this->block_attribute_index     = -1;
-		$this->block_closer              = false;
-		$this->self_closing_flag         = false;
-		$this->block_attributes_updated  = false;
+		$this->block_name               = null;
+		$this->block_attributes         = null;
+		$this->block_attribute_paths    = null;
+		$this->block_attribute_index    = -1;
+		$this->block_closer             = false;
+		$this->self_closing_flag        = false;
+		$this->block_attributes_updated = false;
 
 		while ( true ) {
 			if ( parent::next_token() === false ) {
@@ -338,9 +338,9 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 		}
 
 		// Blocks closers start with the solidus character (`/`).
-		if ( '/' === $text[ $at ] ) {
+		if ( $text[ $at ] === '/' ) {
 			$this->block_closer = true;
-			++ $at;
+			++$at;
 		}
 
 		// Blocks start with wp.
@@ -370,7 +370,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 			return true;
 		}
 		$name = substr( $text, $name_starts_at, $name_length + 3 );
-		$at   += $name_length;
+		$at  += $name_length;
 
 		// Assume no attributes by default.
 		$attributes = array();
@@ -401,7 +401,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 			// Let's try to parse attributes as JSON.
 			if ( strlen( $json_maybe ) > 0 ) {
 				$attributes = json_decode( trim( $json_maybe ), true );
-				if ( null === $attributes || ! is_array( $attributes ) ) {
+				if ( $attributes === null || ! is_array( $attributes ) ) {
 					// This comment looked like a block comment, but the attributes didn't
 					// parse as a JSON array. This means it wasn't a block after all.
 					$this->last_block_error = new WP_Block_Parser_Error(
@@ -508,11 +508,11 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	 * @return bool Whether we successfully advanced to the next attribute.
 	 */
 	public function next_block_attribute() {
-		if ( '#block-comment' !== $this->get_token_type() ) {
+		if ( $this->get_token_type() !== '#block-comment' ) {
 			return false;
 		}
 
-		if ( null === $this->block_attribute_paths ) {
+		if ( $this->block_attribute_paths === null ) {
 			$block_attributes = $this->get_block_attributes();
 			if ( ! is_array( $block_attributes ) ) {
 				return false;
@@ -522,7 +522,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 			$this->block_attribute_index = -1;
 		}
 
-		$this->block_attribute_index++;
+		++$this->block_attribute_index;
 
 		return isset( $this->block_attribute_paths[ $this->block_attribute_index ] );
 	}
@@ -533,7 +533,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	 * @return string|false The attribute key or false if no attribute was matched
 	 */
 	public function get_block_attribute_key() {
-		if ( null === $this->block_attribute_paths || ! isset( $this->block_attribute_paths[ $this->block_attribute_index ] ) ) {
+		if ( $this->block_attribute_paths === null || ! isset( $this->block_attribute_paths[ $this->block_attribute_index ] ) ) {
 			return false;
 		}
 
@@ -548,7 +548,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	 * @return mixed|false The attribute value or false if no attribute was matched
 	 */
 	public function get_block_attribute_value() {
-		if ( null === $this->block_attribute_paths || ! isset( $this->block_attribute_paths[ $this->block_attribute_index ] ) ) {
+		if ( $this->block_attribute_paths === null || ! isset( $this->block_attribute_paths[ $this->block_attribute_index ] ) ) {
 			return false;
 		}
 
@@ -568,20 +568,20 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	/**
 	 * Sets the value of the currently matched block attribute.
 	 *
-	 * @param  mixed  $new_value  The new value to set
+	 * @param  mixed $new_value  The new value to set
 	 *
 	 * @return bool Whether the value was successfully set
 	 */
 	public function set_block_attribute_value( $new_value ) {
-		if ( null === $this->block_attribute_paths || ! isset( $this->block_attribute_paths[ $this->block_attribute_index ] ) ) {
+		if ( $this->block_attribute_paths === null || ! isset( $this->block_attribute_paths[ $this->block_attribute_index ] ) ) {
 			return false;
 		}
 
 		$path = $this->block_attribute_paths[ $this->block_attribute_index ];
 
-		$ref =& $this->block_attributes;
+		$ref   =& $this->block_attributes;
 		$depth = count( $path );
-		for ( $i = 0; $i < $depth - 1; $i ++ ) {
+		for ( $i = 0; $i < $depth - 1; $i++ ) {
 			$segment = $path[ $i ];
 			if ( ! is_array( $ref ) || ! array_key_exists( $segment, $ref ) ) {
 				return false; // Path is invalid.
@@ -589,8 +589,8 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 			$ref =& $ref[ $segment ];
 		}
 
-		$last_key            = $path[ $depth - 1 ];
-		$ref[ $last_key ]    = $new_value;
+		$last_key                       = $path[ $depth - 1 ];
+		$ref[ $last_key ]               = $new_value;
 		$this->block_attributes_updated = true;
 
 		return true;
@@ -608,8 +608,8 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 		$paths = array();
 
 		foreach ( $attributes as $key => $value ) {
-			$current_path   = array_merge( $base_path, array( $key ) );
-			$paths[]        = $current_path; // SELF_FIRST: include parent before children.
+			$current_path = array_merge( $base_path, array( $key ) );
+			$paths[]      = $current_path; // SELF_FIRST: include parent before children.
 
 			if ( is_array( $value ) ) {
 				$paths = array_merge( $paths, $this->build_block_attribute_paths( $value, $current_path ) );

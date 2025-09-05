@@ -3,130 +3,123 @@ declare(strict_types=1);
 
 namespace WordPress\Filesystem\Path;
 
-final class WindowsPath
-{
-    private const SEP = '\\';
+final class WindowsPath {
 
-    /** Converts every “/” to “\” so that later code can assume one separator. */
-    private static function normalizeSeparators(string $path): string
-    {
-        return str_replace('/', self::SEP, $path);
-    }
+	private const SEP = '\\';
 
-    /** Absolute = “C:\…\” or “\\server\share\…”. */
-    private static function isAbsolute(string $path): bool
-    {
-        $path = self::normalizeSeparators($path);
-        return (bool) preg_match('/^(?:[A-Za-z]:\\\\|\\\\\\\\[^\\\\]+\\\\[^\\\\]+)/', $path);
-    }
+	/** Converts every “/” to “\” so that later code can assume one separator. */
+	private static function normalizeSeparators( string $path ): string {
+		return str_replace( '/', self::SEP, $path );
+	}
 
-    /** Returns “C:\foo\bar” → ["C:", "foo", "bar"]; “\\srv\share\dir” → ["srv", "share", "dir"]. */
-    public static function pathSegments(string $path): array
-    {
-        $canonical = self::canonicalize($path);
-        $trimmed   = trim($canonical, self::SEP);
+	/** Absolute = “C:\…\” or “\\server\share\…”. */
+	private static function isAbsolute( string $path ): bool {
+		$path = self::normalizeSeparators( $path );
+		return (bool) preg_match( '/^(?:[A-Za-z]:\\\\|\\\\\\\\[^\\\\]+\\\\[^\\\\]+)/', $path );
+	}
 
-        // root “C:\” or “\\srv\share\” gives empty $trimmed, keep the original string
-        if ($trimmed === '') {
-            return [$canonical];
-        }
-        return array_values(array_filter(explode(self::SEP, $trimmed), 'strlen'));
-    }
+	/** Returns “C:\foo\bar” → ["C:", "foo", "bar"]; “\\srv\share\dir” → ["srv", "share", "dir"]. */
+	public static function pathSegments( string $path ): array {
+		$canonical = self::canonicalize( $path );
+		$trimmed   = trim( $canonical, self::SEP );
 
-    /** Joins segments with a single backslash and keeps any drive-letter or UNC prefix intact. */
-    public static function joinPaths(string ...$segments): string
-    {
-        if (!$segments) {
-            return '';
-        }
+		// root “C:\” or “\\srv\share\” gives empty $trimmed, keep the original string
+		if ( $trimmed === '' ) {
+			return array( $canonical );
+		}
+		return array_values( array_filter( explode( self::SEP, $trimmed ), 'strlen' ) );
+	}
 
-        $pieces = [];
-        $first  = null;
-        foreach ($segments as $seg) {
-            if ($seg === '') {
-                continue;
-            }
-            if ($first === null) {
-                $first = $seg;
-            }
-            $pieces[] = trim(self::normalizeSeparators($seg), '\\/');
-        }
-        $joined = implode(self::SEP, $pieces);
+	/** Joins segments with a single backslash and keeps any drive-letter or UNC prefix intact. */
+	public static function joinPaths( string ...$segments ): string {
+		if ( ! $segments ) {
+			return '';
+		}
 
-        // restore UNC double backslash if needed
-        if (preg_match('/^\\\\\\\\/', self::normalizeSeparators($first))) {
-            return '\\\\' . ltrim($joined, self::SEP);
-        }
-        return $joined;
-    }
+		$pieces = array();
+		$first  = null;
+		foreach ( $segments as $seg ) {
+			if ( $seg === '' ) {
+				continue;
+			}
+			if ( $first === null ) {
+				$first = $seg;
+			}
+			$pieces[] = trim( self::normalizeSeparators( $seg ), '\\/' );
+		}
+		$joined = implode( self::SEP, $pieces );
 
-    /** Mirrors Node.js path.resolve for Windows rules. */
-    public static function resolvePath(string ...$segments): string
-    {
-        for ($i = count($segments) - 1; $i >= 0; --$i) {
-            if (self::isAbsolute($segments[$i])) {
-                return self::canonicalize(
-                    self::joinPaths(...array_slice($segments, $i))
-                );
-            }
-        }
-        array_unshift($segments, getcwd());
-        return self::canonicalize(self::joinPaths(...$segments));
-    }
+		// restore UNC double backslash if needed
+		if ( preg_match( '/^\\\\\\\\/', self::normalizeSeparators( $first ) ) ) {
+			return '\\\\' . ltrim( $joined, self::SEP );
+		}
+		return $joined;
+	}
 
-    /**
-     * Cleans up a path, guarantees it is absolute and free of “\.” / “\..”.
-     * Keeps trailing backslash only for drive-root (“C:\”) or UNC-root (“\\srv\share\”).
-     */
-    public static function canonicalize(string $path): string
-    {
-        $path = self::normalizeSeparators(trim($path));
+	/** Mirrors Node.js path.resolve for Windows rules. */
+	public static function resolvePath( string ...$segments ): string {
+		for ( $i = count( $segments ) - 1; $i >= 0; --$i ) {
+			if ( self::isAbsolute( $segments[ $i ] ) ) {
+				return self::canonicalize(
+					self::joinPaths( ...array_slice( $segments, $i ) )
+				);
+			}
+		}
+		array_unshift( $segments, getcwd() );
+		return self::canonicalize( self::joinPaths( ...$segments ) );
+	}
 
-        if (!self::isAbsolute($path)) {
-            $cwd  = rtrim(getcwd(), self::SEP);
-            $path = $cwd . self::SEP . $path;
-        }
+	/**
+	 * Cleans up a path, guarantees it is absolute and free of “\.” / “\..”.
+	 * Keeps trailing backslash only for drive-root (“C:\”) or UNC-root (“\\srv\share\”).
+	 */
+	public static function canonicalize( string $path ): string {
+		$path = self::normalizeSeparators( trim( $path ) );
 
-        // split prefix (drive or UNC) from the rest
-        preg_match('/^(\\\\\\\\[^\\\\]+\\\\[^\\\\]+|[A-Za-z]:)(?:\\\\)?(.*)$/', $path, $m);
-        $prefix = $m[1] ?? '';
-        $rest   = $m[2] ?? '';
+		if ( ! self::isAbsolute( $path ) ) {
+			$cwd  = rtrim( getcwd(), self::SEP );
+			$path = $cwd . self::SEP . $path;
+		}
 
-        $stack = [];
-        foreach (explode(self::SEP, $rest) as $part) {
-            if ($part === '' || $part === '.') {
-                continue;
-            }
-            if ($part === '..') {
-                array_pop($stack);
-                continue;
-            }
-            $stack[] = $part;
-        }
+		// split prefix (drive or UNC) from the rest
+		preg_match( '/^(\\\\\\\\[^\\\\]+\\\\[^\\\\]+|[A-Za-z]:)(?:\\\\)?(.*)$/', $path, $m );
+		$prefix = $m[1] ?? '';
+		$rest   = $m[2] ?? '';
 
-        $resolved = $prefix;
-        if ($resolved !== '' && substr($resolved, -1) !== self::SEP) {
-            $resolved .= self::SEP;
-        }
-        $resolved .= implode(self::SEP, $stack);
+		$stack = array();
+		foreach ( explode( self::SEP, $rest ) as $part ) {
+			if ( $part === '' || $part === '.' ) {
+				continue;
+			}
+			if ( $part === '..' ) {
+				array_pop( $stack );
+				continue;
+			}
+			$stack[] = $part;
+		}
 
-        // Drive-root and UNC-root must end with “\”
-        if ($resolved === $prefix) {
-            $resolved .= self::SEP;
-        }
-        return $resolved;
-    }
+		$resolved = $prefix;
+		if ( $resolved !== '' && substr( $resolved, -1 ) !== self::SEP ) {
+			$resolved .= self::SEP;
+		}
+		$resolved .= implode( self::SEP, $stack );
 
-    /** Consistent dirname() that sticks to backslashes. */
-    public static function dirname(string $path): string
-    {
-        $path = self::normalizeSeparators($path);
-        $dir  = dirname($path);
+		// Drive-root and UNC-root must end with “\”
+		if ( $resolved === $prefix ) {
+			$resolved .= self::SEP;
+		}
+		return $resolved;
+	}
 
-        // dirname("C:\foo") returns "C:\", keep that trailing sep; but dirname("C:\") yields "C:\"
-        if (preg_match('/^[A-Za-z]:$/', $dir)) {
-            $dir .= self::SEP;
-        }
-        return $dir;
-    }
+	/** Consistent dirname() that sticks to backslashes. */
+	public static function dirname( string $path ): string {
+		$path = self::normalizeSeparators( $path );
+		$dir  = dirname( $path );
+
+		// dirname("C:\foo") returns "C:\", keep that trailing sep; but dirname("C:\") yields "C:\"
+		if ( preg_match( '/^[A-Za-z]:$/', $dir ) ) {
+			$dir .= self::SEP;
+		}
+		return $dir;
+	}
 }

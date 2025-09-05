@@ -23,18 +23,17 @@ class WP_HTML_Decoder {
 	 *     true   === WP_HTML_Decoder::attribute_starts_with( $value, 'http:', 'ascii-case-insensitive' );
 	 *     false  === WP_HTML_Decoder::attribute_starts_with( $value, 'https:', 'ascii-case-insensitive' );
 	 *
-	 * @param  string  $haystack  String containing the raw non-decoded attribute value.
-	 * @param  string  $search_text  Does the attribute value start with this plain string.
-	 * @param  string  $case_sensitivity  Optional. Pass 'ascii-case-insensitive' to ignore ASCII case when matching.
-	 *                                 Default 'case-sensitive'.
+	 * @param  string $haystack  String containing the raw non-decoded attribute value.
+	 * @param  string $search_text  Does the attribute value start with this plain string.
+	 * @param  string $case_sensitivity  Optional. Pass 'ascii-case-insensitive' to ignore ASCII case when matching.
+	 *                                Default 'case-sensitive'.
 	 *
 	 * @return bool Whether the attribute value starts with the given string.
 	 * @since 6.6.0
-	 *
 	 */
 	public static function attribute_starts_with( $haystack, $search_text, $case_sensitivity = 'case-sensitive' ): bool {
 		$search_length = strlen( $search_text );
-		$loose_case    = 'ascii-case-insensitive' === $case_sensitivity;
+		$loose_case    = $case_sensitivity === 'ascii-case-insensitive';
 		$haystack_end  = strlen( $haystack );
 		$search_at     = 0;
 		$haystack_at   = 0;
@@ -44,25 +43,25 @@ class WP_HTML_Decoder {
 				? strtolower( $haystack[ $haystack_at ] ) === strtolower( $search_text[ $search_at ] )
 				: $haystack[ $haystack_at ] === $search_text[ $search_at ];
 
-			$is_introducer = '&' === $haystack[ $haystack_at ];
+			$is_introducer = $haystack[ $haystack_at ] === '&';
 			$next_chunk    = $is_introducer
 				? self::read_character_reference( 'attribute', $haystack, $haystack_at, $token_length )
 				: null;
 
 			// If there's no character reference and the characters don't match, the match fails.
-			if ( null === $next_chunk && ! $chars_match ) {
+			if ( $next_chunk === null && ! $chars_match ) {
 				return false;
 			}
 
 			// If there's no character reference but the character do match, then it could still match.
-			if ( null === $next_chunk && $chars_match ) {
-				++ $haystack_at;
-				++ $search_at;
+			if ( $next_chunk === null && $chars_match ) {
+				++$haystack_at;
+				++$search_at;
 				continue;
 			}
 
 			// If there is a character reference, then the decoded value must exactly match what follows in the search string.
-			if ( 0 !== substr_compare( $search_text, $next_chunk, $search_at, strlen( $next_chunk ), $loose_case ) ) {
+			if ( substr_compare( $search_text, $next_chunk, $search_at, strlen( $next_chunk ), $loose_case ) !== 0 ) {
 				return false;
 			}
 
@@ -86,11 +85,10 @@ class WP_HTML_Decoder {
 	 *
 	 *     '“😄”' === WP_HTML_Decode::decode_text_node( '&#x93;&#x1f604;&#x94' );
 	 *
-	 * @param  string  $text  Text containing raw and non-decoded text node to decode.
+	 * @param  string $text  Text containing raw and non-decoded text node to decode.
 	 *
 	 * @return string Decoded UTF-8 value of given text node.
 	 * @since 6.6.0
-	 *
 	 */
 	public static function decode_text_node( $text ): string {
 		return static::decode( 'data', $text );
@@ -107,11 +105,10 @@ class WP_HTML_Decoder {
 	 *
 	 *     '“😄”' === WP_HTML_Decode::decode_attribute( '&#x93;&#x1f604;&#x94' );
 	 *
-	 * @param  string  $text  Text containing raw and non-decoded attribute value to decode.
+	 * @param  string $text  Text containing raw and non-decoded attribute value to decode.
 	 *
 	 * @return string Decoded UTF-8 value of given attribute value.
 	 * @since 6.6.0
-	 *
 	 */
 	public static function decode_attribute( $text ): string {
 		return static::decode( 'attribute', $text );
@@ -128,14 +125,13 @@ class WP_HTML_Decoder {
 	 *
 	 *     '©' = WP_HTML_Decoder::decode( 'data', '&copy;' );
 	 *
-	 * @param  string  $context  `attribute` for decoding attribute values, `data` otherwise.
-	 * @param  string  $text  Text document containing span of text to decode.
+	 * @param  string $context  `attribute` for decoding attribute values, `data` otherwise.
+	 * @param  string $text  Text document containing span of text to decode.
 	 *
 	 * @return string Decoded UTF-8 string.
 	 * @since 6.6.0
 	 *
 	 * @access private
-	 *
 	 */
 	public static function decode( $context, $text ): string {
 		$decoded = '';
@@ -145,24 +141,24 @@ class WP_HTML_Decoder {
 
 		while ( $at < $end ) {
 			$next_character_reference_at = strpos( $text, '&', $at );
-			if ( false === $next_character_reference_at ) {
+			if ( $next_character_reference_at === false ) {
 				break;
 			}
 
 			$character_reference = self::read_character_reference( $context, $text, $next_character_reference_at, $token_length );
 			if ( isset( $character_reference ) ) {
-				$at      = $next_character_reference_at;
+				$at       = $next_character_reference_at;
 				$decoded .= substr( $text, $was_at, $at - $was_at );
 				$decoded .= $character_reference;
 				$at      += $token_length;
-				$was_at  = $at;
+				$was_at   = $at;
 				continue;
 			}
 
-			++ $at;
+			++$at;
 		}
 
-		if ( 0 === $was_at ) {
+		if ( $was_at === 0 ) {
 			return $text;
 		}
 
@@ -198,9 +194,9 @@ class WP_HTML_Decoder {
 	 *     '∉'  === WP_HTML_Decoder::read_character_reference( 'data', '&notin;', 0, $token_length );
 	 *     7    === $token_length; // `&notin;`
 	 *
-	 * @param  string  $context  `attribute` for decoding attribute values, `data` otherwise.
-	 * @param  string  $text  Text document containing span of text to decode.
-	 * @param  int  $at  Optional. Byte offset into text where span begins, defaults to the beginning (0).
+	 * @param  string $context  `attribute` for decoding attribute values, `data` otherwise.
+	 * @param  string $text  Text document containing span of text to decode.
+	 * @param  int    $at  Optional. Byte offset into text where span begins, defaults to the beginning (0).
 	 * @param  int    &$match_byte_length  Optional. Set to byte-length of character reference if provided and if a match
 	 *                                   is found, otherwise not set. Default null.
 	 *
@@ -208,7 +204,6 @@ class WP_HTML_Decoder {
 	 * @global WP_Token_Map $html5_named_character_references Mappings for HTML5 named character references.
 	 *
 	 * @since 6.6.0
-	 *
 	 */
 	public static function read_character_reference( $context, $text, $at = 0, &$match_byte_length = null ) {
 		/**
@@ -223,7 +218,7 @@ class WP_HTML_Decoder {
 			return null;
 		}
 
-		if ( '&' !== $text[ $at ] ) {
+		if ( $text[ $at ] !== '&' ) {
 			return null;
 		}
 
@@ -237,7 +232,7 @@ class WP_HTML_Decoder {
 		 *  - fail to parse and return plaintext `&#x1f1`.
 		 *  - fail to parse and return the replacement character `�`
 		 */
-		if ( '#' === $text[ $at + 1 ] ) {
+		if ( $text[ $at + 1 ] === '#' ) {
 			if ( $at + 2 >= $length ) {
 				return null;
 			}
@@ -245,11 +240,11 @@ class WP_HTML_Decoder {
 			/** Tracks inner parsing within the numeric character reference. */
 			$digits_at = $at + 2;
 
-			if ( 'x' === $text[ $digits_at ] || 'X' === $text[ $digits_at ] ) {
+			if ( $text[ $digits_at ] === 'x' || $text[ $digits_at ] === 'X' ) {
 				$numeric_base   = 16;
 				$numeric_digits = '0123456789abcdefABCDEF';
 				$max_digits     = 6; // &#x10FFFF;
-				++ $digits_at;
+				++$digits_at;
 			} else {
 				$numeric_base   = 10;
 				$numeric_digits = '0123456789';
@@ -260,16 +255,16 @@ class WP_HTML_Decoder {
 			$zero_count    = strspn( $text, '0', $digits_at );
 			$digit_count   = strspn( $text, $numeric_digits, $digits_at + $zero_count );
 			$after_digits  = $digits_at + $zero_count + $digit_count;
-			$has_semicolon = $after_digits < $length && ';' === $text[ $after_digits ];
+			$has_semicolon = $after_digits < $length && $text[ $after_digits ] === ';';
 			$end_of_span   = $has_semicolon ? $after_digits + 1 : $after_digits;
 
 			// `&#` or `&#x` without digits returns into plaintext.
-			if ( 0 === $digit_count && 0 === $zero_count ) {
+			if ( $digit_count === 0 && $zero_count === 0 ) {
 				return null;
 			}
 
 			// Whereas `&#` and only zeros is invalid.
-			if ( 0 === $digit_count ) {
+			if ( $digit_count === 0 ) {
 				$match_byte_length = $end_of_span - $at;
 
 				return '�';
@@ -282,7 +277,7 @@ class WP_HTML_Decoder {
 				return '�';
 			}
 
-			$digits     = substr( $text, $digits_at + $zero_count, $digit_count );
+			$digits    = substr( $text, $digits_at + $zero_count, $digit_count );
 			$codepoint = intval( $digits, $numeric_base );
 
 			/*
@@ -369,14 +364,14 @@ class WP_HTML_Decoder {
 
 		$name_length = 0;
 		$replacement = $html5_named_character_references->read_token( $text, $name_at, $name_length );
-		if ( false === $replacement ) {
+		if ( $replacement === false ) {
 			return null;
 		}
 
 		$after_name = $name_at + $name_length;
 
 		// If the match ended with a semicolon then it should always be decoded.
-		if ( ';' === $text[ $name_at + $name_length - 1 ] ) {
+		if ( $text[ $name_at + $name_length - 1 ] === ';' ) {
 			$match_byte_length = $after_name - $at;
 
 			return $replacement;
@@ -392,7 +387,7 @@ class WP_HTML_Decoder {
 			$name_at < $length &&
 			(
 				ctype_alnum( $text[ $after_name ] ) ||
-				'=' === $text[ $after_name ]
+				$text[ $after_name ] === '='
 			)
 		);
 
@@ -404,7 +399,7 @@ class WP_HTML_Decoder {
 		}
 
 		// It's ambiguous, which isn't allowed inside attributes.
-		if ( 'attribute' === $context ) {
+		if ( $context === 'attribute' ) {
 			return null;
 		}
 
@@ -427,13 +422,12 @@ class WP_HTML_Decoder {
 	 *     // Half of a surrogate pair is an invalid code point.
 	 *     '�' === WP_HTML_Decoder::codepoint_to_utf8_bytes( 0xd83c );
 	 *
-	 * @param  int  $codepoint  Which code point to convert.
+	 * @param  int $codepoint  Which code point to convert.
 	 *
 	 * @return string Converted code point, or `�` if invalid.
 	 * @since 6.6.0
 	 *
 	 * @see https://www.rfc-editor.org/rfc/rfc3629 For the UTF-8 standard.
-	 *
 	 */
 	public static function codepoint_to_utf8_bytes( $codepoint ): string {
 		// Pre-check to ensure a valid code point.

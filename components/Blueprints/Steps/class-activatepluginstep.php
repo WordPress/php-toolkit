@@ -37,18 +37,18 @@ foreach ( ( glob( $pluginPath . '/*.php' ) ?: array() ) as $file ) {
 
 // If we got here, the plugin was not found.
 exit( 1 );
-PHP
-	;
+PHP;
 
 	/**
 	 * Path to the plugin directory or entry file.
 	 * Examples: '/wordpress/wp-content/plugins/plugin-name', 'plugin-name/plugin-name.php'
+	 *
 	 * @var string
 	 */
 	public $pluginPath;
 
 	/**
-	 * @param  string  $pluginPath  Path to the plugin directory or entry file.
+	 * @param  string $pluginPath  Path to the plugin directory or entry file.
 	 */
 	public function __construct( string $pluginPath ) {
 		$this->pluginPath = $pluginPath;
@@ -61,10 +61,9 @@ PHP
 		$tracker->setCaption( 'Activating plugin ' . ( $this->pluginPath ?? '' ) );
 		$runtime->evalPhpCodeInSubProcess(
 			self::ACTIVATE_PLUGIN_SCRIPT,
-			[
+			array(
 				'PLUGIN_PATH' => $this->pluginPath,
-			]
+			)
 		);
 	}
-
 }

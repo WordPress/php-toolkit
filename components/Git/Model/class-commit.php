@@ -7,7 +7,7 @@ use WordPress\Git\GitException;
 
 class Commit {
 
-	public const NULL_HASH = '0000000000000000000000000000000000000000';
+	public const NULL_HASH   = '0000000000000000000000000000000000000000';
 	public const DATE_FORMAT = 'U +0000';
 
 	/**

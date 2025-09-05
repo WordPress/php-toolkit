@@ -38,7 +38,7 @@ class ClientState {
 	 * @since Next Release
 	 * @var Request[]
 	 */
-	public $requests = [];
+	public $requests = array();
 
 	/**
 	 * Network connection details managed privately by this Client.
@@ -51,12 +51,12 @@ class ClientState {
 	 *
 	 * @var array
 	 */
-	public $connections = [];
-	public $events = [];
-	public $event = null;
-	public $request = null;
+	public $connections         = array();
+	public $events              = array();
+	public $event               = null;
+	public $request             = null;
 	public $response_body_chunk = null;
-	public $request_timeout_ms = null;
+	public $request_timeout_ms  = null;
 
 	public function __construct( $options = array() ) {
 		$this->concurrency        = $options['concurrency'] ?? 10;
@@ -73,7 +73,7 @@ class ClientState {
 	 * @return string|bool The next event, or false if no event is set.
 	 */
 	public function get_event() {
-		if ( null === $this->event ) {
+		if ( $this->event === null ) {
 			return false;
 		}
 
@@ -87,7 +87,7 @@ class ClientState {
 	 * @return Request
 	 */
 	public function get_request() {
-		if ( null === $this->request ) {
+		if ( $this->request === null ) {
 			return false;
 		}
 
@@ -101,7 +101,7 @@ class ClientState {
 	 * @return string|false
 	 */
 	public function get_response_body_chunk() {
-		if ( null === $this->response_body_chunk ) {
+		if ( $this->response_body_chunk === null ) {
 			return false;
 		}
 
@@ -122,7 +122,7 @@ class ClientState {
 		);
 		$available_slots    = $this->concurrency - count( $processed_requests );
 		$enqueued_requests  = $this->get_requests( Request::STATE_ENQUEUED );
-		for ( $i = 0; $i < $available_slots; $i ++ ) {
+		for ( $i = 0; $i < $available_slots; $i++ ) {
 			if ( ! isset( $enqueued_requests[ $i ] ) ) {
 				break;
 			}
@@ -143,7 +143,7 @@ class ClientState {
 		return static::filter_requests_by_state( $this->requests, $states );
 	}
 
-	static public function filter_requests_by_state( array $requests, $states ) {
+	public static function filter_requests_by_state( array $requests, $states ) {
 		if ( ! is_array( $states ) ) {
 			$states = array( $states );
 		}
@@ -172,7 +172,7 @@ class ClientState {
 	 */
 	public function consume_buffered_response_body( $request_id ) {
 		$request = $this->get_request_by_id( $request_id );
-		if ( null === $request ) {
+		if ( $request === null ) {
 			return false;
 		}
 		$connection = $this->connections[ $request->id ];
@@ -196,8 +196,8 @@ class ClientState {
 	}
 
 	public function set_request_error( Request $request, $error ) {
-		$request->error                                     = $error;
-		$request->state                                     = Request::STATE_FAILED;
+		$request->error                                       = $error;
+		$request->state                                       = Request::STATE_FAILED;
 		$this->events[ $request->id ][ Client::EVENT_FAILED ] = true;
 	}
 
@@ -205,5 +205,4 @@ class ClientState {
 		$request->state = Request::STATE_FINISHED;
 		$this->events[ $request->id ][ Client::EVENT_FINISHED ] = true;
 	}
-
 }

@@ -7,7 +7,7 @@ interface MergeValidator {
 	/**
 	 * Validates the merge result.
 	 *
-	 * @param  string  $html  The merged HTML.
+	 * @param  string $html  The merged HTML.
 	 *
 	 * @throws InvalidMergeException if the merge result is invalid.
 	 */

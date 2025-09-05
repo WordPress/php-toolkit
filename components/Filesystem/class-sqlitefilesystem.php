@@ -377,7 +377,7 @@ class SQLiteFilesystem implements Filesystem {
 	}
 
 	private function in_transaction( $callback ) {
-		$current_level = $this->transaction_level ++;
+		$current_level = $this->transaction_level++;
 		try {
 			if ( $current_level === 0 ) {
 				$this->db->exec( 'BEGIN TRANSACTION' );
@@ -399,11 +399,11 @@ class SQLiteFilesystem implements Filesystem {
 				}
 			}
 		} finally {
-			-- $this->transaction_level;
+			--$this->transaction_level;
 		}
 	}
 
 	public function get_meta(): array {
-		return [];
+		return array();
 	}
 }

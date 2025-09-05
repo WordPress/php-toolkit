@@ -14,7 +14,7 @@ class LineMerger implements Merger {
 		$results = array();
 		$n       = max( count( $linesA ), count( $linesB ) );
 
-		for ( $i = 0; $i < $n; $i ++ ) {
+		for ( $i = 0; $i < $n; $i++ ) {
 			$lineA = $linesA[ $i ] ?? array(
 				'base'     => null,
 				'deleted'  => false,

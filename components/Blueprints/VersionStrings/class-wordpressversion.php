@@ -36,20 +36,20 @@ class WordPressVersion implements Version {
 
 	/**
 	 * Parses a WordPress version string.
-	 * 
+	 *
 	 * Return values:
-	 * 
+	 *
 	 * * WordPressVersion
 	 * * false – invalid version string
 	 * * null – non-comparable version strings like beta, trunk, etc.
-	 * 
+	 *
 	 * @return $this|false|null
 	 */
-	static public function fromString( string $raw ) {
-		if(in_array($raw, ['beta','trunk','latest'], true)) {
+	public static function fromString( string $raw ) {
+		if ( in_array( $raw, array( 'beta', 'trunk', 'latest' ), true ) ) {
 			return null;
 		}
-		if(substr($raw, 0, 8) === 'https://') {
+		if ( substr( $raw, 0, 8 ) === 'https://' ) {
 			return null;
 		}
 
@@ -66,7 +66,7 @@ class WordPressVersion implements Version {
 			return false;
 		}
 
-		$stageWeights = [
+		$stageWeights = array(
 			'dev'   => 0,
 			'src'   => 0,
 			'alpha' => 1,
@@ -76,7 +76,7 @@ class WordPressVersion implements Version {
 			'rc'    => 3,
 			''      => 4,
 			'pl'    => 5,
-		];
+		);
 
 		return new self(
 			$raw,
@@ -100,7 +100,7 @@ class WordPressVersion implements Version {
 	}
 
 	public function compareTo( Version $other ): int {
-		foreach ( [ 'major', 'minor' ] as $part ) {
+		foreach ( array( 'major', 'minor' ) as $part ) {
 			if ( $this->$part !== $other->$part ) {
 				return ( $this->$part < $other->$part ) ? - 1 : 1;
 			}
@@ -114,7 +114,7 @@ class WordPressVersion implements Version {
 			}
 		}
 
-		foreach ( [ 'stageRank', 'stageIndex' ] as $part ) {
+		foreach ( array( 'stageRank', 'stageIndex' ) as $part ) {
 			if ( $this->$part !== $other->$part ) {
 				return ( $this->$part < $other->$part ) ? - 1 : 1;
 			}
@@ -143,5 +143,4 @@ class WordPressVersion implements Version {
 	public function __toString(): string {
 		return $this->raw;
 	}
-
 }

@@ -89,7 +89,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			return false;
 		}
 
-		if ( null === $this->url_in_text_processor ) {
+		if ( $this->url_in_text_processor === null ) {
 			/*
 			 * Use the base URL for URLs matched in text nodes. This is the only
 			 * way to recognize a substring "WordPress.org" as a URL. We might
@@ -123,9 +123,9 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			return false;
 		}
 
-		while ( ++ $this->inspected_url_attribute_idx < count( self::URL_ATTRIBUTES[ $tag ] ) ) {
+		while ( ++$this->inspected_url_attribute_idx < count( self::URL_ATTRIBUTES[ $tag ] ) ) {
 			$attr = self::URL_ATTRIBUTES[ $tag ][ $this->inspected_url_attribute_idx ];
-			if ( false === $attr ) {
+			if ( $attr === false ) {
 				return false;
 			}
 
@@ -141,7 +141,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			if ( is_string( $url_maybe ) ) {
 				$parsed_url = WPURL::parse( $url_maybe, $this->base_url_string );
 
-				if ( false === $parsed_url ) {
+				if ( $parsed_url === false ) {
 					return false;
 				}
 				$this->raw_url    = $url_maybe;
@@ -166,7 +166,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			 */
 			if ( is_string( $url_maybe ) ) {
 				$parsed_url = WPURL::parse( $url_maybe );
-				if ( false !== $parsed_url ) {
+				if ( $parsed_url !== false ) {
 					$this->raw_url    = $url_maybe;
 					$this->parsed_url = $parsed_url;
 
@@ -181,15 +181,15 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	/**
 	 * Replaces the currently matched URL with a new one.
 	 *
-	 * @param  string  $raw_url  The raw URL.
-	 * @param  URL  $parsed_url  The parsed version of the raw URL. It is required
-	 *                           as $raw_url might be a relative URL pointing to a different
-	 *                           host than this processor's base URL.
+	 * @param  string $raw_url  The raw URL.
+	 * @param  URL    $parsed_url  The parsed version of the raw URL. It is required
+	 *                             as $raw_url might be a relative URL pointing to a different
+	 *                             host than this processor's base URL.
 	 *
 	 * @return bool True if the URL was set, false otherwise.
 	 */
 	public function set_url( $raw_url, $parsed_url ) {
-		if ( null === $this->raw_url ) {
+		if ( $this->raw_url === null ) {
 			return false;
 		}
 		$this->raw_url    = $raw_url;
@@ -197,7 +197,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		switch ( parent::get_token_type() ) {
 			case '#tag':
 				$attr = $this->get_inspected_attribute_name();
-				if ( false === $attr ) {
+				if ( $attr === false ) {
 					return false;
 				}
 				$this->set_attribute( $attr, $raw_url );
@@ -208,7 +208,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 				return $this->set_block_attribute_value( $raw_url );
 
 			case '#text':
-				if ( null === $this->url_in_text_processor ) {
+				if ( $this->url_in_text_processor === null ) {
 					return false;
 				}
 				$this->url_in_text_node_updated = true;
@@ -306,7 +306,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		return (
 			! WPURL::can_parse( $this->get_raw_url() ) &&
 			// only absolute URLs are detected in text nodes.
-			'#text' !== $this->get_token_type()
+			$this->get_token_type() !== '#text'
 		);
 	}
 
@@ -320,7 +320,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	}
 
 	public function get_inspected_attribute_name() {
-		if ( '#tag' !== $this->get_token_type() ) {
+		if ( $this->get_token_type() !== '#tag' ) {
 			return false;
 		}
 

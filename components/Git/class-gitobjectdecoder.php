@@ -28,11 +28,13 @@ class GitObjectDecoder extends BaseByteReadStream {
 	 */
 	private $header_length = 0; // Uncompressed header length (in bytes, incl. trailing NUL)
 	/** Decompressed view of the full object (header+body).
+	 *
 	 * @var InflateReadStream
 	 */
 	private $inflated_reader;
 
 	/** Points to the body inside $inflated_reader; seek(0) == body start.
+	 *
 	 * @var ByteReadStream
 	 */
 	private $body_source;
@@ -88,18 +90,18 @@ class GitObjectDecoder extends BaseByteReadStream {
 	 * Inflate until we hit the NUL terminator, then parse <type> <size>\x00.
 	 */
 	private function ensure_object_header(): void {
-		if ( null !== $this->object_header ) {
+		if ( $this->object_header !== null ) {
 			return;
 		}
 
 		$header = '';
 		while ( true ) {
-			if ( 0 === $this->inflated_reader->pull( 1, ByteReadStream::PULL_EXACTLY ) ) {
+			if ( $this->inflated_reader->pull( 1, ByteReadStream::PULL_EXACTLY ) === 0 ) {
 				throw new GitException( 'Unexpected end of data while reading object header' );
 			}
-			$byte   = $this->inflated_reader->consume( 1 );
+			$byte    = $this->inflated_reader->consume( 1 );
 			$header .= $byte;
-			if ( "\x00" === $byte ) {
+			if ( $byte === "\x00" ) {
 				break;
 			}
 		}
@@ -119,7 +121,7 @@ class GitObjectDecoder extends BaseByteReadStream {
 	protected function seek_outside_of_buffer( int $target_offset ): void {
 		$this->ensure_object_header();
 
-		if ( null !== $this->length() && $target_offset > $this->length() ) {
+		if ( $this->length() !== null && $target_offset > $this->length() ) {
 			throw new NotEnoughDataException( 'Cannot seek past end of object body' );
 		}
 

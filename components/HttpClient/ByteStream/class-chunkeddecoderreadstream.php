@@ -7,11 +7,11 @@ use WordPress\ByteStream\ReadStream\BaseByteReadStream;
 
 class ChunkedDecoderReadStream extends BaseByteReadStream {
 
-	private $state = self::SCAN_CHUNK_SIZE;
-	const SCAN_CHUNK_SIZE = 'SCAN_CHUNK_SIZE';
-	const SCAN_CHUNK_DATA = 'SCAN_CHUNK_DATA';
+	private $state           = self::SCAN_CHUNK_SIZE;
+	const SCAN_CHUNK_SIZE    = 'SCAN_CHUNK_SIZE';
+	const SCAN_CHUNK_DATA    = 'SCAN_CHUNK_DATA';
 	const SCAN_CHUNK_TRAILER = 'SCAN_CHUNK_TRAILER';
-	const SCAN_FINAL_CHUNK = 'SCAN_FINAL_CHUNK';
+	const SCAN_FINAL_CHUNK   = 'SCAN_FINAL_CHUNK';
 
 	private $upstream;
 	private $chunk_remaining_bytes = 0;
@@ -41,7 +41,7 @@ class ChunkedDecoderReadStream extends BaseByteReadStream {
 				}
 
 				$clrf_pos = strpos( $peeked, "\r\n", $chunk_bytes_nb );
-				if ( false === $clrf_pos ) {
+				if ( $clrf_pos === false ) {
 					break;
 				}
 
@@ -49,7 +49,7 @@ class ChunkedDecoderReadStream extends BaseByteReadStream {
 				$chunk_header = $this->upstream->consume( $clrf_pos + 2 );
 				$chunk_size   = hexdec( substr( $chunk_header, 0, $chunk_bytes_nb ) );
 
-				if ( 0 === $chunk_size ) {
+				if ( $chunk_size === 0 ) {
 					$this->state = self::SCAN_FINAL_CHUNK;
 
 					return '';
@@ -64,7 +64,7 @@ class ChunkedDecoderReadStream extends BaseByteReadStream {
 					break;
 				}
 
-				$data                        = $this->upstream->consume( $available );
+				$data                         = $this->upstream->consume( $available );
 				$this->chunk_remaining_bytes -= strlen( $data );
 				if ( $this->chunk_remaining_bytes === 0 ) {
 					$this->state = self::SCAN_CHUNK_TRAILER;

@@ -46,7 +46,7 @@ class AnnotatedBlockMarkupProducer {
 	}
 
 	public function produce() {
-		if ( null === $this->result ) {
+		if ( $this->result === null ) {
 			$this->result = '';
 			foreach ( $this->blocks_with_meta->get_all_metadata() as $key => $values ) {
 				foreach ( $values as $value ) {

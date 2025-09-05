@@ -35,7 +35,7 @@ class MarkdownProducer implements DataFormatProducer {
 	}
 
 	public function produce() {
-		if ( null === $this->markdown ) {
+		if ( $this->markdown === null ) {
 			$this->markdown  = '';
 			$this->markdown .= $this->frontmatter();
 			$this->markdown .= $this->blocks_to_markdown( parse_blocks( $this->block_markup ) );
@@ -112,7 +112,7 @@ class MarkdownProducer implements DataFormatProducer {
 
 			case 'core/heading':
 				$level = $attributes['level'] ?? null;
-				if ( null === $level ) {
+				if ( $level === null ) {
 					$processor = DataLiberationHTMLProcessor::create_fragment( $inner_html );
 					if ( $processor->next_tag() ) {
 						$tag = $processor->get_tag();
@@ -120,7 +120,7 @@ class MarkdownProducer implements DataFormatProducer {
 							$level = (int) $tag[1];
 						}
 					}
-					if ( null === $level ) {
+					if ( $level === null ) {
 						$level = 1;
 					}
 				}

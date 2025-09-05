@@ -27,7 +27,7 @@ class GitProtocolEncoderPipe extends BaseByteReadStream {
 			}
 		}
 
-		if ( '' !== $channel_code ) {
+		if ( $channel_code !== '' ) {
 			$payload = $channel_code . $payload;
 		}
 		$length = sprintf( '%04x', strlen( $payload ) + 4 );
@@ -38,7 +38,7 @@ class GitProtocolEncoderPipe extends BaseByteReadStream {
 	public static function encode_variable_length( $number ) {
 		$result = '';
 		do {
-			$byte   = $number & 0x7F;
+			$byte     = $number & 0x7F;
 			$number >>= 7;
 			if ( $number > 0 ) {
 				$byte |= 0x80;
@@ -59,7 +59,7 @@ class GitProtocolEncoderPipe extends BaseByteReadStream {
 	}
 
 	protected function internal_pull( $n ): string {
-		if ( null === $this->operation ) {
+		if ( $this->operation === null ) {
 			$this->operation = array_shift( $this->operation_queue );
 		}
 

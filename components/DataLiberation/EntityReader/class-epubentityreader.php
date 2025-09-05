@@ -46,15 +46,15 @@ class EPubEntityReader implements EntityReader {
 			return false;
 		}
 
-		if ( null === $this->remaining_html_files ) {
-			if ( false === $this->parse_manifest() ) {
+		if ( $this->remaining_html_files === null ) {
+			if ( $this->parse_manifest() === false ) {
 				_doing_it_wrong( __METHOD__, 'The EPUB file did not contain a manifest.', '1.0.0' );
 				$this->finished = true;
 
 				return false;
 			}
 
-			$this->remaining_html_files = [];
+			$this->remaining_html_files = array();
 			foreach ( $this->manifest['items'] as $item ) {
 				if ( $item['media-type'] !== 'application/xhtml+xml' ) {
 					continue;
@@ -70,7 +70,7 @@ class EPubEntityReader implements EntityReader {
 		}
 
 		while ( true ) {
-			if ( null !== $this->current_html_reader ) {
+			if ( $this->current_html_reader !== null ) {
 				if (
 					! $this->current_html_reader->is_finished() &&
 					$this->current_html_reader->next_entity()
@@ -113,7 +113,7 @@ class EPubEntityReader implements EntityReader {
 				$blocks_with_meta,
 				$this->current_post_id
 			);
-			++ $this->current_post_id;
+			++$this->current_post_id;
 		}
 
 		return false;
@@ -123,7 +123,7 @@ class EPubEntityReader implements EntityReader {
 	 * An absolute path to the manifest file. Starting with slash.
 	 */
 	public function get_manifest_path() {
-		if ( null === $this->manifest_path ) {
+		if ( $this->manifest_path === null ) {
 			$this->parse_manifest();
 		}
 
@@ -131,15 +131,15 @@ class EPubEntityReader implements EntityReader {
 	}
 
 	private function parse_manifest() {
-		if ( null !== $this->manifest ) {
+		if ( $this->manifest !== null ) {
 			return true;
 		}
 
 		$xml = XMLProcessor::create_from_string(
 			$this->zip->get_contents( 'META-INF/container.xml' )
 		);
-		
-		if ( false === $xml->next_tag( ['urn:oasis:names:tc:opendocument:xmlns:container', 'rootfile'] ) ) {
+
+		if ( $xml->next_tag( array( 'urn:oasis:names:tc:opendocument:xmlns:container', 'rootfile' ) ) === false ) {
 			return false;
 		}
 

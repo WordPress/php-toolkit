@@ -17,14 +17,14 @@ class WordPressOrgPlugin extends DataReference {
 	/**
 	 * Create a WordPress.org plugin reference.
 	 *
-	 * @param  string  $reference  The reference to parse, e.g. "gutenberg" or "gutenberg@14.0.1"
+	 * @param  string $reference  The reference to parse, e.g. "gutenberg" or "gutenberg@14.0.1"
 	 */
 	public function __construct( $reference ) {
-		$parts   = explode( '@', $reference );
+		$parts         = explode( '@', $reference );
 		$this->slug    = $parts[0];
 		$this->version = isset( $parts[1] ) ? $parts[1] : null;
 
-		parent::__construct($reference);
+		parent::__construct( $reference );
 	}
 
 	/**
@@ -49,7 +49,7 @@ class WordPressOrgPlugin extends DataReference {
 	 * Check if a string is a valid WordPress.org plugin reference.
 	 * Valid formats are: "plugin-slug" or "plugin-slug@version"
 	 *
-	 * @param  string  $reference  The reference to check.
+	 * @param  string $reference  The reference to check.
 	 *
 	 * @return bool Whether the reference is valid.
 	 */
@@ -80,5 +80,4 @@ class WordPressOrgPlugin extends DataReference {
 
 		return "Plugin: {$this->slug}";
 	}
-
 }

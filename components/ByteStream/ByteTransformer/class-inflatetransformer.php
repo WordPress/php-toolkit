@@ -13,18 +13,18 @@ class InflateTransformer implements ByteTransformer {
 
 	public function __construct( string $encoding = ZLIB_ENCODING_DEFLATE ) {
 		$this->inflate_handle = inflate_init( $encoding );
-		if ( false === $this->inflate_handle ) {
+		if ( $this->inflate_handle === false ) {
 			throw new ByteStreamException( 'Failed to initialize inflate handle' );
 		}
 	}
 
 	public function filter_bytes( string $bytes ) {
-		if ( null === $this->inflate_handle ) {
+		if ( $this->inflate_handle === null ) {
 			throw new ByteStreamException( 'Inflate handle is not initialized' );
 		}
 
 		$inflated_data = inflate_add( $this->inflate_handle, $bytes, ZLIB_NO_FLUSH );
-		if ( false === $inflated_data ) {
+		if ( $inflated_data === false ) {
 			$last_error = error_get_last();
 			if ( empty( $last_error ) ) {
 				$last_error = array( 'message' => 'Unknown error' );
@@ -36,7 +36,7 @@ class InflateTransformer implements ByteTransformer {
 	}
 
 	public function flush(): string {
-		if ( null === $this->inflate_handle ) {
+		if ( $this->inflate_handle === null ) {
 			throw new ByteStreamException( 'closing the inflate filter?' );
 		}
 

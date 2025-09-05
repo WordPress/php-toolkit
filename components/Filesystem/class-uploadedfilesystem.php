@@ -34,9 +34,9 @@ class UploadedFilesystem implements Filesystem {
 	/**
 	 * Create a new UploadedFilesystem instance.
 	 *
-	 * @param  REST_Request  $request  The request object containing uploaded files
-	 * @param  string  $tree_parameter_name  The name of the parameter containing the tree structure
-	 * @param  array  $options  The options array {
+	 * @param  REST_Request $request  The request object containing uploaded files
+	 * @param  string       $tree_parameter_name  The name of the parameter containing the tree structure
+	 * @param  array        $options  The options array {
 	 *
 	 * @return UploadedFilesystem The new instance
 	 * @var Filesystem $uploads_fs Optional. The filesystem to read the uploaded files from.
@@ -50,14 +50,13 @@ class UploadedFilesystem implements Filesystem {
 	}
 
 	/**
-	 * @param  array  $tree  The directory tree structure
-	 * @param  array  $options  The options array
-	 * @param  Filesystem  $uploads_fs  The filesystem to read the uploaded files from.
-	 * @param  REST_Request  $request  The request object containing uploaded files
+	 * @param  array        $tree  The directory tree structure
+	 * @param  array        $options  The options array
+	 * @param  Filesystem   $uploads_fs  The filesystem to read the uploaded files from.
+	 * @param  REST_Request $request  The request object containing uploaded files
 	 *
 	 * @internal
 	 * Use the static create() method instead.
-	 *
 	 */
 	private function __construct( $request, $tree_parameter_name, $options = array() ) {
 		$tree_json = $request->get_param( $tree_parameter_name );
@@ -159,7 +158,7 @@ class UploadedFilesystem implements Filesystem {
 	/**
 	 * Find a node in the tree by its path
 	 *
-	 * @param  string  $path  The path to find
+	 * @param  string $path  The path to find
 	 *
 	 * @return array|null The node if found, null otherwise
 	 */

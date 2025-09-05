@@ -15,7 +15,7 @@ class EnableMultisiteStep implements StepInterface {
 		$tracker->setCaption( 'Enabling multisite' );
 
 		$code =
-<<<'PHP'
+		<<<'PHP'
 <?php
 /*
  * This code is mirroring the "wp core multisite-convert" command behavior.
@@ -102,7 +102,7 @@ PHP;
 			throw new BlueprintExecutionException( $e->getMessage() );
 		}
 
-		if ( '' === $result->outputFileContent ) {
+		if ( $result->outputFileContent === '' ) {
 			throw new BlueprintExecutionException( 'Failed to enable multisite' );
 		}
 

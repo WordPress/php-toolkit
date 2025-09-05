@@ -19,8 +19,8 @@ class CpStep implements StepInterface {
 	public $toPath;
 
 	/**
-	 * @param  string  $fromPath  The source path to copy from.
-	 * @param  string  $toPath  The destination path to copy to.
+	 * @param  string $fromPath  The source path to copy from.
+	 * @param  string $toPath  The destination path to copy to.
 	 */
 	public function __construct( string $fromPath, string $toPath ) {
 		$this->fromPath = $fromPath;
@@ -35,7 +35,7 @@ class CpStep implements StepInterface {
 		$runtime->getTargetFilesystem()->copy(
 			$this->fromPath,
 			$this->toPath,
-			[ 'recursive' => true ]
+			array( 'recursive' => true )
 		);
 	}
 }

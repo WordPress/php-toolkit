@@ -15,5 +15,4 @@ class DataLiberationException extends Exception {
 		parent::__construct( $message, $code, $previous );
 		$this->code_str = $code_str;
 	}
-
 }

@@ -48,9 +48,9 @@ function url_validate_and_resolve( $url, $resolve_function = 'gethostbynamel' ) 
 
 	if (
 		( isset( $_SERVER['HTTP_HOST'] ) &&
-		  strcasecmp( $_SERVER['HTTP_HOST'], $host ) === 0 ) ||
+			strcasecmp( $_SERVER['HTTP_HOST'], $host ) === 0 ) ||
 		( isset( $_SERVER['SERVER_ADDR'] ) &&
-		  strcasecmp( $_SERVER['SERVER_ADDR'], $host ) === 0 )
+			strcasecmp( $_SERVER['SERVER_ADDR'], $host ) === 0 )
 	) {
 		throw new CorsProxyException( 'URL cannot target the CORS proxy host.' );
 	}
@@ -82,7 +82,7 @@ class IpUtils {
 	/**
 	 * Checks if the given IP address is a private IP address.
 	 *
-	 * @param  string  $ip
+	 * @param  string $ip
 	 *
 	 * @return bool
 	 */
@@ -99,7 +99,7 @@ class IpUtils {
 	/**
 	 * Checks if the given IPv4 address is private.
 	 *
-	 * @param  string  $ip
+	 * @param  string $ip
 	 *
 	 * @return bool
 	 */
@@ -168,7 +168,7 @@ class IpUtils {
 	/**
 	 * Checks if the given IPv6 address is private.
 	 *
-	 * @param  string  $ip
+	 * @param  string $ip
 	 *
 	 * @return bool
 	 */
@@ -258,9 +258,9 @@ class IpUtils {
 	/**
 	 * Checks if the given IPv4 address is within the specified range.
 	 *
-	 * @param  string  $ip
-	 * @param  string  $start
-	 * @param  string  $end
+	 * @param  string $ip
+	 * @param  string $start
+	 * @param  string $end
 	 *
 	 * @return bool
 	 */
@@ -275,9 +275,9 @@ class IpUtils {
 	/**
 	 * Checks if the given IPv6 address is within the specified range.
 	 *
-	 * @param  string  $ip
-	 * @param  string  $start
-	 * @param  string  $end
+	 * @param  string $ip
+	 * @param  string $start
+	 * @param  string $end
 	 *
 	 * @return bool
 	 */
@@ -300,15 +300,15 @@ class IpUtils {
 /**
  * Filters headers by name, removing disallowed headers and enforcing opt-in requirements.
  *
- * @param  array  $php_headers  {
- *  An associative array of headers.
+ * @param  array $php_headers  {
+ * An associative array of headers.
  *
  * @type string $key Header name.
  * }
  *
- * @param  array  $disallowed_headers  List of header names that are disallowed.
- * @param  array  $headers_requiring_opt_in  List of header names that require opt-in
- *                                        via the X-Cors-Proxy-Allowed-Request-Headers header.
+ * @param  array $disallowed_headers  List of header names that are disallowed.
+ * @param  array $headers_requiring_opt_in  List of header names that require opt-in
+ *                                       via the X-Cors-Proxy-Allowed-Request-Headers header.
  *
  * @return array {
  *  Filtered headers.

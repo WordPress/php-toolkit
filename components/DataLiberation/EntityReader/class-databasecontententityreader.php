@@ -27,11 +27,11 @@ class DatabaseContentEntityReader implements EntityReader {
 	 * State constants for the finite state machine
 	 */
 	const STATE_ADVANCE_TO_NEXT_POST = 'advance_to_next_post';
-	const STATE_POST = 'post';
-	const STATE_META = 'meta';
-	const STATE_TERMS = 'terms';
-	const STATE_COMMENTS = 'comments';
-	const STATE_FINISHED = 'finished';
+	const STATE_POST                 = 'post';
+	const STATE_META                 = 'meta';
+	const STATE_TERMS                = 'terms';
+	const STATE_COMMENTS             = 'comments';
+	const STATE_FINISHED             = 'finished';
 
 	/**
 	 * The database connection used to fetch records.
@@ -117,11 +117,10 @@ class DatabaseContentEntityReader implements EntityReader {
 	/**
 	 * Constructor.
 	 *
-	 * @param  PDO  $db  The database connection to use.
-	 * @param  array  $options  The options to configure the reader.
+	 * @param  PDO   $db  The database connection to use.
+	 * @param  array $options  The options to configure the reader.
 	 *
 	 * @since WP_VERSION
-	 *
 	 */
 	public function __construct( PDO $db, $options = array() ) {
 		$this->db           = $db;
@@ -150,7 +149,6 @@ class DatabaseContentEntityReader implements EntityReader {
 	 *
 	 * @return bool Whether another entity was found.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function next_entity() {
 		if ( $this->is_finished() ) {
@@ -212,7 +210,7 @@ class DatabaseContentEntityReader implements EntityReader {
 			if ( $post ) {
 				// Acknowledge we've processed the next child of the last recorded parent
 				if ( count( $this->parent_stack ) > 0 ) {
-					$last_key                                                = count( $this->parent_stack ) - 1;
+					$last_key = count( $this->parent_stack ) - 1;
 					$this->parent_stack[ $last_key ]['last_processed_child'] = $post['ID'];
 				}
 				// Push current post to parent stack to process its children later
@@ -328,10 +326,9 @@ class DatabaseContentEntityReader implements EntityReader {
 	/**
 	 * Initializes the reader from a cursor.
 	 *
-	 * @param  string  $cursor  The cursor to initialize from.
+	 * @param  string $cursor  The cursor to initialize from.
 	 *
 	 * @since WP_VERSION
-	 *
 	 */
 	private function initialize_from_cursor( $cursor ) {
 		$cursor_data = json_decode( $cursor, true );

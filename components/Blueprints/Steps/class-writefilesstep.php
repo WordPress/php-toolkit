@@ -15,12 +15,13 @@ use function WordPress\Filesystem\copy_between_filesystems;
 class WriteFilesStep implements StepInterface {
 	/**
 	 * An associative array where keys are file paths and values are their contents.
+	 *
 	 * @var array<string, DataReference>
 	 */
 	public $files;
 
 	/**
-	 * @param  array<string, string|DataReference>  $files  Files to write (path => content).
+	 * @param  array<string, string|DataReference> $files  Files to write (path => content).
 	 */
 	public function __construct( array $files ) {
 		$this->files = $files;
@@ -43,25 +44,27 @@ class WriteFilesStep implements StepInterface {
 			// Create directory if it doesn't exist
 			$dir = dirname( $path );
 			if ( $dir && $dir !== '/' && $dir !== '.' ) {
-				$target_fs->mkdir( $dir, [ 'recursive' => true ] );
+				$target_fs->mkdir( $dir, array( 'recursive' => true ) );
 			}
 
 			// Handle the data which can be a string or a DataReference
 			$file_or_directory = $runtime->resolve( $data );
 			if ( $file_or_directory instanceof Directory ) {
-				copy_between_filesystems( [
-					'source_filesystem' => $file_or_directory->filesystem,
-					'source_path'       => '/',
-					'target_filesystem' => $target_fs,
-					'target_path'       => $path,
-					'recursive'         => true,
-				] );
+				copy_between_filesystems(
+					array(
+						'source_filesystem' => $file_or_directory->filesystem,
+						'source_path'       => '/',
+						'target_filesystem' => $target_fs,
+						'target_path'       => $path,
+						'recursive'         => true,
+					)
+				);
 			} else {
 				$content = $file_or_directory->getStream()->consume_all();
 				$target_fs->put_contents( $path, $content );
 			}
 
-			$files_written ++;
+			++$files_written;
 		}
 
 		$tracker->set( 100, "All {$total_files} files written successfully." );
