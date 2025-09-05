@@ -80,8 +80,8 @@
         "build-blueprints-phar": "box compile -c phar-blueprints.json",
         "regenerate-json-schema": "node components/Blueprints/Versions/Version2/json-schema/regenerate-schema.ts",
         "test": "phpunit -c phpunit.xml",
-        "lint": "phpcs .",
-        "lint-fix": "phpcbf ."
+        "lint": "phpcs -d memory_limit=1G .",
+        "lint-fix": "phpcbf -d memory_limit=1G ."
     },
     "repositories": [
         {

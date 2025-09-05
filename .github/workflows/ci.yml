@@ -1,0 +1,98 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    name: Code Quality Checks
+
+    strategy:
+      matrix:
+        php-version: ['7.2', '8.0', '8.1', '8.2']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP ${{ matrix.php-version }}
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+        extensions: mbstring, json
+        coverage: none
+        tools: composer:v2
+        ini-values: memory_limit=1G
+
+    - name: Validate composer.json and composer.lock
+      run: composer validate --strict
+
+    - name: Get composer cache directory
+      id: composer-cache
+      run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+    - name: Cache composer dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-php${{ matrix.php-version }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php${{ matrix.php-version }}-composer-
+          ${{ runner.os }}-composer-
+
+    - name: Install composer dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest --optimize-autoloader
+
+    - name: Run PHP CodeSniffer
+      run: composer run-script lint
+
+    - name: Run PHPUnit tests
+      run: composer run-script test
+
+  phpcs-only:
+    runs-on: ubuntu-latest
+    name: PHP CodeSniffer (Required for PRs)
+    if: github.event_name == 'pull_request'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: mbstring, json
+        coverage: none
+        tools: composer:v2
+        ini-values: memory_limit=1G
+
+    - name: Get composer cache directory
+      id: composer-cache
+      run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+    - name: Cache composer dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: ${{ runner.os }}-composer-
+
+    - name: Install composer dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest --optimize-autoloader
+
+    - name: Run PHP CodeSniffer (Strict)
+      run: |
+        composer run-script lint
+        if [ $? -ne 0 ]; then
+          echo "::error::❌ PHP CodeSniffer found coding standard violations"
+          echo "::error::💡 Run 'composer run-script lint-fix' locally to auto-fix issues"
+          echo "::error::📝 Then manually fix any remaining violations before pushing"
+          exit 1
+        else
+          echo "::notice::✅ All code passes PHP CodeSniffer checks"
+        fi
