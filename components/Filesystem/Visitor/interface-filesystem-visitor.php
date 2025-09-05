@@ -10,7 +10,7 @@ use function WordPress\Filesystem\wp_join_unix_paths;
 class FilesystemVisitor {
 	private $filesystem;
 	private $directories = array();
-	private $files = array();
+	private $files       = array();
 	private $current_event;
 	private $iterator_stack = array();
 	private $current_iterator;

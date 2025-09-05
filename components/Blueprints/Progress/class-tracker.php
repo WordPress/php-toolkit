@@ -46,12 +46,12 @@ use function is_string;
  * stage2.finish();
  */
 class Tracker implements ArrayAccess {
-	private $selfWeight = 1;
-	private $selfDone = false;
+	private $selfWeight   = 1;
+	private $selfDone     = false;
 	private $selfProgress = 0;
-	private $selfCaption = '';
+	private $selfCaption  = '';
 	private $weight;
-	private $subTrackers = array();
+	private $subTrackers    = array();
 	private $splitPerformed = false;
 
 	/**
@@ -91,7 +91,7 @@ class Tracker implements ArrayAccess {
 			$definitions = range( 0, $definitions );
 		}
 
-		$items     = [];          // [slug, rawWeight|null, caption]
+		$items     = array();          // [slug, rawWeight|null, caption]
 		$fixedSum  = 0.0;
 		$nullCount = 0;
 
@@ -115,16 +115,16 @@ class Tracker implements ArrayAccess {
 			} else {
 				$fixedSum += $weight;
 			}
-			$items[] = [ $slug, $weight, $caption ];
+			$items[] = array( $slug, $weight, $caption );
 		}
 
-		if ( $items === [] ) {
+		if ( $items === array() ) {
 			throw new InvalidArgumentException( 'split() needs at least one entry.' );
 		}
 
 		$scale = 1.0 / ( $fixedSum + $nullCount ?: 1 ); // if all null, fixedSum=0, nullCount>0
 
-		foreach ( $items as [$slug, $raw, $caption] ) {
+		foreach ( $items as array( $slug, $raw, $caption ) ) {
 			$normWeight = ( $raw ?? 1 ) * $scale;  // null counts as 1 before scaling
 			$this->createSubTracker( $slug, $normWeight, $caption );
 		}
@@ -214,7 +214,12 @@ class Tracker implements ArrayAccess {
 		}
 		$this->selfWeight -= $weight;
 
-		$subTracker                 = new self( [ 'weight' => $weight, 'caption' => $caption ] );
+		$subTracker                 = new self(
+			array(
+				'weight' => $weight,
+				'caption' => $caption,
+			)
+		);
 		$this->subTrackers[ $slug ] = $subTracker;
 
 		$subTracker->events->addListener(
@@ -241,8 +246,8 @@ class Tracker implements ArrayAccess {
 	}
 
 	/**
-	 * @param  float  $value
-	 * @param  string|null  $caption
+	 * @param  float       $value
+	 * @param  string|null $caption
 	 */
 	public function set( $value, $caption = null ) {
 		if ( $value < $this->selfProgress ) {

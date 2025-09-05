@@ -75,15 +75,15 @@ class Runtime {
 		array $blueprint,
 		string $tempRoot,
 		DataReference $wpCliReference,
-		?string $executionContextRoot=null
+		?string $executionContextRoot = null
 	) {
-		$this->targetFs       = $targetFs;
-		$this->configuration  = $configuration;
-		$this->assets         = $assets;
-		$this->client         = $client;
-		$this->blueprint      = $blueprint;
-		$this->tempRoot       = $tempRoot;
-		$this->wpCliReference = $wpCliReference;
+		$this->targetFs             = $targetFs;
+		$this->configuration        = $configuration;
+		$this->assets               = $assets;
+		$this->client               = $client;
+		$this->blueprint            = $blueprint;
+		$this->tempRoot             = $tempRoot;
+		$this->wpCliReference       = $wpCliReference;
 		$this->executionContextRoot = $executionContextRoot;
 	}
 
@@ -156,7 +156,7 @@ class Runtime {
 		try {
 			return $callback( $tmp );
 		} finally {
-			LocalFilesystem::create( $tmp )->rmdir( '/', [ 'recursive' => true ] );
+			LocalFilesystem::create( $tmp )->rmdir( '/', array( 'recursive' => true ) );
 		}
 	}
 
@@ -219,8 +219,8 @@ class Runtime {
 	 *
 	 * Stderr:
 	 *
-	 * @param  mixed[]|null  $env
-	 * @param  float  $timeout
+	 * @param  mixed[]|null $env
+	 * @param  float        $timeout
 	 */
 	public function evalPhpCodeInSubProcess(
 		$code,
@@ -231,7 +231,7 @@ class Runtime {
 		$process = $this->createPhpSubProcess( $code, $env, $input, $timeout );
 		$process->mustRun();
 
-		$output = $process->getOutputStream(Process::OUTPUT_FILE)->consume_all();
+		$output = $process->getOutputStream( Process::OUTPUT_FILE )->consume_all();
 		return new EvalResult(
 			$output,
 			$process
@@ -244,58 +244,60 @@ class Runtime {
 		$input = null,
 		$timeout = 60
 	) {
-		return $this->withTemporaryFile( function ( $script_path ) use ( $code, $env, $input, $timeout ) {
-			file_put_contents( $script_path, $code );
+		return $this->withTemporaryFile(
+			function ( $script_path ) use ( $code, $env, $input, $timeout ) {
+				file_put_contents( $script_path, $code );
 
-			// @TODO: Cleaning up the temporary directory is not done here.
-			$tempDir = $this->createTemporaryDirectory();
+				// @TODO: Cleaning up the temporary directory is not done here.
+				$tempDir = $this->createTemporaryDirectory();
 
-			// Still put the script in a temporary file as the path may be refering
-			// to a file inside the currently executed .phar archive.
-			$actual_script_path = wp_join_unix_paths( $tempDir, 'script.php' );
-			$code = '<?php function append_output( $output ) { file_put_contents( getenv("OUTPUT_FILE"), $output, FILE_APPEND ); } $_SERVER["HTTP_HOST"] = "localhost"; ?>';
-			$code .= file_get_contents( $script_path );
-			file_put_contents( $actual_script_path, $code );
+				// Still put the script in a temporary file as the path may be refering
+				// to a file inside the currently executed .phar archive.
+				$actual_script_path = wp_join_unix_paths( $tempDir, 'script.php' );
+				$code               = '<?php function append_output( $output ) { file_put_contents( getenv("OUTPUT_FILE"), $output, FILE_APPEND ); } $_SERVER["HTTP_HOST"] = "localhost"; ?>';
+				$code              .= file_get_contents( $script_path );
+				file_put_contents( $actual_script_path, $code );
 
-			$output_path = wp_join_unix_paths( $tempDir, 'output.txt' );
-			touch( $output_path );
+				$output_path = wp_join_unix_paths( $tempDir, 'output.txt' );
+				touch( $output_path );
 
-			$phpBinary = null;
-			if ( getenv('PHP_BINARY') ) {
-				$phpBinary = getenv('PHP_BINARY');
-			} elseif ( PHP_BINARY ) {
-				$phpBinary = PHP_BINARY;
-			} else {
-				$phpBinary = 'php';
-			}
+				$phpBinary = null;
+				if ( getenv( 'PHP_BINARY' ) ) {
+					  $phpBinary = getenv( 'PHP_BINARY' );
+				} elseif ( PHP_BINARY ) {
+					$phpBinary = PHP_BINARY;
+				} else {
+					$phpBinary = 'php';
+				}
 
-			return $this->startShellCommand(
-				array(
-					$phpBinary,
-					$actual_script_path,
-				),
-				$this->configuration->getTargetSiteRoot(),
-				array_merge(
+				return $this->startShellCommand(
 					array(
-						'DOCROOT'     => $this->configuration->getTargetSiteRoot(),
-						'OUTPUT_FILE' => $output_path,
+						$phpBinary,
+						$actual_script_path,
 					),
-					$env ?? array()
-				),
-				$input,
-				$timeout,
-				[
-					'output_file_path' => $output_path,
-				]
-			);
-		} );
+					$this->configuration->getTargetSiteRoot(),
+					array_merge(
+						array(
+							'DOCROOT'     => $this->configuration->getTargetSiteRoot(),
+							'OUTPUT_FILE' => $output_path,
+						),
+						$env ?? array()
+					),
+					$input,
+					$timeout,
+					array(
+						'output_file_path' => $output_path,
+					)
+				);
+			}
+		);
 	}
 
 	/**
-	 * @param  mixed[]  $command
+	 * @param  mixed[]      $command
 	 * @param  string|null  $cwd
-	 * @param  mixed[]|null  $env
-	 * @param  float  $timeout
+	 * @param  mixed[]|null $env
+	 * @param  float        $timeout
 	 */
 	public function startShellCommand(
 		$command,
@@ -303,7 +305,7 @@ class Runtime {
 		$env = null,
 		$input = null,
 		$timeout = 60,
-		$options = []
+		$options = array()
 	) {
 		return new Process(
 			$command,

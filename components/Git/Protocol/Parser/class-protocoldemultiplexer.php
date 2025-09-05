@@ -9,9 +9,9 @@ use WordPress\Git\GitException;
 class ProtocolDemultiplexer {
 
 	const STREAM_CODE_SIDE_BAND = 'side_band';
-	const STREAM_CODE_PROGRESS = 'progress';
-	const STREAM_CODE_FATAL = 'fatal';
-	const STREAM_CODE_UNKNOWN = 'unknown';
+	const STREAM_CODE_PROGRESS  = 'progress';
+	const STREAM_CODE_FATAL     = 'fatal';
+	const STREAM_CODE_UNKNOWN   = 'unknown';
 
 	const STREAM_CODE_MAP = array(
 		0x01 => self::STREAM_CODE_SIDE_BAND,
@@ -22,7 +22,7 @@ class ProtocolDemultiplexer {
 	/**
 	 * @var ByteReadStream
 	 */
-	protected $upstream = '';
+	protected $upstream                      = '';
 	protected $is_paused_at_incomplete_input = false;
 
 	protected $chunk;

@@ -54,7 +54,7 @@ class EPubEntityReader implements EntityReader {
 				return false;
 			}
 
-			$this->remaining_html_files = [];
+			$this->remaining_html_files = array();
 			foreach ( $this->manifest['items'] as $item ) {
 				if ( $item['media-type'] !== 'application/xhtml+xml' ) {
 					continue;
@@ -138,8 +138,8 @@ class EPubEntityReader implements EntityReader {
 		$xml = XMLProcessor::create_from_string(
 			$this->zip->get_contents( 'META-INF/container.xml' )
 		);
-		
-		if ( false === $xml->next_tag( ['urn:oasis:names:tc:opendocument:xmlns:container', 'rootfile'] ) ) {
+
+		if ( false === $xml->next_tag( array( 'urn:oasis:names:tc:opendocument:xmlns:container', 'rootfile' ) ) ) {
 			return false;
 		}
 

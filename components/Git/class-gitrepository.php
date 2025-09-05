@@ -406,7 +406,7 @@ class GitRepository {
 	 *        everything into memory and will fail for large merges.
 	 * @TODO: Do not change the HEAD ref.
 	 *
-	 * @param  string  $branch_name  The branch to merge.
+	 * @param  string $branch_name  The branch to merge.
 	 * @param  array  $options  An associative array of options. {
 	 *
 	 * @type string $path The path to merge files at. The other paths will be ignored.
@@ -514,8 +514,8 @@ class GitRepository {
 	 *
 	 * TODO: Support commits with multiple parents.
 	 *
-	 * @param  string  $commit_hash1  The first reference.
-	 * @param  string  $commit_hash2  The second reference.
+	 * @param  string $commit_hash1  The first reference.
+	 * @param  string $commit_hash2  The second reference.
 	 *
 	 * @return string The common ancestor hash.
 	 */
@@ -691,7 +691,7 @@ class GitRepository {
 			$this->mark_tree_path_changed( $changed_trees, wp_unix_dirname( $new_path ) );
 
 			$changed_trees[ wp_unix_dirname( $old_path ) ]->entries[ basename( $old_path ) ] = self::DELETE_PLACEHOLDER;
-			$new_basename                                                               = basename( $new_path );
+			$new_basename = basename( $new_path );
 			if ( $new_basename === '' ) {
 				throw new GitException( 'Cannot rename a file to an empty filename' );
 			}

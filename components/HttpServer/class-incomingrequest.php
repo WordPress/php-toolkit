@@ -13,18 +13,18 @@ use WordPress\HttpClient\Request;
 
 class IncomingRequest extends Request {
 
-	static public function from_resource( $upstream ) {
+	public static function from_resource( $upstream ) {
 		// Read request line
 		$line = fgets( $upstream );
 		if ( $line === false ) {
-			throw new Exception( "Failed to read request line" );
+			throw new Exception( 'Failed to read request line' );
 		}
 		$parts        = explode( ' ', trim( $line ), 3 );
-		$request_info = [
+		$request_info = array(
 			'method'   => $parts[0] ?? 'GET',
 			'pathname' => $parts[1] ?? '/',
-			'headers'  => [],
-		];
+			'headers'  => array(),
+		);
 
 		// Read headers
 		while ( ( $line = fgets( $upstream ) ) !== false ) {
@@ -48,7 +48,7 @@ class IncomingRequest extends Request {
 
 		$body_stream = FileReadStream::from_resource( $upstream );
 
-		$wrapped_streams = [];
+		$wrapped_streams = array();
 
 		$encoding = $request->get_header( 'Content-Encoding' );
 		if ( $encoding ) {

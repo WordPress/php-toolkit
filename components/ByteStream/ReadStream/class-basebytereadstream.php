@@ -13,14 +13,14 @@ abstract class BaseByteReadStream implements ByteReadStream {
 	 * The maximum number of consumed bytes to keep in memory.
 	 *
 	 * For example:
-	 * 
+	 *
 	 *     The quick brown fox jumps over the lazy dog.
 	 *     ^-------------------^
 	 *         consumed bytes
-	 * 
+	 *
 	 * Say the maximum lookbehind bytes is 4. Then the byte stream will forget about
 	 * all consumed bytes except the last 4:
-	 * 
+	 *
 	 *     fox jumps over the lazy dog.
 	 *     ^--^
 	 *       consumed but retained for seek()-ing backwards.
@@ -132,7 +132,7 @@ abstract class BaseByteReadStream implements ByteReadStream {
 				return $body;
 			}
 			$consumable = $this->pull( self::CHUNK_SIZE_BYTES );
-			$body       .= $this->consume( $consumable );
+			$body      .= $this->consume( $consumable );
 		}
 	}
 
@@ -150,13 +150,13 @@ abstract class BaseByteReadStream implements ByteReadStream {
 		if ( strlen( $this->buffer ) < $this->offset_in_current_buffer + $n ) {
 			throw new NotEnoughDataException( 'Cannot consume more bytes than available in the buffer.' );
 		}
-		$bytes                          = substr( $this->buffer, $this->offset_in_current_buffer, $n );
+		$bytes                           = substr( $this->buffer, $this->offset_in_current_buffer, $n );
 		$this->offset_in_current_buffer += $n;
 		if ( $this->offset_in_current_buffer > $this->max_lookbehind_bytes ) {
-			$overflow                       = $this->offset_in_current_buffer - $this->max_lookbehind_bytes;
+			$overflow                        = $this->offset_in_current_buffer - $this->max_lookbehind_bytes;
 			$this->offset_in_current_buffer -= $overflow;
 			$this->bytes_already_forgotten  += $overflow;
-			$this->buffer                   = substr( $this->buffer, $overflow );
+			$this->buffer                    = substr( $this->buffer, $overflow );
 		}
 
 		return $bytes;
@@ -171,8 +171,13 @@ abstract class BaseByteReadStream implements ByteReadStream {
 		}
 		if ( null !== $this->length() && $target_offset > $this->length() ) {
 			$length = $this->length();
-			throw new NotEnoughDataException( sprintf( 'Cannot seek to past the stream length (seeked to %d, stream length is %d).',
-				$target_offset, $length ) );
+			throw new NotEnoughDataException(
+				sprintf(
+					'Cannot seek to past the stream length (seeked to %d, stream length is %d).',
+					$target_offset,
+					$length
+				)
+			);
 		}
 
 		if ( $target_offset < 0 ) {

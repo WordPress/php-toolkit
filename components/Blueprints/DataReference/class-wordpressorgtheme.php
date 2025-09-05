@@ -17,14 +17,14 @@ class WordPressOrgTheme extends DataReference {
 	/**
 	 * Create a WordPress.org theme reference.
 	 *
-	 * @param  string  $reference  The reference to parse, e.g. "adventure" or "adventure@1.0.2"
+	 * @param  string $reference  The reference to parse, e.g. "adventure" or "adventure@1.0.2"
 	 */
 	public function __construct( $reference ) {
-		$parts   = explode( '@', $reference );
+		$parts         = explode( '@', $reference );
 		$this->slug    = $parts[0];
 		$this->version = isset( $parts[1] ) ? $parts[1] : null;
 
-		parent::__construct($reference);
+		parent::__construct( $reference );
 	}
 
 	/**
@@ -49,7 +49,7 @@ class WordPressOrgTheme extends DataReference {
 	 * Check if a string is a valid WordPress.org theme reference.
 	 * Valid formats are: "theme-slug" or "theme-slug@version"
 	 *
-	 * @param  string  $reference  The reference to check.
+	 * @param  string $reference  The reference to check.
 	 *
 	 * @return bool Whether the reference is valid.
 	 */

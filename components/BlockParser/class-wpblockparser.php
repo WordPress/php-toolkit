@@ -55,11 +55,10 @@ class WP_Block_Parser {
 	 * parse. In contrast to the specification parser this does not
 	 * return an error on invalid inputs.
 	 *
-	 * @param  string  $document  Input document being parsed.
+	 * @param  string $document  Input document being parsed.
 	 *
 	 * @return array[]
 	 * @since 5.0.0
-	 *
 	 */
 	public function parse( $document ) {
 		$this->document = $document;
@@ -210,9 +209,12 @@ class WP_Block_Parser {
 				 * block and add it as a new innerBlock to the parent
 				 */
 				$stack_top                        = array_pop( $this->stack );
-				$html                             = substr( $this->document, $stack_top->prev_offset,
-					$start_offset - $stack_top->prev_offset );
-				$stack_top->block->innerHTML      .= $html;
+				$html                             = substr(
+					$this->document,
+					$stack_top->prev_offset,
+					$start_offset - $stack_top->prev_offset
+				);
+				$stack_top->block->innerHTML     .= $html;
 				$stack_top->block->innerContent[] = $html;
 				$stack_top->prev_offset           = $start_offset + $token_length;
 
@@ -314,12 +316,11 @@ class WP_Block_Parser {
 	/**
 	 * Returns a new block object for freeform HTML
 	 *
-	 * @param  string  $inner_html  HTML content of block.
+	 * @param  string $inner_html  HTML content of block.
 	 *
 	 * @return WP_Block_Parser_Block freeform block object.
 	 * @internal
 	 * @since 3.9.0
-	 *
 	 */
 	public function freeform( $inner_html ) {
 		return new WP_Block_Parser_Block( null, array(), array(), $inner_html, array( $inner_html ) );
@@ -329,7 +330,7 @@ class WP_Block_Parser {
 	 * Pushes a length of text from the input document
 	 * to the output list as a freeform block.
 	 *
-	 * @param  null  $length  how many bytes of document text to output.
+	 * @param  null $length  how many bytes of document text to output.
 	 *
 	 * @since 5.0.0
 	 * @internal
@@ -348,10 +349,10 @@ class WP_Block_Parser {
 	 * Given a block structure from memory pushes
 	 * a new block to the output list.
 	 *
-	 * @param  WP_Block_Parser_Block  $block  The block to add to the output.
-	 * @param  int  $token_start  Byte offset into the document where the first token for the block starts.
-	 * @param  int  $token_length  Byte length of entire block from start of opening token to end of closing token.
-	 * @param  int|null  $last_offset  Last byte offset into document if continuing form earlier output.
+	 * @param  WP_Block_Parser_Block $block  The block to add to the output.
+	 * @param  int                   $token_start  Byte offset into the document where the first token for the block starts.
+	 * @param  int                   $token_length  Byte length of entire block from start of opening token to end of closing token.
+	 * @param  int|null              $last_offset  Last byte offset into document if continuing form earlier output.
 	 *
 	 * @internal
 	 * @since 5.0.0
@@ -362,7 +363,7 @@ class WP_Block_Parser {
 		$html                         = substr( $this->document, $parent->prev_offset, $token_start - $parent->prev_offset );
 
 		if ( ! empty( $html ) ) {
-			$parent->block->innerHTML      .= $html;
+			$parent->block->innerHTML     .= $html;
 			$parent->block->innerContent[] = $html;
 		}
 
@@ -373,7 +374,7 @@ class WP_Block_Parser {
 	/**
 	 * Pushes the top block from the parsing stack to the output list.
 	 *
-	 * @param  int|null  $end_offset  byte offset into document for where we should stop sending text output as HTML.
+	 * @param  int|null $end_offset  byte offset into document for where we should stop sending text output as HTML.
 	 *
 	 * @since 5.0.0
 	 * @internal
@@ -387,7 +388,7 @@ class WP_Block_Parser {
 			: substr( $this->document, $prev_offset );
 
 		if ( ! empty( $html ) ) {
-			$stack_top->block->innerHTML      .= $html;
+			$stack_top->block->innerHTML     .= $html;
 			$stack_top->block->innerContent[] = $html;
 		}
 

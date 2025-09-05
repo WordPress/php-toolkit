@@ -27,9 +27,9 @@ class InflateReadStream extends BaseByteReadStream {
 	protected $delegate_offset_0;
 
 	// Ensure properties are defined or inherited
-	protected $is_closed = false;
-	protected $buffer = '';
-	protected $bytes_already_forgotten = 0;
+	protected $is_closed                = false;
+	protected $buffer                   = '';
+	protected $bytes_already_forgotten  = 0;
 	protected $offset_in_current_buffer = 0;
 
 	public function __construct( ByteReadStream $upstream, $encoding = ZLIB_ENCODING_DEFLATE ) {

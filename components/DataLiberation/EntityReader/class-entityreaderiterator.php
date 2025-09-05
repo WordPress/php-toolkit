@@ -16,7 +16,7 @@ class EntityReaderIterator implements Iterator {
 	 */
 	private $entity_reader;
 	private $is_initialized = false;
-	private $key = 0;
+	private $key            = 0;
 
 	public function __construct( EntityReader $entity_reader ) {
 		$this->entity_reader = $entity_reader;

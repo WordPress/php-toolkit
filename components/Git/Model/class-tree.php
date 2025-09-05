@@ -21,7 +21,7 @@ class Tree {
 	/**
 	 * Add a tree entry
 	 *
-	 * @param  TreeEntry  $entry  The entry to add
+	 * @param  TreeEntry $entry  The entry to add
 	 */
 	public function add_entry( TreeEntry $entry ) {
 		$this->entries[ $entry->name ] = $entry;
@@ -30,7 +30,7 @@ class Tree {
 	/**
 	 * Get a tree entry by name
 	 *
-	 * @param  string  $name  The entry name
+	 * @param  string $name  The entry name
 	 *
 	 * @return TreeEntry|null The entry if found, null otherwise
 	 */

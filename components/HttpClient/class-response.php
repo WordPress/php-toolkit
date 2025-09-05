@@ -13,7 +13,7 @@ class Response {
 	public $request;
 
 	public $received_bytes = 0;
-	public $total_bytes = null;
+	public $total_bytes    = null;
 
 	public function __construct( ?Request $request = null ) {
 		$this->request = $request;
@@ -38,16 +38,16 @@ class Response {
 	 * - HTTP/1.x: "HTTP/1.1 200 OK" with optional status message
 	 * - HTTP/2: ":status: 200" pseudo-header without status message
 	 *
-	 * @param  string  $headers_raw  The HTTP headers to parse.
+	 * @param  string       $headers_raw  The HTTP headers to parse.
 	 * @param  Request|null $request  Optional request object to associate with the response.
 	 *
 	 * @return Response|false A new Response object, or false if the headers are invalid.
 	 */
-	static public function from_http_headers( $headers_raw, ?Request $request = null ) {
-		$lines = explode( "\r\n", $headers_raw );
+	public static function from_http_headers( $headers_raw, ?Request $request = null ) {
+		$lines      = explode( "\r\n", $headers_raw );
 		$first_line = array_shift( $lines );
 
-		$response = new Response( $request );
+		$response       = new Response( $request );
 		$headers_parsed = array();
 
 		// Check if this is HTTP/2 format (starts with :status pseudo-header)
@@ -57,14 +57,14 @@ class Response {
 			if ( count( $status_parts ) < 3 ) {
 				return false;
 			}
-			
+
 			$status_code = (int) trim( $status_parts[2] );
 			if ( $status_code < 100 || $status_code > 599 ) {
 				return false;
 			}
 
-			$response->protocol = 'HTTP/2.0';
-			$response->status_code = $status_code;
+			$response->protocol       = 'HTTP/2.0';
+			$response->status_code    = $status_code;
 			$response->status_message = null; // HTTP/2 doesn't have status messages
 
 			// Process remaining headers
@@ -72,21 +72,21 @@ class Response {
 				if ( empty( $line ) ) {
 					continue;
 				}
-				
+
 				if ( strpos( $line, ': ' ) === false ) {
 					// Invalid header format
 					continue;
 				}
-				
+
 				$header_parts = explode( ': ', $line, 2 );
-				$header_name = strtolower( trim( $header_parts[0] ) );
+				$header_name  = strtolower( trim( $header_parts[0] ) );
 				$header_value = trim( $header_parts[1] );
-				
+
 				// Skip pseudo-headers (already processed :status above)
 				if ( strpos( $header_name, ':' ) === 0 ) {
 					continue;
 				}
-				
+
 				$headers_parsed[ $header_name ] = $header_value;
 			}
 		} else {
@@ -96,16 +96,16 @@ class Response {
 				return false;
 			}
 
-			$protocol = $status_parts[0];
-			$status_code = (int) $status_parts[1];
+			$protocol       = $status_parts[0];
+			$status_code    = (int) $status_parts[1];
 			$status_message = isset( $status_parts[2] ) ? $status_parts[2] : '';
 
 			if ( $status_code < 100 || $status_code > 599 ) {
 				return false;
 			}
 
-			$response->protocol = $protocol;
-			$response->status_code = $status_code;
+			$response->protocol       = $protocol;
+			$response->status_code    = $status_code;
 			$response->status_message = $status_message;
 
 			// Process remaining headers
@@ -113,12 +113,12 @@ class Response {
 				if ( empty( $line ) ) {
 					continue;
 				}
-				
+
 				if ( strpos( $line, ': ' ) === false ) {
 					// Invalid header format
 					continue;
 				}
-				
+
 				$header_parts = explode( ': ', $line, 2 );
 				/**
 				 * Headers names are case-insensitive.
@@ -133,8 +133,8 @@ class Response {
 		}
 
 		$response->headers = $headers_parsed;
-		$content_length = $response->get_header('content-length');
-		if(null !== $content_length) {
+		$content_length    = $response->get_header( 'content-length' );
+		if ( null !== $content_length ) {
 			$response->total_bytes = (int) $content_length;
 		}
 		return $response;

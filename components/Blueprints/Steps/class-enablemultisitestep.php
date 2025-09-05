@@ -15,7 +15,7 @@ class EnableMultisiteStep implements StepInterface {
 		$tracker->setCaption( 'Enabling multisite' );
 
 		$code =
-<<<'PHP'
+		<<<'PHP'
 <?php
 /*
  * This code is mirroring the "wp core multisite-convert" command behavior.

@@ -461,7 +461,7 @@ class GitRemote {
 			if ( $i === 0 ) {
 				$packet_line .= ' multi_ack_detailed no-done side-band-64k ofs-delta thin-pack agent=git/2.37.3 filter';
 			}
-			$packet_line    .= "\n";
+			$packet_line   .= "\n";
 			$packet_lines[] = $packet_line;
 		}
 

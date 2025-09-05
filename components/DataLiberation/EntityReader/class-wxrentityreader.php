@@ -294,10 +294,9 @@ class WXREntityReader implements EntityReader {
 	/**
 	 * Constructor.
 	 *
-	 * @param  WP_XML_Processor  $xml  The XML processor to use.
+	 * @param  WP_XML_Processor $xml  The XML processor to use.
 	 *
 	 * @since WP_VERSION
-	 *
 	 */
 	protected function __construct( XMLProcessor $xml, $options = array() ) {
 		$this->xml = $xml;
@@ -494,7 +493,6 @@ class WXREntityReader implements EntityReader {
 	 *
 	 * @return string|false The entity type, or false if no entity is being processed.
 	 * @since WP_VERSION
-	 *
 	 */
 	private function get_entity_type() {
 		if ( null !== $this->entity_type ) {
@@ -515,7 +513,6 @@ class WXREntityReader implements EntityReader {
 	 *
 	 * @return int|null The post ID, or null if no posts have been processed.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_last_post_id() {
 		return $this->last_post_id;
@@ -526,7 +523,6 @@ class WXREntityReader implements EntityReader {
 	 *
 	 * @return int|null The comment ID, or null if no comments have been processed.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_last_comment_id() {
 		return $this->last_comment_id;
@@ -535,10 +531,9 @@ class WXREntityReader implements EntityReader {
 	/**
 	 * Appends bytes to the input stream.
 	 *
-	 * @param  string  $bytes  The bytes to append.
+	 * @param  string $bytes  The bytes to append.
 	 *
 	 * @since WP_VERSION
-	 *
 	 */
 	public function append_bytes( string $bytes ): void {
 		$this->xml->append_bytes( $bytes );
@@ -558,7 +553,6 @@ class WXREntityReader implements EntityReader {
 	 *
 	 * @return bool Whether processing is finished.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function is_finished(): bool {
 		return $this->is_finished;
@@ -569,7 +563,6 @@ class WXREntityReader implements EntityReader {
 	 *
 	 * @return bool Whether processing is paused.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function is_paused_at_incomplete_input(): bool {
 		return $this->xml->is_paused_at_incomplete_input();
@@ -580,7 +573,6 @@ class WXREntityReader implements EntityReader {
 	 *
 	 * @return string|null The error message, or null if no error occurred.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_last_error(): ?string {
 		return $this->xml->get_last_error();
@@ -595,7 +587,6 @@ class WXREntityReader implements EntityReader {
 	 *
 	 * @return bool Whether another entity was found.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function next_entity() {
 		if ( $this->is_finished ) {
@@ -626,7 +617,6 @@ class WXREntityReader implements EntityReader {
 	 *
 	 * @return bool Whether another entity was found.
 	 * @since WP_VERSION
-	 *
 	 */
 	private function read_next_entity() {
 		if ( $this->xml->is_finished() ) {
@@ -903,7 +893,7 @@ class WXREntityReader implements EntityReader {
 	 * Connects a byte stream to automatically pull bytes from once
 	 * the last input chunk have been processed.
 	 *
-	 * @param  WP_Byte_Reader  $stream  The upstream stream.
+	 * @param  WP_Byte_Reader $stream  The upstream stream.
 	 */
 	public function connect_upstream( ByteReadStream $stream ) {
 		$this->upstream = $stream;
@@ -956,10 +946,9 @@ class WXREntityReader implements EntityReader {
 	/**
 	 * Sets the current entity tag and type.
 	 *
-	 * @param  string  $tag  The entity tag name.
+	 * @param  string $tag  The entity tag name.
 	 *
 	 * @since WP_VERSION
-	 *
 	 */
 	private function set_entity_tag( string $tag_with_namespace ) {
 		$this->entity_tag = $tag_with_namespace;

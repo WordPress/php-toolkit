@@ -181,10 +181,10 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	/**
 	 * Replaces the currently matched URL with a new one.
 	 *
-	 * @param  string  $raw_url  The raw URL.
-	 * @param  URL  $parsed_url  The parsed version of the raw URL. It is required
-	 *                           as $raw_url might be a relative URL pointing to a different
-	 *                           host than this processor's base URL.
+	 * @param  string $raw_url  The raw URL.
+	 * @param  URL    $parsed_url  The parsed version of the raw URL. It is required
+	 *                             as $raw_url might be a relative URL pointing to a different
+	 *                             host than this processor's base URL.
 	 *
 	 * @return bool True if the URL was set, false otherwise.
 	 */

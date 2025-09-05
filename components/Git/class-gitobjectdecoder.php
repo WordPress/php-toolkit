@@ -28,11 +28,13 @@ class GitObjectDecoder extends BaseByteReadStream {
 	 */
 	private $header_length = 0; // Uncompressed header length (in bytes, incl. trailing NUL)
 	/** Decompressed view of the full object (header+body).
+	 *
 	 * @var InflateReadStream
 	 */
 	private $inflated_reader;
 
 	/** Points to the body inside $inflated_reader; seek(0) == body start.
+	 *
 	 * @var ByteReadStream
 	 */
 	private $body_source;
@@ -97,7 +99,7 @@ class GitObjectDecoder extends BaseByteReadStream {
 			if ( 0 === $this->inflated_reader->pull( 1, ByteReadStream::PULL_EXACTLY ) ) {
 				throw new GitException( 'Unexpected end of data while reading object header' );
 			}
-			$byte   = $this->inflated_reader->consume( 1 );
+			$byte    = $this->inflated_reader->consume( 1 );
 			$header .= $byte;
 			if ( "\x00" === $byte ) {
 				break;

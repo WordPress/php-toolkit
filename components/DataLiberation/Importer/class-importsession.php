@@ -34,16 +34,16 @@ class ImportSession {
 	);
 
 	const FRONTLOAD_STATUS_AWAITING_DOWNLOAD = 'awaiting_download';
-	const FRONTLOAD_STATUS_IGNORED = 'ignored';
-	const FRONTLOAD_STATUS_ERROR = 'error';
-	const FRONTLOAD_STATUS_SUCCEEDED = 'succeeded';
+	const FRONTLOAD_STATUS_IGNORED           = 'ignored';
+	const FRONTLOAD_STATUS_ERROR             = 'error';
+	const FRONTLOAD_STATUS_SUCCEEDED         = 'succeeded';
 	private $post_id;
 	private $cached_stage;
 
 	/**
 	 * Creates a new import session.
 	 *
-	 * @param  array  $args  {
+	 * @param  array $args  {
 	 *
 	 * @type string $data_source The data source (e.g. 'wxr_file', 'wxr_url', 'markdown_zip')
 	 * @type string $source_url Optional. URL of the source file for remote imports
@@ -117,7 +117,7 @@ class ImportSession {
 	/**
 	 * Gets an existing import session by ID.
 	 *
-	 * @param  int  $post_id  The import session post ID
+	 * @param  int $post_id  The import session post ID
 	 *
 	 * @return WP_Import_Model|null The import model instance or null if not found
 	 */
@@ -257,7 +257,7 @@ class ImportSession {
 	/**
 	 * Updates the progress information.
 	 *
-	 * @param  array  $newly_imported_entities  The new progress data with keys: posts, comments, terms, attachments, users
+	 * @param  array $newly_imported_entities  The new progress data with keys: posts, comments, terms, attachments, users
 	 */
 	public function bump_imported_entities_counts( $newly_imported_entities ) {
 		foreach ( $newly_imported_entities as $field => $count ) {
@@ -592,7 +592,7 @@ class ImportSession {
 	/**
 	 * Updates the current import stage.
 	 *
-	 * @param  string  $stage  The new stage
+	 * @param  string $stage  The new stage
 	 */
 	public function set_stage( $stage ) {
 		if ( $stage === $this->get_stage() ) {
@@ -629,7 +629,7 @@ class ImportSession {
 	/**
 	 * Updates the importer cursor.
 	 *
-	 * @param  string  $cursor  The new cursor data
+	 * @param  string $cursor  The new cursor data
 	 */
 	public function set_reentrancy_cursor( $cursor ) {
 		// WordPress, sadly, removes single slashes from the meta value and

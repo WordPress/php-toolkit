@@ -404,6 +404,6 @@ class SQLiteFilesystem implements Filesystem {
 	}
 
 	public function get_meta(): array {
-		return [];
+		return array();
 	}
 }

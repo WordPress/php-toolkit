@@ -23,9 +23,9 @@ class DeltaResolver {
 	 */
 	private $delta_reader;
 
-	private $base_length = null;
-	private $target_length = null;
-	private $resolved_chunk = '';
+	private $base_length                = null;
+	private $target_length              = null;
+	private $resolved_chunk             = '';
 	private $paused_on_incomplete_input = false;
 
 	public function __construct( GitObjectDecoder $base_object_reader, ByteReadStream $delta_reader ) {
@@ -78,7 +78,7 @@ class DeltaResolver {
 		$result = 0;
 		$shift  = 0;
 		do {
-			$byte   = ord( $this->delta_reader->consume( 1 ) );
+			$byte    = ord( $this->delta_reader->consume( 1 ) );
 			$result |= ( $byte & 0x7F ) << $shift;
 			$shift  += 7;
 		} while ( $byte & 0x80 );

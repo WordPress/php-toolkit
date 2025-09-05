@@ -56,7 +56,7 @@ class TransformedReadStream extends BaseByteReadStream implements ArrayAccess {
 
 		$flush = '';
 		foreach ( $this->filters as $filter ) {
-			$flush = $filter->filter_bytes( $flush );
+			$flush  = $filter->filter_bytes( $flush );
 			$flush .= $filter->flush();
 		}
 

@@ -23,9 +23,9 @@ class MergeStrategy {
 	/**
 	 * Performs a three-way merge between a common base and two branches.
 	 *
-	 * @param  string  $base  The common base version
-	 * @param  string  $branchA  First branch version
-	 * @param  string  $branchB  Second branch version
+	 * @param  string $base  The common base version
+	 * @param  string $branchA  First branch version
+	 * @param  string $branchB  Second branch version
 	 *
 	 * @return MergeResult The merged result
 	 */

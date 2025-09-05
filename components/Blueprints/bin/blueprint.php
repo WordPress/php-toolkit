@@ -51,254 +51,261 @@ if ( PHP_OS_FAMILY === 'Windows' && function_exists( 'sapi_windows_vt100_support
 }
 
 interface ProgressReporter {
-    /**
-     * Report progress update
-     * 
-     * @param float $progress Progress percentage (0-100)
-     * @param string $caption Progress caption/message
-     */
-    public function reportProgress(float $progress, string $caption): void;
+	/**
+	 * Report progress update
+	 *
+	 * @param float  $progress Progress percentage (0-100)
+	 * @param string $caption Progress caption/message
+	 */
+	public function reportProgress( float $progress, string $caption): void;
 
-    /**
-     * Report an error
-     * 
-     * @param string $message Error message
-     * @param \Throwable|null $exception Optional exception details
-     */
-    public function reportError(string $message, ?\Throwable $exception = null): void;
+	/**
+	 * Report an error
+	 *
+	 * @param string          $message Error message
+	 * @param \Throwable|null $exception Optional exception details
+	 */
+	public function reportError( string $message, ?\Throwable $exception = null): void;
 
-    /**
-     * Report completion
-     * 
-     * @param string $message Completion message
-     */
-    public function reportCompletion(string $message): void;
+	/**
+	 * Report completion
+	 *
+	 * @param string $message Completion message
+	 */
+	public function reportCompletion( string $message): void;
 
-    /**
-     * Close/cleanup the reporter
-     */
-    public function close(): void;
+	/**
+	 * Close/cleanup the reporter
+	 */
+	public function close(): void;
 }
 
 class TerminalProgressReporter implements ProgressReporter {
-    private $stdout;
-    private $lastProgress = -1;
-    private $lastCaption = '';
-    private $progressBarWidth = 50;
+	private $stdout;
+	private $lastProgress     = -1;
+	private $lastCaption      = '';
+	private $progressBarWidth = 50;
 
-    public function __construct() {
-        $this->stdout = fopen('php://stdout', 'w');
-    }
+	public function __construct() {
+		$this->stdout = fopen( 'php://stdout', 'w' );
+	}
 
-    public function reportProgress(float $progress, string $caption): void {
-        // Don't repeat identical progress
-        if ($this->lastProgress === $progress && $this->lastCaption === $caption) {
-            return;
-        }
+	public function reportProgress( float $progress, string $caption ): void {
+		// Don't repeat identical progress
+		if ( $this->lastProgress === $progress && $this->lastCaption === $caption ) {
+			return;
+		}
 
-        $this->lastProgress = $progress;
-        $this->lastCaption = $caption;
+		$this->lastProgress = $progress;
+		$this->lastCaption  = $caption;
 
-        $percentage = min(100, max(0, $progress));
-        $filled = (int)round($this->progressBarWidth * ($percentage / 100));
-        $empty = $this->progressBarWidth - $filled;
-        
-        $bar = str_repeat('=', $filled);
-        if ($empty > 0 && $filled < $this->progressBarWidth) {
-            $bar .= '>';
-            $bar .= str_repeat(' ', $empty - 1);
-        } else {
-            $bar .= str_repeat(' ', $empty);
-        }
+		$percentage = min( 100, max( 0, $progress ) );
+		$filled     = (int) round( $this->progressBarWidth * ( $percentage / 100 ) );
+		$empty      = $this->progressBarWidth - $filled;
 
-        $status = sprintf(
-            "\r[%s] %3.1f%% - %s",
-            $bar,
-            $percentage,
-            $caption
-        );
+		$bar = str_repeat( '=', $filled );
+		if ( $empty > 0 && $filled < $this->progressBarWidth ) {
+			$bar .= '>';
+			$bar .= str_repeat( ' ', $empty - 1 );
+		} else {
+			$bar .= str_repeat( ' ', $empty );
+		}
 
-        if ($this->isTty()) {
-            // Clear line and write new progress
-            fwrite($this->stdout, "\r\033[K" . $status);
-        } else {
-            // Non-TTY, just write new line
-            fwrite($this->stdout, $status . "\n");
-        }
-        fflush($this->stdout);
-    }
+		$status = sprintf(
+			"\r[%s] %3.1f%% - %s",
+			$bar,
+			$percentage,
+			$caption
+		);
 
-    public function reportError(string $message, ?\Throwable $exception = null): void {
-        $this->clearCurrentLine();
-        
-        $errorMsg = "\033[1;31mError:\033[0m " . $message;
-        if ($exception) {
-            $errorMsg .= " (" . $exception->getMessage() . ")";
-        }
-        
-        fwrite($this->stdout, $errorMsg . "\n");
-        fflush($this->stdout);
-    }
+		if ( $this->isTty() ) {
+			// Clear line and write new progress
+			fwrite( $this->stdout, "\r\033[K" . $status );
+		} else {
+			// Non-TTY, just write new line
+			fwrite( $this->stdout, $status . "\n" );
+		}
+		fflush( $this->stdout );
+	}
 
-    public function reportCompletion(string $message): void {
-        $this->clearCurrentLine();
-        fwrite($this->stdout, "\033[1;32m" . $message . "\033[0m\n");
-        fflush($this->stdout);
-    }
+	public function reportError( string $message, ?\Throwable $exception = null ): void {
+		$this->clearCurrentLine();
 
-    public function close(): void {
-        if ($this->stdout) {
-            fclose($this->stdout);
-        }
-    }
+		$errorMsg = "\033[1;31mError:\033[0m " . $message;
+		if ( $exception ) {
+			$errorMsg .= ' (' . $exception->getMessage() . ')';
+		}
 
-    private function clearCurrentLine(): void {
-        if ($this->isTty()) {
-            fwrite($this->stdout, "\r\033[K");
-        }
-    }
+		fwrite( $this->stdout, $errorMsg . "\n" );
+		fflush( $this->stdout );
+	}
 
-    private function isTty(): bool {
-        return stream_isatty($this->stdout);
-    }
+	public function reportCompletion( string $message ): void {
+		$this->clearCurrentLine();
+		fwrite( $this->stdout, "\033[1;32m" . $message . "\033[0m\n" );
+		fflush( $this->stdout );
+	}
+
+	public function close(): void {
+		if ( $this->stdout ) {
+			fclose( $this->stdout );
+		}
+	}
+
+	private function clearCurrentLine(): void {
+		if ( $this->isTty() ) {
+			fwrite( $this->stdout, "\r\033[K" );
+		}
+	}
+
+	private function isTty(): bool {
+		return stream_isatty( $this->stdout );
+	}
 }
 
 class JsonProgressReporter implements ProgressReporter {
-    private $outputFile;
+	private $outputFile;
 
-    public function __construct() {
-        $outputPath = getenv('OUTPUT_FILE') ?: 'php://stdout';
-        $this->outputFile = fopen($outputPath, 'w');
-    }
+	public function __construct() {
+		$outputPath       = getenv( 'OUTPUT_FILE' ) ?: 'php://stdout';
+		$this->outputFile = fopen( $outputPath, 'w' );
+	}
 
-    public function reportProgress(float $progress, string $caption): void {
-        $this->writeJsonMessage([
-            'type' => 'progress',
-            'progress' => round($progress, 2),
-            'caption' => $caption
-        ]);
-    }
+	public function reportProgress( float $progress, string $caption ): void {
+		$this->writeJsonMessage(
+			array(
+				'type' => 'progress',
+				'progress' => round( $progress, 2 ),
+				'caption' => $caption,
+			)
+		);
+	}
 
-    public function reportError(string $message, ?\Throwable $exception = null): void {
-        $errorData = [
-            'type' => 'error',
-            'message' => $message
-        ];
+	public function reportError( string $message, ?\Throwable $exception = null ): void {
+		$errorData = array(
+			'type' => 'error',
+			'message' => $message,
+		);
 
-        if ($exception) {
-            $errorData['details'] = [
-                'exception' => get_class($exception),
-                'message' => $exception->getMessage(),
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-                'trace' => $exception->getTraceAsString()
-            ];
-        }
+		if ( $exception ) {
+			$errorData['details'] = array(
+				'exception' => get_class( $exception ),
+				'message' => $exception->getMessage(),
+				'file' => $exception->getFile(),
+				'line' => $exception->getLine(),
+				'trace' => $exception->getTraceAsString(),
+			);
+		}
 
-        $this->writeJsonMessage($errorData);
-    }
+		$this->writeJsonMessage( $errorData );
+	}
 
-    public function reportCompletion(string $message): void {
-        $this->writeJsonMessage([
-            'type' => 'completion',
-            'message' => $message
-        ]);
-    }
+	public function reportCompletion( string $message ): void {
+		$this->writeJsonMessage(
+			array(
+				'type' => 'completion',
+				'message' => $message,
+			)
+		);
+	}
 
-    public function close(): void {
-        if ($this->outputFile) {
-            fclose($this->outputFile);
-        }
-    }
+	public function close(): void {
+		if ( $this->outputFile ) {
+			fclose( $this->outputFile );
+		}
+	}
 
-    private function writeJsonMessage(array $data): void {
-        fwrite($this->outputFile, json_encode($data) . "\n");
-        fflush($this->outputFile);
-    }
+	private function writeJsonMessage( array $data ): void {
+		fwrite( $this->outputFile, json_encode( $data ) . "\n" );
+		fflush( $this->outputFile );
+	}
 }
 
 function createProgressReporter(): ProgressReporter {
-	$reporter = apply_filters('blueprint.progress_reporter', null);
+	$reporter = apply_filters( 'blueprint.progress_reporter', null );
 	if ( $reporter ) {
 		return $reporter;
 	}
 
-    // Use JSON mode if OUTPUT_FILE is set or if we're not in a TTY
-    if (getenv('OUTPUT_FILE') || !stream_isatty(STDOUT)) {
-        return new JsonProgressReporter();
-    }
-    
-    return new TerminalProgressReporter();
+	// Use JSON mode if OUTPUT_FILE is set or if we're not in a TTY
+	if ( getenv( 'OUTPUT_FILE' ) || ! stream_isatty( STDOUT ) ) {
+		return new JsonProgressReporter();
+	}
+
+	return new TerminalProgressReporter();
 }
 
 
 $progressReporter = createProgressReporter();
 
 // -----------------------------------------------------------------------------
-//   Command and option definitions
+// Command and option definitions
 // -----------------------------------------------------------------------------
 $supportedPermissions = RunnerConfiguration::ALL_PERMISSIONS;
 
 // Define common options that can be used by multiple commands
-$commonOptions = [
-	'help'    => [ 'h', false, false, 'Show help for this command' ],
-	'version' => [ 'V', false, false, 'Show version' ],
-];
+$commonOptions = array(
+	'help'    => array( 'h', false, false, 'Show help for this command' ),
+	'version' => array( 'V', false, false, 'Show version' ),
+);
 
 // Define the available commands and their specific options
-$commandConfigurations = [
-	'exec' => [
+$commandConfigurations = array(
+	'exec' => array(
 		'description'     => 'Execute a WordPress Blueprint',
-		'positionalArgs'  => [
+		'positionalArgs'  => array(
 			'blueprint' => 'Path / URL / DataReference to the blueprint (required)',
-		],
-		'options'         => array_merge( $commonOptions, [
-			'site-url'                    => [ 'u', true, null, 'Public site URL (https://example.com)' ],
-			'site-path'                   => [ null, true, null, 'Target directory with WordPress install context)' ],
-			'execution-context'           => [ 'x', true, null, 'Source directory with Blueprint context files' ],
-			'mode'                        => [ 'm', true, Runner::EXECUTION_MODE_CREATE_NEW_SITE, sprintf( 'Execution mode (%s|%s)', Runner::EXECUTION_MODE_CREATE_NEW_SITE, Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ) ],
-			'db-engine'                   => [ 'd', true, 'mysql', 'Database engine (mysql|sqlite)' ],
-			'db-host'                     => [ null, true, '127.0.0.1', 'MySQL host' ],
-			'db-user'                     => [ null, true, 'root', 'MySQL user' ],
-			'db-pass'                     => [ null, true, '', 'MySQL password' ],
-			'db-name'                     => [ null, true, 'wordpress', 'MySQL database' ],
-			'db-path'                     => [ 'p', true, 'wp.db', 'SQLite file path' ],
-			'truncate-new-site-directory' => [ 't', false, false, 'Delete target directory if it exists before execution' ],
-			/**
-			 * @TODO: Reuse this error message removed from the Playground repo:
-			 * 
-			 *			if (!blueprintMayReadAdjacentFiles) {
-			 *				throw new ReportableError(
-			 *					`Error: Blueprint contained tried to read a local file at path "${path}" (via a resource of type "bundled"). ` +
-			 *						`Playground restricts access to local resources by default as a security measure. \n\n` +
-			 *						`You can allow this Blueprint to read files from the same parent directory by explicitly adding the ` +
-			 *						`--blueprint-may-read-adjacent-files option to your command.`
-			 *				);
-			 *			}
-			 */
-			'allow'                       => [ null, true, null, 'Allowed permissions. One of: ' . implode( ', ', $supportedPermissions ) ],
-		] ),
-		'examples'        => [
+		),
+		'options'         => array_merge(
+			$commonOptions,
+			array(
+				'site-url'                    => array( 'u', true, null, 'Public site URL (https://example.com)' ),
+				'site-path'                   => array( null, true, null, 'Target directory with WordPress install context)' ),
+				'execution-context'           => array( 'x', true, null, 'Source directory with Blueprint context files' ),
+				'mode'                        => array( 'm', true, Runner::EXECUTION_MODE_CREATE_NEW_SITE, sprintf( 'Execution mode (%s|%s)', Runner::EXECUTION_MODE_CREATE_NEW_SITE, Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ) ),
+				'db-engine'                   => array( 'd', true, 'mysql', 'Database engine (mysql|sqlite)' ),
+				'db-host'                     => array( null, true, '127.0.0.1', 'MySQL host' ),
+				'db-user'                     => array( null, true, 'root', 'MySQL user' ),
+				'db-pass'                     => array( null, true, '', 'MySQL password' ),
+				'db-name'                     => array( null, true, 'wordpress', 'MySQL database' ),
+				'db-path'                     => array( 'p', true, 'wp.db', 'SQLite file path' ),
+				'truncate-new-site-directory' => array( 't', false, false, 'Delete target directory if it exists before execution' ),
+				/**
+				 * @TODO: Reuse this error message removed from the Playground repo:
+				 *
+				 *          if (!blueprintMayReadAdjacentFiles) {
+				 *              throw new ReportableError(
+				 *                  `Error: Blueprint contained tried to read a local file at path "${path}" (via a resource of type "bundled"). ` +
+				 *                      `Playground restricts access to local resources by default as a security measure. \n\n` +
+				 *                      `You can allow this Blueprint to read files from the same parent directory by explicitly adding the ` +
+				 *                      `--blueprint-may-read-adjacent-files option to your command.`
+				 *              );
+				 *          }
+				 */
+				'allow'                       => array( null, true, null, 'Allowed permissions. One of: ' . implode( ', ', $supportedPermissions ) ),
+			)
+		),
+		'examples'        => array(
 			'php blueprint.php exec my-blueprint.json --site-url https://mysite.test --site-path /var/www/mysite.com',
 			sprintf( 'php blueprint.php exec my-blueprint.json --execution-context /var/www --site-url https://mysite.test --mode %s --site-path ./site', Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ),
 			'php blueprint.php exec my-blueprint.json --site-url https://mysite.test --site-path ./mysite --truncate-new-site-directory',
-		],
-		'aliases'         => [ 'run' ],
-		'requiredOptions' => [ 'site-path', 'site-url', 'mode' ],
-	],
-	'help' => [
+		),
+		'aliases'         => array( 'run' ),
+		'requiredOptions' => array( 'site-path', 'site-url', 'mode' ),
+	),
+	'help' => array(
 		'description'    => 'Show help for WordPress Blueprint Runner CLI',
-		'positionalArgs' => [
+		'positionalArgs' => array(
 			'command' => 'Command name to get help for (optional)',
-		],
+		),
 		'options'        => $commonOptions,
-		'examples'       => [
+		'examples'       => array(
 			'php blueprint.php help',
 			'php blueprint.php help exec',
-		],
-		'aliases'        => [],
-	],
-];
+		),
+		'aliases'        => array(),
+	),
+);
 
 // Get the command name from arguments, accounting for aliases
 function resolveCommand( $commandArg, array $commandConfigurations ): ?string {
@@ -318,7 +325,7 @@ function resolveCommand( $commandArg, array $commandConfigurations ): ?string {
 }
 
 // -----------------------------------------------------------------------------
-//   Command handlers
+// Command handlers
 // -----------------------------------------------------------------------------
 function handleExecCommand( array $positionalArgs, array $options, array $commandConfig, ProgressReporter $progressReporter ): void {
 	// Check if help is requested for this command
@@ -326,48 +333,52 @@ function handleExecCommand( array $positionalArgs, array $options, array $comman
 		showCommandHelpMessage( 'exec', $commandConfig );
 		exit( 0 );
 	}
-	
+
 	// Validate required options
 	foreach ( $commandConfig['requiredOptions'] as $requiredOption ) {
 		if ( empty( $options[ $requiredOption ] ) ) {
-			$progressReporter->reportError("The --$requiredOption option is required for the exec command.");
+			$progressReporter->reportError( "The --$requiredOption option is required for the exec command." );
 			exit( 1 );
 		}
 	}
 
 	// Validate required positional arguments
 	if ( empty( $positionalArgs ) ) {
-		$progressReporter->reportError("A Blueprint reference must be specified as a positional argument.");
+		$progressReporter->reportError( 'A Blueprint reference must be specified as a positional argument.' );
 		exit( 1 );
 	}
 
 	try {
 		// Convert CLI arguments to RunnerConfiguration
 		$config = cliArgsToRunnerConfiguration( $positionalArgs, $options );
-		$config->setProgressObserver( new ProgressObserver( function ( $progress, $caption ) use ( $progressReporter ) {
-			$progressReporter->reportProgress( $progress, $caption );
-		} ) );
+		$config->setProgressObserver(
+			new ProgressObserver(
+				function ( $progress, $caption ) use ( $progressReporter ) {
+					$progressReporter->reportProgress( $progress, $caption );
+				}
+			)
+		);
 		$runner = new Runner( $config );
 
 		// Execute the Blueprint
 		if ( $config->getExecutionMode() === Runner::EXECUTION_MODE_CREATE_NEW_SITE ) {
-			$progressReporter->reportProgress(0, 'Creating a new site');
+			$progressReporter->reportProgress( 0, 'Creating a new site' );
 		} else {
-			$progressReporter->reportProgress(0, 'Updating an existing site');
+			$progressReporter->reportProgress( 0, 'Updating an existing site' );
 		}
-		$progressReporter->reportProgress(0, sprintf("  Site URL:  %s", $config->getTargetSiteUrl()));
-		$progressReporter->reportProgress(0, sprintf("  Site path: %s", $config->getTargetSiteRoot()));
-		$progressReporter->reportProgress(0, sprintf("  Blueprint: %s", $config->getBlueprint()->get_human_readable_name()));
-		
+		$progressReporter->reportProgress( 0, sprintf( '  Site URL:  %s', $config->getTargetSiteUrl() ) );
+		$progressReporter->reportProgress( 0, sprintf( '  Site path: %s', $config->getTargetSiteRoot() ) );
+		$progressReporter->reportProgress( 0, sprintf( '  Blueprint: %s', $config->getBlueprint()->get_human_readable_name() ) );
+
 		$runner->run();
-		
-		$progressReporter->reportCompletion("Blueprint successfully executed.");
+
+		$progressReporter->reportCompletion( 'Blueprint successfully executed.' );
 	} catch ( PermissionsException $ex ) {
 		$permission = $ex->getPermission();
 		$flag       = RunnerConfiguration::getPermissionCliFlag( $permission );
 
-		$progressReporter->reportError(sprintf("Permission Error: %s", $ex->getMessage()), $ex);
-		$progressReporter->reportError(sprintf("Tip: Run with --allow=%s to grant this permission.", $flag));
+		$progressReporter->reportError( sprintf( 'Permission Error: %s', $ex->getMessage() ), $ex );
+		$progressReporter->reportError( sprintf( 'Tip: Run with --allow=%s to grant this permission.', $flag ) );
 		exit( 1 );
 	}
 }
@@ -375,12 +386,12 @@ function handleExecCommand( array $positionalArgs, array $options, array $comman
 function handleHelpCommand( array $positionalArgs, array $options, array $commandConfigurations, ProgressReporter $progressReporter ): void {
 	if ( ! empty( $positionalArgs ) ) {
 		$requestedCommand = $positionalArgs[0];
-		$resolvedCommand = resolveCommand( $requestedCommand, $commandConfigurations );
-		
+		$resolvedCommand  = resolveCommand( $requestedCommand, $commandConfigurations );
+
 		if ( $resolvedCommand !== null ) {
 			showCommandHelpMessage( $resolvedCommand, $commandConfigurations[ $resolvedCommand ] );
 		} else {
-			$progressReporter->reportError("Unknown command '$requestedCommand'.");
+			$progressReporter->reportError( "Unknown command '$requestedCommand'." );
 			showGeneralHelpMessage( $commandConfigurations );
 		}
 	} else {
@@ -396,12 +407,17 @@ function cliArgsToRunnerConfiguration( array $positionalArgs, array $options ): 
 	// The first positional is the blueprint reference
 	try {
 		$blueprint_reference = $positionalArgs[0];
-		$config->setBlueprint( DataReference::create( $blueprint_reference, [
-			AbsoluteLocalPath::class,
-			ExecutionContextPath::class,
-		] ) );
+		$config->setBlueprint(
+			DataReference::create(
+				$blueprint_reference,
+				array(
+					AbsoluteLocalPath::class,
+					ExecutionContextPath::class,
+				)
+			)
+		);
 	} catch ( InvalidArgumentException $e ) {
-		throw new InvalidArgumentException( sprintf( "Invalid Blueprint reference: %s. Hint: paths must start with ./ or /. URLs must start with http:// or https://.", $positionalArgs[0] ) );
+		throw new InvalidArgumentException( sprintf( 'Invalid Blueprint reference: %s. Hint: paths must start with ./ or /. URLs must start with http:// or https://.', $positionalArgs[0] ) );
 	}
 
 	if ( ! empty( $options['mode'] ) ) {
@@ -410,38 +426,38 @@ function cliArgsToRunnerConfiguration( array $positionalArgs, array $options ): 
 			$config->setExecutionMode( Runner::EXECUTION_MODE_CREATE_NEW_SITE );
 		} elseif ( $mode === Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ) {
 			$config->setExecutionMode( Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE );
-			if(!empty($options['wp'])) {
-				throw new InvalidArgumentException( sprintf( "The --wp option cannot be used with --mode=%s. The WordPress version is whatever the existing site has.", Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ) );
+			if ( ! empty( $options['wp'] ) ) {
+				throw new InvalidArgumentException( sprintf( 'The --wp option cannot be used with --mode=%s. The WordPress version is whatever the existing site has.', Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ) );
 			}
 		} else {
 			throw new InvalidArgumentException( sprintf( "Invalid execution mode: '{$mode}'. Supported modes are: %s", implode( ', ', Runner::EXECUTION_MODES ) ) );
 		}
 	}
 
-	$targetSiteRoot         = $options['site-path'];
+	$targetSiteRoot = $options['site-path'];
 	if ( $options['truncate-new-site-directory'] ) {
 		if ( $options['mode'] !== Runner::EXECUTION_MODE_CREATE_NEW_SITE ) {
-			throw new InvalidArgumentException( sprintf( "--truncate-new-site-directory can only be used with --mode=%s", Runner::EXECUTION_MODE_CREATE_NEW_SITE ) );
+			throw new InvalidArgumentException( sprintf( '--truncate-new-site-directory can only be used with --mode=%s', Runner::EXECUTION_MODE_CREATE_NEW_SITE ) );
 		}
 		$absoluteTargetSiteRoot = realpath( $targetSiteRoot );
-		if ( false === $absoluteTargetSiteRoot) {
+		if ( false === $absoluteTargetSiteRoot ) {
 			mkdir( $targetSiteRoot, 0755, true );
-		} else if( is_dir( $absoluteTargetSiteRoot ) ) {
+		} elseif ( is_dir( $absoluteTargetSiteRoot ) ) {
 			$fs = LocalFilesystem::create( $absoluteTargetSiteRoot );
 			// Delete all the files and directories in the target site root, but preserve the
 			// target directory itself. Why? In Playground CLI, `/wordpress` is likely to be a
 			// mount removing a mount root throws an Exception.
-			foreach ( $fs->ls('/') as $file ) {
-				if( $fs->is_dir( $file ) ) {
-					$fs->rmdir( $file, [ 'recursive' => true ] );
+			foreach ( $fs->ls( '/' ) as $file ) {
+				if ( $fs->is_dir( $file ) ) {
+					$fs->rmdir( $file, array( 'recursive' => true ) );
 				} else {
 					$fs->rm( $file );
 				}
 			}
 			if ( ! $fs->is_dir( '/' ) ) {
-				$fs->mkdir( '/', [ 'chmod' => 0755 ] );
+				$fs->mkdir( '/', array( 'chmod' => 0755 ) );
 			}
-		} 
+		}
 	}
 
 	$absoluteTargetSiteRoot = realpath( $targetSiteRoot );
@@ -458,18 +474,18 @@ function cliArgsToRunnerConfiguration( array $positionalArgs, array $options ): 
 
 	// Set database credentials
 	$dbEngine = $options['db-engine'] ?? 'mysql';
-	$dbCreds  = [];
+	$dbCreds  = array();
 	if ( $dbEngine === 'mysql' ) {
-		$dbCreds = [
+		$dbCreds = array(
 			'host'         => $options['db-host'] ?? '127.0.0.1',
 			'username'     => $options['db-user'] ?? 'root',
 			'password'     => $options['db-pass'] ?? '',
 			'databaseName' => $options['db-name'] ?? 'wordpress',
-		];
+		);
 	} elseif ( $dbEngine === 'sqlite' ) {
-		$dbCreds = [
+		$dbCreds = array(
 			'path' => $options['db-path'] ?? 'wp.db',
-		];
+		);
 	}
 	$config->setDatabaseCredentials( $dbCreds );
 
@@ -482,8 +498,12 @@ function cliArgsToRunnerConfiguration( array $positionalArgs, array $options ): 
 					$config->setAllowLocalFilesystemAccess( true );
 					break;
 				default:
-					throw new InvalidArgumentException( "Unknown --allow permission: $permission. Allowed permissions: " . implode( ', ',
-							$supportedPermissions ) );
+					throw new InvalidArgumentException(
+						"Unknown --allow permission: $permission. Allowed permissions: " . implode(
+							', ',
+							$supportedPermissions
+						)
+					);
 			}
 		}
 	}
@@ -496,7 +516,7 @@ function cliArgsToRunnerConfiguration( array $positionalArgs, array $options ): 
 }
 
 // -----------------------------------------------------------------------------
-//   Help & version
+// Help & version
 // -----------------------------------------------------------------------------
 function showGeneralHelpMessage( array $commandConfigurations ): void {
 	$script = basename( $_SERVER['argv'][0] );
@@ -504,29 +524,29 @@ function showGeneralHelpMessage( array $commandConfigurations ): void {
 	echo "\033[1mUsage:\033[0m\n";
 	echo "  php $script \033[33m<command>\033[0m [options] [arguments]\n\n";
 	echo "\033[1mAvailable commands:\033[0m\n";
-	
-	$commandList = [];
+
+	$commandList = array();
 	foreach ( $commandConfigurations as $cmd => $config ) {
-		$aliases = isset( $config['aliases'] ) && !empty( $config['aliases'] ) 
-			? ' (aliases: ' . implode( ', ', $config['aliases'] ) . ')' 
+		$aliases       = isset( $config['aliases'] ) && ! empty( $config['aliases'] )
+			? ' (aliases: ' . implode( ', ', $config['aliases'] ) . ')'
 			: '';
-		$commandList[] = [
+		$commandList[] = array(
 			'name' => $cmd . $aliases,
-			'desc' => $config['description']
-		];
+			'desc' => $config['description'],
+		);
 	}
-	
+
 	// Find the longest command name for proper formatting
 	$maxNameLength = 0;
 	foreach ( $commandList as $cmd ) {
 		$maxNameLength = max( $maxNameLength, strlen( $cmd['name'] ) );
 	}
-	
+
 	// Output command list with descriptions
 	foreach ( $commandList as $cmd ) {
-		printf( "  %-" . ($maxNameLength + 2) . "s %s\n", $cmd['name'], $cmd['desc'] );
+		printf( '  %-' . ( $maxNameLength + 2 ) . "s %s\n", $cmd['name'], $cmd['desc'] );
 	}
-	
+
 	echo "\nFor detailed help on a specific command, use:\n";
 	echo "  php $script help \033[33m<command>\033[0m\n";
 	echo "  php $script \033[33m<command>\033[0m --help\n";
@@ -534,52 +554,52 @@ function showGeneralHelpMessage( array $commandConfigurations ): void {
 
 function showCommandHelpMessage( string $command, array $commandConfig ): void {
 	$script = basename( $_SERVER['argv'][0] );
-	
+
 	echo "\033[1m" . $commandConfig['description'] . "\033[0m\n\n";
-	
+
 	// Display command syntax
 	echo "\033[1mUsage:\033[0m\n";
 	echo "  php $script $command";
-	
+
 	// Add positional args to usage if any
-	if ( !empty( $commandConfig['positionalArgs'] ) ) {
+	if ( ! empty( $commandConfig['positionalArgs'] ) ) {
 		foreach ( $commandConfig['positionalArgs'] as $name => $desc ) {
 			echo " \033[33m<$name>\033[0m";
 		}
 	}
 	echo " [options]\n\n";
-	
+
 	// Display positional arguments
-	if ( !empty( $commandConfig['positionalArgs'] ) ) {
+	if ( ! empty( $commandConfig['positionalArgs'] ) ) {
 		echo "\033[1mArguments:\033[0m\n";
 		$maxArgNameLength = max( array_map( 'strlen', array_keys( $commandConfig['positionalArgs'] ) ) );
 		foreach ( $commandConfig['positionalArgs'] as $name => $desc ) {
-			printf( "  %-" . ($maxArgNameLength + 2) . "s %s\n", $name, $desc );
+			printf( '  %-' . ( $maxArgNameLength + 2 ) . "s %s\n", $name, $desc );
 		}
 		echo "\n";
 	}
-	
+
 	// Display options
-	if ( !empty( $commandConfig['options'] ) ) {
+	if ( ! empty( $commandConfig['options'] ) ) {
 		echo "\033[1mOptions:\033[0m\n";
-		foreach ( $commandConfig['options'] as $long => [$short, $hasVal, $def, $desc] ) {
+		foreach ( $commandConfig['options'] as $long => array( $short, $hasVal, $def, $desc ) ) {
 			$flags = '  ' . ( $short ? "-$short, " : '    ' ) . "--$long";
 			if ( $hasVal ) {
-				$flags .= " <value>";
+				$flags .= ' <value>';
 			}
 			$defaultText = is_null( $def ) ? '' : ' (default ' . var_export( $def, true ) . ')';
-			
+
 			// Mark required options
 			if ( isset( $commandConfig['requiredOptions'] ) && in_array( $long, $commandConfig['requiredOptions'] ) ) {
 				$defaultText = ' (required)';
 			}
-			
+
 			printf( "%-34s %s\n", $flags, $desc . $defaultText );
 		}
 	}
-	
+
 	// Display examples
-	if ( !empty( $commandConfig['examples'] ) ) {
+	if ( ! empty( $commandConfig['examples'] ) ) {
 		echo "\n\033[1mExamples:\033[0m\n";
 		foreach ( $commandConfig['examples'] as $example ) {
 			echo "  $example\n";
@@ -590,31 +610,31 @@ function showCommandHelpMessage( string $command, array $commandConfig ): void {
 
 
 // -----------------------------------------------------------------------------
-//   Main entry
+// Main entry
 // -----------------------------------------------------------------------------
 try {
 	global $commandConfigurations;
-	
+
 	// Process global arguments first (version, etc.)
 	if ( isset( $_SERVER['argv'][1] ) && $_SERVER['argv'][1] === '--version' ) {
 		echo "WordPress Blueprint Runner CLI v0.0.1-alpha\n";
 		exit( 0 );
 	}
-	
+
 	// Get the command from arguments
 	$commandArg = $_SERVER['argv'][1] ?? 'help';
-	$command = resolveCommand( $commandArg, $commandConfigurations );
-	
+	$command    = resolveCommand( $commandArg, $commandConfigurations );
+
 	if ( $command === null ) {
-		$progressReporter->reportError("Unknown command '$commandArg'.");
+		$progressReporter->reportError( "Unknown command '$commandArg'." );
 		showGeneralHelpMessage( $commandConfigurations );
 		exit( 1 );
 	}
-	
+
 	// Parse command arguments and options
-	$commandArgv = array_slice( $_SERVER['argv'], 2 ); // Skip "php script.php command"
-	[ $positionalArgs, $options ] = CLI::parseCommandArgsAndOptions( $commandArgv, $commandConfigurations[ $command ]['options'] );
-	
+	$commandArgv                       = array_slice( $_SERVER['argv'], 2 ); // Skip "php script.php command"
+	array( $positionalArgs, $options ) = CLI::parseCommandArgsAndOptions( $commandArgv, $commandConfigurations[ $command ]['options'] );
+
 	// Dispatch to appropriate command handler
 	switch ( $command ) {
 		case 'exec':
@@ -624,33 +644,33 @@ try {
 			handleHelpCommand( $positionalArgs, $options, $commandConfigurations, $progressReporter );
 			break;
 		default:
-			$progressReporter->reportError("Command handler not implemented for '$command'.");
+			$progressReporter->reportError( "Command handler not implemented for '$command'." );
 			exit( 1 );
 	}
 } catch ( BlueprintExecutionException $ex ) {
 	if ( ! $ex->schemaError ) {
-		$progressReporter->reportError($ex->getMessage());
+		$progressReporter->reportError( $ex->getMessage() );
 		while ( $ex->getPrevious() ) {
 			$ex = $ex->getPrevious();
-			$progressReporter->reportError("Caused by: " . $ex->getMessage());
+			$progressReporter->reportError( 'Caused by: ' . $ex->getMessage() );
 		}
 		exit( 1 );
 	}
 
-	$progressReporter->reportError($ex->getMessage() . ' See the validation errors below:');
+	$progressReporter->reportError( $ex->getMessage() . ' See the validation errors below:' );
 	$lastPrettyPath = '';
 	$currentError   = $ex->schemaError;
 	while ( $currentError ) {
 		$prettyPath = $currentError->getPrettyPath();
 		if ( $prettyPath !== $lastPrettyPath ) {
-			$progressReporter->reportError($prettyPath . ":");
+			$progressReporter->reportError( $prettyPath . ':' );
 		}
-		$progressReporter->reportError($currentError->message);
+		$progressReporter->reportError( $currentError->message );
 		$currentError   = $currentError->getMostProbableCause();
 		$lastPrettyPath = $prettyPath;
 	}
 	exit( 1 );
 } catch ( Exception $ex ) {
-	$progressReporter->reportError($ex->getMessage(), $ex);
+	$progressReporter->reportError( $ex->getMessage(), $ex );
 	exit( 1 );
 }

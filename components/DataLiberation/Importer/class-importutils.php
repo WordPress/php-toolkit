@@ -16,7 +16,7 @@ class ImportUtils {
 	/**
 	 * Generates a block opener comment with given attributes.
 	 *
-	 * @param  string  $block_name  The name of the block.
+	 * @param  string $block_name  The name of the block.
 	 * @param  array  $attrs  The attributes of the block.
 	 *
 	 * @return string The block opener.
@@ -33,7 +33,7 @@ class ImportUtils {
 	/**
 	 * Generates a block closer comment.
 	 *
-	 * @param  string  $block_name  The name of the block.
+	 * @param  string $block_name  The name of the block.
 	 *
 	 * @return string The block closer.
 	 */
@@ -44,7 +44,7 @@ class ImportUtils {
 	/**
 	 * Convert an array of WP_Block_Object objects to HTML markup.
 	 *
-	 * @param  array  $blocks  The blocks to convert to markup.
+	 * @param  array $blocks  The blocks to convert to markup.
 	 *
 	 * @return string The HTML markup.
 	 */

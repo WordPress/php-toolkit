@@ -166,8 +166,8 @@ class FilesystemEntityReader implements EntityReader {
 	/**
 	 * Initializes the reader with filesystem and options.
 	 *
-	 * @param  Filesystem  $filesystem  The filesystem to traverse.
-	 * @param  array  $options  Configuration options.
+	 * @param  Filesystem $filesystem  The filesystem to traverse.
+	 * @param  array      $options  Configuration options.
 	 */
 	public function __construct(
 		Filesystem $filesystem,
@@ -208,7 +208,7 @@ class FilesystemEntityReader implements EntityReader {
 		}
 		$this->base_url = $options['base_url'];
 		if ( isset( $options['root_parent_id'] ) ) {
-			$this->parent_ids[ - 1 ] = $options['root_parent_id'];
+			$this->parent_ids[- 1] = $options['root_parent_id'];
 		}
 	}
 
@@ -394,10 +394,10 @@ class FilesystemEntityReader implements EntityReader {
 					);
 				} elseif ( false === $this->pending_directory_index ) {
 					// No directory index candidate found in the current directory.
-					if ( $depth === 0 && isset( $this->parent_ids[ - 1 ] ) && $parent_id === $this->parent_ids[ - 1 ] ) {
+					if ( $depth === 0 && isset( $this->parent_ids[- 1] ) && $parent_id === $this->parent_ids[- 1] ) {
 						// We're at the root directory and we have a root parent ID. Let's
 						// reuse that as the top-level parent.
-						$this->parent_ids[ $depth ] = $this->parent_ids[ - 1 ];
+						$this->parent_ids[ $depth ] = $this->parent_ids[- 1];
 						// We're no longer looking for a directory index.
 						$this->pending_directory_index = null;
 						continue;
@@ -525,7 +525,7 @@ class FilesystemEntityReader implements EntityReader {
 	/**
 	 * Emits a WordPress post entity based on the provided options.
 	 *
-	 * @param  array  $options  Configuration for the post entity.
+	 * @param  array $options  Configuration for the post entity.
 	 *
 	 * @return int The ID of the created post.
 	 */
@@ -546,7 +546,7 @@ class FilesystemEntityReader implements EntityReader {
 	/**
 	 * Chooses an index file from the list of pending files.
 	 *
-	 * @param  array  $files  List of files to choose from.
+	 * @param  array $files  List of files to choose from.
 	 *
 	 * @return int The index of the chosen file or -1 if none.
 	 */
@@ -566,7 +566,7 @@ class FilesystemEntityReader implements EntityReader {
 	/**
 	 * Determines if a file path matches the index file pattern.
 	 *
-	 * @param  string  $path  The file path to check.
+	 * @param  string $path  The file path to check.
 	 *
 	 * @return bool True if it matches, false otherwise.
 	 */

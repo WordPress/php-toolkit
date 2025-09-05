@@ -50,7 +50,7 @@ class AnnotatedBlockMarkupConsumer implements DataFormatConsumer {
 				if ( $block['blockName'] === null ) {
 					$html_converter = new MarkupProcessorConsumer( WP_HTML_Processor::create_fragment( $block['innerHTML'] ) );
 					$result         = $html_converter->consume();
-					$block_markup   .= $result->get_block_markup() . "\n";
+					$block_markup  .= $result->get_block_markup() . "\n";
 					$metadata       = array_merge( $metadata, $result->get_all_metadata() );
 				} else {
 					$block_markup .= serialize_block( $block ) . "\n";

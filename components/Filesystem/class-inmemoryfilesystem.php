@@ -18,8 +18,8 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 	use Mixin\CopyRecursiveViaStreaming;
 
 	private $last_write_stream_id = 0;
-	private $write_streams = array();
-	private $files = array();
+	private $write_streams        = array();
+	private $files                = array();
 
 	public static function create() {
 		return new ChrootLayer(
@@ -185,7 +185,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 				sprintf( 'Cannot append bytes to a write stream that is not open' )
 			);
 		}
-		$path                             = $this->write_streams[ $stream_id ];
+		$path                              = $this->write_streams[ $stream_id ];
 		$this->files[ $path ]['contents'] .= $data;
 
 		return true;
@@ -201,6 +201,6 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 	}
 
 	public function get_meta(): array {
-		return [];
+		return array();
 	}
 }

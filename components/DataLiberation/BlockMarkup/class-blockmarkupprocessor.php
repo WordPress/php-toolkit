@@ -226,7 +226,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	/**
 	 * Gets a specific attribute value from the current block
 	 *
-	 * @param  string  $attribute_name  The name of the attribute to get
+	 * @param  string $attribute_name  The name of the attribute to get
 	 *
 	 * @return mixed|false The attribute value or false if not found
 	 */
@@ -242,7 +242,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	 * Overwrites all the block attributes of the currently matched block
 	 * opener.
 	 *
-	 * @param  array  $attributes  The new attributes to set
+	 * @param  array $attributes  The new attributes to set
 	 *
 	 * @return bool Whether the attributes were successfully set
 	 */
@@ -294,13 +294,13 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 		}
 		$this->get_updated_html();
 
-		$this->block_name                = null;
-		$this->block_attributes          = null;
-		$this->block_attribute_paths     = null;
-		$this->block_attribute_index     = -1;
-		$this->block_closer              = false;
-		$this->self_closing_flag         = false;
-		$this->block_attributes_updated  = false;
+		$this->block_name               = null;
+		$this->block_attributes         = null;
+		$this->block_attribute_paths    = null;
+		$this->block_attribute_index    = -1;
+		$this->block_closer             = false;
+		$this->self_closing_flag        = false;
+		$this->block_attributes_updated = false;
 
 		while ( true ) {
 			if ( parent::next_token() === false ) {
@@ -370,7 +370,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 			return true;
 		}
 		$name = substr( $text, $name_starts_at, $name_length + 3 );
-		$at   += $name_length;
+		$at  += $name_length;
 
 		// Assume no attributes by default.
 		$attributes = array();
@@ -568,7 +568,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	/**
 	 * Sets the value of the currently matched block attribute.
 	 *
-	 * @param  mixed  $new_value  The new value to set
+	 * @param  mixed $new_value  The new value to set
 	 *
 	 * @return bool Whether the value was successfully set
 	 */
@@ -579,7 +579,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 
 		$path = $this->block_attribute_paths[ $this->block_attribute_index ];
 
-		$ref =& $this->block_attributes;
+		$ref   =& $this->block_attributes;
 		$depth = count( $path );
 		for ( $i = 0; $i < $depth - 1; $i ++ ) {
 			$segment = $path[ $i ];
@@ -589,8 +589,8 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 			$ref =& $ref[ $segment ];
 		}
 
-		$last_key            = $path[ $depth - 1 ];
-		$ref[ $last_key ]    = $new_value;
+		$last_key                       = $path[ $depth - 1 ];
+		$ref[ $last_key ]               = $new_value;
 		$this->block_attributes_updated = true;
 
 		return true;
@@ -608,8 +608,8 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 		$paths = array();
 
 		foreach ( $attributes as $key => $value ) {
-			$current_path   = array_merge( $base_path, array( $key ) );
-			$paths[]        = $current_path; // SELF_FIRST: include parent before children.
+			$current_path = array_merge( $base_path, array( $key ) );
+			$paths[]      = $current_path; // SELF_FIRST: include parent before children.
 
 			if ( is_array( $value ) ) {
 				$paths = array_merge( $paths, $this->build_block_attribute_paths( $value, $current_path ) );

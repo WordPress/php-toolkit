@@ -26,8 +26,8 @@ function ls_recursive( Filesystem $filesystem, $path = '/' ) {
 
 /**
  * Copies a file or directory between two Filesystem instances.
- * 
- * @param  array  $args  The arguments to pass to the copy function. {
+ *
+ * @param  array $args  The arguments to pass to the copy function. {
  *     @type Filesystem $source_filesystem The source filesystem.
  *     @type Filesystem $destination_filesystem The destination filesystem.
  *     @type string $source_path The path to the source file or directory. It must use forward slashes as path separators.
@@ -110,8 +110,8 @@ function copy_between_filesystems( array $args ) {
  * Pipes data from one stream to another.
  *
  * @param  ByteReadStream  $from_stream  The stream to read from.
- * @param  ByteWriteStream  $to_stream  The stream to write to.
- * @param  int  $chunk_size  Optional. The size of chunks to read at a time. Default 65536.
+ * @param  ByteWriteStream $to_stream  The stream to write to.
+ * @param  int             $chunk_size  Optional. The size of chunks to read at a time. Default 65536.
  *
  * @return int The number of chunks written.
  * @throws FilesystemException If there's an error during the transfer.
@@ -137,7 +137,7 @@ function pipe_stream( $from_stream, $to_stream, $chunk_size = 65536 ) {
 
 
 function wp_unix_path_segments( $path ) {
-	$without_dots   = wp_unix_path_resolve_dots( $path );
+	$without_dots    = wp_unix_path_resolve_dots( $path );
 	$without_slashes = trim( $without_dots, '/' );
 
 	return explode( '/', $without_slashes );
@@ -180,7 +180,7 @@ function wp_join_unix_paths( ...$path_segments ) {
  *
  * wp_unix_path_resolve_dots( 'foo/bar/../baz' ) => '/foo/baz'
  *
- * @param  string  $path  The file path that needs cleaning up
+ * @param  string $path  The file path that needs cleaning up
  * @return string The cleaned, absolute path
  */
 function wp_unix_path_resolve_dots( $path ) {
@@ -204,7 +204,7 @@ function wp_unix_path_resolve_dots( $path ) {
 	}
 
 	$result = implode( '/', $normalized );
-	if($result === '.') {
+	if ( $result === '.' ) {
 		$result = '';
 	}
 	return $result;
@@ -227,63 +227,62 @@ function wp_unix_sys_get_temp_dir() {
  * A clone of PHP's dirname() that assumes the path is a Unix path.
  *
  * Both functions agree on the following:
- * 
+ *
  *     dirname("/") === wp_unix_dirname("/") === "/"
  *     dirname("/foo/bar") === wp_unix_dirname("/foo/bar") === "/foo"
  *     dirname("/foo/bar/") === wp_unix_dirname("/foo/bar/") === "/foo/bar"
- * 
+ *
  * However, they disagree on Windows paths:
- * 
+ *
  *     dirname("C:/") === "C:/" (when ran on windows)
  *     dirname("C:/") === "." (when ran on unix)
- * 
+ *
  *     wp_unix_dirname("C:/") === "." (regardless of the OS)
- * 
+ *
  * This ensures we get reliable results on all host OSes.
- * 
+ *
  * It might seem weird to use unix semantics on windows. However, keep in mind,
  * that php-toolkit supports more filesystems than just a local disk and that
  * C: is a valid filename on unix.
- * 
+ *
  * @param string $path   Path to inspect (assumed Unix).
  * @param int    $levels How many levels to climb (≥ 1).
  * @return string
  * @throws ValueError on $levels < 1 (keeps parity with PHP 8.x).
  */
-function wp_unix_dirname(string $path, int $levels = 1): string
-{
-    if ($levels < 1) {
-        throw new ValueError('unix_dirname(): $levels must be >= 1');
-    }
+function wp_unix_dirname( string $path, int $levels = 1 ): string {
+	if ( $levels < 1 ) {
+		throw new ValueError( 'unix_dirname(): $levels must be >= 1' );
+	}
 
-    // treat empty string the same way PHP does
-    if ($path === '') {
-        return '';
-    }
+	// treat empty string the same way PHP does
+	if ( $path === '' ) {
+		return '';
+	}
 
-    // if the path is nothing but slashes, the result is always "/"
-    if (strspn($path, '/') === strlen($path)) {
-        return $levels === 1 ? '/' : wp_unix_dirname('/', $levels - 1);
-    }
+	// if the path is nothing but slashes, the result is always "/"
+	if ( strspn( $path, '/' ) === strlen( $path ) ) {
+		return $levels === 1 ? '/' : wp_unix_dirname( '/', $levels - 1 );
+	}
 
-    // strip trailing slashes (but never the single root slash)
-    $path = rtrim($path, '/');
-    if ($path === '') {        // happens when the original was just "/"
-        return $levels === 1 ? '/' : wp_unix_dirname('/', $levels - 1);
-    }
+	// strip trailing slashes (but never the single root slash)
+	$path = rtrim( $path, '/' );
+	if ( $path === '' ) {        // happens when the original was just "/"
+		return $levels === 1 ? '/' : wp_unix_dirname( '/', $levels - 1 );
+	}
 
-    // locate the last slash
-    $slash = strrpos($path, '/');
-    if ($slash === false) {    // no slash → current dir
-        $path = '.';
-    } else {
-        $path = substr($path, 0, $slash);  // cut off the basename
-        $path = rtrim($path, '/');         // collapse duplicate slashes
-        if ($path === '') {
-            $path = '/';                   // “/foo” → “/”
-        }
-    }
+	// locate the last slash
+	$slash = strrpos( $path, '/' );
+	if ( $slash === false ) {    // no slash → current dir
+		$path = '.';
+	} else {
+		$path = substr( $path, 0, $slash );  // cut off the basename
+		$path = rtrim( $path, '/' );         // collapse duplicate slashes
+		if ( $path === '' ) {
+			$path = '/';                   // “/foo” → “/”
+		}
+	}
 
-    // recurse for additional levels
-    return $levels > 1 ? wp_unix_dirname($path, $levels - 1) : $path;
+	// recurse for additional levels
+	return $levels > 1 ? wp_unix_dirname( $path, $levels - 1 ) : $path;
 }

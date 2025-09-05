@@ -11,11 +11,11 @@ class ChunkedEncoderByteTransformer implements ByteTransformer {
 	 *
 	 * <chunk-size><CRLF><chunk-data><CRLF>
 	 *
-	 * @param  string  $bytes  The bytes to encode.
+	 * @param  string $bytes  The bytes to encode.
 	 */
 	public function filter_bytes( $bytes ): string {
 		if ( strlen( $bytes ) === 0 ) {
-			return "";
+			return '';
 		}
 		$chunk_size = strtoupper( dechex( strlen( $bytes ) ) );
 

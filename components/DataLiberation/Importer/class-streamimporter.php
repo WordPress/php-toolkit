@@ -92,12 +92,12 @@ class StreamImporter {
 	 */
 	protected $options;
 
-	const STAGE_INITIAL = '#initial';
-	const STAGE_INDEX_ENTITIES = '#index_entities';
+	const STAGE_INITIAL          = '#initial';
+	const STAGE_INDEX_ENTITIES   = '#index_entities';
 	const STAGE_TOPOLOGICAL_SORT = '#topological_sort';
 	const STAGE_FRONTLOAD_ASSETS = '#frontload_assets';
-	const STAGE_IMPORT_ENTITIES = '#import_entities';
-	const STAGE_FINISHED = '#finished';
+	const STAGE_IMPORT_ENTITIES  = '#import_entities';
+	const STAGE_FINISHED         = '#finished';
 
 	const STAGES_IN_ORDER = array(
 		self::STAGE_INITIAL,
@@ -224,7 +224,7 @@ class StreamImporter {
 		// -1 is a well-known index for the source site URL.
 		// Every subsequent call to set_source_site_url() will
 		// override that mapping.
-		$this->site_url_mapping[ - 1 ] = array(
+		$this->site_url_mapping[- 1] = array(
 			'from' => WPURL::parse( $source_site_url ),
 			'to'   => WPURL::parse( $this->options['new_site_content_root_url'] ),
 		);
@@ -287,8 +287,8 @@ class StreamImporter {
 			// throw new DataLiberationException( 'The "source_site_url" option is required' );
 		}
 		if ( ! isset( $options['new_site_content_root_url'] ) ) {
-			if(!function_exists('get_site_url')) {
-				throw new InvalidArgumentException('Option "new_site_content_root_url" is required');
+			if ( ! function_exists( 'get_site_url' ) ) {
+				throw new InvalidArgumentException( 'Option "new_site_content_root_url" is required' );
 			}
 			$options['new_site_content_root_url'] = get_site_url();
 		}
@@ -300,8 +300,8 @@ class StreamImporter {
 		$options['uploads_path'] = rtrim( $options['uploads_path'], '/' );
 
 		if ( ! isset( $options['new_media_root_url'] ) ) {
-			if(!function_exists('get_site_url')) {
-				throw new InvalidArgumentException('Option "new_media_root_url" is required');
+			if ( ! function_exists( 'get_site_url' ) ) {
+				throw new InvalidArgumentException( 'Option "new_media_root_url" is required' );
 			}
 			$options['new_media_root_url'] = rtrim( get_site_url(), '/' ) . '/wp-content/uploads';
 		}
@@ -411,7 +411,7 @@ class StreamImporter {
 	}
 
 	protected $indexed_entities_counts = array();
-	protected $indexed_assets_urls = array();
+	protected $indexed_assets_urls     = array();
 
 	protected function index_next_entities() {
 		if ( null !== $this->next_stage ) {
@@ -1004,16 +1004,16 @@ class StreamImporter {
 	protected function url_processor_matched_asset_url( BlockMarkupUrlProcessor $p ) {
 		/**
 		 * Decide whether the URL is an asset URL worth downloading.
-		 * 
+		 *
 		 * All URLs with an image-like extension are treated as images,
-		 * 
+		 *
 		 * For example, the background image in the following block would be accepted:
 		 *
 		 *     <div style="background-image: url(https://example.com/image.jpg)">
 		 */
-		$path = $p->get_parsed_url()->pathname;
+		$path      = $p->get_parsed_url()->pathname;
 		$extension = pathinfo( $path, PATHINFO_EXTENSION );
-		if ( ! in_array($extension, array('jpg', 'jpeg', 'png', 'gif', 'webp', 'svg') ) ) {
+		if ( ! in_array( $extension, array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg' ) ) ) {
 			/**
 			 * Absent an extension, try to guess whether it's a static asset based
 			 * on its location in the document. For now, we only accept images.

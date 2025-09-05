@@ -38,7 +38,7 @@ class ClientState {
 	 * @since Next Release
 	 * @var Request[]
 	 */
-	public $requests = [];
+	public $requests = array();
 
 	/**
 	 * Network connection details managed privately by this Client.
@@ -51,12 +51,12 @@ class ClientState {
 	 *
 	 * @var array
 	 */
-	public $connections = [];
-	public $events = [];
-	public $event = null;
-	public $request = null;
+	public $connections         = array();
+	public $events              = array();
+	public $event               = null;
+	public $request             = null;
 	public $response_body_chunk = null;
-	public $request_timeout_ms = null;
+	public $request_timeout_ms  = null;
 
 	public function __construct( $options = array() ) {
 		$this->concurrency        = $options['concurrency'] ?? 10;
@@ -143,7 +143,7 @@ class ClientState {
 		return static::filter_requests_by_state( $this->requests, $states );
 	}
 
-	static public function filter_requests_by_state( array $requests, $states ) {
+	public static function filter_requests_by_state( array $requests, $states ) {
 		if ( ! is_array( $states ) ) {
 			$states = array( $states );
 		}
@@ -196,8 +196,8 @@ class ClientState {
 	}
 
 	public function set_request_error( Request $request, $error ) {
-		$request->error                                     = $error;
-		$request->state                                     = Request::STATE_FAILED;
+		$request->error                                       = $error;
+		$request->state                                       = Request::STATE_FAILED;
 		$this->events[ $request->id ][ Client::EVENT_FAILED ] = true;
 	}
 

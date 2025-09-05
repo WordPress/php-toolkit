@@ -38,7 +38,7 @@ class GitProtocolEncoderPipe extends BaseByteReadStream {
 	public static function encode_variable_length( $number ) {
 		$result = '';
 		do {
-			$byte   = $number & 0x7F;
+			$byte     = $number & 0x7F;
 			$number >>= 7;
 			if ( $number > 0 ) {
 				$byte |= 0x80;

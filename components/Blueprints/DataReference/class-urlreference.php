@@ -16,11 +16,11 @@ class URLReference extends DataReference {
 	/**
 	 * Constructor.
 	 *
-	 * @param  string  $url  The URL.
+	 * @param  string $url  The URL.
 	 */
 	public function __construct( string $url ) {
 		$this->url = $url;
-		parent::__construct($url);
+		parent::__construct( $url );
 	}
 
 	/**
@@ -39,7 +39,7 @@ class URLReference extends DataReference {
 	/**
 	 * Check if a string is a valid URL reference.
 	 *
-	 * @param  string  $url  The URL to check.
+	 * @param  string $url  The URL to check.
 	 *
 	 * @return bool Whether the URL is valid.
 	 */

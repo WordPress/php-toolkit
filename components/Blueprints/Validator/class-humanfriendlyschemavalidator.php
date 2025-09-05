@@ -3,8 +3,8 @@
 namespace WordPress\Blueprints\Validator;
 
 // @TODO: Reconsider the need for the Symbol class. We use it
-//        as a unique reference that can't be possibly brought
-//        in with the validated data.
+// as a unique reference that can't be possibly brought
+// in with the validated data.
 class Symbol {
 	/**
 	 * @var string
@@ -109,7 +109,7 @@ final class HumanFriendlySchemaValidator {
 
 	public function __construct(
 		array $schema,
-		array $options = []
+		array $options = array()
 	) {
 		$this->schema             = $schema;
 		$this->arrayIsValidObject = $options['array_is_valid_object'] ?? true;
@@ -117,10 +117,10 @@ final class HumanFriendlySchemaValidator {
 	}
 
 	/**
-	 * @param  mixed  $data
+	 * @param  mixed $data
 	 */
 	public function validate( $data ): ?ValidationError {
-		return $this->validateNode( [ 'root' ], $data, $this->schema );
+		return $this->validateNode( array( 'root' ), $data, $this->schema );
 	}
 
 	private function convertPathToString( array $path ): string {
@@ -140,7 +140,7 @@ final class HumanFriendlySchemaValidator {
 	// ─────────────────────────────────────────────────────── helpers ─┐
 
 	/**
-	 * @param  mixed  $v
+	 * @param  mixed $v
 	 */
 	private function valueSnippet( $v ): string {
 		return substr( json_encode( $v, JSON_PARTIAL_OUTPUT_ON_ERROR | JSON_UNESCAPED_SLASHES ), 0, 80 );
@@ -155,14 +155,14 @@ final class HumanFriendlySchemaValidator {
 	}
 
 	/**
-	 * @param  mixed  $data
+	 * @param  mixed $data
 	 */
 	private function typeMatches( $data, ?string $type ): bool {
 		$arrayIsListFunction = function ( array $array ): bool {
 			if ( function_exists( 'array_is_list' ) ) {
 				return array_is_list( $array );
 			}
-			if ( $array === [] ) {
+			if ( $array === array() ) {
 				return true;
 			}
 			$current_key = 0;
@@ -183,7 +183,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -200,7 +200,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -217,7 +217,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -234,7 +234,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -251,7 +251,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -268,7 +268,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -285,7 +285,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -302,7 +302,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -319,7 +319,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -336,7 +336,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -353,7 +353,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -370,7 +370,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -387,7 +387,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -404,7 +404,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -421,7 +421,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -438,7 +438,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -455,7 +455,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -472,7 +472,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -489,7 +489,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -506,7 +506,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -523,7 +523,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -540,7 +540,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -557,7 +557,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -574,7 +574,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -591,7 +591,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -608,7 +608,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -625,7 +625,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -642,7 +642,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -659,7 +659,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -676,7 +676,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -693,7 +693,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -710,7 +710,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -727,7 +727,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -744,7 +744,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -761,7 +761,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -778,7 +778,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -795,7 +795,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -812,7 +812,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -829,7 +829,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -846,7 +846,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -863,7 +863,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -880,7 +880,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -897,7 +897,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -914,7 +914,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -931,7 +931,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -948,7 +948,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -965,7 +965,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -982,7 +982,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -999,7 +999,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1016,7 +1016,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1033,7 +1033,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1050,7 +1050,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1067,7 +1067,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1084,7 +1084,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1101,7 +1101,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1118,7 +1118,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1135,7 +1135,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1152,7 +1152,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1169,7 +1169,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1186,7 +1186,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1203,7 +1203,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1220,7 +1220,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1237,7 +1237,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1254,7 +1254,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1271,7 +1271,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1288,7 +1288,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1305,7 +1305,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1322,7 +1322,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1339,7 +1339,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1356,7 +1356,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1373,7 +1373,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1390,7 +1390,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1407,7 +1407,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1424,7 +1424,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1441,7 +1441,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1458,7 +1458,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1475,7 +1475,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1492,7 +1492,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1509,7 +1509,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1526,7 +1526,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1543,7 +1543,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1560,7 +1560,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1577,7 +1577,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1594,7 +1594,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1611,7 +1611,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1628,7 +1628,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1645,7 +1645,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1662,7 +1662,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1679,7 +1679,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1696,7 +1696,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1713,7 +1713,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1730,7 +1730,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1747,7 +1747,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1764,7 +1764,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1781,7 +1781,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1798,7 +1798,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1815,7 +1815,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1832,7 +1832,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1849,7 +1849,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1866,7 +1866,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1883,7 +1883,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1900,7 +1900,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1917,7 +1917,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1934,7 +1934,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1951,7 +1951,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1968,7 +1968,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -1985,7 +1985,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2002,7 +2002,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2019,7 +2019,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2036,7 +2036,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2053,7 +2053,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2070,7 +2070,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2087,7 +2087,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2104,7 +2104,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2121,7 +2121,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2138,7 +2138,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2155,7 +2155,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2172,7 +2172,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2189,7 +2189,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2206,7 +2206,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2223,7 +2223,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2240,7 +2240,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2257,7 +2257,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2274,7 +2274,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2291,7 +2291,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2308,7 +2308,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2325,7 +2325,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2342,7 +2342,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2359,7 +2359,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2376,7 +2376,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2393,7 +2393,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2410,7 +2410,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2427,7 +2427,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2444,7 +2444,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2461,7 +2461,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2478,7 +2478,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2495,7 +2495,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2512,7 +2512,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2529,7 +2529,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2546,7 +2546,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2563,7 +2563,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2580,7 +2580,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2597,7 +2597,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2614,7 +2614,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2631,7 +2631,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2648,7 +2648,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2665,7 +2665,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2682,7 +2682,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2699,7 +2699,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2716,7 +2716,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2733,7 +2733,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2750,7 +2750,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2767,7 +2767,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2784,7 +2784,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2801,7 +2801,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2818,7 +2818,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2835,7 +2835,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2852,7 +2852,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2869,7 +2869,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2886,7 +2886,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2903,7 +2903,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2920,7 +2920,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2937,7 +2937,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2954,7 +2954,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2971,7 +2971,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -2988,7 +2988,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3005,7 +3005,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3022,7 +3022,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3039,7 +3039,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3056,7 +3056,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3073,7 +3073,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3090,7 +3090,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3107,7 +3107,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3124,7 +3124,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3141,7 +3141,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3158,7 +3158,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3175,7 +3175,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3192,7 +3192,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3209,7 +3209,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3226,7 +3226,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3243,7 +3243,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3260,7 +3260,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3277,7 +3277,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3294,7 +3294,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3311,7 +3311,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3328,7 +3328,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3345,7 +3345,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3362,7 +3362,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3379,7 +3379,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3396,7 +3396,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3413,7 +3413,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3430,7 +3430,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3447,7 +3447,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3464,7 +3464,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3481,7 +3481,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3498,7 +3498,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3515,7 +3515,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3532,7 +3532,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3549,7 +3549,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3566,7 +3566,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3583,7 +3583,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3600,7 +3600,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3617,7 +3617,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3634,7 +3634,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3651,7 +3651,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3668,7 +3668,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3685,7 +3685,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3702,7 +3702,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3719,7 +3719,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3736,7 +3736,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3753,7 +3753,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3770,7 +3770,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3787,7 +3787,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3804,7 +3804,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3821,7 +3821,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3838,7 +3838,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3855,7 +3855,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3872,7 +3872,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3889,7 +3889,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3906,7 +3906,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3923,7 +3923,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3940,7 +3940,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3957,7 +3957,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3974,7 +3974,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -3991,7 +3991,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4008,7 +4008,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4025,7 +4025,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4042,7 +4042,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4059,7 +4059,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4076,7 +4076,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4093,7 +4093,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4110,7 +4110,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4127,7 +4127,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4144,7 +4144,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4161,7 +4161,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4178,7 +4178,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4195,7 +4195,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4212,7 +4212,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4229,7 +4229,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4246,7 +4246,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4263,7 +4263,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4280,7 +4280,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4297,7 +4297,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4314,7 +4314,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4331,7 +4331,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4348,7 +4348,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4365,7 +4365,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4382,7 +4382,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4399,7 +4399,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4416,7 +4416,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4433,7 +4433,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4450,7 +4450,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4467,7 +4467,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4484,7 +4484,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4501,7 +4501,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4518,7 +4518,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4535,7 +4535,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4552,7 +4552,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4569,7 +4569,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4586,7 +4586,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4603,7 +4603,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4620,7 +4620,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4637,7 +4637,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4654,7 +4654,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4671,7 +4671,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4688,7 +4688,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4705,7 +4705,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4722,7 +4722,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4739,7 +4739,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4756,7 +4756,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4773,7 +4773,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4790,7 +4790,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4807,7 +4807,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4824,7 +4824,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4841,7 +4841,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4858,7 +4858,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4875,7 +4875,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4892,7 +4892,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4909,7 +4909,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4926,7 +4926,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4943,7 +4943,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4960,7 +4960,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4977,7 +4977,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -4994,7 +4994,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5011,7 +5011,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5028,7 +5028,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5045,7 +5045,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5062,7 +5062,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5079,7 +5079,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5096,7 +5096,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5113,7 +5113,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5130,7 +5130,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5147,7 +5147,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5164,7 +5164,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5181,7 +5181,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5198,7 +5198,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5215,7 +5215,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5232,7 +5232,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5249,7 +5249,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5266,7 +5266,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5283,7 +5283,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5300,7 +5300,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5317,7 +5317,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5334,7 +5334,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5351,7 +5351,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5368,7 +5368,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5385,7 +5385,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5402,7 +5402,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5419,7 +5419,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5436,7 +5436,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5453,7 +5453,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5470,7 +5470,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5487,7 +5487,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5504,7 +5504,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5521,7 +5521,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5538,7 +5538,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5555,7 +5555,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5572,7 +5572,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5589,7 +5589,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5606,7 +5606,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5623,7 +5623,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5640,7 +5640,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5657,7 +5657,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5674,7 +5674,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5691,7 +5691,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5708,7 +5708,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5725,7 +5725,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5742,7 +5742,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5759,7 +5759,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5776,7 +5776,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5793,7 +5793,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5810,7 +5810,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5827,7 +5827,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5844,7 +5844,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5861,7 +5861,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5878,7 +5878,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5895,7 +5895,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5912,7 +5912,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5929,7 +5929,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5946,7 +5946,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5963,7 +5963,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5980,7 +5980,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -5997,7 +5997,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6014,7 +6014,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6031,7 +6031,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6048,7 +6048,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6065,7 +6065,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6082,7 +6082,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6099,7 +6099,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6116,7 +6116,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6133,7 +6133,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6150,7 +6150,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6167,7 +6167,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6184,7 +6184,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6201,7 +6201,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6218,7 +6218,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6235,7 +6235,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6252,7 +6252,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6269,7 +6269,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6286,7 +6286,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6303,7 +6303,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6320,7 +6320,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6337,7 +6337,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6354,7 +6354,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6371,7 +6371,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6388,7 +6388,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6405,7 +6405,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6422,7 +6422,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6439,7 +6439,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6456,7 +6456,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6473,7 +6473,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6490,7 +6490,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6507,7 +6507,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6524,7 +6524,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6541,7 +6541,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6558,7 +6558,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6575,7 +6575,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6592,7 +6592,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6609,7 +6609,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6626,7 +6626,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6643,7 +6643,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6660,7 +6660,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6677,7 +6677,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6694,7 +6694,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6711,7 +6711,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6728,7 +6728,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6745,7 +6745,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6762,7 +6762,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6779,7 +6779,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6796,7 +6796,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6813,7 +6813,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6830,7 +6830,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6847,7 +6847,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6864,7 +6864,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6881,7 +6881,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6898,7 +6898,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6915,7 +6915,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6932,7 +6932,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6949,7 +6949,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6966,7 +6966,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -6983,7 +6983,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7000,7 +7000,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7017,7 +7017,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7034,7 +7034,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7051,7 +7051,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7068,7 +7068,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7085,7 +7085,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7102,7 +7102,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7119,7 +7119,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7136,7 +7136,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7153,7 +7153,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7170,7 +7170,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7187,7 +7187,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7204,7 +7204,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7221,7 +7221,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7238,7 +7238,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7255,7 +7255,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7272,7 +7272,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7289,7 +7289,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7306,7 +7306,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7323,7 +7323,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7340,7 +7340,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7357,7 +7357,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7374,7 +7374,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7391,7 +7391,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7408,7 +7408,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7425,7 +7425,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7442,7 +7442,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7459,7 +7459,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7476,7 +7476,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7493,7 +7493,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7510,7 +7510,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7527,7 +7527,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7544,7 +7544,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7561,7 +7561,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7578,7 +7578,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7595,7 +7595,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7612,7 +7612,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7629,7 +7629,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7646,7 +7646,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7663,7 +7663,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7680,7 +7680,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7697,7 +7697,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7714,7 +7714,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7731,7 +7731,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7748,7 +7748,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7765,7 +7765,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7782,7 +7782,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7799,7 +7799,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7816,7 +7816,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7833,7 +7833,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7850,7 +7850,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7867,7 +7867,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7884,7 +7884,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7901,7 +7901,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7918,7 +7918,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7935,7 +7935,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7952,7 +7952,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7969,7 +7969,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -7986,7 +7986,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8003,7 +8003,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8020,7 +8020,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8037,7 +8037,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8054,7 +8054,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8071,7 +8071,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8088,7 +8088,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8105,7 +8105,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8122,7 +8122,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8139,7 +8139,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8156,7 +8156,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8173,7 +8173,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8190,7 +8190,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8207,7 +8207,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8224,7 +8224,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8241,7 +8241,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8258,7 +8258,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8275,7 +8275,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8292,7 +8292,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8309,7 +8309,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8326,7 +8326,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8343,7 +8343,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8360,7 +8360,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8377,7 +8377,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8394,7 +8394,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8411,7 +8411,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8428,7 +8428,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8445,7 +8445,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8462,7 +8462,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8479,7 +8479,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8496,7 +8496,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8513,7 +8513,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8530,7 +8530,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8547,7 +8547,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8564,7 +8564,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8581,7 +8581,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8598,7 +8598,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8615,7 +8615,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8632,7 +8632,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8649,7 +8649,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8666,7 +8666,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8683,7 +8683,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8700,7 +8700,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8717,7 +8717,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8734,7 +8734,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8751,7 +8751,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8768,7 +8768,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8785,7 +8785,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8802,7 +8802,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8819,7 +8819,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8836,7 +8836,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8853,7 +8853,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8870,7 +8870,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8887,7 +8887,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8904,7 +8904,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8921,7 +8921,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8938,7 +8938,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8955,7 +8955,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8972,7 +8972,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -8989,7 +8989,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9006,7 +9006,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9023,7 +9023,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9040,7 +9040,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9057,7 +9057,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9074,7 +9074,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9091,7 +9091,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9108,7 +9108,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9125,7 +9125,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9142,7 +9142,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9159,7 +9159,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9176,7 +9176,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9193,7 +9193,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9210,7 +9210,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9227,7 +9227,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9244,7 +9244,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9261,7 +9261,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9278,7 +9278,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9295,7 +9295,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9312,7 +9312,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9329,7 +9329,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9346,7 +9346,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9363,7 +9363,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9380,7 +9380,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9397,7 +9397,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9414,7 +9414,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9431,7 +9431,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9448,7 +9448,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9465,7 +9465,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9482,7 +9482,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9499,7 +9499,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9516,7 +9516,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9533,7 +9533,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9550,7 +9550,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9567,7 +9567,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9584,7 +9584,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9601,7 +9601,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9618,7 +9618,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9635,7 +9635,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9652,7 +9652,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9669,7 +9669,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9686,7 +9686,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9703,7 +9703,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9720,7 +9720,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9737,7 +9737,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9754,7 +9754,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9771,7 +9771,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9788,7 +9788,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9805,7 +9805,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9822,7 +9822,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9839,7 +9839,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9856,7 +9856,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9873,7 +9873,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9890,7 +9890,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9907,7 +9907,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9924,7 +9924,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9941,7 +9941,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9958,7 +9958,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9975,7 +9975,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -9992,7 +9992,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10009,7 +10009,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10026,7 +10026,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10043,7 +10043,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10060,7 +10060,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10077,7 +10077,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10094,7 +10094,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10111,7 +10111,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10128,7 +10128,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10145,7 +10145,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10162,7 +10162,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10179,7 +10179,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10196,7 +10196,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10213,7 +10213,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10230,7 +10230,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10247,7 +10247,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10264,7 +10264,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10281,7 +10281,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10298,7 +10298,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10315,7 +10315,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10332,7 +10332,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10349,7 +10349,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10366,7 +10366,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10383,7 +10383,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10400,7 +10400,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10417,7 +10417,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10434,7 +10434,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10451,7 +10451,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10468,7 +10468,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10485,7 +10485,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10502,7 +10502,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10519,7 +10519,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10536,7 +10536,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10553,7 +10553,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10570,7 +10570,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10587,7 +10587,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10604,7 +10604,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10621,7 +10621,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10638,7 +10638,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10655,7 +10655,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10672,7 +10672,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10689,7 +10689,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10706,7 +10706,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10723,7 +10723,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10740,7 +10740,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10757,7 +10757,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10774,7 +10774,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10791,7 +10791,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10808,7 +10808,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10825,7 +10825,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10842,7 +10842,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10859,7 +10859,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10876,7 +10876,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10893,7 +10893,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10910,7 +10910,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10927,7 +10927,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10944,7 +10944,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10961,7 +10961,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10978,7 +10978,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -10995,7 +10995,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11012,7 +11012,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11029,7 +11029,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11046,7 +11046,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11063,7 +11063,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11080,7 +11080,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11097,7 +11097,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11114,7 +11114,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11131,7 +11131,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11148,7 +11148,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11165,7 +11165,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11182,7 +11182,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11199,7 +11199,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11216,7 +11216,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11233,7 +11233,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11250,7 +11250,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11267,7 +11267,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11284,7 +11284,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11301,7 +11301,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11318,7 +11318,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11335,7 +11335,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11352,7 +11352,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11369,7 +11369,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11386,7 +11386,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11403,7 +11403,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11420,7 +11420,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11437,7 +11437,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11454,7 +11454,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11471,7 +11471,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11488,7 +11488,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11505,7 +11505,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11522,7 +11522,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11539,7 +11539,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11556,7 +11556,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11573,7 +11573,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11590,7 +11590,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11607,7 +11607,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11624,7 +11624,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11641,7 +11641,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11658,7 +11658,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11675,7 +11675,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11692,7 +11692,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11709,7 +11709,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11726,7 +11726,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11743,7 +11743,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11760,7 +11760,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11777,7 +11777,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11794,7 +11794,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11811,7 +11811,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11828,7 +11828,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11845,7 +11845,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11862,7 +11862,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11879,7 +11879,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11896,7 +11896,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11913,7 +11913,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11930,7 +11930,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11947,7 +11947,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11964,7 +11964,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11981,7 +11981,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -11998,7 +11998,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12015,7 +12015,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12032,7 +12032,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12049,7 +12049,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12066,7 +12066,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12083,7 +12083,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12100,7 +12100,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12117,7 +12117,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12134,7 +12134,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12151,7 +12151,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12168,7 +12168,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12185,7 +12185,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12202,7 +12202,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12219,7 +12219,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12236,7 +12236,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12253,7 +12253,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12270,7 +12270,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12287,7 +12287,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12304,7 +12304,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12321,7 +12321,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12338,7 +12338,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12355,7 +12355,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12372,7 +12372,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12389,7 +12389,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12406,7 +12406,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12423,7 +12423,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12440,7 +12440,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12457,7 +12457,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12474,7 +12474,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12491,7 +12491,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12508,7 +12508,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12525,7 +12525,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12542,7 +12542,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12559,7 +12559,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12576,7 +12576,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12593,7 +12593,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12610,7 +12610,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12627,7 +12627,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12644,7 +12644,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12661,7 +12661,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12678,7 +12678,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12695,7 +12695,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12712,7 +12712,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12729,7 +12729,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12746,7 +12746,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12763,7 +12763,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12780,7 +12780,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12797,7 +12797,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12814,7 +12814,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12831,7 +12831,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12848,7 +12848,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12865,7 +12865,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12882,7 +12882,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12899,7 +12899,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12916,7 +12916,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12933,7 +12933,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12950,7 +12950,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12967,7 +12967,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -12984,7 +12984,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13001,7 +13001,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13018,7 +13018,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13035,7 +13035,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13052,7 +13052,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13069,7 +13069,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13086,7 +13086,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13103,7 +13103,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13120,7 +13120,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13137,7 +13137,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13154,7 +13154,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13171,7 +13171,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13188,7 +13188,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13205,7 +13205,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13222,7 +13222,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13239,7 +13239,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13256,7 +13256,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13273,7 +13273,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13290,7 +13290,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13307,7 +13307,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13324,7 +13324,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13341,7 +13341,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13358,7 +13358,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13375,7 +13375,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13392,7 +13392,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13409,7 +13409,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13426,7 +13426,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13443,7 +13443,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13460,7 +13460,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13477,7 +13477,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13494,7 +13494,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13511,7 +13511,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13528,7 +13528,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13545,7 +13545,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13562,7 +13562,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13579,7 +13579,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13596,7 +13596,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13613,7 +13613,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13630,7 +13630,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13647,7 +13647,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13664,7 +13664,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13681,7 +13681,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13698,7 +13698,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13715,7 +13715,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13732,7 +13732,7 @@ final class HumanFriendlySchemaValidator {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
-					if ( $array === [] ) {
+					if ( $array === array() ) {
 						return true;
 					}
 					$current_key = 0;
@@ -13765,7 +13765,7 @@ final class HumanFriendlySchemaValidator {
 	}
 
 	/**
-	 * @param  mixed  $data
+	 * @param  mixed $data
 	 */
 	private function typeMatchesAny( $data, $type_or_types ): bool {
 		if ( ! is_array( $type_or_types ) ) {
@@ -13786,7 +13786,7 @@ final class HumanFriendlySchemaValidator {
 	// ───────────────────────────────────────────────────────── validation ─┐
 
 	/**
-	 * @param  mixed  $data
+	 * @param  mixed $data
 	 */
 	private function validateNode( array $path, $data, array $schema ): ?ValidationError {
 		if ( isset( $schema['$ref'] ) ) {
@@ -13794,7 +13794,7 @@ final class HumanFriendlySchemaValidator {
 		}
 
 		// Check for unsupported keywords
-		$unsupportedKeywords = [
+		$unsupportedKeywords = array(
 			'not',
 			'patternProperties',
 			'dependencies',
@@ -13804,7 +13804,7 @@ final class HumanFriendlySchemaValidator {
 			'contentMediaType',
 			'contentEncoding',
 			'contentSchema',
-		];
+		);
 		foreach ( $unsupportedKeywords as $keyword ) {
 			if ( isset( $schema[ $keyword ] ) ) {
 				// This should remain an exception as it's a schema configuration issue, not a data validation issue.
@@ -13823,8 +13823,11 @@ final class HumanFriendlySchemaValidator {
 				return $this->validateType( $path, $data, $schema );
 			default:
 				throw new UnsupportedSchemaException(
-					'Every schema rule must have one of "allOf", "anyOf", "oneOf", "type" or be a "$ref". Rule for path ' . json_encode( $path ) . ' did not. Schema snippet: ' . substr( json_encode( $schema ),
-						0, 100 )
+					'Every schema rule must have one of "allOf", "anyOf", "oneOf", "type" or be a "$ref". Rule for path ' . json_encode( $path ) . ' did not. Schema snippet: ' . substr(
+						json_encode( $schema ),
+						0,
+						100
+					)
 				);
 		}
 	}
@@ -13832,40 +13835,47 @@ final class HumanFriendlySchemaValidator {
 	// ───────────────────────────────────────────── anyOf / oneOf ─┐
 
 	/**
-	 * @param  mixed  $data
+	 * @param  mixed $data
 	 */
 	private function narrowBranches( $data, array $branches, array $schema ): array {
 		// 1. filter by declared top‑level type
-		$candidates = array_filter( $branches, function ( $spec ) use ( $data ) {
-			while ( isset( $spec['$ref'] ) ) {
-				$spec = $this->resolveReference( $spec['$ref'] );
-			}
+		$candidates = array_filter(
+			$branches,
+			function ( $spec ) use ( $data ) {
+				while ( isset( $spec['$ref'] ) ) {
+					$spec = $this->resolveReference( $spec['$ref'] );
+				}
 
-			return $this->typeMatchesAny( $data, $spec['type'] ?? null );
-		} );
+				return $this->typeMatchesAny( $data, $spec['type'] ?? null );
+			}
+		);
 
 		// 2. filter by discriminator (explicit or inferred)
 		$disc = $this->inferDiscriminator( $schema['discriminator'] ?? null, $branches );
 		if ( $disc && ( is_array( $data ) || is_object( $data ) ) ) { // Discriminator implies object/array data
-			$dataArr = (array) $data; // Cast to array for consistent access
-			[ $prop, $allowed ] = $disc;
+			$dataArr                 = (array) $data; // Cast to array for consistent access
+			array( $prop, $allowed ) = $disc;
 			if ( array_key_exists( $prop, $dataArr ) ) {
 				$wanted     = $dataArr[ $prop ];
-				$candidates = array_values( array_filter( $candidates, function ( $b ) use ( $prop, $wanted ) {
-					$r = isset( $b['$ref'] ) ? $this->resolveReference( $b['$ref'] ) : $b;
-					// Ensure properties exist before accessing
-					if ( isset( $r['properties'][ $prop ]['enum'][0] ) && ( $r['properties'][ $prop ]['enum'][0] === $wanted ) ) {
-						return true;
-					}
-					if ( isset( $r['properties'][ $prop ]['const'] ) && ( $r['properties'][ $prop ]['const'] === $wanted ) ) {
-						return true;
-					}
+				$candidates = array_values(
+					array_filter(
+						$candidates,
+						function ( $b ) use ( $prop, $wanted ) {
+							$r = isset( $b['$ref'] ) ? $this->resolveReference( $b['$ref'] ) : $b;
+							// Ensure properties exist before accessing
+							if ( isset( $r['properties'][ $prop ]['enum'][0] ) && ( $r['properties'][ $prop ]['enum'][0] === $wanted ) ) {
+								return true;
+							}
+							if ( isset( $r['properties'][ $prop ]['const'] ) && ( $r['properties'][ $prop ]['const'] === $wanted ) ) {
+								return true;
+							}
 
-					return false;
-				} ) );
+							return false;
+						}
+					)
+				);
 			}
 		}
-
 
 		return $candidates ?: $branches; // never empty
 	}
@@ -13882,13 +13892,13 @@ final class HumanFriendlySchemaValidator {
 	}
 
 	/**
-	 * @param  mixed  $data
+	 * @param  mixed $data
 	 */
 	private function validateAnyOf( array $path, $data, array $schema ): ?ValidationError {
 		$branches = $schema['anyOf'];
 		$cands    = $this->narrowBranches( $data, $branches, $schema );
 		// $narrowed = count($cands) < count($branches); // This logic changes
-		$childErrors = [];
+		$childErrors = array();
 
 		foreach ( $cands as $b ) {
 			// $label = $this->branchLabel($b); // branchLabel might be used in error message context
@@ -13907,15 +13917,15 @@ final class HumanFriendlySchemaValidator {
 	}
 
 	/**
-	 * @param  mixed  $data
+	 * @param  mixed $data
 	 */
 	private function validateOneOf( array $path, $data, array $schema ): ?ValidationError {
 		$branches = $schema['oneOf'];
 		$cands    = $this->narrowBranches( $data, $branches, $schema );
 		// $narrowed = count($cands) < count($branches);
 
-		$validResults = [];
-		$childErrors  = [];
+		$validResults = array();
+		$childErrors  = array();
 		foreach ( $cands as $b ) {
 			// $label=$this->branchLabel($b);
 			$error = $this->validateNode( $path, $data, isset( $b['$ref'] ) ? $this->resolveReference( $b['$ref'] ) : $b );
@@ -13932,22 +13942,27 @@ final class HumanFriendlySchemaValidator {
 		} // Exactly one schema matched
 
 		if ( count( $validResults ) > 1 ) {
-			$matchedShapes = array_map( function ( $b ) {
-				if ( isset( $b['$ref'] ) ) {
-					$resolved = $this->resolveReference( $b['$ref'] );
+			$matchedShapes = array_map(
+				function ( $b ) {
+					if ( isset( $b['$ref'] ) ) {
+						  $resolved = $this->resolveReference( $b['$ref'] );
 
-					return $resolved['title'] ?? $b['$ref'];
-				}
+						  return $resolved['title'] ?? $b['$ref'];
+					}
 
-				return $this->branchLabel( $b );
-			}, $validResults );
+					return $this->branchLabel( $b );
+				},
+				$validResults
+			);
 
 			return new ValidationError(
 				$this->convertPathToString( $path ),
 				'oneOf-multiple-matches',
-				'Data matches more than one allowed shape - you need to make it unambiguous. Matched shapes: ' . implode( ', ',
-					$matchedShapes ) . '.',
-				[ 'matchedShapes' => $matchedShapes ]
+				'Data matches more than one allowed shape - you need to make it unambiguous. Matched shapes: ' . implode(
+					', ',
+					$matchedShapes
+				) . '.',
+				array( 'matchedShapes' => $matchedShapes )
 			);
 		}
 
@@ -13959,7 +13974,7 @@ final class HumanFriendlySchemaValidator {
 	/**
 	 * Create a parent error for anyOf/oneOf mismatches.
 	 *
-	 * @param  mixed  $data
+	 * @param  mixed $data
 	 */
 	private function explainAggregateMismatch(
 		array $path,
@@ -13972,7 +13987,7 @@ final class HumanFriendlySchemaValidator {
 		$pointer = $this->convertPathToString( $path );
 
 		// 1. Type mismatch (if data type doesn't match any of the branch types)
-		$allowedTypes = [];
+		$allowedTypes = array();
 		foreach ( $branches as $b ) {
 			$s    = isset( $b['$ref'] ) ? $this->resolveReference( $b['$ref'] ) : $b;
 			$type = $s['type'] ?? null;
@@ -14010,18 +14025,21 @@ final class HumanFriendlySchemaValidator {
 				$pointer,
 				'type-mismatch',
 				$message,
-				[
-					'expected' => [ 'types' => $allowedTypes ],
-					'actual'   => [ 'type' => gettype( $data ), 'snippet' => $this->valueSnippet( $data ) ],
-				]
+				array(
+					'expected' => array( 'types' => $allowedTypes ),
+					'actual'   => array(
+						'type' => gettype( $data ),
+						'snippet' => $this->valueSnippet( $data ),
+					),
+				)
 			);
 		}
 
 		// 2. Discriminator check (if applicable and discriminator value is invalid)
 		$disc = $this->inferDiscriminator( $parentSchema['discriminator'] ?? null, $branches );
 		if ( $disc ) {
-			[ $prop, $allowedDiscriminatorValues ] = $disc;
-			$actualValue = $this->MISSING; // Default to missing
+			array( $prop, $allowedDiscriminatorValues ) = $disc;
+			$actualValue                                = $this->MISSING; // Default to missing
 			if ( is_array( $data ) && array_key_exists( $prop, $data ) ) {
 				$actualValue = $data[ $prop ];
 			} elseif ( is_object( $data ) && property_exists( $data, $prop ) ) {
@@ -14040,24 +14058,28 @@ final class HumanFriendlySchemaValidator {
 						implode( ', ', $allowedDiscriminatorValues ),
 						$actual_humanized
 					),
-					[
-						'expected' => [ 'property' => $prop, 'allowedValues' => $allowedDiscriminatorValues ],
-						'actual'   => [ 'value'   => ( $actualValue === $this->MISSING ) ? null : $actualValue,
-						                'snippet' => $this->valueSnippet( $actualValue ),
-						],
-					]
+					array(
+						'expected' => array(
+							'property' => $prop,
+							'allowedValues' => $allowedDiscriminatorValues,
+						),
+						'actual'   => array(
+							'value'   => ( $actualValue === $this->MISSING ) ? null : $actualValue,
+							'snippet' => $this->valueSnippet( $actualValue ),
+						),
+					)
 				);
 			}
 		}
 
 		// 3. If there's only one child error, return it directly.
-		//    No need to wrap it in a parent error.
+		// No need to wrap it in a parent error.
 		if ( count( $childErrors ) === 1 ) {
 			return $childErrors[0];
 		}
 
 		// 4. Fallback: Generic message with children errors
-		$labels  = array_unique( array_map( [ $this, 'branchLabel' ], $branches ) );
+		$labels  = array_unique( array_map( array( $this, 'branchLabel' ), $branches ) );
 		$message = 'Value did not match any of the allowed shapes: ' . implode( ', ', $labels ) . '.';
 		if ( $keyword === 'oneOf' ) {
 			$message = 'Value did not match exactly one of the allowed shapes: ' . implode( ', ', $labels ) . '.';
@@ -14067,7 +14089,7 @@ final class HumanFriendlySchemaValidator {
 			$pointer,
 			$keyword . '-mismatch', // e.g., 'anyOf-mismatch'
 			$message,
-			[ 'allowedShapes' => $labels ],
+			array( 'allowedShapes' => $labels ),
 			$childErrors // Attach all child errors here
 		);
 	}
@@ -14075,26 +14097,29 @@ final class HumanFriendlySchemaValidator {
 	// ─────────────────────────────────────────── primitives / objects / arrays ─┐
 
 	/**
-	 * @param  mixed  $data
+	 * @param  mixed $data
 	 */
 	private function validateType( array $path, $data, array $schema ): ?ValidationError {
 		$type = $schema['type'];
 		if ( ! $this->typeMatchesAny( $data, $type ) ) {
-			$error = is_array($type) ? 'Expected one of the following types: ' . implode(', ', $type) . ' but got type "' . gettype($data) . '".' : 'Expected type "' . $type . '" but got type "' . gettype($data) . '".';
+			$error = is_array( $type ) ? 'Expected one of the following types: ' . implode( ', ', $type ) . ' but got type "' . gettype( $data ) . '".' : 'Expected type "' . $type . '" but got type "' . gettype( $data ) . '".';
 			return new ValidationError(
 				$this->convertPathToString( $path ),
 				'type-mismatch',
 				$error,
-				[
-					'expected' => [ 'type' => $type ],
-					'actual'   => [ 'type' => gettype( $data ), 'snippet' => $this->valueSnippet( $data ) ],
-				]
+				array(
+					'expected' => array( 'type' => $type ),
+					'actual'   => array(
+						'type' => gettype( $data ),
+						'snippet' => $this->valueSnippet( $data ),
+					),
+				)
 			);
 		}
 
 		// Schema integrity checks (throw exceptions as these are schema definition issues)
 		if ( $type === 'string' ) {
-			$unsupportedStringKeywords = [ 'pattern', 'minLength', 'maxLength', 'format' ];
+			$unsupportedStringKeywords = array( 'pattern', 'minLength', 'maxLength', 'format' );
 			foreach ( $unsupportedStringKeywords as $keyword ) {
 				if ( isset( $schema[ $keyword ] ) ) {
 					throw new UnsupportedSchemaException( "The string constraint \"{$keyword}\" is not supported." );
@@ -14102,7 +14127,7 @@ final class HumanFriendlySchemaValidator {
 			}
 		}
 		if ( $type === 'number' || $type === 'integer' ) {
-			$unsupportedNumericKeywords = [ 'minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf' ];
+			$unsupportedNumericKeywords = array( 'minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf' );
 			foreach ( $unsupportedNumericKeywords as $keyword ) {
 				if ( isset( $schema[ $keyword ] ) ) {
 					throw new UnsupportedSchemaException( "The numeric constraint \"{$keyword}\" is not supported." );
@@ -14113,7 +14138,7 @@ final class HumanFriendlySchemaValidator {
 			foreach ( $schema['enum'] as $enumValue ) {
 				if ( ! $this->typeMatches( $enumValue, $type ) ) {
 					throw new UnsupportedSchemaException(
-						"Enum value " . json_encode( $enumValue ) . " does not match the declared type \"{$type}\"."
+						'Enum value ' . json_encode( $enumValue ) . " does not match the declared type \"{$type}\"."
 					);
 				}
 			}
@@ -14129,10 +14154,13 @@ final class HumanFriendlySchemaValidator {
 						$this->valueSnippet( $data ),
 						implode( ', ', $schema['enum'] )
 					),
-					[
-						'expected' => [ 'enum' => $schema['enum'] ],
-						'actual'   => [ 'value' => $data, 'snippet' => $this->valueSnippet( $data ) ],
-					]
+					array(
+						'expected' => array( 'enum' => $schema['enum'] ),
+						'actual'   => array(
+							'value' => $data,
+							'snippet' => $this->valueSnippet( $data ),
+						),
+					)
 				);
 			}
 		}
@@ -14143,10 +14171,13 @@ final class HumanFriendlySchemaValidator {
 					$this->convertPathToString( $path ),
 					'const-mismatch',
 					sprintf( 'Expected value "%s" but got "%s".', $this->valueSnippet( $schema['const'] ), $this->valueSnippet( $data ) ),
-					[
-						'expected' => [ 'const' => $schema['const'] ],
-						'actual'   => [ 'value' => $data, 'snippet' => $this->valueSnippet( $data ) ],
-					]
+					array(
+						'expected' => array( 'const' => $schema['const'] ),
+						'actual'   => array(
+							'value' => $data,
+							'snippet' => $this->valueSnippet( $data ),
+						),
+					)
 				);
 			}
 		}
@@ -14164,11 +14195,11 @@ final class HumanFriendlySchemaValidator {
 	// ───────────────────────────────────────────────────────────── object ─┐
 
 	/**
-	 * @param  mixed[]|object  $data
+	 * @param  mixed[]|object $data
 	 */
 	private function validateObject( array $path, $data, array $schema ): ?ValidationError {
 		$arr            = is_object( $data ) ? (array) $data : $data;
-		$childrenErrors = [];
+		$childrenErrors = array();
 
 		if ( ! empty( $schema['required'] ) ) {
 			$missing = array_diff( $schema['required'], array_keys( $arr ) );
@@ -14180,7 +14211,10 @@ final class HumanFriendlySchemaValidator {
 						$this->convertPathToString( $path ), // Error is about the object at $path
 						'required-field-missing',
 						'Missing required field: ' . $m . '.',
-						[ 'missingField' => $m, 'requiredFields' => $schema['required'] ]
+						array(
+							'missingField' => $m,
+							'requiredFields' => $schema['required'],
+						)
 					);
 				}
 			}
@@ -14189,7 +14223,7 @@ final class HumanFriendlySchemaValidator {
 		if ( ! empty( $schema['properties'] ) ) {
 			foreach ( $schema['properties'] as $name => $propSpec ) {
 				if ( array_key_exists( $name, $arr ) ) {
-					$error = $this->validateNode( array_merge( $path, [ $name ] ), $arr[ $name ], $propSpec );
+					$error = $this->validateNode( array_merge( $path, array( $name ) ), $arr[ $name ], $propSpec );
 					if ( $error ) {
 						$childrenErrors[] = $error;
 					}
@@ -14203,14 +14237,17 @@ final class HumanFriendlySchemaValidator {
 					continue;
 				} // Handled by 'properties' validation
 
-				$currentPropPath = array_merge( $path, [ $name ] );
+				$currentPropPath = array_merge( $path, array( $name ) );
 				if ( $schema['additionalProperties'] === false ) {
 					$childrenErrors[] = new ValidationError(
 						$this->convertPathToString( $currentPropPath ),
 						'additional-property-not-allowed',
-						sprintf( 'Property "%s" isn\'t allowed here. Allowed properties are: %s.', $name,
-							implode( ', ', array_keys( $schema['properties'] ) ) ),
-						[ 'propertyName' => $name ]
+						sprintf(
+							'Property "%s" isn\'t allowed here. Allowed properties are: %s.',
+							$name,
+							implode( ', ', array_keys( $schema['properties'] ) )
+						),
+						array( 'propertyName' => $name )
 					);
 				} elseif ( is_array( $schema['additionalProperties'] ) ) {
 					if ( count( $schema['additionalProperties'] ) ) {
@@ -14226,7 +14263,6 @@ final class HumanFriendlySchemaValidator {
 			}
 		}
 
-
 		if ( ! empty( $childrenErrors ) ) {
 			if ( count( $childrenErrors ) === 1 ) {
 				return $childrenErrors[0];
@@ -14236,7 +14272,7 @@ final class HumanFriendlySchemaValidator {
 				$this->convertPathToString( $path ),
 				'object-validation-failed',
 				'Object validation failed.',
-				[],
+				array(),
 				$childrenErrors
 			);
 		}
@@ -14247,10 +14283,10 @@ final class HumanFriendlySchemaValidator {
 	// ───────────────────────────────────────────────────────────── array ─┐
 
 	private function validateArray( array $path, array $data, array $schema ): ?ValidationError {
-		$childrenErrors = [];
+		$childrenErrors = array();
 		if ( isset( $schema['items'] ) ) {
 			foreach ( $data as $idx => $item ) {
-				$error = $this->validateNode( array_merge( $path, [ $idx ] ), $item, $schema['items'] );
+				$error = $this->validateNode( array_merge( $path, array( $idx ) ), $item, $schema['items'] );
 				if ( $error ) {
 					$childrenErrors[] = $error;
 				}
@@ -14263,7 +14299,10 @@ final class HumanFriendlySchemaValidator {
 				$currentPathStr,
 				'minItems-not-met',
 				'Need at least ' . $schema['minItems'] . ' items, found ' . count( $data ) . '.',
-				[ 'expectedMin' => $schema['minItems'], 'actualCount' => count( $data ) ]
+				array(
+					'expectedMin' => $schema['minItems'],
+					'actualCount' => count( $data ),
+				)
 			);
 		}
 		if ( isset( $schema['maxItems'] ) && count( $data ) > $schema['maxItems'] ) {
@@ -14271,12 +14310,15 @@ final class HumanFriendlySchemaValidator {
 				$currentPathStr,
 				'maxItems-exceeded',
 				'May contain at most ' . $schema['maxItems'] . ' items, found ' . count( $data ) . '.',
-				[ 'expectedMax' => $schema['maxItems'], 'actualCount' => count( $data ) ]
+				array(
+					'expectedMax' => $schema['maxItems'],
+					'actualCount' => count( $data ),
+				)
 			);
 		}
 		if ( isset( $schema['uniqueItems'] ) ) {
 			// This is a schema configuration issue, not a data validation issue.
-			throw new UnsupportedSchemaException( "The array constraint \"uniqueItems\" is not supported." );
+			throw new UnsupportedSchemaException( 'The array constraint "uniqueItems" is not supported.' );
 		}
 
 		if ( count( $childrenErrors ) === 1 ) {
@@ -14288,7 +14330,7 @@ final class HumanFriendlySchemaValidator {
 				$currentPathStr,
 				'array-validation-failed',
 				'Array validation failed.',
-				[],
+				array(),
 				$childrenErrors
 			);
 		}
@@ -14306,7 +14348,7 @@ final class HumanFriendlySchemaValidator {
 		$pathParts = explode( '/', substr( $ref, 2 ) );
 		foreach ( $pathParts as $p ) {
 			// Need to handle cases where $p could be an encoded character like ~0 for ~ or ~1 for /
-			$p = str_replace( [ '~1', '~0' ], [ '/', '~' ], $p );
+			$p = str_replace( array( '~1', '~0' ), array( '/', '~' ), $p );
 			if ( is_array( $node ) && array_key_exists( $p, $node ) ) {
 				$node = $node[ $p ];
 			} else {
@@ -14321,11 +14363,14 @@ final class HumanFriendlySchemaValidator {
 
 	private function inferDiscriminator( ?array $explicit, array $branches ): ?array {
 		// Filter branches to only include those that are objects and have properties defined
-		$objs = array_filter( $branches, function ( $b ) {
-			$schema = isset( $b['$ref'] ) ? $this->resolveReference( $b['$ref'] ) : $b;
+		$objs = array_filter(
+			$branches,
+			function ( $b ) {
+				$schema = isset( $b['$ref'] ) ? $this->resolveReference( $b['$ref'] ) : $b;
 
-			return ( $schema['type'] ?? null ) === 'object' && isset( $schema['properties'] );
-		} );
+				return ( $schema['type'] ?? null ) === 'object' && isset( $schema['properties'] );
+			}
+		);
 
 		if ( count( $objs ) < 2 ) {
 			return null;
@@ -14335,7 +14380,7 @@ final class HumanFriendlySchemaValidator {
 
 		if ( $explicit && isset( $explicit['propertyName'] ) ) {
 			$prop = $explicit['propertyName'];
-			$vals = [];
+			$vals = array();
 			foreach ( $objs as $s_wrapper ) {
 				$s = isset( $s_wrapper['$ref'] ) ? $this->resolveReference( $s_wrapper['$ref'] ) : $s_wrapper;
 				$d = $s['properties'][ $prop ] ?? null;
@@ -14350,14 +14395,14 @@ final class HumanFriendlySchemaValidator {
 			}
 			// Ensure all discriminator values are unique among the object branches considered
 			if ( count( $vals ) === count( $objs ) && count( array_unique( $vals ) ) === count( $vals ) ) {
-				return [ $prop, $vals ];
+				return array( $prop, $vals );
 			}
 
 			return null; // Explicit discriminator not viable (e.g. not present in all, or not single enum)
 		}
 
 		// Auto‑guess single‑value enums and consts
-		$candidates = [];
+		$candidates = array();
 		if ( isset( $objs[0] ) ) {
 			$firstObjSchema = isset( $objs[0]['$ref'] ) ? $this->resolveReference( $objs[0]['$ref'] ) : $objs[0];
 			if ( ! isset( $firstObjSchema['properties'] ) ) {
@@ -14365,7 +14410,7 @@ final class HumanFriendlySchemaValidator {
 			} // Should not happen due to filter above
 
 			foreach ( array_keys( $firstObjSchema['properties'] ) as $prop ) {
-				$possibleValues          = [];
+				$possibleValues          = array();
 				$allObjsHaveThisEnumProp = true;
 				foreach ( $objs as $s_wrapper ) {
 					$s = isset( $s_wrapper['$ref'] ) ? $this->resolveReference( $s_wrapper['$ref'] ) : $s_wrapper;
@@ -14388,7 +14433,7 @@ final class HumanFriendlySchemaValidator {
 		// print_R($objs);
 
 		if ( count( $candidates ) === 1 ) { // Only one property serves as a unique discriminator
-			return [ key( $candidates ), current( $candidates ) ];
+			return array( key( $candidates ), current( $candidates ) );
 		}
 
 		return null; // No single property found to act as an implicit discriminator, or multiple found (ambiguous)

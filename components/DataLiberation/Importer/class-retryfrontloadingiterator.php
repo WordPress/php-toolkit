@@ -9,7 +9,7 @@ use WordPress\DataLiberation\ImportEntity;
 class RetryFrontloadingIterator implements Iterator {
 	private $import_post_id;
 	private $last_id_on_page = null;
-	private $placeholders = array();
+	private $placeholders    = array();
 	private $current;
 	private $rewound = true;
 

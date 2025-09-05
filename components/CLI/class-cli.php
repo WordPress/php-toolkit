@@ -43,30 +43,30 @@ class CLI {
 	 * @throws InvalidArgumentException for unknown options or missing required values.
 	 */
 	public static function parseCommandArgsAndOptions( array $argv, array $optionDefs ): array {
-		$positionals = [];
-		$options     = [];
-		$short2long  = [];
-	
+		$positionals = array();
+		$options     = array();
+		$short2long  = array();
+
 		// Initialise defaults & maps
 		foreach ( $optionDefs as $long => $def ) {
-			[ $short, , $default ] = $def;
-			$options[ $long ] = $default;
+			array( $short, , $default ) = $def;
+			$options[ $long ]           = $default;
 			if ( $short ) {
 				$short2long[ $short ] = $long;
 			}
 		}
-	
+
 		$i = 0; // Start from the first command argument
 		while ( $i < count( $argv ) ) {
 			$token = $argv[ $i ];
-	
+
 			// Long option --foo or --foo=bar
 			if ( preg_match( '/^--([^=]+)(=(.*))?$/', $token, $m ) ) {
 				$long = $m[1];
 				if ( ! isset( $optionDefs[ $long ] ) ) {
 					throw new InvalidArgumentException( "Unknown option --$long" );
 				}
-				[ $short, $hasVal ] = $optionDefs[ $long ];
+				array( $short, $hasVal ) = $optionDefs[ $long ];
 				if ( $hasVal ) {
 					$val = $m[3] ?? ( $argv[ ++ $i ] ?? null );
 					if ( $val === null ) {
@@ -79,7 +79,7 @@ class CLI {
 				$i ++;
 				continue;
 			}
-	
+
 			// Short option(s): -abc or -e mysql or -e=mysql
 			if ( preg_match( '/^-([A-Za-z]{1,})(=(.*))?$/', $token, $m ) ) {
 				$bundle    = str_split( $m[1] );
@@ -108,12 +108,12 @@ class CLI {
 				$i ++;
 				continue;
 			}
-	
+
 			// Positional argument
 			$positionals[] = $token;
 			$i ++;
 		}
-	
-		return [ $positionals, $options ];
+
+		return array( $positionals, $options );
 	}
 }

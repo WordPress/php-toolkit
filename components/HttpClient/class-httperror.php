@@ -16,8 +16,8 @@ class HttpError extends Exception {
 
 	public function __toString() {
 		$url = $this->request->url ?? '';
-		if (strlen($url) > 100) {
-			$url = substr($url, 0, 97) . '...';
+		if ( strlen( $url ) > 100 ) {
+			$url = substr( $url, 0, 97 ) . '...';
 		}
 		return sprintf(
 			'%s (Request: %s, %s)',

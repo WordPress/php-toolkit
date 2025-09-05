@@ -41,7 +41,6 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *        * <!NOTATION, see https://www.w3.org/TR/xml/#sec-entity-decl
  *        * Conditional sections, see https://www.w3.org/TR/xml/#sec-condition-sect
  *
- *
  * @TODO: Support XML 1.1.
  *
  * @TODO: Evaluate the performance of utf8_codepoint_at() against using the mbstring
@@ -315,7 +314,7 @@ use function WordPress\Encoding\utf8_codepoint_at;
  *
  * The XMLProcessor assumes that the input XML document is encoded with a
  * UTF-8 encoding and will refuse to process documents that declare other encodings.
- * 
+ *
  * ### Namespaces
  *
  * Namespaces are first-class citizens in the XMLProcessor. Methods such as `set_attribute()` and `remove_attribute()`
@@ -333,13 +332,13 @@ use function WordPress\Encoding\utf8_codepoint_at;
  * #### Internal representation of names
  *
  * Internally, the XMLProcessor stores names using the following format:
- * 
+ *
  *     {namespace}local_name
- * 
+ *
  * It's safe, because the "{" and "}" bytes cannot be used in tag names or attribute names:
- * 
- *     [4]   	NameStartChar  ::=   	":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
- *     [4a]   	NameChar	   ::=   	NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F] | [#x203F-#x2040]
+ *
+ *     [4]      NameStartChar  ::=      ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
+ *     [4a]     NameChar       ::=      NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F] | [#x203F-#x2040]
  *
  * @since WP_VERSION
  */
@@ -855,8 +854,8 @@ class XMLProcessor {
 	 *
 	 * @access private
 	 *
-	 * @param  string  $xml  XML to process.
-	 * @param  string|null  $use_the_static_create_methods_instead  This constructor should not be called manually.
+	 * @param  string      $xml  XML to process.
+	 * @param  string|null $use_the_static_create_methods_instead  This constructor should not be called manually.
 	 *
 	 * @see XMLProcessor::create_stream()
 	 *
@@ -892,7 +891,7 @@ class XMLProcessor {
 	 * Wipes out the processed XML and appends the next chunk of XML to
 	 * any remaining unprocessed XML.
 	 *
-	 * @param  string  $next_chunk  XML to append.
+	 * @param  string $next_chunk  XML to append.
 	 */
 	public function append_bytes( $next_chunk ) {
 		if ( ! $this->expecting_more_input ) {
@@ -990,7 +989,6 @@ class XMLProcessor {
 	 * @since 6.5.0
 	 *
 	 * @access private
-	 *
 	 */
 	protected function parse_next_token() {
 		$was_at = $this->bytes_already_parsed;
@@ -1161,6 +1159,7 @@ class XMLProcessor {
 
 			/**
 			 * Confirm the tag name is valid with respect to XML namespaces.
+			 *
 			 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#Conformance
 			 */
 			$tag_name = $this->get_tag_name_qualified();
@@ -1343,7 +1342,6 @@ class XMLProcessor {
 	 *
 	 * @return bool Whether the parse paused at the start of an incomplete token.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function is_paused_at_incomplete_input(): bool {
 		return self::STATE_INCOMPLETE_INPUT === $this->parser_state;
@@ -1354,7 +1352,6 @@ class XMLProcessor {
 	 *
 	 * @return bool Whether the processor finished processing.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function is_finished() {
 		return self::STATE_COMPLETE === $this->parser_state;
@@ -1435,11 +1432,10 @@ class XMLProcessor {
 	 * reaching for it, as inappropriate use could lead to broken
 	 * XML structure or unwanted processing overhead.
 	 *
-	 * @param  string  $name  Identifies this particular bookmark.
+	 * @param  string $name  Identifies this particular bookmark.
 	 *
 	 * @return bool Whether the bookmark was successfully created.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function set_bookmark( $name ) {
 		// It only makes sense to set a bookmark if the parser has paused on a concrete token.
@@ -1472,7 +1468,7 @@ class XMLProcessor {
 	 * Releasing a bookmark frees up the small
 	 * performance overhead it requires.
 	 *
-	 * @param  string  $name  Name of the bookmark to remove.
+	 * @param  string $name  Name of the bookmark to remove.
 	 *
 	 * @return bool Whether the bookmark already existed before removal.
 	 */
@@ -1507,7 +1503,6 @@ class XMLProcessor {
 	 * @see self::ERROR_EXCEEDED_MAX_BOOKMARKS
 	 *
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_last_error(): ?string {
 		return $this->last_error;
@@ -1520,8 +1515,8 @@ class XMLProcessor {
 	 * semantic rules for text nodes. For access to the raw tokens consider using
 	 * XMLProcessor instead.
 	 *
-	 * @param  array|string|null  $query  {
-	 *     Optional. Which tag name to find, having which class, etc. Default is to find any tag.
+	 * @param  array|string|null $query  {
+	 *    Optional. Which tag name to find, having which class, etc. Default is to find any tag.
 	 *
 	 * @type string|null $tag_name Which tag to find, or `null` for "any tag."
 	 * @type int|null $match_offset Find the Nth tag matching all search criteria.
@@ -1532,7 +1527,6 @@ class XMLProcessor {
 	 * }
 	 * @return bool Whether a tag was matched.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function next_tag( $query_or_ns = null, $null_or_local_name = null ) {
 		if ( null === $query_or_ns && null === $null_or_local_name ) {
@@ -1637,7 +1631,6 @@ class XMLProcessor {
 	 *
 	 * @return bool Whether a tag was found before the end of the document.
 	 * @since WP_VERSION
-	 *
 	 */
 	private function parse_next_tag() {
 		$this->after_tag();
@@ -2165,7 +2158,6 @@ class XMLProcessor {
 	 *
 	 * @return bool Whether an attribute was found before the end of the document.
 	 * @since WP_VERSION
-	 *
 	 */
 	private function parse_next_attribute() {
 		// Skip whitespace and slashes.
@@ -2250,6 +2242,7 @@ class XMLProcessor {
 
 		/**
 		 * Confirm the tag name is valid with respect to XML namespaces.
+		 *
 		 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#Conformance
 		 */
 		if ( false === $this->validate_qualified_name( $attribute_qname ) ) {
@@ -2317,7 +2310,7 @@ class XMLProcessor {
 	 *
 	 * Name ::= NameStartChar (NameChar)*
 	 *
-	 * @param  int  $offset
+	 * @param  int $offset
 	 *
 	 * @return int
 	 */
@@ -2486,11 +2479,10 @@ class XMLProcessor {
 	/**
 	 * Applies lexical updates to XML document.
 	 *
-	 * @param  int  $shift_this_point  Accumulate and return shift for this position.
+	 * @param  int $shift_this_point  Accumulate and return shift for this position.
 	 *
 	 * @return int How many bytes the given pointer moved in response to the updates.
 	 * @since WP_VERSION
-	 *
 	 */
 	private function apply_lexical_updates( $shift_this_point = 0 ) {
 		if ( ! count( $this->lexical_updates ) ) {
@@ -2584,11 +2576,10 @@ class XMLProcessor {
 	/**
 	 * Checks whether a bookmark with the given name exists.
 	 *
-	 * @param  string  $bookmark_name  Name to identify a bookmark that potentially exists.
+	 * @param  string $bookmark_name  Name to identify a bookmark that potentially exists.
 	 *
 	 * @return bool Whether that bookmark exists.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function has_bookmark( $bookmark_name ) {
 		return array_key_exists( $bookmark_name, $this->bookmarks );
@@ -2604,11 +2595,10 @@ class XMLProcessor {
 	 * In order to prevent accidental infinite loops, there's a
 	 * maximum limit on the number of times seek() can be called.
 	 *
-	 * @param  string  $bookmark_name  Jump to the place in the document identified by this bookmark name.
+	 * @param  string $bookmark_name  Jump to the place in the document identified by this bookmark name.
 	 *
 	 * @return bool Whether the internal cursor was successfully moved to the bookmark's location.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function seek( $bookmark_name ) {
 		if ( ! array_key_exists( $bookmark_name, $this->bookmarks ) ) {
@@ -2644,12 +2634,11 @@ class XMLProcessor {
 	/**
 	 * Compare two WP_HTML_Text_Replacement objects.
 	 *
-	 * @param  WP_HTML_Text_Replacement  $a  First attribute update.
-	 * @param  WP_HTML_Text_Replacement  $b  Second attribute update.
+	 * @param  WP_HTML_Text_Replacement $a  First attribute update.
+	 * @param  WP_HTML_Text_Replacement $b  Second attribute update.
 	 *
 	 * @return int Comparison value for string order.
 	 * @since WP_VERSION
-	 *
 	 */
 	private static function sort_start_ascending( $a, $b ) {
 		$by_start = $a->start - $b->start;
@@ -2679,11 +2668,10 @@ class XMLProcessor {
 	 *  - If an attribute is enqueued to be removed, the return will be `null` to indicate that.
 	 *  - If no updates are enqueued, the return will be `false` to differentiate from "removed."
 	 *
-	 * @param  string  $comparable_name  The attribute name in its comparable form.
+	 * @param  string $comparable_name  The attribute name in its comparable form.
 	 *
 	 * @return string|boolean|null Value of enqueued update if present, otherwise false.
 	 * @since WP_VERSION
-	 *
 	 */
 	private function get_enqueued_attribute_value( $comparable_name ) {
 		if ( self::STATE_MATCHED_TAG !== $this->parser_state ) {
@@ -2763,12 +2751,11 @@ class XMLProcessor {
 	 *     $p->get_attribute( 'http://www.w3.org/1999/xhtml', 'enabled' ) === "true";
 	 *     $p->get_attribute( 'aria-label' ) === null;
 	 *
-	 * @param  string  $namespace_reference  Full namespace of the requested attribute, e.g. "http://wordpress.org/export/1.2/"
-	 * @param  string  $local_name           Name of attribute whose value is requested, e.g. data-test-id
+	 * @param  string $namespace_reference  Full namespace of the requested attribute, e.g. "http://wordpress.org/export/1.2/"
+	 * @param  string $local_name           Name of attribute whose value is requested, e.g. data-test-id
 	 *
 	 * @return string|true|null Value of attribute or `null` if not available. Boolean attributes return `true`.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_attribute( $namespace_reference, $local_name ) {
 		if (
@@ -2892,7 +2879,6 @@ class XMLProcessor {
 	 *
 	 * @return array|null List of [namespace, local_name] pairs, or `null` when no tag opener is matched.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_attribute_names_with_prefix( $full_namespace_prefix, $local_name_prefix ) {
 		if (
@@ -3036,7 +3022,6 @@ class XMLProcessor {
 	 *
 	 * @return string|null The name from the DOCTYPE declaration, or null if not available.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_doctype_name() {
 		if ( null === $this->doctype_name ) {
@@ -3059,7 +3044,6 @@ class XMLProcessor {
 	 *
 	 * @return string|null The system literal value, or null if not available.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_system_literal() {
 		if ( null === $this->system_literal ) {
@@ -3081,7 +3065,6 @@ class XMLProcessor {
 	 *
 	 * @return string|null The public identifier value, or null if not available.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_pubid_literal() {
 		if ( null === $this->pubid_literal ) {
@@ -3112,9 +3095,9 @@ class XMLProcessor {
 	 *
 	 * XML tags ending with a solidus ("/") are parsed as empty elements. They have no
 	 * content and no matching closer is expected.
+	 *
 	 * @return bool Whether the currently matched tag is an empty element tag.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function is_empty_element() {
 		if ( self::STATE_MATCHED_TAG !== $this->parser_state ) {
@@ -3147,7 +3130,6 @@ class XMLProcessor {
 	 *
 	 * @return bool Whether the current tag is a tag closer.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function is_tag_closer() {
 		return (
@@ -3170,7 +3152,6 @@ class XMLProcessor {
 	 *
 	 * @return bool Whether the current tag is a tag closer.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function is_tag_opener() {
 		return (
@@ -3198,7 +3179,6 @@ class XMLProcessor {
 	 *
 	 * @return string|null What kind of token is matched, or null.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_token_type() {
 		switch ( $this->parser_state ) {
@@ -3227,7 +3207,6 @@ class XMLProcessor {
 	 *
 	 * @return string|null Name of the matched token.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_token_name() {
 		switch ( $this->parser_state ) {
@@ -3278,7 +3257,6 @@ class XMLProcessor {
 	 *
 	 * @return string
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_modifiable_text() {
 		if ( null === $this->text_starts_at ) {
@@ -3383,12 +3361,11 @@ class XMLProcessor {
 	 *
 	 * For string attributes, the value is escaped using the `esc_attr` function.
 	 *
-	 * @param  string  $name  The attribute name to target.
-	 * @param  string|bool  $value  The new attribute value.
+	 * @param  string      $name  The attribute name to target.
+	 * @param  string|bool $value  The new attribute value.
 	 *
 	 * @return bool Whether an attribute value was set.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function set_attribute( $xml_namespace, $local_name, $value ) {
 		if ( ! is_string( $value ) ) {
@@ -3483,12 +3460,11 @@ class XMLProcessor {
 	/**
 	 * Remove an attribute from the currently-matched tag.
 	 *
-	 * @param  string  $namespace  The attribute's namespace.
-	 * @param  string  $name       The attribute name to remove.
+	 * @param  string $namespace  The attribute's namespace.
+	 * @param  string $name       The attribute name to remove.
 	 *
 	 * @return bool Whether an attribute was removed.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function remove_attribute( $xml_namespace, $local_name ) {
 		if (
@@ -3543,7 +3519,6 @@ class XMLProcessor {
 	 * @see XMLProcessor::get_updated_xml()
 	 *
 	 * @since WP_VERSION
-	 *
 	 */
 	public function __toString() {
 		return $this->get_updated_xml();
@@ -3554,7 +3529,6 @@ class XMLProcessor {
 	 *
 	 * @return string The processed XML.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_updated_xml() {
 		$requires_no_updating = 0 === count( $this->lexical_updates );
@@ -3639,14 +3613,13 @@ class XMLProcessor {
 	 * It considers the current XML context (prolog, element, or misc)
 	 * and only expects the nodes that are allowed in that context.
 	 *
-	 * @param  int  $node_to_process  Whether to process the next node or
-	 *            reprocess the current node, e.g. using another parser context.
+	 * @param  int $node_to_process  Whether to process the next node or
+	 *           reprocess the current node, e.g. using another parser context.
 	 *
 	 * @return bool Whether a token was parsed.
 	 * @since WP_VERSION
 	 *
 	 * @access private
-	 *
 	 */
 	private function step( $node_to_process = self::PROCESS_NEXT_NODE ) {
 		// Refuse to proceed if there was a previous error.
@@ -3698,7 +3671,6 @@ class XMLProcessor {
 	 * @see XMLProcessor::step
 	 *
 	 * @since WP_VERSION
-	 *
 	 */
 	private function step_in_prolog( $node_to_process = self::PROCESS_NEXT_NODE ) {
 		if ( self::PROCESS_NEXT_NODE === $node_to_process ) {
@@ -3758,7 +3730,6 @@ class XMLProcessor {
 	 * @see XMLProcessor::step
 	 *
 	 * @since WP_VERSION
-	 *
 	 */
 	private function step_in_element( $node_to_process = self::PROCESS_NEXT_NODE ) {
 		if ( self::PROCESS_NEXT_NODE === $node_to_process ) {
@@ -3836,7 +3807,6 @@ class XMLProcessor {
 	 * @see XMLProcessor::step
 	 *
 	 * @since WP_VERSION
-	 *
 	 */
 	private function step_in_misc( $node_to_process = self::PROCESS_NEXT_NODE ) {
 		if ( self::PROCESS_NEXT_NODE === $node_to_process ) {
@@ -3891,7 +3861,6 @@ class XMLProcessor {
 	 *
 	 * @return string[]|null Array of tag names representing path to matched node, if matched, otherwise NULL.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_breadcrumbs() {
 		return array_map(
@@ -3921,12 +3890,11 @@ class XMLProcessor {
 	 *     false === $processor->matches_breadcrumbs( array( 'post', 'image' ) );
 	 *     true  === $processor->matches_breadcrumbs( array( 'post', '*', 'image' ) );
 	 *
-	 * @param  string[]  $breadcrumbs  DOM sub-path at which element is found, e.g. `array( 'content', 'image' )`.
-	 *                              May also contain the wildcard `*` which matches a single element, e.g. `array( 'post', '*' )`.
+	 * @param  string[] $breadcrumbs  DOM sub-path at which element is found, e.g. `array( 'content', 'image' )`.
+	 *                             May also contain the wildcard `*` which matches a single element, e.g. `array( 'post', '*' )`.
 	 *
 	 * @return bool Whether the currently-matched tag is found at the given nested structure.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function matches_breadcrumbs( $breadcrumbs ) {
 		// Everything matches when there are zero constraints.
@@ -3999,7 +3967,6 @@ class XMLProcessor {
 	 *
 	 * @return int Nesting-depth of current location in the document.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function get_current_depth() {
 		return count( $this->stack_of_open_elements );
@@ -4013,7 +3980,7 @@ class XMLProcessor {
 	 *     $this->parse_qualified_name( 'wp:post' ); // Returns array( 'wp.org', 'post' )
 	 *     $this->parse_qualified_name( 'image' ); // Returns array( '', 'image' )
 	 *
-	 * @param  string  $qualified_name  The qualified name to parse.
+	 * @param  string $qualified_name  The qualified name to parse.
 	 *
 	 * @return array<string, string> The namespace prefix and local name.
 	 */
@@ -4034,7 +4001,7 @@ class XMLProcessor {
 	 * Asserts a qualified tag name is syntactically valid according to the
 	 * XML specification.
 	 *
-	 * @param  string  $qualified_name  The qualified name to validate.
+	 * @param  string $qualified_name  The qualified name to validate.
 	 * @return bool Whether the qualified name is syntactically valid.
 	 */
 	private function validate_qualified_name( $qualified_name ) {
@@ -4091,10 +4058,9 @@ class XMLProcessor {
 	/**
 	 * Stops the parser and terminates its execution when encountering unsupported markup.
 	 *
-	 * @param  string  $message  Explains support is missing in order to parse the current node.
+	 * @param  string $message  Explains support is missing in order to parse the current node.
 	 *
 	 * @throws XMLUnsupportedException Halts execution of the parser.
-	 *
 	 */
 	private function bail( $message, $reason = self::ERROR_UNSUPPORTED ) {
 		$starts_at = isset( $this->token_starts_at ) ? $this->token_starts_at : strlen( $this->xml );

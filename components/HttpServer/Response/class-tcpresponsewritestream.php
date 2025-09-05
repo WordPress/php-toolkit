@@ -22,7 +22,7 @@ class TcpResponseWriteStream implements ResponseWriteStream {
 	/**
 	 * @var array
 	 */
-	private $headers = [];
+	private $headers = array();
 
 	/**
 	 * @var bool
@@ -41,22 +41,22 @@ class TcpResponseWriteStream implements ResponseWriteStream {
 
 	public function __construct( ByteWriteStream $upstream ) {
 		$this->upstream = $upstream;
-		$this->writer   = new TransformedWriteStream( $this->upstream, [] );
+		$this->writer   = new TransformedWriteStream( $this->upstream, array() );
 	}
 
 	public function send_http_code( $code ) {
 		if ( $this->headers_sent ) {
-			throw new RuntimeException( "Cannot set HTTP code after headers have been sent" );
+			throw new RuntimeException( 'Cannot set HTTP code after headers have been sent' );
 		}
 		$this->http_code = (int) $code;
 	}
 
 	public function send_header( $name, $value ) {
 		if ( $this->headers_sent ) {
-			throw new RuntimeException( "Cannot send header after headers have been sent" );
+			throw new RuntimeException( 'Cannot send header after headers have been sent' );
 		}
 		$lname                   = strtolower( $name );
-		$this->headers[ $lname ] = [ $name, $value ];
+		$this->headers[ $lname ] = array( $name, $value );
 	}
 
 	/**
@@ -76,7 +76,7 @@ class TcpResponseWriteStream implements ResponseWriteStream {
 		$this->upstream->append_bytes( "HTTP/1.1 {$this->http_code} {$status_text}\r\n" );
 
 		// Headers
-		foreach ( $this->headers as [$name, $value] ) {
+		foreach ( $this->headers as array( $name, $value ) ) {
 			$this->upstream->append_bytes( "{$name}: {$value}\r\n" );
 		}
 
@@ -93,7 +93,7 @@ class TcpResponseWriteStream implements ResponseWriteStream {
 
 	public function append_bytes( string $bytes ): void {
 		if ( $this->closed ) {
-			throw new RuntimeException( "Cannot write to closed ResponseWriteStream" );
+			throw new RuntimeException( 'Cannot write to closed ResponseWriteStream' );
 		}
 		$this->send_headers_if_needed();
 		$this->writer->append_bytes( $bytes );
@@ -105,7 +105,7 @@ class TcpResponseWriteStream implements ResponseWriteStream {
 
 	public function close_writing(): void {
 		if ( $this->closed ) {
-			throw new RuntimeException( "ResponseWriteStream already closed" );
+			throw new RuntimeException( 'ResponseWriteStream already closed' );
 		}
 		$this->send_headers_if_needed();
 		$this->writer->close_writing();

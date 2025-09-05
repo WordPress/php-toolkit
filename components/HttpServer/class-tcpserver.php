@@ -18,8 +18,8 @@ class TcpServer {
 	private $port;
 
 	/**
-	 * @param  string  $host
-	 * @param  int  $port
+	 * @param  string $host
+	 * @param  int    $port
 	 */
 	public function __construct( $host = '127.0.0.1', $port = 8080 ) {
 		$this->host = $host;
@@ -32,7 +32,7 @@ class TcpServer {
 
 	public function serve( ?callable $on_accept = null ) {
 		if ( ! is_callable( $this->handler ) ) {
-			throw new RuntimeException( "No request handler set. Call set_handler() before serve()." );
+			throw new RuntimeException( 'No request handler set. Call set_handler() before serve().' );
 		}
 
 		$socket = stream_socket_server(
@@ -57,7 +57,7 @@ class TcpServer {
 
 			// Initialize to null to avoid undefined variable errors
 			$socket_write_stream = null;
-			$response_writer = null;
+			$response_writer     = null;
 
 			try {
 				$request = IncomingRequest::from_resource( $client );
@@ -73,14 +73,14 @@ class TcpServer {
 				$response_writer     = new TcpResponseWriteStream( $socket_write_stream );
 				call_user_func( $this->handler, $request, $response_writer, $client );
 			} catch ( Exception $e ) {
-				error_log( "Error: " . $e->getMessage() );
+				error_log( 'Error: ' . $e->getMessage() );
 			} finally {
 				try {
 					if ( $response_writer && ! $response_writer->is_writing_closed() ) {
 						$response_writer->close_writing();
 					}
 				} catch ( Exception $e ) {
-					error_log( "Error closing response writer: " . $e->getMessage() );
+					error_log( 'Error closing response writer: ' . $e->getMessage() );
 				}
 
 				try {
@@ -88,10 +88,10 @@ class TcpServer {
 						$socket_write_stream->close_writing();
 					}
 				} catch ( Exception $e ) {
-					error_log( "Error closing socket write stream: " . $e->getMessage() );
+					error_log( 'Error closing socket write stream: ' . $e->getMessage() );
 				}
-				if ( isset($response_writer, $request) && $response_writer ) {
-					echo "[" . date( 'Y-m-d H:i:s' ) . "] " . $response_writer->http_code . ' ' . $request->method . ' ' . $request->get_parsed_url()->pathname . "\n";
+				if ( isset( $response_writer, $request ) && $response_writer ) {
+					echo '[' . date( 'Y-m-d H:i:s' ) . '] ' . $response_writer->http_code . ' ' . $request->method . ' ' . $request->get_parsed_url()->pathname . "\n";
 				}
 			}
 		}

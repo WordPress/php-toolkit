@@ -16,10 +16,10 @@ class AbsoluteLocalPath extends DataReference {
 	/**
 	 * Constructor.
 	 *
-	 * @param  string  $path  The path.
+	 * @param  string $path  The path.
 	 */
 	public function __construct( string $path ) {
-		$this->path = realpath($path);
+		$this->path = realpath( $path );
 		parent::__construct();
 	}
 
@@ -40,18 +40,18 @@ class AbsoluteLocalPath extends DataReference {
 	 * Checks if a string is a valid absolute local path. Useful
 	 * for resolving a Blueprint reference to an actual file before
 	 * we know the execution context.
-	 * 
+	 *
 	 * Windows paths can be really comples:
-	 * 
+	 *
 	 *    https://www.fileside.app/blog/2023-03-17_windows-file-paths/
-	 * 
+	 *
 	 * Instead of parsing them, we'll just ask the OS whether the path exists.
 	 *
 	 * @param $path The path to check.
 	 * @return bool Whether the path is valid.
 	 */
 	public static function is_valid( $path ): bool {
-		return false !== realpath($path);
+		return false !== realpath( $path );
 	}
 
 	/**

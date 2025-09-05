@@ -22,11 +22,11 @@ class ZipFilesystem implements Filesystem {
 
 	private $last_file_stream;
 
-	const TYPE_DIR = 'dir';
+	const TYPE_DIR  = 'dir';
 	const TYPE_FILE = 'file';
 
 	const CENTRAL_DIRECTORY_INDEX = 'central-directory-index';
-	const FILE_ENTRY = 'file-entry';
+	const FILE_ENTRY              = 'file-entry';
 
 	/**
 	 * Don't support ZIP files with more than 2MB of central directory data.
@@ -143,8 +143,11 @@ class ZipFilesystem implements Filesystem {
 
 		if ( $this->central_directory_size() >= self::MAX_CENTRAL_DIRECTORY_SIZE ) {
 			throw new FilesystemException(
-				sprintf( 'Central directory size %d exceeds the maximum allowed size of %d', $this->central_directory_size(),
-					self::MAX_CENTRAL_DIRECTORY_SIZE )
+				sprintf(
+					'Central directory size %d exceeds the maximum allowed size of %d',
+					$this->central_directory_size(),
+					self::MAX_CENTRAL_DIRECTORY_SIZE
+				)
 			);
 		}
 
@@ -215,8 +218,10 @@ class ZipFilesystem implements Filesystem {
 		}
 		if ( ! ( $this->zip->get_object() instanceof EndCentralDirectoryEntry ) ) {
 			throw new FilesystemException(
-				sprintf( 'Expected end central directory index at the end of the ZIP file but found %s',
-					get_class( $this->zip->get_object() ) )
+				sprintf(
+					'Expected end central directory index at the end of the ZIP file but found %s',
+					get_class( $this->zip->get_object() )
+				)
 			);
 		}
 
@@ -224,6 +229,6 @@ class ZipFilesystem implements Filesystem {
 	}
 
 	public function get_meta(): array {
-		return [];
+		return array();
 	}
 }
