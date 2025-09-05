@@ -39,7 +39,6 @@
         <exclude name="Generic.CodeAnalysis.EmptyStatement.DetectedWhile"/>
         <!-- Unused arguments are necessary when inheriting from classes and overriding methods. -->
         <exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.Found"/>
-        <exclude name="Generic.Commenting.DocComment.LongNotCapital"/>
         <exclude name="Generic.Commenting.DocComment.MissingShort"/>
         <exclude name="Generic.Commenting.DocComment.ShortNotCapital"/>
         <exclude name="Generic.PHP.DiscourageGoto.Found"/>

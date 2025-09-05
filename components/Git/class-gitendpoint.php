@@ -107,7 +107,7 @@ class GitEndpoint {
 	/**
 	 * Handle Git protocol v2 ls-refs command
 	 *
-	 * ls-refs is the command used to request a reference advertisement in v2.
+	 * `ls-refs` is the command used to request a reference advertisement in v2.
 	 * Unlike the current reference advertisement, ls-refs takes in arguments
 	 * which can be used to limit the refs sent from the server.
 	 *
