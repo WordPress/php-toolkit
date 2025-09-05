@@ -94,7 +94,7 @@ class CLI {
 						if ( null !== $inline_val && 0 === $idx ) {
 							$options[ $long ] = $inline_val;
 						} else {
-							$val = ( $idx === count( $bundle ) - 1 ) ? ( $argv[ ++$i ] ?? null ) : null;
+							$val = ( count( $bundle ) - 1 === $idx ) ? ( $argv[ ++$i ] ?? null ) : null;
 							if ( null === $val ) {
 								throw new InvalidArgumentException( "Option -$short requires a value" );
 							}

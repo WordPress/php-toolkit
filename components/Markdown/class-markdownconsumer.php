@@ -410,7 +410,7 @@ BLOCK;
 
 		// Skip the <p> tag.
 		$p_tag = strrev( '<p>' );
-		if ( $p_tag !== substr( $str, $at, strlen( $p_tag ) ) ) {
+		if ( substr( $str, $at, strlen( $p_tag ) ) !== $p_tag ) {
 			return false;
 		}
 		$at += strlen( $p_tag );
@@ -420,7 +420,7 @@ BLOCK;
 
 		// Skip the block opener.
 		$block_opener = strrev( '<!-- wp:paragraph -->' );
-		if ( $block_opener !== substr( $str, $at, strlen( $block_opener ) ) ) {
+		if ( substr( $str, $at, strlen( $block_opener ) ) !== $block_opener ) {
 			return false;
 		}
 		$at             += strlen( $block_opener );

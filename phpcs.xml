@@ -25,7 +25,6 @@
         <exclude name="WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid"/>
         <exclude name="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid"/>
         <exclude name="WordPress.PHP.IniSet.display_errors_Disallowed"/>
-        <exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
         <exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped"/>
         <exclude name="WordPress.Security.EscapeOutput.OutputNotEscaped"/>
         <exclude name="WordPress.Security.ValidatedSanitizedInput.InputNotSanitized"/>
