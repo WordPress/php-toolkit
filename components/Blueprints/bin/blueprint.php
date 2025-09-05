@@ -1,4 +1,8 @@
 <?php
+// phpcs:disable
+// Disable phpcs for now – there's a few classes declared in this file. Let's split
+// them out into separate files eventually.
+
 /**
  * blueprint.php – the main entry point to the WordPress Blueprint Runner CLI.
  *
@@ -31,10 +35,6 @@
  * ✅ @TODO: Prevent remote resources from using local bundle paths
  */
 
-// Disable phpcs for now – there's a few classes declared in this file. Let's split
-// them out into separate files eventually.
-
-// phpcs:disable
 require __DIR__ . '/../../../vendor/autoload.php';
 
 use WordPress\CLI\CLI;

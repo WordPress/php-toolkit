@@ -40,7 +40,6 @@
         <!-- Unused arguments are necessary when inheriting from classes and overriding methods. -->
         <exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.Found"/>
         <exclude name="Generic.Commenting.DocComment.MissingShort"/>
-        <exclude name="Generic.Commenting.DocComment.ShortNotCapital"/>
         <exclude name="Generic.PHP.DiscourageGoto.Found"/>
         <exclude name="PSR12.Files.FileHeader.IncorrectOrder"/>
         <exclude name="Squiz.Commenting.BlockComment.NoEmptyLineAfter"/>
