@@ -33,11 +33,15 @@ abstract class BaseByteReadStream implements ByteReadStream {
 	 * The remaining unconsumed bytes.
 	 *
 	 * @var string
+	 *
+	 * @var string
 	 */
 	protected $buffer = '';
 
 	/**
 	 * How many bytes have already been consumed in the current **buffer**.
+	 *
+	 * @var int
 	 *
 	 * @var int
 	 */
@@ -47,11 +51,15 @@ abstract class BaseByteReadStream implements ByteReadStream {
 	 * How many bytes have already been forgotten in the current **stream**.
 	 *
 	 * @var int
+	 *
+	 * @var int
 	 */
 	protected $bytes_already_forgotten = 0;
 
 	/**
 	 * Whether the stream has been closed for reading.
+	 *
+	 * @var bool
 	 *
 	 * @var bool
 	 */
@@ -61,6 +69,8 @@ abstract class BaseByteReadStream implements ByteReadStream {
 	 * How many bytes are expected in the stream. Optional.
 	 *
 	 * When it's null, the stream is unbounded and length() will also return null.
+	 *
+	 * @var int|null
 	 *
 	 * @var int|null
 	 */
