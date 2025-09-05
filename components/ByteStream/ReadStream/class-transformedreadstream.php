@@ -88,7 +88,7 @@ class TransformedReadStream extends BaseByteReadStream implements ArrayAccess {
 	}
 
 	/**
-	 * @param  string $offset          The offset to set.
+	 * @param  string          $offset          The offset to set.
 	 * @param  ByteTransformer $value  The filter to set.
 	 * @throws ByteStreamException     If the filters are immutable.
 	 */

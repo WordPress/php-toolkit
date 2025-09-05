@@ -133,7 +133,7 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 						}
 					}
 					/**
-					 *
+					 * Set the image template with updated HTML.
 					 */
 					$this->append_rich_text( $template->get_updated_html() );
 					break;
@@ -211,17 +211,17 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 					$this->block_markup .= '<h' . $tag[1] . '>';
 					break;
 
-				// Inline elements.
-				case 'A':
-					$template = new WP_HTML_Tag_Processor( '<a>' );
-					$template->next_tag();
-					if ( $this->get_attribute( 'href' ) ) {
-						$template->set_attribute( 'href', $this->get_attribute( 'href' ) );
-					}
-					/**
-					 *
-					 */
-					$this->append_rich_text( $template->get_updated_html() );
+							// Inline elements.
+			case 'A':
+				$template = new WP_HTML_Tag_Processor( '<a>' );
+				$template->next_tag();
+				if ( $this->get_attribute( 'href' ) ) {
+					$template->set_attribute( 'href', $this->get_attribute( 'href' ) );
+				}
+				/**
+				 * Set the link template with updated HTML.
+				 */
+				$this->append_rich_text( $template->get_updated_html() );
 					break;
 
 				// Formats – just pass through (minus the HTML attributes).

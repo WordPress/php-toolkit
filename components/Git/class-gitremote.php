@@ -11,7 +11,7 @@ namespace WordPress\Git;
  * - ... what else? ...
  *
  * Currently, we only support full branch names.
- * 
+ *
  * This comment is below the namespace so PHPCS doesn't complain.
  */
 
@@ -180,8 +180,8 @@ class GitRemote {
 			'unpack ok',
 			'ok refs/heads/' . $short_branch_name,
 		);
-		if ( $data_packets != $expected_response ) {
-			throw new GitRemoteException( 'Push failed:' . var_export( $data_packets, true ) );
+		if ( $data_packets !== $expected_response ) {
+			throw new GitRemoteException( sprintf( 'Push failed: %s', esc_html( wp_json_encode( $data_packets ) ) ) );
 		}
 
 		$this->repository->set_branch_tip( 'refs/remotes/' . $this->remote_name . '/' . $short_branch_name, $push_commit );

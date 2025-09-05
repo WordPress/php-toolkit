@@ -37,7 +37,7 @@ class TreeEntry {
 	public function __construct( $data = array() ) {
 		foreach ( $data as $key => $value ) {
 			if ( ! property_exists( $this, $key ) ) {
-				throw new GitException( "Invalid tree entry property: $key" );
+				throw new GitException( sprintf( 'Invalid tree entry property: %s', esc_html( $key ) ) );
 			}
 			$this->$key = $value;
 		}

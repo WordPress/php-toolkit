@@ -32,7 +32,7 @@ class StaticPostFilesWriter implements EntityWriter {
 		$this->filesystem       = $filesystem;
 		$this->directory_scheme = $options['directory_scheme'] ?? self::SCHEME_DATE;
 		if ( self::SCHEME_DATE !== $this->directory_scheme && self::SCHEME_PARENT_TRAIL !== $this->directory_scheme ) {
-			throw new DataLiberationException( 'Invalid directory scheme: ' . $this->directory_scheme );
+			throw new DataLiberationException( sprintf( 'Invalid directory scheme: %s', esc_html( $this->directory_scheme ) ) );
 		}
 		if ( ! isset( $options['static_content_producer_factory'] ) ) {
 			throw new DataLiberationException( 'static_content_producer_factory is required' );

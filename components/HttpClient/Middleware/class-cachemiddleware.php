@@ -23,7 +23,11 @@ final class CacheMiddleware implements MiddlewareInterface {
 	/** @var array<string,array{req:Request,meta:array,file:resource|null,headerDone:bool,done:bool}> */
 	private $replay = array();
 
-	/** writers keyed by spl_object_hash(req) */
+	/**
+	 * Writers keyed by spl_object_hash(req).
+	 *
+	 * @var array
+	 */
 	private $temp_handle = array();
 	private $temp_path   = array();
 
@@ -33,7 +37,7 @@ final class CacheMiddleware implements MiddlewareInterface {
 		$this->dir             = rtrim( $options['cache_dir'], '/' );
 
 		if ( ! is_dir( $this->dir ) ) {
-			throw new RuntimeException( "Cache dir {$this->dir} does not exist or is not a directory" );
+			throw new RuntimeException( sprintf( 'Cache dir %s does not exist or is not a directory', esc_html( $this->dir ) ) );
 		}
 	}
 
@@ -81,7 +85,9 @@ final class CacheMiddleware implements MiddlewareInterface {
 		return $this->handleNetwork();
 	}
 
-	/*============ CACHE REPLAY ============. */
+	/**
+	 * Cache replay functionality.
+	 */
 	private function startReplay( Request $request, array $meta ): void {
 		$id                  = spl_object_hash( $request );
 		$file_handle         = fopen( $this->bodyPath( $request->cache_key, $request->url ), 'rb' );
@@ -147,7 +153,9 @@ final class CacheMiddleware implements MiddlewareInterface {
 		}
 	}
 
-	/*============ NETWORK HANDLING ============. */
+	/**
+	 * Network handling functionality.
+	 */
 	private function handleNetwork(): bool {
 		$event    = $this->state->event;
 		$request  = $this->state->request;
@@ -201,7 +209,9 @@ final class CacheMiddleware implements MiddlewareInterface {
 		return true;
 	}
 
-	/*============ CACHE UTILITIES ============. */
+	/**
+	 * Cache utilities functionality.
+	 */
 	private function metaPath( string $key, ?string $url = null ): string {
 		if ( $url ) {
 			$url_hash = sha1( $url );

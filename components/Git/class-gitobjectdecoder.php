@@ -68,7 +68,7 @@ class GitObjectDecoder extends BaseByteReadStream {
 
 	public function as_commit() {
 		if ( 'commit' !== $this->get_object_type_name() ) {
-			throw new GitException( sprintf( 'Object is %s, expected commit', $this->get_object_type_name() ) );
+			throw new GitException( sprintf( 'Object is %s, expected commit', esc_html( $this->get_object_type_name() ) ) );
 		}
 
 		return CommitParser::parse( $this->consume_all() );
@@ -76,7 +76,7 @@ class GitObjectDecoder extends BaseByteReadStream {
 
 	public function as_tree() {
 		if ( 'tree' !== $this->get_object_type_name() ) {
-			throw new GitException( sprintf( 'Object is %s, expected tree', $this->get_object_type_name() ) );
+			throw new GitException( sprintf( 'Object is %s, expected tree', esc_html( $this->get_object_type_name() ) ) );
 		}
 
 		return TreeParser::parse_entire_tree( $this->consume_all() );

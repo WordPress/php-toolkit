@@ -146,7 +146,7 @@ class FilesystemEntityReader implements EntityReader {
 
 	/**
 	 * The post type to emit.
-	 * 
+	 *
 	 * @var string
 	 */
 	private $post_type;

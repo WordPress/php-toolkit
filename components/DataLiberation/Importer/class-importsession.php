@@ -99,7 +99,7 @@ class ImportSession {
 			true
 		);
 		if ( is_wp_error( $post_id ) ) {
-			throw new DataLiberationException( 'Error creating an import session: ' . $post_id->get_error_message() );
+			throw new DataLiberationException( sprintf( 'Error creating an import session: %s', esc_html( $post_id->get_error_message() ) ) );
 		}
 
 		if ( ! empty( $args['attachment_id'] ) ) {
@@ -476,9 +476,9 @@ class ImportSession {
 	}
 
 	/**
-	 * Sets the total number of entities to import for each type.
+	 * The total number of entities to import for each type.
 	 *
-	 * @param  array  $totals  The total number of entities for each type
+	 * @var array The total number of entities for each type
 	 */
 	private $cached_totals = array();
 

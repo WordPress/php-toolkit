@@ -126,11 +126,12 @@ class CLILogger implements LoggerInterface {
 	}
 
 	/**
+	 * @param  string $level
 	 * @param  string|Stringable $message
 	 */
 	public function log( $level, $message, array $context = array() ): void {
 		if ( ! isset( self::LEVELS[ $level ] ) ) {
-			throw new InvalidArgumentException( 'Invalid log level: ' . $level );
+			throw new InvalidArgumentException( sprintf( 'Invalid log level: %s', esc_html( $level ) ) );
 		}
 		$this->logMessage( $level, $message, $context );
 	}

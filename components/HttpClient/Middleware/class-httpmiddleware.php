@@ -38,7 +38,7 @@ class HttpMiddleware implements MiddlewareInterface {
 	 * an internal queue. Network transmission is delayed until one of the returned
 	 * streams is read from.
 	 *
-	 * @param  Request|Request[] $requests  The HTTP request(s) to enqueue. Can be a single request or an array of requests.
+	 * @param  Request $request  The HTTP request to enqueue.
 	 */
 	public function enqueue( Request $request ) {
 		$request->state                           = Request::STATE_ENQUEUED;

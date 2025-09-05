@@ -24,7 +24,7 @@ abstract class BaseByteReadStream implements ByteReadStream {
 	 *     fox jumps over the lazy dog.
 	 *     ^--^
 	 *       consumed but retained for seek()-ing backwards.
-	 * 
+	 *
 	 * @var int
 	 */
 	protected $max_lookbehind_bytes = 2048;

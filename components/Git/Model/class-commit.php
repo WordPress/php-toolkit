@@ -80,7 +80,7 @@ class Commit {
 	public function __construct( $data = array() ) {
 		foreach ( $data as $key => $value ) {
 			if ( ! property_exists( $this, $key ) ) {
-				throw new GitException( "Invalid commit property: $key" );
+				throw new GitException( sprintf( 'Invalid commit property: %s', esc_html( $key ) ) );
 			}
 			$this->$key = $value;
 		}
@@ -88,13 +88,13 @@ class Commit {
 			$this->author = 'Admin <adam@adamziel.com>';
 		}
 		if ( ! isset( $this->author_date ) ) {
-			$this->author_date = date( self::DATE_FORMAT );
+			$this->author_date = gmdate( self::DATE_FORMAT );
 		}
 		if ( ! isset( $this->committer ) ) {
 			$this->committer = 'Admin <adam@adamziel.com>';
 		}
 		if ( ! isset( $this->committer_date ) ) {
-			$this->committer_date = date( self::DATE_FORMAT );
+			$this->committer_date = gmdate( self::DATE_FORMAT );
 		}
 	}
 

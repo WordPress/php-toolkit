@@ -151,7 +151,7 @@ class GitRepository {
 			throw new GitException(
 				sprintf(
 					'Object %s not available in the local repository',
-					$oid
+					esc_html( $oid )
 				)
 			);
 		}
@@ -176,7 +176,7 @@ class GitRepository {
 		$root_tree_oid = $commit->tree;
 
 		if ( null === $root_tree_oid ) {
-			throw new GitPathDoesNotExistException( sprintf( 'Could not resolve root tree to lookup path: %s', $path ) );
+			throw new GitPathDoesNotExistException( sprintf( 'Could not resolve root tree to lookup path: %s', esc_html( $path ) ) );
 		}
 
 		$path     = trim( $path, '/' );
@@ -187,7 +187,7 @@ class GitRepository {
 			foreach ( $path_segments as $segment ) {
 				$tree = $this->read_object( $next_oid )->as_tree();
 				if ( ! $tree->has_entry( $segment ) ) {
-					throw new GitPathDoesNotExistException( sprintf( 'Path not found: %s', $path ) );
+					throw new GitPathDoesNotExistException( sprintf( 'Path not found: %s', esc_html( $path ) ) );
 				}
 				$next_oid = $tree->get_entry( $segment )->hash;
 			}
@@ -304,7 +304,7 @@ class GitRepository {
 
 	public function create_branch( $branch_name, $head_oid = Commit::NULL_HASH ) {
 		if ( $this->branch_exists( $branch_name ) ) {
-			throw new GitException( 'Branch already exists: ' . $branch_name );
+			throw new GitException( sprintf( 'Branch already exists: %s', esc_html( $branch_name ) ) );
 		}
 		$this->set_branch_tip( $branch_name, $head_oid );
 	}
@@ -332,12 +332,12 @@ class GitRepository {
 			if ( $this->has_object( $branch_name ) ) {
 				return $branch_name;
 			}
-			$path = $this->resolve_branch_file_path( $branch_name );
-			if ( ! $path ) {
-				throw new GitException( 'Failed to resolve branch file path: ' . $branch_name );
+					$path = $this->resolve_branch_file_path( $branch_name );
+		if ( ! $path ) {
+			throw new GitException( sprintf( 'Failed to resolve branch file path: %s', esc_html( $branch_name ) ) );
 			}
-			if ( ! $this->fs->is_file( $path ) ) {
-				throw new GitException( 'Branch file not found: ' . $path );
+					if ( ! $this->fs->is_file( $path ) ) {
+			throw new GitException( sprintf( 'Branch file not found: %s', esc_html( $path ) ) );
 			}
 			$branch_name = trim( $this->fs->get_contents( $path ) );
 			if ( 0 === strncmp( $branch_name, 'ref: ', strlen( 'ref: ' ) ) && ( $options['follow_symrefs'] ?? true ) ) {
@@ -426,7 +426,7 @@ class GitRepository {
 		$conflicts                    = array();
 		$conflict_resolution_strategy = $options['conflict_resolution_strategy'] ?? 'theirs';
 		if ( 'theirs' !== $conflict_resolution_strategy ) {
-			throw new GitException( "Conflict resolution strategy not supported: {$conflict_resolution_strategy}. Supported strategies: 'theirs'." );
+			throw new GitException( sprintf( 'Conflict resolution strategy not supported: %s. Supported strategies: theirs.', esc_html( $conflict_resolution_strategy ) ) );
 		}
 
 		$tree_stack     = array( array( $merged_branch_diff_root, $current_branch_diff_root, $path ) );
@@ -467,8 +467,8 @@ class GitRepository {
 							// Overwrite the current entry with the incoming entry.
 							$updates[ $path ] = $incoming_entry->content['text'];
 							break;
-						default:
-							throw new GitException( "Unsupported conflict resolution strategy: {$conflict_resolution_strategy}." );
+											default:
+						throw new GitException( sprintf( 'Unsupported conflict resolution strategy: %s.', esc_html( $conflict_resolution_strategy ) ) );
 					}
 				} elseif ( is_array( $incoming_entry->content ) ) {
 					$tree_stack[] = array(
@@ -562,7 +562,7 @@ class GitRepository {
 		}
 
 		// No common ancestor found.
-		throw new GitException( 'No common ancestor found for ' . $commit_hash1 . ' and ' . $commit_hash2 );
+		throw new GitException( sprintf( 'No common ancestor found for %s and %s', esc_html( $commit_hash1 ), esc_html( $commit_hash2 ) ) );
 	}
 
 	public function get_nth_ancestor_hash( $n, $commit_hash = null ) {
@@ -596,13 +596,13 @@ class GitRepository {
 
 			if ( ! $this->has_object( $next_parent_hash ) ) {
 				if ( 'throw' === $on_missing ) {
-					throw new GitException(
-						sprintf(
-							'Commit %s (parent of %s) is not available in the local repository.',
-							$next_parent_hash,
-							$parent_to_child[ $next_parent_hash ] ?? '<branch tip – not a parent>'
-						)
-					);
+									throw new GitException(
+					sprintf(
+						'Commit %s (parent of %s) is not available in the local repository.',
+						esc_html( $next_parent_hash ),
+						esc_html( $parent_to_child[ $next_parent_hash ] ?? '<branch tip – not a parent>' )
+					)
+				);
 				} else {
 					continue;
 				}
@@ -850,7 +850,8 @@ class GitRepository {
 		$extension = pathinfo( $blob_name, PATHINFO_EXTENSION );
 		if ( in_array(
 			$extension,
-			array( 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico', 'bmp', 'tiff', 'tif', 'raw', 'heic', 'heif', 'avif' )
+			array( 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico', 'bmp', 'tiff', 'tif', 'raw', 'heic', 'heif', 'avif' ),
+			true
 		) ) {
 			return true;
 		}
@@ -933,9 +934,9 @@ class GitRepository {
 			}
 		}
 
-		if ( ! in_array( $last_ancestor_oid, $commits ) ) {
+		if ( ! in_array( $last_ancestor_oid, $commits, true ) ) {
 			throw new GitException(
-				"$last_ancestor_oid is not an ancestor of $head_oid."
+				sprintf( '%s is not an ancestor of %s.', esc_html( $last_ancestor_oid ), esc_html( $head_oid ) )
 			);
 		}
 
@@ -985,6 +986,7 @@ class GitRepository {
 			$tree_objects = $this->read_object_by_path( $path )->as_tree()->entries;
 		} catch ( GitException $e ) {
 			// It's fine if the tree doesn't exist.
+			unset( $e );
 		}
 
 		// Apply any changes to this tree.
