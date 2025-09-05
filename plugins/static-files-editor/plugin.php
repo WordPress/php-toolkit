@@ -120,11 +120,14 @@ class WP_Static_Files_Editor_Plugin {
 					self::$data_source = GitDataSource::create( $settings );
 					break;
 				case 'github_repository':
-					$settings['gitRepo'] = self::get_git_remote_url( $settings['gitRepo'], [
-						'provider' => 'github',
-						'token' => get_option( 'msf_github_token', '' ),
-					] );
-					self::$data_source = GitDataSource::create( $settings );
+					$settings['gitRepo'] = self::get_git_remote_url(
+						$settings['gitRepo'],
+						array(
+							'provider' => 'github',
+							'token' => get_option( 'msf_github_token', '' ),
+						)
+					);
+					self::$data_source   = GitDataSource::create( $settings );
 					break;
 			}
 
@@ -164,13 +167,13 @@ class WP_Static_Files_Editor_Plugin {
 			try {
 				self::sync_data_source();
 				$data_source = self::get_data_source();
-				$fs = $data_source->get_filesystem();
-				foreach( $fs->ls('/') as $entry ) {
-					if( ! $fs->is_file( $entry ) ) {
+				$fs          = $data_source->get_filesystem();
+				foreach ( $fs->ls( '/' ) as $entry ) {
+					if ( ! $fs->is_file( $entry ) ) {
 						continue;
 					}
 					$extension = pathinfo( $entry, PATHINFO_EXTENSION );
-					if( ! in_array( $extension, ['md', 'html'] ) ) {
+					if ( ! in_array( $extension, array( 'md', 'html' ) ) ) {
 						continue;
 					}
 					self::get_or_create_post_for_file( $entry );
@@ -199,13 +202,13 @@ class WP_Static_Files_Editor_Plugin {
 		$post_id = null;
 		foreach ( $posts as $post ) {
 			$path = get_post_meta( $post->ID, 'local_file_path', true );
-			if ( $path !== '/my-first-note.md' ) {
+			if ( '/my-first-note.md' !== $path ) {
 				$post_id = $post->ID;
 				break;
 			}
 		}
 		// Fallback to first post if no other found
-		if ( $post_id === null ) {
+		if ( null === $post_id ) {
 			$post_id = $posts[0]->ID;
 		}
 
@@ -240,7 +243,7 @@ class WP_Static_Files_Editor_Plugin {
 				self::register_post_type();
 				// Redirect menu page to custom route
 				global $pagenow;
-				if ( $pagenow === 'admin.php' && isset( $_GET['page'] ) && $_GET['page'] === 'static_files_editor' ) {
+				if ( 'admin.php' === $pagenow && isset( $_GET['page'] ) && 'static_files_editor' === $_GET['page'] ) {
 					self::menu_item_callback();
 				}
 			}
@@ -423,7 +426,7 @@ class WP_Static_Files_Editor_Plugin {
 				);
 
 				$screen         = get_current_screen();
-				$enqueue_script = $screen && $screen->base === 'post' && $screen->post_type === WP_LOCAL_FILE_POST_TYPE;
+				$enqueue_script = $screen && 'post' === $screen->base && WP_LOCAL_FILE_POST_TYPE === $screen->post_type;
 				if ( ! $enqueue_script ) {
 					return;
 				}
@@ -661,7 +664,7 @@ class WP_Static_Files_Editor_Plugin {
 		add_filter(
 			'block_editor_settings_all',
 			function ( $settings, $context ) {
-				if ( isset( $context->post ) && $context->post->post_type === WP_LOCAL_FILE_POST_TYPE ) {
+				if ( isset( $context->post ) && WP_LOCAL_FILE_POST_TYPE === $context->post->post_type ) {
 					$settings['autosaveInterval'] = 86400 * 100;
 				}
 				return $settings;
@@ -676,7 +679,7 @@ class WP_Static_Files_Editor_Plugin {
 			function ( $response, $post, $request ) {
 				// Short-circuit on non-GET requests to avoid messing with
 				// POST requests.
-				if ( $request->get_method() !== 'GET' ) {
+				if ( 'GET' !== $request->get_method() ) {
 					return $response;
 				}
 
@@ -710,14 +713,14 @@ class WP_Static_Files_Editor_Plugin {
 				}
 
 				$creating_revision = false;
-				if ( $processed_post['post_type'] === 'revision' ) {
+				if ( 'revision' === $processed_post['post_type'] ) {
 					$parent_post = get_post( $processed_post['post_parent'] );
-					if ( $parent_post->post_type === WP_LOCAL_FILE_POST_TYPE ) {
+					if ( WP_LOCAL_FILE_POST_TYPE === $parent_post->post_type ) {
 						$creating_revision = true;
 					}
 				}
 
-				$updating_post = $processed_post['post_type'] === WP_LOCAL_FILE_POST_TYPE && $update;
+				$updating_post = WP_LOCAL_FILE_POST_TYPE === $processed_post['post_type'] && $update;
 				$should_run    = $updating_post || $creating_revision;
 				if ( ! $should_run ) {
 					return $processed_post;
@@ -814,7 +817,7 @@ class WP_Static_Files_Editor_Plugin {
 						} else {
 							$blocks_with_metadata = self::annotated_block_markup_to_blocks_with_metadata( $merge_result->get_merged_content() );
 							$delta_post           = array_merge(
-								['post_content' => $blocks_with_metadata->get_block_markup()],
+								array( 'post_content' => $blocks_with_metadata->get_block_markup() ),
 								$blocks_with_metadata->get_all_metadata( array( 'first_value_only' => true ) ),
 							);
 							/**
@@ -883,7 +886,7 @@ class WP_Static_Files_Editor_Plugin {
 		// getimagesize() returns false for non-images (and
 		// also image formats it can't handle)
 		$image_size = @getimagesize( $image_path );
-		if ( $image_size === false ) {
+		if ( false === $image_size ) {
 			return $image_path;
 		}
 
@@ -1086,7 +1089,7 @@ class WP_Static_Files_Editor_Plugin {
 	}
 
 	private static function post_to_mergable_string( $post, $format ) {
-		if ( $format === 'html' ) {
+		if ( 'html' === $format ) {
 			return trim( $post['post_content'], "\n " );
 		}
 		$blocks_with_metadata = self::post_entity_to_blocks_with_metadata( $post );
@@ -1185,7 +1188,7 @@ class WP_Static_Files_Editor_Plugin {
 
 			// @TODO: Also work with <a> tags, account
 			// for .md and directory links etc.
-			if ( $p->get_tag() !== 'IMG' ) {
+			if ( 'IMG' !== $p->get_tag() ) {
 				continue;
 			}
 
@@ -1251,23 +1254,23 @@ class WP_Static_Files_Editor_Plugin {
 
 	private static function build_local_file_list( $fs, $dir, &$list, $path_to_post ) {
 		$items = $fs->ls( $dir );
-		if ( $items === false ) {
+		if ( false === $items ) {
 			return;
 		}
 
 		foreach ( $items as $item ) {
 			// Exclude the autosaves directory from the files tree
-			if ( $dir === '/' && $item === WP_AUTOSAVES_DIRECTORY ) {
+			if ( '/' === $dir && WP_AUTOSAVES_DIRECTORY === $item ) {
 				continue;
 			}
 			// Exclude the .gitkeep file from the files tree.
 			// WP_Git_Filesystem::mkdir() creates an empty .gitkeep file in each created
 			// directory since Git doesn't support empty directories.
-			if ( $item === '.gitkeep' ) {
+			if ( '.gitkeep' === $item ) {
 				continue;
 			}
 
-			$path = $dir === '/' ? "/$item" : "$dir/$item";
+			$path = '/' === $dir ? "/$item" : "$dir/$item";
 
 			if ( $fs->is_dir( $path ) ) {
 				$node   = array(
@@ -1550,7 +1553,7 @@ class WP_Static_Files_Editor_Plugin {
 					// Regenerate the content from scratch if we're changing the file format.
 					$previous_extension = pathinfo( $from_path, PATHINFO_EXTENSION );
 					$new_extension      = pathinfo( $to_path, PATHINFO_EXTENSION );
-					if ( $existing_post->post_type === WP_LOCAL_FILE_POST_TYPE && $previous_extension !== $new_extension ) {
+					if ( WP_LOCAL_FILE_POST_TYPE === $existing_post->post_type && $previous_extension !== $new_extension ) {
 						$parsed      = self::parse_local_file(
 							$previous_content,
 							$previous_extension
@@ -1682,7 +1685,7 @@ class WP_Static_Files_Editor_Plugin {
 					continue;
 				}
 				$paths = $event->files;
-				if ( $visitor->get_current_depth() === 1 ) {
+				if ( 1 === $visitor->get_current_depth() ) {
 					// Make sure we save the top-level directories
 					$paths = array_merge( array( $event->dir ), $event->files );
 				}
@@ -1690,7 +1693,7 @@ class WP_Static_Files_Editor_Plugin {
 					$type         = $uploaded_fs->is_dir( $path ) ? 'directory' : 'file';
 					$post_id      = null;
 					$created_path = wp_join_unix_paths( $create_in_dir, $path );
-					if ( $type === 'post' ) {
+					if ( 'post' === $type ) {
 						$created_post = get_posts(
 							array(
 								'post_type'      => WP_LOCAL_FILE_POST_TYPE,
@@ -1751,7 +1754,7 @@ class WP_Static_Files_Editor_Plugin {
 	public static function get_git_branches_endpoint( $request ) {
 		$git_repo_string = $request->get_param( 'gitRepo' );
 		$provider        = $request->get_param( 'provider' );
-		$git_repo_url    = self::get_git_remote_url( $git_repo_string, [ 'provider' => $provider ] );
+		$git_repo_url    = self::get_git_remote_url( $git_repo_string, array( 'provider' => $provider ) );
 		return self::get_git_branches( $git_repo_url );
 	}
 
@@ -1760,12 +1763,12 @@ class WP_Static_Files_Editor_Plugin {
 
 		$git_repo_url = $request->get_param( 'gitRepo' );
 		$provider     = $request->get_param( 'provider' );
-		$repo->add_remote( 'origin', self::get_git_remote_url( $git_repo_url, [ 'provider' => $provider ] ) );
+		$repo->add_remote( 'origin', self::get_git_remote_url( $git_repo_url, array( 'provider' => $provider ) ) );
 		$remote = new GitRemote( $repo, 'origin' );
 
 		$refs = $remote->ls_refs( 'refs/heads/' );
 
-		$branch       = $request->get_param( 'branch' );
+		$branch = $request->get_param( 'branch' );
 		if ( ! isset( $refs[ $branch ] ) ) {
 			return new WP_Error( 'branch_not_found', 'Branch "' . $branch . '" not found' );
 		}
@@ -1780,9 +1783,9 @@ class WP_Static_Files_Editor_Plugin {
 	public static function get_git_remote_url( $git_repo_url, $options = array() ) {
 		switch ( $options['provider'] ) {
 			case 'github':
-				$url = WPURL::parse( $git_repo_url );
+				$url           = WPURL::parse( $git_repo_url );
 				$url->username = get_option( 'msf_github_token', '' );
-				$url = $url->toString();
+				$url           = $url->toString();
 				break;
 			case 'git':
 			default:
@@ -1923,7 +1926,7 @@ class WP_Static_Files_Editor_Plugin {
 		$user        = wp_get_current_user();
 		$uploads_dir = wp_upload_dir();
 
-		$settings = get_option( 'static_files_editor_settings' ) ?: array();
+		$settings = get_option( 'static_files_editor_settings' ) ? get_option( 'static_files_editor_settings' ) : array();
 		$settings = array_merge(
 			array(
 				'gitRepo'        => '',
@@ -1944,11 +1947,11 @@ class WP_Static_Files_Editor_Plugin {
 	 */
 	public static function get_github_repos_endpoint() {
 		$github_token = get_option( 'msf_github_token', '' );
-		
+
 		if ( empty( $github_token ) ) {
 			return new WP_Error( 'no_token', 'GitHub token not found', array( 'status' => 400 ) );
 		}
-		
+
 		$response = wp_remote_get(
 			'https://api.github.com/user/repos?visibility=all&sort=updated&per_page=100',
 			array(
@@ -1959,42 +1962,42 @@ class WP_Static_Files_Editor_Plugin {
 				),
 			)
 		);
-		
+
 		if ( is_wp_error( $response ) ) {
 			return new WP_Error( 'github_api_error', $response->get_error_message(), array( 'status' => 500 ) );
 		}
-		
-		$body = wp_remote_retrieve_body( $response );
+
+		$body  = wp_remote_retrieve_body( $response );
 		$repos = json_decode( $body, true );
-		
+
 		if ( ! is_array( $repos ) ) {
 			return new WP_Error( 'invalid_response', 'Invalid response from GitHub API', array( 'status' => 500 ) );
 		}
 
-		foreach($repos as $key => $repo) {
+		foreach ( $repos as $key => $repo ) {
 			$git_url = $repo['git_url'];
-			if(str_starts_with($git_url, 'git://')) {
-				$git_url = 'https' . substr($git_url, 3);
+			if ( str_starts_with( $git_url, 'git://' ) ) {
+				$git_url = 'https' . substr( $git_url, 3 );
 			}
-			$repos[$key]['http_clone_url'] = $git_url;
+			$repos[ $key ]['http_clone_url'] = $git_url;
 		}
-		
+
 		return $repos;
 	}
-	
+
 	/**
 	 * Store GitHub token endpoint
 	 */
 	public static function store_github_token_endpoint( $request ) {
 		$token = $request->get_param( 'token' );
-		
+
 		if ( empty( $token ) ) {
 			return new WP_Error( 'no_token', 'No token provided', array( 'status' => 400 ) );
 		}
-		
+
 		// Store the token in site options
 		update_option( 'msf_github_token', $token );
-		
+
 		return array( 'success' => true );
 	}
 
@@ -2002,10 +2005,9 @@ class WP_Static_Files_Editor_Plugin {
 	public static function clear_github_token_endpoint() {
 		// Delete the token from site options
 		delete_option( 'msf_github_token' );
-		
+
 		return array( 'success' => true );
 	}
-
 }
 
 WP_Static_Files_Editor_Plugin::initialize();

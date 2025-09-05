@@ -47,7 +47,7 @@ function rpi_render_admin_page() {
 		$stored_url  = rpi_get_stored_plugin_url( $plugin_file );
 
 		// Direct update without changing URL
-		if ( isset( $_GET['direct_update'] ) && $_GET['direct_update'] === 'true' ) {
+		if ( isset( $_GET['direct_update'] ) && 'true' === $_GET['direct_update'] ) {
 			$installed_plugin_file = rpi_install_plugin_from_url( $stored_url, true, $plugin_file );
 			if ( is_wp_error( $installed_plugin_file ) ) {
 				echo '<div class="notice notice-error"><p>' . esc_html( $installed_plugin_file->get_error_message() ) . '</p></div>';
@@ -149,10 +149,10 @@ function rpi_install_plugin_from_url( string $package_url, bool $is_update = fal
 		return new WP_Error( 'download_failed', $tmp_file->get_error_message() );
 	}
 
-	$parsed_url     = wp_parse_url( $package_url );
-	$package_path   = isset( $parsed_url['path'] ) ? $parsed_url['path'] : '';
+	$parsed_url        = wp_parse_url( $package_url );
+	$package_path      = isset( $parsed_url['path'] ) ? $parsed_url['path'] : '';
 	$package_extension = 'zip';
-	$base_name      = $original_plugin_file ? basename( dirname( $original_plugin_file ) ) : basename( $package_path, '.' . $package_extension );
+	$base_name         = $original_plugin_file ? basename( dirname( $original_plugin_file ) ) : basename( $package_path, '.' . $package_extension );
 
 	/**
 	 * $tmp_file has a random component in the filename. WordPress would

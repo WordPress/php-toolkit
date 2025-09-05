@@ -39,7 +39,7 @@ class PluginUpdater {
 		$this->wp_plugins_directory->mkdir( $this->new_version_extract_to_dir );
 
 		$extension = pathinfo( $this->package_absolute_path, PATHINFO_EXTENSION );
-		if ( $extension === 'zip' ) {
+		if ( 'zip' === $extension ) {
 			$zip_fs = ZipFilesystem::create( FileReadStream::from_path( $this->package_absolute_path ) );
 			copy_between_filesystems(
 				array(
@@ -55,10 +55,10 @@ class PluginUpdater {
 				$extracted_dirs,
 				function ( $dir ) {
 					$basename = basename( $dir );
-					return $basename !== '__MACOSX' && $basename !== '.DS_Store';
+					return '__MACOSX' !== $basename && '.DS_Store' !== $basename;
 				}
 			);
-			if ( count( $extracted_dirs ) === 1 ) {
+			if ( 1 === count( $extracted_dirs ) ) {
 				$potential_root_dir = wp_join_unix_paths( $this->new_version_extract_to_dir, $extracted_dirs[0] );
 				if ( $this->wp_plugins_directory->is_dir( $potential_root_dir ) ) {
 					return $potential_root_dir;
@@ -66,7 +66,7 @@ class PluginUpdater {
 			}
 
 			return $this->new_version_extract_to_dir;
-		} elseif ( $extension === 'php' ) {
+		} elseif ( 'php' === $extension ) {
 			$plugin_name = basename( $this->package_absolute_path, '.php' );
 			$this->wp_plugins_directory->mkdir( $plugin_name );
 			$this->wp_plugins_directory->put_contents(

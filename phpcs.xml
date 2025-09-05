@@ -6,6 +6,8 @@
     <exclude-pattern>*/vendor-patched/*</exclude-pattern>
     <exclude-pattern>*/Tests/*</exclude-pattern>
     <exclude-pattern>plugins/*</exclude-pattern>
+    <exclude-pattern>examples/*</exclude-pattern>
+    <exclude-pattern>rector.php</exclude-pattern>
     <rule ref="PHPCompatibility">
     </rule>
     <rule ref="components/ToolkitCodingStandards/WordPressToolkitCodingStandards/ruleset.xml"/>
