@@ -33,7 +33,7 @@ class InlineCommentPunctuationSniff implements Sniff
         $content = $tokens[$stackPtr]['content'];
 
         // Ignore multi-line block comments; focus on inline comments only.
-        if (strpos($content, "\n") !== false || strpos($content, "\r") !== false) {
+        if (substr_count($content, "\n") > 1) {
             return;
         }
 
