@@ -6,6 +6,8 @@
     <exclude-pattern>*/Tests/*</exclude-pattern>
     <rule ref="PHPCompatibility">
     </rule>
+    <rule ref="SlevomatCodingStandard.ControlStructures.DisallowYodaComparison">
+    </rule>
 	<rule ref="WordPress">
         <exclude name="Generic.Commenting.DocComment.MissingShort"/>
         <exclude name="Generic.PHP.DiscourageGoto.Found"/>
