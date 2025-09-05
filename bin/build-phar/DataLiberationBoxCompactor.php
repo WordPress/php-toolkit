@@ -2,31 +2,30 @@
 
 use KevinGH\Box\Compactor\Compactor;
 
-class DataLiberationBoxCompactor implements Compactor
-{
-    /**
-     * {@inheritdoc}
-     */
-    public function compact(string $file, string $contents): string
-    {
-        if (!preg_match('/\.(php|json|lock)$/', $file)) {
-            return '';
-        }
+class DataLiberationBoxCompactor implements Compactor {
 
-        if (
-            str_contains($file, 'platform_check.php') ||
-            str_contains($file, '/tests/') ||
-            str_contains($file, '/.git/') ||
-            str_contains($file, '/.github/') ||
-            str_contains($file, '/bin/')
-        ) {
-            return '';
-        }
+	/**
+	 * {@inheritdoc}
+	 */
+	public function compact( string $file, string $contents ): string {
+		if ( ! preg_match( '/\.(php|json|lock)$/', $file ) ) {
+			return '';
+		}
 
-        if( str_contains($contents, 'Your Composer dependencies require ') ) {
-            return '';
-        }
+		if (
+			str_contains( $file, 'platform_check.php' ) ||
+			str_contains( $file, '/tests/' ) ||
+			str_contains( $file, '/.git/' ) ||
+			str_contains( $file, '/.github/' ) ||
+			str_contains( $file, '/bin/' )
+		) {
+			return '';
+		}
 
-        return $contents;
-    }
+		if ( str_contains( $contents, 'Your Composer dependencies require ' ) ) {
+			return '';
+		}
+
+		return $contents;
+	}
 }

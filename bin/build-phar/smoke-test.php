@@ -7,14 +7,16 @@ require_once __DIR__ . '/../../dist/php-toolkit.phar';
  * any data. We're just making sure the importer can
  * be created without throwing an exception.
  */
-$c = WordPress\DataLiberation\Importer\StreamImporter::create_for_wxr_file(__DIR__ . '/nosuchfile.xml', [
-    'uploads_path' => __DIR__ . '/uploads',
-    'new_site_url' => 'https://smoke-test.org',
-	'new_site_content_root_url' => 'https://smoke-test.org',
-	'new_media_root_url' => 'https://smoke-test.org',
-]);
+$c = WordPress\DataLiberation\Importer\StreamImporter::create_for_wxr_file(
+	__DIR__ . '/nosuchfile.xml',
+	array(
+		'uploads_path' => __DIR__ . '/uploads',
+		'new_site_url' => 'https://smoke-test.org',
+		'new_site_content_root_url' => 'https://smoke-test.org',
+		'new_media_root_url' => 'https://smoke-test.org',
+	)
+);
 
-WordPress\DataLiberation\URL\WPURL::parse('https://example.com');
+WordPress\DataLiberation\URL\WPURL::parse( 'https://example.com' );
 
 echo 'Stream importer created!';
-
