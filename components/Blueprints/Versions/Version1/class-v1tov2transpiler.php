@@ -571,7 +571,7 @@ PHP
 					// If it's a github.com URL, convert to raw.githubusercontent.com like WordPress Playground does.
 					if ( preg_match( '#^https://github\.com/([^/]+)/([^/]+)/(?:blob|raw)/(.+)$#', $url, $matches ) ) {
 						// e.g. https://github.com/user/repo/blob/branch/path/to/file
-						// => https://raw.githubusercontent.com/user/repo/branch/path/to/file
+						// => https://raw.githubusercontent.com/user/repo/branch/path/to/file.
 						$user = $matches[1];
 						$repo = $matches[2];
 						$rest = $matches[3];

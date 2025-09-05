@@ -62,7 +62,6 @@
         <exclude name="Squiz.Commenting.FunctionComment.ThrowsNotCapital"/>
         <exclude name="Squiz.Commenting.FunctionComment.WrongStyle"/>
         <exclude name="Squiz.Commenting.FunctionCommentThrowTag"/>
-        <exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
         <exclude name="Squiz.Commenting.VariableComment.Missing"/>
         <exclude name="Squiz.Commenting.VariableComment.MissingVar"/>
         <exclude name="Squiz.Operators.IncrementDecrementUsage.Found"/>

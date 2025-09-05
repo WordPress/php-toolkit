@@ -311,7 +311,7 @@ class Runner {
 		// AbsoluteLocalPath is a necessary special case to correctly support.
 		// Windows absolute paths. There's so much more to them than C:\.
 		//
-		// See https://www.fileside.app/blog/2023-03-17_windows-file-paths/
+		// See https://www.fileside.app/blog/2023-03-17_windows-file-paths/.
 		if ( $reference instanceof AbsoluteLocalPath ) {
 			$resolved                          = new File(
 				FileReadStream::from_path( $reference->get_path() ),
