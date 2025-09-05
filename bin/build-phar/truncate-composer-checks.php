@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Box, very annoyingly, force-adds a platform_check.php file
  * into the final built .phar archive. The vendor libraries

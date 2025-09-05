@@ -8,6 +8,7 @@
     <exclude-pattern>plugins/*</exclude-pattern>
     <exclude-pattern>examples/*</exclude-pattern>
     <exclude-pattern>rector.php</exclude-pattern>
+    <exclude-pattern>components/CORSProxy/cors-proxy-functions.php</exclude-pattern>
     <rule ref="PHPCompatibility">
     </rule>
     <rule ref="components/ToolkitCodingStandards/WordPressToolkitCodingStandards/ruleset.xml"/>
