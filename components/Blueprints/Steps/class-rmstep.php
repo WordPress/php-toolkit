@@ -25,7 +25,7 @@ class RmStep implements StepInterface {
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Removing ' . $this->path );
 
-		$filesystem = $runtime->getTargetFilesystem();
+		$filesystem = $runtime->get_target_filesystem();
 		$path       = $this->path;
 
 		if ( ! $filesystem->exists( $path ) ) {
