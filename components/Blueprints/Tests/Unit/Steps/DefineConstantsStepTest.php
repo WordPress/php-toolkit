@@ -261,7 +261,7 @@ PHP
 			[
 				'CONSTANTS' => json_encode( $expected_constants ),
 			]
-		)->outputFileContent;
+		)->output_file_content;
 
 		$actual_constants = json_decode( $result, true );
 		$this->assertEquals( $expected_constants, $actual_constants );

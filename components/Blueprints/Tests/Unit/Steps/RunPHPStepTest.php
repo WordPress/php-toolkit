@@ -106,7 +106,7 @@ require_once getenv('DOCROOT') . '/wp-load.php';
 append_output( get_option('test_option') );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		$this->assertEquals( 'test_value', $option_value );
 	}

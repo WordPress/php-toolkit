@@ -60,7 +60,7 @@ append_output(
 PHP
 		);
 
-		$output = json_decode( $result->outputFileContent, true );
+		$output = json_decode( $result->output_file_content, true );
 		$this->assertSame( true, $output['is_multisite'] );
 		$this->assertSame( 'WordPress Site', $output['name'] );
 		$this->assertSame( 'http://localhost', $output['wpurl'] );
@@ -111,7 +111,7 @@ PHP
 
 		// In the CLI SAPI, the "header()" function is a no-op. We can only test
 		// that "ms_site_not_found" was called and that the process exited early.
-		$this->assertSame( 'redirected', $result->outputFileContent );
+		$this->assertSame( 'redirected', $result->output_file_content );
 	}
 
 	public function testEnableMultisiteFailsOnNon80Port() {
