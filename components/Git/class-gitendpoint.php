@@ -138,7 +138,7 @@ class GitEndpoint {
 	 *
 	 * @see https://git-scm.com/docs/protocol-v2#_ls_refs
 	 *
-	 * @param  array  $request_bytes  The parsed request data
+	 * @param  array $request_bytes  The parsed request data
 	 *
 	 * @return string The response in Git protocol v2 format
 	 */
@@ -205,8 +205,8 @@ class GitEndpoint {
 	 */
 	public function capability_advertise() {
 		return "version 2\n" .
-		       "agent=git/2.37.3\n" .
-		       '0000';
+				"agent=git/2.37.3\n" .
+				'0000';
 	}
 
 	public function parse_message( $request_bytes_bytes ) {
@@ -230,7 +230,7 @@ class GitEndpoint {
 			switch ( $mode ) {
 				case 'capabilities':
 					if ( strpos( $packet, '=' ) !== false ) {
-						list( $key, $value ) = explode( '=', $packet );
+						list( $key, $value )  = explode( '=', $packet );
 						$capabilities[ $key ] = $value;
 					} else {
 						$capabilities[ $packet ] = true;
@@ -265,7 +265,7 @@ class GitEndpoint {
 	/**
 	 * Handle Git protocol v2 fetch command with "want" packets
 	 *
-	 * @param  array  $request_bytes  The parsed request data
+	 * @param  array $request_bytes  The parsed request data
 	 *
 	 * @return string The response in Git protocol v2 format containing the pack data
 	 */
@@ -326,7 +326,7 @@ class GitEndpoint {
 				$want_hash,
 				$common_parent_hash
 			);
-			if ( false !== $new_objects ) {
+			if ( $new_objects !== false ) {
 				$objects_to_send = array_merge(
 					$objects_to_send,
 					$new_objects
@@ -391,8 +391,8 @@ class GitEndpoint {
 	/**
 	 * Handle Git protocol v2 push command
 	 *
-	 * @param  string  $request_bytes  Raw request bytes
-	 * @param  ResponseWriteStream  $response  Response writer
+	 * @param  string              $request_bytes  Raw request bytes
+	 * @param  ResponseWriteStream $response  Response writer
 	 *
 	 * @return bool Success status
 	 */
@@ -472,7 +472,7 @@ class GitEndpoint {
 	/**
 	 * Parse a push request according to Git protocol v2
 	 *
-	 * @param  string  $request_bytes  Raw request bytes
+	 * @param  string $request_bytes  Raw request bytes
 	 *
 	 * @return array|false Parsed request data or false on error
 	 */
@@ -518,7 +518,7 @@ class GitEndpoint {
 
 	public static function decode_next_packet_line( $pack_bytes, &$offset ) {
 		$packet_length_bytes = substr( $pack_bytes, $offset, 4 );
-		$offset              += 4;
+		$offset             += 4;
 		if (
 			strlen( $packet_length_bytes ) !== 4 ||
 			! preg_match( '/^[0-9a-f]{4}$/', $packet_length_bytes )

@@ -31,7 +31,7 @@ class RunPHPStep implements StepInterface {
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Running custom PHP code' );
 
-		$env = $this->env ?? [];
+		$env          = $this->env ?? array();
 		$resolvedCode = $runtime->resolve( $this->code );
 		if ( $resolvedCode instanceof File ) {
 			$code = $resolvedCode->getStream()->consume_all();

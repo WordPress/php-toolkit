@@ -8,6 +8,5 @@ interface MiddlewareInterface {
 
 	public function enqueue( Request $request );
 
-	public function await_next_event( $requests_ids ) :bool;
-
+	public function await_next_event( $requests_ids ): bool;
 }

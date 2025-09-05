@@ -71,7 +71,7 @@ class PackfileEncoderReadStream extends BaseByteReadStream {
 			$this->object_reader_base->close_reading();
 			$this->object_reader_base = null;
 
-			++ $this->objects_written;
+			++$this->objects_written;
 		}
 
 		return $this->internal_pull( $n );
@@ -82,7 +82,7 @@ class PackfileEncoderReadStream extends BaseByteReadStream {
 		$object_type = $types[ $object_type_name ];
 
 		// First byte: type in bits 4-6, size bits 0-3
-		$firstByte = $uncompressed_size & 0b1111;
+		$firstByte  = $uncompressed_size & 0b1111;
 		$firstByte |= ( $object_type & 0b111 ) << 4;
 
 		// Continuation bit 7 if needed
@@ -98,7 +98,7 @@ class PackfileEncoderReadStream extends BaseByteReadStream {
 		// Add continuation bytes if needed
 		while ( $remainingSize > 0 ) {
 			// Set continuation bit if we have more bytes
-			$byte          = $remainingSize & 0b01111111;
+			$byte            = $remainingSize & 0b01111111;
 			$remainingSize >>= 7;
 			if ( $remainingSize > 0 ) {
 				$byte |= 0b10000000;

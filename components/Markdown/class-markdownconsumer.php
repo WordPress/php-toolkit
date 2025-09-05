@@ -84,7 +84,7 @@ class MarkdownConsumer implements DataFormatConsumer {
 		$document          = $parser->parse( $this->markdown );
 		$this->frontmatter = array();
 		foreach ( $document->data->export() as $key => $value ) {
-			if ( 'attributes' === $key && empty( $value ) ) {
+			if ( $key === 'attributes' && empty( $value ) ) {
 				// The Frontmatter extension adds an 'attributes' key to the document data
 				// even when there is no actual "attributes" key in the frontmatter.
 				//
@@ -181,7 +181,7 @@ class MarkdownConsumer implements DataFormatConsumer {
 						if ( method_exists( $node, 'getInfo' ) && $node->getInfo() ) {
 							$attrs['language'] = preg_replace( '/[ \t\r\n\f].*/', '', $node->getInfo() );
 						}
-						if ( 'block' === $attrs['language'] ) {
+						if ( $attrs['language'] === 'block' ) {
 							// This is a special case for preserving block literals that could not be expressed as markdown.
 							$this->append_content( "\n" . $node->getLiteral() . "\n" );
 						} else {

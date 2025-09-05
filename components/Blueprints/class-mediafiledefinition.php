@@ -26,7 +26,7 @@ class MediaFileDefinition {
 	 */
 	public $caption;
 
-	static public function fromArray( array $data ): self {
+	public static function fromArray( array $data ): self {
 		$instance              = new self();
 		$instance->source      = $data['source'];
 		$instance->title       = $data['title'] ?? null;

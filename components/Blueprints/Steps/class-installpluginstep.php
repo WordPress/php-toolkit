@@ -19,33 +19,37 @@ use function WordPress\Zip\is_zip_file_stream;
 class InstallPluginStep implements StepInterface {
 	/**
 	 * Plugin source reference.
+	 *
 	 * @var DataReference
 	 */
 	public $source;
 
 	/**
 	 * Whether to activate the plugin after installation. Defaults to true.
+	 *
 	 * @var bool
 	 */
 	public $active;
 
 	/**
 	 * Optional key-value pairs passed to the plugin during activation.
+	 *
 	 * @var array<string, mixed>|null
 	 */
 	public $activationOptions;
 
 	/**
 	 * Behavior on installation error. Defaults to THROW_ERROR.
+	 *
 	 * @var string
 	 */
 	public $onError;
 
 	/**
-	 * @param  DataReference  $source  Plugin source reference.
-	 * @param  bool  $active  Activate after install?
-	 * @param  array<string, mixed>|null  $activationOptions  Optional activation data.
-	 * @param  string  $onError  Error handling behavior.
+	 * @param  DataReference             $source  Plugin source reference.
+	 * @param  bool                      $active  Activate after install?
+	 * @param  array<string, mixed>|null $activationOptions  Optional activation data.
+	 * @param  string                    $onError  Error handling behavior.
 	 */
 	public function __construct(
 		DataReference $source,
@@ -62,38 +66,43 @@ class InstallPluginStep implements StepInterface {
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$plugin_data = $runtime->resolve( $this->source );
 
-		$runtime->withTemporaryDirectory( function ( $temp_dir ) use ( $runtime, $tracker, $plugin_data ) {
-			$tracker->setCaption( 'Installing plugin ' . $plugin_data->get_human_readable_name() );
-			if ( $plugin_data instanceof Directory ) {
-				$zip_filename      = $plugin_data->dirname . '.zip';
-				$zip_absolute_path = wp_join_unix_paths( $temp_dir, $zip_filename );
-				$zip_stream        = FileWriteStream::from_path( $zip_absolute_path, 'truncate' );
-				$zip_encoder       = new ZipEncoder( $zip_stream );
-				$zip_encoder->append_from_filesystem( $plugin_data->filesystem );
-				$zip_encoder->close();
-			} elseif ( $plugin_data instanceof File ) {
-				$zip_filename      = preg_replace( '/\.(zip|php)$/', '', $plugin_data->filename ) . '.zip';
-				$zip_absolute_path = wp_join_unix_paths( $temp_dir, $zip_filename );
-				$zip_stream        = FileWriteStream::from_path( $zip_absolute_path, 'truncate' );
+		$runtime->withTemporaryDirectory(
+			function ( $temp_dir ) use ( $runtime, $tracker, $plugin_data ) {
+				$tracker->setCaption( 'Installing plugin ' . $plugin_data->get_human_readable_name() );
+				if ( $plugin_data instanceof Directory ) {
+						$zip_filename      = $plugin_data->dirname . '.zip';
+						$zip_absolute_path = wp_join_unix_paths( $temp_dir, $zip_filename );
+						$zip_stream        = FileWriteStream::from_path( $zip_absolute_path, 'truncate' );
+						$zip_encoder       = new ZipEncoder( $zip_stream );
+						$zip_encoder->append_from_filesystem( $plugin_data->filesystem );
+						$zip_encoder->close();
+				} elseif ( $plugin_data instanceof File ) {
+					$zip_filename      = preg_replace( '/\.(zip|php)$/', '', $plugin_data->filename ) . '.zip';
+					$zip_absolute_path = wp_join_unix_paths( $temp_dir, $zip_filename );
+					$zip_stream        = FileWriteStream::from_path( $zip_absolute_path, 'truncate' );
 
-				if ( is_zip_file_stream( $plugin_data->getStream() ) ) {
-					pipe_stream( $plugin_data->getStream(), $zip_stream );
-				} else {
-					$zip_encoder = new ZipEncoder( $zip_stream );
-					$zip_encoder->append_file( new FileEntry( [
-						'path'              => $plugin_data->filename,
-						'body_reader'       => $plugin_data->getStream(),
-						'compressionMethod' => ZipDecoder::COMPRESSION_DEFLATE,
-					] ) );
-					$zip_encoder->close();
+					if ( is_zip_file_stream( $plugin_data->getStream() ) ) {
+						pipe_stream( $plugin_data->getStream(), $zip_stream );
+					} else {
+						$zip_encoder = new ZipEncoder( $zip_stream );
+						$zip_encoder->append_file(
+							new FileEntry(
+								array(
+									'path'              => $plugin_data->filename,
+									'body_reader'       => $plugin_data->getStream(),
+									'compressionMethod' => ZipDecoder::COMPRESSION_DEFLATE,
+								)
+							)
+						);
+						$zip_encoder->close();
+					}
+					$plugin_data->getStream()->close_reading();
 				}
-				$plugin_data->getStream()->close_reading();
-			}
-			$zip_stream->close_writing();
+				$zip_stream->close_writing();
 
-			$tracker->set( 50 );
-			$relative_path = $runtime->evalPhpCodeInSubProcess(
-<<<'PHP'
+				$tracker->set( 50 );
+				$relative_path = $runtime->evalPhpCodeInSubProcess(
+					<<<'PHP'
 <?php
 
 require_once getenv( 'DOCROOT' ) . '/wp-load.php';
@@ -323,19 +332,21 @@ if ( function_exists( 'append_output' ) ) {
 
 exit( 0 );
 PHP
-				,
-				[ 'PLUGIN_ZIP_PATH' => $zip_absolute_path ]
-			)->outputFileContent;
+					,
+					array( 'PLUGIN_ZIP_PATH' => $zip_absolute_path )
+				)->outputFileContent;
 
-			if ( $this->active ) {
-				$tracker->set( 75, 'Activating plugin ' . $plugin_data->get_human_readable_name() );
-				$runtime->evalPhpCodeInSubProcess(
-					ActivatePluginStep::ACTIVATE_PLUGIN_SCRIPT,
-					[ 'PLUGIN_PATH' => $relative_path ]
-				);
-			}
+				if ( $this->active ) {
+					$tracker->set( 75, 'Activating plugin ' . $plugin_data->get_human_readable_name() );
+					$runtime->evalPhpCodeInSubProcess(
+						ActivatePluginStep::ACTIVATE_PLUGIN_SCRIPT,
+						array( 'PLUGIN_PATH' => $relative_path )
+					);
+				}
 
-			$tracker->set( 100 );
-		}, '' );
+				$tracker->set( 100 );
+			},
+			''
+		);
 	}
 }

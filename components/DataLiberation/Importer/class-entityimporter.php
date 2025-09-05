@@ -60,25 +60,25 @@ class EntityImporter {
 
 	// information to import from WXR file
 	protected $categories = array();
-	protected $tags = array();
-	protected $base_url = '';
+	protected $tags       = array();
+	protected $base_url   = '';
 
 	protected $logger;
 	protected $options = array();
 
 	// NEW STYLE
-	protected $mapping = array();
+	protected $mapping            = array();
 	protected $requires_remapping = array();
-	protected $exists = array();
+	protected $exists             = array();
 	protected $user_slug_override = array();
 
-	protected $url_remap = array();
+	protected $url_remap       = array();
 	protected $featured_images = array();
 
 	/**
 	 * Constructor
 	 *
-	 * @param  array  $options  {
+	 * @param  array $options  {
 	 *
 	 * @var bool $prefill_existing_posts Should we prefill `post_exists` calls? (True prefills and uses more memory, false checks once per imported post and takes longer. Default is true.)
 	 * @var bool $prefill_existing_comments Should we prefill `comment_exists` calls? (True prefills and uses more memory, false checks once per imported comment and takes longer. Default is true.)
@@ -115,7 +115,7 @@ class EntityImporter {
 		);
 
 		// Load the function wp_read_audio_metadata
-		if(!function_exists('wp_read_audio_metadata')) {
+		if ( ! function_exists( 'wp_read_audio_metadata' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/media.php';
 		}
 	}
@@ -156,7 +156,7 @@ class EntityImporter {
 		 * We may need to revisit this approach if this class is ever used to import
 		 * from data sources different than static content files, e.g. a database dump.
 		 */
-		if($data['option_name'] === 'siteurl' || $data['option_name'] === 'home') {
+		if ( $data['option_name'] === 'siteurl' || $data['option_name'] === 'home' ) {
 			return;
 		}
 
@@ -434,7 +434,7 @@ class EntityImporter {
 	/**
 	 * Does the post exist?
 	 *
-	 * @param  array  $data  Post data to check against.
+	 * @param  array $data  Post data to check against.
 	 *
 	 * @return int|bool Existing post ID if it exists, false otherwise.
 	 */
@@ -592,7 +592,7 @@ class EntityImporter {
 
 		$postdata = apply_filters( 'wp_import_post_data_processed', $postdata, $data );
 
-		if ( isset( $postdata['post_type'] ) && 'attachment' === $postdata['post_type'] ) {
+		if ( isset( $postdata['post_type'] ) && $postdata['post_type'] === 'attachment' ) {
 			$post_id = $this->process_attachment( $postdata, $meta );
 		} else {
 			$post_id = wp_insert_post( $postdata, true );
@@ -717,7 +717,7 @@ class EntityImporter {
 	 * represents doesn't exist then the menu item will not be imported (waits until the
 	 * end of the import to retry again before discarding).
 	 *
-	 * @param  array  $item  Menu item details from WXR file
+	 * @param  array $item  Menu item details from WXR file
 	 */
 	protected function process_menu_item_meta( $post_id, $data, $meta ) {
 		$item_type          = get_post_meta( $post_id, '_menu_item_type', true );
@@ -775,7 +775,7 @@ class EntityImporter {
 	 * If fetching attachments is enabled then attempt to create a new attachment
 	 *
 	 * @param  array  $post  Attachment post details from WXR
-	 * @param  string  $url  URL to fetch attachment from
+	 * @param  string $url  URL to fetch attachment from
 	 *
 	 * @return int|WP_Error Post ID on success, WP_Error otherwise
 	 */
@@ -865,9 +865,9 @@ class EntityImporter {
 	/**
 	 * Process and import post meta items.
 	 *
-	 * @param  array  $meta  List of meta data arrays
-	 * @param  int  $post_id  Post to associate with
-	 * @param  array  $post  Post data
+	 * @param  array $meta  List of meta data arrays
+	 * @param  int   $post_id  Post to associate with
+	 * @param  array $post  Post data
 	 *
 	 * @return int|WP_Error Number of meta items imported on success, error otherwise.
 	 */
@@ -890,7 +890,7 @@ class EntityImporter {
 		$key   = apply_filters( 'import_post_meta_key', $meta_item['meta_key'], $post_id );
 		$value = false;
 
-		if ( '_edit_last' === $key ) {
+		if ( $key === '_edit_last' ) {
 			$value = intval( $meta_item['meta_value'] );
 			if ( ! isset( $this->mapping['user'][ $value ] ) ) {
 				// Skip!
@@ -912,7 +912,7 @@ class EntityImporter {
 			do_action( 'import_post_meta', $post_id, $key, $value );
 
 			// if the post has a featured image, take note of this in case of remap
-			if ( '_thumbnail_id' === $key ) {
+			if ( $key === '_thumbnail_id' ) {
 				$this->featured_images[ $post_id ] = (int) $value;
 			}
 		}
@@ -923,9 +923,9 @@ class EntityImporter {
 	/**
 	 * Process and import comment data.
 	 *
-	 * @param  array  $comments  List of comment data arrays.
-	 * @param  int  $post_id  Post to associate with.
-	 * @param  array  $post  Post data.
+	 * @param  array $comments  List of comment data arrays.
+	 * @param  int   $post_id  Post to associate with.
+	 * @param  array $post  Post data.
 	 *
 	 * @return int|WP_Error Number of comments imported on success, error otherwise.
 	 */
@@ -1062,8 +1062,8 @@ class EntityImporter {
 	/**
 	 * Mark the post as existing.
 	 *
-	 * @param  array  $data  Post data to mark as existing.
-	 * @param  int  $post_id  Post ID.
+	 * @param  array $data  Post data to mark as existing.
+	 * @param  int   $post_id  Post ID.
 	 */
 	protected function mark_post_exists( $data, $post_id ) {
 		$exists_key                          = $data['guid'] ?? false;
@@ -1088,7 +1088,7 @@ class EntityImporter {
 	/**
 	 * Does the comment exist?
 	 *
-	 * @param  array  $data  Comment data to check against.
+	 * @param  array $data  Comment data to check against.
 	 *
 	 * @return int|bool Existing comment ID if it exists, false otherwise.
 	 */
@@ -1116,8 +1116,8 @@ class EntityImporter {
 	/**
 	 * Mark the comment as existing.
 	 *
-	 * @param  array  $data  Comment data to mark as existing.
-	 * @param  int  $comment_id  Comment ID.
+	 * @param  array $data  Comment data to mark as existing.
+	 * @param  int   $comment_id  Comment ID.
 	 */
 	protected function mark_comment_exists( $data, $comment_id ) {
 		$exists_key                             = sha1( $data['comment_author'] . ':' . $data['comment_date'] );
@@ -1131,7 +1131,7 @@ class EntityImporter {
 	 */
 	protected function prefill_existing_terms() {
 		global $wpdb;
-		$query = "SELECT t_term_id, tt.taxonomy, t.slug FROM {$wpdb->terms} AS t";
+		$query  = "SELECT t_term_id, tt.taxonomy, t.slug FROM {$wpdb->terms} AS t";
 		$query .= " JOIN {$wpdb->term_taxonomy} AS tt ON t_term_id = tt_term_id";
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$terms = $wpdb->get_results( $query );
@@ -1145,7 +1145,7 @@ class EntityImporter {
 	/**
 	 * Does the term exist?
 	 *
-	 * @param  array  $data  Term data to check against.
+	 * @param  array $data  Term data to check against.
 	 *
 	 * @return int|bool Existing term ID if it exists, false otherwise.
 	 */
@@ -1176,8 +1176,8 @@ class EntityImporter {
 	/**
 	 * Mark the term as existing.
 	 *
-	 * @param  array  $data  Term data to mark as existing.
-	 * @param  int  $term_id  Term ID.
+	 * @param  array $data  Term data to mark as existing.
+	 * @param  int   $term_id  Term ID.
 	 */
 	protected function mark_term_exists( $data, $term_id ) {
 		$exists_key                          = sha1( $data['taxonomy'] . ':' . $data['slug'] );
@@ -1187,8 +1187,8 @@ class EntityImporter {
 	/**
 	 * Callback for `usort` to sort comments by ID
 	 *
-	 * @param  array  $a  Comment data for the first comment
-	 * @param  array  $b  Comment data for the second comment
+	 * @param  array $a  Comment data for the first comment
+	 * @param  array $b  Comment data for the second comment
 	 *
 	 * @return int
 	 */
@@ -1216,7 +1216,7 @@ class Logger {
 	/**
 	 * Log a debug message.
 	 *
-	 * @param  string  $message  Message to log
+	 * @param  string $message  Message to log
 	 */
 	public function debug( $message ) {
 		echo( '[DEBUG] ' . $message . "\n" );
@@ -1225,7 +1225,7 @@ class Logger {
 	/**
 	 * Log an info message.
 	 *
-	 * @param  string  $message  Message to log
+	 * @param  string $message  Message to log
 	 */
 	public function info( $message ) {
 		echo( '[INFO] ' . $message . "\n" );
@@ -1234,7 +1234,7 @@ class Logger {
 	/**
 	 * Log a warning message.
 	 *
-	 * @param  string  $message  Message to log
+	 * @param  string $message  Message to log
 	 */
 	public function warning( $message ) {
 		echo( '[WARNING] ' . $message . "\n" );
@@ -1243,7 +1243,7 @@ class Logger {
 	/**
 	 * Log an error message.
 	 *
-	 * @param  string  $message  Message to log
+	 * @param  string $message  Message to log
 	 */
 	public function error( $message ) {
 		echo( '[ERROR] ' . $message . "\n" );
@@ -1252,7 +1252,7 @@ class Logger {
 	/**
 	 * Log a notice message.
 	 *
-	 * @param  string  $message  Message to log
+	 * @param  string $message  Message to log
 	 */
 	public function notice( $message ) {
 		echo( '[NOTICE] ' . $message . "\n" );

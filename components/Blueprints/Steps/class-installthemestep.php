@@ -21,33 +21,37 @@ use function WordPress\Zip\is_zip_file_stream;
 class InstallThemeStep implements StepInterface {
 	/**
 	 * Theme source identifier (slug, slug@version, URL, ./path, /path).
+	 *
 	 * @var DataReference
 	 */
 	public $source;
 
 	/**
 	 * Whether to active the theme after installing it. Defaults to false.
+	 *
 	 * @var bool
 	 */
 	public $active;
 
 	/**
 	 * Whether to import the theme's starter content after installing it. Defaults to false.
+	 *
 	 * @var bool
 	 */
 	public $importStarterContent;
 
 	/**
 	 * Optional target folder name. Defaults based on source.
+	 *
 	 * @var string|null
 	 */
 	public $targetFolderName;
 
 	/**
-	 * @param  DataReference  $source  Theme source identifier.
-	 * @param  bool  $active  active after install?
-	 * @param  bool  $importStarterContent  Import starter content?
-	 * @param  string|null  $targetFolderName  Optional target folder name.
+	 * @param  DataReference $source  Theme source identifier.
+	 * @param  bool          $active  active after install?
+	 * @param  bool          $importStarterContent  Import starter content?
+	 * @param  string|null   $targetFolderName  Optional target folder name.
 	 */
 	public function __construct(
 		DataReference $source,
@@ -62,36 +66,37 @@ class InstallThemeStep implements StepInterface {
 	}
 
 	public function run( Runtime $runtime, Tracker $tracker ) {
-		$runtime->withTemporaryDirectory( function ( $temp_dir ) use ( $runtime, $tracker ) {
-			$theme_data = $runtime->resolve( $this->source );
-			$tracker->setCaption( 'Installing theme ' . $theme_data->get_human_readable_name() );
+		$runtime->withTemporaryDirectory(
+			function ( $temp_dir ) use ( $runtime, $tracker ) {
+				$theme_data = $runtime->resolve( $this->source );
+				$tracker->setCaption( 'Installing theme ' . $theme_data->get_human_readable_name() );
 
-			if ( $theme_data instanceof Directory ) {
-				$zip_filename      = $theme_data->dirname . '.zip';
-				$zip_absolute_path = wp_join_unix_paths( $temp_dir, $zip_filename );
-				$zip_stream        = FileWriteStream::from_path( $zip_absolute_path, 'truncate' );
-				$zip_encoder       = new ZipEncoder( $zip_stream );
-				$zip_encoder->append_from_filesystem( $theme_data->filesystem );
-				$zip_encoder->close();
-			} elseif ( $theme_data instanceof File ) {
-				$zip_filename      = preg_replace( '/\.(zip|php)$/', '', $theme_data->filename ) . '.zip';
-				$zip_absolute_path = wp_join_unix_paths( $temp_dir, $zip_filename );
-				$zip_stream        = FileWriteStream::from_path( $zip_absolute_path, 'truncate' );
+				if ( $theme_data instanceof Directory ) {
+						$zip_filename      = $theme_data->dirname . '.zip';
+						$zip_absolute_path = wp_join_unix_paths( $temp_dir, $zip_filename );
+						$zip_stream        = FileWriteStream::from_path( $zip_absolute_path, 'truncate' );
+						$zip_encoder       = new ZipEncoder( $zip_stream );
+						$zip_encoder->append_from_filesystem( $theme_data->filesystem );
+						$zip_encoder->close();
+				} elseif ( $theme_data instanceof File ) {
+					$zip_filename      = preg_replace( '/\.(zip|php)$/', '', $theme_data->filename ) . '.zip';
+					$zip_absolute_path = wp_join_unix_paths( $temp_dir, $zip_filename );
+					$zip_stream        = FileWriteStream::from_path( $zip_absolute_path, 'truncate' );
 
-				if ( is_zip_file_stream( $theme_data->getStream() ) ) {
-					pipe_stream( $theme_data->getStream(), $zip_stream );
-				} else {
-					throw new RuntimeException( "Theme is not a valid zip file." );
+					if ( is_zip_file_stream( $theme_data->getStream() ) ) {
+						pipe_stream( $theme_data->getStream(), $zip_stream );
+					} else {
+						throw new RuntimeException( 'Theme is not a valid zip file.' );
+					}
+					$zip_stream->close_writing();
 				}
-				$zip_stream->close_writing();
-			}
 
-			$tracker->set( 50 );
+				$tracker->set( 50 );
 
-			// Inline PHP script to avoid reading a static script.php file via
-			// file_get_contents() inside the built blueprints.phar file.
-			$output = $runtime->evalPhpCodeInSubProcess(
-<<<'PHP'
+				// Inline PHP script to avoid reading a static script.php file via
+				// file_get_contents() inside the built blueprints.phar file.
+				$output = $runtime->evalPhpCodeInSubProcess(
+					<<<'PHP'
 <?php
 
 require_once getenv( 'DOCROOT' ) . '/wp-load.php';
@@ -228,26 +233,28 @@ if ( function_exists( 'append_output' ) ) {
 // Exit with success status code
 exit( 0 );
 PHP
-				,
-				[ 'THEME_ZIP_PATH' => $zip_absolute_path ]
-			);
-
-			$theme_folder_name = trim( $output->outputFileContent );
-			if ( empty( $theme_folder_name ) ) {
-				throw new RuntimeException(
-					"Theme installation script did not return the theme stylesheet name."
+					,
+					array( 'THEME_ZIP_PATH' => $zip_absolute_path )
 				);
-			}
 
-			if ( $this->active ) {
-				$tracker->set( 75, 'Activating theme ' . $theme_folder_name );
-				$runtime->evalPhpCodeInSubProcess(
-					ActivateThemeStep::ACTIVATE_THEME_SCRIPT,
-					[ 'THEME_FOLDER_NAME' => $theme_folder_name ]
-				);
-			}
+				$theme_folder_name = trim( $output->outputFileContent );
+				if ( empty( $theme_folder_name ) ) {
+					throw new RuntimeException(
+						'Theme installation script did not return the theme stylesheet name.'
+					);
+				}
 
-			$tracker->set( 100 );
-		}, '' );
+				if ( $this->active ) {
+						$tracker->set( 75, 'Activating theme ' . $theme_folder_name );
+						$runtime->evalPhpCodeInSubProcess(
+							ActivateThemeStep::ACTIVATE_THEME_SCRIPT,
+							array( 'THEME_FOLDER_NAME' => $theme_folder_name )
+						);
+				}
+
+				$tracker->set( 100 );
+			},
+			''
+		);
 	}
 }

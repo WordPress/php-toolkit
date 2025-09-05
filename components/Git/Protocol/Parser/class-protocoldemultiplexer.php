@@ -9,9 +9,9 @@ use WordPress\Git\GitException;
 class ProtocolDemultiplexer {
 
 	const STREAM_CODE_SIDE_BAND = 'side_band';
-	const STREAM_CODE_PROGRESS = 'progress';
-	const STREAM_CODE_FATAL = 'fatal';
-	const STREAM_CODE_UNKNOWN = 'unknown';
+	const STREAM_CODE_PROGRESS  = 'progress';
+	const STREAM_CODE_FATAL     = 'fatal';
+	const STREAM_CODE_UNKNOWN   = 'unknown';
 
 	const STREAM_CODE_MAP = array(
 		0x01 => self::STREAM_CODE_SIDE_BAND,
@@ -22,7 +22,7 @@ class ProtocolDemultiplexer {
 	/**
 	 * @var ByteReadStream
 	 */
-	protected $upstream = '';
+	protected $upstream                      = '';
 	protected $is_paused_at_incomplete_input = false;
 
 	protected $chunk;
@@ -96,7 +96,7 @@ class ProtocolDemultiplexer {
 			return;
 		}
 
-		if ( 0 === $length ) {
+		if ( $length === 0 ) {
 			throw new GitException( 'Demultiplexer error: Received a zero-length chunk ' . $length_hex . ' at ' . $this->upstream->tell() );
 		}
 
@@ -105,7 +105,7 @@ class ProtocolDemultiplexer {
 		$this->upstream->pull( $length, ByteReadStream::PULL_EXACTLY );
 		$chunk             = $this->upstream->consume( $length );
 		$this->stream_code = $stream_code;
-		if ( 'unknown' === $this->stream_code ) {
+		if ( $this->stream_code === 'unknown' ) {
 			// $chunk is not actually multiplexed so we need to relay
 			// all the data we've read so far to the consumer.
 			$this->chunk = $length_hex . $chunk;

@@ -21,7 +21,7 @@ class ProgressEvent extends Event {
 	 * Create a new progress event
 	 *
 	 * @param  float  $progress  The progress value (0-100)
-	 * @param  string  $caption  The caption describing current progress
+	 * @param  string $caption  The caption describing current progress
 	 */
 	public function __construct( float $progress, string $caption ) {
 		$this->progress = $progress;

@@ -15,7 +15,7 @@ trait MkdirRecursive {
 
 	public function mkdir( $path, $options = array() ) {
 		// Windows paths compatibility for LocalFilesystem:
-		if(method_exists($this, 'normalize_path')) {
+		if ( method_exists( $this, 'normalize_path' ) ) {
 			$path = $this->normalize_path( $path );
 		}
 
@@ -41,7 +41,7 @@ trait MkdirRecursive {
 		$path = rtrim( $path, '/' ) . '/';
 
 		// Windows paths compatibility for LocalFilesystem:
-		if(method_exists($this, 'normalize_path')) {
+		if ( method_exists( $this, 'normalize_path' ) ) {
 			$root = $this->normalize_path( $root );
 			$path = $this->normalize_path( $path );
 		}
@@ -51,8 +51,8 @@ trait MkdirRecursive {
 		}
 
 		$child_path = substr( $path, strlen( $root ) );
-		$segments = wp_unix_path_segments( $child_path );
-		for( $i = 0; $i < count( $segments ); $i++ ) {
+		$segments   = wp_unix_path_segments( $child_path );
+		for ( $i = 0; $i < count( $segments ); $i++ ) {
 			$parent_path = wp_join_unix_paths(
 				$root,
 				...array_slice( $segments, 0, $i + 1 )
@@ -64,9 +64,9 @@ trait MkdirRecursive {
 	}
 
 	private function parent_paths( $path ) {
-		$segments     = wp_unix_path_segments( $path );
-		$paths        = array();
-		for ( $i = 0; $i < count( $segments ) - 1; $i ++ ) {
+		$segments = wp_unix_path_segments( $path );
+		$paths    = array();
+		for ( $i = 0; $i < count( $segments ) - 1; $i++ ) {
 			$paths[] = $segments[ $i ];
 			yield wp_join_unix_paths( ...$paths );
 		}

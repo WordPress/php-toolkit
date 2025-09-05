@@ -20,34 +20,34 @@ class V1ToV2Transpiler {
 	 */
 	private $logger;
 
-	static public function validate_v1_blueprint( array $v1 ): ?ValidationError {
+	public static function validate_v1_blueprint( array $v1 ): ?ValidationError {
 		$v = new HumanFriendlySchemaValidator(
 			json_decode( file_get_contents( __DIR__ . '/schema-v1.json' ), true )
 		);
 
 		// For every steps[] entry with step === "installPlugin" and "pluginZipFile", remove that key and rewrite it as "pluginData"
-		if (isset($v1['steps']) && is_array($v1['steps'])) {
-			foreach ($v1['steps'] as &$step) {
-				if(!is_array($step) || !isset($step['step'])) {
+		if ( isset( $v1['steps'] ) && is_array( $v1['steps'] ) ) {
+			foreach ( $v1['steps'] as &$step ) {
+				if ( ! is_array( $step ) || ! isset( $step['step'] ) ) {
 					continue;
 				}
-				if ($step['step'] === 'installPlugin' && array_key_exists('pluginZipFile', $step)) {
+				if ( $step['step'] === 'installPlugin' && array_key_exists( 'pluginZipFile', $step ) ) {
 					// If pluginData is not already set, move pluginZipFile to pluginData
-					if (!array_key_exists('pluginData', $step)) {
+					if ( ! array_key_exists( 'pluginData', $step ) ) {
 						$step['pluginData'] = $step['pluginZipFile'];
 					}
-					unset($step['pluginZipFile']);
-				} else if ($step['step'] === 'installTheme' && array_key_exists('themeZipFile', $step)) {
+					unset( $step['pluginZipFile'] );
+				} elseif ( $step['step'] === 'installTheme' && array_key_exists( 'themeZipFile', $step ) ) {
 					// If themeData is not already set, move themeZipFile to themeData
-					if (!array_key_exists('themeData', $step)) {
+					if ( ! array_key_exists( 'themeData', $step ) ) {
 						$step['themeData'] = $step['themeZipFile'];
 					}
-					unset($step['themeZipFile']);
-				} else if($step['step'] === 'importFile') {
+					unset( $step['themeZipFile'] );
+				} elseif ( $step['step'] === 'importFile' ) {
 					$step['step'] = 'importWxr';
 				}
 			}
-			unset($step); // break reference
+			unset( $step ); // break reference
 		}
 
 		return $v->validate( $v1 );
@@ -60,17 +60,17 @@ class V1ToV2Transpiler {
 	/**
 	 * Upgrade a v1 Blueprint array to a v2 Blueprint array.
 	 *
-	 * @param  array  $v1
+	 * @param  array $v1
 	 *
 	 * @return array
 	 * @throws BlueprintExecutionException
 	 */
 	public function upgrade( array $validated_v1_blueprint ): array {
 		$v1      = $validated_v1_blueprint;
-		$v2      = [
+		$v2      = array(
 			'version' => 2,
-		];
-		$v2steps = [];
+		);
+		$v2steps = array();
 
 		// Map $schema if present
 		if ( isset( $v1['$schema'] ) ) {
@@ -79,7 +79,7 @@ class V1ToV2Transpiler {
 
 		// Map meta fields
 		if ( isset( $v1['meta'] ) ) {
-			$v2['blueprintMeta'] = [];
+			$v2['blueprintMeta'] = array();
 			if ( isset( $v1['meta']['title'] ) ) {
 				$v2['blueprintMeta']['name'] = $v1['meta']['title'];
 			}
@@ -90,7 +90,7 @@ class V1ToV2Transpiler {
 				$v2['blueprintMeta']['tags'] = $v1['meta']['categories'];
 			}
 			if ( isset( $v1['meta']['author'] ) ) {
-				$v2['blueprintMeta']['authors'] = [ $v1['meta']['author'] ];
+				$v2['blueprintMeta']['authors'] = array( $v1['meta']['author'] );
 			}
 		}
 
@@ -108,25 +108,29 @@ class V1ToV2Transpiler {
 		// Unsupported fields
 		// @TODO: Actually transpile a few of them:
 		// * features -> runtimeOptions.playground.features
-		//            -> or consider moving this to runtime configuration – as in
-		//               permissions to access the network, disk, etc.
+		// -> or consider moving this to runtime configuration – as in
+		// permissions to access the network, disk, etc.
 		// * landingPage -> runtimeOptions.landingPage
 		// * login -> runtimeOptions.login
-		$unsupportedFields        = [
+		$unsupportedFields        = array(
 			'features',
 			'landingPage',
 			'login',
 			'phpExtensionBundles',
-		];
-		$presentUnsupportedFields = [];
+		);
+		$presentUnsupportedFields = array();
 		foreach ( $unsupportedFields as $field ) {
 			if ( isset( $v1[ $field ] ) ) {
 				$presentUnsupportedFields[] = $field;
 			}
 		}
 		if ( ! empty( $presentUnsupportedFields ) ) {
-			$this->logger->warning( sprintf( 'The following fields are not yet supported by the v1->v2 Blueprint transpiler and will be ignored: %s.',
-				implode( ', ', $presentUnsupportedFields ) ) );
+			$this->logger->warning(
+				sprintf(
+					'The following fields are not yet supported by the v1->v2 Blueprint transpiler and will be ignored: %s.',
+					implode( ', ', $presentUnsupportedFields )
+				)
+			);
 		}
 
 		// SHORTHANDS:
@@ -134,10 +138,10 @@ class V1ToV2Transpiler {
 		// Plugins
 		if ( isset( $v1['plugins'] ) ) {
 			foreach ( $v1['plugins'] as $plugin ) {
-				$v2steps[] = [
+				$v2steps[] = array(
 					'step'   => 'installPlugin',
 					'source' => self::convertV1ResourceToV2Reference( $plugin ),
-				];
+				);
 			}
 		}
 
@@ -159,10 +163,10 @@ class V1ToV2Transpiler {
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option is not supported on activatePlugin step and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2step = [
+						$v2step = array(
 							'step'       => 'activatePlugin',
 							'pluginPath' => $v1step['pluginPath'],
-						];
+						);
 						if ( isset( $v1step['humanReadableName'] ) ) {
 							$v2step['humanReadableName'] = $v1step['humanReadableName'];
 						}
@@ -172,10 +176,10 @@ class V1ToV2Transpiler {
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option is not supported on activateTheme step and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2step = [
+						$v2step = array(
 							'step'               => 'activateTheme',
 							'themeDirectoryName' => $v1step['themeFolderName'],
-						];
+						);
 						if ( isset( $v1step['humanReadableName'] ) ) {
 							$v2step['humanReadableName'] = $v1step['humanReadableName'];
 						}
@@ -185,11 +189,11 @@ class V1ToV2Transpiler {
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option is not supported on cp step and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step'     => 'cp',
 							'fromPath' => self::translatePath( $v1step['fromPath'] ),
 							'toPath'   => self::translatePath( $v1step['toPath'] ),
-						];
+						);
 						break;
 					case 'defineWpConfigConsts':
 						if ( isset( $v1step['progress'] ) ) {
@@ -201,18 +205,18 @@ class V1ToV2Transpiler {
 						if ( isset( $v1step['virtualize'] ) ) {
 							$this->logger->warning( 'The `virtualize` option is not supported on defineWpConfigConsts step and will be ignored: %s. This option is deprecated and will be removed in a future version.' );
 						}
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step'      => 'defineConstants',
 							'constants' => $v1step['consts'],
-						];
+						);
 						break;
 					case 'defineSiteUrl':
 						$this->logger->warning( 'The `defineSiteUrl` step is not supported by the Blueprint v2 schema. Use the runner configuration to set the site URL instead.' );
 						break;
 					case 'enableMultisite':
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step' => 'enableMultisite',
-						];
+						);
 						break;
 					case 'importWordPressFiles':
 						$this->logger->warning( 'The `importWordPressFiles` step is not supported by the Blueprint v2 schema. The entire step will be ignored.' );
@@ -224,36 +228,40 @@ class V1ToV2Transpiler {
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option is not supported on importWxr step and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step'    => 'importContent',
-							'content' => [
-								[
+							'content' => array(
+								array(
 									'type'   => 'wxr',
 									'source' => self::convertV1ResourceToV2Reference( $v1step['file'] ),
-								],
-							],
-						];
+								),
+							),
+						);
 						break;
 					case 'importThemeStarterContent':
 						// @TODO: We really need to support this in the v2 runner!
-						//        Let's add an importContent step.
+						// Let's add an importContent step.
 						$this->logger->warning( 'The `importThemeStarterContent` step is not supported by the Blueprint v2 schema. Use the runner configuration to set the import behavior instead.' );
 						break;
 					case 'installPlugin':
 						if ( isset( $v1step['ifAlreadyInstalled'] ) ) {
-							$this->logger->warning( sprintf( 'The `ifAlreadyInstalled` option is not yet supported by the v1->v2 Blueprint transpiler and will be ignored: %s. Use the runtime configuration to set the behavior instead.',
-								$v1step['ifAlreadyInstalled'] ) );
+							$this->logger->warning(
+								sprintf(
+									'The `ifAlreadyInstalled` option is not yet supported by the v1->v2 Blueprint transpiler and will be ignored: %s. Use the runtime configuration to set the behavior instead.',
+									$v1step['ifAlreadyInstalled']
+								)
+							);
 						}
 						if ( isset( $v1step['progress']['weight'] ) ) {
 							$this->logger->warning( 'The `progress.weight` option is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2step = [
+						$v2step = array(
 							'step'   => 'installPlugin',
 							'source' => self::convertV1ResourceToV2Reference(
 								$v1step['pluginZipFile'] ??
 								$v1step['pluginData']
 							),
-						];
+						);
 						if ( isset( $v1step['progress']['caption'] ) ) {
 							// This isn't an exact tranlation but it will do.
 							// v1 caption would be "Installing Jetpack"
@@ -271,19 +279,23 @@ class V1ToV2Transpiler {
 						break;
 					case 'installTheme':
 						if ( isset( $v1step['ifAlreadyInstalled'] ) ) {
-							$this->logger->warning( sprintf( 'The `ifAlreadyInstalled` option is not yet supported by the v1->v2 Blueprint transpiler and will be ignored: %s. Use the runtime configuration to set the behavior instead.',
-								$v1step['ifAlreadyInstalled'] ) );
+							$this->logger->warning(
+								sprintf(
+									'The `ifAlreadyInstalled` option is not yet supported by the v1->v2 Blueprint transpiler and will be ignored: %s. Use the runtime configuration to set the behavior instead.',
+									$v1step['ifAlreadyInstalled']
+								)
+							);
 						}
 						if ( isset( $v1step['progress']['weight'] ) ) {
 							$this->logger->warning( 'The `progress.weight` option is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2step = [
+						$v2step = array(
 							'step'   => 'installTheme',
 							'source' => self::convertV1ResourceToV2Reference(
 								$v1step['themeData'] ??
 								$v1step['themeZipFile']
 							),
-						];
+						);
 						if ( isset( $v1step['progress']['caption'] ) ) {
 							$v2step['humanReadableName'] = $v1step['progress']['caption'];
 						}
@@ -306,20 +318,20 @@ class V1ToV2Transpiler {
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option on mkDir step is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step' => 'mkdir',
 							'path' => self::translatePath( $v1step['path'] ),
-						];
+						);
 						break;
 					case 'mv':
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option on mv step is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step'     => 'mv',
 							'fromPath' => self::translatePath( $v1step['fromPath'] ),
 							'toPath'   => self::translatePath( $v1step['toPath'] ),
-						];
+						);
 						break;
 					case 'request':
 						$this->logger->warning( 'The `request` step was deprecated in Blueprints v1 and is not supported anymore by Blueprints v2. Replace it with a wp-cli step or a runPHP step.' );
@@ -328,11 +340,11 @@ class V1ToV2Transpiler {
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option on resetData step is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step' => 'runPHP',
-							'code' => [
-								"filename" => "script.php",
-								"content"  => <<<'PHP'
+							'code' => array(
+								'filename' => 'script.php',
+								'content'  => <<<'PHP'
 <?php
 require getenv('DOCROOT') . '/wp-load.php';
 
@@ -350,91 +362,91 @@ $GLOBALS['@pdo']->query("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='wp_comment
 PHP
 	,
 
-							],
-						];
+							),
+						);
 						break;
 					case 'rm':
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option on rm step is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step' => 'rm',
 							'path' => self::translatePath( $v1step['path'] ),
-						];
+						);
 						break;
 					case 'rmDir':
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option on rmDir step is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step' => 'rmdir',
 							'path' => self::translatePath( $v1step['path'] ),
-						];
+						);
 						break;
 					case 'runPHP':
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option on runPHP step is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step' => 'runPHP',
-							'code' => [
-								"filename" => "script.php",
-								"content"  => self::convertPhpCode( $v1step['code'] ),
-							],
-						];
+							'code' => array(
+								'filename' => 'script.php',
+								'content'  => self::convertPhpCode( $v1step['code'] ),
+							),
+						);
 						break;
 					case 'runSQL':
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option on runSQL step is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step'   => 'runSQL',
-							'source' => [
-								"filename" => "script.sql",
-								"content"  => $v1step['sql'],
-							],
-						];
+							'source' => array(
+								'filename' => 'script.sql',
+								'content'  => $v1step['sql'],
+							),
+						);
 						break;
 					case 'setSiteLanguage':
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option on setSiteLanguage step is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step'     => 'setSiteLanguage',
 							'language' => $v1step['language'],
-						];
+						);
 						break;
 					case 'setSiteOptions':
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option on setSiteOptions step is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step'    => 'setSiteOptions',
 							'options' => $v1step['options'],
-						];
+						);
 						break;
 					case 'unzip':
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option on unzip step is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step'          => 'unzip',
 							'zipFile'       => self::convertV1ResourceToV2Reference(
 								$v1step['zipPath'] ??
 								$v1step['zipFile']
 							),
 							'extractToPath' => self::translatePath( $v1step['extractToPath'] ),
-						];
+						);
 						break;
 					case 'updateUserMeta':
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option on updateUserMeta step is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step' => 'runPHP',
-							'code' => [
-								"filename" => "script.php",
-								"content"  => <<<'PHP'
+							'code' => array(
+								'filename' => 'script.php',
+								'content'  => <<<'PHP'
 <?php
 include getenv("DOCROOT") . '/wp-load.php';
 $meta = json_decode(getenv("META"), true);
@@ -445,57 +457,57 @@ update_user_meta(getenv("USER_ID"), $name, $value);
 PHP
 	,
 
-							],
-							'env'  => [
-								'USER_ID' => $v1step['userId'] . "",
+							),
+							'env'  => array(
+								'USER_ID' => $v1step['userId'] . '',
 								'META'    => json_encode( $v1step['meta'] ),
-							],
-						];
+							),
+						);
 						break;
 					case 'writeFile':
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option on writeFile step is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
 						$path      = self::translatePath( $v1step['path'] );
-						$v2steps[] = [
+						$v2steps[] = array(
 							'step'  => 'writeFiles',
-							'files' => [
+							'files' => array(
 								$path => is_string( $v1step['data'] )
-									? [
+									? array(
 										'filename' => basename( $path ),
-										'content'  => str_ends_with($path, '.php') 
-											? self::convertPhpCode($v1step['data']) 
+										'content'  => str_ends_with( $path, '.php' )
+											? self::convertPhpCode( $v1step['data'] )
 											: $v1step['data'],
-									]
+									)
 									: self::convertV1ResourceToV2Reference(
 										$v1step['data']
 									),
-							],
-						];
+							),
+						);
 						break;
 					case 'writeFiles':
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option on writeFiles step is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$v2step = [
+						$v2step = array(
 							'step'  => 'writeFiles',
-							'files' => [],
-						];
+							'files' => array(),
+						);
 						// Prefix paths with "writeToPath".
 						// The rest of the data format is compliant with v2.
 						$base_path = self::translatePath( $v1step['writeToPath'] );
-						if(isset($v1step['filesTree']['resource'])) {
+						if ( isset( $v1step['filesTree']['resource'] ) ) {
 							$v2step['files']['/'] = self::convertV1ResourceToV2Reference( $v1step['filesTree'], $base_path );
 						} else {
 							foreach ( $v1step['filesTree'] as $path => $data ) {
 								$joined_path                     = wp_join_unix_paths( $base_path, $path );
 								$v2step['files'][ $joined_path ] = is_string( $data )
-								? [
+								? array(
 									'filename' => basename( $path ),
-									'content'  => str_ends_with($path, '.php') 
-										? self::convertPhpCode($data) 
+									'content'  => str_ends_with( $path, '.php' )
+										? self::convertPhpCode( $data )
 										: $data,
-								]
+								)
 								: self::convertV1ResourceToV2Reference(
 									$data
 								);
@@ -505,17 +517,21 @@ PHP
 						break;
 					case 'wp-cli':
 						// @TODO: Don't naively replace on the entire command. Actually parse it and only replace at the beginning
-						//        of each argument value.
-						$cmd = str_replace('/wordpress/', '', $v1step['command']);
-						$cmd = str_replace('wordpress/', '', $cmd);
-						$v2steps[] = [
+						// of each argument value.
+						$cmd       = str_replace( '/wordpress/', '', $v1step['command'] );
+						$cmd       = str_replace( 'wordpress/', '', $cmd );
+						$v2steps[] = array(
 							'step'    => 'wp-cli',
 							'command' => $cmd,
-						];
+						);
 						break;
 					default:
-						$this->logger->warning( sprintf( 'The `%s` step is not yet supported by the v1->v2 Blueprint transpiler and will be ignored.',
-							$v1step['step'] ) );
+						$this->logger->warning(
+							sprintf(
+								'The `%s` step is not yet supported by the v1->v2 Blueprint transpiler and will be ignored.',
+								$v1step['step']
+							)
+						);
 						break;
 				}
 			}
@@ -536,10 +552,10 @@ PHP
 			switch ( $resource['resource'] ) {
 				case 'literal':
 					// InlineFile
-					return [
+					return array(
 						'filename' => $resource['name'],
 						'content'  => $resource['contents'],
-					];
+					);
 				case 'wordpress.org/themes':
 					// WordPressOrgThemeReference
 					return $resource['slug'];
@@ -553,17 +569,17 @@ PHP
 					// URLReference
 					$url = $resource['url'];
 					// If it's a github.com URL, convert to raw.githubusercontent.com like WordPress Playground does
-					if (preg_match('#^https://github\.com/([^/]+)/([^/]+)/(?:blob|raw)/(.+)$#', $url, $matches)) {
+					if ( preg_match( '#^https://github\.com/([^/]+)/([^/]+)/(?:blob|raw)/(.+)$#', $url, $matches ) ) {
 						// e.g. https://github.com/user/repo/blob/branch/path/to/file
-						//      => https://raw.githubusercontent.com/user/repo/branch/path/to/file
+						// => https://raw.githubusercontent.com/user/repo/branch/path/to/file
 						$user = $matches[1];
 						$repo = $matches[2];
 						$rest = $matches[3];
 						// The first segment of $rest is the branch/ref
-						$parts = explode('/', $rest, 2);
-						$ref = $parts[0];
-						$path = isset($parts[1]) ? $parts[1] : '';
-						$url = "https://raw.githubusercontent.com/$user/$repo/$ref/$path";
+						$parts = explode( '/', $rest, 2 );
+						$ref   = $parts[0];
+						$path  = isset( $parts[1] ) ? $parts[1] : '';
+						$url   = "https://raw.githubusercontent.com/$user/$repo/$ref/$path";
 					}
 					return $url;
 				case 'bundled':
@@ -575,27 +591,27 @@ PHP
 					}
 
 					return $path;
-				case "literal:directory":
+				case 'literal:directory':
 					// InlineDirectory
-					$files = [];
+					$files = array();
 					foreach ( $resource['files'] as $name => $file ) {
 						if ( is_string( $file ) ) {
-							$files[$name] = $file;
+							$files[ $name ] = $file;
 						} else {
-							$files[$name] = self::convertV1ResourceToV2Reference( $file );
+							$files[ $name ] = self::convertV1ResourceToV2Reference( $file );
 						}
 					}
-					return [
+					return array(
 						'directoryName' => $resource['name'],
 						'files'         => $files,
-					];
-				case "git:directory":
+					);
+				case 'git:directory':
 					// GitDirectoryReference
-					return [
+					return array(
 						'gitRepository'    => $resource['url'],
 						'pathInRepository' => $resource['path'],
 						'ref'              => $resource['ref'],
-					];
+					);
 				default:
 					throw new BlueprintExecutionException( 'Unknown resource type: ' . $resource['resource'] );
 			}
@@ -615,36 +631,36 @@ PHP
 	}
 
 	protected static function convertPhpCode( $code ) {
-		$had_php_tag = substr($code, 0, 5) === '<?php';
-		if(!$had_php_tag) {
+		$had_php_tag = substr( $code, 0, 5 ) === '<?php';
+		if ( ! $had_php_tag ) {
 			$code = '<?php ' . $code;
 		}
 		$tokens        = token_get_all( $code );
 		$convertedCode = '';
 		foreach ( $tokens as $token ) {
-			if ( !is_array( $token ) ) {
+			if ( ! is_array( $token ) ) {
 				$convertedCode .= $token;
 			}
 			[ $id, $text ] = $token;
 			switch ( $id ) {
 				case T_CONSTANT_ENCAPSED_STRING:
 					// Support both single and double quoted strings
-					$quote = $text[0];
-					$unquoted = substr($text, 1, -1);
+					$quote    = $text[0];
+					$unquoted = substr( $text, 1, -1 );
 					if (
 						(
-							($quote === "'" || $quote === '"')
-							&& strncmp($unquoted, '/wordpress/', strlen('/wordpress/')) === 0
+							( $quote === "'" || $quote === '"' )
+							&& strncmp( $unquoted, '/wordpress/', strlen( '/wordpress/' ) ) === 0
 						)
 					) {
-						$convertedCode .= 'getenv(\'DOCROOT\') . ' . var_export(substr($unquoted, strlen('/wordpress')), true);
-					} else if (
+						$convertedCode .= 'getenv(\'DOCROOT\') . ' . var_export( substr( $unquoted, strlen( '/wordpress' ) ), true );
+					} elseif (
 						(
-							($quote === "'" || $quote === '"')
-							&& strncmp($unquoted, 'wordpress/', strlen('wordpress/')) === 0
+							( $quote === "'" || $quote === '"' )
+							&& strncmp( $unquoted, 'wordpress/', strlen( 'wordpress/' ) ) === 0
 						)
 					) {
-						$convertedCode .= 'getenv(\'DOCROOT\') . ' . var_export(substr($unquoted, strlen('wordpress')), true);
+						$convertedCode .= 'getenv(\'DOCROOT\') . ' . var_export( substr( $unquoted, strlen( 'WordPress' ) ), true );
 					} else {
 						$convertedCode .= $text;
 					}
@@ -654,12 +670,10 @@ PHP
 					break;
 			}
 		}
-		$convertedCode = trim($convertedCode);
-		if(!$had_php_tag && substr($convertedCode, 0, 5) === '<?php') {
-			$convertedCode = substr( $convertedCode, 5); // Remove the initial '<?php' added for tokenization
+		$convertedCode = trim( $convertedCode );
+		if ( ! $had_php_tag && substr( $convertedCode, 0, 5 ) === '<?php' ) {
+			$convertedCode = substr( $convertedCode, 5 ); // Remove the initial '<?php' added for tokenization
 		}
 		return $convertedCode;
 	}
-
-
 }

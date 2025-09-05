@@ -11,16 +11,16 @@ use WordPress\Git\Parser\Commit;
 
 class PackParser {
 
-	const STATE_PACK_HEADER = 'STATE_PACK_HEADER';
+	const STATE_PACK_HEADER            = 'STATE_PACK_HEADER';
 	const STATE_SCAN_FOR_OBJECT_HEADER = 'STATE_SCAN_FOR_OBJECT_HEADER';
 	const STATE_PROCESSING_OBJECT_BODY = 'STATE_PROCESSING_OBJECT_BODY';
-	const STATE_OBJECT_BODY_COMPLETE = 'STATE_OBJECT_BODY_COMPLETE';
+	const STATE_OBJECT_BODY_COMPLETE   = 'STATE_OBJECT_BODY_COMPLETE';
 
-	const OBJECT_TYPE_COMMIT = 1;
-	const OBJECT_TYPE_TREE = 2;
-	const OBJECT_TYPE_BLOB = 3;
-	const OBJECT_TYPE_TAG = 4;
-	const OBJECT_TYPE_RESERVED = 5;
+	const OBJECT_TYPE_COMMIT    = 1;
+	const OBJECT_TYPE_TREE      = 2;
+	const OBJECT_TYPE_BLOB      = 3;
+	const OBJECT_TYPE_TAG       = 4;
+	const OBJECT_TYPE_RESERVED  = 5;
 	const OBJECT_TYPE_OFS_DELTA = 6;
 	const OBJECT_TYPE_REF_DELTA = 7;
 
@@ -188,19 +188,19 @@ class PackParser {
 	/**
 	 * Append bytes to be processed
 	 *
-	 * @param  string  $bytes  Raw bytes to process
+	 * @param  string $bytes  Raw bytes to process
 	 *
 	 * @return bool Whether processing can continue
 	 */
 	public function append_bytes( $bytes ) {
-		$this->pack_data                     .= $bytes;
+		$this->pack_data                    .= $bytes;
 		$this->is_paused_on_incomplete_input = false;
 
 		if ( strlen( $this->pack_data ) > $this->memory_budget ) {
 			// Flush processed bytes
 			$this->bytes_already_forgotten += $this->bytes_processed;
-			$this->pack_data               = substr( $this->pack_data, $this->bytes_processed );
-			$this->bytes_processed         = 0;
+			$this->pack_data                = substr( $this->pack_data, $this->bytes_processed );
+			$this->bytes_processed          = 0;
 		}
 
 		return true;
@@ -220,7 +220,7 @@ class PackParser {
 				return false;
 			}
 			if (
-				null !== $this->object_count &&
+				$this->object_count !== null &&
 				$this->objects_processed >= $this->object_count
 			) {
 				return false;
@@ -325,7 +325,7 @@ class PackParser {
 			return false;
 		}
 
-		if ( self::STATE_OBJECT_BODY_COMPLETE === $this->parser_state ) {
+		if ( $this->parser_state === self::STATE_OBJECT_BODY_COMPLETE ) {
 			return false;
 		}
 
@@ -337,7 +337,7 @@ class PackParser {
 
 		if ( inflate_get_status( $this->inflate_context ) === ZLIB_STREAM_END ) {
 			$this->hash = hash_final( $this->hash_context );
-			++ $this->objects_processed;
+			++$this->objects_processed;
 			$this->offset_hash_map[ $this->object_header['offset'] ] = $this->hash;
 			$this->body_chunk                                        = '';
 			$this->parser_state                                      = self::STATE_OBJECT_BODY_COMPLETE;
@@ -359,10 +359,10 @@ class PackParser {
 		if ( $res === false ) {
 			throw new GitException( 'Inflate error' );
 		}
-		$bytes_read_for_this_chunk    = inflate_get_read_len( $this->inflate_context ) - $this->object_bytes_processed;
+		$bytes_read_for_this_chunk     = inflate_get_read_len( $this->inflate_context ) - $this->object_bytes_processed;
 		$this->bytes_processed        += $bytes_read_for_this_chunk;
 		$this->object_bytes_processed += $bytes_read_for_this_chunk;
-		$this->body_chunk             = $res;
+		$this->body_chunk              = $res;
 		hash_update( $this->hash_context, $res );
 
 		return true;
@@ -427,16 +427,16 @@ class PackParser {
 			throw new NotEnoughDataException();
 		}
 		$header = substr( $this->pack_data, $at, 4 );
-		$at     += 4;
+		$at    += 4;
 		if ( $header !== 'PACK' ) {
 			throw new GitException( 'Invalid PACK header' );
 		}
 
 		$this->pack_version = unpack( 'N', substr( $this->pack_data, $at, 4 ) )[1];
-		$at                 += 4;
+		$at                += 4;
 
 		$this->object_count = unpack( 'N', substr( $this->pack_data, $at, 4 ) )[1];
-		$at                 += 4;
+		$at                += 4;
 
 		$this->bytes_processed = $at;
 		$this->parser_state    = self::STATE_SCAN_FOR_OBJECT_HEADER;
@@ -468,7 +468,7 @@ class PackParser {
 			throw new NotEnoughDataException();
 		}
 		$byte = ord( $this->pack_data[ $at ] );
-		++ $at;
+		++$at;
 		$type = ( $byte >> 4 ) & 0x7;
 
 		// Parse variable length size
@@ -480,7 +480,7 @@ class PackParser {
 					throw new NotEnoughDataException();
 				}
 				$byte = ord( $this->pack_data[ $at ] );
-				++ $at;
+				++$at;
 				$size  |= ( $byte & 0x7f ) << $shift;
 				$shift += 7;
 			} while ( $byte & 0x80 );
@@ -505,7 +505,7 @@ class PackParser {
 				throw new NotEnoughDataException();
 			}
 			$c = ord( $this->pack_data[ $at ] );
-			++ $at;
+			++$at;
 			$offset = ( $c & 0x7F );
 
 			// If bit 7 (0x80) is set, we keep reading
@@ -514,7 +514,7 @@ class PackParser {
 					throw new NotEnoughDataException();
 				}
 				$c = ord( $this->pack_data[ $at ] );
-				++ $at;
+				++$at;
 				$offset = ( ( $offset + 1 ) << 7 ) + ( $c & 0x7F );
 			}
 			$object_header['reference'] = $this->offset_hash_map[ $header_offset - $offset ];
@@ -523,7 +523,7 @@ class PackParser {
 				throw new NotEnoughDataException();
 			}
 			$object_header['reference'] = bin2hex( substr( $this->pack_data, $at, 20 ) );
-			$at                         += 20;
+			$at                        += 20;
 		}
 
 		$this->bytes_processed = $at;

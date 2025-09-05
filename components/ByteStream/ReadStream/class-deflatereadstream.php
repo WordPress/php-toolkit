@@ -24,7 +24,7 @@ class DeflateReadStream extends BaseByteReadStream {
 	}
 
 	protected function internal_pull( $n ): string {
-		if ( null === $this->delegate_offset_0 ) {
+		if ( $this->delegate_offset_0 === null ) {
 			$this->delegate_offset_0 = $this->upstream->tell();
 		}
 

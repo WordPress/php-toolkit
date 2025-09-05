@@ -12,8 +12,8 @@ interface StepInterface {
 	/**
 	 * Executes the step logic.
 	 *
-	 * @param  Runtime  $runtime  The runtime providing environment access
-	 * @param  Tracker  $tracker  The tracker for reporting progress
+	 * @param  Runtime $runtime  The runtime providing environment access
+	 * @param  Tracker $tracker  The tracker for reporting progress
 	 *
 	 * @return mixed The result of running the step
 	 */

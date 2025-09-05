@@ -219,7 +219,7 @@ class GitFilesystem implements Filesystem {
 	}
 
 	private function should_amend_last_commit() {
-		if ( false === $this->amend_time_window ) {
+		if ( $this->amend_time_window === false ) {
 			return false;
 		}
 
@@ -250,8 +250,10 @@ class GitFilesystem implements Filesystem {
 		}
 
 		$full_branch_name   = $this->get_repository()->get_current_branch_name();
-		$short_branch_name  = strncmp( $full_branch_name, 'refs/heads/', strlen( 'refs/heads/' ) ) === 0 ? substr( $full_branch_name,
-			11 ) : $full_branch_name;
+		$short_branch_name  = strncmp( $full_branch_name, 'refs/heads/', strlen( 'refs/heads/' ) ) === 0 ? substr(
+			$full_branch_name,
+			11
+		) : $full_branch_name;
 		$remote_name        = $this->remote->get_name();
 		$remote_branch_name = "refs/remotes/{$remote_name}/{$short_branch_name}";
 		$remote_branch_hash = $this->get_repository()->get_branch_tip( $remote_branch_name );
@@ -263,6 +265,6 @@ class GitFilesystem implements Filesystem {
 	}
 
 	public function get_meta(): array {
-		return [];
+		return array();
 	}
 }

@@ -102,7 +102,7 @@ class ProgressTrackedReadStream implements ByteReadStream {
 			return;
 		}
 
-		if ( null === $this->streamLength || $this->streamLength === 0 ) {
+		if ( $this->streamLength === null || $this->streamLength === 0 ) {
 			// If length is unknown or zero, we cannot meaningfully report percentage progress.
 			// However, if we are at the end or length is 0, we can consider it 100%
 			if ( $this->streamLength === 0 || ( $this->streamLength !== null && $this->stream->tell() >= $this->streamLength ) ) {
@@ -123,5 +123,4 @@ class ProgressTrackedReadStream implements ByteReadStream {
 			$this->tracker->set( $progress );
 		}
 	}
-
 }

@@ -17,7 +17,7 @@ interface Filesystem {
 	/**
 	 * List the contents of a directory.
 	 *
-	 * @param  string  $parent  The path to the parent directory.
+	 * @param  string $parent  The path to the parent directory.
 	 *
 	 * @return array<string> The contents of the directory.
 	 * @throws FilesystemException If the directory cannot be listed.
@@ -27,7 +27,7 @@ interface Filesystem {
 	/**
 	 * Check if a path is a directory.
 	 *
-	 * @param  string  $path  The path to check.
+	 * @param  string $path  The path to check.
 	 *
 	 * @return bool True if the path is a directory, false otherwise.
 	 * @throws FilesystemException If the path cannot be checked.
@@ -37,7 +37,7 @@ interface Filesystem {
 	/**
 	 * Check if a path is a file.
 	 *
-	 * @param  string  $path  The path to check.
+	 * @param  string $path  The path to check.
 	 *
 	 * @return bool True if the path is a file, false otherwise.
 	 * @throws FilesystemException If the path cannot be checked.
@@ -47,7 +47,7 @@ interface Filesystem {
 	/**
 	 * Check if a path exists.
 	 *
-	 * @param  string  $path  The path to check.
+	 * @param  string $path  The path to check.
 	 *
 	 * @return bool True if the path exists, false otherwise.
 	 * @throws FilesystemException If the path cannot be checked.
@@ -57,7 +57,7 @@ interface Filesystem {
 	/**
 	 * Create a directory.
 	 *
-	 * @param  string  $path  The path to create.
+	 * @param  string $path  The path to create.
 	 * @param  array  $options  Additional options.
 	 *
 	 * @throws FilesystemException If the directory cannot be created.
@@ -67,7 +67,7 @@ interface Filesystem {
 	/**
 	 * Remove a file.
 	 *
-	 * @param  string  $path  The path to remove.
+	 * @param  string $path  The path to remove.
 	 *
 	 * @throws FilesystemException If the file cannot be removed.
 	 */
@@ -76,7 +76,7 @@ interface Filesystem {
 	/**
 	 * Remove a directory.
 	 *
-	 * @param  string  $path  The path to remove.
+	 * @param  string $path  The path to remove.
 	 * @param  array  $options  Additional options.
 	 *
 	 * @throws FilesystemException If the directory cannot be removed.
@@ -86,7 +86,7 @@ interface Filesystem {
 	/**
 	 * Start streaming a file.
 	 *
-	 * @param  string  $path  The path to the file.
+	 * @param  string $path  The path to the file.
 	 *
 	 * @return ByteReadStream The stream identifier.
 	 * @throws FilesystemException If the stream cannot be opened.
@@ -104,7 +104,7 @@ interface Filesystem {
 	/**
 	 * Open a write stream to a file.
 	 *
-	 * @param  string  $path  The path to write to.
+	 * @param  string $path  The path to write to.
 	 *
 	 * @return ByteWriteStream The stream identifier.
 	 * @throws FilesystemException If the stream cannot be opened.
@@ -114,8 +114,8 @@ interface Filesystem {
 	/**
 	 * Write data to a file.
 	 *
-	 * @param  string  $path  The path to write to.
-	 * @param  string  $data  The data to write.
+	 * @param  string $path  The path to write to.
+	 * @param  string $data  The data to write.
 	 * @param  array  $options  Additional options.
 	 *
 	 * @throws FilesystemException If the data cannot be written.
@@ -125,8 +125,8 @@ interface Filesystem {
 	/**
 	 * Copy a file from one path to another.
 	 *
-	 * @param  string  $from_path  The path to copy from.
-	 * @param  string  $to_path  The path to copy to.
+	 * @param  string $from_path  The path to copy from.
+	 * @param  string $to_path  The path to copy to.
 	 * @param  array  $options  Additional options.
 	 *
 	 * @throws FilesystemException If the file cannot be copied.
@@ -136,8 +136,8 @@ interface Filesystem {
 	/**
 	 * Moves a file from one path to another.
 	 *
-	 * @param  string  $from_path  The path to move from.
-	 * @param  string  $to_path  The path to move to.
+	 * @param  string $from_path  The path to move from.
+	 * @param  string $to_path  The path to move to.
 	 * @param  array  $options  Additional options.
 	 *
 	 * @throws FilesystemException If the file cannot be moved.
@@ -148,7 +148,7 @@ interface Filesystem {
 	 * Buffers the entire contents of a file into a string
 	 * and returns it.
 	 *
-	 * @param  string  $path  The path to the file.
+	 * @param  string $path  The path to the file.
 	 *
 	 * @return string The contents of the file.
 	 * @throws FilesystemException If the file cannot be read.

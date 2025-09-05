@@ -10,15 +10,17 @@ use WordPress\Blueprints\VersionStrings\VersionConstraint;
 use WordPress\Blueprints\VersionStrings\WordPressVersion;
 
 class ExistingSiteResolver {
-	static public function resolve( Runtime $runtime, Tracker $progress, ?VersionConstraint $wpVersionConstraint = null ) {
-		$progress->split( [
-			'verify_installation' => 3,
-			'check_compatibility' => 3,
-			'verify_database'     => 4,
-		] );
+	public static function resolve( Runtime $runtime, Tracker $progress, ?VersionConstraint $wpVersionConstraint = null ) {
+		$progress->split(
+			array(
+				'verify_installation' => 3,
+				'check_compatibility' => 3,
+				'verify_database'     => 4,
+			)
+		);
 
-		$config    = $runtime->getConfiguration();
-		$targetFs  = $runtime->getTargetFilesystem();
+		$config   = $runtime->getConfiguration();
+		$targetFs = $runtime->getTargetFilesystem();
 
 		// 1. Verify it's a valid WordPress installation
 		$progress['verify_installation']->setCaption( 'Verifying WordPress installation' );

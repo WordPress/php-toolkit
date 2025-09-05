@@ -7,7 +7,7 @@ use ReturnTypeWillChange;
 
 class EntityIteratorChain implements Iterator {
 	private $assets_attempts_iterator = null;
-	private $entities_iterator = null;
+	private $entities_iterator        = null;
 
 	public function set_assets_attempts_iterator( Iterator $iterator ) {
 		$this->assets_attempts_iterator = $iterator;

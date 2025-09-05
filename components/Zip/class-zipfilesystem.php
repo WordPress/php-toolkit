@@ -22,11 +22,11 @@ class ZipFilesystem implements Filesystem {
 
 	private $last_file_stream;
 
-	const TYPE_DIR = 'dir';
+	const TYPE_DIR  = 'dir';
 	const TYPE_FILE = 'file';
 
 	const CENTRAL_DIRECTORY_INDEX = 'central-directory-index';
-	const FILE_ENTRY = 'file-entry';
+	const FILE_ENTRY              = 'file-entry';
 
 	/**
 	 * Don't support ZIP files with more than 2MB of central directory data.
@@ -87,7 +87,7 @@ class ZipFilesystem implements Filesystem {
 	}
 
 	public function is_dir( $path ) {
-		if ( '/' === $path ) {
+		if ( $path === '/' ) {
 			return true;
 		}
 		$this->load_central_directory();
@@ -137,14 +137,17 @@ class ZipFilesystem implements Filesystem {
 	}
 
 	private function load_central_directory() {
-		if ( null !== $this->central_directory ) {
+		if ( $this->central_directory !== null ) {
 			return true;
 		}
 
 		if ( $this->central_directory_size() >= self::MAX_CENTRAL_DIRECTORY_SIZE ) {
 			throw new FilesystemException(
-				sprintf( 'Central directory size %d exceeds the maximum allowed size of %d', $this->central_directory_size(),
-					self::MAX_CENTRAL_DIRECTORY_SIZE )
+				sprintf(
+					'Central directory size %d exceeds the maximum allowed size of %d',
+					$this->central_directory_size(),
+					self::MAX_CENTRAL_DIRECTORY_SIZE
+				)
 			);
 		}
 
@@ -170,7 +173,7 @@ class ZipFilesystem implements Filesystem {
 			 */
 			$path_segments = explode( '/', $entry->path );
 
-			for ( $i = 0; $i < count( $path_segments ) - 1; $i ++ ) {
+			for ( $i = 0; $i < count( $path_segments ) - 1; $i++ ) {
 				$path_so_far                             = implode( '/', array_slice( $path_segments, 0, $i + 1 ) ) . '/';
 				$this->central_directory[ $path_so_far ] = new CentralDirectoryEntry(
 					array(
@@ -202,7 +205,7 @@ class ZipFilesystem implements Filesystem {
 	}
 
 	private function collect_central_directory_end_header() {
-		if ( null !== $this->central_directory_end_header ) {
+		if ( $this->central_directory_end_header !== null ) {
 			return;
 		}
 
@@ -215,8 +218,10 @@ class ZipFilesystem implements Filesystem {
 		}
 		if ( ! ( $this->zip->get_object() instanceof EndCentralDirectoryEntry ) ) {
 			throw new FilesystemException(
-				sprintf( 'Expected end central directory index at the end of the ZIP file but found %s',
-					get_class( $this->zip->get_object() ) )
+				sprintf(
+					'Expected end central directory index at the end of the ZIP file but found %s',
+					get_class( $this->zip->get_object() )
+				)
 			);
 		}
 
@@ -224,6 +229,6 @@ class ZipFilesystem implements Filesystem {
 	}
 
 	public function get_meta(): array {
-		return [];
+		return array();
 	}
 }

@@ -43,7 +43,7 @@ class VersionConstraint {
 	 * Returns an array of error messages (empty if valid).
 	 */
 	public function validate(): array {
-		$errors = [];
+		$errors = array();
 		if ( $this->min !== null && $this->max !== null ) {
 			if ( $this->min->is( '>', $this->max ) ) {
 				$errors[] = sprintf( 'min (%s) is greater than max (%s)', $this->min, $this->max );
@@ -76,7 +76,7 @@ class VersionConstraint {
 	}
 
 	public function __toString(): string {
-		$parts = [];
+		$parts = array();
 		if ( $this->min !== null ) {
 			$parts[] = "min: {$this->min}";
 		}

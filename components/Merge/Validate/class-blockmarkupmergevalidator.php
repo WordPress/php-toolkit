@@ -54,7 +54,7 @@ class BlockMarkupMergeValidator implements MergeValidator {
 	}
 
 	private function assert_html_is_structurally_sound( $html ) {
-		$html           .= '<TERMINATE-PROCESSING>';
+		$html          .= '<TERMINATE-PROCESSING>';
 		$html_processor = WP_HTML_Processor::create_fragment( $html );
 
 		/**

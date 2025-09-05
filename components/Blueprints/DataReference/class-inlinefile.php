@@ -21,8 +21,8 @@ class InlineFile extends DataReference {
 	/**
 	 * Constructor.
 	 *
-	 * @param  string  $filename  The filename.
-	 * @param  string  $content  The content.
+	 * @param  string $filename  The filename.
+	 * @param  string $content  The content.
 	 */
 	public function __construct( array $definition ) {
 		if ( ! isset( $definition['filename'] ) || ! isset( $definition['content'] ) ) {
@@ -31,7 +31,7 @@ class InlineFile extends DataReference {
 
 		$this->filename = $definition['filename'];
 		$this->content  = $definition['content'];
-		parent::__construct($definition);
+		parent::__construct( $definition );
 	}
 
 	/**
@@ -55,7 +55,7 @@ class InlineFile extends DataReference {
 	/**
 	 * Check if an array represents a valid inline file.
 	 *
-	 * @param  array  $data  The array to check.
+	 * @param  array $data  The array to check.
 	 *
 	 * @return bool Whether the array is valid.
 	 */
@@ -70,6 +70,6 @@ class InlineFile extends DataReference {
 	 * @return string The human-readable name.
 	 */
 	public function get_human_readable_name(): string {
-		return "Inline file: " . basename( $this->filename );
+		return 'Inline file: ' . basename( $this->filename );
 	}
 }
