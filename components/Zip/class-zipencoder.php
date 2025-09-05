@@ -116,22 +116,22 @@ class ZipEncoder {
 	private function recordFileForCentralDirectory( FileEntry $file_entry ) {
 		$this->central_directory[] = new CentralDirectoryEntry(
 			array(
-				'versionCreated'     => 2,
-				'versionNeeded'      => 2,
-				'generalPurpose'     => $file_entry->general_purpose,
-				'compressionMethod'  => $file_entry->compression_method,
-				'lastModifiedTime'   => $file_entry->last_modified_time,
-				'lastModifiedDate'   => $file_entry->last_modified_date,
+				'version_created'     => 2,
+				'version_needed'      => 2,
+				'general_purpose'     => $file_entry->general_purpose,
+				'compression_method'  => $file_entry->compression_method,
+				'last_modified_time'   => $file_entry->last_modified_time,
+				'last_modified_date'   => $file_entry->last_modified_date,
 				'crc'                => $file_entry->crc,
-				'compressedSize'     => $file_entry->compressed_size,
-				'uncompressedSize'   => $file_entry->uncompressed_size,
-				'diskNumber'         => 0,
-				'internalAttributes' => 0,
-				'externalAttributes' => 0,
-				'firstByteAt'        => $this->bytes_written,
+				'compressed_size'     => $file_entry->compressed_size,
+				'uncompressed_size'   => $file_entry->uncompressed_size,
+				'disk_number'         => 0,
+				'internal_attributes' => 0,
+				'external_attributes' => 0,
+				'first_byte_at'        => $this->bytes_written,
 				'path'               => $file_entry->path,
 				'extra'              => $file_entry->extra,
-				'fileComment'        => '',
+				'file_comment'        => '',
 			)
 		);
 	}
@@ -157,10 +157,10 @@ class ZipEncoder {
 		$this->append_end_central_directory_entry(
 			new EndCentralDirectoryEntry(
 				array(
-					'numberCentralDirectoryRecordsOnThisDisk' => count( $this->central_directory ),
-					'numberCentralDirectoryRecords'           => count( $this->central_directory ),
-					'centralDirectorySize'                    => $this->bytes_written - $central_directory_offset,
-					'centralDirectoryOffset'                  => $central_directory_offset,
+					'number_central_directory_records_on_this_disk' => count( $this->central_directory ),
+					'number_central_directory_records'           => count( $this->central_directory ),
+					'central_directory_size'                    => $this->bytes_written - $central_directory_offset,
+					'central_directory_offset'                  => $central_directory_offset,
 				)
 			)
 		);

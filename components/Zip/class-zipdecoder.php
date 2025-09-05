@@ -134,7 +134,7 @@ class ZipDecoder {
 		$this->byte_reader->pull( CentralDirectoryEntry::HEADER_SIZE, ByteReadStream::PULL_EXACTLY );
 		$data          = $this->byte_reader->consume( CentralDirectoryEntry::HEADER_SIZE );
 		$header_fields = unpack(
-			'vversionCreated/vversionNeeded/vgeneralPurpose/vcompressionMethod/vlastModifiedTime/vlastModifiedDate/Vcrc/VcompressedSize/VuncompressedSize/vpathLength/vextraLength/vfileCommentLength/vdiskNumber/vinternalAttributes/VexternalAttributes/VfirstByteAt',
+			'vversion_created/vversion_needed/vgeneral_purpose/vcompression_method/vlast_modified_time/vlast_modified_date/Vcrc/Vcompressed_size/Vuncompressed_size/vpath_length/vextra_length/vfile_comment_length/vdisk_number/vinternal_attributes/Vexternal_attributes/Vfirst_byte_at',
 			$data
 		);
 		$this->object  = new CentralDirectoryEntry( $header_fields );
@@ -157,7 +157,7 @@ class ZipDecoder {
 		$this->byte_reader->pull( EndCentralDirectoryEntry::HEADER_SIZE, ByteReadStream::PULL_EXACTLY );
 		$data          = $this->byte_reader->consume( EndCentralDirectoryEntry::HEADER_SIZE );
 		$header_fields = unpack(
-			'vdiskNumber/vcentralDirectoryStartDisk/vnumberCentralDirectoryRecordsOnThisDisk/vnumberCentralDirectoryRecords/VcentralDirectorySize/VcentralDirectoryOffset/vcommentLength',
+			'vdisk_number/vcentral_directory_start_disk/vnumber_central_directory_records_on_this_disk/vnumber_central_directory_records/Vcentral_directory_size/Vcentral_directory_offset/vcomment_length',
 			$data
 		);
 		$this->object  = new EndCentralDirectoryEntry(
