@@ -29,7 +29,7 @@ class CurlTransport implements TransportInterface {
     /**
 	 * @var array Map of cURL handle resource IDs to request IDs (for callbacks).
 	 */
-    protected $handleMap = array();
+    protected $handle_map = array();
 
     /**
      * Initializes a new CurlClient with optional settings.
@@ -64,7 +64,7 @@ class CurlTransport implements TransportInterface {
 			$this->state->get_active_requests( [ Request::STATE_ENQUEUED ] )
 		);
 
-		if(count($this->handleMap) === 0) {
+		if(count($this->handle_map) === 0) {
 			return false;
 		}
 
@@ -92,7 +92,7 @@ class CurlTransport implements TransportInterface {
 				continue;
 			}
             $this->state->connections[ $request->id ]->http_socket = $ch;
-            $this->handleMap[ (int) $ch ] = $request->id;
+            $this->handle_map[ (int) $ch ] = $request->id;
         }
 	}
 
@@ -106,7 +106,7 @@ class CurlTransport implements TransportInterface {
 		while ( $info = curl_multi_info_read( $this->multi_handle ) ) {
 			if ( $info['msg'] === CURLMSG_DONE ) {
 				$ch = $info['handle'];
-				$id = $this->handleMap[ (int) $ch ] ?? null;
+				$id = $this->handle_map[ (int) $ch ] ?? null;
 				if ( $id === null ) {
 					throw new HttpClientException('Received completion event for an unknown request ' . ($ch ? (int) $ch : 'unknown'));
 				}
@@ -253,7 +253,7 @@ class CurlTransport implements TransportInterface {
     }
 
 	private function get_request_by_handle( $handle ) {
-		$request_id = $this->handleMap[ (int) $handle ] ?? null;
+		$request_id = $this->handle_map[ (int) $handle ] ?? null;
 		return $this->state->get_request_by_id($request_id);
 	}
 
@@ -273,7 +273,7 @@ class CurlTransport implements TransportInterface {
 			curl_multi_remove_handle( $this->multi_handle, $handle );
 			curl_close( $handle );
 		}
-		unset( $this->handleMap[ (int) $handle ] );
+		unset( $this->handle_map[ (int) $handle ] );
 	}
 
 }

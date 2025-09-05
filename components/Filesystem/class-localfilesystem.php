@@ -26,8 +26,8 @@ class LocalFilesystem implements Filesystem {
 		// This allows us to use all wp_unix_* functions across the board.
 		if ( null === $root ) {
 			if ( strtoupper( substr( PHP_OS, 0, 3 ) ) === 'WIN' ) {
-				$systemDrive = getenv( 'SystemDrive' );
-				$root = $systemDrive ? $systemDrive . '\\' : 'C:\\';
+				$system_drive = getenv( 'SystemDrive' );
+				$root = $system_drive ? $system_drive . '\\' : 'C:\\';
 			} else {
 				$root = '/';
 			}

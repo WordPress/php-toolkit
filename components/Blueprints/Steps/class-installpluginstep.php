@@ -33,13 +33,13 @@ class InstallPluginStep implements StepInterface {
 	 * Optional key-value pairs passed to the plugin during activation.
 	 * @var array<string, mixed>|null
 	 */
-	public $activationOptions;
+	public $activation_options;
 
 	/**
 	 * Behavior on installation error. Defaults to THROW_ERROR.
 	 * @var string
 	 */
-	public $onError;
+	public $on_error;
 
 	/**
 	 * @param  DataReference  $source  Plugin source reference.
@@ -50,13 +50,13 @@ class InstallPluginStep implements StepInterface {
 	public function __construct(
 		DataReference $source,
 		bool $active = true,
-		?array $activationOptions = null,
-		string $onError = 'throw'
+		?array $activation_options = null,
+		string $on_error = 'throw'
 	) {
 		$this->source            = $source;
 		$this->active            = $active;
-		$this->activationOptions = $activationOptions;
-		$this->onError           = $onError;
+		$this->activation_options = $activation_options;
+		$this->on_error           = $on_error;
 	}
 
 	public function run( Runtime $runtime, Tracker $tracker ) {
@@ -325,7 +325,7 @@ exit( 0 );
 PHP
 				,
 				[ 'PLUGIN_ZIP_PATH' => $zip_absolute_path ]
-			)->outputFileContent;
+			)->output_file_content;
 
 			if ( $this->active ) {
 				$tracker->set( 75, 'Activating plugin ' . $plugin_data->get_human_readable_name() );

@@ -46,22 +46,22 @@ class FileEntry {
 	/**
 	 * @var int
 	 */
-	public $generalPurpose = 0;
+	public $general_purpose = 0;
 
 	/**
 	 * @var int
 	 */
-	public $compressionMethod;
+	public $compression_method;
 
 	/**
 	 * @var int
 	 */
-	public $lastModifiedTime;
+	public $last_modified_time;
 
 	/**
 	 * @var int
 	 */
-	public $lastModifiedDate;
+	public $last_modified_date;
 
 	/**
 	 * @var int
@@ -71,22 +71,22 @@ class FileEntry {
 	/**
 	 * @var int
 	 */
-	public $compressedSize;
+	public $compressed_size;
 
 	/**
 	 * @var int
 	 */
-	public $uncompressedSize;
+	public $uncompressed_size;
 
 	/**
 	 * @var int
 	 */
-	public $pathLength = 0;
+	public $path_length = 0;
 
 	/**
 	 * @var int
 	 */
-	public $extraLength = 0;
+	public $extra_length = 0;
 
 	/**
 	 * @var string
@@ -115,28 +115,28 @@ class FileEntry {
 		}
 
 		// Convert Unix timestamp to DOS date/time format
-		if ( null === $this->lastModifiedDate ) {
+		if ( null === $this->last_modified_date ) {
 			// DOS date format: bits 0-4: day, bits 5-8: month, bits 9-15: years since 1980
-			$dt                     = getdate( $this->lastModifiedTime );
-			$this->lastModifiedDate = ( ( $dt['year'] - 1980 ) << 9 ) |
+			$dt                     = getdate( $this->last_modified_time );
+			$this->last_modified_date = ( ( $dt['year'] - 1980 ) << 9 ) |
 			                          ( $dt['mon'] << 5 ) |
 			                          $dt['mday'];
 		}
 
-		if ( null === $this->lastModifiedTime ) {
+		if ( null === $this->last_modified_time ) {
 			// DOS time format: bits 0-4: seconds/2, bits 5-10: minutes, bits 11-15: hours
-			$dt                     = getdate( $this->lastModifiedTime );
-			$this->lastModifiedTime = ( $dt['hours'] << 11 ) |
+			$dt                     = getdate( $this->last_modified_time );
+			$this->last_modified_time = ( $dt['hours'] << 11 ) |
 			                          ( $dt['minutes'] << 5 ) |
 			                          ( floor( $dt['seconds'] / 2 ) );
 		}
 
 		if ( null !== $this->path ) {
-			$this->pathLength = strlen( $this->path );
+			$this->path_length = strlen( $this->path );
 		}
 
 		if ( null !== $this->extra ) {
-			$this->extraLength = strlen( $this->extra );
+			$this->extra_length = strlen( $this->extra );
 		}
 	}
 }

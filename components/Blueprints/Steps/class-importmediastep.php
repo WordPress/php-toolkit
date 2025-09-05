@@ -67,7 +67,7 @@ class ImportMediaStep implements StepInterface {
 			$upload_dir = wp_upload_dir();
 			append_output( json_encode($upload_dir) );
 			'
-		)->outputFileContent;
+		)->output_file_content;
 
 		$upload_dir = json_decode( $wp_upload_dir, true );
 		if ( ! $upload_dir || ! isset( $upload_dir['path'] ) ) {

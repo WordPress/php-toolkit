@@ -108,20 +108,20 @@ class ZipDecoder {
 		);
 		$this->object  = new FileEntry( $header_fields );
 
-		$this->byte_reader->pull( $this->object->pathLength, ByteReadStream::PULL_EXACTLY );
-		$path               = $this->byte_reader->consume( $this->object->pathLength );
+		$this->byte_reader->pull( $this->object->path_length, ByteReadStream::PULL_EXACTLY );
+		$path               = $this->byte_reader->consume( $this->object->path_length );
 		$this->object->path = self::sanitize_path( $path );
 
-		$this->byte_reader->pull( $this->object->extraLength, ByteReadStream::PULL_EXACTLY );
-		$extra               = $this->byte_reader->consume( $this->object->extraLength );
+		$this->byte_reader->pull( $this->object->extra_length, ByteReadStream::PULL_EXACTLY );
+		$extra               = $this->byte_reader->consume( $this->object->extra_length );
 		$this->object->extra = $extra;
 
 		$limit_reader = new LimitedByteReadStream(
 			$this->byte_reader,
-			$this->object->compressedSize
+			$this->object->compressed_size
 		);
 
-		$is_compressed = $this->object->compressionMethod === self::COMPRESSION_DEFLATE;
+		$is_compressed = $this->object->compression_method === self::COMPRESSION_DEFLATE;
 		if ( $is_compressed ) {
 			$this->object->body_reader = new InflateReadStream( $limit_reader, ZLIB_ENCODING_RAW );
 		} else {
@@ -139,17 +139,17 @@ class ZipDecoder {
 		);
 		$this->object  = new CentralDirectoryEntry( $header_fields );
 
-		$this->byte_reader->pull( $this->object->pathLength, ByteReadStream::PULL_EXACTLY );
-		$path_bytes         = $this->byte_reader->consume( $this->object->pathLength );
+		$this->byte_reader->pull( $this->object->path_length, ByteReadStream::PULL_EXACTLY );
+		$path_bytes         = $this->byte_reader->consume( $this->object->path_length );
 		$this->object->path = self::sanitize_path( $path_bytes );
 
-		$this->byte_reader->pull( $this->object->extraLength, ByteReadStream::PULL_EXACTLY );
-		$extra_bytes         = $this->byte_reader->consume( $this->object->extraLength );
+		$this->byte_reader->pull( $this->object->extra_length, ByteReadStream::PULL_EXACTLY );
+		$extra_bytes         = $this->byte_reader->consume( $this->object->extra_length );
 		$this->object->extra = $extra_bytes;
 
-		$this->byte_reader->pull( $this->object->fileCommentLength, ByteReadStream::PULL_EXACTLY );
-		$file_comment_bytes        = $this->byte_reader->consume( $this->object->fileCommentLength );
-		$this->object->fileComment = $file_comment_bytes;
+		$this->byte_reader->pull( $this->object->file_comment_length, ByteReadStream::PULL_EXACTLY );
+		$file_comment_bytes        = $this->byte_reader->consume( $this->object->file_comment_length );
+		$this->object->file_comment = $file_comment_bytes;
 		$this->state               = self::STATE_OBJECT_READY;
 	}
 
@@ -164,8 +164,8 @@ class ZipDecoder {
 			$header_fields
 		);
 
-		$this->byte_reader->pull( $this->object->commentLength, ByteReadStream::PULL_EXACTLY );
-		$comment_bytes         = $this->byte_reader->consume( $this->object->commentLength );
+		$this->byte_reader->pull( $this->object->comment_length, ByteReadStream::PULL_EXACTLY );
+		$comment_bytes         = $this->byte_reader->consume( $this->object->comment_length );
 		$this->object->comment = $comment_bytes;
 		$this->state           = self::STATE_OBJECT_READY;
 	}

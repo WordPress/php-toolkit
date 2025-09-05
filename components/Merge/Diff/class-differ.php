@@ -11,5 +11,5 @@ interface Differ {
 	 *
 	 * @return Diff The computed differences
 	 */
-	public function diff( string $oldString, string $newString ): Diff;
+	public function diff( string $old_string, string $new_string ): Diff;
 }

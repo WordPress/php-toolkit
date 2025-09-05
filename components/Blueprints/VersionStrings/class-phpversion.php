@@ -20,15 +20,15 @@ class PHPVersion implements Version {
 	/**
 	 * @var bool
 	 */
-	private $patchSpecified;
+	private $patch_specified;
 	/**
 	 * @var int
 	 */
-	private $stageRank;
+	private $stage_rank;
 	/**
 	 * @var int
 	 */
-	private $stageIndex;
+	private $stage_index;
 
 	/**
 	 * @return $this|false
@@ -47,7 +47,7 @@ class PHPVersion implements Version {
 			return false;
 		}
 
-		$stageWeights = [
+		$stage_weights = [
 			'dev'   => 0,
 			'src'   => 0,
 			'alpha' => 1,
@@ -64,18 +64,18 @@ class PHPVersion implements Version {
 			(int) ( $m['minor'] ?? 0 ),
 			(int) ( $m['patch'] ?? 0 ),
 			isset( $m['patch'] ) && $m['patch'] !== '',
-			$stageWeights[ strtolower( $m['label'] ?? '' ) ] ?? 0,
+			$stage_weights[ strtolower( $m['label'] ?? '' ) ] ?? 0,
 			(int) ( $m['labelnum'] ?? ( $m['build'] ?? 0 ) )
 		);
 	}
 
-	private function __construct( $major, $minor, $patch, $patchSpecified, $stageRank, $stageIndex ) {
+	private function __construct( $major, $minor, $patch, $patch_specified, $stage_rank, $stage_index ) {
 		$this->major          = $major;
 		$this->minor          = $minor;
 		$this->patch          = $patch;
-		$this->patchSpecified = $patchSpecified;
-		$this->stageRank      = $stageRank;
-		$this->stageIndex     = $stageIndex;
+		$this->patch_specified = $patch_specified;
+		$this->stage_rank      = $stage_rank;
+		$this->stage_index     = $stage_index;
 	}
 
 	public function compareTo( Version $other ): int {
@@ -86,7 +86,7 @@ class PHPVersion implements Version {
 		}
 
 		if ( $this->patch !== $other->patch ) {
-			if ( ! $this->patchSpecified || ! $other->patchSpecified ) {
+			if ( ! $this->patch_specified || ! $other->patch_specified ) {
 				// do nothing – fall through to stage comparison
 			} else {
 				return ( $this->patch < $other->patch ) ? - 1 : 1;

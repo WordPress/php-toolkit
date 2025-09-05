@@ -3,93 +3,93 @@
 namespace WordPress\Merge\Diff;
 
 class LineDiffer implements Differ {
-	public function diff( string $oldString, string $newString ): Diff {
-		$oldLines = explode( "\n", $oldString );
-		$newLines = explode( "\n", $newString );
+	public function diff( string $old_string, string $new_string ): Diff {
+		$old_lines = explode( "\n", $old_string );
+		$new_lines = explode( "\n", $new_string );
 
-		$lcs = $this->longestCommonSubsequence( $oldLines, $newLines );
+		$lcs = $this->longestCommonSubsequence( $old_lines, $new_lines );
 
-		$oldIndex = 0;
-		$newIndex = 0;
+		$old_index = 0;
+		$new_index = 0;
 		$diff     = array();
 
 		foreach ( $lcs as $match ) {
-			while ( $oldIndex < $match['old_index'] || $newIndex < $match['new_index'] ) {
-				if ( $oldIndex < $match['old_index'] ) {
+			while ( $old_index < $match['old_index'] || $new_index < $match['new_index'] ) {
+				if ( $old_index < $match['old_index'] ) {
 					$diff[] = array(
 						Diff::DIFF_DELETE,
-						$oldLines[ $oldIndex ] . "\n",
+						$old_lines[ $old_index ] . "\n",
 					);
-					++ $oldIndex;
+					++ $old_index;
 				}
-				if ( $newIndex < $match['new_index'] ) {
+				if ( $new_index < $match['new_index'] ) {
 					$diff[] = array(
 						Diff::DIFF_INSERT,
-						$newLines[ $newIndex ] . "\n",
+						$new_lines[ $new_index ] . "\n",
 					);
-					++ $newIndex;
+					++ $new_index;
 				}
 			}
 
 			// Add matching line as context
-			if ( $oldIndex < count( $oldLines ) && $newIndex < count( $newLines ) ) {
+			if ( $old_index < count( $old_lines ) && $new_index < count( $new_lines ) ) {
 				$diff[] = array(
 					Diff::DIFF_EQUAL,
-					$oldLines[ $oldIndex ] . "\n",
+					$old_lines[ $old_index ] . "\n",
 				);
-				++ $oldIndex;
-				++ $newIndex;
+				++ $old_index;
+				++ $new_index;
 			}
 		}
 
 		// Add remaining lines
-		while ( $oldIndex < count( $oldLines ) ) {
+		while ( $old_index < count( $old_lines ) ) {
 			$diff[] = array(
 				Diff::DIFF_DELETE,
-				$oldLines[ $oldIndex ] . "\n",
+				$old_lines[ $old_index ] . "\n",
 			);
-			++ $oldIndex;
+			++ $old_index;
 		}
-		while ( $newIndex < count( $newLines ) ) {
+		while ( $new_index < count( $new_lines ) ) {
 			$diff[] = array(
 				Diff::DIFF_INSERT,
-				$newLines[ $newIndex ] . "\n",
+				$new_lines[ $new_index ] . "\n",
 			);
-			++ $newIndex;
+			++ $new_index;
 		}
 
 		return new Diff( $diff );
 	}
 
-	private function longestCommonSubsequence( array $oldLines, array $newLines ): array {
-		$oldLen    = count( $oldLines );
-		$newLen    = count( $newLines );
-		$lcsMatrix = array_fill( 0, $oldLen + 1, array_fill( 0, $newLen + 1, 0 ) );
+	private function longestCommonSubsequence( array $old_lines, array $new_lines ): array {
+		$old_len    = count( $old_lines );
+		$new_len    = count( $new_lines );
+		$lcs_matrix = array_fill( 0, $old_len + 1, array_fill( 0, $new_len + 1, 0 ) );
 
 		// Build the LCS matrix
-		for ( $i = 1; $i <= $oldLen; $i ++ ) {
-			for ( $j = 1; $j <= $newLen; $j ++ ) {
-				if ( $oldLines[ $i - 1 ] === $newLines[ $j - 1 ] ) {
-					$lcsMatrix[ $i ][ $j ] = $lcsMatrix[ $i - 1 ][ $j - 1 ] + 1;
+		for ( $i = 1; $i <= $old_len; $i ++ ) {
+			for ( $j = 1; $j <= $new_len; $j ++ ) {
+				if ( $old_lines[ $i - 1 ] === $new_lines[ $j - 1 ] ) {
+					$lcs_matrix[ $i ][ $j ] = $lcs_matrix[ $i - 1 ][ $j - 1 ] + 1;
 				} else {
-					$lcsMatrix[ $i ][ $j ] = max( $lcsMatrix[ $i - 1 ][ $j ], $lcsMatrix[ $i ][ $j - 1 ] );
+					$lcs_matrix[ $i ][ $j ] = max( $lcs_matrix[ $i - 1 ][ $j ], $lcs_matrix[ $i ][ $j - 1 ] );
 				}
 			}
 		}
 
 		// Backtrack to find the LCS
 		$lcs = array();
-		$i   = $oldLen;
-		$j   = $newLen;
+		$i   = $old_len;
+		$j   = $new_len;
 		while ( $i > 0 && $j > 0 ) {
-			if ( $oldLines[ $i - 1 ] === $newLines[ $j - 1 ] ) {
+			if ( $old_lines[ $i - 1 ] === $new_lines[ $j - 1 ] ) {
 				$lcs[] = array(
 					'old_index' => $i - 1,
 					'new_index' => $j - 1,
 				);
 				-- $i;
 				-- $j;
-			} elseif ( $lcsMatrix[ $i - 1 ][ $j ] >= $lcsMatrix[ $i ][ $j - 1 ] ) {
+			} elseif ( $lcs_matrix[ $i - 1 ][ $j ] >= $lcs_matrix[ $i ][ $j - 1 ] ) {
 				-- $i;
 			} else {
 				-- $j;

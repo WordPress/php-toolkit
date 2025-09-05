@@ -42,13 +42,13 @@ class CLI {
 	 * @return array            [ $positionals, $options ]
 	 * @throws InvalidArgumentException for unknown options or missing required values.
 	 */
-	public static function parseCommandArgsAndOptions( array $argv, array $optionDefs ): array {
+	public static function parseCommandArgsAndOptions( array $argv, array $option_defs ): array {
 		$positionals = [];
 		$options     = [];
 		$short2long  = [];
 	
 		// Initialise defaults & maps
-		foreach ( $optionDefs as $long => $def ) {
+		foreach ( $option_defs as $long => $def ) {
 			[ $short, , $default ] = $def;
 			$options[ $long ] = $default;
 			if ( $short ) {
@@ -63,11 +63,11 @@ class CLI {
 			// Long option --foo or --foo=bar
 			if ( preg_match( '/^--([^=]+)(=(.*))?$/', $token, $m ) ) {
 				$long = $m[1];
-				if ( ! isset( $optionDefs[ $long ] ) ) {
+				if ( ! isset( $option_defs[ $long ] ) ) {
 					throw new InvalidArgumentException( "Unknown option --$long" );
 				}
-				[ $short, $hasVal ] = $optionDefs[ $long ];
-				if ( $hasVal ) {
+				[ $short, $has_val ] = $option_defs[ $long ];
+				if ( $has_val ) {
 					$val = $m[3] ?? ( $argv[ ++ $i ] ?? null );
 					if ( $val === null ) {
 						throw new InvalidArgumentException( "Option --$long requires a value" );
@@ -83,16 +83,16 @@ class CLI {
 			// Short option(s): -abc or -e mysql or -e=mysql
 			if ( preg_match( '/^-([A-Za-z]{1,})(=(.*))?$/', $token, $m ) ) {
 				$bundle    = str_split( $m[1] );
-				$inlineVal = $m[3] ?? null;
+				$inline_val = $m[3] ?? null;
 				foreach ( $bundle as $idx => $short ) {
 					if ( ! isset( $short2long[ $short ] ) ) {
 						throw new InvalidArgumentException( "Unknown option -$short" );
 					}
 					$long   = $short2long[ $short ];
-					$hasVal = $optionDefs[ $long ][1];
-					if ( $hasVal ) {
-						if ( $inlineVal !== null && $idx === 0 ) {
-							$options[ $long ] = $inlineVal;
+					$has_val = $option_defs[ $long ][1];
+					if ( $has_val ) {
+						if ( $inline_val !== null && $idx === 0 ) {
+							$options[ $long ] = $inline_val;
 						} else {
 							$val = ( $idx === count( $bundle ) - 1 ) ? ( $argv[ ++ $i ] ?? null ) : null;
 							if ( $val === null ) {

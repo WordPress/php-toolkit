@@ -56,8 +56,8 @@ class CLILogger implements LoggerInterface {
 
 		$color            = self::COLORS[ $level ] ?? "\033[0m";
 		$reset            = "\033[0m";
-		$formattedMessage = $this->interpolate( $message, $context );
-		fwrite( $this->stream, "\n{$color}[{$level}] {$formattedMessage}{$reset}\n" );
+		$formatted_message = $this->interpolate( $message, $context );
+		fwrite( $this->stream, "\n{$color}[{$level}] {$formatted_message}{$reset}\n" );
 	}
 
 	private function interpolate( string $message, array $context = [] ): string {

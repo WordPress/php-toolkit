@@ -11,8 +11,8 @@ class MyersDiffer implements Differ {
 		$this->dmp = new DiffMatchPatch();
 	}
 
-	public function diff( string $oldString, string $newString ): Diff {
-		$diff = $this->dmp->diff_main( $oldString, $newString, false );
+	public function diff( string $old_string, string $new_string ): Diff {
+		$diff = $this->dmp->diff_main( $old_string, $new_string, false );
 		$this->dmp->diff_cleanupSemantic( $diff );
 		$this->dmp->diff_cleanupEfficiency( $diff );
 

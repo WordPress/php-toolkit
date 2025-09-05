@@ -11,17 +11,17 @@ class ImportThemeStarterContentStep implements StepInterface {
 	 * If null, might imply the currently active theme.
 	 * @var string|null
 	 */
-	public $themeSlug;
+	public $theme_slug;
 
 	/**
 	 * @param  string|null  $themeSlug  Optional theme slug.
 	 */
-	public function __construct( ?string $themeSlug = null ) {
-		$this->themeSlug = $themeSlug;
+	public function __construct( ?string $theme_slug = null ) {
+		$this->theme_slug = $theme_slug;
 	}
 
 	public function run( Runtime $runtime, Tracker $tracker ) {
-		$tracker->setCaption( 'Importing theme starter content' . ( $this->themeSlug ? ' for ' . $this->themeSlug : '' ) );
+		$tracker->setCaption( 'Importing theme starter content' . ( $this->theme_slug ? ' for ' . $this->theme_slug : '' ) );
 		// Inline PHP script to avoid reading a static script.php file via
 		// file_get_contents() inside the built blueprints.phar file.
 		$runtime->evalPhpCodeInSubProcess(

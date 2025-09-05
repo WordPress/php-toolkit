@@ -35,14 +35,14 @@ class InlineDirectory extends DataReference {
 		$this->name = $data['directoryName'];
 		
 		$children = [];
-		foreach ( $data['files'] as $fileName => $child ) {
+		foreach ( $data['files'] as $file_name => $child ) {
 			if ( is_string( $child ) ) {
-				$children[$fileName] = new InlineFile( [
-					'filename' => $fileName,
+				$children[$file_name] = new InlineFile( [
+					'filename' => $file_name,
 					'content' => $child
 				] );
 			} elseif ( self::is_valid( $child ) ) {
-				$children[$fileName] = new self( $child );
+				$children[$file_name] = new self( $child );
 			} else {
 				throw new InvalidArgumentException( 'Invalid inline directory child' );
 			}

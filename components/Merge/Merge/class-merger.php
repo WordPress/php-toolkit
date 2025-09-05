@@ -13,5 +13,5 @@ interface Merger {
 	 *
 	 * @return MergeResult The merged result
 	 */
-	public function merge( Diff $diffAB, Diff $diffAC ): MergeResult;
+	public function merge( Diff $diff_ab, Diff $diff_ac ): MergeResult;
 }

@@ -21,14 +21,14 @@ class EvalResult {
 	/**
 	 * @var string
 	 */
-	public $outputFileContent;
+	public $output_file_content;
 	/**
 	 * @var Process
 	 */
 	public $process;
 
-	public function __construct( string $outputFileContent, Process $process ) {
-		$this->outputFileContent = $outputFileContent;
+	public function __construct( string $output_file_content, Process $process ) {
+		$this->output_file_content = $output_file_content;
 		$this->process           = $process;
 	}
 }
@@ -37,7 +37,7 @@ class Runtime {
 	/**
 	 * @var Filesystem
 	 */
-	private $targetFs;
+	private $target_fs;
 	/**
 	 * @var RunnerConfiguration
 	 */
@@ -57,38 +57,38 @@ class Runtime {
 	/**
 	 * @var string
 	 */
-	private $tempRoot;
+	private $temp_root;
 	/**
 	 * @var DataReference
 	 */
-	private $wpCliReference;
+	private $wp_cli_reference;
 	/**
 	 * @var string
 	 */
-	private $executionContextRoot;
+	private $execution_context_root;
 
 	public function __construct(
-		Filesystem $targetFs,
+		Filesystem $target_fs,
 		RunnerConfiguration $configuration,
 		DataReferenceResolver $assets,
 		Client $client,
 		array $blueprint,
-		string $tempRoot,
-		DataReference $wpCliReference,
-		?string $executionContextRoot=null
+		string $temp_root,
+		DataReference $wp_cli_reference,
+		?string $execution_context_root=null
 	) {
-		$this->targetFs       = $targetFs;
+		$this->target_fs       = $target_fs;
 		$this->configuration  = $configuration;
 		$this->assets         = $assets;
 		$this->client         = $client;
 		$this->blueprint      = $blueprint;
-		$this->tempRoot       = $tempRoot;
-		$this->wpCliReference = $wpCliReference;
-		$this->executionContextRoot = $executionContextRoot;
+		$this->temp_root       = $temp_root;
+		$this->wp_cli_reference = $wp_cli_reference;
+		$this->execution_context_root = $execution_context_root;
 	}
 
 	public function getExecutionContextRoot(): ?string {
-		return $this->executionContextRoot;
+		return $this->execution_context_root;
 	}
 
 	public function getHttpClient(): Client {
@@ -104,11 +104,11 @@ class Runtime {
 	}
 
 	public function getTargetFilesystem(): Filesystem {
-		return $this->targetFs;
+		return $this->target_fs;
 	}
 
 	public function getTempRoot(): string {
-		return $this->tempRoot;
+		return $this->temp_root;
 	}
 
 	public function getDataReferenceResolver(): DataReferenceResolver {
@@ -123,18 +123,18 @@ class Runtime {
 	}
 
 	public function saveToTemporaryFile( File $file ) {
-		$tempFile     = $this->createTemporaryFile();
-		$write_stream = FileWriteStream::from_path( $tempFile );
+		$temp_file     = $this->createTemporaryFile();
+		$write_stream = FileWriteStream::from_path( $temp_file );
 		pipe_stream( $file->getStream(), $write_stream );
 		$write_stream->close_writing();
 
-		return $tempFile;
+		return $temp_file;
 	}
 
 	public function getWpCliPath(): string {
 		$wp_cli_path = wp_join_unix_paths( $this->getTempRoot(), 'wp-cli.phar' );
 		if ( ! file_exists( $wp_cli_path ) ) {
-			$resolved = $this->resolve( $this->wpCliReference );
+			$resolved = $this->resolve( $this->wp_cli_reference );
 			if ( ! $resolved instanceof File ) {
 				throw new BlueprintExecutionException( 'Error downloading WP-CLI' );
 			}
@@ -162,7 +162,7 @@ class Runtime {
 
 	public function createTemporaryDirectory(): string {
 		do {
-			$dirname = wp_join_unix_paths( $this->tempRoot, uniqid( 'tmp_' ) );
+			$dirname = wp_join_unix_paths( $this->temp_root, uniqid( 'tmp_' ) );
 		} while ( file_exists( $dirname ) );
 
 		mkdir( $dirname, 0777, true );
@@ -171,17 +171,17 @@ class Runtime {
 	}
 
 	public function withTemporaryFile( callable $callback, ?string $suffix = null ) {
-		$tempFile = $this->createTemporaryFile( $suffix );
+		$temp_file = $this->createTemporaryFile( $suffix );
 		try {
-			return $callback( $tempFile );
+			return $callback( $temp_file );
 		} finally {
-			@unlink( $tempFile );
+			@unlink( $temp_file );
 		}
 	}
 
 	public function createTemporaryFile( ?string $suffix = null ): string {
 		do {
-			$filename = wp_join_unix_paths( $this->tempRoot, uniqid( $suffix ?? 'tmp_' ) );
+			$filename = wp_join_unix_paths( $this->temp_root, uniqid( $suffix ?? 'tmp_' ) );
 		} while ( file_exists( $filename ) );
 
 		touch( $filename );
@@ -248,30 +248,30 @@ class Runtime {
 			file_put_contents( $script_path, $code );
 
 			// @TODO: Cleaning up the temporary directory is not done here.
-			$tempDir = $this->createTemporaryDirectory();
+			$temp_dir = $this->createTemporaryDirectory();
 
 			// Still put the script in a temporary file as the path may be refering
 			// to a file inside the currently executed .phar archive.
-			$actual_script_path = wp_join_unix_paths( $tempDir, 'script.php' );
+			$actual_script_path = wp_join_unix_paths( $temp_dir, 'script.php' );
 			$code = '<?php function append_output( $output ) { file_put_contents( getenv("OUTPUT_FILE"), $output, FILE_APPEND ); } $_SERVER["HTTP_HOST"] = "localhost"; ?>';
 			$code .= file_get_contents( $script_path );
 			file_put_contents( $actual_script_path, $code );
 
-			$output_path = wp_join_unix_paths( $tempDir, 'output.txt' );
+			$output_path = wp_join_unix_paths( $temp_dir, 'output.txt' );
 			touch( $output_path );
 
-			$phpBinary = null;
+			$php_binary = null;
 			if ( getenv('PHP_BINARY') ) {
-				$phpBinary = getenv('PHP_BINARY');
+				$php_binary = getenv('PHP_BINARY');
 			} elseif ( PHP_BINARY ) {
-				$phpBinary = PHP_BINARY;
+				$php_binary = PHP_BINARY;
 			} else {
-				$phpBinary = 'php';
+				$php_binary = 'php';
 			}
 
 			return $this->startShellCommand(
 				array(
-					$phpBinary,
+					$php_binary,
 					$actual_script_path,
 				),
 				$this->configuration->getTargetSiteRoot(),

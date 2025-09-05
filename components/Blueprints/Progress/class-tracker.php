@@ -46,13 +46,13 @@ use function is_string;
  * stage2.finish();
  */
 class Tracker implements ArrayAccess {
-	private $selfWeight = 1;
-	private $selfDone = false;
-	private $selfProgress = 0;
-	private $selfCaption = '';
+	private $self_weight = 1;
+	private $self_done = false;
+	private $self_progress = 0;
+	private $self_caption = '';
 	private $weight;
-	private $subTrackers = array();
-	private $splitPerformed = false;
+	private $sub_trackers = array();
+	private $split_performed = false;
 
 	/**
 	 * Most recently updated tracker or sub-tracker, used to expose
@@ -64,13 +64,13 @@ class Tracker implements ArrayAccess {
 	 * * null – when this tracker was updated more recently than
 	 *          any of its sub-trackers
 	 */
-	private $lastUpdatedTracker = null;
+	private $last_updated_tracker = null;
 
 	public $events;
 
 	public function __construct( $options = array() ) {
 		$this->weight      = $options['weight'] ?? 1;
-		$this->selfCaption = $options['caption'] ?? '';
+		$this->self_caption = $options['caption'] ?? '';
 		$this->events      = new EventDispatcher();
 	}
 
@@ -83,7 +83,7 @@ class Tracker implements ArrayAccess {
 	 * …behaves like weights [6000,1,1] ⇒ normalised to [0.99967,0.00017,0.00017]
 	 */
 	public function split( $definitions ) {
-		if ( $this->subTrackers ) {
+		if ( $this->sub_trackers ) {
 			throw new LogicException( 'split() must be called once and before any stage().' );
 		}
 
@@ -92,8 +92,8 @@ class Tracker implements ArrayAccess {
 		}
 
 		$items     = [];          // [slug, rawWeight|null, caption]
-		$fixedSum  = 0.0;
-		$nullCount = 0;
+		$fixed_sum  = 0.0;
+		$null_count = 0;
 
 		foreach ( $definitions as $key => $value ) {
 			if ( is_array( $value ) ) {
@@ -105,15 +105,15 @@ class Tracker implements ArrayAccess {
 				$weight  = null;
 				$caption = '';
 			}
-			if ( isset( $this->subTrackers[ $slug ] ) ) {
+			if ( isset( $this->sub_trackers[ $slug ] ) ) {
 				throw new LogicException( "Duplicate slug '$slug'." );
 			}
 			if ( $weight === null ) {
-				$nullCount ++;
+				$null_count ++;
 			} elseif ( $weight <= 0 ) {
 				throw new InvalidArgumentException( 'Weights must be positive numbers or null.' );
 			} else {
-				$fixedSum += $weight;
+				$fixed_sum += $weight;
 			}
 			$items[] = [ $slug, $weight, $caption ];
 		}
@@ -122,14 +122,14 @@ class Tracker implements ArrayAccess {
 			throw new InvalidArgumentException( 'split() needs at least one entry.' );
 		}
 
-		$scale = 1.0 / ( $fixedSum + $nullCount ?: 1 ); // if all null, fixedSum=0, nullCount>0
+		$scale = 1.0 / ( $fixed_sum + $null_count ?: 1 ); // if all null, fixedSum=0, nullCount>0
 
 		foreach ( $items as [$slug, $raw, $caption] ) {
-			$normWeight = ( $raw ?? 1 ) * $scale;  // null counts as 1 before scaling
-			$this->createSubTracker( $slug, $normWeight, $caption );
+			$norm_weight = ( $raw ?? 1 ) * $scale;  // null counts as 1 before scaling
+			$this->createSubTracker( $slug, $norm_weight, $caption );
 		}
 
-		$this->splitPerformed = true;
+		$this->split_performed = true;
 	}
 
 	/**
@@ -168,30 +168,30 @@ class Tracker implements ArrayAccess {
 	 * ```
 	 */
 	public function stage( $weight = null, $caption = '' ) {
-		if ( $this->splitPerformed ) {
+		if ( $this->split_performed ) {
 			throw new LogicException( 'stage() is not allowed after split().' );
 		}
-		$weight = $weight ?? $this->selfWeight;
+		$weight = $weight ?? $this->self_weight;
 
-		return $this->createSubTracker( count( $this->subTrackers ), $weight, $caption );
+		return $this->createSubTracker( count( $this->sub_trackers ), $weight, $caption );
 	}
 
 	/** ────────────── ArrayAccess: slug-aware, read-only ───────────── */
 	public function offsetExists( $offset ): bool {
 		return is_string( $offset )
-			? isset( $this->subTrackers[ $offset ] )
-			: array_key_exists( $offset, array_values( $this->subTrackers ) );
+			? isset( $this->sub_trackers[ $offset ] )
+			: array_key_exists( $offset, array_values( $this->sub_trackers ) );
 	}
 
 	public function offsetGet( $offset ): Tracker {
 		if ( is_string( $offset ) ) {
-			if ( ! isset( $this->subTrackers[ $offset ] ) ) {
+			if ( ! isset( $this->sub_trackers[ $offset ] ) ) {
 				throw new OutOfBoundsException( "Unknown tracker slug '$offset'." );
 			}
 
-			return $this->subTrackers[ $offset ];
+			return $this->sub_trackers[ $offset ];
 		}
-		$list = array_values( $this->subTrackers );
+		$list = array_values( $this->sub_trackers );
 		if ( ! isset( $list[ $offset ] ) ) {
 			throw new OutOfBoundsException( "No sub-tracker at index $offset." );
 		}
@@ -209,22 +209,22 @@ class Tracker implements ArrayAccess {
 
 	/** ────────────────── createSubTracker() gets a slug ────────────────── */
 	private function createSubTracker( string $slug, float $weight, string $caption ): Tracker {
-		if ( $this->selfWeight - $weight < - 0.00001 ) {
+		if ( $this->self_weight - $weight < - 0.00001 ) {
 			throw new LogicException( "Adding stage weight $weight would exceed total 1.0." );
 		}
-		$this->selfWeight -= $weight;
+		$this->self_weight -= $weight;
 
-		$subTracker                 = new self( [ 'weight' => $weight, 'caption' => $caption ] );
-		$this->subTrackers[ $slug ] = $subTracker;
+		$sub_tracker                 = new self( [ 'weight' => $weight, 'caption' => $caption ] );
+		$this->sub_trackers[ $slug ] = $sub_tracker;
 
-		$subTracker->events->addListener(
+		$sub_tracker->events->addListener(
 			ProgressEvent::class,
-			function () use ( $subTracker ) {
-				$this->lastUpdatedTracker = $subTracker;
+			function () use ( $sub_tracker ) {
+				$this->last_updated_tracker = $sub_tracker;
 				$this->notifyProgress();
 			}
 		);
-		$subTracker->events->addListener(
+		$sub_tracker->events->addListener(
 			DoneEvent::class,
 			function () {
 				if ( $this->isDone() ) {
@@ -233,7 +233,7 @@ class Tracker implements ArrayAccess {
 			}
 		);
 
-		return $subTracker;
+		return $sub_tracker;
 	}
 
 	public function increment( $value = 1, $caption = null ) {
@@ -245,48 +245,48 @@ class Tracker implements ArrayAccess {
 	 * @param  string|null  $caption
 	 */
 	public function set( $value, $caption = null ) {
-		if ( $value < $this->selfProgress ) {
-			throw new InvalidArgumentException( "Progress cannot go backwards (tried updating to $value when it already was $this->selfProgress)" );
+		if ( $value < $this->self_progress ) {
+			throw new InvalidArgumentException( "Progress cannot go backwards (tried updating to $value when it already was $this->self_progress)" );
 		}
 		// Don't report the same progress twice
-		if ( $this->selfProgress === $value && ( $caption === null || $this->selfCaption === $caption ) ) {
+		if ( $this->self_progress === $value && ( $caption === null || $this->self_caption === $caption ) ) {
 			return;
 		}
-		$this->selfProgress = min( $value, 100 );
+		$this->self_progress = min( $value, 100 );
 		if ( $caption !== null ) {
-			$this->selfCaption = $caption;
+			$this->self_caption = $caption;
 		}
 
-		$this->lastUpdatedTracker = null;
+		$this->last_updated_tracker = null;
 
 		$this->notifyProgress();
-		if ( $this->selfProgress + 0.00001 >= 100 ) {
+		if ( $this->self_progress + 0.00001 >= 100 ) {
 			$this->finish();
 		}
 	}
 
 	public function setCaption( $caption ) {
-		$this->selfCaption        = $caption;
-		$this->lastUpdatedTracker = null;
+		$this->self_caption        = $caption;
+		$this->last_updated_tracker = null;
 		$this->notifyProgress();
 	}
 
 	public function finish() {
-		$this->selfDone           = true;
-		$this->selfProgress       = 100;
-		$this->lastUpdatedTracker = null;
+		$this->self_done           = true;
+		$this->self_progress       = 100;
+		$this->last_updated_tracker = null;
 		$this->notifyProgress();
 		$this->notifyDone();
 	}
 
 	public function getCaption() {
 		// If this tracker was most recently updated, return its caption
-		if ( $this->lastUpdatedTracker === null ) {
-			return $this->selfCaption;
+		if ( $this->last_updated_tracker === null ) {
+			return $this->self_caption;
 		}
 
 		// Otherwise return the caption of the most recently updated sub-tracker
-		return $this->lastUpdatedTracker->getCaption();
+		return $this->last_updated_tracker->getCaption();
 	}
 
 	public function isDone() {
@@ -294,15 +294,15 @@ class Tracker implements ArrayAccess {
 	}
 
 	public function getProgress() {
-		if ( $this->selfDone ) {
+		if ( $this->self_done ) {
 			return 100;
 		}
 		$sum = array_reduce(
-			$this->subTrackers,
+			$this->sub_trackers,
 			function ( $sum, $tracker ) {
 				return $sum + $tracker->getProgress() * $tracker->getWeight();
 			},
-			$this->selfProgress * $this->selfWeight
+			$this->self_progress * $this->self_weight
 		);
 
 		return round( $sum * 10000 ) / 10000;

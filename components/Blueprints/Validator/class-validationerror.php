@@ -74,8 +74,8 @@ class ValidationError {
 			return null;
 		}
 
-		$minChild            = null;
-		$minDescendantsCount = PHP_INT_MAX;
+		$min_child            = null;
+		$min_descendants_count = PHP_INT_MAX;
 
 		/**
 		 * Choose the child with the fewest children as the most probable cause.
@@ -83,32 +83,32 @@ class ValidationError {
 		 * Rationale: we're looking for the shape that's the closest to the data we've got.
 		 */
 		foreach ( $this->children as $child ) {
-			$currentChildDescendantsCount = count( $child->children );
-			if ( $currentChildDescendantsCount < $minDescendantsCount ) {
-				$minDescendantsCount = $currentChildDescendantsCount;
-				$minChild            = $child;
+			$current_child_descendants_count = count( $child->children );
+			if ( $current_child_descendants_count < $min_descendants_count ) {
+				$min_descendants_count = $current_child_descendants_count;
+				$min_child            = $child;
 			}
 		}
 
 		// Collapse all required-field-missing errors into a single error
-		if ( $minChild->code === 'required-field-missing' ) {
-			$missingFields = [];
+		if ( $min_child->code === 'required-field-missing' ) {
+			$missing_fields = [];
 			foreach ( $this->children as $child ) {
 				if ( $child->code === 'required-field-missing' ) {
-					$missingFields[] = $child->context['missingField'];
+					$missing_fields[] = $child->context['missingField'];
 				}
 			}
-			if ( count( $missingFields ) > 1 ) {
+			if ( count( $missing_fields ) > 1 ) {
 				return new ValidationError(
-					$minChild->pointer,
+					$min_child->pointer,
 					'required-field-missing',
-					sprintf( 'Missing required fields: %s.', implode( ', ', $missingFields ) ),
-					$minChild->context,
-					$minChild->children
+					sprintf( 'Missing required fields: %s.', implode( ', ', $missing_fields ) ),
+					$min_child->context,
+					$min_child->children
 				);
 			}
 		}
 
-		return $minChild;
+		return $min_child;
 	}
 }

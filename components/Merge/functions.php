@@ -8,9 +8,9 @@ function print_diff_chunks( array $chunks_a, array $chunks_b ): void {
 	$empty_line = str_repeat( ' ', $half_width );
 
 	echo "\n";
-	$headerA = str_pad( 'Version A', $half_width, ' ', STR_PAD_BOTH );
-	$headerB = str_pad( 'Version B', $half_width, ' ', STR_PAD_BOTH );
-	echo "     \033[1m" . $headerA . ' | ' . $headerB . "\033[0m\n";
+	$header_a = str_pad( 'Version A', $half_width, ' ', STR_PAD_BOTH );
+	$header_b = str_pad( 'Version B', $half_width, ' ', STR_PAD_BOTH );
+	echo "     \033[1m" . $header_a . ' | ' . $header_b . "\033[0m\n";
 	echo str_repeat( '-', $width ) . "\n";
 
 	$n = max( count( $chunks_a ), count( $chunks_b ) );

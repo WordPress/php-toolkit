@@ -19,7 +19,7 @@ class RunPHPStep implements StepInterface {
 	/**
 	 * @var string|null
 	 */
-	public $scriptPath;
+	public $script_path;
 	/** @var array<string, string>|null */
 	public $env;
 
@@ -32,9 +32,9 @@ class RunPHPStep implements StepInterface {
 		$tracker->setCaption( 'Running custom PHP code' );
 
 		$env = $this->env ?? [];
-		$resolvedCode = $runtime->resolve( $this->code );
-		if ( $resolvedCode instanceof File ) {
-			$code = $resolvedCode->getStream()->consume_all();
+		$resolved_code = $runtime->resolve( $this->code );
+		if ( $resolved_code instanceof File ) {
+			$code = $resolved_code->getStream()->consume_all();
 		} else {
 			throw new BlueprintExecutionException( 'The code property must be a File reference.' );
 		}

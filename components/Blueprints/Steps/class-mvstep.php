@@ -12,23 +12,23 @@ class MvStep implements StepInterface {
 	/**
 	 * @var string
 	 */
-	public $fromPath;
+	public $from_path;
 	/**
 	 * @var string
 	 */
-	public $toPath;
+	public $to_path;
 
 	/**
 	 * @param  string  $fromPath  The source path to move from.
 	 * @param  string  $toPath  The destination path to move to.
 	 */
-	public function __construct( string $fromPath, string $toPath ) {
-		$this->fromPath = $fromPath;
-		$this->toPath   = $toPath;
+	public function __construct( string $from_path, string $to_path ) {
+		$this->from_path = $from_path;
+		$this->to_path   = $to_path;
 	}
 
 	public function run( Runtime $runtime, Tracker $tracker ) {
-		$tracker->setCaption( 'Moving from ' . $this->fromPath . ' to ' . $this->toPath );
-		$runtime->getTargetFilesystem()->rename( $this->fromPath, $this->toPath );
+		$tracker->setCaption( 'Moving from ' . $this->from_path . ' to ' . $this->to_path );
+		$runtime->getTargetFilesystem()->rename( $this->from_path, $this->to_path );
 	}
 }

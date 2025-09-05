@@ -28,24 +28,24 @@ PHP
 	 * The name of the theme folder inside wp-content/themes/.
 	 * @var string
 	 */
-	public $themeFolderName;
+	public $theme_folder_name;
 
 	/**
 	 * @param  string  $themeFolderName  The name of the theme folder.
 	 */
-	public function __construct( string $themeFolderName ) {
-		$this->themeFolderName = $themeFolderName;
+	public function __construct( string $theme_folder_name ) {
+		$this->theme_folder_name = $theme_folder_name;
 	}
 
 	/**
 	 * Executes the activateTheme step.
 	 */
 	public function run( Runtime $runtime, Tracker $tracker ) {
-		$tracker->setCaption( 'Activating theme ' . $this->themeFolderName );
+		$tracker->setCaption( 'Activating theme ' . $this->theme_folder_name );
 		$runtime->evalPhpCodeInSubProcess(
 			self::ACTIVATE_THEME_SCRIPT,
 			[
-				'THEME_FOLDER_NAME' => $this->themeFolderName,
+				'THEME_FOLDER_NAME' => $this->theme_folder_name,
 			]
 		);
 	}

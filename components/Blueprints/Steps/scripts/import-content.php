@@ -58,9 +58,9 @@ interface ProgressReporter {
 
 class TerminalProgressReporter implements ProgressReporter {
     private $stdout;
-    private $lastProgress = -1;
-    private $lastCaption = '';
-    private $progressBarWidth = 50;
+    private $last_progress = -1;
+    private $last_caption = '';
+    private $progress_bar_width = 50;
 
     public function __construct() {
         $this->stdout = fopen('php://stdout', 'w');
@@ -68,19 +68,19 @@ class TerminalProgressReporter implements ProgressReporter {
 
     public function reportProgress(float $progress, string $caption): void {
         // Don't repeat identical progress
-        if ($this->lastProgress === $progress && $this->lastCaption === $caption) {
+        if ($this->last_progress === $progress && $this->last_caption === $caption) {
             return;
         }
 
-        $this->lastProgress = $progress;
-        $this->lastCaption = $caption;
+        $this->last_progress = $progress;
+        $this->last_caption = $caption;
 
         $percentage = min(100, max(0, $progress));
-        $filled = (int)round($this->progressBarWidth * ($percentage / 100));
-        $empty = $this->progressBarWidth - $filled;
+        $filled = (int)round($this->progress_bar_width * ($percentage / 100));
+        $empty = $this->progress_bar_width - $filled;
         
         $bar = str_repeat('=', $filled);
-        if ($empty > 0 && $filled < $this->progressBarWidth) {
+        if ($empty > 0 && $filled < $this->progress_bar_width) {
             $bar .= '>';
             $bar .= str_repeat(' ', $empty - 1);
         } else {
@@ -107,12 +107,12 @@ class TerminalProgressReporter implements ProgressReporter {
     public function reportError(string $message, ?\Throwable $exception = null): void {
         $this->clearCurrentLine();
         
-        $errorMsg = "\033[1;31mError:\033[0m " . $message;
+        $error_msg = "\033[1;31mError:\033[0m " . $message;
         if ($exception) {
-            $errorMsg .= " (" . $exception->getMessage() . ")";
+            $error_msg .= " (" . $exception->getMessage() . ")";
         }
         
-        fwrite($this->stdout, $errorMsg . "\n");
+        fwrite($this->stdout, $error_msg . "\n");
         fflush($this->stdout);
     }
 
@@ -140,11 +140,11 @@ class TerminalProgressReporter implements ProgressReporter {
 }
 
 class JsonProgressReporter implements ProgressReporter {
-    private $outputFile;
+    private $output_file;
 
     public function __construct() {
-        $outputPath = getenv('OUTPUT_FILE') ?: 'php://stdout';
-        $this->outputFile = fopen($outputPath, 'w');
+        $output_path = getenv('OUTPUT_FILE') ?: 'php://stdout';
+        $this->output_file = fopen($output_path, 'w');
     }
 
     public function reportProgress(float $progress, string $caption): void {
@@ -156,13 +156,13 @@ class JsonProgressReporter implements ProgressReporter {
     }
 
     public function reportError(string $message, ?\Throwable $exception = null): void {
-        $errorData = [
+        $error_data = [
             'type' => 'error',
             'message' => $message
         ];
 
         if ($exception) {
-            $errorData['details'] = [
+            $error_data['details'] = [
                 'exception' => get_class($exception),
                 'message' => $exception->getMessage(),
                 'file' => $exception->getFile(),
@@ -171,7 +171,7 @@ class JsonProgressReporter implements ProgressReporter {
             ];
         }
 
-        $this->writeJsonMessage($errorData);
+        $this->writeJsonMessage($error_data);
     }
 
     public function reportCompletion(string $message): void {
@@ -182,14 +182,14 @@ class JsonProgressReporter implements ProgressReporter {
     }
 
     public function close(): void {
-        if ($this->outputFile) {
-            fclose($this->outputFile);
+        if ($this->output_file) {
+            fclose($this->output_file);
         }
     }
 
     private function writeJsonMessage(array $data): void {
-        fwrite($this->outputFile, json_encode($data) . "\n");
-        fflush($this->outputFile);
+        fwrite($this->output_file, json_encode($data) . "\n");
+        fflush($this->output_file);
     }
 }
 
@@ -208,10 +208,10 @@ function bail_out( $message ) {
 
 function run_content_import( $options ) {
 	$reporter = createProgressReporter();
-	$mainTracker = new Tracker();
+	$main_tracker = new Tracker();
 
 	// Set up progress reporting
-	$mainTracker->events->addListener(
+	$main_tracker->events->addListener(
 		'WordPress\Blueprints\Progress\ProgressEvent',
 		function($event) use ($reporter) {
 			$reporter->reportProgress($event->getProgress(), $event->getCaption());
@@ -246,21 +246,21 @@ function run_content_import( $options ) {
 		}
 
 		// Set up progress stages
-		$mainTracker->split([
+		$main_tracker->split([
 			'setup' => ['ratio' => 10, 'caption' => 'Setting up import'],
 			'indexing' => ['ratio' => 20, 'caption' => 'Indexing entities'],
 			'assets' => ['ratio' => 30, 'caption' => 'Processing assets'],
 			'importing' => ['ratio' => 40, 'caption' => 'Importing content']
 		]);
 
-		$setupTracker = $mainTracker['setup'];
-		$setupTracker->set(10, 'Resolving content source');
+		$setup_tracker = $main_tracker['setup'];
+		$setup_tracker->set(10, 'Resolving content source');
 
-		$httpClient = new Client();
+		$http_client = new Client();
 		$content_source = DataReference::create($options['source'], [
 			ExecutionContextPath::class,
 		]);
-		$resolver = new DataReferenceResolver($httpClient);
+		$resolver = new DataReferenceResolver($http_client);
 		if(isset($options['execution_context_root']) && $options['execution_context_root'] !== '') {
 			$resolver->setExecutionContext(
 				LocalFilesystem::create($options['execution_context_root'])
@@ -268,7 +268,7 @@ function run_content_import( $options ) {
 		}
 		$resolved_source = $resolver->resolve_uncached($content_source);
 
-		$setupTracker->set(30, 'Configuring import mode');
+		$setup_tracker->set(30, 'Configuring import mode');
 
 		$chrooted_fs     = null;
 		$source_site_url = null;
@@ -553,10 +553,10 @@ function run_content_import( $options ) {
 			exit( 1 );
 		}
 
-		$setupTracker->finish();
+		$setup_tracker->finish();
 
 		$source = $options['source'];
-		$reporter->reportProgress($mainTracker->getProgress(), "Importing static files from $source");
+		$reporter->reportProgress($main_tracker->getProgress(), "Importing static files from $source");
 
 		// Parse URL mapping options
 		$additional_url_mappings = array();
@@ -601,7 +601,7 @@ function run_content_import( $options ) {
 			$result = data_liberation_import_step_customized( 
 				$import_session, 
 				$importer, 
-				$mainTracker,
+				$main_tracker,
 				$reporter
 			);
 			
@@ -632,7 +632,7 @@ function run_content_import( $options ) {
 			} elseif ( false === $result ) {
 				if ( $importer->get_stage() === StreamImporter::STAGE_FRONTLOAD_ASSETS ) {
 					if ( ! $ignored_message_printed ) {
-						$reporter->reportProgress($mainTracker->getProgress(), "Some assets could not be downloaded – they will be ignored so we can continue with the import.");
+						$reporter->reportProgress($main_tracker->getProgress(), "Some assets could not be downloaded – they will be ignored so we can continue with the import.");
 						$ignored_message_printed = true;
 					}
 					// $import_session->mark_frontloading_errors_as_ignored();
@@ -664,7 +664,7 @@ function run_content_import( $options ) {
  *        DataLiberation PHP component. Support all sorts of pause conditions
  *        such as time limits, retry counts, memory limits, etc.
  */
-function data_liberation_import_step_customized( ImportSession $session, StreamImporter $importer, Tracker $mainTracker, ProgressReporter $reporter ) {
+function data_liberation_import_step_customized( ImportSession $session, StreamImporter $importer, Tracker $main_tracker, ProgressReporter $reporter ) {
 	$soft_time_limit_seconds = 15;
 	$hard_time_limit_seconds = 25;
 	$start_time              = microtime( true );
@@ -721,10 +721,10 @@ function data_liberation_import_step_customized( ImportSession $session, StreamI
 				$session->create_frontloading_stubs( $importer->get_indexed_assets_urls() );
 				$session->bump_total_number_of_entities( $entities_counts );
 				
-				$totalEntities = array_sum( $session->get_total_number_of_entities() );
-				$mainTracker['indexing']->set(
-					min(100, ($totalEntities / 100) * 100), // Rough progress calculation
-					'Indexing entities (' . $totalEntities . ' found)'
+				$total_entities = array_sum( $session->get_total_number_of_entities() );
+				$main_tracker['indexing']->set(
+					min(100, ($total_entities / 100) * 100), // Rough progress calculation
+					'Indexing entities (' . $total_entities . ' found)'
 				);
 				break;
 
@@ -736,7 +736,7 @@ function data_liberation_import_step_customized( ImportSession $session, StreamI
 				);
 
 				$remaining = $session->count_unfinished_frontloading_stubs();
-				$mainTracker['assets']->set(
+				$main_tracker['assets']->set(
 					max(0, 100 - ($remaining / max(1, $remaining + ($progress['downloaded'] ?? 0)) * 100)),
 					'Fetching media files (' . $remaining . ' remaining)'
 				);
@@ -750,7 +750,7 @@ function data_liberation_import_step_customized( ImportSession $session, StreamI
 				$total = $session->count_remaining_entities() + $imported;
 				$progress = $total > 0 ? ($imported / $total) * 100 : 0;
 				
-				$mainTracker['importing']->set(
+				$main_tracker['importing']->set(
 					$progress,
 					'Importing entities (' . $imported . '/' . $total . ')'
 				);

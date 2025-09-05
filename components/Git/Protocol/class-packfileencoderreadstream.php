@@ -82,25 +82,25 @@ class PackfileEncoderReadStream extends BaseByteReadStream {
 		$object_type = $types[ $object_type_name ];
 
 		// First byte: type in bits 4-6, size bits 0-3
-		$firstByte = $uncompressed_size & 0b1111;
-		$firstByte |= ( $object_type & 0b111 ) << 4;
+		$first_byte = $uncompressed_size & 0b1111;
+		$first_byte |= ( $object_type & 0b111 ) << 4;
 
 		// Continuation bit 7 if needed
 		if ( $uncompressed_size > 15 ) {
-			$firstByte |= 0b10000000;
+			$first_byte |= 0b10000000;
 		}
 
 		// Get remaining size bits after first 4 bits
-		$remainingSize = $uncompressed_size >> 4;
+		$remaining_size = $uncompressed_size >> 4;
 
 		// Build result starting with first byte
-		$result = chr( $firstByte );
+		$result = chr( $first_byte );
 		// Add continuation bytes if needed
-		while ( $remainingSize > 0 ) {
+		while ( $remaining_size > 0 ) {
 			// Set continuation bit if we have more bytes
-			$byte          = $remainingSize & 0b01111111;
-			$remainingSize >>= 7;
-			if ( $remainingSize > 0 ) {
+			$byte          = $remaining_size & 0b01111111;
+			$remaining_size >>= 7;
+			if ( $remaining_size > 0 ) {
 				$byte |= 0b10000000;
 			}
 

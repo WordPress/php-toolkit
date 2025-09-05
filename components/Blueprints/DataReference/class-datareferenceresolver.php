@@ -25,47 +25,47 @@ class DataReferenceResolver {
 	/**
 	 * @var mixed[]
 	 */
-	private $subTrackers;
+	private $sub_trackers;
 	/**
 	 * @var mixed[]
 	 */
-	private $dataReferences;
+	private $data_references;
 	/**
 	 * @var mixed[]
 	 */
-	private $resolvedDataReferences;
+	private $resolved_data_references;
 	/**
 	 * @var Tracker
 	 */
-	private $dataResolutionTracker;
+	private $data_resolution_tracker;
 	/**
 	 * @var Filesystem|null
 	 */
-	private $executionContext;
+	private $execution_context;
 	/**
 	 * @var string
 	 */
-	private $tmpRoot;
+	private $tmp_root;
 
-	public function __construct( Client $client, ?string $tmpRoot = null ) {
+	public function __construct( Client $client, ?string $tmp_root = null ) {
 		$this->client  = $client;
-		$this->tmpRoot = $tmpRoot ?: wp_unix_sys_get_temp_dir();
+		$this->tmp_root = $tmp_root ?: wp_unix_sys_get_temp_dir();
 	}
 
-	public function setExecutionContext( ?Filesystem $executionContext ) {
-		$this->executionContext = $executionContext;
+	public function setExecutionContext( ?Filesystem $execution_context ) {
+		$this->execution_context = $execution_context;
 	}
 
-	public function startEagerResolution( array $dataReferences, Tracker $dataResolutionTracker ) {
-		$this->dataResolutionTracker = $dataResolutionTracker;
-		$this->dataReferences        = $dataReferences;
-		$nb_data_references          = count( $this->dataReferences );
-		foreach ( $this->dataReferences as $dataReference ) {
-			$this->subTrackers[ $dataReference->id ] = $this->dataResolutionTracker->stage(
+	public function startEagerResolution( array $data_references, Tracker $data_resolution_tracker ) {
+		$this->data_resolution_tracker = $data_resolution_tracker;
+		$this->data_references        = $data_references;
+		$nb_data_references          = count( $this->data_references );
+		foreach ( $this->data_references as $data_reference ) {
+			$this->sub_trackers[ $data_reference->id ] = $this->data_resolution_tracker->stage(
 				1 / $nb_data_references,
-				'Resolving data reference #' . $dataReference->id . ': ' . $dataReference->get_human_readable_name()
+				'Resolving data reference #' . $data_reference->id . ': ' . $data_reference->get_human_readable_name()
 			);
-			$this->resolve( $dataReference, $this->subTrackers[ $dataReference->id ] );
+			$this->resolve( $data_reference, $this->sub_trackers[ $data_reference->id ] );
 		}
 	}
 
@@ -74,10 +74,10 @@ class DataReferenceResolver {
 	 */
 	public function resolve( DataReference $reference ) {
 		// TODO: Comment this. Make semantics clearer.
-		if ( ! isset( $this->resolvedDataReferences[ $reference->id ] ) ) {
-			$this->resolvedDataReferences[ $reference->id ] = $this->resolve_uncached( $reference );
+		if ( ! isset( $this->resolved_data_references[ $reference->id ] ) ) {
+			$this->resolved_data_references[ $reference->id ] = $this->resolve_uncached( $reference );
 		}
-		return $this->resolvedDataReferences[ $reference->id ];
+		return $this->resolved_data_references[ $reference->id ];
 	}
 
 	// @TODO: Clean up the semantics of this class. Resolve() and separate resolve_uncached() seem confusing. There's
@@ -85,7 +85,7 @@ class DataReferenceResolver {
 	//        method, or co-locate the resolution logic with the data reference classes and only use this class for
 	//        caching.
 	public function resolve_uncached( DataReference $reference ) {
-		$progress_tracker = $this->subTrackers[ $reference->id ] ?? new Tracker();
+		$progress_tracker = $this->sub_trackers[ $reference->id ] ?? new Tracker();
 
 		if ( $reference instanceof WordPressOrgPlugin ) {
 			$reference = new URLReference( 'https://downloads.wordpress.org/plugin/' . $reference->get_slug() . '.latest-stable.zip' );
@@ -101,7 +101,7 @@ class DataReferenceResolver {
 				$url,
 				array(
 					'client'           => $this->client,
-					'cache_path'       => wp_join_unix_paths( $this->tmpRoot, uniqid( 'blueprints_seekable_cache_' ) ),
+					'cache_path'       => wp_join_unix_paths( $this->tmp_root, uniqid( 'blueprints_seekable_cache_' ) ),
 					/**
 					 * Use a 100MB buffer to support seek()-ing in the streamed ZIP files.
 					 * To support ZIPs larger than 100MB, we'll need a custom SeekableRequestReadStream that:
@@ -126,20 +126,20 @@ class DataReferenceResolver {
 			// BlueprintParentPath, BlueprintRootPath, BlueprintContextPath, BlueprintRelativePath
 		} elseif ( $reference instanceof ExecutionContextPath ) {
 			$path = $reference->get_path();
-			if ( ! $this->executionContext->exists( $path ) ) {
+			if ( ! $this->execution_context->exists( $path ) ) {
 				throw new DataResolutionException( 'Path referenced in the Blueprint was not found in the execution context: ' . $path );
 			}
-			if ( $this->executionContext->is_file( $path ) ) {
-				$stream         = $this->executionContext->open_read_stream( $path );
+			if ( $this->execution_context->is_file( $path ) ) {
+				$stream         = $this->execution_context->open_read_stream( $path );
 				$tracked_stream = new ProgressTrackedReadStream( $stream, $progress_tracker );
 
 				return new File( $tracked_stream, basename( $path ) );
-			} elseif ( $this->executionContext->is_dir( $path ) ) {
+			} elseif ( $this->execution_context->is_dir( $path ) ) {
 				// @TODO (low priority): Actually track the download progress for directories.
 				$progress_tracker->finish();
 
 				return new Directory(
-					new ChrootLayer( $this->executionContext, $path ),
+					new ChrootLayer( $this->execution_context, $path ),
 					basename( $path )
 				);
 			} else {
@@ -168,7 +168,7 @@ class DataReferenceResolver {
 			 * The Blueprint Runner will clean up all temporary directories at
 			 * the end of the execution.
 			 */
-			$tmp_dir = wp_join_unix_paths( $this->tmpRoot, 'git-repo-' . uniqid() );
+			$tmp_dir = wp_join_unix_paths( $this->tmp_root, 'git-repo-' . uniqid() );
 
 			$repo = new GitRepository( LocalFilesystem::create( $tmp_dir ) );
 			$repo->add_remote( 'origin', $reference->get_git_repository() );

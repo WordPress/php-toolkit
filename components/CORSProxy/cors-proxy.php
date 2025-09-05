@@ -56,15 +56,15 @@ if ( function_exists( 'playground_cors_proxy_maybe_rate_limit' ) ) {
 }
 
 // Get the full target URL from the request path
-$targetUrl = get_target_url( $_SERVER );
-if ( ! $targetUrl ) {
+$target_url = get_target_url( $_SERVER );
+if ( ! $target_url ) {
 	http_response_code( 400 );
 	echo "Bad Request\n\nNo URL provided";
 	exit;
 }
 
 try {
-	$resolved = url_validate_and_resolve( $targetUrl );
+	$resolved = url_validate_and_resolve( $target_url );
 } catch ( CorsProxyException $e ) {
 	http_response_code( 400 );
 	echo "Bad Request\n\n" . $e->getMessage();
@@ -72,14 +72,14 @@ try {
 }
 
 $host       = $resolved['host'];
-$resolvedIp = $resolved['ip'];
+$resolved_ip = $resolved['ip'];
 
 define(
 	'CURRENT_SCRIPT_URI',
-	get_current_script_uri( $targetUrl, $_SERVER['REQUEST_URI'] )
+	get_current_script_uri( $target_url, $_SERVER['REQUEST_URI'] )
 );
 
-$ch = curl_init( $targetUrl );
+$ch = curl_init( $target_url );
 
 $is_chunked_response = false;
 $http_code_sent      = false;
@@ -131,8 +131,8 @@ curl_setopt(
 	$ch,
 	CURLOPT_RESOLVE,
 	array(
-		"$host:80:$resolvedIp",
-		"$host:443:$resolvedIp",
+		"$host:80:$resolved_ip",
+		"$host:443:$resolved_ip",
 	)
 );
 
@@ -151,7 +151,7 @@ $headers_requiring_opt_in    = array(
 	// - the proxy forwarding the basic auth values to all target servers
 	'Authorization',
 );
-$curlHeaders                 = kv_headers_to_curl_format(
+$curl_headers                 = kv_headers_to_curl_format(
 	filter_headers_by_name(
 		getallheaders(),
 		$strictly_disallowed_headers,
@@ -162,7 +162,7 @@ curl_setopt(
 	$ch,
 	CURLOPT_HTTPHEADER,
 	array_merge(
-		$curlHeaders,
+		$curl_headers,
 		array(
 			"Host: $host",
 			// @TODO: Consider relaying client IP with the following reasoning:
@@ -185,21 +185,21 @@ curl_setopt(
 		$curl,
 		$header
 	) use (
-		$targetUrl,
+		$target_url,
 		$relay_http_code_and_initial_headers_if_not_already_sent,
 		&$is_chunked_response
 	) {
 		@$relay_http_code_and_initial_headers_if_not_already_sent();
 
 		$len      = strlen( $header );
-		$colonPos = strpos( $header, ':' );
+		$colon_pos = strpos( $header, ':' );
 
-		if ( $colonPos === false ) {
+		if ( $colon_pos === false ) {
 			return $len;
 		}
 
-		$name  = strtolower( substr( $header, 0, $colonPos ) );
-		$value = trim( substr( $header, $colonPos + 1 ) );
+		$name  = strtolower( substr( $header, 0, $colon_pos ) );
+		$value = trim( substr( $header, $colon_pos + 1 ) );
 
 		if ( $name === 'content-length' ) {
 			$content_length = intval( $value );
@@ -221,13 +221,13 @@ curl_setopt(
 
 		if ( stripos( $header, 'Location:' ) === 0 ) {
 			// Adjust the redirection URL to go back to the proxy script
-			$locationUrl = trim( substr( $header, 9 ) );
-			$newLocation = rewrite_relative_redirect(
-				$targetUrl,
-				$locationUrl,
+			$location_url = trim( substr( $header, 9 ) );
+			$new_location = rewrite_relative_redirect(
+				$target_url,
+				$location_url,
 				CURRENT_SCRIPT_URI
 			);
-			header( 'Location: ' . $newLocation, true );
+			header( 'Location: ' . $new_location, true );
 		} elseif (
 			// Safari fails with "Cannot connect to the server" if we let
 			// the HTTP/2 line be relayed. This proxy doesn't support HTTP/2,
@@ -266,10 +266,10 @@ curl_setopt(
 );
 
 // Handle request method and data
-$requestMethod = $_SERVER['REQUEST_METHOD'];
-curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, $requestMethod );
+$request_method = $_SERVER['REQUEST_METHOD'];
+curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, $request_method );
 
-if ( $requestMethod !== 'GET' && $requestMethod !== 'HEAD' && $requestMethod !== 'OPTIONS' ) {
+if ( $request_method !== 'GET' && $request_method !== 'HEAD' && $request_method !== 'OPTIONS' ) {
 	$input = fopen( 'php://input', 'r' );
 	curl_setopt( $ch, CURLOPT_UPLOAD, true );
 	curl_setopt( $ch, CURLOPT_INFILE, $input );

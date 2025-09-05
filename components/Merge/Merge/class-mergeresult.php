@@ -10,20 +10,20 @@ class MergeResult {
 	}
 
 	public function get_merged_content(): string {
-		$mergedContent = '';
+		$merged_content = '';
 		foreach ( $this->results as $result ) {
 			if ( $result instanceof MergeConflict ) {
-				$mergedContent .= "\n<<<<<<< HEAD\n";
-				$mergedContent .= $result->ours . "\n";
-				$mergedContent .= "=======\n";
-				$mergedContent .= $result->theirs . "\n";
-				$mergedContent .= ">>>>>>> incoming \n";
+				$merged_content .= "\n<<<<<<< HEAD\n";
+				$merged_content .= $result->ours . "\n";
+				$merged_content .= "=======\n";
+				$merged_content .= $result->theirs . "\n";
+				$merged_content .= ">>>>>>> incoming \n";
 			} else {
-				$mergedContent .= $result;
+				$merged_content .= $result;
 			}
 		}
 
-		return $mergedContent;
+		return $merged_content;
 	}
 
 	public function has_conflicts(): bool {
