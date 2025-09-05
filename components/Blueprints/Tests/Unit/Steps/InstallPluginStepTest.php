@@ -50,12 +50,12 @@ PHP;
 		$step->run( $this->runtime, $tracker );
 
 		// Check if plugin is installed
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( 'wp-content/plugins/test-plugin' ) );
 		$this->assertTrue( $fs->exists( 'wp-content/plugins/test-plugin/test-plugin.php' ) );
 
 		// Check if plugin is activated
-		$active_plugins = $this->runtime->evalPhpCodeInSubProcess(
+		$active_plugins = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
@@ -88,10 +88,10 @@ PHP
 		$step->run( $this->runtime, $tracker );
 
 		// Check if plugin is installed
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( 'wp-content/plugins/test-plugin' ) );
 		$this->assertTrue( $fs->exists( 'wp-content/plugins/test-plugin/test-plugin.php' ) );
-		$inactive_plugins = $this->runtime->evalPhpCodeInSubProcess(
+		$inactive_plugins = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
@@ -110,7 +110,7 @@ PHP
 		$this->assertContains( 'test-plugin/test-plugin.php', $inactive_plugins );
 
 		// Check if plugin is activated
-		$active_plugins = $this->runtime->evalPhpCodeInSubProcess(
+		$active_plugins = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
@@ -142,12 +142,12 @@ PHP
 		$step->run( $this->runtime, $tracker );
 
 		// Check if plugin is installed
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( 'wp-content/plugins/zipped-test-plugin' ) );
 		$this->assertTrue( $fs->exists( 'wp-content/plugins/zipped-test-plugin/test-plugin.php' ) );
 
 		// Check if plugin is activated
-		$active_plugins = $this->runtime->evalPhpCodeInSubProcess(
+		$active_plugins = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
@@ -179,12 +179,12 @@ PHP
 		$step->run( $this->runtime, $tracker );
 
 		// Check if plugin is installed
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( 'wp-content/plugins/subfolder-name' ) );
 		$this->assertTrue( $fs->exists( 'wp-content/plugins/subfolder-name/test-plugin.php' ) );
 
 		// Check if plugin is activated
-		$active_plugins = $this->runtime->evalPhpCodeInSubProcess(
+		$active_plugins = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
@@ -217,11 +217,11 @@ PHP
 		$step->run( $this->runtime, $tracker );
 
 		// Check if plugin is installed
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( 'wp-content/plugins/plugin-directory/test-plugin.php' ) );
 
 		// Check if plugin is activated
-		$active_plugins = $this->runtime->evalPhpCodeInSubProcess(
+		$active_plugins = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';

@@ -14,7 +14,7 @@ class EnableMultisiteStepTest extends StepTestCase {
 		parent::setUp();
 
 		// Set site URL.
-		$this->runtime->evalPhpCodeInSubProcess(
+		$this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
@@ -30,7 +30,7 @@ PHP
 		$step->run( $this->runtime, $tracker );
 
 		// Verify that multisite is set up and enabled.
-		$result = $this->runtime->evalPhpCodeInSubProcess(
+		$result = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 
@@ -89,7 +89,7 @@ PHP
 		$step->run( $this->runtime, $tracker );
 
 		// Verify that multisite is set up and enabled.
-		$result = $this->runtime->evalPhpCodeInSubProcess(
+		$result = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 
@@ -115,7 +115,7 @@ PHP
 	}
 
 	public function testEnableMultisiteFailsOnNon80Port() {
-		$this->runtime->evalPhpCodeInSubProcess(
+		$this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
@@ -141,7 +141,7 @@ PHP
 	}
 
 	public function testEnableMultisiteFailsWhenConfigInvalid() {
-		$this->runtime->evalPhpCodeInSubProcess(
+		$this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';

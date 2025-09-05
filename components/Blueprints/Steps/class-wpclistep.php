@@ -43,15 +43,15 @@ class WPCLIStep implements StepInterface {
 		$command = implode(
 			' ',
 			array(
-				$this->wp_cli_path ?? $runtime->getWpCliPath(),
+				$this->wp_cli_path ?? $runtime->get_wp_cli_path(),
 				// For Docker compatibility. If we got this far, the Blueprint runner was already.
 				// allowed to run as root.
 				'--allow-root',
-				'--path=' . $runtime->getConfiguration()->getTargetSiteRoot(),
+				'--path=' . $runtime->get_configuration()->getTargetSiteRoot(),
 				substr( $command, 3 ),
 			)
 		);
-		$process = $runtime->startShellCommand( $command );
+		$process = $runtime->start_shell_command( $command );
 		$process->mustRun();
 	}
 }

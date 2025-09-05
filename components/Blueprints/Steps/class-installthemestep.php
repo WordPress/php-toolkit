@@ -66,7 +66,7 @@ class InstallThemeStep implements StepInterface {
 	}
 
 	public function run( Runtime $runtime, Tracker $tracker ) {
-		$runtime->withTemporaryDirectory(
+		$runtime->with_temporary_directory(
 			function ( $temp_dir ) use ( $runtime, $tracker ) {
 				$theme_data = $runtime->resolve( $this->source );
 				$tracker->setCaption( 'Installing theme ' . $theme_data->get_human_readable_name() );
@@ -95,7 +95,7 @@ class InstallThemeStep implements StepInterface {
 
 				// Inline PHP script to avoid reading a static script.php file via.
 				// file_get_contents() inside the built blueprints.phar file.
-				$output = $runtime->evalPhpCodeInSubProcess(
+				$output = $runtime->eval_php_code_in_subprocess(
 					<<<'PHP'
 <?php
 
@@ -246,7 +246,7 @@ PHP
 
 				if ( $this->active ) {
 						$tracker->set( 75, 'Activating theme ' . $theme_folder_name );
-						$runtime->evalPhpCodeInSubProcess(
+						$runtime->eval_php_code_in_subprocess(
 							ActivateThemeStep::ACTIVATE_THEME_SCRIPT,
 							array( 'THEME_FOLDER_NAME' => $theme_folder_name )
 						);

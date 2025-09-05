@@ -43,7 +43,7 @@ class UnzipStepTest extends StepTestCase {
 		$step->run( $this->runtime, $tracker );
 
 		// Check if files were extracted correctly
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( 'extract_dir' ) );
 		$this->assertTrue( $fs->exists( 'extract_dir/test_zip.txt' ) );
 
@@ -54,7 +54,7 @@ class UnzipStepTest extends StepTestCase {
 
 	public function testUnzipToExistingDirectory() {
 		// Create the target directory first
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$fs->mkdir( 'existing_dir', [ 'recursive' => true ] );
 
 		$step = new UnzipStep(
@@ -92,7 +92,7 @@ class UnzipStepTest extends StepTestCase {
 		$step->run( $this->runtime, $tracker );
 
 		// Check if nested directories and files were extracted correctly
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( 'nested_extract/folder1/test1.txt' ) );
 		$this->assertTrue( $fs->exists( 'nested_extract/folder1/folder2/test2.txt' ) );
 	}

@@ -38,6 +38,6 @@ class RunPHPStep implements StepInterface {
 		} else {
 			throw new BlueprintExecutionException( 'The code property must be a File reference.' );
 		}
-		$runtime->evalPhpCodeInSubProcess( $code, $env );
+		$runtime->eval_php_code_in_subprocess( $code, $env );
 	}
 }

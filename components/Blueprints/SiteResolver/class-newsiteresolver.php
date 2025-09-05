@@ -25,22 +25,22 @@ class NewSiteResolver {
 		);
 
 		// Ensure document root directory exists (LocalFilesystem::create creates it).
-		$target_fs = $runtime->getTargetFilesystem();
+		$target_fs = $runtime->get_target_filesystem();
 		if ( count( $target_fs->ls( '/' ) ) > 0 ) {
 			throw new BlueprintExecutionException( 'The target site root directory must be empty in the create-new-site mode, but it wasn\'t.' );
 		}
 
 		// Unzip WordPress core into document root.
-		$wp_zip = self::resolveWordPressZipUrl( $runtime->getHttpClient(), $recommended_wp_version );
+		$wp_zip = self::resolveWordPressZipUrl( $runtime->get_http_client(), $recommended_wp_version );
 
 		$assets = array(
 			'wordpress' => DataReference::create( $wp_zip ),
 		);
-		if ( 'sqlite' === $runtime->getConfiguration()->getDatabaseEngine() ) {
-			$assets['sqlite-integration'] = $runtime->getConfiguration()->getSqliteIntegrationPlugin();
+		if ( 'sqlite' === $runtime->get_configuration()->getDatabaseEngine() ) {
+			$assets['sqlite-integration'] = $runtime->get_configuration()->getSqliteIntegrationPlugin();
 		}
 
-		$runtime->getDataReferenceResolver()->startEagerResolution( $assets, $progress['resolve_assets'] );
+		$runtime->get_data_reference_resolver()->startEagerResolution( $assets, $progress['resolve_assets'] );
 
 		$progress['resolve_assets']->setCaption( 'Downloading WordPress' );
 
@@ -70,7 +70,7 @@ class NewSiteResolver {
 		$progress['install_wordpress']->set( 0.6, 'Installing WordPress' );
 
 		// If SQLite integration zip provided, unzip into appropriate folder.
-		if ( 'sqlite' === $runtime->getConfiguration()->getDatabaseEngine() ) {
+		if ( 'sqlite' === $runtime->get_configuration()->getDatabaseEngine() ) {
 			/*
 			 * @TODO: Ensure DB_NAME gets defined in wp-config.php before installing the SQLite plugin.
 			 */
@@ -119,19 +119,19 @@ class NewSiteResolver {
 			// Perform installation using WP-CLI.
 			// @TODO (low priority): Remove the WP-CLI dependency to lower the download size for blueprints.phar.
 			$progress['install_wordpress']->set( 0.7, 'Installing WordPress' );
-			$wp_cli_path = $runtime->getWpCliPath();
-			$process     = $runtime->startShellCommand(
+			$wp_cli_path = $runtime->get_wp_cli_path();
+			$process     = $runtime->start_shell_command(
 				array(
 					'php',
 					$wp_cli_path,
 					'core',
 					'install',
-					'--path=' . $runtime->getConfiguration()->getTargetSiteRoot(),
+					'--path=' . $runtime->get_configuration()->getTargetSiteRoot(),
 
 					// For Docker compatibility. If we got this far, Blueprint runner was already.
 					// allowed to run as root.
 					'--allow-root',
-					'--url=' . $runtime->getConfiguration()->getTargetSiteUrl(),
+					'--url=' . $runtime->get_configuration()->getTargetSiteUrl(),
 					'--title=WordPress Site',
 					'--admin_user=admin',
 					'--admin_password=password',
@@ -150,7 +150,7 @@ class NewSiteResolver {
 	}
 
 	private static function isWordPressInstalled( Runtime $runtime, Tracker $progress ) {
-		$install_check = $runtime->evalPhpCodeInSubProcess(
+		$install_check = $runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 			<?php
 			$wp_load = getenv('DOCROOT') . '/wp-load.php';
@@ -164,7 +164,7 @@ class NewSiteResolver {
 PHP
 			,
 			array(
-				'DOCROOT' => $runtime->getConfiguration()->getTargetSiteRoot(),
+				'DOCROOT' => $runtime->get_configuration()->getTargetSiteRoot(),
 			),
 			null,
 			5

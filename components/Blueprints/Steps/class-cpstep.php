@@ -32,7 +32,7 @@ class CpStep implements StepInterface {
 	 */
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Copying from ' . $this->from_path . ' to ' . $this->to_path );
-		$runtime->getTargetFilesystem()->copy(
+		$runtime->get_target_filesystem()->copy(
 			$this->from_path,
 			$this->to_path,
 			array( 'recursive' => true )

@@ -19,8 +19,8 @@ class ExistingSiteResolver {
 			)
 		);
 
-		$config    = $runtime->getConfiguration();
-		$target_fs = $runtime->getTargetFilesystem();
+		$config    = $runtime->get_configuration();
+		$target_fs = $runtime->get_target_filesystem();
 
 		// 1. Verify it's a valid WordPress installation.
 		$progress['verify_installation']->setCaption( 'Verifying WordPress installation' );
@@ -32,7 +32,7 @@ class ExistingSiteResolver {
 
 		// Additional check to ensure we can actually load WordPress.
 		try {
-			$result = $runtime->evalPhpCodeInSubProcess(
+			$result = $runtime->eval_php_code_in_subprocess(
 				'<?php
 				require_once(getenv("DOCROOT") . "/wp-load.php");
 				$is_installed = function_exists("is_blog_installed") && is_blog_installed() ? "true" : "false";
@@ -59,7 +59,7 @@ class ExistingSiteResolver {
 			// Get current WordPress version.
 			$current_word_press_version = WordPressVersion::fromString(
 				trim(
-					$runtime->evalPhpCodeInSubProcess(
+					$runtime->eval_php_code_in_subprocess(
 						'<?php
 						require_once(getenv("DOCROOT") . "/wp-includes/version.php");
 						append_output( $wp_version );
@@ -90,7 +90,7 @@ class ExistingSiteResolver {
 
 		// Check if SQLite integration plugin is active when using SQLite.
 		if ( 'sqlite' === $required_engine ) {
-			$sqlite_active = $runtime->evalPhpCodeInSubProcess(
+			$sqlite_active = $runtime->eval_php_code_in_subprocess(
 				'<?php
 				require_once(getenv("DOCROOT") . "/wp-load.php");
 				
@@ -111,7 +111,7 @@ class ExistingSiteResolver {
 			}
 		} elseif ( 'mysql' === $required_engine ) {
 			// For MySQL, verify it's not using SQLite.
-			$using_mysql = $runtime->evalPhpCodeInSubProcess(
+			$using_mysql = $runtime->eval_php_code_in_subprocess(
 				'<?php
 				require_once(getenv("DOCROOT") . "/wp-load.php");
 				

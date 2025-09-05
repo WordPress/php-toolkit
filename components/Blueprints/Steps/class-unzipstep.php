@@ -41,7 +41,7 @@ class UnzipStep implements StepInterface {
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->set( 10, 'Unzipping...' );
 
-		$target_fs = $runtime->getTargetFilesystem();
+		$target_fs = $runtime->get_target_filesystem();
 
 		// Get the data reference for the zip file.
 		$zip_stream = $runtime->resolve( $this->zip_file );

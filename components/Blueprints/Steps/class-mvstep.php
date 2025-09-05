@@ -29,6 +29,6 @@ class MvStep implements StepInterface {
 
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Moving from ' . $this->from_path . ' to ' . $this->to_path );
-		$runtime->getTargetFilesystem()->rename( $this->from_path, $this->to_path );
+		$runtime->get_target_filesystem()->rename( $this->from_path, $this->to_path );
 	}
 }

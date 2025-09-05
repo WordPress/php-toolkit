@@ -20,7 +20,7 @@ class MkdirStepTest extends StepTestCase {
 		$tracker = new Tracker();
 		$step->run( $this->runtime, $tracker );
 
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( $path ) );
 	}
 
@@ -34,7 +34,7 @@ class MkdirStepTest extends StepTestCase {
 		$tracker = new Tracker();
 		$step->run( $this->runtime, $tracker );
 
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue(
 			$fs->exists( $absolute_path ),
 			sprintf( 'Failed to assert that the directory exists: %s', $absolute_path )
@@ -51,7 +51,7 @@ class MkdirStepTest extends StepTestCase {
 		$tracker = new Tracker();
 		$step->run( $this->runtime, $tracker );
 
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( $path ) );
 	}
 
@@ -64,13 +64,13 @@ class MkdirStepTest extends StepTestCase {
 		$tracker = new Tracker();
 		$step->run( $this->runtime, $tracker );
 
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( $path ) );
 	}
 
 	public function testThrowExceptionWhenCreatingDirectoryAndItAlreadyExists() {
 		$path = 'dir';
-		$fs   = $this->runtime->getTargetFilesystem();
+		$fs   = $this->runtime->get_target_filesystem();
 		$fs->mkdir( $path );
 
 		$step = new MkdirStep(

@@ -29,7 +29,7 @@ class RmStep implements StepInterface {
 		$path       = $this->path;
 
 		if ( ! $filesystem->exists( $path ) ) {
-			throw new FilesystemException( sprintf( 'Path does not exist: %s', $path ) );
+			throw new FilesystemException( sprintf( 'Path does not exist: %s', esc_html( $path ) ) );
 		}
 
 		if ( $filesystem->is_dir( $path ) ) {

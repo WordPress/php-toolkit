@@ -63,8 +63,8 @@ class ImportMediaStep implements StepInterface {
 		);
 
 		$files_imported = 0;
-		$fs             = $runtime->getTargetFilesystem();
-		$wp_upload_dir  = $runtime->evalPhpCodeInSubProcess(
+		$fs             = $runtime->get_target_filesystem();
+		$wp_upload_dir  = $runtime->eval_php_code_in_subprocess(
 			'<?php
 			require_once(getenv("DOCROOT") . "/wp-load.php");
 			$upload_dir = wp_upload_dir();
@@ -78,15 +78,15 @@ class ImportMediaStep implements StepInterface {
 		}
 
 		// Get the upload path relative to the WordPress root.
-		$upload_base_dir = ltrim( substr( $upload_dir['path'], strlen( $runtime->getConfiguration()->getTargetSiteRoot() ) ), '/' );
+		$upload_base_dir = ltrim( substr( $upload_dir['path'], strlen( $runtime->get_configuration()->getTargetSiteRoot() ) ), '/' );
 
 		// Ensure the uploads directory exists.
-		$fs = $runtime->getTargetFilesystem();
+		$fs = $runtime->get_target_filesystem();
 		if ( ! $fs->is_dir( $upload_base_dir ) ) {
 			$fs->mkdir( $upload_base_dir, array( 'recursive' => true ) );
 		}
 
-		$resolved = $runtime->getDataReferenceResolver()->startEagerResolution(
+		$resolved = $runtime->get_data_reference_resolver()->startEagerResolution(
 			array_map(
 				function ( $media ) {
 					return $media->source;
@@ -127,7 +127,7 @@ class ImportMediaStep implements StepInterface {
 				$write_stream->close_writing();
 
 				// Add to WordPress media library.
-				$attachment_id = $runtime->evalPhpCodeInSubProcess(
+				$attachment_id = $runtime->eval_php_code_in_subprocess(
 					<<<'CODE'
 <?php
 require_once(getenv("DOCROOT") . "/wp-load.php");
@@ -183,7 +183,7 @@ CODE
 			} catch ( Exception $e ) {
 				// Log error but continue with other media files.
 				// @TODO: Think through exception handling here.
-				$runtime->getLogger()->warning( "Failed to import media file {$target_path}: " . $e->getMessage() );
+				$runtime->get_logger()->warning( "Failed to import media file {$target_path}: " . $e->getMessage() );
 			}
 
 			++$files_imported;
@@ -197,7 +197,7 @@ CODE
 		DataReference $source,
 		string $upload_base_dir
 	): string {
-		$fs = $runtime->getTargetFilesystem();
+		$fs = $runtime->get_target_filesystem();
 
 		$filename = $source->get_filename();
 		if ( ! $filename ) {

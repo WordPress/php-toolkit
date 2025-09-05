@@ -1,6 +1,8 @@
 <?php
 /**
  * This script regenerates the public suffix list from the publicsuffix.org website.
+ *
+ * @package WordPress\DataLiberation
  */
 
 $suffixes = file_get_contents( 'https://publicsuffix.org/list/public_suffix_list.dat' );

@@ -29,6 +29,6 @@ class RmDirStep implements StepInterface {
 
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Removing directory ' . $this->path );
-		$runtime->getTargetFilesystem()->rmdir( $this->path, $this->options );
+		$runtime->get_target_filesystem()->rmdir( $this->path, $this->options );
 	}
 }

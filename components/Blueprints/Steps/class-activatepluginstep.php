@@ -59,7 +59,7 @@ PHP;
 	 */
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Activating plugin ' . ( $this->plugin_path ?? '' ) );
-		$runtime->evalPhpCodeInSubProcess(
+		$runtime->eval_php_code_in_subprocess(
 			self::ACTIVATE_PLUGIN_SCRIPT,
 			array(
 				'PLUGIN_PATH' => $this->plugin_path,

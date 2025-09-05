@@ -57,14 +57,14 @@ function wp_rewrite_urls( $options ) {
 	return $p->get_updated_html();
 }
 
-/**
- * Check if a given URL matches the current site URL.
- *
- * @param  URL    $parent  The URL to check.
- * @param  string $child  The current site URL to compare against.
- *
- * @return bool Whether the URL matches the current site URL.
- */
+	/**
+	 * Check if a given URL matches the current site URL.
+	 *
+	 * @param  URL    $child  The URL to check.
+	 * @param  string $parent_url  The current site URL to compare against.
+	 *
+	 * @return bool Whether the URL matches the current site URL.
+	 */
 function is_child_url_of( $child, $parent_url ) {
 	$parent_url                       = is_string( $parent_url ) ? WPURL::parse( $parent_url ) : $parent_url;
 	$child                            = is_string( $child ) ? WPURL::parse( $child ) : $child;
@@ -99,7 +99,7 @@ function is_child_url_of( $child, $parent_url ) {
  * For example, `urldecode_n( '%22is 6 %3C 6?%22 – asked Achilles', 1 )` returns
  * '"is 6 %3C 6?%22 – asked Achilles' because only the first encoded byte is decoded.
  *
- * @param  string $string  The string to decode.
+ * @param  string $input  The string to decode.
  * @param  int    $decode_n  The number of bytes to decode in $input
  *
  * @return string The decoded string.

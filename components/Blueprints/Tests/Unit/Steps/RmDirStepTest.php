@@ -11,7 +11,7 @@ require_once __DIR__ . '/StepTestCase.php';
 class RmDirStepTest extends StepTestCase {
 
 	public function testRemoveEmptyDirectory() {
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$fs->mkdir( 'empty_dir' );
 
 		$step = new RmDirStep(
@@ -29,7 +29,7 @@ class RmDirStepTest extends StepTestCase {
 	}
 
 	public function testRemoveDirectoryWithRecursiveOption() {
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$fs->mkdir( 'parent/child', [ 'recursive' => true ] );
 		$fs->put_contents( 'parent/file.txt', 'test content' );
 		$fs->put_contents( 'parent/child/nested_file.txt', 'nested content' );
@@ -49,7 +49,7 @@ class RmDirStepTest extends StepTestCase {
 	}
 
 	public function testNonRecursiveRemovalFailsForNonEmptyDirectory() {
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$fs->mkdir( 'non_empty_dir' );
 		$fs->put_contents( 'non_empty_dir/file.txt', 'test content' );
 
@@ -64,7 +64,7 @@ class RmDirStepTest extends StepTestCase {
 	}
 
 	public function testRemoveDirectoryWithMultipleFilesAndNestedDirectories() {
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$fs->mkdir( 'complex/nested1/sub1', [ 'recursive' => true ] );
 		$fs->mkdir( 'complex/nested2', [ 'recursive' => true ] );
 		$fs->put_contents( 'complex/file1.txt', 'content 1' );
@@ -99,7 +99,7 @@ class RmDirStepTest extends StepTestCase {
 	}
 
 	public function testRemoveFileWithRmDirFails() {
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$fs->put_contents( 'test_file.txt', 'test content' );
 
 		$step = new RmDirStep(

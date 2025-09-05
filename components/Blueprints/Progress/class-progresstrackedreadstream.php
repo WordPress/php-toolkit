@@ -35,9 +35,6 @@ class ProgressTrackedReadStream implements ByteReadStream {
 		return $this->stream->tell();
 	}
 
-	/**
-	 * @throws ByteStreamException
-	 */
 	public function seek( int $offset ) {
 		$this->stream->seek( $offset );
 		$this->updateProgress();
@@ -52,9 +49,6 @@ class ProgressTrackedReadStream implements ByteReadStream {
 		return $is_end_of_data;
 	}
 
-	/**
-	 * @throws ByteStreamException
-	 */
 	public function pull( $n, $mode = self::PULL_NO_MORE_THAN ): int {
 		$bytes_pulled = $this->stream->pull( $n, $mode );
 		$this->updateProgress();
@@ -62,16 +56,10 @@ class ProgressTrackedReadStream implements ByteReadStream {
 		return $bytes_pulled;
 	}
 
-	/**
-	 * @throws ByteStreamException
-	 */
 	public function peek( $n ): string {
 		return $this->stream->peek( $n );
 	}
 
-	/**
-	 * @throws ByteStreamException
-	 */
 	public function consume( $n ): string {
 		$data = $this->stream->consume( $n );
 		$this->updateProgress();
@@ -79,9 +67,6 @@ class ProgressTrackedReadStream implements ByteReadStream {
 		return $data;
 	}
 
-	/**
-	 * @throws ByteStreamException
-	 */
 	public function consume_all(): string {
 		$data = $this->stream->consume_all();
 		$this->updateProgress(); // Should be 100% after this.

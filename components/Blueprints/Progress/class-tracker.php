@@ -46,12 +46,12 @@ use function is_string;
  * stage2.finish();
  */
 class Tracker implements ArrayAccess {
-	private $self_weight   = 1;
-	private $self_done     = false;
+	private $self_weight = 1;
+	private $self_done = false;
 	private $self_progress = 0;
-	private $self_caption  = '';
+	private $self_caption = '';
 	private $weight;
-	private $sub_trackers    = array();
+	private $sub_trackers = array();
 	private $split_performed = false;
 
 	/**
@@ -63,6 +63,8 @@ class Tracker implements ArrayAccess {
 	 * * Tracker instance – the last sub-tracker that was updated
 	 * * null – when this tracker was updated more recently than
 	 *          any of its sub-trackers
+	 *
+	 * @var Tracker|null
 	 */
 	private $last_updated_tracker = null;
 
@@ -75,11 +77,13 @@ class Tracker implements ArrayAccess {
 	}
 
 	/**
+	 * ```
 	 * split([
 	 *   'alpha' => 6000,
 	 *   'beta',             // null → implicit 1
 	 *   'gamma' => null,    // explicit null → implicit 1
 	 * ]);
+	 * ```
 	 * …behaves like weights [6000,1,1] ⇒ normalised to [0.99967,0.00017,0.00017]
 	 */
 	public function split( $definitions ) {
@@ -106,7 +110,7 @@ class Tracker implements ArrayAccess {
 				$caption = '';
 			}
 			if ( isset( $this->sub_trackers[ $slug ] ) ) {
-				throw new LogicException( "Duplicate slug '$slug'." );
+				throw new LogicException( esc_html( "Duplicate slug '$slug'." ) );
 			}
 			if ( null === $weight ) {
 				++$null_count;
@@ -150,8 +154,8 @@ class Tracker implements ArrayAccess {
 	 *
 	 * Returns the newly-created sub-tracker.
 	 *
-	 * @param  weight The weight of the new stage, as a decimal value between 0 and 1.
-	 * @param  caption The caption for the new stage, which will be used as the progress caption for the sub-tracker.
+	 * @param  $weight float The weight of the new stage, as a decimal value between 0 and 1.
+	 * @param  $caption string The caption for the new stage, which will be used as the progress caption for the sub-tracker.
 	 *
 	 * @throws {Error} If the weight of the new stage would cause the total weight of all stages to exceed 1.
 	 *
@@ -216,7 +220,7 @@ class Tracker implements ArrayAccess {
 
 		$sub_tracker                 = new self(
 			array(
-				'weight' => $weight,
+				'weight'  => $weight,
 				'caption' => $caption,
 			)
 		);
@@ -246,8 +250,8 @@ class Tracker implements ArrayAccess {
 	}
 
 	/**
-	 * @param  float       $value
-	 * @param  string|null $caption
+	 * @param  float  $value
+	 * @param  string|null  $caption
 	 */
 	public function set( $value, $caption = null ) {
 		if ( $value < $this->self_progress ) {

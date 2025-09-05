@@ -32,7 +32,7 @@ class WriteFilesStep implements StepInterface {
 
 		$tracker->set( 10, 'Writing files...' );
 
-		$target_fs     = $runtime->getTargetFilesystem();
+		$target_fs     = $runtime->get_target_filesystem();
 		$files_written = 0;
 
 		foreach ( $this->files as $path => $data ) {

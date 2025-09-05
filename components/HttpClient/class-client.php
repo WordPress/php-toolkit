@@ -49,7 +49,7 @@ class Client {
 				$transport = new SocketTransport( $this->state );
 				break;
 			default:
-				throw new HttpClientException( "Invalid transport: {$options['transport']}" );
+				throw new HttpClientException( sprintf( 'Invalid transport: %s', esc_html( $options['transport'] ) ) );
 		}
 
 		$middleware = new HttpMiddleware( $this->state, array( 'transport' => $transport ) );
@@ -132,11 +132,11 @@ class Client {
 				$request = new Request( $request );
 			}
 			if ( array_key_exists( $request->id, $this->state->connections ) ) {
-				throw new HttpClientException( "Request {$request->id} is already enqueued." );
+				throw new HttpClientException( sprintf( 'Request %s is already enqueued.', esc_html( $request->id ) ) );
 			}
 
 			if ( Request::STATE_CREATED !== $request->state ) {
-				throw new HttpClientException( "Request {$request->id} is not in the created state." );
+				throw new HttpClientException( sprintf( 'Request %s is not in the created state.', esc_html( $request->id ) ) );
 			}
 
 			$this->middleware->enqueue( $request );

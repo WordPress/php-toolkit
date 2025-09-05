@@ -22,7 +22,7 @@ class RunSQLStepTest extends StepTestCase {
 		] ) );
 		$step->run( $this->runtime, new Tracker() );
 
-		$table_exists = $this->runtime->evalPhpCodeInSubProcess(
+		$table_exists = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
@@ -54,7 +54,7 @@ SQL;
 		] ) );
 		$step->run( $this->runtime, new Tracker() );
 
-		$result = $this->runtime->evalPhpCodeInSubProcess(
+		$result = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
@@ -91,7 +91,7 @@ SQL;
 		] ) );
 		$step->run( $this->runtime, new Tracker() );
 
-		$option_value = $this->runtime->evalPhpCodeInSubProcess(
+		$option_value = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
@@ -120,7 +120,7 @@ SQL;
 		] ) );
 		$step->run( $this->runtime, new Tracker() );
 
-		$result = $this->runtime->evalPhpCodeInSubProcess(
+		$result = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
@@ -154,7 +154,7 @@ PHP
 		] ) );
 		$step->run( $this->runtime, new Tracker() );
 
-		$table_exists = $this->runtime->evalPhpCodeInSubProcess(
+		$table_exists = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';

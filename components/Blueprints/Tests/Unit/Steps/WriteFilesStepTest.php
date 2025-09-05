@@ -27,7 +27,7 @@ class WriteFilesStepTest extends StepTestCase {
 		$step->run( $this->runtime, $tracker );
 
 		// Check if file was created with correct content
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( 'test_output.txt' ) );
 		$this->assertEquals( 'String content test', $fs->get_contents( 'test_output.txt' ) );
 	}
@@ -53,7 +53,7 @@ class WriteFilesStepTest extends StepTestCase {
 		$step->run( $this->runtime, $tracker );
 
 		// Check if file was created with correct content
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( 'test_output_from_ref.txt' ) );
 		$this->assertEquals( 'Test file content', $fs->get_contents( 'test_output_from_ref.txt' ) );
 	}
@@ -74,7 +74,7 @@ class WriteFilesStepTest extends StepTestCase {
 		$step->run( $this->runtime, $tracker );
 
 		// Check if nested directories and file were created
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( 'nested/directory/structure/test.txt' ) );
 		$this->assertEquals( 'Nested directory test', $fs->get_contents( 'nested/directory/structure/test.txt' ) );
 	}

@@ -36,7 +36,7 @@ class DefineConstantsStepTest extends StepTestCase {
 	}
 
 	public function testAddNewConstantsToEmptyWpConfig() {
-		$this->runtime->getTargetFilesystem()->put_contents( 'wp-config.php', "<?php\n" );
+		$this->runtime->get_target_filesystem()->put_contents( 'wp-config.php', "<?php\n" );
 		$constants = [
 			'WP_MEMORY_LIMIT'            => '256M',
 			'AUTOMATIC_UPDATER_DISABLED' => true,
@@ -47,14 +47,14 @@ class DefineConstantsStepTest extends StepTestCase {
 
 		$this->assertSame(
 			"<?php\n\ndefine( 'WP_MEMORY_LIMIT', '256M' );\ndefine( 'AUTOMATIC_UPDATER_DISABLED', true );\n\n",
-			$this->runtime->getTargetFilesystem()->get_contents( 'wp-config.php' )
+			$this->runtime->get_target_filesystem()->get_contents( 'wp-config.php' )
 		);
 
-		$this->runtime->getTargetFilesystem()->rm( 'wp-config.php' );
+		$this->runtime->get_target_filesystem()->rm( 'wp-config.php' );
 	}
 
 	public function testAddNewConstantsToWpConfigWithEditingComment() {
-		$this->runtime->getTargetFilesystem()->put_contents(
+		$this->runtime->get_target_filesystem()->put_contents(
 			'wp-config.php',
 			<<<'PHP'
 <?php
@@ -93,12 +93,12 @@ define( 'AUTOMATIC_UPDATER_DISABLED', true );
 require_once ABSPATH . 'wp-settings.php';
 PHP
 			,
-			$this->runtime->getTargetFilesystem()->get_contents( 'wp-config.php' )
+			$this->runtime->get_target_filesystem()->get_contents( 'wp-config.php' )
 		);
 	}
 
 	public function testAddNewConstantsToWpConfigWithSetupWpSettingsComment() {
-		$this->runtime->getTargetFilesystem()->put_contents(
+		$this->runtime->get_target_filesystem()->put_contents(
 			'wp-config.php',
 			<<<'PHP'
 <?php
@@ -133,12 +133,12 @@ define( 'AUTOMATIC_UPDATER_DISABLED', true );
 require_once ABSPATH . 'wp-settings.php';
 PHP
 			,
-			$this->runtime->getTargetFilesystem()->get_contents( 'wp-config.php' )
+			$this->runtime->get_target_filesystem()->get_contents( 'wp-config.php' )
 		);
 	}
 
 	public function testAddNewConstantsToWpConfigWithRequireWpSettings() {
-		$this->runtime->getTargetFilesystem()->put_contents(
+		$this->runtime->get_target_filesystem()->put_contents(
 			'wp-config.php',
 			<<<'PHP'
 <?php
@@ -167,12 +167,12 @@ define( 'AUTOMATIC_UPDATER_DISABLED', true );
 require_once ABSPATH . 'wp-settings.php';
 PHP
 			,
-			$this->runtime->getTargetFilesystem()->get_contents( 'wp-config.php' )
+			$this->runtime->get_target_filesystem()->get_contents( 'wp-config.php' )
 		);
 	}
 
 	public function testAddNewConstantsToInvalidWpConfig() {
-		$this->runtime->getTargetFilesystem()->put_contents( 'wp-config.php', '' );
+		$this->runtime->get_target_filesystem()->put_contents( 'wp-config.php', '' );
 		$constants = [
 			'WP_MEMORY_LIMIT'            => '256M',
 			'AUTOMATIC_UPDATER_DISABLED' => true,
@@ -206,7 +206,7 @@ PHP
 	 * Test error handling when wp-config.php does not exist
 	 */
 	public function testErrorHandlingWhenWpConfigNotExists() {
-		$this->runtime->getTargetFilesystem()->rm( 'wp-config.php' );
+		$this->runtime->get_target_filesystem()->rm( 'wp-config.php' );
 		$step = new DefineConstantsStep( [ 'WP_DEBUG' => true ] );
 		$this->expectException( Exception::class );
 		$step->run( $this->runtime, new Tracker() );
@@ -241,7 +241,7 @@ PHP
 	 * @return array Results of constant verification
 	 */
 	private function assertWordPressConstants( array $expected_constants ) {
-		$result = $this->runtime->evalPhpCodeInSubProcess(
+		$result = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 // Load WordPress environment

@@ -58,7 +58,7 @@ class RedirectionMiddleware implements MiddlewareInterface {
 	}
 
 	/**
-	 * @param  array $requests  An array of requests.
+	 * @param  Request $request  The request to handle.
 	 */
 	protected function handle_redirect( Request $request ) {
 		$response = $request->response;

@@ -51,7 +51,7 @@ class BlocksWithMetadata {
 	 * Gets all the metadata sourced from the input document by the convert() method.
 	 * The data format is:
 	 *
-	 * array(
+	 * Array(
 	 *     'post_title' => array( 'The Name of the Wind' ),
 	 *     'post_author' => array( 'Patrick Rothfuss', 'Betsy Wollheim' )
 	 * )

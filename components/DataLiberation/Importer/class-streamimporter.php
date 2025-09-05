@@ -84,6 +84,8 @@ class StreamImporter {
 	 *
 	 * Once the API consumer decides on the mapping, it can call
 	 * add_url_mapping() to tell the importer what to map that domain to.
+	 *
+	 * @var array
 	 */
 	protected $site_url_mapping_candidates = array();
 
@@ -92,6 +94,7 @@ class StreamImporter {
 	 */
 	protected $entity_reader_factory;
 	/**
+	 * @var array
 	 * @param  array|string|null  $query  {
 	 *
 	 * @type string $uploads_path The directory to download the media attachments to.
@@ -887,12 +890,11 @@ class StreamImporter {
 		}
 
 		$post_id = $this->entity_sink->import_entity( $entity );
-					if ( false !== $post_id ) {
-				$this->count_imported_entity( $entity->get_type() );
-			} else {
-				// @TODO: Store error.
-				// For now, we continue processing other entities.
-			}
+		if ( false !== $post_id ) {
+			$this->count_imported_entity( $entity->get_type() );
+		}
+		// @TODO: Store error.
+		// For now, we continue processing other entities.
 		foreach ( $attachments as $filepath ) {
 			// @TODO: Monitor failures.
 			$attachment_id = $this->entity_sink->import_attachment( $filepath, $post_id );

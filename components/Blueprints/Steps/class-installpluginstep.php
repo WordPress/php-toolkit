@@ -66,7 +66,7 @@ class InstallPluginStep implements StepInterface {
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$plugin_data = $runtime->resolve( $this->source );
 
-		$runtime->withTemporaryDirectory(
+		$runtime->with_temporary_directory(
 			function ( $temp_dir ) use ( $runtime, $tracker, $plugin_data ) {
 				$tracker->setCaption( 'Installing plugin ' . $plugin_data->get_human_readable_name() );
 				if ( $plugin_data instanceof Directory ) {
@@ -101,7 +101,7 @@ class InstallPluginStep implements StepInterface {
 				$zip_stream->close_writing();
 
 				$tracker->set( 50 );
-				$relative_path = $runtime->evalPhpCodeInSubProcess(
+				$relative_path = $runtime->eval_php_code_in_subprocess(
 					<<<'PHP'
 <?php
 
@@ -338,7 +338,7 @@ PHP
 
 				if ( $this->active ) {
 					$tracker->set( 75, 'Activating plugin ' . $plugin_data->get_human_readable_name() );
-					$runtime->evalPhpCodeInSubProcess(
+					$runtime->eval_php_code_in_subprocess(
 						ActivatePluginStep::ACTIVATE_PLUGIN_SCRIPT,
 						array( 'PLUGIN_PATH' => $relative_path )
 					);

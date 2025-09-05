@@ -83,7 +83,7 @@ class StepTestCase extends TestCase {
 		$this->runtime = $runner->runtime;
 		// Recreate the temp root directory – the runner cleans it up at the
 		// end of run().
-		@mkdir( $this->runtime->getTempRoot() );
+		@mkdir( $this->runtime->get_temp_root() );
 	}
 
 	/**
@@ -98,8 +98,8 @@ class StepTestCase extends TestCase {
 		if ( is_dir( $this->document_root ) ) {
 			$this->removeDirectory( $this->document_root );
 		}
-		if ( is_dir( $this->runtime->getTempRoot() ) ) {
-			$this->removeDirectory( $this->runtime->getTempRoot() );
+		if ( is_dir( $this->runtime->get_temp_root() ) ) {
+			$this->removeDirectory( $this->runtime->get_temp_root() );
 		}
 	}
 

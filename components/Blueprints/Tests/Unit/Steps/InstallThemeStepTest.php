@@ -67,12 +67,12 @@ PHP;
 		$tracker = new Tracker();
 		$step->run( $this->runtime, $tracker );
 
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( 'wp-content/themes/test-theme' ) );
 		$this->assertTrue( $fs->exists( 'wp-content/themes/test-theme/style.css' ) );
 		$this->assertTrue( $fs->exists( 'wp-content/themes/test-theme/index.php' ) );
 
-		$active_theme = $this->runtime->evalPhpCodeInSubProcess(
+		$active_theme = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
@@ -107,12 +107,12 @@ PHP
 		$tracker = new Tracker();
 		$step->run( $this->runtime, $tracker );
 
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( 'wp-content/themes/test-theme' ) );
 		$this->assertTrue( $fs->exists( 'wp-content/themes/test-theme/style.css' ) );
 		$this->assertTrue( $fs->exists( 'wp-content/themes/test-theme/index.php' ) );
 
-		$active_theme = $this->runtime->evalPhpCodeInSubProcess(
+		$active_theme = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
@@ -143,12 +143,12 @@ PHP
 		$tracker = new Tracker();
 		$step->run( $this->runtime, $tracker );
 
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertTrue( $fs->exists( 'wp-content/themes/test-theme' ) );
 		$this->assertTrue( $fs->exists( 'wp-content/themes/test-theme/style.css' ) );
 		$this->assertTrue( $fs->exists( 'wp-content/themes/test-theme/index.php' ) );
 
-		$active_theme = $this->runtime->evalPhpCodeInSubProcess(
+		$active_theme = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';

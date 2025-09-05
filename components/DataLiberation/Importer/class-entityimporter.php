@@ -61,16 +61,22 @@ class EntityImporter {
 
 	/**
 	 * Information to import from WXR file.
+	 *
+	 * @var array
 	 */
 	protected $categories = array();
 
 	/**
 	 * Information to import from WXR file.
+	 *
+	 * @var array
 	 */
 	protected $tags = array();
 
 	/**
 	 * Information to import from WXR file.
+	 *
+	 * @var string
 	 */
 	protected $base_url = '';
 
@@ -79,6 +85,8 @@ class EntityImporter {
 
 	/**
 	 * NEW STYLE.
+	 *
+	 * @var array
 	 */
 	protected $mapping = array();
 	protected $requires_remapping = array();
@@ -780,7 +788,8 @@ class EntityImporter {
 			return;
 		}
 
-		$this->logger->debug( sprintf( esc_html__( 'Menu item %d mapped to %d', 'wordpress-components' ), $original_object_id, $object_id ) );
+		// translators: %1$d is the original menu item ID, %2$d is the new mapped ID.
+		$this->logger->debug( sprintf( esc_html__( 'Menu item %1$d mapped to %2$d', 'wordpress-components' ), $original_object_id, $object_id ) );
 		update_post_meta( $post_id, '_menu_item_object_id', wp_slash( $object_id ) );
 	}
 
@@ -878,9 +887,8 @@ class EntityImporter {
 	/**
 	 * Process and import post meta items.
 	 *
-	 * @param  array $meta  List of meta data arrays
+	 * @param  array $meta_item  List of meta data arrays
 	 * @param  int   $post_id  Post to associate with
-	 * @param  array $post  Post data
 	 *
 	 * @return int|WP_Error Number of meta items imported on success, error otherwise.
 	 */

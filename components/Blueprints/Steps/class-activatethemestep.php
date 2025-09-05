@@ -42,7 +42,7 @@ PHP;
 	 */
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Activating theme ' . $this->theme_folder_name );
-		$runtime->evalPhpCodeInSubProcess(
+		$runtime->eval_php_code_in_subprocess(
 			self::ACTIVATE_THEME_SCRIPT,
 			array(
 				'THEME_FOLDER_NAME' => $this->theme_folder_name,

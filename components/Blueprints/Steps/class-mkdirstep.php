@@ -27,7 +27,7 @@ class MkdirStep implements StepInterface {
 	 */
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Creating directory ' . $this->path );
-		$fs = $runtime->getTargetFilesystem();
+		$fs = $runtime->get_target_filesystem();
 		if ( $fs->exists( $this->path ) ) {
 			throw new BlueprintExecutionException( sprintf( 'Path already exists: %s', $this->path ) );
 		}

@@ -64,7 +64,7 @@ class ImportContentStep implements StepInterface {
 		}
 
 		$importer_script = file_get_contents( $import_script_path );
-		$import_process  = $runtime->createPhpSubProcess(
+		$import_process  = $runtime->create_php_sub_process(
 			$importer_script .
 			<<<'PHP'
 <?php
@@ -80,7 +80,7 @@ PHP
 			,
 			array(
 				'DATA_SOURCE_DEFINITION' => json_encode( $content_definition['source']->original_definition ),
-				'EXECUTION_CONTEXT' => $runtime->getExecutionContextRoot(),
+				'EXECUTION_CONTEXT' => $runtime->get_execution_context_root(),
 			)
 		);
 		$import_process->start();
@@ -148,7 +148,7 @@ PHP
 			);
 		}
 
-		$runtime->evalPhpCodeInSubProcess(
+		$runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';

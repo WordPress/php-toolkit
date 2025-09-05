@@ -11,7 +11,7 @@ require_once __DIR__ . '/StepTestCase.php';
 class RmStepTest extends StepTestCase {
 
 	public function testRemoveFile() {
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$fs->put_contents( 'test_file.txt', 'test content' );
 
 		$step = new RmStep(
@@ -28,7 +28,7 @@ class RmStepTest extends StepTestCase {
 	}
 
 	public function testRemoveDirectoryWhenUsingRelativePath() {
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$fs->mkdir( 'test_dir' );
 
 		$step = new RmStep(
@@ -45,7 +45,7 @@ class RmStepTest extends StepTestCase {
 	}
 
 	public function testRemoveDirectoryWithSubdirectory() {
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$fs->mkdir( 'parent/child', [ 'recursive' => true ] );
 
 		$step = new RmStep(
@@ -63,7 +63,7 @@ class RmStepTest extends StepTestCase {
 	}
 
 	public function testRemoveDirectoryWithFile() {
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		// Create directory with file
 		$fs->mkdir( 'dir_with_file', [ 'recursive' => true ] );
 		$fs->put_contents( 'dir_with_file/test.txt', 'test content' );

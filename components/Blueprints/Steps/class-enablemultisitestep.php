@@ -97,7 +97,7 @@ append_output( json_encode( $wp_config_constants ) );
 PHP;
 
 		try {
-			$result = $runtime->evalPhpCodeInSubProcess( $code );
+			$result = $runtime->eval_php_code_in_subprocess( $code );
 		} catch ( ProcessFailedException $e ) {
 			throw new BlueprintExecutionException( $e->getMessage() );
 		}

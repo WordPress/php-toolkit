@@ -3,7 +3,6 @@
 namespace WordPress\Blueprints;
 
 use Psr\Log\LoggerInterface;
-use WordPress\Blueprints\Process;
 use WordPress\Blueprints\DataReference\DataReference;
 use WordPress\Blueprints\DataReference\DataReferenceResolver;
 use WordPress\Blueprints\DataReference\Directory;
@@ -16,22 +15,6 @@ use WordPress\HttpClient\Client;
 
 use function WordPress\Filesystem\pipe_stream;
 use function WordPress\Filesystem\wp_join_unix_paths;
-
-class EvalResult {
-	/**
-	 * @var string
-	 */
-	public $output_file_content;
-	/**
-	 * @var Process
-	 */
-	public $process;
-
-	public function __construct( string $output_file_content, Process $process ) {
-		$this->output_file_content = $output_file_content;
-		$this->process             = $process;
-	}
-}
 
 class Runtime {
 	/**
@@ -87,31 +70,31 @@ class Runtime {
 		$this->execution_context_root = $execution_context_root;
 	}
 
-	public function getExecutionContextRoot(): ?string {
+	public function get_execution_context_root(): ?string {
 		return $this->execution_context_root;
 	}
 
-	public function getHttpClient(): Client {
+	public function get_http_client(): Client {
 		return $this->client;
 	}
 
-	public function getBlueprint(): array {
+	public function get_blueprint(): array {
 		return $this->blueprint;
 	}
 
-	public function getConfiguration(): RunnerConfiguration {
+	public function get_configuration(): RunnerConfiguration {
 		return $this->configuration;
 	}
 
-	public function getTargetFilesystem(): Filesystem {
+	public function get_target_filesystem(): Filesystem {
 		return $this->target_fs;
 	}
 
-	public function getTempRoot(): string {
+	public function get_temp_root(): string {
 		return $this->temp_root;
 	}
 
-	public function getDataReferenceResolver(): DataReferenceResolver {
+	public function get_data_reference_resolver(): DataReferenceResolver {
 		return $this->assets;
 	}
 
@@ -122,8 +105,8 @@ class Runtime {
 		return $this->assets->resolve( $r );
 	}
 
-	public function saveToTemporaryFile( File $file ) {
-		$temp_file    = $this->createTemporaryFile();
+	public function save_to_temporary_file( File $file ) {
+		$temp_file    = $this->create_temporary_file();
 		$write_stream = FileWriteStream::from_path( $temp_file );
 		pipe_stream( $file->getStream(), $write_stream );
 		$write_stream->close_writing();
@@ -131,8 +114,8 @@ class Runtime {
 		return $temp_file;
 	}
 
-	public function getWpCliPath(): string {
-		$wp_cli_path = wp_join_unix_paths( $this->getTempRoot(), 'wp-cli.phar' );
+	public function get_wp_cli_path(): string {
+		$wp_cli_path = wp_join_unix_paths( $this->get_temp_root(), 'wp-cli.phar' );
 		if ( ! file_exists( $wp_cli_path ) ) {
 			$resolved = $this->resolve( $this->wp_cli_reference );
 			if ( ! $resolved instanceof File ) {
@@ -147,12 +130,12 @@ class Runtime {
 		return $wp_cli_path;
 	}
 
-	public function getLogger(): LoggerInterface {
+	public function get_logger(): LoggerInterface {
 		return $this->configuration->getLogger();
 	}
 
-	public function withTemporaryDirectory( callable $callback ) {
-		$tmp = $this->createTemporaryDirectory();
+	public function with_temporary_directory( callable $callback ) {
+		$tmp = $this->create_temporary_directory();
 		try {
 			return $callback( $tmp );
 		} finally {
@@ -160,7 +143,7 @@ class Runtime {
 		}
 	}
 
-	public function createTemporaryDirectory(): string {
+	public function create_temporary_directory(): string {
 		do {
 			$dirname = wp_join_unix_paths( $this->temp_root, uniqid( 'tmp_' ) );
 		} while ( file_exists( $dirname ) );
@@ -170,16 +153,16 @@ class Runtime {
 		return $dirname;
 	}
 
-	public function withTemporaryFile( callable $callback, ?string $suffix = null ) {
-		$temp_file = $this->createTemporaryFile( $suffix );
+	public function with_temporary_file( callable $callback, ?string $suffix = null ) {
+		$temp_file = $this->create_temporary_file( $suffix );
 		try {
 			return $callback( $temp_file );
 		} finally {
-			@unlink( $temp_file );
+			@unlink( $temp_file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 		}
 	}
 
-	public function createTemporaryFile( ?string $suffix = null ): string {
+	public function create_temporary_file( ?string $suffix = null ): string {
 		do {
 			$filename = wp_join_unix_paths( $this->temp_root, uniqid( $suffix ?? 'tmp_' ) );
 		} while ( file_exists( $filename ) );
@@ -219,16 +202,18 @@ class Runtime {
 	 *
 	 * Stderr:
 	 *
-	 * @param  mixed[]|null $env
-	 * @param  float        $timeout
+	 * @param  string       $code    The PHP code to execute.
+	 * @param  mixed[]|null $env     Optional environment variables to set.
+	 * @param  string|null  $input   Optional input to pass to the process.
+	 * @param  float        $timeout Timeout in seconds.
 	 */
-	public function evalPhpCodeInSubProcess(
+	public function eval_php_code_in_subprocess(
 		$code,
 		$env = null,
 		$input = null,
 		$timeout = 60
 	) {
-		$process = $this->createPhpSubProcess( $code, $env, $input, $timeout );
+		$process = $this->create_php_sub_process( $code, $env, $input, $timeout );
 		$process->mustRun();
 
 		$output = $process->getOutputStream( Process::OUTPUT_FILE )->consume_all();
@@ -238,18 +223,18 @@ class Runtime {
 		);
 	}
 
-	public function createPhpSubProcess(
+	public function create_php_sub_process(
 		$code,
 		$env = null,
 		$input = null,
 		$timeout = 60
 	) {
-		return $this->withTemporaryFile(
+		return $this->with_temporary_file(
 			function ( $script_path ) use ( $code, $env, $input, $timeout ) {
 				file_put_contents( $script_path, $code );
 
 				// @TODO: Cleaning up the temporary directory is not done here.
-				$temp_dir = $this->createTemporaryDirectory();
+				$temp_dir = $this->create_temporary_directory();
 
 				// Still put the script in a temporary file as the path may be refering.
 				// to a file inside the currently executed .phar archive.
@@ -270,7 +255,7 @@ class Runtime {
 					$php_binary = 'php';
 				}
 
-				return $this->startShellCommand(
+				return $this->start_shell_command(
 					array(
 						$php_binary,
 						$actual_script_path,
@@ -297,9 +282,11 @@ class Runtime {
 	 * @param  mixed[]      $command
 	 * @param  string|null  $cwd
 	 * @param  mixed[]|null $env
+	 * @param  string|null  $input
 	 * @param  float        $timeout
+	 * @param  mixed[]      $options
 	 */
-	public function startShellCommand(
+	public function start_shell_command(
 		$command,
 		$cwd = null,
 		$env = null,

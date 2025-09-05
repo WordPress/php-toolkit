@@ -422,7 +422,8 @@ final class CacheMiddleware implements MiddlewareInterface {
 		$meta_file = $this->metaPath( $key, $request->url );
 
 		// Optionally, acquire lock on meta file to prevent concurrent writes.
-		if ( $fp = @fopen( $meta_file, 'c' ) ) {
+		$fp = @fopen( $meta_file, 'c' );
+		if ( $fp ) {
 			flock( $fp, LOCK_EX );
 		}
 
@@ -448,7 +449,7 @@ final class CacheMiddleware implements MiddlewareInterface {
 	}
 
 
-	/** return ['no-store'=>true, 'max-age'=>60, …] */
+	/** Return ['no-store'=>true, 'max-age'=>60, …] */
 	public static function directives( ?string $value ): array {
 		if ( null === $value ) {
 			return array();

@@ -17,8 +17,8 @@ class RunPHPStepTest extends StepTestCase {
 	 * Test running simple PHP code
 	 */
 	public function testRunSimplePHPCode() {
-		$output_file = wp_join_unix_paths( $this->runtime->getConfiguration()->getTargetSiteRoot(), 'output.txt' );
-		
+		$output_file = wp_join_unix_paths( $this->runtime->get_configuration()->getTargetSiteRoot(), 'output.txt' );
+
 		$step = new RunPHPStep(new InlineFile(
 			[
 				'filename' => 'script.php',
@@ -40,8 +40,8 @@ PHP
 	 * Test running PHP code that creates a file
 	 */
 	public function testRunPHPCodeCreatingFile() {
-		$test_file_path = wp_join_unix_paths( $this->runtime->getConfiguration()->getTargetSiteRoot(), 'test_file.txt' );
-		$output_file = wp_join_unix_paths( $this->runtime->getConfiguration()->getTargetSiteRoot(), 'output.txt' );
+		$test_file_path = wp_join_unix_paths( $this->runtime->get_configuration()->getTargetSiteRoot(), 'test_file.txt' );
+		$output_file = wp_join_unix_paths( $this->runtime->get_configuration()->getTargetSiteRoot(), 'output.txt' );
 		$test_content = 'This is a test file created by PHP';
 
 		$step = new RunPHPStep(
@@ -72,8 +72,8 @@ PHP
 	 * Test running PHP code that loads WordPress
 	 */
 	public function testRunPHPCodeWithWordPress() {
-		$output_file = wp_join_unix_paths( $this->runtime->getConfiguration()->getTargetSiteRoot(), 'output.txt' );
-		
+		$output_file = wp_join_unix_paths( $this->runtime->get_configuration()->getTargetSiteRoot(), 'output.txt' );
+
 		$step = new RunPHPStep(
 			new InlineFile(
 				[
@@ -99,7 +99,7 @@ PHP
 		$this->assertEquals( 'test_value', file_get_contents( $output_file ) );
 
 		// Verify the option was actually set in WordPress
-		$option_value = $this->runtime->evalPhpCodeInSubProcess(
+		$option_value = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
 require_once getenv('DOCROOT') . '/wp-load.php';
@@ -115,8 +115,8 @@ PHP
 	 * Test running PHP code that returns complex data
 	 */
 	public function testRunPHPCodeReturningComplexData() {
-		$output_file = wp_join_unix_paths( $this->runtime->getConfiguration()->getTargetSiteRoot(), 'output.txt' );
-		
+		$output_file = wp_join_unix_paths( $this->runtime->get_configuration()->getTargetSiteRoot(), 'output.txt' );
+
 		$step = new RunPHPStep(
 			new InlineFile(
 				[

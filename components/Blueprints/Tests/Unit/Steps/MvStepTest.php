@@ -11,7 +11,7 @@ require_once __DIR__ . '/StepTestCase.php';
 class MvStepTest extends StepTestCase {
 
 	public function testMoveFile() {
-		$this->runtime->getTargetFilesystem()->put_contents( 'source_file.txt', 'test content' );
+		$this->runtime->get_target_filesystem()->put_contents( 'source_file.txt', 'test content' );
 
 		$step = new MvStep(
 			'source_file.txt',
@@ -21,7 +21,7 @@ class MvStepTest extends StepTestCase {
 		$tracker = new Tracker();
 		$step->run( $this->runtime, $tracker );
 
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$this->assertFalse(
 			$fs->exists( 'source_file.txt' ),
 			'Failed to assert that the source file no longer exists'
@@ -38,7 +38,7 @@ class MvStepTest extends StepTestCase {
 	}
 
 	public function testMoveFileToDirectory() {
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$fs->put_contents( 'source_file.txt', 'test content' );
 		$fs->mkdir( 'target_dir' );
 
@@ -61,7 +61,7 @@ class MvStepTest extends StepTestCase {
 	}
 
 	public function testMoveDirectory() {
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$fs->mkdir( 'source_dir' );
 		$fs->put_contents( 'source_dir/file.txt', 'test content' );
 
@@ -88,7 +88,7 @@ class MvStepTest extends StepTestCase {
 	}
 
 	public function testMoveDirectoryWithNestedContent() {
-		$fs = $this->runtime->getTargetFilesystem();
+		$fs = $this->runtime->get_target_filesystem();
 		$fs->mkdir( 'source_dir/nested_dir', [ 'recursive' => true ] );
 		$fs->put_contents( 'source_dir/file1.txt', 'test content 1' );
 		$fs->put_contents( 'source_dir/nested_dir/file2.txt', 'test content 2' );
