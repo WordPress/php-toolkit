@@ -21,20 +21,20 @@ class ValidationError {
 	/**
 	 * @var array
 	 */
-	public $context = array();
+	public $context = [];
 	/**
 	 * @var ValidationError[]
 	 */
-	public $children = array();
+	public $children = [];
 
 	/**
-	 * @param  string            $pointer  JSON Pointer like /steps/0/data/url
-	 * @param  string            $code  short, stable key: required, type-mismatch …
-	 * @param  string            $message  human sentence
-	 * @param  array             $context  expected/actual/allowed, always associative
-	 * @param  ValidationError[] $children  nested causes
+	 * @param  string  $pointer  JSON Pointer like /steps/0/data/url
+	 * @param  string  $code  short, stable key: required, type-mismatch …
+	 * @param  string  $message  human sentence
+	 * @param  array  $context  expected/actual/allowed, always associative
+	 * @param  ValidationError[]  $children  nested causes
 	 */
-	public function __construct( string $pointer, string $code, string $message, array $context = array(), array $children = array() ) {
+	public function __construct( string $pointer, string $code, string $message, array $context = [], array $children = [] ) {
 		$this->pointer  = $pointer;
 		$this->code     = $code;
 		$this->message  = $message;
@@ -45,14 +45,14 @@ class ValidationError {
 	public function getPath(): array {
 		$path_string = substr( $this->pointer, 2 );
 		if ( ! $path_string ) {
-			return array();
+			return [];
 		}
 
 		return explode( '/', $path_string );
 	}
 
 	public function getPrettyPath(): string {
-		$segments = array( 'Blueprint root' );
+		$segments = [ 'Blueprint root' ];
 		foreach ( $this->getPath() as $segment ) {
 			if ( ctype_digit( $segment ) ) {
 				$segment = (int) $segment;
@@ -92,7 +92,7 @@ class ValidationError {
 
 		// Collapse all required-field-missing errors into a single error
 		if ( $minChild->code === 'required-field-missing' ) {
-			$missingFields = array();
+			$missingFields = [];
 			foreach ( $this->children as $child ) {
 				if ( $child->code === 'required-field-missing' ) {
 					$missingFields[] = $child->context['missingField'];

@@ -10,12 +10,12 @@ use WordPress\XML\XMLProcessor;
 class WXRWriter implements EntityWriter {
 
 	private $write_stream;
-	private $state     = self::STATE_WRITING;
+	private $state = self::STATE_WRITING;
 	private $open_tags = array();
 
-	const STATE_NEW     = 'new';
+	const STATE_NEW = 'new';
 	const STATE_WRITING = 'writing';
-	const STATE_CLOSED  = 'closed';
+	const STATE_CLOSED = 'closed';
 
 	public function __construct( ByteWriteStream $write_stream, $cursor = null ) {
 		$this->write_stream = $write_stream;
@@ -117,24 +117,19 @@ class WXRWriter implements EntityWriter {
 	}
 
 	private function append_if_not_empty( $tag_name, &$content ) {
-		if ( $content !== null ) {
+		if ( null !== $content ) {
 			$this->write_stream->append_bytes( $this->create_xml_tag( $tag_name, $content ) );
 		}
 	}
 
 	private function create_xml_tag( $tag_name, $content ) {
-		$xml = XMLProcessor::create_from_string(
-			"<$tag_name>text</$tag_name>\n",
-			null,
-			'UTF-8',
-			array(
-				'excerpt' => 'http://wordpress.org/export/1.2/excerpt/',
-				'content' => 'http://purl.org/rss/1.0/modules/content/',
-				'wfw' => 'http://wellformedweb.org/CommentAPI/',
-				'dc' => 'http://purl.org/dc/elements/1.1/',
-				'wp' => 'http://wordpress.org/export/1.2/',
-			)
-		);
+		$xml = XMLProcessor::create_from_string( "<$tag_name>text</$tag_name>\n", null, 'UTF-8', array(
+			'excerpt' => "http://wordpress.org/export/1.2/excerpt/",
+			'content' => "http://purl.org/rss/1.0/modules/content/",
+			'wfw' => "http://wellformedweb.org/CommentAPI/",
+			'dc' => "http://purl.org/dc/elements/1.1/",
+			'wp' => "http://wordpress.org/export/1.2/"
+		) );
 		$xml->next_token(); // Move to the opening tag
 		$xml->next_token(); // Move to the text node
 		$xml->set_modifiable_text( $content );

@@ -50,11 +50,12 @@ class WP_HTML_Text_Replacement {
 	/**
 	 * Constructor.
 	 *
-	 * @param  int    $start  Byte offset into document where replacement span begins.
-	 * @param  int    $length  Byte length of span in document being replaced.
-	 * @param  string $text  Span of text to insert in document to replace existing content from start to end.
+	 * @param  int  $start  Byte offset into document where replacement span begins.
+	 * @param  int  $length  Byte length of span in document being replaced.
+	 * @param  string  $text  Span of text to insert in document to replace existing content from start to end.
 	 *
 	 * @since 6.2.0
+	 *
 	 */
 	public function __construct( int $start, int $length, string $text ) {
 		$this->start  = $start;

@@ -51,27 +51,27 @@ class WPURL {
 			(
 				// Protocol-relative URLs.
 				strlen( $raw_url ) > 2 &&
-				$raw_url[0] === '/' &&
-				$raw_url[1] === '/'
+				'/' === $raw_url[0] &&
+				'/' === $raw_url[1]
 			) || (
 				strlen( $raw_url ) > 7 &&
-				( $raw_url[0] === 'h' || $raw_url[0] === 'H' ) &&
-				( $raw_url[1] === 't' || $raw_url[1] === 'T' ) &&
-				( $raw_url[2] === 't' || $raw_url[2] === 'T' ) &&
-				( $raw_url[3] === 'p' || $raw_url[3] === 'P' ) &&
-				$raw_url[4] === ':' &&
-				$raw_url[5] === '/' &&
-				$raw_url[6] === '/'
+				( 'h' === $raw_url[0] || 'H' === $raw_url[0] ) &&
+				( 't' === $raw_url[1] || 'T' === $raw_url[1] ) &&
+				( 't' === $raw_url[2] || 'T' === $raw_url[2] ) &&
+				( 'p' === $raw_url[3] || 'P' === $raw_url[3] ) &&
+				':' === $raw_url[4] &&
+				'/' === $raw_url[5] &&
+				'/' === $raw_url[6]
 			) || (
 				strlen( $raw_url ) > 8 &&
-				( $raw_url[0] === 'h' || $raw_url[0] === 'H' ) &&
-				( $raw_url[1] === 't' || $raw_url[1] === 'T' ) &&
-				( $raw_url[2] === 't' || $raw_url[2] === 'T' ) &&
-				( $raw_url[3] === 'p' || $raw_url[3] === 'P' ) &&
-				( $raw_url[4] === 's' || $raw_url[4] === 'S' ) &&
-				$raw_url[5] === ':' &&
-				$raw_url[6] === '/' &&
-				$raw_url[7] === '/'
+				( 'h' === $raw_url[0] || 'H' === $raw_url[0] ) &&
+				( 't' === $raw_url[1] || 'T' === $raw_url[1] ) &&
+				( 't' === $raw_url[2] || 'T' === $raw_url[2] ) &&
+				( 'p' === $raw_url[3] || 'P' === $raw_url[3] ) &&
+				( 's' === $raw_url[4] || 'S' === $raw_url[4] ) &&
+				':' === $raw_url[5] &&
+				'/' === $raw_url[6] &&
+				'/' === $raw_url[7]
 			)
 		);
 	}

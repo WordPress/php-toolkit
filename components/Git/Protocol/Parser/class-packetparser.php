@@ -8,19 +8,19 @@ use WordPress\Git\GitException;
 class PacketParser {
 
 	const STATE_SCAN_FOR_EXPECTED_LENGTH = 'scan_for_expected_length';
-	const STATE_READ_PACKET_BODY         = 'read_packet_body';
-	const STATE_PACKET_FOOTER            = 'packet_footer';
+	const STATE_READ_PACKET_BODY = 'read_packet_body';
+	const STATE_PACKET_FOOTER = 'packet_footer';
 
-	protected $bytes                         = '';
-	protected $bytes_read_so_far             = 0;
-	protected $bytes_already_forgotten       = 0;
-	protected $is_finished                   = false;
+	protected $bytes = '';
+	protected $bytes_read_so_far = 0;
+	protected $bytes_already_forgotten = 0;
+	protected $is_finished = false;
 	protected $is_paused_at_incomplete_input = false;
-	protected $packet_type                   = null;
-	protected $expected_length               = 0;
-	protected $packet_bytes_read             = 0;
-	protected $body_chunk                    = '';
-	protected $state                         = self::STATE_SCAN_FOR_EXPECTED_LENGTH;
+	protected $packet_type = null;
+	protected $expected_length = 0;
+	protected $packet_bytes_read = 0;
+	protected $body_chunk = '';
+	protected $state = self::STATE_SCAN_FOR_EXPECTED_LENGTH;
 
 	public function next_token() {
 		if ( $this->is_paused_at_incomplete_input ) {
@@ -158,12 +158,12 @@ class PacketParser {
 	}
 
 	private function next_body_chunk() {
-		if ( $this->packet_type === '#pack' ) {
+		if ( '#pack' === $this->packet_type ) {
 			$next_chunk = substr( $this->bytes, $this->bytes_read_so_far );
 			if ( ! $next_chunk ) {
 				throw new NotEnoughDataException();
 			}
-			$this->body_chunk         = $next_chunk;
+			$this->body_chunk        = $next_chunk;
 			$this->bytes_read_so_far += strlen( $next_chunk );
 			$this->packet_bytes_read += strlen( $next_chunk );
 
@@ -176,10 +176,10 @@ class PacketParser {
 			throw new NotEnoughDataException();
 		}
 
-		$chunk                    = substr( $this->bytes, $this->bytes_read_so_far, $chunk_size );
+		$chunk                   = substr( $this->bytes, $this->bytes_read_so_far, $chunk_size );
 		$this->bytes_read_so_far += $chunk_size;
 		$this->packet_bytes_read += $chunk_size;
-		$this->body_chunk         = $chunk;
+		$this->body_chunk        = $chunk;
 
 		if ( $this->packet_bytes_read === $this->expected_length ) {
 			if ( substr_compare( $this->body_chunk, "\n", - strlen( "\n" ) ) === 0 ) {
@@ -189,10 +189,10 @@ class PacketParser {
 	}
 
 	public function append_bytes( $bytes ) {
-		$this->bytes_already_forgotten      += $this->bytes_read_so_far;
+		$this->bytes_already_forgotten       += $this->bytes_read_so_far;
 		$this->bytes                         = substr( $this->bytes, $this->bytes_read_so_far );
 		$this->bytes_read_so_far             = 0;
-		$this->bytes                        .= $bytes;
+		$this->bytes                         .= $bytes;
 		$this->is_paused_at_incomplete_input = false;
 	}
 

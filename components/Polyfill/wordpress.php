@@ -34,7 +34,7 @@ if ( ! function_exists( 'wp_trigger_error' ) ) {
 			$message = sprintf( '%s(): %s', $function_name, $message );
 		}
 
-		if ( $error_level === E_USER_ERROR ) {
+		if ( E_USER_ERROR === $error_level ) {
 			throw new WP_Exception( $message );
 		}
 
@@ -158,7 +158,7 @@ if ( ! function_exists( 'serialize_block' ) ) {
 
 		$index = 0;
 		foreach ( $block['innerContent'] as $chunk ) {
-			$block_content .= is_string( $chunk ) ? $chunk : serialize_block( $block['innerBlocks'][ $index++ ] );
+			$block_content .= is_string( $chunk ) ? $chunk : serialize_block( $block['innerBlocks'][ $index ++ ] );
 		}
 
 		if ( ! is_array( $block['attrs'] ) ) {
@@ -221,8 +221,8 @@ if ( ! function_exists( 'serialize_block_attributes' ) ) {
 	}
 }
 
-if ( ! function_exists( 'wp_read_audio_metadata' ) ) {
-	function wp_read_audio_metadata( $file ) {
+if(!function_exists('wp_read_audio_metadata')) {
+	function wp_read_audio_metadata($file) {
 		return array();
 	}
 }

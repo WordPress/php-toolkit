@@ -72,7 +72,7 @@ class GitRemote {
 					$ref_line                 = $protocol->get_packet_body();
 					$ref                      = $this->parse_ref_line( $ref_line );
 					$refs[ $ref['ref_name'] ] = $ref['hash'];
-					if ( $ref === false ) {
+					if ( false === $ref ) {
 						continue 2;
 					}
 
@@ -456,12 +456,12 @@ class GitRemote {
 		}
 		$want_refs    = $options['want_refs'];
 		$packet_lines = array();
-		for ( $i = 0; $i < count( $want_refs ); $i++ ) {
+		for ( $i = 0; $i < count( $want_refs ); $i ++ ) {
 			$packet_line = "want {$want_refs[$i]}";
 			if ( $i === 0 ) {
 				$packet_line .= ' multi_ack_detailed no-done side-band-64k ofs-delta thin-pack agent=git/2.37.3 filter';
 			}
-			$packet_line   .= "\n";
+			$packet_line    .= "\n";
 			$packet_lines[] = $packet_line;
 		}
 

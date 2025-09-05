@@ -48,7 +48,7 @@ class FileReadStream extends BaseByteReadStream {
 		 * @TODO: Improve the streaming support in WordPress Playground.
 		 */
 		feof( $this->file_pointer );
-		if ( $bytes === false ) {
+		if ( false === $bytes ) {
 			throw new ByteStreamException( 'Failed to read from file' );
 		}
 
@@ -59,7 +59,7 @@ class FileReadStream extends BaseByteReadStream {
 		$this->buffer                   = '';
 		$this->offset_in_current_buffer = 0;
 		$this->bytes_already_forgotten  = $target_offset;
-		if ( fseek( $this->file_pointer, $target_offset ) === false ) {
+		if ( false === fseek( $this->file_pointer, $target_offset ) ) {
 			throw new ByteStreamException( 'Failed to seek to offset' );
 		}
 	}
@@ -69,7 +69,7 @@ class FileReadStream extends BaseByteReadStream {
 			return;
 		}
 		$this->is_read_closed = true;
-		$this->buffer         = '';
+		$this->buffer    = '';
 		if ( ! fclose( $this->file_pointer ) ) {
 			throw new ByteStreamException( 'Failed to close file pointer' );
 		}

@@ -115,27 +115,27 @@ class FileEntry {
 		}
 
 		// Convert Unix timestamp to DOS date/time format
-		if ( $this->lastModifiedDate === null ) {
+		if ( null === $this->lastModifiedDate ) {
 			// DOS date format: bits 0-4: day, bits 5-8: month, bits 9-15: years since 1980
 			$dt                     = getdate( $this->lastModifiedTime );
 			$this->lastModifiedDate = ( ( $dt['year'] - 1980 ) << 9 ) |
-										( $dt['mon'] << 5 ) |
-										$dt['mday'];
+			                          ( $dt['mon'] << 5 ) |
+			                          $dt['mday'];
 		}
 
-		if ( $this->lastModifiedTime === null ) {
+		if ( null === $this->lastModifiedTime ) {
 			// DOS time format: bits 0-4: seconds/2, bits 5-10: minutes, bits 11-15: hours
 			$dt                     = getdate( $this->lastModifiedTime );
 			$this->lastModifiedTime = ( $dt['hours'] << 11 ) |
-										( $dt['minutes'] << 5 ) |
-										( floor( $dt['seconds'] / 2 ) );
+			                          ( $dt['minutes'] << 5 ) |
+			                          ( floor( $dt['seconds'] / 2 ) );
 		}
 
-		if ( $this->path !== null ) {
+		if ( null !== $this->path ) {
 			$this->pathLength = strlen( $this->path );
 		}
 
-		if ( $this->extra !== null ) {
+		if ( null !== $this->extra ) {
 			$this->extraLength = strlen( $this->extra );
 		}
 	}

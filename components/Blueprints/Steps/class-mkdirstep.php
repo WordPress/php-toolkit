@@ -16,7 +16,7 @@ class MkdirStep implements StepInterface {
 	public $path;
 
 	/**
-	 * @param  string $path  The directory path to create.
+	 * @param  string  $path  The directory path to create.
 	 */
 	public function __construct( string $path ) {
 		$this->path = $path;
@@ -28,9 +28,9 @@ class MkdirStep implements StepInterface {
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Creating directory ' . $this->path );
 		$fs = $runtime->getTargetFilesystem();
-		if ( $fs->exists( $this->path ) ) {
-			throw new BlueprintExecutionException( sprintf( 'Path already exists: %s', $this->path ) );
+		if($fs->exists($this->path)) {
+			throw new BlueprintExecutionException(sprintf('Path already exists: %s', $this->path));
 		}
-		$fs->mkdir( $this->path, array( 'recursive' => true ) );
+		$fs->mkdir( $this->path, [ 'recursive' => true ] );
 	}
 }

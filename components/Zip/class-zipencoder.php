@@ -14,7 +14,7 @@ class ZipEncoder {
 
 	private $output;
 	private $centralDirectory = array();
-	private $bytes_written    = 0;
+	private $bytes_written = 0;
 
 	public function __construct( ByteWriteStream $output ) {
 		$this->output = $output;
@@ -26,14 +26,10 @@ class ZipEncoder {
 			if ( $filesystem->is_dir( $entry_path ) ) {
 				$this->append_from_filesystem( $filesystem, $entry_path );
 			} else {
-				$this->append_file(
-					new FileEntry(
-						array(
-							'path'        => $entry_path,
-							'body_reader' => $filesystem->open_read_stream( $entry_path ),
-						)
-					)
-				);
+				$this->append_file( new FileEntry( [
+					'path'        => $entry_path,
+					'body_reader' => $filesystem->open_read_stream( $entry_path ),
+				] ) );
 			}
 		}
 	}
@@ -73,8 +69,8 @@ class ZipEncoder {
 	 * stream. The file data is read and compressed in two passes: first to compute
 	 * the CRC32 and sizes, and second to write the actual compressed data.
 	 *
-	 * @param  string $sourcePathOnDisk  The filesystem path to the source file to be included in the ZIP archive.
-	 * @param  string $targetPathInZip  The desired path (including filename) of the file within the ZIP archive.
+	 * @param  string  $sourcePathOnDisk  The filesystem path to the source file to be included in the ZIP archive.
+	 * @param  string  $targetPathInZip  The desired path (including filename) of the file within the ZIP archive.
 	 *
 	 * @return number The number of bytes written to the ZIP archive stream.
 	 *
@@ -172,19 +168,19 @@ class ZipEncoder {
 
 	private function append_file_entry_header( FileEntry $entry ) {
 		$header = pack(
-			'VvvvvvVVVvv',
-			FileEntry::SIGNATURE,
-			$entry->version,
-			$entry->generalPurpose,
-			$entry->compressionMethod,
-			$entry->lastModifiedTime,
-			$entry->lastModifiedDate,
-			$entry->crc,
-			$entry->compressedSize,
-			$entry->uncompressedSize,
-			$entry->pathLength,
-			$entry->extraLength
-		) . $entry->path . $entry->extra;
+			          'VvvvvvVVVvv',
+			          FileEntry::SIGNATURE,
+			          $entry->version,
+			          $entry->generalPurpose,
+			          $entry->compressionMethod,
+			          $entry->lastModifiedTime,
+			          $entry->lastModifiedDate,
+			          $entry->crc,
+			          $entry->compressedSize,
+			          $entry->uncompressedSize,
+			          $entry->pathLength,
+			          $entry->extraLength
+		          ) . $entry->path . $entry->extra;
 
 		$this->output->append_bytes( $header );
 		$this->bytes_written += strlen( $header );
@@ -193,29 +189,29 @@ class ZipEncoder {
 	/**
 	 * Appends a central directory entry to the zip file.
 	 *
-	 * @param  CentralDirectoryEntry $entry
+	 * @param  CentralDirectoryEntry  $entry
 	 */
 	protected function append_central_directory_entry( CentralDirectoryEntry $entry ) {
 		$object = pack(
-			'VvvvvvvVVVvvvvvVV',
-			CentralDirectoryEntry::SIGNATURE,
-			$entry->versionCreated,
-			$entry->versionNeeded,
-			$entry->generalPurpose,
-			$entry->compressionMethod,
-			$entry->lastModifiedTime,
-			$entry->lastModifiedDate,
-			$entry->crc,
-			$entry->compressedSize,
-			$entry->uncompressedSize,
-			$entry->pathLength,
-			$entry->extraLength,
-			$entry->fileCommentLength,
-			$entry->diskNumber,
-			$entry->internalAttributes,
-			$entry->externalAttributes,
-			$entry->firstByteAt
-		) . $entry->path . $entry->extra . $entry->fileComment;
+			          'VvvvvvvVVVvvvvvVV',
+			          CentralDirectoryEntry::SIGNATURE,
+			          $entry->versionCreated,
+			          $entry->versionNeeded,
+			          $entry->generalPurpose,
+			          $entry->compressionMethod,
+			          $entry->lastModifiedTime,
+			          $entry->lastModifiedDate,
+			          $entry->crc,
+			          $entry->compressedSize,
+			          $entry->uncompressedSize,
+			          $entry->pathLength,
+			          $entry->extraLength,
+			          $entry->fileCommentLength,
+			          $entry->diskNumber,
+			          $entry->internalAttributes,
+			          $entry->externalAttributes,
+			          $entry->firstByteAt
+		          ) . $entry->path . $entry->extra . $entry->fileComment;
 
 		$this->output->append_bytes( $object );
 		$this->bytes_written += strlen( $object );
@@ -226,16 +222,16 @@ class ZipEncoder {
 	 */
 	protected function append_end_central_directory_entry( EndCentralDirectoryEntry $entry ) {
 		$object = pack(
-			'VvvvvVVv',
-			EndCentralDirectoryEntry::SIGNATURE,
-			$entry->diskNumber,
-			$entry->centralDirectoryStartDisk,
-			$entry->numberCentralDirectoryRecordsOnThisDisk,
-			$entry->numberCentralDirectoryRecords,
-			$entry->centralDirectorySize,
-			$entry->centralDirectoryOffset,
-			$entry->commentLength
-		) . $entry->comment;
+			          'VvvvvVVv',
+			          EndCentralDirectoryEntry::SIGNATURE,
+			          $entry->diskNumber,
+			          $entry->centralDirectoryStartDisk,
+			          $entry->numberCentralDirectoryRecordsOnThisDisk,
+			          $entry->numberCentralDirectoryRecords,
+			          $entry->centralDirectorySize,
+			          $entry->centralDirectoryOffset,
+			          $entry->commentLength
+		          ) . $entry->comment;
 
 		$this->output->append_bytes( $object );
 		$this->bytes_written += strlen( $object );

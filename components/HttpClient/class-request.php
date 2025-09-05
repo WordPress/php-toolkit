@@ -4,17 +4,17 @@ namespace WordPress\HttpClient;
 
 class Request {
 
-	const STATE_CREATED            = 'STATE_CREATED';
-	const STATE_ENQUEUED           = 'STATE_ENQUEUED';
+	const STATE_CREATED = 'STATE_CREATED';
+	const STATE_ENQUEUED = 'STATE_ENQUEUED';
 	const STATE_WILL_ENABLE_CRYPTO = 'STATE_WILL_ENABLE_CRYPTO';
-	const STATE_WILL_SEND_HEADERS  = 'STATE_WILL_SEND_HEADERS';
-	const STATE_WILL_SEND_BODY     = 'STATE_WILL_SEND_BODY';
-	const STATE_SENT               = 'STATE_SENT';
-	const STATE_RECEIVING_HEADERS  = 'STATE_RECEIVING_HEADERS';
-	const STATE_RECEIVING_BODY     = 'STATE_RECEIVING_BODY';
-	const STATE_RECEIVED           = 'STATE_RECEIVED';
-	const STATE_FAILED             = 'STATE_FAILED';
-	const STATE_FINISHED           = 'STATE_FINISHED';
+	const STATE_WILL_SEND_HEADERS = 'STATE_WILL_SEND_HEADERS';
+	const STATE_WILL_SEND_BODY = 'STATE_WILL_SEND_BODY';
+	const STATE_SENT = 'STATE_SENT';
+	const STATE_RECEIVING_HEADERS = 'STATE_RECEIVING_HEADERS';
+	const STATE_RECEIVING_BODY = 'STATE_RECEIVING_BODY';
+	const STATE_RECEIVED = 'STATE_RECEIVED';
+	const STATE_FAILED = 'STATE_FAILED';
+	const STATE_FINISHED = 'STATE_FINISHED';
 
 	private static $last_id;
 
@@ -46,7 +46,7 @@ class Request {
 	public $response;
 
 	/**
-	 * @param  string $url
+	 * @param  string  $url
 	 */
 	public function __construct( string $url, $request_info = array() ) {
 		$request_info = array_merge(
@@ -96,7 +96,7 @@ class Request {
 		);
 		if ( $request_info['body_stream'] ) {
 			$length = $request_info['body_stream']->length();
-			if ( $length !== null ) {
+			if ( null !== $length ) {
 				$headers['content-length'] = $length;
 			} else {
 				$headers['transfer-encoding'] = 'chunked';
@@ -141,6 +141,6 @@ class Request {
 	}
 
 	public function is_redirected() {
-		return $this->redirected_to !== null;
+		return null !== $this->redirected_to;
 	}
 }

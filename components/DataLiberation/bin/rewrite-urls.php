@@ -13,10 +13,10 @@ if ( $argc < 2 ) {
 $command = $argv[1];
 $options = array();
 
-for ( $i = 2; $i < $argc; $i++ ) {
+for ( $i = 2; $i < $argc; $i ++ ) {
 	if ( strncmp( $argv[ $i ], '--', strlen( '--' ) ) === 0 && isset( $argv[ $i + 1 ] ) ) {
 		$options[ substr( $argv[ $i ], 2 ) ] = $argv[ $i + 1 ];
-		++$i;
+		++ $i;
 	}
 }
 

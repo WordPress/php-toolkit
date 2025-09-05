@@ -33,7 +33,7 @@ class BlocksWithMetadataEntityReader implements EntityReader {
 
 		$this->current_entity = null;
 
-		if ( $this->enqueued_entities !== null ) {
+		if ( null !== $this->enqueued_entities ) {
 			if ( count( $this->enqueued_entities ) === 0 ) {
 				$this->finished = true;
 
@@ -67,7 +67,7 @@ class BlocksWithMetadataEntityReader implements EntityReader {
 		// @TODO: Enable the API consumer to customize the title resolution.
 		if ( ! isset( $post_fields['post_title'] ) ) {
 			$removed_title = ImportUtils::remove_first_h1_block_from_block_markup( $post_fields['post_content'] );
-			if ( $removed_title !== false ) {
+			if ( false !== $removed_title ) {
 				$post_fields['post_title']   = $removed_title['h1_content'];
 				$post_fields['post_content'] = $removed_title['remaining_html'];
 			}

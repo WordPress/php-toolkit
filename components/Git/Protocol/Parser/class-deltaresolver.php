@@ -23,9 +23,9 @@ class DeltaResolver {
 	 */
 	private $delta_reader;
 
-	private $base_length                = null;
-	private $target_length              = null;
-	private $resolved_chunk             = '';
+	private $base_length = null;
+	private $target_length = null;
+	private $resolved_chunk = '';
 	private $paused_on_incomplete_input = false;
 
 	public function __construct( GitObjectDecoder $base_object_reader, ByteReadStream $delta_reader ) {
@@ -40,13 +40,13 @@ class DeltaResolver {
 	public function resolve_buffers_lengths() {
 		$position = $this->delta_reader->tell();
 		try {
-			if ( $this->base_length !== null && $this->target_length !== null ) {
+			if ( null !== $this->base_length && null !== $this->target_length ) {
 				return false;
 			}
 
 			$this->base_object_reader->read_header();
 
-			if ( $this->base_length === null ) {
+			if ( null === $this->base_length ) {
 				$this->base_length = $this->read_variable_length();
 				if ( $this->base_length !== $this->base_object_reader->get_uncompressed_size() ) {
 					throw new GitException(
@@ -59,7 +59,7 @@ class DeltaResolver {
 				}
 			}
 
-			if ( $this->target_length === null ) {
+			if ( null === $this->target_length ) {
 				$this->target_length = $this->read_variable_length();
 			}
 
@@ -78,7 +78,7 @@ class DeltaResolver {
 		$result = 0;
 		$shift  = 0;
 		do {
-			$byte    = ord( $this->delta_reader->consume( 1 ) );
+			$byte   = ord( $this->delta_reader->consume( 1 ) );
 			$result |= ( $byte & 0x7F ) << $shift;
 			$shift  += 7;
 		} while ( $byte & 0x80 );
@@ -103,9 +103,9 @@ class DeltaResolver {
 		$position                         = $this->delta_reader->tell();
 		try {
 			// Don't resolve body chunks until we know the source and target lengths
-			if ( $this->target_length === null ) {
+			if ( null === $this->target_length ) {
 				$this->resolve_buffers_lengths();
-				if ( $this->target_length === null ) {
+				if ( null === $this->target_length ) {
 					return false;
 				}
 			}
@@ -118,9 +118,9 @@ class DeltaResolver {
 				$copySize   = 0;
 
 				$needed_bytes = 0;
-				for ( $i = 0; $i < 7; $i++ ) {
+				for ( $i = 0; $i < 7; $i ++ ) {
 					if ( $command_byte & ( 1 << $i ) ) {
-						++$needed_bytes;
+						++ $needed_bytes;
 					}
 				}
 
@@ -129,25 +129,25 @@ class DeltaResolver {
 				$offset_bytes = $this->delta_reader->consume( $needed_bytes );
 				$read_offset  = 0;
 				if ( $command_byte & 0b00000001 ) {
-					$copyOffset |= ord( $offset_bytes[ $read_offset++ ] );
+					$copyOffset |= ord( $offset_bytes[ $read_offset ++ ] );
 				}
 				if ( $command_byte & 0b00000010 ) {
-					$copyOffset |= ord( $offset_bytes[ $read_offset++ ] ) << 8;
+					$copyOffset |= ord( $offset_bytes[ $read_offset ++ ] ) << 8;
 				}
 				if ( $command_byte & 0b00000100 ) {
-					$copyOffset |= ord( $offset_bytes[ $read_offset++ ] ) << 16;
+					$copyOffset |= ord( $offset_bytes[ $read_offset ++ ] ) << 16;
 				}
 				if ( $command_byte & 0b00001000 ) {
-					$copyOffset |= ord( $offset_bytes[ $read_offset++ ] ) << 24;
+					$copyOffset |= ord( $offset_bytes[ $read_offset ++ ] ) << 24;
 				}
 				if ( $command_byte & 0b00010000 ) {
-					$copySize |= ord( $offset_bytes[ $read_offset++ ] );
+					$copySize |= ord( $offset_bytes[ $read_offset ++ ] );
 				}
 				if ( $command_byte & 0b00100000 ) {
-					$copySize |= ord( $offset_bytes[ $read_offset++ ] ) << 8;
+					$copySize |= ord( $offset_bytes[ $read_offset ++ ] ) << 8;
 				}
 				if ( $command_byte & 0b01000000 ) {
-					$copySize |= ord( $offset_bytes[ $read_offset++ ] ) << 16;
+					$copySize |= ord( $offset_bytes[ $read_offset ++ ] ) << 16;
 				}
 				if ( $copySize === 0 ) {
 					$copySize = 0x10000;

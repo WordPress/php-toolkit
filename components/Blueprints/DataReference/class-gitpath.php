@@ -35,7 +35,7 @@ class GitPath extends DataReference {
 		$this->git_repository = $definition['gitRepository'];
 		$this->ref            = $definition['ref'] ?? null;
 		$this->path           = $definition['path'] ?? null;
-		parent::__construct( $definition );
+		parent::__construct($definition);
 	}
 
 	/**
@@ -72,7 +72,7 @@ class GitPath extends DataReference {
 	/**
 	 * Check if an array represents a valid git path.
 	 *
-	 * @param  array $data  The array to check.
+	 * @param  array  $data  The array to check.
 	 *
 	 * @return bool Whether the array is valid.
 	 */
@@ -87,8 +87,8 @@ class GitPath extends DataReference {
 	 * @return string The human-readable name.
 	 */
 	public function get_human_readable_name(): string {
-		$ref  = $this->ref ? "#{$this->ref}" : '';
-		$path = $this->path ? "/{$this->path}" : '';
+		$ref  = $this->ref ? "#{$this->ref}" : "";
+		$path = $this->path ? "/{$this->path}" : "";
 
 		return "Git: {$this->git_repository}{$ref}{$path}";
 	}

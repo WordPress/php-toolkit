@@ -16,11 +16,11 @@ class ExecutionContextPath extends DataReference {
 	/**
 	 * Constructor.
 	 *
-	 * @param  string $path  The path.
+	 * @param  string  $path  The path.
 	 */
 	public function __construct( string $path ) {
 		$this->path = $path;
-		parent::__construct( $path );
+		parent::__construct($path);
 	}
 
 	/**
@@ -48,10 +48,10 @@ class ExecutionContextPath extends DataReference {
 	 * @return bool Whether the path is valid.
 	 */
 	public static function is_valid( $path ): bool {
-		if ( ! is_string( $path ) ) {
+		if(!is_string($path)) {
 			return false;
 		}
-		if ( strpos( $path, './' ) === 0 || strpos( $path, '/' ) === 0 ) {
+		if(strpos($path, './') === 0 || strpos($path, '/') === 0) {
 			return true;
 		}
 		return false;

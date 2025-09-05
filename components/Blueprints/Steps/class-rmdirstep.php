@@ -20,10 +20,10 @@ class RmDirStep implements StepInterface {
 	public $options;
 
 	/**
-	 * @param  string $path  The directory path to remove.
+	 * @param  string  $path  The directory path to remove.
 	 */
-	public function __construct( string $path, $options = array() ) {
-		$this->path    = $path;
+	public function __construct( string $path, $options = [] ) {
+		$this->path = $path;
 		$this->options = $options;
 	}
 

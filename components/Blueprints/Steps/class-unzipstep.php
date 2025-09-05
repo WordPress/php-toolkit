@@ -17,21 +17,19 @@ use function WordPress\Filesystem\copy_between_filesystems;
 class UnzipStep implements StepInterface {
 	/**
 	 * Zip file source identifier (URL, ./path, /path).
-	 *
 	 * @var DataReference
 	 */
 	public $zipFile;
 
 	/**
 	 * The path to extract the zip file to.
-	 *
 	 * @var string
 	 */
 	public $extractToPath;
 
 	/**
-	 * @param  DataReference $zipFile  Zip file source identifier.
-	 * @param  string        $extractToPath  The path to extract the zip file to.
+	 * @param  DataReference  $zipFile  Zip file source identifier.
+	 * @param  string  $extractToPath  The path to extract the zip file to.
 	 */
 	public function __construct( DataReference $zipFile, string $extractToPath ) {
 		$this->zipFile       = $zipFile;
@@ -54,15 +52,13 @@ class UnzipStep implements StepInterface {
 
 		$tracker->set( 50, 'Extracting files...' );
 
-		copy_between_filesystems(
-			array(
-				'source_filesystem' => $zip_fs,
-				'source_path'       => '/',
-				'target_filesystem' => $target_fs,
-				'target_path'       => $this->extractToPath,
-				'recursive'         => true,
-			)
-		);
+		copy_between_filesystems( [
+			'source_filesystem' => $zip_fs,
+			'source_path'       => '/',
+			'target_filesystem' => $target_fs,
+			'target_path'       => $this->extractToPath,
+			'recursive'         => true,
+		] );
 
 		$tracker->set( 100, 'Extraction complete' );
 	}

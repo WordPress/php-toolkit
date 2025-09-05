@@ -29,7 +29,7 @@ class HTMLEntityReader implements EntityReader {
 		}
 
 		// If we've already read some entities, skip to the next one.
-		if ( $this->entities !== null ) {
+		if ( null !== $this->entities ) {
 			array_shift( $this->entities );
 			if ( count( $this->entities ) === 0 ) {
 				$this->finished = true;

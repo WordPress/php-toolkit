@@ -9,7 +9,7 @@ use WordPress\DataLiberation\ImportEntity;
 class RetryFrontloadingIterator implements Iterator {
 	private $import_post_id;
 	private $last_id_on_page = null;
-	private $placeholders    = array();
+	private $placeholders = array();
 	private $current;
 	private $rewound = true;
 
@@ -58,7 +58,7 @@ class RetryFrontloadingIterator implements Iterator {
 			$this->next();
 		}
 
-		return $this->current !== null;
+		return null !== $this->current;
 	}
 
 	public function rewind(): void {
@@ -78,7 +78,7 @@ class RetryFrontloadingIterator implements Iterator {
 			'pm.meta_value < 3',
 		);
 
-		if ( $this->last_id_on_page !== null ) {
+		if ( null !== $this->last_id_on_page ) {
 			$where_clauses[] = $wpdb->prepare( 'p.ID > %d', $this->last_id_on_page );
 		}
 

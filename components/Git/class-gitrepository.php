@@ -406,7 +406,7 @@ class GitRepository {
 	 *        everything into memory and will fail for large merges.
 	 * @TODO: Do not change the HEAD ref.
 	 *
-	 * @param  string $branch_name  The branch to merge.
+	 * @param  string  $branch_name  The branch to merge.
 	 * @param  array  $options  An associative array of options. {
 	 *
 	 * @type string $path The path to merge files at. The other paths will be ignored.
@@ -514,8 +514,8 @@ class GitRepository {
 	 *
 	 * TODO: Support commits with multiple parents.
 	 *
-	 * @param  string $commit_hash1  The first reference.
-	 * @param  string $commit_hash2  The second reference.
+	 * @param  string  $commit_hash1  The first reference.
+	 * @param  string  $commit_hash2  The second reference.
 	 *
 	 * @return string The common ancestor hash.
 	 */
@@ -568,7 +568,7 @@ class GitRepository {
 	public function get_nth_ancestor_hash( $n, $commit_hash = null ) {
 		$commit_hash = $options['commit_hash'] ?? $this->get_branch_tip( 'HEAD' );
 
-		for ( $i = 0; $i < $n; $i++ ) {
+		for ( $i = 0; $i < $n; $i ++ ) {
 			$commit_hash = $this->read_object( $commit_hash )->as_commit()->parents[0];
 		}
 
@@ -691,7 +691,7 @@ class GitRepository {
 			$this->mark_tree_path_changed( $changed_trees, wp_unix_dirname( $new_path ) );
 
 			$changed_trees[ wp_unix_dirname( $old_path ) ]->entries[ basename( $old_path ) ] = self::DELETE_PLACEHOLDER;
-			$new_basename = basename( $new_path );
+			$new_basename                                                               = basename( $new_path );
 			if ( $new_basename === '' ) {
 				throw new GitException( 'Cannot rename a file to an empty filename' );
 			}
@@ -892,7 +892,7 @@ class GitRepository {
 		// Rebase $squash_into_commit_oid and its descenrants onto the parent
 		// of the squashed range.
 		$new_parent_oid = $new_base_oid;
-		for ( $i = count( $commits_to_rebase ) - 1; $i >= 0; $i-- ) {
+		for ( $i = count( $commits_to_rebase ) - 1; $i >= 0; $i -- ) {
 			$parsed_old_commit       = $this->read_object( $commits_to_rebase[ $i ] )->as_commit();
 			$updated_commit          = clone $parsed_old_commit;
 			$updated_commit->parents = array( $new_parent_oid );

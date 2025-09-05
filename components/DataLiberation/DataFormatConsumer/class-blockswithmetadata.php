@@ -35,7 +35,7 @@ class BlocksWithMetadata {
 	 *
 	 * get_first_meta_value( 'post_author' ) returns 'Patrick Rothfuss'.
 	 *
-	 * @param  string $key  The metadata key.
+	 * @param  string  $key  The metadata key.
 	 *
 	 * @return mixed The metadata value.
 	 */

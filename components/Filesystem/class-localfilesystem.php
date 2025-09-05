@@ -24,20 +24,22 @@ class LocalFilesystem implements Filesystem {
 	public static function create( $root = null ) {
 		// Make sure the root path uses forward slashes on Windows.
 		// This allows us to use all wp_unix_* functions across the board.
-		if ( $root === null ) {
+		if ( null === $root ) {
 			if ( strtoupper( substr( PHP_OS, 0, 3 ) ) === 'WIN' ) {
 				$systemDrive = getenv( 'SystemDrive' );
-				$root        = $systemDrive ? $systemDrive . '\\' : 'C:\\';
+				$root = $systemDrive ? $systemDrive . '\\' : 'C:\\';
 			} else {
 				$root = '/';
 			}
-		} elseif ( strtoupper( substr( PHP_OS, 0, 3 ) ) === 'WIN' ) {
+		} else {
+			if ( strtoupper( substr( PHP_OS, 0, 3 ) ) === 'WIN' ) {
 				$root = self::normalize_path( $root );
+			}
 		}
 
 		if ( ! is_dir( $root ) ) {
-			if ( mkdir( $root, 0755, true ) === false ) {
-				throw new FilesystemException( sprintf( 'Root directory did not exist and could not be created: %s', var_export( $root, true ) ) );
+			if ( false === mkdir( $root, 0755, true ) ) {
+				throw new FilesystemException( sprintf( 'Root directory did not exist and could not be created: %s', var_export($root, true) ) );
 			}
 		}
 
@@ -62,14 +64,14 @@ class LocalFilesystem implements Filesystem {
 	}
 
 	public function get_meta(): array {
-		return array(
+		return [
 			'root' => $this->root,
-		);
+		];
 	}
 
 	public function ls( $path = '/' ) {
 		$dh = @opendir( $path );
-		if ( $dh === false ) {
+		if ( false === $dh ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to open directory: %s', $path )
 			);
@@ -81,7 +83,7 @@ class LocalFilesystem implements Filesystem {
 			if ( $filename === false ) {
 				break;
 			}
-			if ( $filename === '.' || $filename === '..' ) {
+			if ( '.' === $filename || '..' === $filename ) {
 				continue;
 			}
 			$children[] = $filename;
@@ -104,7 +106,7 @@ class LocalFilesystem implements Filesystem {
 	}
 
 	public function rename( $old_path, $new_path, $options = array() ) {
-		if ( @rename( $old_path, $new_path ) === false ) {
+		if ( false === @rename( $old_path, $new_path ) ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to rename: %s to %s', $old_path, $new_path )
 			);
@@ -114,7 +116,7 @@ class LocalFilesystem implements Filesystem {
 	}
 
 	public function copy_file( $from_path, $to_path, $options ) {
-		if ( @copy( $from_path, $to_path ) === false ) {
+		if ( false === @copy( $from_path, $to_path ) ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to copy file: %s to %s', $from_path, $to_path )
 			);
@@ -128,13 +130,13 @@ class LocalFilesystem implements Filesystem {
 				sprintf( 'Path already exists: %s', $path )
 			);
 		}
-		if ( @mkdir( $resolved_path ) === false ) {
+		if ( false === @mkdir( $resolved_path ) ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to create directory: %s', $resolved_path )
 			);
 		}
 		if ( isset( $options['chmod'] ) ) {
-			if ( @chmod( $path, $options['chmod'] ) === false ) {
+			if ( false === @chmod( $path, $options['chmod'] ) ) {
 				throw new FilesystemException(
 					sprintf( 'Failed to chmod directory: %s', $path )
 				);
@@ -143,7 +145,7 @@ class LocalFilesystem implements Filesystem {
 	}
 
 	public function rm( $path ) {
-		if ( @unlink( $path ) === false ) {
+		if ( false === @unlink( $path ) ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to remove file: %s', $path )
 			);
@@ -151,7 +153,7 @@ class LocalFilesystem implements Filesystem {
 	}
 
 	protected function rmdir_single( $path, $options = array() ) {
-		if ( @rmdir( $path ) === false ) {
+		if ( false === @rmdir( $path ) ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to remove directory: %s', $path )
 			);
@@ -159,10 +161,10 @@ class LocalFilesystem implements Filesystem {
 	}
 
 	public function put_contents( $path, $data, $options = array() ) {
-		if ( @file_put_contents(
-			$path,
-			$data
-		) === false ) {
+		if ( false === @file_put_contents(
+				$path,
+				$data
+			) ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to write to file: %s', $path )
 			);
@@ -188,7 +190,7 @@ class LocalFilesystem implements Filesystem {
 	 * OS-specific path separators is specific to the LocalFilesystem
 	 * class
 	 */
-	private static function normalize_path( $path ) {
+	static private function normalize_path( $path ) {
 		return str_replace( DIRECTORY_SEPARATOR, '/', $path );
 	}
 }

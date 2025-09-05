@@ -46,12 +46,12 @@ use function is_string;
  * stage2.finish();
  */
 class Tracker implements ArrayAccess {
-	private $selfWeight   = 1;
-	private $selfDone     = false;
+	private $selfWeight = 1;
+	private $selfDone = false;
 	private $selfProgress = 0;
-	private $selfCaption  = '';
+	private $selfCaption = '';
 	private $weight;
-	private $subTrackers    = array();
+	private $subTrackers = array();
 	private $splitPerformed = false;
 
 	/**
@@ -91,7 +91,7 @@ class Tracker implements ArrayAccess {
 			$definitions = range( 0, $definitions );
 		}
 
-		$items     = array();          // [slug, rawWeight|null, caption]
+		$items     = [];          // [slug, rawWeight|null, caption]
 		$fixedSum  = 0.0;
 		$nullCount = 0;
 
@@ -109,16 +109,16 @@ class Tracker implements ArrayAccess {
 				throw new LogicException( "Duplicate slug '$slug'." );
 			}
 			if ( $weight === null ) {
-				++$nullCount;
+				$nullCount ++;
 			} elseif ( $weight <= 0 ) {
 				throw new InvalidArgumentException( 'Weights must be positive numbers or null.' );
 			} else {
 				$fixedSum += $weight;
 			}
-			$items[] = array( $slug, $weight, $caption );
+			$items[] = [ $slug, $weight, $caption ];
 		}
 
-		if ( $items === array() ) {
+		if ( $items === [] ) {
 			throw new InvalidArgumentException( 'split() needs at least one entry.' );
 		}
 
@@ -214,12 +214,7 @@ class Tracker implements ArrayAccess {
 		}
 		$this->selfWeight -= $weight;
 
-		$subTracker                 = new self(
-			array(
-				'weight' => $weight,
-				'caption' => $caption,
-			)
-		);
+		$subTracker                 = new self( [ 'weight' => $weight, 'caption' => $caption ] );
 		$this->subTrackers[ $slug ] = $subTracker;
 
 		$subTracker->events->addListener(
@@ -246,8 +241,8 @@ class Tracker implements ArrayAccess {
 	}
 
 	/**
-	 * @param  float       $value
-	 * @param  string|null $caption
+	 * @param  float  $value
+	 * @param  string|null  $caption
 	 */
 	public function set( $value, $caption = null ) {
 		if ( $value < $this->selfProgress ) {

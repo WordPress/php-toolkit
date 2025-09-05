@@ -25,7 +25,7 @@ class InlineDirectory extends DataReference {
 	/**
 	 * Constructor.
 	 *
-	 * @param  array $data  The blueprint data array.
+	 * @param  array  $data  The blueprint data array.
 	 */
 	public function __construct( array $data ) {
 		if ( ! isset( $data['directoryName'] ) || ! isset( $data['files'] ) || ! is_array( $data['files'] ) ) {
@@ -33,23 +33,21 @@ class InlineDirectory extends DataReference {
 		}
 
 		$this->name = $data['directoryName'];
-
-		$children = array();
+		
+		$children = [];
 		foreach ( $data['files'] as $fileName => $child ) {
 			if ( is_string( $child ) ) {
-				$children[ $fileName ] = new InlineFile(
-					array(
-						'filename' => $fileName,
-						'content' => $child,
-					)
-				);
+				$children[$fileName] = new InlineFile( [
+					'filename' => $fileName,
+					'content' => $child
+				] );
 			} elseif ( self::is_valid( $child ) ) {
-				$children[ $fileName ] = new self( $child );
+				$children[$fileName] = new self( $child );
 			} else {
 				throw new InvalidArgumentException( 'Invalid inline directory child' );
 			}
 		}
-
+		
 		$this->children = $children;
 		parent::__construct( $data );
 	}
@@ -86,7 +84,7 @@ class InlineDirectory extends DataReference {
 					$fs->put_contents( $path, $child->get_content() );
 				} elseif ( $child instanceof InlineDirectory ) {
 					$dir_path = wp_join_unix_paths( $base_path, $child->get_name() );
-					$fs->mkdir( $dir_path, array( 'recursive' => true ) );
+					$fs->mkdir( $dir_path, [ 'recursive' => true ] );
 					$add_to_fs( $child->get_children(), $dir_path );
 				}
 			}
@@ -105,7 +103,7 @@ class InlineDirectory extends DataReference {
 	/**
 	 * Check if an array represents a valid inline directory.
 	 *
-	 * @param  array $data  The array to check.
+	 * @param  array  $data  The array to check.
 	 *
 	 * @return bool Whether the array is valid.
 	 */
@@ -120,6 +118,6 @@ class InlineDirectory extends DataReference {
 	 * @return string The human-readable name.
 	 */
 	public function get_human_readable_name(): string {
-		return 'Inline directory: ' . $this->name;
+		return "Inline directory: " . $this->name;
 	}
 }

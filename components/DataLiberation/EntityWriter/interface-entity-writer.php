@@ -12,7 +12,7 @@ interface EntityWriter {
 	/**
 	 * Writes an entity to the destination.
 	 *
-	 * @param  ImportEntity $entity  The entity to write.
+	 * @param  ImportEntity  $entity  The entity to write.
 	 */
 	public function append_entity( ImportEntity $entity );
 

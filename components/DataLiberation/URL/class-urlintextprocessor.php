@@ -189,7 +189,7 @@ class URLInTextProcessor {
 			 */
 			$matches = array();
 			$found   = preg_match( $this->regex, $this->text, $matches, PREG_OFFSET_CAPTURE, $this->bytes_already_parsed );
-			if ( $found !== 1 ) {
+			if ( 1 !== $found ) {
 				return false;
 			}
 
@@ -214,7 +214,7 @@ class URLInTextProcessor {
 			 * Extra fine sieve – parse the candidates using a WHATWG-compliant parser to rule out false positives.
 			 */
 			$parsed_url = WPURL::parse( $url_to_parse, $this->base_url );
-			if ( $parsed_url === false ) {
+			if ( false === $parsed_url ) {
 				continue;
 			}
 
@@ -227,7 +227,7 @@ class URLInTextProcessor {
 				 * See https://publicsuffix.org/.
 				 */
 				$last_dot_position = strrpos( $parsed_url->hostname, '.' );
-				if ( $last_dot_position === false ) {
+				if ( false === $last_dot_position ) {
 					/*
 					 * Oh, there was no dot in the hostname AND no double slash at
 					 * the beginning! Let's assume this isn't a valid URL and move on.
@@ -255,7 +255,7 @@ class URLInTextProcessor {
 	}
 
 	public function get_raw_url() {
-		if ( $this->raw_url === null ) {
+		if ( null === $this->raw_url ) {
 			return false;
 		}
 
@@ -263,7 +263,7 @@ class URLInTextProcessor {
 	}
 
 	public function get_parsed_url() {
-		if ( $this->parsed_url === null ) {
+		if ( null === $this->parsed_url ) {
 			return false;
 		}
 
@@ -271,7 +271,7 @@ class URLInTextProcessor {
 	}
 
 	public function set_raw_url( $new_url ) {
-		if ( $this->raw_url === null ) {
+		if ( null === $this->raw_url ) {
 			return false;
 		}
 		if ( $this->did_prepend_protocol ) {
@@ -320,7 +320,7 @@ class URLInTextProcessor {
 				$this->url_starts_at = strlen( $output_buffer );
 				$this->url_length    = strlen( $diff->text );
 			}
-			$output_buffer       .= $diff->text;
+			$output_buffer        .= $diff->text;
 			$bytes_already_copied = $diff->start + $diff->length;
 		}
 

@@ -10,10 +10,10 @@ class MemoryPipe extends BaseByteReadStream implements ByteWriteStream {
 	protected $is_writing_closed;
 
 	public function __construct( ?string $string = null, $expected_length = null ) {
-		if ( $string !== null && strlen( $string ) > 0 && $expected_length !== null ) {
+		if ( null !== $string && strlen( $string ) > 0 && null !== $expected_length ) {
 			throw new ByteStreamException( 'A MemoryPipe accepts either a non-empty string representing the entire data, or an expected length when the data is not available yet. It does not accept both arguments.' );
 		}
-		if ( $string !== null ) {
+		if ( null !== $string ) {
 			$this->buffer          = $string;
 			$this->expected_length = strlen( $string );
 			// If we have a full buffer, it's already in memory and we don't need
@@ -21,7 +21,7 @@ class MemoryPipe extends BaseByteReadStream implements ByteWriteStream {
 			// If we did clean up old data, we would lose the ability to seek() to
 			// the beginning of the buffer.
 			$this->max_lookbehind_bytes = PHP_INT_MAX;
-		} elseif ( $expected_length !== null ) {
+		} elseif ( null !== $expected_length ) {
 			$this->expected_length = $expected_length;
 		}
 	}
@@ -35,7 +35,7 @@ class MemoryPipe extends BaseByteReadStream implements ByteWriteStream {
 		if ( $this->is_writing_closed ) {
 			throw new ByteStreamException( 'Cannot append bytes to a closed stream.' );
 		}
-		if ( $this->length() !== null && $this->tell() + strlen( $new_bytes ) > $this->length() ) {
+		if ( null !== $this->length() && $this->tell() + strlen( $new_bytes ) > $this->length() ) {
 			throw new ByteStreamException( 'Appending bytes to the stream would exceed the expected length.' );
 		}
 		$this->buffer .= $new_bytes;

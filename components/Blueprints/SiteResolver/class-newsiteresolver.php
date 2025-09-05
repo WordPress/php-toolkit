@@ -16,13 +16,11 @@ use function WordPress\Filesystem\copy_between_filesystems;
 use function WordPress\Filesystem\wp_join_unix_paths;
 
 class NewSiteResolver {
-	public static function resolve( Runtime $runtime, Tracker $progress, ?VersionConstraint $wpVersionConstraint = null, ?string $recommendedWpVersion = 'latest' ) {
-		$progress->split(
-			array(
-				'resolve_assets'    => 2,
-				'install_wordpress' => 1,
-			)
-		);
+	static public function resolve( Runtime $runtime, Tracker $progress, ?VersionConstraint $wpVersionConstraint = null, ?string $recommendedWpVersion = 'latest' ) {
+		$progress->split( [
+			'resolve_assets'    => 2,
+			'install_wordpress' => 1,
+		] );
 
 		// Ensure document root directory exists (LocalFilesystem::create creates it)
 		$targetFs = $runtime->getTargetFilesystem();
@@ -33,9 +31,9 @@ class NewSiteResolver {
 		// Unzip WordPress core into document root
 		$wpZip = self::resolveWordPressZipUrl( $runtime->getHttpClient(), $recommendedWpVersion );
 
-		$assets = array(
+		$assets = [
 			'wordpress' => DataReference::create( $wpZip ),
-		);
+		];
 		if ( $runtime->getConfiguration()->getDatabaseEngine() === 'sqlite' ) {
 			$assets['sqlite-integration'] = $runtime->getConfiguration()->getSqliteIntegrationPlugin();
 		}
@@ -57,15 +55,13 @@ class NewSiteResolver {
 
 		$progress['install_wordpress']->set( 0.2, 'Setting up WordPress files' );
 
-		copy_between_filesystems(
-			array(
-				'source_filesystem' => $zipFs,
-				'source_path'       => $path_in_zip,
-				'target_filesystem' => $targetFs,
-				'target_path'       => '/',
-				'recursive'         => true,
-			)
-		);
+		copy_between_filesystems( [
+			'source_filesystem' => $zipFs,
+			'source_path'       => $path_in_zip,
+			'target_filesystem' => $targetFs,
+			'target_path'       => '/',
+			'recursive'         => true,
+		] );
 
 		$progress['install_wordpress']->set( 0.6, 'Installing WordPress' );
 
@@ -87,15 +83,13 @@ class NewSiteResolver {
 			if ( $zipFs->exists( 'sqlite-database-integration' ) ) {
 				$sourcePath = '/sqlite-database-integration';
 			}
-			copy_between_filesystems(
-				array(
-					'source_filesystem' => $zipFs,
-					'source_path'       => $sourcePath,
-					'target_filesystem' => $targetFs,
-					'target_path'       => $targetPath,
-					'recursive'         => true,
-				)
-			);
+			copy_between_filesystems( [
+				'source_filesystem' => $zipFs,
+				'source_path'       => $sourcePath,
+				'target_filesystem' => $targetFs,
+				'target_path'       => $targetPath,
+				'recursive'         => true,
+			] );
 
 			$targetFs->copy(
 				wp_join_unix_paths( $targetPath, 'db.copy' ),
@@ -104,9 +98,9 @@ class NewSiteResolver {
 		}
 
 		// 3. Install WordPress if not installed yet.
-		// Technically, this is a "new site" resolver, but it's entirely possible
-		// the developer-provided WordPress zip already has a sqlite database with the
-		// a WordPress site installed..
+		//    Technically, this is a "new site" resolver, but it's entirely possible
+		//    the developer-provided WordPress zip already has a sqlite database with the
+		//    a WordPress site installed..
 		if ( ! self::isWordPressInstalled( $runtime, $progress ) ) {
 			if ( ! $targetFs->exists( '/wp-config.php' ) ) {
 				if ( $targetFs->exists( 'wp-config-sample.php' ) ) {
@@ -120,25 +114,23 @@ class NewSiteResolver {
 			// @TODO (low priority): Remove the WP-CLI dependency to lower the download size for blueprints.phar.
 			$progress['install_wordpress']->set( 0.7, 'Installing WordPress' );
 			$wp_cli_path = $runtime->getWpCliPath();
-			$process     = $runtime->startShellCommand(
-				array(
-					'php',
-					$wp_cli_path,
-					'core',
-					'install',
-					'--path=' . $runtime->getConfiguration()->getTargetSiteRoot(),
+			$process = $runtime->startShellCommand( [
+				'php',
+				$wp_cli_path,
+				'core',
+				'install',
+				'--path=' . $runtime->getConfiguration()->getTargetSiteRoot(),
 
-					// For Docker compatibility. If we got this far, Blueprint runner was already
-					// allowed to run as root.
-					'--allow-root',
-					'--url=' . $runtime->getConfiguration()->getTargetSiteUrl(),
-					'--title=WordPress Site',
-					'--admin_user=admin',
-					'--admin_password=password',
-					'--admin_email=admin@example.com',
-					'--skip-email',
-				)
-			);
+				// For Docker compatibility. If we got this far, Blueprint runner was already
+				// allowed to run as root.
+				'--allow-root',
+				'--url=' . $runtime->getConfiguration()->getTargetSiteUrl(),
+				'--title=WordPress Site',
+				'--admin_user=admin',
+				'--admin_password=password',
+				'--admin_email=admin@example.com',
+				'--skip-email',
+			] );
 			$process->mustRun();
 
 			if ( ! self::isWordPressInstalled( $runtime, $progress ) ) {
@@ -149,7 +141,7 @@ class NewSiteResolver {
 		$progress->finish();
 	}
 
-	private static function isWordPressInstalled( Runtime $runtime, Tracker $progress ) {
+	static private function isWordPressInstalled( Runtime $runtime, Tracker $progress ) {
 		$installCheck = $runtime->evalPhpCodeInSubProcess(
 			<<<'PHP'
 			<?php
@@ -163,9 +155,9 @@ class NewSiteResolver {
 			append_output( function_exists('is_blog_installed') && is_blog_installed() ? '1' : '0' );
 PHP
 			,
-			array(
+			[
 				'DOCROOT' => $runtime->getConfiguration()->getTargetSiteRoot(),
-			),
+			],
 			null,
 			5
 		)->outputFileContent;
@@ -173,7 +165,7 @@ PHP
 		return trim( $installCheck ) === '1';
 	}
 
-	private static function resolveWordPressZipUrl( Client $client, string $version_string ): string {
+	static private function resolveWordPressZipUrl( Client $client, string $version_string ): string {
 		if ( $version_string === 'latest' ) {
 			return 'https://wordpress.org/latest.zip';
 		}
@@ -191,20 +183,17 @@ PHP
 
 		$latestVersions = $client->fetch( new Request( 'https://api.wordpress.org/core/version-check/1.7/?channel=beta' ) )->json();
 
-		$latestVersions = array_filter(
-			$latestVersions['offers'],
-			function ( $v ) {
-				return $v['response'] === 'autoupdate';
-			}
-		);
-		$latestNonBeta  = null;
-
+		$latestVersions = array_filter( $latestVersions['offers'], function ( $v ) {
+			return $v['response'] === 'autoupdate';
+		} );
+		$latestNonBeta = null;
+		
 		foreach ( $latestVersions as $apiVersion ) {
 			// Keep track of the first non-beta version (which is the latest)
 			if ( $latestNonBeta === null && strpos( $apiVersion['version'], 'beta' ) === false ) {
 				$latestNonBeta = $apiVersion;
 			}
-
+			
 			if ( $version_string === 'beta' && strpos( $apiVersion['version'], 'beta' ) !== false ) {
 				return $apiVersion['download'];
 			} elseif (
@@ -227,7 +216,7 @@ PHP
 				return $apiVersion['download'];
 			}
 		}
-
+		
 		// If we're looking for beta but no beta was found, return latest
 		if ( $version_string === 'beta' && $latestNonBeta !== null ) {
 			return $latestNonBeta['download'];
@@ -238,7 +227,7 @@ PHP
 		 * the latest in its channel. Let's assume that if the versioning scheme seems to fit
 		 * that hypothesis.
 		 */
-		if ( preg_match( '/^\d+\.\d+\.\d+$/', $version_string ) ) {
+		if(preg_match('/^\d+\.\d+\.\d+$/', $version_string)) {
 			return 'https://downloads.wordpress.org/release/wordpress-' . $version_string . '.zip';
 		}
 

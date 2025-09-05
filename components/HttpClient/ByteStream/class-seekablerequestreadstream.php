@@ -34,7 +34,7 @@ class SeekableRequestReadStream implements ByteReadStream {
 	private function pipe_until( int $offset ): void {
 		while ( $this->cache->length() === null || $this->cache->length() < $offset ) {
 			$pulled = $this->remote->pull( BaseByteReadStream::CHUNK_SIZE_BYTES );
-			if ( $pulled === 0 ) {
+			if ( 0 === $pulled ) {
 				break;
 			}
 			$this->cache->append_bytes( $this->remote->consume( $pulled ) );
@@ -42,7 +42,7 @@ class SeekableRequestReadStream implements ByteReadStream {
 	}
 
 	public function length(): ?int {
-		if ( ! $this->length_resolved && $this->remote->length() === null ) {
+		if ( ! $this->length_resolved && null === $this->remote->length() ) {
 			/**
 			 * Wait for the remote headers before returning the length.
 			 *
@@ -60,7 +60,7 @@ class SeekableRequestReadStream implements ByteReadStream {
 			 *   when knowing the length is vital, e.g. reading from a remote ZIP file.
 			 */
 			$this->remote->await_response();
-			if ( $this->remote->length() === null ) {
+			if ( null === $this->remote->length() ) {
 				// The server did not send the Content-Length header.
 				// We need to consume the entire stream to infer the length.
 				$position = $this->tell();

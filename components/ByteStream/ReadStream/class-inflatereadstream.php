@@ -27,9 +27,9 @@ class InflateReadStream extends BaseByteReadStream {
 	protected $delegate_offset_0;
 
 	// Ensure properties are defined or inherited
-	protected $is_closed                = false;
-	protected $buffer                   = '';
-	protected $bytes_already_forgotten  = 0;
+	protected $is_closed = false;
+	protected $buffer = '';
+	protected $bytes_already_forgotten = 0;
 	protected $offset_in_current_buffer = 0;
 
 	public function __construct( ByteReadStream $upstream, $encoding = ZLIB_ENCODING_DEFLATE ) {
@@ -39,7 +39,7 @@ class InflateReadStream extends BaseByteReadStream {
 	}
 
 	protected function internal_pull( $n ): string {
-		if ( $this->delegate_offset_0 === null ) {
+		if ( null === $this->delegate_offset_0 ) {
 			$this->delegate_offset_0 = $this->upstream->tell();
 		}
 
@@ -58,7 +58,7 @@ class InflateReadStream extends BaseByteReadStream {
 		$available = $this->upstream->pull( $n );
 
 		$inflated = inflate_add( $this->inflate_context, $this->upstream->consume( $available ) );
-		if ( $inflated === false ) {
+		if ( false === $inflated ) {
 			throw new ByteStreamException( 'Inflate error: ' . $this->get_error_string() );
 		}
 
@@ -78,7 +78,7 @@ class InflateReadStream extends BaseByteReadStream {
 	}
 
 	public function seek( $target_offset ): void {
-		if ( $this->length() !== null && $target_offset > $this->length() ) {
+		if ( null !== $this->length() && $target_offset > $this->length() ) {
 			throw new ByteStreamException( 'Cannot seek past the available data. Call append_bytes() first.' );
 		}
 

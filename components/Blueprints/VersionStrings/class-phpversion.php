@@ -33,7 +33,7 @@ class PHPVersion implements Version {
 	/**
 	 * @return $this|false
 	 */
-	public static function fromString( string $raw ) {
+	static public function fromString( string $raw ) {
 		$pattern = '/^\s*
             (?P<major>\d+)
             (?:\.(?P<minor>\d+))?
@@ -47,7 +47,7 @@ class PHPVersion implements Version {
 			return false;
 		}
 
-		$stageWeights = array(
+		$stageWeights = [
 			'dev'   => 0,
 			'src'   => 0,
 			'alpha' => 1,
@@ -57,7 +57,7 @@ class PHPVersion implements Version {
 			'rc'    => 3,
 			''      => 4,
 			'pl'    => 5,
-		);
+		];
 
 		return new self(
 			(int) $m['major'],
@@ -79,7 +79,7 @@ class PHPVersion implements Version {
 	}
 
 	public function compareTo( Version $other ): int {
-		foreach ( array( 'major', 'minor' ) as $part ) {
+		foreach ( [ 'major', 'minor' ] as $part ) {
 			if ( $this->$part !== $other->$part ) {
 				return ( $this->$part < $other->$part ) ? - 1 : 1;
 			}
@@ -93,7 +93,7 @@ class PHPVersion implements Version {
 			}
 		}
 
-		foreach ( array( 'stageRank', 'stageIndex' ) as $part ) {
+		foreach ( [ 'stageRank', 'stageIndex' ] as $part ) {
 			if ( $this->$part !== $other->$part ) {
 				return ( $this->$part < $other->$part ) ? - 1 : 1;
 			}
@@ -122,4 +122,5 @@ class PHPVersion implements Version {
 	public function __toString(): string {
 		return "{$this->major}.{$this->minor}.{$this->patch}";
 	}
+
 }

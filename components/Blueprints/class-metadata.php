@@ -42,7 +42,7 @@ class Metadata {
 	/**
 	 * Create a BlueprintMetadata object from an array of data.
 	 *
-	 * @param  array|null $data  The metadata array from the blueprint
+	 * @param  array|null  $data  The metadata array from the blueprint
 	 *
 	 * @return self A new BlueprintMetadata object with data or defaults
 	 */
@@ -58,10 +58,10 @@ class Metadata {
 		$metadata->name        = $data['name'] ?? 'Untitled Blueprint';
 		$metadata->description = $data['description'] ?? 'No description provided';
 		$metadata->version     = $data['version'] ?? '1.0.0';
-		$metadata->authors     = $data['authors'] ?? array();
+		$metadata->authors     = $data['authors'] ?? [];
 		$metadata->authorUrl   = $data['authorUrl'] ?? null;
 		$metadata->donateLink  = $data['donateLink'] ?? null;
-		$metadata->tags        = $data['tags'] ?? array();
+		$metadata->tags        = $data['tags'] ?? [];
 		$metadata->license     = $data['license'] ?? null;
 
 		return $metadata;

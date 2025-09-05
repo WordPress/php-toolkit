@@ -75,23 +75,21 @@ class AttachmentDownloader {
 		}
 
 		$protocol = parse_url( $url, PHP_URL_SCHEME );
-		if ( $protocol === null ) {
+		if ( null === $protocol ) {
 			return false;
 		}
 
 		switch ( $protocol ) {
 			case 'file':
 				if ( ! $this->source_from_filesystem ) {
-					_doing_it_wrong(
-						__METHOD__,
+					_doing_it_wrong( __METHOD__,
 						'Cannot process file:// URLs without a source filesystem instance. Use the source_from_filesystem option to pass in a filesystem instance to WP_Attachment_Downloader.',
-						'1.0'
-					);
+						'1.0' );
 
 					return false;
 				}
 				$source_path = parse_url( $url, PHP_URL_PATH );
-				if ( $source_path === false ) {
+				if ( false === $source_path ) {
 					return false;
 				}
 
@@ -170,7 +168,7 @@ class AttachmentDownloader {
 		while ( $this->client->await_next_event() ) {
 			$event   = $this->client->get_event();
 			$request = $this->client->get_request();
-			if ( $event === Client::EVENT_FAILED ) {
+			if ( Client::EVENT_FAILED === $event ) {
 				$this->on_failure( $request->url, $request->id, $request->error );
 				return true;
 			}
@@ -179,7 +177,7 @@ class AttachmentDownloader {
 			if ( $request->is_redirected() ) {
 				continue;
 			}
-
+			
 			// The request object we get from the client may be a redirect.
 			// Let's keep referring to the original request.
 			$original_url        = $request->original_request()->url;
@@ -195,7 +193,7 @@ class AttachmentDownloader {
 						unlink( $this->output_paths[ $original_request_id ] . '.partial' );
 					}
 					$fp = fopen( $this->output_paths[ $original_request_id ] . '.partial', 'wb' );
-					if ( $fp !== false ) {
+					if ( false !== $fp ) {
 						$this->fps[ $original_request_id ]           = $fp;
 						$this->progress[ $original_url ]['received'] = 0;
 						if ( $request->response->get_header( 'Content-Length' ) ) {
@@ -207,11 +205,8 @@ class AttachmentDownloader {
 					$chunk = $this->client->get_response_body_chunk();
 					if ( ! fwrite( $this->fps[ $original_request_id ], $chunk ) ) {
 						// @TODO: Don't echo the error message. Attach it to the import session instead for the user to review later on.
-						_doing_it_wrong(
-							__METHOD__,
-							sprintf( 'Failed to write to file: %s', $this->output_paths[ $original_request_id ] ),
-							'1.0'
-						);
+						_doing_it_wrong( __METHOD__, sprintf( 'Failed to write to file: %s', $this->output_paths[ $original_request_id ] ),
+							'1.0' );
 					}
 					$this->progress[ $original_url ]['received'] += strlen( $chunk );
 					break;
@@ -223,7 +218,7 @@ class AttachmentDownloader {
 					}
 					break;
 			}
-
+			
 			return true;
 		}
 
@@ -255,10 +250,10 @@ class AttachmentDownloader {
 			fclose( $this->fps[ $original_request_id ] );
 		}
 		if ( isset( $this->output_paths[ $original_request_id ] ) ) {
-			if ( rename(
-				$this->output_paths[ $original_request_id ] . '.partial',
-				$this->output_paths[ $original_request_id ]
-			) === false ) {
+			if ( false === rename(
+					$this->output_paths[ $original_request_id ] . '.partial',
+					$this->output_paths[ $original_request_id ]
+				) ) {
 				// @TODO: Log an error.
 			}
 		}

@@ -116,7 +116,7 @@ class RequestReadStream extends BaseByteReadStream {
 				case Client::EVENT_GOT_HEADERS:
 					$this->response = $response;
 					$content_length = $response->get_header( 'Content-Length' );
-					if ( $content_length !== null ) {
+					if ( null !== $content_length ) {
 						/**
 						 * Best-effort attempt to guess the content-length of the response.
 						 *
@@ -166,7 +166,7 @@ class RequestReadStream extends BaseByteReadStream {
 					 * backfill the file length with the number of downloaded
 					 * bytes.
 					 */
-					if ( $this->remote_file_length === null ) {
+					if ( null === $this->remote_file_length ) {
 						$this->remote_file_length = $this->bytes_already_forgotten + strlen( $this->buffer );
 					}
 
@@ -203,7 +203,7 @@ class RequestReadStream extends BaseByteReadStream {
 
 	protected function internal_reached_end_of_data(): bool {
 		return (
-			$this->request->latest_redirect()->state === Request::STATE_FINISHED &&
+			Request::STATE_FINISHED === $this->request->latest_redirect()->state &&
 			! $this->client->has_pending_event( $this->request, Client::EVENT_BODY_CHUNK_AVAILABLE ) &&
 			! $this->client->has_pending_event( $this->request, Client::EVENT_FINISHED ) &&
 			strlen( $this->buffer ) === $this->offset_in_current_buffer

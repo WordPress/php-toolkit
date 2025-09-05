@@ -44,7 +44,7 @@ class XMLDecoder {
 
 		while ( $at < $end ) {
 			$next_character_reference_at = strpos( $text, '&', $at );
-			if ( $next_character_reference_at === false || $next_character_reference_at >= $end ) {
+			if ( false === $next_character_reference_at || $next_character_reference_at >= $end ) {
 				break;
 			}
 
@@ -80,10 +80,10 @@ class XMLDecoder {
 			if (
 				$next_character_reference_at < $end - 5 &&
 				(
-					$start_of_potential_reference === 'a' ||
-					$start_of_potential_reference === 'g' ||
-					$start_of_potential_reference === 'l' ||
-					$start_of_potential_reference === 'q'
+					'a' === $start_of_potential_reference ||
+					'g' === $start_of_potential_reference ||
+					'l' === $start_of_potential_reference ||
+					'q' === $start_of_potential_reference
 				)
 			) {
 				foreach ( array(
@@ -93,7 +93,7 @@ class XMLDecoder {
 					'gt;'   => '>',
 					'quot;' => '"',
 				) as $name => $substitution ) {
-					if ( substr_compare( $text, $name, $start_of_potential_reference_at, strlen( $name ) ) === 0 ) {
+					if ( 0 === substr_compare( $text, $name, $start_of_potential_reference_at, strlen( $name ) ) ) {
 						$decoded .= substr( $text, $was_at, $next_character_reference_at - $was_at ) . $substitution;
 						$at       = $start_of_potential_reference_at + strlen( $name );
 						$was_at   = $at;
@@ -113,13 +113,13 @@ class XMLDecoder {
 			 *
 			 *     &#9;
 			 */
-			if ( $start_of_potential_reference !== '#' || $next_character_reference_at + 4 >= $end ) {
+			if ( '#' !== $start_of_potential_reference || $next_character_reference_at + 4 >= $end ) {
 				// @todo This is an error. This ampersand _must_ be encoded. Treat as plaintext and move on.
 				++$at;
 				continue;
 			}
 
-			$is_hex = $text[ $start_of_potential_reference_at + 1 ] === 'x';
+			$is_hex = 'x' === $text[ $start_of_potential_reference_at + 1 ];
 			if ( $is_hex ) {
 				$zeros_at    = $start_of_potential_reference_at + 2;
 				$base        = 16;
@@ -137,15 +137,15 @@ class XMLDecoder {
 			$digit_count = strspn( $text, $digit_chars, $digits_at, $max_digits );
 			$semi_at     = $digits_at + $digit_count;
 
-			if ( $digit_count === 0 || $semi_at >= $end || $text[ $semi_at ] !== ';' ) {
+			if ( 0 === $digit_count || $semi_at >= $end || ';' !== $text[ $semi_at ] ) {
 				// @todo This is an error. Treat as plaintext and move on.
 				++$at;
 				continue;
 			}
 
-			$codepoint           = intval( substr( $text, $digits_at, $digit_count ), $base );
+			$codepoint          = intval( substr( $text, $digits_at, $digit_count ), $base );
 			$character_reference = codepoint_to_utf8_bytes( $codepoint );
-			if ( $character_reference === '�' && $codepoint !== 0xFFFD ) {
+			if ( '�' === $character_reference && 0xFFFD !== $codepoint ) {
 				/*
 				 * Stop processing if we got an invalid character AND the reference does not
 				 * specifically refer code point FFFD (�).
@@ -173,7 +173,7 @@ class XMLDecoder {
 			$was_at   = $at;
 		}
 
-		if ( $was_at === 0 ) {
+		if ( 0 === $was_at ) {
 			return $text;
 		}
 

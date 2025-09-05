@@ -32,7 +32,7 @@ class TransformedReadStream extends BaseByteReadStream implements ArrayAccess {
 
 	protected function internal_pull( $max_bytes ): string {
 		$bytes_pulled = $this->reader->pull( $max_bytes );
-		if ( $bytes_pulled === 0 ) {
+		if ( 0 === $bytes_pulled ) {
 			if ( $this->reader->reached_end_of_data() && ! $this->filters_flushed ) {
 				return $this->flush_filters();
 			}
@@ -56,7 +56,7 @@ class TransformedReadStream extends BaseByteReadStream implements ArrayAccess {
 
 		$flush = '';
 		foreach ( $this->filters as $filter ) {
-			$flush  = $filter->filter_bytes( $flush );
+			$flush = $filter->filter_bytes( $flush );
 			$flush .= $filter->flush();
 		}
 
