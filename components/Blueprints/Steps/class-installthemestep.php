@@ -50,8 +50,8 @@ class InstallThemeStep implements StepInterface {
 	/**
 	 * @param  DataReference $source  Theme source identifier.
 	 * @param  bool          $active  active after install?
-	 * @param  bool          $importStarterContent  Import starter content?
-	 * @param  string|null   $targetFolderName  Optional target folder name.
+	 * @param  bool          $import_starter_content  Import starter content?
+	 * @param  string|null   $target_folder_name  Optional target folder name.
 	 */
 	public function __construct(
 		DataReference $source,

@@ -6,8 +6,8 @@ interface Differ {
 	/**
 	 * Computes the difference between two strings.
 	 *
-	 * @param  string $oldString  The original string
-	 * @param  string $newString  The new string to compare against
+	 * @param  string $old_string  The original string
+	 * @param  string $new_string  The new string to compare against
 	 *
 	 * @return Diff The computed differences
 	 */

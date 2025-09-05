@@ -38,7 +38,7 @@ class CLI {
 	 *   php blueprint.php exec my-blueprint.json --site-url https://mysite.test --site-path ./mysite --help
 	 *
 	 * @param array $argv       The CLI arguments (excluding the script name and command).
-	 * @param array $optionDefs Option definitions as described above.
+	 * @param array $option_defs Option definitions as described above.
 	 * @return array            [ $positionals, $options ]
 	 * @throws InvalidArgumentException for unknown options or missing required values.
 	 */

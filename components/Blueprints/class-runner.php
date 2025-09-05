@@ -730,7 +730,7 @@ class Runner {
 	/**
 	 * Helper method to create a specific step object from its type and data.
 	 *
-	 * @param  string $stepType  The 'step' identifier (e.g., 'installPlugin').
+	 * @param  string $step_type  The 'step' identifier (e.g., 'installPlugin').
 	 * @param  array  $data  The properties for the step.
 	 *
 	 * @return mixed A Step object instance.
@@ -1087,7 +1087,7 @@ PHP
 	/**
 	 * Run the steps in the execution plan with progress tracking
 	 *
-	 * @param  Tracker $parentTracker  The parent tracker for step execution
+	 * @param  Tracker $progress  The parent tracker for step execution
 	 *
 	 * @return array Results from each step execution
 	 */

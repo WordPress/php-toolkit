@@ -26,7 +26,7 @@ class WPCLIStep implements StepInterface {
 
 	/**
 	 * @param  string      $command  The WP-CLI command string.
-	 * @param  string|null $wpCliPath  Optional path to WP-CLI executable.
+	 * @param  string|null $wp_cli_path  Optional path to WP-CLI executable.
 	 */
 	public function __construct( string $command, ?string $wp_cli_path = null ) {
 		$this->command     = $command;

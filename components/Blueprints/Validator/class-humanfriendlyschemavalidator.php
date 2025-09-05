@@ -641,7 +641,7 @@ final class HumanFriendlySchemaValidator {
 	// ───────────────────────────────────────────────────────────── object ─┐.
 
 	/**
-	 * @param  mixed[]|object $data
+	 * @param  mixed[]|object $path
 	 */
 	private function validate_object( array $path, $data, array $schema ): ?ValidationError {
 		$arr             = is_object( $data ) ? (array) $data : $data;

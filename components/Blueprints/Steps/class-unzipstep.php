@@ -30,8 +30,8 @@ class UnzipStep implements StepInterface {
 	public $extract_to_path;
 
 	/**
-	 * @param  DataReference $zipFile  Zip file source identifier.
-	 * @param  string        $extractToPath  The path to extract the zip file to.
+	 * @param  DataReference $zip_file  Zip file source identifier.
+	 * @param  string        $extract_to_path  The path to extract the zip file to.
 	 */
 	public function __construct( DataReference $zip_file, string $extract_to_path ) {
 		$this->zip_file        = $zip_file;

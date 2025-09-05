@@ -130,7 +130,7 @@ class RunnerConfiguration {
 	/**
 	 * Sets the database engine.
 	 *
-	 * @param  string $databaseEngine  Database engine to use ('mysql' or 'sqlite')
+	 * @param  string $database_engine  Database engine to use ('mysql' or 'sqlite')
 	 *
 	 * @return self
 	 * @throws InvalidArgumentException If the database engine is invalid.
@@ -152,7 +152,7 @@ class RunnerConfiguration {
 	/**
 	 * Sets the database credentials.
 	 *
-	 * @param  array $databaseCredentials  Connection parameters for the database
+	 * @param  array $database_credentials  Connection parameters for the database
 	 *
 	 * @return self
 	 */
@@ -169,7 +169,7 @@ class RunnerConfiguration {
 	/**
 	 * Sets a callback function to be called to report progress during execution.
 	 *
-	 * @param  callable|null $callback  A function that accepts progress information
+	 * @param  callable|null $observer  A function that accepts progress information
 	 *
 	 * @return self
 	 */

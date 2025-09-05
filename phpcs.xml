@@ -5,8 +5,11 @@
     <exclude-pattern>vendor/*</exclude-pattern>
     <exclude-pattern>*/vendor-patched/*</exclude-pattern>
     <exclude-pattern>*/Tests/*</exclude-pattern>
-    <exclude-pattern>plugins/*</exclude-pattern>
-    <exclude-pattern>examples/*</exclude-pattern>
+    <exclude-pattern>/plugins/data-liberation/</exclude-pattern>
+    <exclude-pattern>/plugins/static-files-editor/</exclude-pattern>
+    <exclude-pattern>/plugins/git-repo/</exclude-pattern>
+    <exclude-pattern>/plugins/url-updater/</exclude-pattern>
+    <exclude-pattern>/examples/</exclude-pattern>
     <exclude-pattern>rector.php</exclude-pattern>
     <exclude-pattern>components/CORSProxy/cors-proxy-functions.php</exclude-pattern>
     <rule ref="PHPCompatibility">
@@ -35,7 +38,6 @@
         <exclude name="Generic.CodeAnalysis.EmptyStatement.DetectedElse"/>
         <exclude name="PSR12.Files.FileHeader.IncorrectOrder"/>
         <exclude name="WordPress.WP.GlobalVariablesOverride.Prohibited"/>
-        <exclude name="Squiz.Commenting.FunctionComment.ParamNameNoMatch"/>
         <exclude name="Squiz.Commenting.FunctionComment.ThrowsNotCapital"/>
         <exclude name="Generic.Commenting.DocComment.LongNotCapital"/>
         <exclude name="WordPress.PHP.IniSet.display_errors_Disallowed"/>

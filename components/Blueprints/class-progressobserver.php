@@ -23,7 +23,7 @@ class ProgressObserver {
 	/**
 	 * Create a new progress logger with the given logging function
 	 *
-	 * @param  callable $logCallback  Function that receives progress updates
+	 * @param  callable $log_callback  Function that receives progress updates
 	 */
 	public function __construct( ?callable $log_callback = null ) {
 		$this->log_callback = $log_callback ?? function () {
