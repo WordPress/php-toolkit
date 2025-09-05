@@ -78,8 +78,8 @@
         "build-blueprints-phar": "box compile -c phar-blueprints.json",
         "regenerate-json-schema": "node components/Blueprints/Versions/Version2/json-schema/regenerate-schema.ts",
         "test": "phpunit -c phpunit.xml",
-        "lint": "phpcs --standard=WordPress .",
-        "lint-fix": "phpcbf --standard=WordPress ."
+        "lint": "phpcs .",
+        "lint-fix": "phpcbf ."
     },
     "repositories": [
         {
