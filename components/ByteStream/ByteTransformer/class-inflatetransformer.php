@@ -29,7 +29,7 @@ class InflateTransformer implements ByteTransformer {
 			if ( empty( $last_error ) ) {
 				$last_error = array( 'message' => 'Unknown error' );
 			}
-			throw new ByteStreamException( 'Failed to inflate data: ' . $last_error['message'] );
+			throw new ByteStreamException( esc_html( 'Failed to inflate data: ' . $last_error['message'] ) );
 		}
 
 		return $inflated_data;

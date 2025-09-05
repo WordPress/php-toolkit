@@ -10,14 +10,14 @@ class FileReadStream extends BaseByteReadStream {
 
 	public static function from_path( $file_path ) {
 		if ( ! file_exists( $file_path ) ) {
-			throw new ByteStreamException( sprintf( 'File %s does not exist', $file_path ) );
+			throw new ByteStreamException( esc_html( sprintf( 'File %s does not exist', $file_path ) ) );
 		}
 		if ( ! is_file( $file_path ) ) {
-			throw new ByteStreamException( sprintf( '%s is not a file', $file_path ) );
+			throw new ByteStreamException( esc_html( sprintf( '%s is not a file', $file_path ) ) );
 		}
 		$handle = fopen( $file_path, 'r' );
 		if ( ! $handle ) {
-			throw new ByteStreamException( sprintf( 'Failed to open file %s', $file_path ) );
+			throw new ByteStreamException( esc_html( sprintf( 'Failed to open file %s', $file_path ) ) );
 		}
 
 		return self::from_resource( $handle, filesize( $file_path ) );

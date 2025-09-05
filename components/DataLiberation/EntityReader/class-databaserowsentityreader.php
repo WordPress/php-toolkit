@@ -128,8 +128,8 @@ class DatabaseRowsEntityReader implements EntityReader {
 		$this->tables_to_process  = $options['tables_to_process'] ?? null;
 		$this->create_table_query = $options['create_table_query'] ?? false;
 		$this->db_type            = $db->getAttribute( PDO::ATTR_DRIVER_NAME );
-		if ( ! in_array( $this->db_type, array( 'sqlite', 'mysql' ) ) ) {
-			throw new DataLiberationException( 'Unsupported database type: ' . $this->db_type );
+		if ( ! in_array( $this->db_type, array( 'sqlite', 'mysql' ), true ) ) {
+			throw new DataLiberationException( esc_html( 'Unsupported database type: ' . $this->db_type ) );
 		}
 		if ( isset( $options['cursor'] ) ) {
 			$this->initialize_from_cursor( $options['cursor'] );
@@ -292,7 +292,7 @@ class DatabaseRowsEntityReader implements EntityReader {
 	private function initialize_tables_to_process() {
 		$this->tables_to_process = array();
 		$result                  = $this->db->query( 'SHOW TABLES' );
-		while ( $row = $result->fetch( PDO::FETCH_NUM ) ) {
+		while ( $row = $result->fetch( PDO::FETCH_NUM ) ) { // phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
 			$this->tables_to_process[] = $row[0];
 		}
 		sort( $this->tables_to_process );

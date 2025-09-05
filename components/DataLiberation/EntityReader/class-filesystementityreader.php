@@ -146,6 +146,8 @@ class FilesystemEntityReader implements EntityReader {
 
 	/**
 	 * The post type to emit.
+	 * 
+	 * @var string
 	 */
 	private $post_type;
 
@@ -331,8 +333,8 @@ class FilesystemEntityReader implements EntityReader {
 					'post_meta',
 					array(
 						'post_id'    => $post_tree_node['post_id'],
-						'meta_key'   => $key,
-						'meta_value' => $value,
+						'meta_key'   => $key,   // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+						'meta_value' => $value, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 					)
 				);
 			}

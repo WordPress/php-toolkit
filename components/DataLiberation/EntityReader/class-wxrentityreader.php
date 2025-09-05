@@ -294,7 +294,7 @@ class WXREntityReader implements EntityReader {
 	/**
 	 * Constructor.
 	 *
-	 * @param  WP_XML_Processor $xml  The XML processor to use.
+	 * @param XMLProcessor $xml  The XML processor to use.
 	 *
 	 * @since WP_VERSION
 	 */
@@ -457,9 +457,9 @@ class WXREntityReader implements EntityReader {
 		 *        even after evicting the actual bytes where $last_entity is stored.
 		 */
 		$xml_cursor                             = $this->xml->get_reentrancy_cursor();
-		$xml_cursor                             = json_decode( base64_decode( $xml_cursor ), true );
+		$xml_cursor                             = json_decode( base64_decode( $xml_cursor ), true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 		$xml_cursor['upstream_bytes_forgotten'] = $this->entity_opener_byte_offset;
-		$xml_cursor                             = base64_encode( json_encode( $xml_cursor ) );
+		$xml_cursor                             = base64_encode( json_encode( $xml_cursor ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 
 		return json_encode(
 			array(
@@ -893,7 +893,7 @@ class WXREntityReader implements EntityReader {
 	 * Connects a byte stream to automatically pull bytes from once
 	 * the last input chunk have been processed.
 	 *
-	 * @param  WP_Byte_Reader $stream  The upstream stream.
+	 * @param  ByteReadStream $stream  The upstream stream.
 	 */
 	public function connect_upstream( ByteReadStream $stream ) {
 		$this->upstream = $stream;
@@ -946,7 +946,7 @@ class WXREntityReader implements EntityReader {
 	/**
 	 * Sets the current entity tag and type.
 	 *
-	 * @param  string $tag  The entity tag name.
+	 * @param  string $tag_with_namespace  The entity tag name.
 	 *
 	 * @since WP_VERSION
 	 */

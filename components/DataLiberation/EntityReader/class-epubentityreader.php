@@ -10,7 +10,7 @@ use WordPress\XML\XMLProcessor;
 use function WordPress\Filesystem\wp_join_unix_paths;
 
 /**
- * https://www.w3.org/AudioVideo/ebook/
+ * EPub specification: https://www.w3.org/AudioVideo/ebook/
  *
  * An EPUB Publication is transported as a single file (a "portable document") that contains:
  * * a Package Document (OPF file) which specifies all the Publication's constituent content documents and their required resources, defines a reading order  and associates Publication-level metadata and navigation information.

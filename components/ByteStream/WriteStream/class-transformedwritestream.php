@@ -47,11 +47,15 @@ class TransformedWriteStream implements ByteWriteStream, ArrayAccess {
 		}
 	}
 
-	/** @disregard P1038 */
+	/**
+	 *
+	 * @param  string $offset  The offset to get.
+	 * @throws ByteStreamException If the filter is not found.
+	 */
 	#[ReturnTypeWillChange]
 	public function offsetGet( $offset ) {
 		if ( ! isset( $this->filters[ $offset ] ) ) {
-			throw new ByteStreamException( sprintf( 'Filter %s not found', $offset ) );
+			throw new ByteStreamException( esc_html( sprintf( 'Filter %s not found', $offset ) ) );
 		}
 
 		return $this->filters[ $offset ];

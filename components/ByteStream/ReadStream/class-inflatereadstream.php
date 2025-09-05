@@ -23,10 +23,16 @@ class InflateReadStream extends BaseByteReadStream {
 	 *
 	 * If we just seeked to offset=0, we'd start inflating the plaintext,
 	 * not the deflated body, and get an error.
+	 *
+	 * @var int|null
 	 */
 	protected $delegate_offset_0;
 
-	// Ensure properties are defined or inherited.
+	/**
+	 * Ensure properties are defined or inherited.
+	 *
+	 * @var bool
+	 */
 	protected $is_closed                = false;
 	protected $buffer                   = '';
 	protected $bytes_already_forgotten  = 0;
@@ -59,7 +65,7 @@ class InflateReadStream extends BaseByteReadStream {
 
 		$inflated = inflate_add( $this->inflate_context, $this->upstream->consume( $available ) );
 		if ( false === $inflated ) {
-			throw new ByteStreamException( 'Inflate error: ' . $this->get_error_string() );
+			throw new ByteStreamException( esc_html( 'Inflate error: ' . $this->get_error_string() ) );
 		}
 
 		return $inflated;

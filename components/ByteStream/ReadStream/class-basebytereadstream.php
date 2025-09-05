@@ -24,26 +24,36 @@ abstract class BaseByteReadStream implements ByteReadStream {
 	 *     fox jumps over the lazy dog.
 	 *     ^--^
 	 *       consumed but retained for seek()-ing backwards.
+	 * 
+	 * @var int
 	 */
 	protected $max_lookbehind_bytes = 2048;
 
 	/**
 	 * The remaining unconsumed bytes.
+	 *
+	 * @var string
 	 */
 	protected $buffer = '';
 
 	/**
 	 * How many bytes have already been consumed in the current **buffer**.
+	 *
+	 * @var int
 	 */
 	protected $offset_in_current_buffer = 0;
 
 	/**
 	 * How many bytes have already been forgotten in the current **stream**.
+	 *
+	 * @var int
 	 */
 	protected $bytes_already_forgotten = 0;
 
 	/**
 	 * Whether the stream has been closed for reading.
+	 *
+	 * @var bool
 	 */
 	protected $is_read_closed = false;
 
@@ -51,6 +61,8 @@ abstract class BaseByteReadStream implements ByteReadStream {
 	 * How many bytes are expected in the stream. Optional.
 	 *
 	 * When it's null, the stream is unbounded and length() will also return null.
+	 *
+	 * @var int|null
 	 */
 	protected $expected_length = null;
 
@@ -172,10 +184,12 @@ abstract class BaseByteReadStream implements ByteReadStream {
 		if ( null !== $this->length() && $target_offset > $this->length() ) {
 			$length = $this->length();
 			throw new NotEnoughDataException(
-				sprintf(
-					'Cannot seek to past the stream length (seeked to %d, stream length is %d).',
-					$target_offset,
-					$length
+				esc_html(
+					sprintf(
+						'Cannot seek to past the stream length (seeked to %d, stream length is %d).',
+						$target_offset,
+						$length
+					)
 				)
 			);
 		}

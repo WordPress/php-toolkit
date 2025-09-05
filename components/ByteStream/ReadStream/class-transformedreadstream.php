@@ -63,29 +63,44 @@ class TransformedReadStream extends BaseByteReadStream implements ArrayAccess {
 		return $flush;
 	}
 
-	/** @disregard P1038 */
+	/**
+	 *
+	 * @param  string $offset  The offset to get.
+	 * @throws ByteStreamException If the filter is not found.
+	 */
 	#[ReturnTypeWillChange]
 	public function offsetGet( $offset ) {
 		if ( ! isset( $this->filters[ $offset ] ) ) {
-			throw new ByteStreamException( sprintf( 'Filter %s not found', $offset ) );
+			throw new ByteStreamException( esc_html( sprintf( 'Filter %s not found', $offset ) ) );
 		}
 
 		return $this->filters[ $offset ];
 	}
 
-	/** @disregard P1038 */
+	/**
+	 *
+	 * @param  string $offset  The offset to check.
+	 * @return bool Whether the filter exists.
+	 */
 	#[ReturnTypeWillChange]
 	public function offsetExists( $offset ) {
 		return isset( $this->filters[ $offset ] );
 	}
 
-	/** @disregard P1038 */
+	/**
+	 * @param  string $offset          The offset to set.
+	 * @param  ByteTransformer $value  The filter to set.
+	 * @throws ByteStreamException     If the filters are immutable.
+	 */
 	#[ReturnTypeWillChange]
 	public function offsetSet( $offset, $value ) {
 		throw new ByteStreamException( 'Filters are immutable' );
 	}
 
-	/** @disregard P1038 */
+	/**
+	 * @param  string $offset  The offset to unset.
+	 * @throws ByteStreamException If the filters are immutable.
+	 */
 	#[ReturnTypeWillChange]
 	public function offsetUnset( $offset ) {
 		throw new ByteStreamException( 'Filters are immutable' );

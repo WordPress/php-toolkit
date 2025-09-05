@@ -9,13 +9,13 @@ class MemoryPipe extends BaseByteReadStream implements ByteWriteStream {
 
 	protected $is_writing_closed;
 
-	public function __construct( ?string $string = null, $expected_length = null ) {
-		if ( null !== $string && strlen( $string ) > 0 && null !== $expected_length ) {
+	public function __construct( ?string $bytes = null, $expected_length = null ) {
+		if ( null !== $bytes && strlen( $bytes ) > 0 && null !== $expected_length ) {
 			throw new ByteStreamException( 'A MemoryPipe accepts either a non-empty string representing the entire data, or an expected length when the data is not available yet. It does not accept both arguments.' );
 		}
-		if ( null !== $string ) {
-			$this->buffer          = $string;
-			$this->expected_length = strlen( $string );
+		if ( null !== $bytes ) {
+			$this->buffer          = $bytes;
+			$this->expected_length = strlen( $bytes );
 			// If we have a full buffer, it's already in memory and we don't need.
 			// to clean up old data as we stream it.
 			// If we did clean up old data, we would lose the ability to seek() to.

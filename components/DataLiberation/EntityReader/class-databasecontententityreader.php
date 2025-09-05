@@ -186,7 +186,7 @@ class DatabaseContentEntityReader implements EntityReader {
 					return false;
 
 				default:
-					throw new DataLiberationException( 'Invalid state: ' . $this->state );
+					throw new DataLiberationException( esc_html( 'Invalid state: ' . $this->state ) );
 			}
 		}
 

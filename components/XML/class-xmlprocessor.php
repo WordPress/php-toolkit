@@ -636,8 +636,10 @@ class XMLProcessor {
 	/**
 	 * The Name from the DOCTYPE declaration.
 	 *
+	 * ```
 	 * doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>'
 	 *                               ^^^^
+	 * ```
 	 *
 	 * @since WP_VERSION
 	 * @var WP_HTML_Span|null
@@ -647,9 +649,11 @@ class XMLProcessor {
 	/**
 	 * The system literal value from the DOCTYPE declaration.
 	 *
+	 * ```
 	 * doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>'
 	 * ExternalID ::= 'SYSTEM' S SystemLiteral | 'PUBLIC' S PubidLiteral
 	 *                           ^^^^^^^^^^^^^
+	 * ```
 	 *
 	 * Example:
 	 *
@@ -666,12 +670,16 @@ class XMLProcessor {
 	/**
 	 * The public identifier value from the DOCTYPE declaration.
 	 *
+	 * ```
 	 * doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>'
 	 * ExternalID ::= 'SYSTEM' S SystemLiteral | 'PUBLIC' S PubidLiteral
+	 * ```
 	 *                                                      ^^^^^^^^^^^^
 	 * Example:
 	 *
-	 *     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+	 * ```
+	 * <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+	 * ```
 	 *
 	 * In this example, the publid_literal would be:
 	 * "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -684,7 +692,7 @@ class XMLProcessor {
 	/**
 	 * Memory budget for the processed XML.
 	 *
-	 * append_bytes() will flush the processed bytes whenever the XML buffer
+	 * `append_bytes()` will flush the processed bytes whenever the XML buffer
 	 * exceeds this budget. The lexical updates will be applied and the bookmarks
 	 * will be reset.
 	 *
@@ -733,11 +741,15 @@ class XMLProcessor {
 
 	/**
 	 * Top-level namespaces for the currently parsed document.
+	 *
+	 * @var array
 	 */
 	private $document_namespaces;
 
 	/**
 	 * Tracks open elements and their namespaces while scanning XML.
+	 *
+	 * @var array
 	 */
 	private $stack_of_open_elements = array();
 
@@ -783,7 +795,7 @@ class XMLProcessor {
 			$stack_of_open_elements[] = $element->to_array();
 		}
 
-		return base64_encode(
+		return base64_encode( // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 			json_encode(
 				array(
 					'is_finished'              => $this->is_finished(),
@@ -818,7 +830,7 @@ class XMLProcessor {
 
 			return false;
 		}
-		$cursor = base64_decode( $cursor );
+		$cursor = base64_decode( $cursor ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 		if ( false === $cursor ) {
 			_doing_it_wrong( __METHOD__, 'Invalid cursor provided to initialize_from_cursor().', '1.0.0' );
 
@@ -855,6 +867,7 @@ class XMLProcessor {
 	 * @access private
 	 *
 	 * @param  string      $xml  XML to process.
+	 * @param  array       $document_namespaces  Document namespaces.
 	 * @param  string|null $use_the_static_create_methods_instead  This constructor should not be called manually.
 	 *
 	 * @see XMLProcessor::create_stream()
@@ -1105,8 +1118,8 @@ class XMLProcessor {
 			$namespaces = $this->get_tag_namespaces_in_scope();
 			foreach ( $this->qualified_attributes as $attribute ) {
 				/**
-				 * xmlns attribute is the default namespace
-				 * xmlns:<prefix> declares a namespace prefix scoped to the current element and its descendants
+				 * `xmlns` attribute is the default namespace
+				 * `xmlns:<prefix>` declares a namespace prefix scoped to the current element and its descendants
 				 *
 				 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#ns-decl
 				 */
@@ -1515,7 +1528,7 @@ class XMLProcessor {
 	 * semantic rules for text nodes. For access to the raw tokens consider using
 	 * XMLProcessor instead.
 	 *
-	 * @param  array|string|null $query  {
+	 * @param  array|string|null $query_or_ns  {
 	 *    Optional. Which tag name to find, having which class, etc. Default is to find any tag.
 	 *
 	 * @type string|null $tag_name Which tag to find, or `null` for "any tag."
@@ -2365,7 +2378,7 @@ class XMLProcessor {
 	private function is_valid_name_codepoint( $codepoint, $is_first_character = false ) {
 		// Test against the NameStartChar pattern:.
 		// NameStartChar ::= ":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF].
-		// See https://www.w3.org/TR/xml/#NT-Name
+		// See `https://www.w3.org/TR/xml/#NT-Name`.
 		if (
 			// :.
 			( 0x3A <= $codepoint && $codepoint <= 0x3A ) ||
@@ -2408,7 +2421,7 @@ class XMLProcessor {
 
 		// Test against the NameChar pattern:.
 		// NameChar ::= NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F] | [#x203F-#x2040].
-		// See https://www.w3.org/TR/xml/#NT-Name
+		// See `https://www.w3.org/TR/xml/#NT-Name`.
 		return (
 			// "-".
 			45 === $codepoint ||
@@ -3017,8 +3030,10 @@ class XMLProcessor {
 	/**
 	 * Returns the name from the DOCTYPE declaration.
 	 *
+	 * ```
 	 * doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' intSubset ']' S?)? '>'
 	 *                               ^^^^
+	 * ```
 	 *
 	 * @return string|null The name from the DOCTYPE declaration, or null if not available.
 	 * @since WP_VERSION
@@ -3361,7 +3376,8 @@ class XMLProcessor {
 	 *
 	 * For string attributes, the value is escaped using the `esc_attr` function.
 	 *
-	 * @param  string      $name  The attribute name to target.
+	 * @param  string      $xml_namespace  The attribute's namespace.
+	 * @param  string      $local_name  The attribute name to target.
 	 * @param  string|bool $value  The new attribute value.
 	 *
 	 * @return bool Whether an attribute value was set.
@@ -3397,6 +3413,7 @@ class XMLProcessor {
 			$prefix = $this->get_tag_namespace_prefix( $xml_namespace );
 			if ( false === $prefix ) {
 				$this->bail(
+					// Translators: 1: The XML namespace.
 					__( 'The namespace "%1$s" is not in the current element\'s scope.' ),
 					$xml_namespace
 				);
@@ -3460,8 +3477,8 @@ class XMLProcessor {
 	/**
 	 * Remove an attribute from the currently-matched tag.
 	 *
-	 * @param  string $namespace  The attribute's namespace.
-	 * @param  string $name       The attribute name to remove.
+	 * @param  string $xml_namespace  The attribute's namespace.
+	 * @param  string $local_name     The attribute name to remove.
 	 *
 	 * @return bool Whether an attribute was removed.
 	 * @since WP_VERSION
@@ -3700,7 +3717,7 @@ class XMLProcessor {
 				$whitespaces = strspn( $text, " \t\n\r" );
 				if ( strlen( $text ) !== $whitespaces ) {
 					// @TODO: Only look for this in the 2 initial bytes of the document:.
-					if ( "\xFF\xFE" == substr( $text, 0, 2 ) ) {
+					if ( "\xFF\xFE" === substr( $text, 0, 2 ) ) {
 						$this->bail( 'Unexpected UTF-16 BOM byte sequence (0xFFFE) in the document. XMLProcessor only supports UTF-8.', self::ERROR_SYNTAX );
 					}
 					$this->bail( 'Unexpected non-whitespace text token in prolog stage.', self::ERROR_SYNTAX );
@@ -3759,6 +3776,7 @@ class XMLProcessor {
 				if ( $this->is_tag_closer() ) {
 					if ( ! count( $this->stack_of_open_elements ) ) {
 						$this->bail(
+							// Translators: 1: The closing tag name. 2: The opening tag name.
 							__( 'The closing tag "%1$s" did not match the opening tag "%2$s".' ),
 							$tag_qname,
 							$tag_qname

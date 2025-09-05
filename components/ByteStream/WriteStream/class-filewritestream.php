@@ -26,12 +26,12 @@ class FileWriteStream implements ByteWriteStream {
 				$file_mode = 'ab'; // Append mode: appends to the file.
 				break;
 			default:
-				throw new ByteStreamException( "Invalid mode: $mode. Use 'truncate' or 'append'." );
+				throw new ByteStreamException( esc_html( "Invalid mode: $mode. Use 'truncate' or 'append'." ) );
 		}
 
 		$file_handle = fopen( $path, $file_mode );
 		if ( false === $file_handle ) {
-			throw new ByteStreamException( "Failed to open file at path: $path" );
+			throw new ByteStreamException( esc_html( "Failed to open file at path: $path" ) );
 		}
 
 		return new self( $file_handle );
@@ -40,7 +40,7 @@ class FileWriteStream implements ByteWriteStream {
 	/**
 	 * Creates a new instance of FileWriter from an existing file handle.
 	 *
-	 * @param  resource $fileHandle  A valid file handle.
+	 * @param  resource $file_handle  A valid file handle.
 	 *
 	 * @return FileWriteStream
 	 * @throws ByteStreamException If the file handle is invalid.
@@ -52,7 +52,8 @@ class FileWriteStream implements ByteWriteStream {
 	/**
 	 * Private constructor to enforce the use of static factory methods.
 	 *
-	 * @param  resource $fileHandle
+	 * @param  resource $file_handle  A valid file handle.
+	 * @throws ByteStreamException If the file handle is invalid.
 	 */
 	public function __construct( $file_handle ) {
 		if ( ! is_resource( $file_handle ) || 'stream' !== get_resource_type( $file_handle ) ) {

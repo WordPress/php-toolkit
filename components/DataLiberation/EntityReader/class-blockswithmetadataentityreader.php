@@ -82,8 +82,8 @@ class BlocksWithMetadataEntityReader implements EntityReader {
 				'post_meta',
 				array(
 					'post_id'    => $this->post_id,
-					'meta_key'   => $key,
-					'meta_value' => $value,
+					'meta_key'   => $key,   // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+					'meta_value' => $value, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 				)
 			);
 		}

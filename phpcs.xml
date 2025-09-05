@@ -16,6 +16,9 @@
         <exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.Found"/>
         <exclude name="Squiz.PHP.NonExecutableCode.Unreachable"/>
         <exclude name="Squiz.Commenting.BlockComment.CloserSameLine"/>
+        <exclude name="Squiz.Commenting.BlockComment.NoEmptyLineAfter"/>
+        <exclude name="Squiz.Commenting.BlockComment.NoEmptyLineBefore"/>
+        <exclude name="Squiz.Commenting.ClassComment.SpacingAfter"/>
         <exclude name="Squiz.Commenting.ClassComment.Missing"/>
         <exclude name="Squiz.Commenting.FileComment.WrongStyle"/>
         <exclude name="Squiz.Commenting.FileComment.Missing"/>
@@ -24,6 +27,7 @@
         <exclude name="Squiz.Commenting.FunctionComment.MissingParamType"/>
         <exclude name="Squiz.Commenting.FunctionComment.MissingParamComment"/>
         <exclude name="Squiz.Commenting.VariableComment.Missing"/>
+        <exclude name="Squiz.Commenting.FunctionCommentThrowTag"/>
         <exclude name="Squiz.PHP.CommentedOutCode.Found"/>
         <!-- "Parameter comment must end with a full stop" is such a pebble in the shoe. -->
         <exclude name="Squiz.Commenting.FunctionComment.ParamCommentFullStop"/>

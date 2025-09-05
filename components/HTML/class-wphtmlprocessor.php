@@ -3344,7 +3344,6 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * This internal function performs the 'in table text' insertion mode
 	 * logic for the generalized WP_HTML_Processor::step() function.
 	 *
-	 * @return bool Whether an element was found.
 	 * @throws WP_HTML_Unsupported_Exception When encountering unsupported HTML input.
 	 *
 	 * @see https://html.spec.whatwg.org/#parsing-main-intabletext

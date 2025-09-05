@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Class for efficiently looking up and mapping string keys to string values, with limits.
  *
@@ -407,8 +406,8 @@ class WP_Token_Map {
 		if ( self::STORAGE_VERSION !== $state['storage_version'] ) {
 			_doing_it_wrong(
 				__METHOD__,
-				/* translators: 1: version string, 2: version string. */
 				sprintf(
+					/* translators: 1: version string, 2: version string. */
 					__( 'Loaded version \'%1$s\' incompatible with expected version \'%2$s\'.' ),
 					$state['storage_version'],
 					self::STORAGE_VERSION

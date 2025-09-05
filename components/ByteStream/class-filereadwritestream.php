@@ -15,7 +15,7 @@ class FileReadWriteStream extends BaseByteReadStream implements BytePipe {
 		$mode         = $truncate ? 'w+b' : 'a+b';
 		$file_pointer = fopen( $path, $mode );
 		if ( ! $file_pointer ) {
-			throw new ByteStreamException( "Cannot open $path" );
+			throw new ByteStreamException( esc_html( "Cannot open $path" ) );
 		}
 
 		return new self( $file_pointer, filesize( $path ) );

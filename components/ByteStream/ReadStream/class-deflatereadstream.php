@@ -10,6 +10,8 @@ class DeflateReadStream extends BaseByteReadStream {
 	/**
 	 * The offset of the underlying reader at the time of the first read
 	 * from the DeflateReader.
+	 *
+	 * @var int|null
 	 */
 	protected $delegate_offset_0;
 	protected $deflate_context;

@@ -1,6 +1,8 @@
 <?php
 /**
  * XML API: XMLUnsupportedException class
+ *
+ * @package WordPress\XML
  */
 
 namespace WordPress\XML;
