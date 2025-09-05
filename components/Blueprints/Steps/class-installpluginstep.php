@@ -83,7 +83,7 @@ class InstallPluginStep implements StepInterface {
 					$zip_encoder->append_file( new FileEntry( [
 						'path'              => $plugin_data->filename,
 						'body_reader'       => $plugin_data->getStream(),
-						'compressionMethod' => ZipDecoder::COMPRESSION_DEFLATE,
+						'compression_method' => ZipDecoder::COMPRESSION_DEFLATE,
 					] ) );
 					$zip_encoder->close();
 				}

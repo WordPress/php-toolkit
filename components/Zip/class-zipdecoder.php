@@ -103,7 +103,7 @@ class ZipDecoder {
 		$this->byte_reader->pull( FileEntry::HEADER_SIZE, ByteReadStream::PULL_EXACTLY );
 		$data          = $this->byte_reader->consume( FileEntry::HEADER_SIZE );
 		$header_fields = unpack(
-			'vversion/vgeneralPurpose/vcompressionMethod/vlastModifiedTime/vlastModifiedDate/Vcrc/VcompressedSize/VuncompressedSize/vpathLength/vextraLength',
+			'vversion/vgeneral_purpose/vcompression_method/vlast_modified_time/vlast_modified_date/Vcrc/Vcompressed_size/Vuncompressed_size/vpath_length/vextra_length',
 			$data
 		);
 		$this->object  = new FileEntry( $header_fields );
