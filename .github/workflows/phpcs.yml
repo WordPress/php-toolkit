@@ -41,7 +41,7 @@ jobs:
       run: composer install --dev --prefer-dist --no-progress --no-suggest --optimize-autoloader
 
     - name: Run PHP CodeSniffer
-      run: composer run-script lint
+      run: phpcs -d memory_limit=1G . -n
 
     - name: Annotate PHPCS results
       if: failure()
