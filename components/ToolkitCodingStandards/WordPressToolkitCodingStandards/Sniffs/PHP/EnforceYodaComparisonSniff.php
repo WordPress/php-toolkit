@@ -21,69 +21,65 @@ use const T_IS_NOT_IDENTICAL;
  *  > (Foo::BAR, BAR)
  *  > (true, false, null, 1, 1.0, arrays, 'foo')
  */
-class EnforceYodaComparisonSniff implements Sniff
-{
+class EnforceYodaComparisonSniff implements Sniff {
 
-    public const CODE_DISALLOWED_YODA_COMPARISON = 'DisallowedYodaComparison';
 
-    /**
-     * @return array<int, (int|string)>
-     */
-    public function register(): array
-    {
-        return [
-            T_IS_IDENTICAL,
-            T_IS_NOT_IDENTICAL,
-            T_IS_EQUAL,
-            T_IS_NOT_EQUAL,
-        ];
-    }
+	public const CODE_DISALLOWED_YODA_COMPARISON = 'DisallowedYodaComparison';
 
-    /**
-     * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-     * @param int $comparisonTokenPointer
-     */
-    public function process(File $phpcs_file, $comparison_token_pointer): void
-    {
-        $tokens = $phpcs_file->getTokens();
-        $left_side_tokens = YodaHelper::getRightSideTokens($tokens, $comparison_token_pointer);
-        $right_side_tokens = YodaHelper::getLeftSideTokens($tokens, $comparison_token_pointer);
-        $left_dynamism = YodaHelper::getDynamismForTokens($tokens, $left_side_tokens);
-        $right_dynamism = YodaHelper::getDynamismForTokens($tokens, $right_side_tokens);
+	/**
+	 * @return array<int, (int|string)>
+	 */
+	public function register(): array {
+		return array(
+			T_IS_IDENTICAL,
+			T_IS_NOT_IDENTICAL,
+			T_IS_EQUAL,
+			T_IS_NOT_EQUAL,
+		);
+	}
 
-        if ($left_dynamism === null || $right_dynamism === null) {
-            return;
-        }
+	/**
+	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
+	 * @param int $comparisonTokenPointer
+	 */
+	public function process( File $phpcs_file, $comparison_token_pointer ): void {
+		$tokens            = $phpcs_file->getTokens();
+		$left_side_tokens  = YodaHelper::getRightSideTokens( $tokens, $comparison_token_pointer );
+		$right_side_tokens = YodaHelper::getLeftSideTokens( $tokens, $comparison_token_pointer );
+		$left_dynamism     = YodaHelper::getDynamismForTokens( $tokens, $left_side_tokens );
+		$right_dynamism    = YodaHelper::getDynamismForTokens( $tokens, $right_side_tokens );
 
-        if ($left_dynamism >= $right_dynamism) {
-            return;
-        }
+		if ( null === $left_dynamism || null === $right_dynamism ) {
+			return;
+		}
 
-        if ($left_dynamism >= 900 && $right_dynamism >= 900) {
-            return;
-        }
+		if ( $left_dynamism >= $right_dynamism ) {
+			return;
+		}
 
-        $error_parameters = [
-            'Yoda comparisons are required.',
-            $comparison_token_pointer,
-            self::CODE_DISALLOWED_YODA_COMPARISON,
-        ];
+		if ( $left_dynamism >= 900 && $right_dynamism >= 900 ) {
+			return;
+		}
 
-        $last_right_side_token_pointer = array_keys($right_side_tokens)[count($right_side_tokens) - 1];
+		$error_parameters = array(
+			'Yoda comparisons are required.',
+			$comparison_token_pointer,
+			self::CODE_DISALLOWED_YODA_COMPARISON,
+		);
 
-        $next_pointer = TokenHelper::findNextEffective($phpcs_file, $last_right_side_token_pointer + 1);
-        if ($tokens[$next_pointer]['code'] === T_EQUAL) {
-            $phpcs_file->addError(...$error_parameters);
-            return;
-        }
+		$last_right_side_token_pointer = array_keys( $right_side_tokens )[ count( $right_side_tokens ) - 1 ];
 
-        $fix = $phpcs_file->addFixableError(...$error_parameters);
-        if (!$fix) {
-            return;
-        }
+		$next_pointer = TokenHelper::findNextEffective( $phpcs_file, $last_right_side_token_pointer + 1 );
+		if ( T_EQUAL === $tokens[ $next_pointer ]['code'] ) {
+			$phpcs_file->addError( ...$error_parameters );
+			return;
+		}
 
-        YodaHelper::fix($phpcs_file, $left_side_tokens, $right_side_tokens);
-    }
+		$fix = $phpcs_file->addFixableError( ...$error_parameters );
+		if ( ! $fix ) {
+			return;
+		}
+
+		YodaHelper::fix( $phpcs_file, $left_side_tokens, $right_side_tokens );
+	}
 }
-
-

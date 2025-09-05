@@ -46,12 +46,12 @@ use function is_string;
  * stage2.finish();
  */
 class Tracker implements ArrayAccess {
-	private $self_weight = 1;
-	private $self_done = false;
+	private $self_weight   = 1;
+	private $self_done     = false;
 	private $self_progress = 0;
-	private $self_caption = '';
+	private $self_caption  = '';
 	private $weight;
-	private $sub_trackers = array();
+	private $sub_trackers    = array();
 	private $split_performed = false;
 
 	/**
@@ -69,9 +69,9 @@ class Tracker implements ArrayAccess {
 	public $events;
 
 	public function __construct( $options = array() ) {
-		$this->weight      = $options['weight'] ?? 1;
+		$this->weight       = $options['weight'] ?? 1;
 		$this->self_caption = $options['caption'] ?? '';
-		$this->events      = new EventDispatcher();
+		$this->events       = new EventDispatcher();
 	}
 
 	/**
@@ -91,7 +91,7 @@ class Tracker implements ArrayAccess {
 			$definitions = range( 0, $definitions );
 		}
 
-		$items     = [];          // [slug, rawWeight|null, caption]
+		$items      = array();          // [slug, rawWeight|null, caption].
 		$fixed_sum  = 0.0;
 		$null_count = 0;
 
@@ -101,31 +101,31 @@ class Tracker implements ArrayAccess {
 				$weight  = $value['ratio'] ?? $value['weight'] ?? $value[0] ?? null;
 				$caption = $value['caption'] ?? $value[1] ?? '';
 			} else {
-				$slug    = is_string( $key ) ? $key : $value;  // scalar value is slug
+				$slug    = is_string( $key ) ? $key : $value;  // scalar value is slug.
 				$weight  = null;
 				$caption = '';
 			}
 			if ( isset( $this->sub_trackers[ $slug ] ) ) {
 				throw new LogicException( "Duplicate slug '$slug'." );
 			}
-			if ( $weight === null ) {
-				$null_count ++;
+			if ( null === $weight ) {
+				++$null_count;
 			} elseif ( $weight <= 0 ) {
 				throw new InvalidArgumentException( 'Weights must be positive numbers or null.' );
 			} else {
 				$fixed_sum += $weight;
 			}
-			$items[] = [ $slug, $weight, $caption ];
+			$items[] = array( $slug, $weight, $caption );
 		}
 
-		if ( $items === [] ) {
+		if ( array() === $items ) {
 			throw new InvalidArgumentException( 'split() needs at least one entry.' );
 		}
 
-		$scale = 1.0 / ( $fixed_sum + $null_count ?: 1 ); // if all null, fixedSum=0, nullCount>0
+		$scale = 1.0 / ( $fixed_sum + $null_count ? $fixed_sum + $null_count : 1 ); // if all null, fixedSum=0, nullCount>0.
 
 		foreach ( $items as [$slug, $raw, $caption] ) {
-			$norm_weight = ( $raw ?? 1 ) * $scale;  // null counts as 1 before scaling
+			$norm_weight = ( $raw ?? 1 ) * $scale;  // null counts as 1 before scaling.
 			$this->createSubTracker( $slug, $norm_weight, $caption );
 		}
 
@@ -214,7 +214,12 @@ class Tracker implements ArrayAccess {
 		}
 		$this->self_weight -= $weight;
 
-		$sub_tracker                 = new self( [ 'weight' => $weight, 'caption' => $caption ] );
+		$sub_tracker                 = new self(
+			array(
+				'weight' => $weight,
+				'caption' => $caption,
+			)
+		);
 		$this->sub_trackers[ $slug ] = $sub_tracker;
 
 		$sub_tracker->events->addListener(
@@ -241,19 +246,19 @@ class Tracker implements ArrayAccess {
 	}
 
 	/**
-	 * @param  float  $value
-	 * @param  string|null  $caption
+	 * @param  float       $value
+	 * @param  string|null $caption
 	 */
 	public function set( $value, $caption = null ) {
 		if ( $value < $this->self_progress ) {
 			throw new InvalidArgumentException( "Progress cannot go backwards (tried updating to $value when it already was $this->self_progress)" );
 		}
-		// Don't report the same progress twice
-		if ( $this->self_progress === $value && ( $caption === null || $this->self_caption === $caption ) ) {
+		// Don't report the same progress twice.
+		if ( $this->self_progress === $value && ( null === $caption || $this->self_caption === $caption ) ) {
 			return;
 		}
 		$this->self_progress = min( $value, 100 );
-		if ( $caption !== null ) {
+		if ( null !== $caption ) {
 			$this->self_caption = $caption;
 		}
 
@@ -266,26 +271,26 @@ class Tracker implements ArrayAccess {
 	}
 
 	public function setCaption( $caption ) {
-		$this->self_caption        = $caption;
+		$this->self_caption         = $caption;
 		$this->last_updated_tracker = null;
 		$this->notifyProgress();
 	}
 
 	public function finish() {
-		$this->self_done           = true;
-		$this->self_progress       = 100;
+		$this->self_done            = true;
+		$this->self_progress        = 100;
 		$this->last_updated_tracker = null;
 		$this->notifyProgress();
 		$this->notifyDone();
 	}
 
 	public function getCaption() {
-		// If this tracker was most recently updated, return its caption
-		if ( $this->last_updated_tracker === null ) {
+		// If this tracker was most recently updated, return its caption.
+		if ( null === $this->last_updated_tracker ) {
 			return $this->self_caption;
 		}
 
-		// Otherwise return the caption of the most recently updated sub-tracker
+		// Otherwise return the caption of the most recently updated sub-tracker.
 		return $this->last_updated_tracker->getCaption();
 	}
 

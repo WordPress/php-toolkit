@@ -13,10 +13,10 @@ if ( $argc < 2 ) {
 $command = $argv[1];
 $options = array();
 
-for ( $i = 2; $i < $argc; $i ++ ) {
-	if ( strncmp( $argv[ $i ], '--', strlen( '--' ) ) === 0 && isset( $argv[ $i + 1 ] ) ) {
+for ( $i = 2; $i < $argc; $i++ ) {
+	if ( 0 === strncmp( $argv[ $i ], '--', strlen( '--' ) ) && isset( $argv[ $i + 1 ] ) ) {
 		$options[ substr( $argv[ $i ], 2 ) ] = $argv[ $i + 1 ];
-		++ $i;
+		++$i;
 	}
 }
 
@@ -32,7 +32,7 @@ if ( ! file_exists( $input_file ) ) {
 }
 $block_markup = file_get_contents( $input_file );
 
-// @TODO: Decide – should the current site URL be always required to
+// @TODO: Decide – should the current site URL be always required to.
 // populate $base_url?
 $base_url = $options['from-url'] ?? 'https://playground.internal';
 $p        = new WP_Block_Markup_Url_Processor( $block_markup, $base_url );

@@ -19,9 +19,9 @@ foreach ( new RecursiveIteratorIterator( $phar ) as $file ) {
 	if ( ! $file->isFile() ) {
 		continue;
 	}
-	$relative_path     = $file->getPathname();
-	$relative_path     = str_replace( 'phar://', '', $relative_path );
-	$relative_path     = str_replace( $phar->getPath() . '/', '', $relative_path );
+	$relative_path    = $file->getPathname();
+	$relative_path    = str_replace( 'phar://', '', $relative_path );
+	$relative_path    = str_replace( $phar->getPath() . '/', '', $relative_path );
 	$contents         = $file->getContent();
 	$updated_contents = $contents;
 	foreach ( array(

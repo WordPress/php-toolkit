@@ -51,7 +51,7 @@ class SQLiteFilesystem implements Filesystem {
 		'
 		);
 
-		// Create root directory if it doesn't exist
+		// Create root directory if it doesn't exist.
 		$stmt = $this->db->prepare( 'INSERT OR IGNORE INTO files (path, type) VALUES (?, ?)' );
 		$stmt->bindValue( 1, '/', SQLITE3_TEXT );
 		$stmt->bindValue( 2, 'dir', SQLITE3_TEXT );
@@ -87,7 +87,7 @@ class SQLiteFilesystem implements Filesystem {
 		$stmt->bindValue( 2, 'dir', SQLITE3_TEXT );
 		$result = $stmt->execute();
 
-		return $result->fetchArray() !== false;
+		return false !== $result->fetchArray();
 	}
 
 	public function is_file( $path ) {
@@ -101,7 +101,7 @@ class SQLiteFilesystem implements Filesystem {
 		$stmt->bindValue( 2, 'file', SQLITE3_TEXT );
 		$result = $stmt->execute();
 
-		return $result->fetchArray() !== false;
+		return false !== $result->fetchArray();
 	}
 
 	public function exists( $path ) {
@@ -114,7 +114,7 @@ class SQLiteFilesystem implements Filesystem {
 		$stmt->bindValue( 1, $path, SQLITE3_TEXT );
 		$result = $stmt->execute();
 
-		return $result->fetchArray() !== false;
+		return false !== $result->fetchArray();
 	}
 
 	public function open_read_stream( $path ): ByteReadStream {
@@ -152,13 +152,13 @@ class SQLiteFilesystem implements Filesystem {
 		try {
 			$this->in_transaction(
 				function () use ( $from_path, $to_path ) {
-					// Update the file path
+					// Update the file path.
 					$stmt = $this->db->prepare( 'UPDATE files SET path = ? WHERE path = ?' );
 					$stmt->bindValue( 1, $to_path, SQLITE3_TEXT );
 					$stmt->bindValue( 2, $from_path, SQLITE3_TEXT );
 					$stmt->execute();
 
-					// Update directory entries
+					// Update directory entries.
 					$old_parent = wp_unix_dirname( $from_path );
 					$parent     = wp_unix_dirname( $to_path );
 
@@ -377,9 +377,9 @@ class SQLiteFilesystem implements Filesystem {
 	}
 
 	private function in_transaction( $callback ) {
-		$current_level = $this->transaction_level ++;
+		$current_level = $this->transaction_level++;
 		try {
-			if ( $current_level === 0 ) {
+			if ( 0 === $current_level ) {
 				$this->db->exec( 'BEGIN TRANSACTION' );
 				try {
 					$callback();
@@ -399,11 +399,11 @@ class SQLiteFilesystem implements Filesystem {
 				}
 			}
 		} finally {
-			-- $this->transaction_level;
+			--$this->transaction_level;
 		}
 	}
 
 	public function get_meta(): array {
-		return [];
+		return array();
 	}
 }

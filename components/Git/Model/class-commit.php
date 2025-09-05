@@ -7,7 +7,7 @@ use WordPress\Git\GitException;
 
 class Commit {
 
-	public const NULL_HASH = '0000000000000000000000000000000000000000';
+	public const NULL_HASH   = '0000000000000000000000000000000000000000';
 	public const DATE_FORMAT = 'U +0000';
 
 	/**
@@ -74,7 +74,7 @@ class Commit {
 	public $gpgsig;
 
 	public static function is_null_hash( $oid ) {
-		return $oid === null || $oid === self::NULL_HASH;
+		return null === $oid || self::NULL_HASH === $oid;
 	}
 
 	public function __construct( $data = array() ) {
@@ -99,7 +99,7 @@ class Commit {
 	}
 
 	public function get_author_date_time() {
-		// Workaround: We can't use $head_commit_time->getTimestamp() on 32bit systems
+		// Workaround: We can't use $head_commit_time->getTimestamp() on 32bit systems.
 		if ( preg_match( '/^(\d+)\s+([+-]\d{2})(\d{2})$/', $this->author_date, $matches ) ) {
 			$timestamp = $matches[1];
 

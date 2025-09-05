@@ -46,13 +46,13 @@ class CommitParser {
 		$bytes_len = strlen( $this->bytes );
 
 		while ( $offset < $bytes_len ) {
-			// Find length of line
+			// Find length of line.
 			$line_len = strcspn( $this->bytes, "\n", $offset );
 			$line     = substr( $this->bytes, $offset, $line_len );
 
-			// Skip empty lines
+			// Skip empty lines.
 			if ( strspn( $line, " \t" ) === strlen( $line ) ) {
-				// The rest is commit message
+				// The rest is commit message.
 				$this->commit->message = substr( $this->bytes, $offset + $line_len + 1 );
 				$this->commit->hash    = sha1(
 					'commit ' . strlen( $this->bytes ) . "\x00" .
@@ -67,15 +67,15 @@ class CommitParser {
 			$type     = substr( $line, 0, $type_len );
 			$value    = substr( $line, $type_len + 1 );
 
-			if ( $type === 'author' ) {
+			if ( 'author' === $type ) {
 				$author_date_starts        = strpos( $value, '>' ) + 1;
 				$this->commit->author      = substr( $value, 0, $author_date_starts );
 				$this->commit->author_date = substr( $value, $author_date_starts + 1 );
-			} elseif ( $type === 'committer' ) {
+			} elseif ( 'committer' === $type ) {
 				$committer_date_starts        = strpos( $value, '>' ) + 1;
 				$this->commit->committer      = substr( $value, 0, $committer_date_starts );
 				$this->commit->committer_date = substr( $value, $committer_date_starts + 1 );
-			} elseif ( $type === 'parent' ) {
+			} elseif ( 'parent' === $type ) {
 				$this->commit->parents[] = $value;
 			} elseif ( property_exists( $this->commit, $type ) ) {
 				$this->commit->$type = $value;

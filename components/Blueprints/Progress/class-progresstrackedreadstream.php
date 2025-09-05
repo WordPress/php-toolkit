@@ -21,10 +21,10 @@ class ProgressTrackedReadStream implements ByteReadStream {
 	private $stream_length;
 
 	public function __construct( ByteReadStream $stream, Tracker $tracker ) {
-		$this->stream       = $stream;
-		$this->tracker      = $tracker;
+		$this->stream        = $stream;
+		$this->tracker       = $tracker;
 		$this->stream_length = $this->stream->length();
-		$this->updateProgress(); // Initial progress update
+		$this->updateProgress(); // Initial progress update.
 	}
 
 	public function length(): ?int {
@@ -46,7 +46,7 @@ class ProgressTrackedReadStream implements ByteReadStream {
 	public function reached_end_of_data(): bool {
 		$is_end_of_data = $this->stream->reached_end_of_data();
 		if ( $is_end_of_data ) {
-			$this->updateProgress(); // Ensure progress is 100% if end is reached
+			$this->updateProgress(); // Ensure progress is 100% if end is reached.
 		}
 
 		return $is_end_of_data;
@@ -84,7 +84,7 @@ class ProgressTrackedReadStream implements ByteReadStream {
 	 */
 	public function consume_all(): string {
 		$data = $this->stream->consume_all();
-		$this->updateProgress(); // Should be 100% after this
+		$this->updateProgress(); // Should be 100% after this.
 
 		return $data;
 	}
@@ -98,14 +98,14 @@ class ProgressTrackedReadStream implements ByteReadStream {
 	}
 
 	private function updateProgress(): void {
-		if ( $this->stream->tell() === 0 ) {
+		if ( 0 === $this->stream->tell() ) {
 			return;
 		}
 
-		if ( null === $this->stream_length || $this->stream_length === 0 ) {
+		if ( null === $this->stream_length || 0 === $this->stream_length ) {
 			// If length is unknown or zero, we cannot meaningfully report percentage progress.
-			// However, if we are at the end or length is 0, we can consider it 100%
-			if ( $this->stream_length === 0 || ( $this->stream_length !== null && $this->stream->tell() >= $this->stream_length ) ) {
+			// However, if we are at the end or length is 0, we can consider it 100%.
+			if ( 0 === $this->stream_length || ( null !== $this->stream_length && $this->stream->tell() >= $this->stream_length ) ) {
 				// Ensure progress is set to 100 if stream is empty or fully read.
 				// Only set if not already done to avoid redundant notifications.
 				if ( $this->tracker->getProgress() < 100 ) {
@@ -117,11 +117,10 @@ class ProgressTrackedReadStream implements ByteReadStream {
 		}
 
 		$progress = ( $this->stream->tell() / $this->stream_length ) * 100;
-		// It's possible to seek() backwards. Let's make sure we never decrease
+		// It's possible to seek() backwards. Let's make sure we never decrease.
 		// the reported progress.
 		if ( $progress > $this->tracker->getProgress() ) {
 			$this->tracker->set( $progress );
 		}
 	}
-
 }

@@ -11,16 +11,16 @@ use WordPress\ByteStream\ReadStream\LimitedByteReadStream;
 class ZipDecoder {
 
 	const COMPRESSION_DEFLATE = 8;
-	const COMPRESSION_NONE = 0;
+	const COMPRESSION_NONE    = 0;
 
-	const STATE_SCAN = 'scan';
-	const STATE_FILE_ENTRY = 'file-entry';
-	const STATE_CENTRAL_DIRECTORY_ENTRY_READING = 'central-directory-entry-reading';
+	const STATE_SCAN                                = 'scan';
+	const STATE_FILE_ENTRY                          = 'file-entry';
+	const STATE_CENTRAL_DIRECTORY_ENTRY_READING     = 'central-directory-entry-reading';
 	const STATE_END_CENTRAL_DIRECTORY_ENTRY_READING = 'end-central-directory-entry-reading';
-	const STATE_OBJECT_READY = 'object-ready';
-	const STATE_COMPLETE = 'complete';
+	const STATE_OBJECT_READY                        = 'object-ready';
+	const STATE_COMPLETE                            = 'complete';
 
-	private $state = self::STATE_SCAN;
+	private $state  = self::STATE_SCAN;
 	private $object = null;
 	private $byte_reader;
 
@@ -33,10 +33,10 @@ class ZipDecoder {
 	}
 
 	public function next_object(): bool {
-		// If we're calling next_object() when an object is ready,
-		// it means we want to scan for the next object. Let's clear
+		// If we're calling next_object() when an object is ready,.
+		// it means we want to scan for the next object. Let's clear.
 		// the state and start scanning again.
-		if ( $this->state === self::STATE_OBJECT_READY ) {
+		if ( self::STATE_OBJECT_READY === $this->state ) {
 			$this->after_record();
 		}
 
@@ -121,7 +121,7 @@ class ZipDecoder {
 			$this->object->compressed_size
 		);
 
-		$is_compressed = $this->object->compression_method === self::COMPRESSION_DEFLATE;
+		$is_compressed = self::COMPRESSION_DEFLATE === $this->object->compression_method;
 		if ( $is_compressed ) {
 			$this->object->body_reader = new InflateReadStream( $limit_reader, ZLIB_ENCODING_RAW );
 		} else {
@@ -148,9 +148,9 @@ class ZipDecoder {
 		$this->object->extra = $extra_bytes;
 
 		$this->byte_reader->pull( $this->object->file_comment_length, ByteReadStream::PULL_EXACTLY );
-		$file_comment_bytes        = $this->byte_reader->consume( $this->object->file_comment_length );
+		$file_comment_bytes         = $this->byte_reader->consume( $this->object->file_comment_length );
 		$this->object->file_comment = $file_comment_bytes;
-		$this->state               = self::STATE_OBJECT_READY;
+		$this->state                = self::STATE_OBJECT_READY;
 	}
 
 	private function read_end_central_directory_entry() {
@@ -172,7 +172,7 @@ class ZipDecoder {
 
 	private function after_record() {
 		if ( $this->object instanceof FileEntry ) {
-			// Skip past the file bytes
+			// Skip past the file bytes.
 			$this->object->body_reader->consume_all();
 			$this->object->body_reader->close_reading();
 		}

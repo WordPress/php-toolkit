@@ -43,24 +43,24 @@ class CLI {
 	 * @throws InvalidArgumentException for unknown options or missing required values.
 	 */
 	public static function parseCommandArgsAndOptions( array $argv, array $option_defs ): array {
-		$positionals = [];
-		$options     = [];
-		$short2long  = [];
-	
-		// Initialise defaults & maps
+		$positionals = array();
+		$options     = array();
+		$short2long  = array();
+
+		// Initialise defaults & maps.
 		foreach ( $option_defs as $long => $def ) {
 			[ $short, , $default ] = $def;
-			$options[ $long ] = $default;
+			$options[ $long ]      = $default;
 			if ( $short ) {
 				$short2long[ $short ] = $long;
 			}
 		}
-	
-		$i = 0; // Start from the first command argument
+
+		$i = 0; // Start from the first command argument.
 		while ( $i < count( $argv ) ) {
 			$token = $argv[ $i ];
-	
-			// Long option --foo or --foo=bar
+
+			// Long option --foo or --foo=bar.
 			if ( preg_match( '/^--([^=]+)(=(.*))?$/', $token, $m ) ) {
 				$long = $m[1];
 				if ( ! isset( $option_defs[ $long ] ) ) {
@@ -68,52 +68,52 @@ class CLI {
 				}
 				[ $short, $has_val ] = $option_defs[ $long ];
 				if ( $has_val ) {
-					$val = $m[3] ?? ( $argv[ ++ $i ] ?? null );
-					if ( $val === null ) {
+					$val = $m[3] ?? ( $argv[ ++$i ] ?? null );
+					if ( null === $val ) {
 						throw new InvalidArgumentException( "Option --$long requires a value" );
 					}
 					$options[ $long ] = $val;
 				} else {
 					$options[ $long ] = true;
 				}
-				$i ++;
+				++$i;
 				continue;
 			}
-	
-			// Short option(s): -abc or -e mysql or -e=mysql
+
+			// Short option(s): -abc or -e mysql or -e=mysql.
 			if ( preg_match( '/^-([A-Za-z]{1,})(=(.*))?$/', $token, $m ) ) {
-				$bundle    = str_split( $m[1] );
+				$bundle     = str_split( $m[1] );
 				$inline_val = $m[3] ?? null;
 				foreach ( $bundle as $idx => $short ) {
 					if ( ! isset( $short2long[ $short ] ) ) {
 						throw new InvalidArgumentException( "Unknown option -$short" );
 					}
-					$long   = $short2long[ $short ];
+					$long    = $short2long[ $short ];
 					$has_val = $option_defs[ $long ][1];
 					if ( $has_val ) {
-						if ( $inline_val !== null && $idx === 0 ) {
+						if ( null !== $inline_val && 0 === $idx ) {
 							$options[ $long ] = $inline_val;
 						} else {
-							$val = ( $idx === count( $bundle ) - 1 ) ? ( $argv[ ++ $i ] ?? null ) : null;
-							if ( $val === null ) {
+							$val = ( $idx === count( $bundle ) - 1 ) ? ( $argv[ ++$i ] ?? null ) : null;
+							if ( null === $val ) {
 								throw new InvalidArgumentException( "Option -$short requires a value" );
 							}
 							$options[ $long ] = $val;
 						}
-						break; // value‑bearing short stops bundle processing
+						break; // value‑bearing short stops bundle processing.
 					} else {
 						$options[ $long ] = true;
 					}
 				}
-				$i ++;
+				++$i;
 				continue;
 			}
-	
-			// Positional argument
+
+			// Positional argument.
 			$positionals[] = $token;
-			$i ++;
+			++$i;
 		}
-	
-		return [ $positionals, $options ];
+
+		return array( $positionals, $options );
 	}
 }

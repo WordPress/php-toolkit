@@ -12,10 +12,10 @@ use WordPress\HttpClient\Transport\SocketTransport;
 
 class Client {
 
-	const EVENT_GOT_HEADERS = 'EVENT_GOT_HEADERS';
+	const EVENT_GOT_HEADERS          = 'EVENT_GOT_HEADERS';
 	const EVENT_BODY_CHUNK_AVAILABLE = 'EVENT_BODY_CHUNK_AVAILABLE';
-	const EVENT_FAILED = 'EVENT_FAILED';
-	const EVENT_FINISHED = 'EVENT_FINISHED';
+	const EVENT_FAILED               = 'EVENT_FAILED';
+	const EVENT_FINISHED             = 'EVENT_FINISHED';
 
 	/**
 	 * All the HTTP requests ever enqueued with this Client.
@@ -36,7 +36,7 @@ class Client {
 
 	public function __construct( $options = array() ) {
 		$this->state = new ClientState( $options );
-		if(empty($options['transport']) || $options['transport'] === 'auto') {
+		if ( empty( $options['transport'] ) || 'auto' === $options['transport'] ) {
 			$options['transport'] = extension_loaded( 'curl' ) ? 'curl' : 'sockets';
 		}
 
@@ -53,16 +53,23 @@ class Client {
 		}
 
 		$middleware = new HttpMiddleware( $this->state, array( 'transport' => $transport ) );
-		if(isset($options['cache_dir'])) {
-			$middleware = new CacheMiddleware( $this->state, $middleware, [
-				'cache_dir' => $options['cache_dir'],
-			] );
+		if ( isset( $options['cache_dir'] ) ) {
+			$middleware = new CacheMiddleware(
+				$this->state,
+				$middleware,
+				array(
+					'cache_dir' => $options['cache_dir'],
+				)
+			);
 		}
 
-		$this->middleware = new RedirectionMiddleware( 
+		$this->middleware = new RedirectionMiddleware(
 			$this->state,
 			$middleware,
-			array( 'client' => $this, 'max_redirects' => 5 )
+			array(
+				'client' => $this,
+				'max_redirects' => 5,
+			)
 		);
 	}
 
@@ -70,19 +77,21 @@ class Client {
 	 * Returns a RemoteFileReader that streams the response body of the
 	 * given request.
 	 *
-	 * @param  Request  $request  The request to stream.
-	 * @param  array    $options  Options for the request.
+	 * @param  Request $request  The request to stream.
+	 * @param  array   $options  Options for the request.
 	 *
 	 * @return RequestReadStream
 	 */
-	public function fetch( $request, array $options = [] ) {
-		if(is_string($request)) {
-			$request = new Request($request);
+	public function fetch( $request, array $options = array() ) {
+		if ( is_string( $request ) ) {
+			$request = new Request( $request );
 		}
 		return new RequestReadStream(
 			$request,
-			array_merge( [ 'client' => $this ],
-				is_array( $options ) ? $options : iterator_to_array( $options ) )
+			array_merge(
+				array( 'client' => $this ),
+				is_array( $options ) ? $options : iterator_to_array( $options )
+			)
 		);
 	}
 
@@ -90,12 +99,12 @@ class Client {
 	 * Returns an array of RemoteFileReader instances that stream the response bodies
 	 * of the given requests.
 	 *
-	 * @param  Request[]  $requests  The requests to stream.
-	 * @param  array      $options   Options for the requests.
+	 * @param  Request[] $requests  The requests to stream.
+	 * @param  array     $options   Options for the requests.
 	 *
 	 * @return RequestReadStream[]
 	 */
-	public function fetch_many( array $requests, array $options = [] ) {
+	public function fetch_many( array $requests, array $options = array() ) {
 		$streams = array();
 
 		foreach ( $requests as $request ) {
@@ -111,11 +120,11 @@ class Client {
 	 * an internal queue. Network transmission is delayed until one of the returned
 	 * streams is read from.
 	 *
-	 * @param  Request[]|Request|string|string[]  $requests  The HTTP request(s) to enqueue.
+	 * @param  Request[]|Request|string|string[] $requests  The HTTP request(s) to enqueue.
 	 */
 	public function enqueue( $requests ) {
-		if(!is_array($requests)) {
-			$requests = [$requests];
+		if ( ! is_array( $requests ) ) {
+			$requests = array( $requests );
 		}
 
 		foreach ( $requests as $request ) {
@@ -126,7 +135,7 @@ class Client {
 				throw new HttpClientException( "Request {$request->id} is already enqueued." );
 			}
 
-			if ( $request->state !== Request::STATE_CREATED ) {
+			if ( Request::STATE_CREATED !== $request->state ) {
 				throw new HttpClientException( "Request {$request->id} is not in the created state." );
 			}
 
@@ -137,9 +146,11 @@ class Client {
 				$this->state->set_request_error( $request, new HttpError( sprintf( 'Invalid URL: %s', $request->url ) ) );
 				continue;
 			}
-			if ( $parsed->protocol !== 'http:' && $parsed->protocol !== 'https:' ) {
-				$this->state->set_request_error( $request,
-					new HttpError( sprintf( 'Invalid URL – only HTTP and HTTPS URLs are supported: %s', $parsed->toString() ) ) );
+			if ( 'http:' !== $parsed->protocol && 'https:' !== $parsed->protocol ) {
+				$this->state->set_request_error(
+					$request,
+					new HttpError( sprintf( 'Invalid URL – only HTTP and HTTPS URLs are supported: %s', $parsed->toString() ) )
+				);
 				continue;
 			}
 		}
@@ -199,14 +210,17 @@ class Client {
 	 *
 	 * @return bool
 	 */
-	public function await_next_event( array $query = [] ) {
+	public function await_next_event( array $query = array() ) {
 		$requests_ids = array();
-		if(empty($query['requests'])) {
+		if ( empty( $query['requests'] ) ) {
 			$requests_ids = array_keys( $this->state->events );
 		} else {
-			$requests_ids = array_map( function( $request ) {
-				return $request->id;
-			}, $query['requests'] );
+			$requests_ids = array_map(
+				function ( $request ) {
+					return $request->id;
+				},
+				$query['requests']
+			);
 		}
 		return $this->middleware->await_next_event( $requests_ids );
 	}
@@ -263,5 +277,4 @@ class Client {
 	public function get_active_requests( $states = null ) {
 		return $this->state->get_active_requests( $states );
 	}
-
 }

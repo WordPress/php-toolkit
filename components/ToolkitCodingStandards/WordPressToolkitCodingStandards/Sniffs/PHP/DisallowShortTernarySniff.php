@@ -17,62 +17,60 @@ use SlevomatCodingStandard\Helpers\TokenHelper;
  * This sniff reports when a ternary `?` is immediately followed (ignoring
  * whitespace/comments) by `:`, indicating a short ternary.
  */
-class DisallowShortTernarySniff implements Sniff
-{
-    public const CODE_SHORT_TERNARY_USED = 'ShortTernaryUsed';
+class DisallowShortTernarySniff implements Sniff {
 
-    /**
-     * @return array<int, (int|string)>
-     */
-    public function register(): array
-    {
-        return [T_INLINE_THEN];
-    }
+	public const CODE_SHORT_TERNARY_USED = 'ShortTernaryUsed';
 
-    /**
-     * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-     * @param int $stackPtr
-     */
-    public function process(File $phpcs_file, $stack_ptr): void
-    {
-        $tokens = $phpcs_file->getTokens();
+	/**
+	 * @return array<int, (int|string)>
+	 */
+	public function register(): array {
+		return array( T_INLINE_THEN );
+	}
 
-        // Find the next effective token after '?'.
-        $next_effective = TokenHelper::findNextEffective($phpcs_file, $stack_ptr + 1);
-        if ($next_effective === null) {
-            return;
-        }
+	/**
+	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
+	 * @param int $stackPtr
+	 */
+	public function process( File $phpcs_file, $stack_ptr ): void {
+		$tokens = $phpcs_file->getTokens();
 
-        // If the next effective token is ':', this is a short ternary (Elvis) operator.
-        if ($tokens[$next_effective]['code'] !== T_INLINE_ELSE) {
-            return;
-        }
+		// Find the next effective token after '?'.
+		$next_effective = TokenHelper::findNextEffective( $phpcs_file, $stack_ptr + 1 );
+		if ( null === $next_effective ) {
+			return;
+		}
 
-        $fix = $phpcs_file->addFixableError(
-            'Using short ternaries is not allowed as they are rarely used correctly.',
-            $stack_ptr,
-            self::CODE_SHORT_TERNARY_USED
-        );
+		// If the next effective token is ':', this is a short ternary (Elvis) operator.
+		if ( T_INLINE_ELSE !== $tokens[ $next_effective ]['code'] ) {
+			return;
+		}
 
-        if ($fix !== true) {
-            return;
-        }
+		$fix = $phpcs_file->addFixableError(
+			'Using short ternaries is not allowed as they are rarely used correctly.',
+			$stack_ptr,
+			self::CODE_SHORT_TERNARY_USED
+		);
 
-        // Expand `cond ?: else` into `cond ? cond : else` while preserving original condition text.
-        $start_ptr = TernaryOperatorHelper::getStartPointer($phpcs_file, $stack_ptr);
-        $else_ptr = TernaryOperatorHelper::getElsePointer($phpcs_file, $stack_ptr);
+		if ( true !== $fix ) {
+			return;
+		}
 
-        $condition = '';
-        for ($i = $start_ptr; $i < $stack_ptr; $i++) {
-            $condition .= $tokens[$i]['content'];
-        }
-        $condition = rtrim($condition);
+		// Expand `cond ?: else` into `cond ? cond : else` while preserving original condition text.
+		$start_ptr = TernaryOperatorHelper::getStartPointer( $phpcs_file, $stack_ptr );
+		$else_ptr  = TernaryOperatorHelper::getElsePointer( $phpcs_file, $stack_ptr );
 
-        $phpcs_file->fixer->beginChangeset();
-        // Remove anything between '?' and ':' (whitespace/comments).
-        FixerHelper::removeBetween($phpcs_file, $stack_ptr, $else_ptr);
-        // Insert the duplicated condition with spaces around.
-        FixerHelper::add($phpcs_file, $stack_ptr, ' ' . $condition . ' ');
-        $phpcs_file->fixer->endChangeset();
-    }
+		$condition = '';
+		for ( $i = $start_ptr; $i < $stack_ptr; $i++ ) {
+			$condition .= $tokens[ $i ]['content'];
+		}
+		$condition = rtrim( $condition );
+
+		$phpcs_file->fixer->beginChangeset();
+		// Remove anything between '?' and ':' (whitespace/comments).
+		FixerHelper::removeBetween( $phpcs_file, $stack_ptr, $else_ptr );
+		// Insert the duplicated condition with spaces around.
+		FixerHelper::add( $phpcs_file, $stack_ptr, ' ' . $condition . ' ' );
+		$phpcs_file->fixer->endChangeset();
+	}
 }

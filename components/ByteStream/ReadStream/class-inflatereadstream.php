@@ -26,10 +26,10 @@ class InflateReadStream extends BaseByteReadStream {
 	 */
 	protected $delegate_offset_0;
 
-	// Ensure properties are defined or inherited
-	protected $is_closed = false;
-	protected $buffer = '';
-	protected $bytes_already_forgotten = 0;
+	// Ensure properties are defined or inherited.
+	protected $is_closed                = false;
+	protected $buffer                   = '';
+	protected $bytes_already_forgotten  = 0;
 	protected $offset_in_current_buffer = 0;
 
 	public function __construct( ByteReadStream $upstream, $encoding = ZLIB_ENCODING_DEFLATE ) {
@@ -74,7 +74,7 @@ class InflateReadStream extends BaseByteReadStream {
 	}
 
 	protected function internal_reached_end_of_data(): bool {
-		return $this->inflate_context === null && $this->upstream->reached_end_of_data();
+		return null === $this->inflate_context && $this->upstream->reached_end_of_data();
 	}
 
 	public function seek( $target_offset ): void {
@@ -95,7 +95,7 @@ class InflateReadStream extends BaseByteReadStream {
 			$remaining_bytes = $target_offset - $this->tell();
 			$next_chunk_size = min( 50 * 1024, $remaining_bytes );
 			$pulled          = $this->pull( $next_chunk_size );
-			// Keep skipping bytes until we've consumed enough
+			// Keep skipping bytes until we've consumed enough.
 			$this->consume( min( $remaining_bytes, $pulled ) );
 		}
 	}

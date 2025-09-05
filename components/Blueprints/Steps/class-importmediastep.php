@@ -18,12 +18,13 @@ use function WordPress\Filesystem\pipe_stream;
 class ImportMediaStep implements StepInterface {
 	/**
 	 * An associative array of media files to import.
+	 *
 	 * @var array<string, DataReference|string>
 	 */
 	private $media;
 
 	/**
-	 * @param  array<string, DataReference|string>  $media  Media files to import.
+	 * @param  array<string, DataReference|string> $media  Media files to import.
 	 */
 	public function __construct( array $media ) {
 		$this->media = $media;
@@ -37,7 +38,7 @@ class ImportMediaStep implements StepInterface {
 	}
 
 	/**
-	 * @param  array<string, MediaFileDefinition>  $media
+	 * @param  array<string, MediaFileDefinition> $media
 	 */
 	public function setMedia( array $media ): void {
 		$this->media = $media;
@@ -47,17 +48,19 @@ class ImportMediaStep implements StepInterface {
 		$medias = $this->getMedia();
 
 		$total_files = count( $medias );
-		if ( $total_files === 0 ) {
+		if ( 0 === $total_files ) {
 			$progress->finish();
 
 			return true;
 		}
 
 		$progress->setCaption( 'Importing media files' );
-		$progress->split( [
-			'download' => 0.5,
-			'import'   => 0.5,
-		] );
+		$progress->split(
+			array(
+				'download' => 0.5,
+				'import'   => 0.5,
+			)
+		);
 
 		$files_imported = 0;
 		$fs             = $runtime->getTargetFilesystem();
@@ -74,19 +77,22 @@ class ImportMediaStep implements StepInterface {
 			throw new RuntimeException( 'Failed to get WordPress upload directory' );
 		}
 
-		// Get the upload path relative to the WordPress root
+		// Get the upload path relative to the WordPress root.
 		$upload_base_dir = ltrim( substr( $upload_dir['path'], strlen( $runtime->getConfiguration()->getTargetSiteRoot() ) ), '/' );
 
-		// Ensure the uploads directory exists
+		// Ensure the uploads directory exists.
 		$fs = $runtime->getTargetFilesystem();
 		if ( ! $fs->is_dir( $upload_base_dir ) ) {
-			$fs->mkdir( $upload_base_dir, [ 'recursive' => true ] );
+			$fs->mkdir( $upload_base_dir, array( 'recursive' => true ) );
 		}
 
 		$resolved = $runtime->getDataReferenceResolver()->startEagerResolution(
-			array_map( function ( $media ) {
-				return $media->source;
-			}, $medias ),
+			array_map(
+				function ( $media ) {
+					return $media->source;
+				},
+				$medias
+			),
 			$progress['download']
 		);
 
@@ -101,14 +107,14 @@ class ImportMediaStep implements StepInterface {
 				if ( ! $resolved instanceof File ) {
 					// TODO: What if the schema specifies a resource type that can only be resolved to a file?
 					// Then the resolver could throw the error instead of requiring each step to check.
-					// But since the resolve interface can return either a File or Directory,
+					// But since the resolve interface can return either a File or Directory,.
 					// would we have to check anyway?
-					// Would there be any value in the runtime having specific methods like resolveFile()
+					// Would there be any value in the runtime having specific methods like resolveFile().
 					// and resolveDirectory() that throw if they cannot resolve the requested type?
 					throw new RuntimeException( "Failed to resolve media file: $human_readable_name" );
 				}
 
-				// Create a new file in the uploads directory
+				// Create a new file in the uploads directory.
 				$target_path = $this->resolveTargetPath(
 					$runtime,
 					$media_definition->source,
@@ -120,7 +126,7 @@ class ImportMediaStep implements StepInterface {
 				$resolved->getStream()->close_reading();
 				$write_stream->close_writing();
 
-				// Add to WordPress media library
+				// Add to WordPress media library.
 				$attachment_id = $runtime->evalPhpCodeInSubProcess(
 					<<<'CODE'
 <?php
@@ -156,15 +162,17 @@ wp_update_attachment_metadata($attachment_id, $attachment_metadata);
 echo $attachment_id;
 CODE
 					,
-					[
+					array(
 						'MEDIA_FILE_PATH' => $target_path,
-						'ATTACHMENT_META' => json_encode( [
-							'title'       => $media_definition->title,
-							'description' => $media_definition->description,
-							'alt'         => $media_definition->alt,
-							'caption'     => $media_definition->caption,
-						] ),
-					]
+						'ATTACHMENT_META' => json_encode(
+							array(
+								'title'       => $media_definition->title,
+								'description' => $media_definition->description,
+								'alt'         => $media_definition->alt,
+								'caption'     => $media_definition->caption,
+							)
+						),
+					)
 				);
 
 				if ( ! $attachment_id ) {
@@ -173,12 +181,12 @@ CODE
 
 				$progress['import'][ $i ]->finish();
 			} catch ( Exception $e ) {
-				// Log error but continue with other media files
+				// Log error but continue with other media files.
 				// @TODO: Think through exception handling here.
 				$runtime->getLogger()->warning( "Failed to import media file {$target_path}: " . $e->getMessage() );
 			}
 
-			$files_imported ++;
+			++$files_imported;
 		}
 
 		$progress->finish();
@@ -193,10 +201,12 @@ CODE
 
 		$filename = $source->get_filename();
 		if ( ! $filename ) {
-			throw new RuntimeException( sprintf(
-				'Failed to get filename for media file: %s. We can\'t infer the extension.',
-				$source->get_human_readable_name()
-			) );
+			throw new RuntimeException(
+				sprintf(
+					'Failed to get filename for media file: %s. We can\'t infer the extension.',
+					$source->get_human_readable_name()
+				)
+			);
 		}
 
 		/**
@@ -212,7 +222,7 @@ CODE
 
 		$parent_dir = dirname( $target_path );
 		if ( ! $fs->is_dir( $parent_dir ) ) {
-			$fs->mkdir( $parent_dir, [ 'recursive' => true ] );
+			$fs->mkdir( $parent_dir, array( 'recursive' => true ) );
 		}
 
 		return $target_path;

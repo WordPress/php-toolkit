@@ -46,7 +46,7 @@ class DataLiberationHTMLProcessor extends WP_HTML_Processor {
 		$starting_depth = $this->get_current_depth();
 		while ( $this->next_token() ) {
 			if (
-				$this->get_token_type() === '#tag' &&
+				'#tag' === $this->get_token_type() &&
 				$this->is_tag_closer() &&
 				$this->get_current_depth() === $starting_depth - 1
 			) {

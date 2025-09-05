@@ -23,9 +23,9 @@ class DeltaResolver {
 	 */
 	private $delta_reader;
 
-	private $base_length = null;
-	private $target_length = null;
-	private $resolved_chunk = '';
+	private $base_length                = null;
+	private $target_length              = null;
+	private $resolved_chunk             = '';
 	private $paused_on_incomplete_input = false;
 
 	public function __construct( GitObjectDecoder $base_object_reader, ByteReadStream $delta_reader ) {
@@ -65,8 +65,8 @@ class DeltaResolver {
 
 			return true;
 		} catch ( NotEnoughDataException $e ) {
-			// @TODO: Refactor GitProtocolReader to provide a ByteProducer we can pull from instead of
-			// a fixed MemoryPipe
+			// @TODO: Refactor GitProtocolReader to provide a ByteProducer we can pull from instead of.
+			// a fixed MemoryPipe.
 			$this->delta_reader->seek( $position );
 			$this->paused_on_incomplete_input = true;
 
@@ -78,7 +78,7 @@ class DeltaResolver {
 		$result = 0;
 		$shift  = 0;
 		do {
-			$byte   = ord( $this->delta_reader->consume( 1 ) );
+			$byte    = ord( $this->delta_reader->consume( 1 ) );
 			$result |= ( $byte & 0x7F ) << $shift;
 			$shift  += 7;
 		} while ( $byte & 0x80 );
@@ -102,7 +102,7 @@ class DeltaResolver {
 		$this->paused_on_incomplete_input = false;
 		$position                         = $this->delta_reader->tell();
 		try {
-			// Don't resolve body chunks until we know the source and target lengths
+			// Don't resolve body chunks until we know the source and target lengths.
 			if ( null === $this->target_length ) {
 				$this->resolve_buffers_lengths();
 				if ( null === $this->target_length ) {
@@ -118,9 +118,9 @@ class DeltaResolver {
 				$copy_size   = 0;
 
 				$needed_bytes = 0;
-				for ( $i = 0; $i < 7; $i ++ ) {
+				for ( $i = 0; $i < 7; $i++ ) {
 					if ( $command_byte & ( 1 << $i ) ) {
-						++ $needed_bytes;
+						++$needed_bytes;
 					}
 				}
 
@@ -129,27 +129,27 @@ class DeltaResolver {
 				$offset_bytes = $this->delta_reader->consume( $needed_bytes );
 				$read_offset  = 0;
 				if ( $command_byte & 0b00000001 ) {
-					$copy_offset |= ord( $offset_bytes[ $read_offset ++ ] );
+					$copy_offset |= ord( $offset_bytes[ $read_offset++ ] );
 				}
 				if ( $command_byte & 0b00000010 ) {
-					$copy_offset |= ord( $offset_bytes[ $read_offset ++ ] ) << 8;
+					$copy_offset |= ord( $offset_bytes[ $read_offset++ ] ) << 8;
 				}
 				if ( $command_byte & 0b00000100 ) {
-					$copy_offset |= ord( $offset_bytes[ $read_offset ++ ] ) << 16;
+					$copy_offset |= ord( $offset_bytes[ $read_offset++ ] ) << 16;
 				}
 				if ( $command_byte & 0b00001000 ) {
-					$copy_offset |= ord( $offset_bytes[ $read_offset ++ ] ) << 24;
+					$copy_offset |= ord( $offset_bytes[ $read_offset++ ] ) << 24;
 				}
 				if ( $command_byte & 0b00010000 ) {
-					$copy_size |= ord( $offset_bytes[ $read_offset ++ ] );
+					$copy_size |= ord( $offset_bytes[ $read_offset++ ] );
 				}
 				if ( $command_byte & 0b00100000 ) {
-					$copy_size |= ord( $offset_bytes[ $read_offset ++ ] ) << 8;
+					$copy_size |= ord( $offset_bytes[ $read_offset++ ] ) << 8;
 				}
 				if ( $command_byte & 0b01000000 ) {
-					$copy_size |= ord( $offset_bytes[ $read_offset ++ ] ) << 16;
+					$copy_size |= ord( $offset_bytes[ $read_offset++ ] ) << 16;
 				}
-				if ( $copy_size === 0 ) {
+				if ( 0 === $copy_size ) {
 					$copy_size = 0x10000;
 				}
 				$this->base_object_reader->seek( $copy_offset );

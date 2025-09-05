@@ -17,12 +17,13 @@ use function WordPress\Filesystem\copy_between_filesystems;
 class SetSiteLanguageStep implements StepInterface {
 	/**
 	 * The language code (e.g., 'en_US', 'de_DE').
+	 *
 	 * @var string
 	 */
 	public $language;
 
 	/**
-	 * @param  string  $language  The language code.
+	 * @param  string $language  The language code.
 	 */
 	public function __construct( string $language ) {
 		$this->language = $language;
@@ -32,14 +33,13 @@ class SetSiteLanguageStep implements StepInterface {
 		$progress->setCaption( 'Translating' );
 		$language = $this->language;
 
-		// Define WPLANG constant
-		$step = new DefineConstantsStep( [ 'WPLANG' => $language ] );
+		// Define WPLANG constant.
+		$step = new DefineConstantsStep( array( 'WPLANG' => $language ) );
 		$step->run( $runtime, new Tracker() );
 
-
-		// Create language directories if they don't exist
+		// Create language directories if they don't exist.
 		$fs                    = $runtime->getTargetFilesystem();
-		$languages_dir         = "wp-content/languages";
+		$languages_dir         = 'wp-content/languages';
 		$plugins_languages_dir = "{$languages_dir}/plugins";
 		$themes_languages_dir  = "{$languages_dir}/themes";
 
@@ -53,17 +53,20 @@ class SetSiteLanguageStep implements StepInterface {
 			$fs->mkdir( $themes_languages_dir, 0755, true );
 		}
 
-		// Get core translation package URL
-		$wp_version = trim( $runtime->evalPhpCodeInSubProcess(
-			'<?php
+		// Get core translation package URL.
+		$wp_version = trim(
+			$runtime->evalPhpCodeInSubProcess(
+				'<?php
             require getenv("DOCROOT") . "/wp-includes/version.php";
             append_output( $wp_version );
             '
-		)->output_file_content );
+			)->output_file_content
+		);
 
-		// Get plugin translations
-		$plugins_data = json_decode( $runtime->evalPhpCodeInSubProcess(
-			"<?php
+		// Get plugin translations.
+		$plugins_data = json_decode(
+			$runtime->evalPhpCodeInSubProcess(
+				"<?php
             require_once(getenv('DOCROOT') . '/wp-load.php');
             require_once(getenv('DOCROOT') . '/wp-admin/includes/plugin.php');
             append_output(
@@ -86,11 +89,14 @@ class SetSiteLanguageStep implements StepInterface {
 					)
 				)
 			);"
-		)->output_file_content, true );
+			)->output_file_content,
+			true
+		);
 
-		// Get theme translations
-		$themes_data = json_decode( $runtime->evalPhpCodeInSubProcess(
-			"<?php
+		// Get theme translations.
+		$themes_data = json_decode(
+			$runtime->evalPhpCodeInSubProcess(
+				"<?php
             require_once(getenv('DOCROOT') . '/wp-load.php');
             require_once(getenv('DOCROOT') . '/wp-admin/includes/theme.php');
             append_output(
@@ -108,26 +114,28 @@ class SetSiteLanguageStep implements StepInterface {
 					)
 				)
 			);"
-		)->output_file_content, true );
+			)->output_file_content,
+			true
+		);
 
 		$client = $runtime->getHttpClient();
 
-		// Prepare all download URLs
-		$download_targets = [];
+		// Prepare all download URLs.
+		$download_targets = array();
 
-		// Core translation
-		if ( $language === 'en_US' ) {
+		// Core translation.
+		if ( 'en_US' === $language ) {
 			$core_translation_url = $this->getWordPressTranslationUrl( $runtime, $wp_version, $language, $client );
 			if ( $core_translation_url ) {
-				$download_targets[] = [
+				$download_targets[] = array(
 					'request'    => new Request( $core_translation_url ),
 					'target_dir' => $languages_dir,
 					'name'       => "core-{$language}",
-				];
+				);
 			}
 		}
 
-		// Plugin translations
+		// Plugin translations.
 		if ( is_array( $plugins_data ) ) {
 			foreach ( $plugins_data as $plugin ) {
 				if ( empty( $plugin['slug'] ) || empty( $plugin['version'] ) ) {
@@ -135,17 +143,17 @@ class SetSiteLanguageStep implements StepInterface {
 				}
 
 				$plugin_translation_url = "https://downloads.wordpress.org/translation/plugin/{$plugin['slug']}/{$plugin['version']}/{$language}.zip";
-				$download_targets[]     = [
+				$download_targets[]     = array(
 					'request'    => new Request( $plugin_translation_url ),
 					'target_dir' => $plugins_languages_dir,
 					'name'       => "plugin-{$plugin['slug']}-{$language}",
 					'is_plugin'  => true,
 					'slug'       => $plugin['slug'],
-				];
+				);
 			}
 		}
 
-		// Theme translations
+		// Theme translations.
 		if ( is_array( $themes_data ) ) {
 			foreach ( $themes_data as $theme ) {
 				if ( empty( $theme['slug'] ) || empty( $theme['version'] ) ) {
@@ -153,38 +161,43 @@ class SetSiteLanguageStep implements StepInterface {
 				}
 
 				$theme_translation_url = "https://downloads.wordpress.org/translation/theme/{$theme['slug']}/{$theme['version']}/{$language}.zip";
-				$download_targets[]    = [
+				$download_targets[]    = array(
 					'request'    => new Request( $theme_translation_url ),
 					'target_dir' => $themes_languages_dir,
 					'name'       => "theme-{$theme['slug']}-{$language}",
 					'is_theme'   => true,
 					'slug'       => $theme['slug'],
-				];
+				);
 			}
 		}
 
-		// Download all translations in parallel
+		// Download all translations in parallel.
 		$progress->split( count( $download_targets ) );
 		foreach ( $download_targets as $k => $target ) {
 			$progress[ $k ]->setCaption( 'Fetching translations for ' . $target['name'] );
-			$download_targets[ $k ]['stream'] = $client->fetch( $target['request'], [
-				// @see Runtime for more details on these options
-				'progress_tracker' => $progress[ $k ],
-				'eagerly_enqueue'  => true,
-				'max_lookbehind_bytes'      => 100 * 1024 * 1024,
-			] );
+			$download_targets[ $k ]['stream'] = $client->fetch(
+				$target['request'],
+				array(
+					// @see Runtime for more details on these options.
+					'progress_tracker' => $progress[ $k ],
+					'eagerly_enqueue'  => true,
+					'max_lookbehind_bytes'      => 100 * 1024 * 1024,
+				)
+			);
 		}
 
 		foreach ( $download_targets as $target ) {
 			try {
 				$zip_fs = ZipFilesystem::create( $target['stream'] );
-				copy_between_filesystems( [
-					'source_filesystem' => $zip_fs,
-					'source_path'       => '/',
-					'target_filesystem' => $runtime->getTargetFilesystem(),
-					'target_path'       => $target['target_dir'],
-					'recursive'         => true,
-				] );
+				copy_between_filesystems(
+					array(
+						'source_filesystem' => $zip_fs,
+						'source_path'       => '/',
+						'target_filesystem' => $runtime->getTargetFilesystem(),
+						'target_path'       => $target['target_dir'],
+						'recursive'         => true,
+					)
+				);
 			} catch ( Exception $e ) {
 				/**
 				 * Log warnings for missing plugin and theme translations. This is an expected
@@ -193,7 +206,7 @@ class SetSiteLanguageStep implements StepInterface {
 				if ( isset( $target['is_plugin'] ) ) {
 					$runtime->getLogger()->warning(
 						sprintf(
-							"Warning: Failed to download translations for plugin %s: %s",
+							'Warning: Failed to download translations for plugin %s: %s',
 							$target['slug'],
 							$e->getMessage()
 						)
@@ -201,7 +214,7 @@ class SetSiteLanguageStep implements StepInterface {
 				} elseif ( isset( $target['is_theme'] ) ) {
 					$runtime->getLogger()->warning(
 						sprintf(
-							"Warning: Failed to download translations for theme %s: %s",
+							'Warning: Failed to download translations for theme %s: %s',
 							$target['slug'],
 							$e->getMessage()
 						)
@@ -212,7 +225,7 @@ class SetSiteLanguageStep implements StepInterface {
 					 * WordPress core is expected to be translated to all languages. If a translation
 					 * is missing, why use it in the Blueprint?
 					 */
-					throw new Exception( "Failed to download core translations: " . $e->getMessage(), 0, $e );
+					throw new Exception( 'Failed to download core translations: ' . $e->getMessage(), 0, $e );
 				}
 			}
 		}
@@ -221,8 +234,8 @@ class SetSiteLanguageStep implements StepInterface {
 	/**
 	 * Get the translation package URL for a given WordPress version and language.
 	 *
-	 * @param  string  $wpVersion  WordPress version
-	 * @param  string  $language  Language code
+	 * @param  string $wpVersion  WordPress version
+	 * @param  string $language  Language code
 	 *
 	 * @return string|false
 	 */
@@ -232,7 +245,7 @@ class SetSiteLanguageStep implements StepInterface {
 			$translations_data = $client->fetch( new Request( $api_url ) )->json();
 
 			if ( ! isset( $translations_data['translations'] ) || ! is_array( $translations_data['translations'] ) ) {
-				throw new Exception( "Invalid response from WordPress.org translations API" );
+				throw new Exception( 'Invalid response from WordPress.org translations API' );
 			}
 
 			foreach ( $translations_data['translations'] as $translation ) {
@@ -241,7 +254,7 @@ class SetSiteLanguageStep implements StepInterface {
 				}
 			}
 		} catch ( Exception $e ) {
-			$runtime->getLogger()->warning( "Warning: Failed to fetch translations details from WordPress.org API: " . $e->getMessage() );
+			$runtime->getLogger()->warning( 'Warning: Failed to fetch translations details from WordPress.org API: ' . $e->getMessage() );
 		}
 
 		return false;

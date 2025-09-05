@@ -13,12 +13,12 @@ class ChunkMerger implements Merger {
 
 	public function merge( Diff $diff_ab, Diff $diff_ac ): MergeResult {
 		list( $chunks_a, $chunks_b ) = $this->ensureChunks( $diff_ab->get_changes(), $diff_ac->get_changes() );
-		$this->chunks_a = $chunks_a;
-		$this->chunks_b = $chunks_b;
+		$this->chunks_a              = $chunks_a;
+		$this->chunks_b              = $chunks_b;
 
 		$results = array();
 		$n       = max( count( $chunks_a ), count( $chunks_b ) );
-		for ( $i = 0; $i < $n; $i ++ ) {
+		for ( $i = 0; $i < $n; $i++ ) {
 			$chunk_a = $chunks_a[ $i ] ?? array(
 				'base'     => null,
 				'deleted'  => false,
@@ -31,12 +31,12 @@ class ChunkMerger implements Merger {
 			);
 
 			if (
-				$chunk_a['inserted'] !== '' &&
-				$chunk_b['inserted'] !== '' &&
-				strncmp( $chunk_a['inserted'], $chunk_b['inserted'], strlen( $chunk_b['inserted'] ) ) !== 0 &&
-				strncmp( $chunk_b['inserted'], $chunk_a['inserted'], strlen( $chunk_a['inserted'] ) ) !== 0 &&
-				substr_compare( $chunk_a['inserted'], $chunk_b['inserted'], - strlen( $chunk_b['inserted'] ) ) !== 0 &&
-				substr_compare( $chunk_b['inserted'], $chunk_a['inserted'], - strlen( $chunk_a['inserted'] ) ) !== 0
+				'' !== $chunk_a['inserted'] &&
+				'' !== $chunk_b['inserted'] &&
+				0 !== strncmp( $chunk_a['inserted'], $chunk_b['inserted'], strlen( $chunk_b['inserted'] ) ) &&
+				0 !== strncmp( $chunk_b['inserted'], $chunk_a['inserted'], strlen( $chunk_a['inserted'] ) ) &&
+				0 !== substr_compare( $chunk_a['inserted'], $chunk_b['inserted'], - strlen( $chunk_b['inserted'] ) ) &&
+				0 !== substr_compare( $chunk_b['inserted'], $chunk_a['inserted'], - strlen( $chunk_a['inserted'] ) )
 			) {
 				$results[] = new MergeConflict(
 					$chunk_a['inserted'],
@@ -48,10 +48,10 @@ class ChunkMerger implements Merger {
 				continue;
 			}
 
-			if ( $chunk_a['base'] === null || $chunk_b['base'] === null ) {
-				if ( $chunk_a['base'] !== null ) {
+			if ( null === $chunk_a['base'] || null === $chunk_b['base'] ) {
+				if ( null !== $chunk_a['base'] ) {
 					$results[] = $chunk_a['base'] . $chunk_a['inserted'];
-				} elseif ( $chunk_b['base'] !== null ) {
+				} elseif ( null !== $chunk_b['base'] ) {
 					$results[] = $chunk_b['base'] . $chunk_b['inserted'];
 				}
 				continue;
@@ -70,10 +70,10 @@ class ChunkMerger implements Merger {
 
 			if ( $chunk_a['deleted'] || $chunk_b['deleted'] ) {
 				if ( $chunk_a['inserted'] && $chunk_b['inserted'] && (
-						strncmp( $chunk_a['inserted'], $chunk_b['inserted'], strlen( $chunk_b['inserted'] ) ) === 0 ||
-						strncmp( $chunk_b['inserted'], $chunk_a['inserted'], strlen( $chunk_a['inserted'] ) ) === 0 ||
-						substr_compare( $chunk_a['inserted'], $chunk_b['inserted'], - strlen( $chunk_b['inserted'] ) ) === 0 ||
-						substr_compare( $chunk_b['inserted'], $chunk_a['inserted'], - strlen( $chunk_a['inserted'] ) ) === 0
+						0 === strncmp( $chunk_a['inserted'], $chunk_b['inserted'], strlen( $chunk_b['inserted'] ) ) ||
+						0 === strncmp( $chunk_b['inserted'], $chunk_a['inserted'], strlen( $chunk_a['inserted'] ) ) ||
+						0 === substr_compare( $chunk_a['inserted'], $chunk_b['inserted'], - strlen( $chunk_b['inserted'] ) ) ||
+						0 === substr_compare( $chunk_b['inserted'], $chunk_a['inserted'], - strlen( $chunk_a['inserted'] ) )
 					) ) {
 					$results[] = strlen( $chunk_a['inserted'] ) > strlen( $chunk_b['inserted'] ) ? $chunk_a['inserted'] : $chunk_b['inserted'];
 					continue;
@@ -82,11 +82,11 @@ class ChunkMerger implements Merger {
 					continue;
 				}
 
-				$deletion    = $chunk_a['deleted'] ? $chunk_a : $chunk_b;
+				$deletion     = $chunk_a['deleted'] ? $chunk_a : $chunk_b;
 				$non_deletion = $chunk_a['deleted'] ? $chunk_b : $chunk_a;
 
 				if ( $deletion['inserted'] ) {
-					if ( $non_deletion['inserted'] !== '' ) {
+					if ( '' !== $non_deletion['inserted'] ) {
 						$results[] = new MergeConflict(
 							$deletion['inserted'],
 							$non_deletion['inserted'],
@@ -98,9 +98,9 @@ class ChunkMerger implements Merger {
 					}
 
 					$results[] = $deletion['inserted'];
-				} elseif ( trim( $deletion['base'], ' ' ) === '' && $non_deletion['inserted'] !== '' ) {
-					// Sometimes branch A is one space short (e.g. due to a trim()) and branch B
-					// adds a meaningful span of text. In this case, we want to ignore the deletion
+				} elseif ( '' === trim( $deletion['base'], ' ' ) && '' !== $non_deletion['inserted'] ) {
+					// Sometimes branch A is one space short (e.g. due to a trim()) and branch B.
+					// adds a meaningful span of text. In this case, we want to ignore the deletion.
 					// and keep branch B's text.
 					$results[] = $non_deletion['base'];
 					$results[] = $non_deletion['inserted'];
@@ -108,9 +108,9 @@ class ChunkMerger implements Merger {
 				continue;
 			}
 
-			$results[]     = $chunk_a['base'];
-			$only_insertion = $chunk_a['inserted'] !== '' ? $chunk_a['inserted'] : $chunk_b['inserted'];
-			$results[]     = $only_insertion;
+			$results[]      = $chunk_a['base'];
+			$only_insertion = '' !== $chunk_a['inserted'] ? $chunk_a['inserted'] : $chunk_b['inserted'];
+			$results[]      = $only_insertion;
 		}
 
 		return new MergeResult( $results );
@@ -122,8 +122,8 @@ class ChunkMerger implements Merger {
 		}
 
 		$boundaries = self::extractBoundaries( $diff_ab, $diff_ac );
-		$diff_ab     = self::resliceDiff( $diff_ab, $boundaries );
-		$diff_ac     = self::resliceDiff( $diff_ac, $boundaries );
+		$diff_ab    = self::resliceDiff( $diff_ab, $boundaries );
+		$diff_ac    = self::resliceDiff( $diff_ac, $boundaries );
 
 		$chunks_a = self::convertDiffToChunks( $diff_ab );
 		$chunks_b = self::convertDiffToChunks( $diff_ac );
@@ -142,8 +142,8 @@ class ChunkMerger implements Merger {
 		foreach ( $diff as $part ) {
 			list( $op, $text ) = $part;
 
-			if ( $op === Diff::DIFF_DELETE || $op === Diff::DIFF_EQUAL ) {
-				if ( $current['base'] !== null || $current['inserted'] !== '' ) {
+			if ( Diff::DIFF_DELETE === $op || Diff::DIFF_EQUAL === $op ) {
+				if ( null !== $current['base'] || '' !== $current['inserted'] ) {
 					$chunks[] = $current;
 					$current  = array(
 						'base'     => null,
@@ -152,13 +152,13 @@ class ChunkMerger implements Merger {
 					);
 				}
 				$current['base']    = $text;
-				$current['deleted'] = ( $op === Diff::DIFF_DELETE );
-			} elseif ( $op === Diff::DIFF_INSERT ) {
+				$current['deleted'] = ( Diff::DIFF_DELETE === $op );
+			} elseif ( Diff::DIFF_INSERT === $op ) {
 				$current['inserted'] .= $text;
 			}
 		}
 
-		if ( $current['base'] !== null || $current['inserted'] !== '' ) {
+		if ( null !== $current['base'] || '' !== $current['inserted'] ) {
 			$chunks[] = $current;
 		}
 
@@ -170,10 +170,10 @@ class ChunkMerger implements Merger {
 		foreach ( array( $diff_a, $diff_b ) as $diff ) {
 			$offset = 0;
 			foreach ( $diff as [$op, $text] ) {
-				if ( $op === Diff::DIFF_INSERT ) {
+				if ( Diff::DIFF_INSERT === $op ) {
 					continue;
 				}
-				if ( $offset !== 0 ) {
+				if ( 0 !== $offset ) {
 					$boundaries[ $offset ] = true;
 				}
 				$offset += strlen( $text );
@@ -186,8 +186,8 @@ class ChunkMerger implements Merger {
 	}
 
 	private static function resliceDiff( array $diff, array $boundaries ): array {
-		$boundaries    = array_values( $boundaries );
-		$resliced      = array();
+		$boundaries     = array_values( $boundaries );
+		$resliced       = array();
 		$base_cursor    = 0;
 		$boundary_index = 0;
 
@@ -195,7 +195,7 @@ class ChunkMerger implements Merger {
 			if ( ! $text ) {
 				continue;
 			}
-			if ( $op === Diff::DIFF_INSERT ) {
+			if ( Diff::DIFF_INSERT === $op ) {
 				$resliced[] = array( $op, $text );
 				continue;
 			}
@@ -207,7 +207,7 @@ class ChunkMerger implements Merger {
 				$boundary_index < count( $boundaries ) &&
 				$boundaries[ $boundary_index ] <= $start_offset
 			) {
-				++ $boundary_index;
+				++$boundary_index;
 			}
 
 			while (
@@ -218,19 +218,19 @@ class ChunkMerger implements Merger {
 
 				$slice_length = $boundary - $start_offset;
 				if ( $slice_length > 0 && strlen( $text ) > 0 ) {
-					$slice_text  = substr( $text, 0, $slice_length );
+					$slice_text = substr( $text, 0, $slice_length );
 					$resliced[] = array( $op, $slice_text );
 				}
 
-				$text        = substr( $text, $slice_length );
+				$text          = substr( $text, $slice_length );
 				$start_offset += $slice_length;
-				++ $boundary_index;
+				++$boundary_index;
 				if ( ! $text ) {
 					break;
 				}
 			}
 
-			if ( $text !== '' ) {
+			if ( '' !== $text ) {
 				$resliced[] = array( $op, $text );
 			}
 

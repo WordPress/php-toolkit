@@ -6,16 +6,16 @@ class Connection {
 
 	public $request;
 	public $http_socket;
-	public $response_buffer = '';
+	public $response_buffer         = '';
 	public $decoded_response_stream = null;
-	public $started_at = null;
+	public $started_at              = null;
 
 	public function __construct( Request $request ) {
 		$this->request = $request;
 	}
 
 	public function consume_buffer( $length = null ) {
-		if ( $length === null ) {
+		if ( null === $length ) {
 			$length = strlen( $this->response_buffer );
 		}
 		$buffer                = substr( $this->response_buffer, 0, $length );

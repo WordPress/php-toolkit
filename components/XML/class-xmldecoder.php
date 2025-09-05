@@ -124,12 +124,12 @@ class XMLDecoder {
 				$zeros_at    = $start_of_potential_reference_at + 2;
 				$base        = 16;
 				$digit_chars = '0123456789abcdefABCDEF';
-				$max_digits  = 6; // `&#x10FFFF;`
+				$max_digits  = 6; // `&#x10FFFF;`.
 			} else {
 				$zeros_at    = $start_of_potential_reference_at + 1;
 				$base        = 10;
 				$digit_chars = '0123456789';
-				$max_digits  = 7; // `&#1114111;`
+				$max_digits  = 7; // `&#1114111;`.
 			}
 
 			$zero_count  = strspn( $text, '0', $zeros_at );
@@ -143,7 +143,7 @@ class XMLDecoder {
 				continue;
 			}
 
-			$codepoint          = intval( substr( $text, $digits_at, $digit_count ), $base );
+			$codepoint           = intval( substr( $text, $digits_at, $digit_count ), $base );
 			$character_reference = codepoint_to_utf8_bytes( $codepoint );
 			if ( '�' === $character_reference && 0xFFFD !== $codepoint ) {
 				/*

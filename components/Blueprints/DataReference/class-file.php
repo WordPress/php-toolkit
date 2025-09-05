@@ -22,8 +22,8 @@ class File extends DataReference {
 	/**
 	 * Constructor.
 	 *
-	 * @param  ByteReadStream  $stream  The stream representing the file content.
-	 * @param  string  $filename  The name of the file.
+	 * @param  ByteReadStream $stream  The stream representing the file content.
+	 * @param  string         $filename  The name of the file.
 	 */
 	public function __construct( ByteReadStream $stream, string $filename ) {
 		$this->stream   = $stream;
@@ -38,7 +38,7 @@ class File extends DataReference {
 	 * @return string The human-readable name.
 	 */
 	public function get_human_readable_name(): string {
-		return "File: " . $this->filename;
+		return 'File: ' . $this->filename;
 	}
 
 	public function getStream(): ByteReadStream {

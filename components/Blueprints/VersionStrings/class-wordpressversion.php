@@ -36,20 +36,20 @@ class WordPressVersion implements Version {
 
 	/**
 	 * Parses a WordPress version string.
-	 * 
+	 *
 	 * Return values:
-	 * 
+	 *
 	 * * WordPressVersion
 	 * * false – invalid version string
 	 * * null – non-comparable version strings like beta, trunk, etc.
-	 * 
+	 *
 	 * @return $this|false|null
 	 */
-	static public function fromString( string $raw ) {
-		if(in_array($raw, ['beta','trunk','latest'], true)) {
+	public static function fromString( string $raw ) {
+		if ( in_array( $raw, array( 'beta', 'trunk', 'latest' ), true ) ) {
 			return null;
 		}
-		if(substr($raw, 0, 8) === 'https://') {
+		if ( 'https://' === substr( $raw, 0, 8 ) ) {
 			return null;
 		}
 
@@ -66,7 +66,7 @@ class WordPressVersion implements Version {
 			return false;
 		}
 
-		$stage_weights = [
+		$stage_weights = array(
 			'dev'   => 0,
 			'src'   => 0,
 			'alpha' => 1,
@@ -76,31 +76,31 @@ class WordPressVersion implements Version {
 			'rc'    => 3,
 			''      => 4,
 			'pl'    => 5,
-		];
+		);
 
 		return new self(
 			$raw,
 			(int) $m['major'],
 			(int) ( $m['minor'] ?? 0 ),
 			(int) ( $m['patch'] ?? 0 ),
-			isset( $m['patch'] ) && $m['patch'] !== '',
+			isset( $m['patch'] ) && '' !== $m['patch'],
 			$stage_weights[ strtolower( $m['label'] ?? '' ) ] ?? 0,
 			(int) ( $m['labelnum'] ?? ( $m['build'] ?? 0 ) )
 		);
 	}
 
 	private function __construct( $raw, $major, $minor, $patch, $patch_specified, $stage_rank, $stage_index ) {
-		$this->raw            = $raw;
-		$this->major          = $major;
-		$this->minor          = $minor;
-		$this->patch          = $patch;
+		$this->raw             = $raw;
+		$this->major           = $major;
+		$this->minor           = $minor;
+		$this->patch           = $patch;
 		$this->patch_specified = $patch_specified;
 		$this->stage_rank      = $stage_rank;
 		$this->stage_index     = $stage_index;
 	}
 
 	public function compareTo( Version $other ): int {
-		foreach ( [ 'major', 'minor' ] as $part ) {
+		foreach ( array( 'major', 'minor' ) as $part ) {
 			if ( $this->$part !== $other->$part ) {
 				return ( $this->$part < $other->$part ) ? - 1 : 1;
 			}
@@ -108,13 +108,13 @@ class WordPressVersion implements Version {
 
 		if ( $this->patch !== $other->patch ) {
 			if ( ! $this->patch_specified || ! $other->patch_specified ) {
-				// do nothing – fall through to stage comparison
+				// do nothing – fall through to stage comparison.
 			} else {
 				return ( $this->patch < $other->patch ) ? - 1 : 1;
 			}
 		}
 
-		foreach ( [ 'stageRank', 'stageIndex' ] as $part ) {
+		foreach ( array( 'stageRank', 'stageIndex' ) as $part ) {
 			if ( $this->$part !== $other->$part ) {
 				return ( $this->$part < $other->$part ) ? - 1 : 1;
 			}
@@ -134,7 +134,7 @@ class WordPressVersion implements Version {
 			case '<=':
 				return $this->compareTo( $other ) <= 0;
 			case '==':
-				return $this->compareTo( $other ) == 0;
+				return 0 == $this->compareTo( $other );
 			default:
 				throw new InvalidArgumentException( "Invalid comparison operator: {$comparison}" );
 		}
@@ -143,5 +143,4 @@ class WordPressVersion implements Version {
 	public function __toString(): string {
 		return $this->raw;
 	}
-
 }

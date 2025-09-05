@@ -14,138 +14,136 @@ use SlevomatCodingStandard\Helpers\TokenHelper;
  * Auto-fix converts the leading '/*' to '/**' when the non-Doc comment directly
  * precedes a property.
  */
-class MemberVariableDocStyleSniff implements Sniff
-{
-    public const CODE_WRONG_STYLE = 'MemberVariableCommentWrongStyle';
+class MemberVariableDocStyleSniff implements Sniff {
 
-    /**
-     * @return array<int, (int|string)>
-     */
-    public function register(): array
-    {
-        return [T_VARIABLE];
-    }
+	public const CODE_WRONG_STYLE = 'MemberVariableCommentWrongStyle';
 
-    /**
-     * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-     * @param int $stackPtr
-     */
-    public function process(File $phpcsFile, $stackPtr): void
-    {
-        $tokens = $phpcsFile->getTokens();
+	/**
+	 * @return array<int, (int|string)>
+	 */
+	public function register(): array {
+		return array( T_VARIABLE );
+	}
 
-        // Only apply to class/trait/interface properties.
-        if (!PropertyHelper::isProperty($phpcsFile, $stackPtr)) {
-            return;
-        }
+	/**
+	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
+	 * @param int $stackPtr
+	 */
+	public function process( File $phpcsFile, $stackPtr ): void {
+		$tokens = $phpcsFile->getTokens();
 
-        // Already has a DocBlock comment; nothing to do.
-        if (DocCommentHelper::hasDocComment($phpcsFile, $stackPtr)) {
-            return;
-        }
+		// Only apply to class/trait/interface properties.
+		if ( ! PropertyHelper::isProperty( $phpcsFile, $stackPtr ) ) {
+			return;
+		}
 
-        // 1) Handle a block comment directly above the property (/* ... */ -> /** ... */).
-        $prevPtr = TokenHelper::findPreviousExcluding($phpcsFile, [T_WHITESPACE], $stackPtr - 1);
-        if ($prevPtr !== null && $tokens[$prevPtr]['code'] === T_COMMENT) {
-            $comment = $tokens[$prevPtr]['content'];
-            $trimmed = ltrim($comment);
+		// Already has a DocBlock comment; nothing to do.
+		if ( DocCommentHelper::hasDocComment( $phpcsFile, $stackPtr ) ) {
+			return;
+		}
 
-            if (strncmp($trimmed, '/*', 2) === 0 && strncmp($trimmed, '/**', 3) !== 0) {
-                // Ensure the comment is immediately adjacent (no blank line) to the property.
-                if ($tokens[$stackPtr]['line'] - $tokens[$prevPtr]['line'] <= 1) {
-                    $fix = $phpcsFile->addFixableError(
-                        'You must use "/**" style comments for a member variable comment',
-                        $prevPtr,
-                        self::CODE_WRONG_STYLE
-                    );
+		// 1) Handle a block comment directly above the property (/* ... */ -> /** ... */).
+		$prevPtr = TokenHelper::findPreviousExcluding( $phpcsFile, array( T_WHITESPACE ), $stackPtr - 1 );
+		if ( null !== $prevPtr && T_COMMENT === $tokens[ $prevPtr ]['code'] ) {
+			$comment = $tokens[ $prevPtr ]['content'];
+			$trimmed = ltrim( $comment );
 
-                    if ($fix === true) {
-                        $replacePos = strpos($comment, '/*');
-                        if ($replacePos !== false) {
-                            $fixed = substr($comment, 0, $replacePos) . '/**' . substr($comment, $replacePos + 2);
-                            $phpcsFile->fixer->beginChangeset();
-                            $phpcsFile->fixer->replaceToken($prevPtr, $fixed);
-                            $phpcsFile->fixer->endChangeset();
-                        }
-                    }
-                    return;
-                }
-            }
-        }
+			if ( 0 === strncmp( $trimmed, '/*', 2 ) && 0 !== strncmp( $trimmed, '/**', 3 ) ) {
+				// Ensure the comment is immediately adjacent (no blank line) to the property.
+				if ( $tokens[ $stackPtr ]['line'] - $tokens[ $prevPtr ]['line'] <= 1 ) {
+					$fix = $phpcsFile->addFixableError(
+						'You must use "/**" style comments for a member variable comment',
+						$prevPtr,
+						self::CODE_WRONG_STYLE
+					);
 
-        // 2) Handle an end-of-line comment after the property on the same line.
-        $propertyLine = $tokens[$stackPtr]['line'];
-        $startPtr = PropertyHelper::getStartPointer($phpcsFile, $stackPtr);
-        $commentPtr = null;
-        for ($i = $stackPtr + 1, $count = count($tokens); $i < $count; $i++) {
-            if ($tokens[$i]['line'] !== $propertyLine) {
-                break;
-            }
-            if ($tokens[$i]['code'] === T_COMMENT) {
-                $commentPtr = $i;
-                break;
-            }
-        }
+					if ( true === $fix ) {
+						$replacePos = strpos( $comment, '/*' );
+						if ( false !== $replacePos ) {
+							$fixed = substr( $comment, 0, $replacePos ) . '/**' . substr( $comment, $replacePos + 2 );
+							$phpcsFile->fixer->beginChangeset();
+							$phpcsFile->fixer->replaceToken( $prevPtr, $fixed );
+							$phpcsFile->fixer->endChangeset();
+						}
+					}
+					return;
+				}
+			}
+		}
 
-        if ($commentPtr === null) {
-            return;
-        }
+		// 2) Handle an end-of-line comment after the property on the same line.
+		$propertyLine = $tokens[ $stackPtr ]['line'];
+		$startPtr     = PropertyHelper::getStartPointer( $phpcsFile, $stackPtr );
+		$commentPtr   = null;
+		for ( $i = $stackPtr + 1, $count = count( $tokens ); $i < $count; $i++ ) {
+			if ( $tokens[ $i ]['line'] !== $propertyLine ) {
+				break;
+			}
+			if ( T_COMMENT === $tokens[ $i ]['code'] ) {
+				$commentPtr = $i;
+				break;
+			}
+		}
 
-        $commentContent = $tokens[$commentPtr]['content'];
-        $trimmed = ltrim($commentContent);
+		if ( null === $commentPtr ) {
+			return;
+		}
 
-        // Extract single-line comment text.
-        if (strncmp($trimmed, '//', 2) === 0) {
-            $text = ltrim(substr($trimmed, 2));
-        } elseif (strncmp($trimmed, '#', 1) === 0) {
-            $text = ltrim(substr($trimmed, 1));
-        } elseif (strncmp($trimmed, '/*', 2) === 0 && substr(rtrim($trimmed), -2) === '*/') {
-            $inner = trim($trimmed);
-            $inner = substr($inner, 2, -2);
-            $text = trim($inner);
-        } else {
-            // Not a single-line comment we can transform safely.
-            return;
-        }
+		$commentContent = $tokens[ $commentPtr ]['content'];
+		$trimmed        = ltrim( $commentContent );
 
-        // Compute indentation from the beginning of the line where the property starts.
-        $lineStartPtr = $startPtr;
-        for ($i = $startPtr; $i >= 0; $i--) {
-            if ($tokens[$i]['line'] < $propertyLine) {
-                $lineStartPtr = $i + 1;
-                break;
-            }
-            if ($i === 0) {
-                $lineStartPtr = 0;
-                break;
-            }
-        }
+		// Extract single-line comment text.
+		if ( 0 === strncmp( $trimmed, '//', 2 ) ) {
+			$text = ltrim( substr( $trimmed, 2 ) );
+		} elseif ( 0 === strncmp( $trimmed, '#', 1 ) ) {
+			$text = ltrim( substr( $trimmed, 1 ) );
+		} elseif ( 0 === strncmp( $trimmed, '/*', 2 ) && '*/' === substr( rtrim( $trimmed ), -2 ) ) {
+			$inner = trim( $trimmed );
+			$inner = substr( $inner, 2, -2 );
+			$text  = trim( $inner );
+		} else {
+			// Not a single-line comment we can transform safely.
+			return;
+		}
 
-        // Build a multi-line DocBlock.
-        $doc  = "/**\n";
-        $doc .= " * " . $text . "\n";
-        $doc .= " */\n";
+		// Compute indentation from the beginning of the line where the property starts.
+		$lineStartPtr = $startPtr;
+		for ( $i = $startPtr; $i >= 0; $i-- ) {
+			if ( $tokens[ $i ]['line'] < $propertyLine ) {
+				$lineStartPtr = $i + 1;
+				break;
+			}
+			if ( 0 === $i ) {
+				$lineStartPtr = 0;
+				break;
+			}
+		}
 
-        $fix = $phpcsFile->addFixableError(
-            'You must use "/**" style comments for a member variable comment',
-            $commentPtr,
-            self::CODE_WRONG_STYLE
-        );
+		// Build a multi-line DocBlock.
+		$doc  = "/**\n";
+		$doc .= ' * ' . $text . "\n";
+		$doc .= " */\n";
 
-        if ($fix !== true) {
-            return;
-        }
+		$fix = $phpcsFile->addFixableError(
+			'You must use "/**" style comments for a member variable comment',
+			$commentPtr,
+			self::CODE_WRONG_STYLE
+		);
 
-        $phpcsFile->fixer->beginChangeset();
-        // Insert docblock before the property declaration start.
-        $phpcsFile->fixer->addContentBefore($startPtr, $doc);
-        $phpcsFile->fixer->addContentBefore($startPtr-1, "\n");
-        // Remove whitespace before the inline comment on the same line.
-        for ($i = $commentPtr - 1; $i > 0 && $tokens[$i]['line'] === $propertyLine && $tokens[$i]['code'] === T_WHITESPACE; $i--) {
-            $phpcsFile->fixer->replaceToken($i, '');
-        }
-        // Remove the original inline comment token.
-        $phpcsFile->fixer->replaceToken($commentPtr, '');
-        $phpcsFile->fixer->endChangeset();
-    }
+		if ( true !== $fix ) {
+			return;
+		}
+
+		$phpcsFile->fixer->beginChangeset();
+		// Insert docblock before the property declaration start.
+		$phpcsFile->fixer->addContentBefore( $startPtr, $doc );
+		$phpcsFile->fixer->addContentBefore( $startPtr - 1, "\n" );
+		// Remove whitespace before the inline comment on the same line.
+		for ( $i = $commentPtr - 1; $i > 0 && $tokens[ $i ]['line'] === $propertyLine && T_WHITESPACE === $tokens[ $i ]['code']; $i-- ) {
+			$phpcsFile->fixer->replaceToken( $i, '' );
+		}
+		// Remove the original inline comment token.
+		$phpcsFile->fixer->replaceToken( $commentPtr, '' );
+		$phpcsFile->fixer->endChangeset();
+	}
 }

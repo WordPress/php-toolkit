@@ -25,7 +25,7 @@ class ImportContentStep implements StepInterface {
 		$progress->setCaption( 'Importing content' );
 
 		$total_files = count( $this->content );
-		if ( $total_files === 0 ) {
+		if ( 0 === $total_files ) {
 			$progress->finish();
 
 			return true;
@@ -34,11 +34,11 @@ class ImportContentStep implements StepInterface {
 		$progress->split( $total_files );
 
 		foreach ( $this->content as $i => $content_definition ) {
-			if ( $content_definition['type'] === 'wxr' ) {
-				// @TODO: More useful captions – include the url
+			if ( 'wxr' === $content_definition['type'] ) {
+				// @TODO: More useful captions – include the url.
 				$progress[ $i ]->setCaption( 'Importing WXR file ' );
 				$this->importWxr( $runtime, $content_definition, $progress[ $i ] );
-			} elseif ( $content_definition['type'] === 'posts' ) {
+			} elseif ( 'posts' === $content_definition['type'] ) {
 				$progress[ $i ]->setCaption( 'Importing a post ' );
 				$this->importPosts( $runtime, $content_definition['source'] );
 			} else {
@@ -52,18 +52,20 @@ class ImportContentStep implements StepInterface {
 	}
 
 	private function importWxr( Runtime $runtime, array $content_definition, Tracker $progress ): void {
-		// @TODO: Make it work when Blueprints are running as phar archive
+		// @TODO: Make it work when Blueprints are running as phar archive.
 		$import_script_path = __DIR__ . '/scripts/import-content.php';
 		if ( ! file_exists( $import_script_path ) ) {
-			throw new BlueprintExecutionException( sprintf(
-				'Import script %s does not exist.',
-				$import_script_path
-			) );
+			throw new BlueprintExecutionException(
+				sprintf(
+					'Import script %s does not exist.',
+					$import_script_path
+				)
+			);
 		}
 
 		$importer_script = file_get_contents( $import_script_path );
-		$import_process = $runtime->createPhpSubProcess(
-			$importer_script . 
+		$import_process  = $runtime->createPhpSubProcess(
+			$importer_script .
 			<<<'PHP'
 <?php
 run_content_import([
@@ -76,24 +78,24 @@ run_content_import([
 ?>
 PHP
 			,
-			[
+			array(
 				'DATA_SOURCE_DEFINITION' => json_encode( $content_definition['source']->original_definition ),
 				'EXECUTION_CONTEXT' => $runtime->getExecutionContextRoot(),
-			]
+			)
 		);
 		$import_process->start();
 
-		$output = $import_process->getOutputStream(Process::OUTPUT_FILE);
+		$output = $import_process->getOutputStream( Process::OUTPUT_FILE );
 		foreach ( $this->output_lines( $output ) as $line ) {
-			$data = @json_decode($line, true);
-			if(!is_array($data)) {
-				// Non-JSON output is treated as a crash. We use a dedicated file pipe
+			$data = @json_decode( $line, true );
+			if ( ! is_array( $data ) ) {
+				// Non-JSON output is treated as a crash. We use a dedicated file pipe.
 				// for communication and it should never contain a non-JSON line.
 				$import_process->stop();
 				throw new ProcessFailedException( $import_process );
 			}
 			// Report progress, errors, etc.
-			switch($data['type'] ?? '**MISSING**') {
+			switch ( $data['type'] ?? '**MISSING**' ) {
 				case 'progress':
 					$progress->set( $data['progress'], 'Importing WXR file: ' . $data['caption'] );
 					break;
@@ -107,28 +109,28 @@ PHP
 			}
 		}
 
-		if($import_process->getExitCode() !== 0) {
+		if ( 0 !== $import_process->getExitCode() ) {
 			throw new ProcessFailedException( $import_process );
 		}
 
-		// @TODO: remove the Process::OUTPUT_FILE pipe
+		// @TODO: remove the Process::OUTPUT_FILE pipe.
 	}
 
 	private function output_lines( ByteReadStream $output ) {
 		$buffer = '';
-		while ( !$output->reached_end_of_data() ) {
-			$bytes_ready = $output->pull(1024);
+		while ( ! $output->reached_end_of_data() ) {
+			$bytes_ready = $output->pull( 1024 );
 			if ( ! $bytes_ready ) {
 				continue;
 			}
 			$buffer .= $output->consume( $bytes_ready );
-			while ( ( $newline_pos = strpos( $buffer, "\n" ) ) !== false ) {
+			while ( false !== ( $newline_pos = strpos( $buffer, "\n" ) ) ) {
 				$line = substr( $buffer, 0, $newline_pos + 1 );
 				yield $line;
 				$buffer = substr( $buffer, $newline_pos + 1 );
 			}
 		}
-		// Output any remaining data as the last line (if not empty)
+		// Output any remaining data as the last line (if not empty).
 		if ( strlen( $buffer ) > 0 ) {
 			yield $buffer;
 		}
@@ -138,10 +140,12 @@ PHP
 		// @TODO: Use the Data Liberation importer here.
 		$resolved = $runtime->resolve( $post );
 		if ( ! $resolved instanceof File ) {
-			throw new BlueprintExecutionException( sprintf(
-				'Imported content reference must be a file, but %s was a Directory.',
-				$post->get_human_readable_name()
-			) );
+			throw new BlueprintExecutionException(
+				sprintf(
+					'Imported content reference must be a file, but %s was a Directory.',
+					$post->get_human_readable_name()
+				)
+			);
 		}
 
 		$runtime->evalPhpCodeInSubProcess(
@@ -156,16 +160,18 @@ foreach (json_decode(getenv('POSTS'), true) as $post) {
 }
 PHP
 			,
-			[
-				'POSTS' => json_encode( [
-					[
-						'post_title'   => 'Test Post',
-						'post_content' => $resolved->getStream()->consume_all(),
-						'post_status'  => 'publish',
-						'post_type'    => 'post',
-					],
-				] ),
-			]
+			array(
+				'POSTS' => json_encode(
+					array(
+						array(
+							'post_title'   => 'Test Post',
+							'post_content' => $resolved->getStream()->consume_all(),
+							'post_status'  => 'publish',
+							'post_type'    => 'post',
+						),
+					)
+				),
+			)
 		);
 	}
 }

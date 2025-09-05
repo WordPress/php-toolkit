@@ -142,18 +142,18 @@ class RequestReadStream extends BaseByteReadStream {
 							$this->remote_file_length = (int) $content_length;
 						}
 					}
-					if ( $stop_at_event === Client::EVENT_GOT_HEADERS ) {
+					if ( Client::EVENT_GOT_HEADERS === $stop_at_event ) {
 						return true;
 					}
 					break;
 				case Client::EVENT_BODY_CHUNK_AVAILABLE:
-					if ( $stop_at_event === Client::EVENT_BODY_CHUNK_AVAILABLE ) {
+					if ( Client::EVENT_BODY_CHUNK_AVAILABLE === $stop_at_event ) {
 						$body_chunk = $this->client->get_response_body_chunk();
 
 						if ( $this->progress_tracker ) {
 							$bytes_downloaded = $this->bytes_already_forgotten + strlen( $this->buffer ) + strlen( $body_chunk );
-							// Arbitrarily assume 15MB if no length is provided
-							$length = $this->remote_file_length ?: 15 * 1024 * 1024;
+							// Arbitrarily assume 15MB if no length is provided.
+							$length = $this->remote_file_length ? $this->remote_file_length : 15 * 1024 * 1024;
 							$this->progress_tracker->set( $bytes_downloaded / $length * 100 );
 						}
 
@@ -172,7 +172,7 @@ class RequestReadStream extends BaseByteReadStream {
 
 					return '';
 				case Client::EVENT_FAILED:
-					// TODO: Think through error handling. Errors are expected when working with
+					// TODO: Think through error handling. Errors are expected when working with.
 					// the network. Should we auto retry? Make it easy for the caller to retry?
 					// Something else?
 					throw new ByteStreamException( 'HTTP request failed: ' . $this->client->get_request()->error );
@@ -214,8 +214,8 @@ class RequestReadStream extends BaseByteReadStream {
 		$latest_redirect = $this->request->latest_redirect();
 		if (
 			$latest_redirect &&
-			$latest_redirect->state !== Request::STATE_FINISHED &&
-			$latest_redirect->state !== Request::STATE_FAILED
+			Request::STATE_FINISHED !== $latest_redirect->state &&
+			Request::STATE_FAILED !== $latest_redirect->state
 		) {
 			throw new ByteStreamException( 'Cancelling the request is not implemented yet' );
 		}

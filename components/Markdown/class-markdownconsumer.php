@@ -85,7 +85,7 @@ class MarkdownConsumer implements DataFormatConsumer {
 		$this->frontmatter = array();
 		foreach ( $document->data->export() as $key => $value ) {
 			if ( 'attributes' === $key && empty( $value ) ) {
-				// The Frontmatter extension adds an 'attributes' key to the document data
+				// The Frontmatter extension adds an 'attributes' key to the document data.
 				// even when there is no actual "attributes" key in the frontmatter.
 				//
 				// Let's skip it when the value is empty.
@@ -106,7 +106,7 @@ class MarkdownConsumer implements DataFormatConsumer {
 			if ( $event->isEntering() ) {
 				switch ( get_class( $node ) ) {
 					case Block\Document::class:
-						// Ignore
+						// Ignore.
 						break;
 
 					case ExtensionBlock\Heading::class:
@@ -115,9 +115,9 @@ class MarkdownConsumer implements DataFormatConsumer {
 							$level = 3;
 						}
 						$attrs = array();
-						// 2 is the default level and the editor-produced markup won't contain this attribute, leading to
+						// 2 is the default level and the editor-produced markup won't contain this attribute, leading to.
 						// permanent client-side three-way merges.
-						if ( $level !== 2 ) {
+						if ( 2 !== $level ) {
 							$attrs['level'] = $level;
 						}
 						$this->push_block( 'heading', $attrs );
@@ -127,9 +127,9 @@ class MarkdownConsumer implements DataFormatConsumer {
 
 					case ExtensionBlock\ListBlock::class:
 						$attrs = array(
-							'ordered' => $node->getListData()->type === 'ordered',
+							'ordered' => 'ordered' === $node->getListData()->type,
 						);
-						if ( $node->getListData()->start && $node->getListData()->start !== 1 ) {
+						if ( $node->getListData()->start && 1 !== $node->getListData()->start ) {
 							$attrs['start'] = $node->getListData()->start;
 						}
 						$this->push_block(
@@ -163,7 +163,7 @@ class MarkdownConsumer implements DataFormatConsumer {
 
 					case TableCell::class:
 						/** @var TableCell $node */
-						$is_header = $this->current_block() && $this->current_block()->block_name === 'table' && end( $this->table_stack ) === 'head';
+						$is_header = $this->current_block() && 'table' === $this->current_block()->block_name && 'head' === end( $this->table_stack );
 						$tag       = $is_header ? 'th' : 'td';
 						$this->append_content( '<' . $tag . '>' );
 						break;
@@ -202,7 +202,7 @@ class MarkdownConsumer implements DataFormatConsumer {
 
 					case Block\Paragraph::class:
 						$current_block = $this->current_block();
-						if ( $current_block && $current_block->block_name === 'list-item' ) {
+						if ( $current_block && 'list-item' === $current_block->block_name ) {
 							break;
 						}
 						$this->push_block( 'paragraph' );
@@ -251,13 +251,13 @@ class MarkdownConsumer implements DataFormatConsumer {
 						$children = $node->children();
 						if ( count( $children ) > 0 && $children[0] instanceof Inline\Text && $children[0]->getLiteral() ) {
 							$html->set_attribute( 'alt', $children[0]->getLiteral() );
-							// Empty the text node so it will not be rendered twice: once in as an alt="",
+							// Empty the text node so it will not be rendered twice: once in as an alt="",.
 							// and once as a new paragraph block.
 							$children[0]->setLiteral( '' );
 						}
 
 						$image_tag = $html->get_updated_html();
-						// @TODO: Decide between inline image and the image block
+						// @TODO: Decide between inline image and the image block.
 						if ( $this->drop_current_paragraph_if_empty() ) {
 							$image_block = <<<BLOCK
 							<!-- wp:image -->
@@ -335,7 +335,7 @@ BLOCK;
 						$this->append_content( '</tr>' );
 						break;
 					case TableCell::class:
-						$is_header = $this->current_block() && $this->current_block()->block_name === 'table' && end( $this->table_stack ) === 'head';
+						$is_header = $this->current_block() && 'table' === $this->current_block()->block_name && 'head' === end( $this->table_stack );
 						$tag       = $is_header ? 'th' : 'td';
 						$this->append_content( '</' . $tag . '>' );
 						break;
@@ -345,7 +345,7 @@ BLOCK;
 						break;
 
 					case Block\Paragraph::class:
-						if ( $this->current_block()->block_name === 'list-item' ) {
+						if ( 'list-item' === $this->current_block()->block_name ) {
 							break;
 						}
 						if ( ! $this->drop_current_paragraph_if_empty() ) {
@@ -399,26 +399,26 @@ BLOCK;
 	}
 
 	private function drop_current_paragraph_if_empty() {
-		if ( $this->current_block()->block_name !== 'paragraph' ) {
+		if ( 'paragraph' !== $this->current_block()->block_name ) {
 			return false;
 		}
 		$str = strrev( $this->block_markup );
 		$at  = 0;
 
-		// Skip the whitespace
+		// Skip the whitespace.
 		$at += strspn( $str, " \n\r\t", $at );
 
-		// Skip the <p> tag
+		// Skip the <p> tag.
 		$p_tag = strrev( '<p>' );
 		if ( $p_tag !== substr( $str, $at, strlen( $p_tag ) ) ) {
 			return false;
 		}
 		$at += strlen( $p_tag );
 
-		// Skip the whitespace
+		// Skip the whitespace.
 		$at += strspn( $str, " \n\r\t", $at );
 
-		// Skip the block opener
+		// Skip the block opener.
 		$block_opener = strrev( '<!-- wp:paragraph -->' );
 		if ( $block_opener !== substr( $str, $at, strlen( $block_opener ) ) ) {
 			return false;

@@ -27,7 +27,7 @@ use WordPress\HttpClient\Response;
  */
 class SocketTransport implements TransportInterface {
 
-	protected const STREAM_SELECT_READ = 1;
+	protected const STREAM_SELECT_READ  = 1;
 	protected const STREAM_SELECT_WRITE = 2;
 
 	/**
@@ -40,19 +40,21 @@ class SocketTransport implements TransportInterface {
 	}
 
 	public function event_loop_tick(): bool {
-		if ( count( $this->state->get_active_requests() ) === 0 ) {
+		if ( 0 === count( $this->state->get_active_requests() ) ) {
 			return false;
 		}
 
-		foreach ( $this->state->get_active_requests([
-			Request::STATE_WILL_ENABLE_CRYPTO,
-			Request::STATE_WILL_SEND_HEADERS,
-			Request::STATE_WILL_SEND_BODY,
-			Request::STATE_SENT,
-			Request::STATE_RECEIVING_HEADERS,
-			Request::STATE_RECEIVING_BODY,
-			Request::STATE_RECEIVED,
-		]) as $request ) {
+		foreach ( $this->state->get_active_requests(
+			array(
+				Request::STATE_WILL_ENABLE_CRYPTO,
+				Request::STATE_WILL_SEND_HEADERS,
+				Request::STATE_WILL_SEND_BODY,
+				Request::STATE_SENT,
+				Request::STATE_RECEIVING_HEADERS,
+				Request::STATE_RECEIVING_BODY,
+				Request::STATE_RECEIVED,
+			)
+		) as $request ) {
 			$time_elapsed_ms = $this->state->connections[ $request->id ]->time_elapsed_ms();
 			if ( $time_elapsed_ms > $this->state->request_timeout_ms ) {
 				$this->set_error( $request, new HttpError( sprintf( 'Request timed out after %d ms.', (int) $time_elapsed_ms ) ) );
@@ -107,7 +109,6 @@ class SocketTransport implements TransportInterface {
 			$this->state->get_active_requests( Request::STATE_RECEIVING_BODY )
 		);
 
-
 		return true;
 	}
 
@@ -120,7 +121,7 @@ class SocketTransport implements TransportInterface {
 	 * until the SSL handshake is complete.
 	 * The actual socket it then switched to non-blocking mode using stream_set_blocking().
 	 *
-	 * @param  Request  $request  The Request to open the socket for.
+	 * @param  Request $request  The Request to open the socket for.
 	 *
 	 * @return bool Whether the stream was opened successfully.
 	 */
@@ -137,11 +138,11 @@ class SocketTransport implements TransportInterface {
 				continue;
 			}
 
-			$is_ssl = $scheme === 'https';
-			$port   = $parts['port'] ?? ( $scheme === 'https' ? 443 : 80 );
+			$is_ssl = 'https' === $scheme;
+			$port   = $parts['port'] ?? ( 'https' === $scheme ? 443 : 80 );
 			$host   = $parts['host'];
 
-			// Create stream context
+			// Create stream context.
 			$context = stream_context_create(
 				array(
 					'socket' => array(
@@ -161,7 +162,7 @@ class SocketTransport implements TransportInterface {
 				$context
 			);
 
-			if ( $stream === false ) {
+			if ( false === $stream ) {
 				$this->set_error(
 					$request,
 					new HttpError( "stream_http_open_nonblocking: stream_socket_client() was unable to open a stream to $url. $errno: $errstr" )
@@ -172,7 +173,7 @@ class SocketTransport implements TransportInterface {
 			stream_set_blocking( $stream, false );
 
 			$this->state->connections[ $request->id ]->http_socket = $stream;
-			$this->state->connections[ $request->id ]->started_at = microtime( true );
+			$this->state->connections[ $request->id ]->started_at  = microtime( true );
 			if ( $is_ssl ) {
 				$request->state = Request::STATE_WILL_ENABLE_CRYPTO;
 			} else {
@@ -186,7 +187,7 @@ class SocketTransport implements TransportInterface {
 	/**
 	 * Handle transfer encodings.
 	 *
-	 * @param  Request  $request
+	 * @param  Request $request
 	 *
 	 * @return false|resource
 	 */
@@ -215,14 +216,14 @@ class SocketTransport implements TransportInterface {
 					break;
 				case 'gzip':
 					$transformers[] = new InflateTransformer(
-						$transfer_encoding === 'gzip' ? ZLIB_ENCODING_GZIP : ZLIB_ENCODING_RAW
+						'gzip' === $transfer_encoding ? ZLIB_ENCODING_GZIP : ZLIB_ENCODING_RAW
 					);
 					break;
 				case 'deflate':
 					$transformers[] = new InflateTransformer( ZLIB_ENCODING_DEFLATE );
 					break;
 				case 'identity':
-					// No-op
+					// No-op.
 					break;
 				default:
 					$this->set_error(
@@ -244,7 +245,7 @@ class SocketTransport implements TransportInterface {
 	 *
 	 * Enables crypto on the $requests HTTP socksts and sends the request body asynchronously.
 	 *
-	 * @param  Request[]  $requests  An array of HTTP requests.
+	 * @param  Request[] $requests  An array of HTTP requests.
 	 */
 	protected function enable_crypto( array $requests ) {
 		foreach ( $this->stream_select( $requests, static::STREAM_SELECT_WRITE ) as $request ) {
@@ -258,12 +259,13 @@ class SocketTransport implements TransportInterface {
 			);
 			if ( false === $enabled_crypto ) {
 				$last_error = error_get_last();
-				$this->set_error( $request,
+				$this->set_error(
+					$request,
 					new HttpError( 'Failed to enable crypto: ' . ( is_array( $last_error ) ? $last_error['message'] : 'unknown' ) )
 				);
 				continue;
 			} elseif ( 0 === $enabled_crypto ) {
-				// The SSL handshake isn't finished yet, let's skip it
+				// The SSL handshake isn't finished yet, let's skip it.
 				// for now and try again on the next event loop pass.
 				continue;
 			}
@@ -275,15 +277,16 @@ class SocketTransport implements TransportInterface {
 	/**
 	 * Sends HTTP request headers.
 	 *
-	 * @param  Request[]  $requests  An array of HTTP requests.
+	 * @param  Request[] $requests  An array of HTTP requests.
 	 */
 	protected function send_request_headers( array $requests ) {
 		foreach ( $this->stream_select( $requests, static::STREAM_SELECT_WRITE ) as $request ) {
 			$header_bytes = static::prepare_request_headers( $request );
 			if ( false === @fwrite( $this->state->connections[ $request->id ]->http_socket, $header_bytes ) ) {
-				$last_error = error_get_last();
+				$last_error         = error_get_last();
 				$last_error_message = is_array( $last_error ) ? $last_error['message'] : 'unknown';
-				$this->set_error( $request,
+				$this->set_error(
+					$request,
 					new HttpError( 'Failed to write request bytes - ' . $last_error_message )
 				);
 				continue;
@@ -292,7 +295,7 @@ class SocketTransport implements TransportInterface {
 			if ( $request->upload_body_stream ) {
 				$request->state = Request::STATE_WILL_SEND_BODY;
 
-				if ( $request->get_header( 'transfer-encoding' ) === 'chunked' ) {
+				if ( 'chunked' === $request->get_header( 'transfer-encoding' ) ) {
 					$request->upload_body_stream = new TransformedReadStream(
 						$request->upload_body_stream,
 						array( new ChunkedEncoderByteTransformer() )
@@ -307,7 +310,7 @@ class SocketTransport implements TransportInterface {
 	/**
 	 * Sends HTTP request body.
 	 *
-	 * @param  Request[]  $requests  An array of HTTP requests.
+	 * @param  Request[] $requests  An array of HTTP requests.
 	 */
 	protected function send_request_body( array $requests ) {
 		foreach ( $this->stream_select( $requests, self::STREAM_SELECT_WRITE ) as $request ) {
@@ -319,7 +322,7 @@ class SocketTransport implements TransportInterface {
 			}
 
 			$available_bytes = $request->upload_body_stream->pull( 65536 );
-			if ( $available_bytes === 0 ) {
+			if ( 0 === $available_bytes ) {
 				// Not all pull() calls must yield bytes, maybe we just need to wait for the next chunk.
 				// Let's continue and keep trying.
 				// @TODO: Implement a generic timeout mechanism for pull() calls.
@@ -328,7 +331,7 @@ class SocketTransport implements TransportInterface {
 
 			$chunk = $request->upload_body_stream->consume( $available_bytes );
 			if ( ! @fwrite( $this->state->connections[ $request->id ]->http_socket, $chunk ) ) {
-				$last_error = error_get_last();
+				$last_error         = error_get_last();
 				$last_error_message = is_array( $last_error ) ? $last_error['message'] : 'unknown';
 				$this->set_error( $request, new HttpError( 'Failed to write request bytes: ' . $last_error_message ) );
 				continue;
@@ -339,7 +342,7 @@ class SocketTransport implements TransportInterface {
 	/**
 	 * Reads the next received portion of HTTP response headers for multiple requests.
 	 *
-	 * @param  array  $requests  An array of requests.
+	 * @param  array $requests  An array of requests.
 	 */
 	protected function receive_response_headers( $requests ) {
 		$nb_headers_received = 0;
@@ -355,11 +358,11 @@ class SocketTransport implements TransportInterface {
 				// @TODO: Use a larger chunk size here and then scan for \r\n\r\n.
 				// 1 seems slow and overly conservative.
 				if (
-					!$this->state->connections[ $request->id ]->http_socket ||
-					!is_resource($this->state->connections[ $request->id ]->http_socket) ||
-					@feof($this->state->connections[ $request->id ]->http_socket)
+					! $this->state->connections[ $request->id ]->http_socket ||
+					! is_resource( $this->state->connections[ $request->id ]->http_socket ) ||
+					@feof( $this->state->connections[ $request->id ]->http_socket )
 				) {
-					$this->set_error($request, new HttpError('Connection closed while reading response headers.'));
+					$this->set_error( $request, new HttpError( 'Connection closed while reading response headers.' ) );
 					break;
 				}
 
@@ -367,11 +370,11 @@ class SocketTransport implements TransportInterface {
 
 				if ( false === $header_byte || '' === $header_byte ) {
 					if (
-						!$this->state->connections[ $request->id ]->http_socket ||
-						!is_resource($this->state->connections[ $request->id ]->http_socket) ||
-						@feof($this->state->connections[ $request->id ]->http_socket)
+						! $this->state->connections[ $request->id ]->http_socket ||
+						! is_resource( $this->state->connections[ $request->id ]->http_socket ) ||
+						@feof( $this->state->connections[ $request->id ]->http_socket )
 					) {
-						$this->set_error($request, new HttpError('Connection closed while reading response headers.'));
+						$this->set_error( $request, new HttpError( 'Connection closed while reading response headers.' ) );
 						break;
 					}
 					break;
@@ -381,28 +384,28 @@ class SocketTransport implements TransportInterface {
 				$buffer_size = strlen( $connection->response_buffer );
 				if (
 					$buffer_size < 4 ||
-					$connection->response_buffer[ $buffer_size - 4 ] !== "\r" ||
-					$connection->response_buffer[ $buffer_size - 3 ] !== "\n" ||
-					$connection->response_buffer[ $buffer_size - 2 ] !== "\r" ||
-					$connection->response_buffer[ $buffer_size - 1 ] !== "\n"
+					"\r" !== $connection->response_buffer[ $buffer_size - 4 ] ||
+					"\n" !== $connection->response_buffer[ $buffer_size - 3 ] ||
+					"\r" !== $connection->response_buffer[ $buffer_size - 2 ] ||
+					"\n" !== $connection->response_buffer[ $buffer_size - 1 ]
 				) {
 					continue;
 				}
 
-				$request->response = Response::from_http_headers(
+				$request->response           = Response::from_http_headers(
 					$connection->response_buffer,
 					$request
 				);
 				$connection->response_buffer = '';
-				if(false === $request->response) {
+				if ( false === $request->response ) {
 					$this->set_error( $request, new HttpError( 'Malformed HTTP headers received from the server.' ) );
 					break;
 				}
 
 				$this->state->events[ $request->id ][ Client::EVENT_GOT_HEADERS ] = true;
-				$nb_headers_received ++;
+				++$nb_headers_received;
 
-				if ( $response->total_bytes === 0 ) {
+				if ( 0 === $response->total_bytes ) {
 					$request->state = Request::STATE_RECEIVED;
 					break;
 				}
@@ -419,24 +422,24 @@ class SocketTransport implements TransportInterface {
 	/**
 	 * Reads the next received portion of HTTP response headers for multiple requests.
 	 *
-	 * @param  array  $requests  An array of requests.
+	 * @param  array $requests  An array of requests.
 	 */
 	protected function receive_response_body( $requests ) {
-		// @TODO: Assume body is fully received when either
-		// * Content-Length is reached
-		// * The last chunk in Transfer-Encoding: chunked is received
-		// * The connection is closed
+		// @TODO: Assume body is fully received when either.
+		// * Content-Length is reached.
+		// * The last chunk in Transfer-Encoding: chunked is received.
+		// * The connection is closed.
 		foreach ( $this->stream_select( $requests, static::STREAM_SELECT_READ ) as $request ) {
 			$stream = $this->state->connections[ $request->id ]->decoded_response_stream;
 
 			while ( true ) {
 				$available_bytes = $stream->pull( 65536 );
 				if ( $available_bytes > 0 ) {
-					$body_chunk                                         = $stream->consume( $available_bytes );
-					$request->response->received_bytes                  += $available_bytes;
-					$this->state->connections[ $request->id ]->response_buffer .= $body_chunk;
+					$body_chunk                         = $stream->consume( $available_bytes );
+					$request->response->received_bytes += $available_bytes;
+					$this->state->connections[ $request->id ]->response_buffer                .= $body_chunk;
 					$this->state->events[ $request->id ][ Client::EVENT_BODY_CHUNK_AVAILABLE ] = true;
-					break; // Process one chunk per loop iteration
+					break; // Process one chunk per loop iteration.
 				} elseif ( $stream->reached_end_of_data() ) {
 					$request->state = Request::STATE_RECEIVED;
 					break;
@@ -448,7 +451,7 @@ class SocketTransport implements TransportInterface {
 	/**
 	 * Prepares an HTTP request string for a given URL.
 	 *
-	 * @param  Request  $request  The Request to prepare the HTTP headers for.
+	 * @param  Request $request  The Request to prepare the HTTP headers for.
 	 *
 	 * @return string The prepared HTTP request string.
 	 */
@@ -515,23 +518,23 @@ class SocketTransport implements TransportInterface {
 			}
 		}
 		$except = null;
-		if ( count( $read ) === 0 && count( $write ) === 0 ) {
+		if ( 0 === count( $read ) && 0 === count( $write ) ) {
 			return array();
 		}
 
 		// phpcs:disable WordPress.PHP.NoSilencedErrors.Discouraged
 		$ready = @stream_select( $read, $write, $except, 0, ClientState::NONBLOCKING_TIMEOUT_MICROSECONDS );
-		if ( $ready === false ) {
+		if ( false === $ready ) {
 			foreach ( $requests as $request ) {
 				$this->set_error( $request, new HttpError( 'Error: ' . error_get_last()['message'] ) );
 			}
 
 			return array();
 		} elseif ( $ready <= 0 ) {
-			// @TODO allow at most X stream_select attempts per request
-			// foreach ( $unprocessed_requests as $request ) {
-			// $this->>set_error($request, new HttpError( 'stream_select timed out' ));
-			// }
+			// @TODO allow at most X stream_select attempts per request.
+			// foreach ( $unprocessed_requests as $request ) {.
+			// $this->>set_error($request, new HttpError( 'stream_select timed out' ));.
+			// }.
 			return array();
 		}
 
@@ -559,7 +562,7 @@ class SocketTransport implements TransportInterface {
 	private function close_connection( Request $request ) {
 		$socket = $this->state->connections[ $request->id ]->http_socket;
 		if ( $socket && is_resource( $socket ) ) {
-			// Close the TCP socket
+			// Close the TCP socket.
 			if ( $this->state->connections[ $request->id ]->decoded_response_stream ) {
 				$stream = $this->state->connections[ $request->id ]->decoded_response_stream;
 				$stream->close_reading();
@@ -569,5 +572,4 @@ class SocketTransport implements TransportInterface {
 			}
 		}
 	}
-
 }

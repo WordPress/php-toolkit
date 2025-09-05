@@ -17,8 +17,15 @@ use WordPress\HttpClient\Request;
  */
 class SeekableRequestReadStream implements ByteReadStream {
 
-	private $remote;   // RequestReadStream
-	private $cache;    // FileReadWriteStream
+
+	/**
+	 * RequestReadStream
+	 */
+	private $remote;
+	/**
+	 * FileReadWriteStream
+	 */
+	private $cache;
 	private $temp;
 	private $length_resolved = false;
 
@@ -32,7 +39,7 @@ class SeekableRequestReadStream implements ByteReadStream {
 	}
 
 	private function pipe_until( int $offset ): void {
-		while ( $this->cache->length() === null || $this->cache->length() < $offset ) {
+		while ( null === $this->cache->length() || $this->cache->length() < $offset ) {
 			$pulled = $this->remote->pull( BaseByteReadStream::CHUNK_SIZE_BYTES );
 			if ( 0 === $pulled ) {
 				break;

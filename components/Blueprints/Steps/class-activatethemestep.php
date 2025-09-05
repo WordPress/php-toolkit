@@ -10,7 +10,7 @@ use WordPress\Blueprints\Runtime;
  */
 class ActivateThemeStep implements StepInterface {
 
-	// Inline PHP script to avoid reading a static script.php file via
+	// Inline PHP script to avoid reading a static script.php file via.
 	// file_get_contents() inside the built blueprints.phar file.
 	const ACTIVATE_THEME_SCRIPT = <<<'PHP'
 <?php
@@ -21,17 +21,17 @@ require_once getenv( 'DOCROOT' ) . '/wp-load.php';
 // Set current user to admin
 set_current_user( get_users( array( 'role' => 'Administrator' ) )[0] );
 switch_theme( getenv( 'THEME_FOLDER_NAME' ) );
-PHP
-	;
+PHP;
 
 	/**
 	 * The name of the theme folder inside wp-content/themes/.
+	 *
 	 * @var string
 	 */
 	public $theme_folder_name;
 
 	/**
-	 * @param  string  $themeFolderName  The name of the theme folder.
+	 * @param  string $themeFolderName  The name of the theme folder.
 	 */
 	public function __construct( string $theme_folder_name ) {
 		$this->theme_folder_name = $theme_folder_name;
@@ -44,9 +44,9 @@ PHP
 		$tracker->setCaption( 'Activating theme ' . $this->theme_folder_name );
 		$runtime->evalPhpCodeInSubProcess(
 			self::ACTIVATE_THEME_SCRIPT,
-			[
+			array(
 				'THEME_FOLDER_NAME' => $this->theme_folder_name,
-			]
+			)
 		);
 	}
 }

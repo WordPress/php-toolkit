@@ -58,7 +58,7 @@ class GitRepository {
 			}
 		}
 		if ( ! $this->fs->is_file( 'HEAD' ) ) {
-			// Initialize the repository with a default branch
+			// Initialize the repository with a default branch.
 			$default_branch = $options['default_branch'] ?? 'trunk';
 			$this->set_branch_tip( 'HEAD', "ref: refs/heads/{$default_branch}\n" );
 			$this->set_branch_tip( "refs/heads/{$default_branch}", Commit::NULL_HASH );
@@ -71,8 +71,8 @@ class GitRepository {
 		if ( ! $this->fs->is_dir( $path ) ) {
 			$this->fs->mkdir( $path );
 		}
-		// @TODO: support fetch option
-		// $this->set_config_value(['remote', $name, 'fetch'], '+refs/heads/*:refs/remotes/' . $name . '/*');
+		// @TODO: support fetch option.
+		// $this->set_config_value(['remote', $name, 'fetch'], '+refs/heads/*:refs/remotes/' . $name . '/*');.
 	}
 
 	public function get_remote( $name ) {
@@ -175,7 +175,7 @@ class GitRepository {
 		$commit        = $this->read_object( $commit_hash )->as_commit();
 		$root_tree_oid = $commit->tree;
 
-		if ( $root_tree_oid === null ) {
+		if ( null === $root_tree_oid ) {
 			throw new GitPathDoesNotExistException( sprintf( 'Could not resolve root tree to lookup path: %s', $path ) );
 		}
 
@@ -222,7 +222,7 @@ class GitRepository {
 				return false;
 			}
 			$object = $this->read_object( $hash );
-			if ( $object->get_object_type_name() === 'tree' ) {
+			if ( 'tree' === $object->get_object_type_name() ) {
 				foreach ( $object->as_tree()->entries as $entry ) {
 					$stack[] = $entry->hash;
 				}
@@ -296,7 +296,7 @@ class GitRepository {
 
 	public function checkout( $branch_name_or_commit_hash ) {
 		if ( ! $this->has_object( $branch_name_or_commit_hash ) ) {
-			// Symref
+			// Symref.
 			$branch_name_or_commit_hash = 'ref: ' . $branch_name_or_commit_hash;
 		}
 		$this->set_branch_tip( 'HEAD', $branch_name_or_commit_hash );
@@ -312,11 +312,11 @@ class GitRepository {
 	public function get_current_branch_name() {
 		$name = $this->get_branch_tip( 'HEAD', array( 'follow_symrefs' => false ) );
 		if ( $this->has_object( $name ) ) {
-			// Commit hash, not a branch name
+			// Commit hash, not a branch name.
 			return false;
 		}
 
-		if ( substr( $name, 0, 5 ) === 'ref: ' ) {
+		if ( 'ref: ' === substr( $name, 0, 5 ) ) {
 			$name = trim( substr( $name, 5 ) );
 		}
 
@@ -340,7 +340,7 @@ class GitRepository {
 				throw new GitException( 'Branch file not found: ' . $path );
 			}
 			$branch_name = trim( $this->fs->get_contents( $path ) );
-			if ( strncmp( $branch_name, 'ref: ', strlen( 'ref: ' ) ) === 0 && ( $options['follow_symrefs'] ?? true ) ) {
+			if ( 0 === strncmp( $branch_name, 'ref: ', strlen( 'ref: ' ) ) && ( $options['follow_symrefs'] ?? true ) ) {
 				continue;
 			}
 
@@ -350,25 +350,25 @@ class GitRepository {
 
 	private function resolve_branch_file_path( $branch_name ) {
 		$branch_name = trim( $branch_name );
-		if ( strncmp( $branch_name, 'ref: ', strlen( 'ref: ' ) ) === 0 ) {
+		if ( 0 === strncmp( $branch_name, 'ref: ', strlen( 'ref: ' ) ) ) {
 			$branch_name = trim( substr( $branch_name, 5 ) );
 		}
 		if (
-			strpos( $branch_name, '/' ) !== false &&
-			strncmp( $branch_name, 'refs/heads/', strlen( 'refs/heads/' ) ) !== 0 &&
-			strncmp( $branch_name, 'refs/remotes/', strlen( 'refs/remotes/' ) ) !== 0
+			false !== strpos( $branch_name, '/' ) &&
+			0 !== strncmp( $branch_name, 'refs/heads/', strlen( 'refs/heads/' ) ) &&
+			0 !== strncmp( $branch_name, 'refs/remotes/', strlen( 'refs/remotes/' ) )
 		) {
 			_doing_it_wrong( __METHOD__, 'Invalid ref name: ' . $branch_name, '1.0.0' );
 
 			return false;
 		}
-		if ( strpos( $branch_name, '../' ) !== false ) {
+		if ( false !== strpos( $branch_name, '../' ) ) {
 			_doing_it_wrong( __METHOD__, 'Invalid ref name: ' . $branch_name, '1.0.0' );
 
 			return false;
 		}
 
-		// Make sure all the directories leading up to the ref exist
+		// Make sure all the directories leading up to the ref exist.
 		$parent_path = wp_unix_dirname( $branch_name );
 		if ( ! $this->fs->exists( $parent_path ) ) {
 			$this->fs->mkdir( $parent_path, array( 'recursive' => true ) );
@@ -406,7 +406,7 @@ class GitRepository {
 	 *        everything into memory and will fail for large merges.
 	 * @TODO: Do not change the HEAD ref.
 	 *
-	 * @param  string  $branch_name  The branch to merge.
+	 * @param  string $branch_name  The branch to merge.
 	 * @param  array  $options  An associative array of options. {
 	 *
 	 * @type string $path The path to merge files at. The other paths will be ignored.
@@ -425,7 +425,7 @@ class GitRepository {
 
 		$conflicts                    = array();
 		$conflict_resolution_strategy = $options['conflict_resolution_strategy'] ?? 'theirs';
-		if ( $conflict_resolution_strategy !== 'theirs' ) {
+		if ( 'theirs' !== $conflict_resolution_strategy ) {
 			throw new GitException( "Conflict resolution strategy not supported: {$conflict_resolution_strategy}. Supported strategies: 'theirs'." );
 		}
 
@@ -437,12 +437,12 @@ class GitRepository {
 			list( $incoming_branch_diff, $current_branch_diff, $parent_path ) = array_pop( $tree_stack );
 			foreach ( $incoming_branch_diff as $name => $incoming_entry ) {
 				$path = wp_join_unix_paths( $parent_path, $name );
-				if ( $incoming_entry === self::DELETE_PLACEHOLDER ) {
+				if ( self::DELETE_PLACEHOLDER === $incoming_entry ) {
 					$deletes[] = $path;
 					continue;
 				}
 				$current_entry = $current_branch_diff[ $name ] ?? null;
-				$is_text       = is_array( $incoming_entry->content ) && isset( $incoming_entry->content['type'] ) && $incoming_entry->content['type'] === 'text';
+				$is_text       = is_array( $incoming_entry->content ) && isset( $incoming_entry->content['type'] ) && 'text' === $incoming_entry->content['type'];
 				if ( $is_text ) {
 					$ancestor_content = $this->read_object_by_path( $path, $common_ancestor_commit_hash )->consume_all();
 					if ( ! $current_entry ) {
@@ -473,7 +473,7 @@ class GitRepository {
 				} elseif ( is_array( $incoming_entry->content ) ) {
 					$tree_stack[] = array(
 						$incoming_entry->content,
-						$current_entry !== null ? $current_entry->content : array(),
+						null !== $current_entry ? $current_entry->content : array(),
 						$path,
 					);
 				}
@@ -514,8 +514,8 @@ class GitRepository {
 	 *
 	 * TODO: Support commits with multiple parents.
 	 *
-	 * @param  string  $commit_hash1  The first reference.
-	 * @param  string  $commit_hash2  The second reference.
+	 * @param  string $commit_hash1  The first reference.
+	 * @param  string $commit_hash2  The second reference.
 	 *
 	 * @return string The common ancestor hash.
 	 */
@@ -568,7 +568,7 @@ class GitRepository {
 	public function get_nth_ancestor_hash( $n, $commit_hash = null ) {
 		$commit_hash = $options['commit_hash'] ?? $this->get_branch_tip( 'HEAD' );
 
-		for ( $i = 0; $i < $n; $i ++ ) {
+		for ( $i = 0; $i < $n; $i++ ) {
 			$commit_hash = $this->read_object( $commit_hash )->as_commit()->parents[0];
 		}
 
@@ -582,7 +582,7 @@ class GitRepository {
 	 */
 	public function get_ancestors_hashes( $options = array() ) {
 		$commit_hash = $options['commit_hash'] ?? $this->get_branch_tip( 'HEAD' );
-		$on_missing  = $options['on_missing'] ?? 'throw'; // throw | return-early
+		$on_missing  = $options['on_missing'] ?? 'throw'; // throw | return-early.
 		$limit       = $options['count'] ?? - 1;
 
 		$found_parents    = array();
@@ -595,7 +595,7 @@ class GitRepository {
 			}
 
 			if ( ! $this->has_object( $next_parent_hash ) ) {
-				if ( $on_missing === 'throw' ) {
+				if ( 'throw' === $on_missing ) {
 					throw new GitException(
 						sprintf(
 							'Commit %s (parent of %s) is not available in the local repository.',
@@ -624,7 +624,7 @@ class GitRepository {
 				$parents
 			);
 
-			if ( $limit !== - 1 && count( $found_parents ) >= $limit ) {
+			if ( - 1 !== $limit && count( $found_parents ) >= $limit ) {
 				break;
 			}
 		}
@@ -638,23 +638,23 @@ class GitRepository {
 	 *        changeset didn't actually change the root tree oid.
 	 */
 	public function commit( $options = array() ) {
-		// First process all blob updates
+		// First process all blob updates.
 		$updates    = $options['updates'] ?? array();
 		$deletes    = $options['deletes'] ?? array();
 		$move_trees = $options['move_trees'] ?? array();
 
-		// Track which trees need updating
+		// Track which trees need updating.
 		$changed_trees = array(
 			'/' => new Tree(),
 		);
 
-		// Process blob updates
+		// Process blob updates.
 		foreach ( $updates as $path => $content ) {
 			$path     = '/' . ltrim( $path, '/' );
 			$blob_oid = $this->add_object( 'blob', $content );
 			$this->mark_tree_path_changed( $changed_trees, wp_unix_dirname( $path ) );
 			$basename = basename( $path );
-			if ( $basename === '' ) {
+			if ( '' === $basename ) {
 				throw new GitException( 'Cannot commit a file with an empty filename' );
 			}
 			$changed_trees[ wp_unix_dirname( $path ) ]->entries[ basename( $path ) ] = new TreeEntry(
@@ -666,7 +666,7 @@ class GitRepository {
 			);
 		}
 
-		// Process deletes
+		// Process deletes.
 		foreach ( $deletes as $path ) {
 			$path = '/' . ltrim( $path, '/' );
 			if ( ! $this->read_object_by_path( wp_unix_dirname( $path ) ) ) {
@@ -678,7 +678,7 @@ class GitRepository {
 			$changed_trees[ wp_unix_dirname( $path ) ]->entries[ basename( $path ) ] = self::DELETE_PLACEHOLDER;
 		}
 
-		// Process tree moves
+		// Process tree moves.
 		foreach ( $move_trees as $old_path => $new_path ) {
 			$old_path = '/' . ltrim( $old_path, '/' );
 			$new_path = '/' . ltrim( $new_path, '/' );
@@ -691,8 +691,8 @@ class GitRepository {
 			$this->mark_tree_path_changed( $changed_trees, wp_unix_dirname( $new_path ) );
 
 			$changed_trees[ wp_unix_dirname( $old_path ) ]->entries[ basename( $old_path ) ] = self::DELETE_PLACEHOLDER;
-			$new_basename                                                               = basename( $new_path );
-			if ( $new_basename === '' ) {
+			$new_basename = basename( $new_path );
+			if ( '' === $new_basename ) {
 				throw new GitException( 'Cannot rename a file to an empty filename' );
 			}
 			$changed_trees[ wp_unix_dirname( $new_path ) ]->entries[ $new_basename ] = new TreeEntry(
@@ -706,7 +706,7 @@ class GitRepository {
 
 		$is_amend = isset( $options['amend'] ) && $options['amend'];
 
-		// Process trees bottom-up recursively
+		// Process trees bottom-up recursively.
 		$root_tree_oid = $this->commit_tree( '/', $changed_trees );
 		$head          = $this->get_branch_tip( 'HEAD' );
 		if ( $this->has_object( $head ) ) {
@@ -724,7 +724,7 @@ class GitRepository {
 			return $current_commit->hash;
 		}
 
-		// Create a new commit object
+		// Create a new commit object.
 		$commit_options         = $options['commit'] ?? array();
 		$commit_options['tree'] = $root_tree_oid;
 		if ( ! isset( $commit_options['parents'] ) && $this->get_branch_tip( 'HEAD' ) ) {
@@ -750,7 +750,7 @@ class GitRepository {
 			$commit_message
 		);
 
-		// Update HEAD
+		// Update HEAD.
 		$head_tip = $this->get_branch_tip( 'HEAD', array( 'follow_symrefs' => false ) );
 		if ( $this->branch_exists( $head_tip ) ) {
 			$this->set_branch_tip( $head_tip, $commit_oid );
@@ -805,7 +805,7 @@ class GitRepository {
 				)
 			);
 
-			if ( $current_entry->get_mode_bucket() === TreeEntry::FILE_MODE_DIRECTORY ) {
+			if ( TreeEntry::FILE_MODE_DIRECTORY === $current_entry->get_mode_bucket() ) {
 				$diff[ $name ]->content = $this->diff_trees( $current_entry->hash, $previous_entry->hash );
 			} else {
 				$diff[ $name ]->content = $this->diff_blobs(
@@ -825,7 +825,7 @@ class GitRepository {
 	}
 
 	public function diff_blobs( $current_blob_entry, $previous_blob_entry ) {
-		// @TODO: Support streaming diffs for large files
+		// @TODO: Support streaming diffs for large files.
 		$current_blob           = $this->read_object( $current_blob_entry->hash );
 		$current_blob_contents  = $current_blob->consume_all();
 		$current_blob_is_binary = $this->guess_if_binary_blob( $current_blob_entry->name, $current_blob_contents );
@@ -855,8 +855,8 @@ class GitRepository {
 			return true;
 		}
 
-		// Naively assume null bytes only occur in binary files
-		if ( strpos( $blob_contents, "\0" ) !== false ) {
+		// Naively assume null bytes only occur in binary files.
+		if ( false !== strpos( $blob_contents, "\0" ) ) {
 			return true;
 		}
 
@@ -864,10 +864,10 @@ class GitRepository {
 	}
 
 	public function squash( $squash_into_commit_oid, $squash_until_ancestor_oid ) {
-		// Find the parent of the squashed range
+		// Find the parent of the squashed range.
 		$new_base_oid = $this->read_object( $squash_until_ancestor_oid )->as_commit()->get_first_parent_hash();
 
-		// Reparent the commits from HEAD until $squash_into_commit_oid onto the parent
+		// Reparent the commits from HEAD until $squash_into_commit_oid onto the parent.
 		// of the squashed range.
 		$new_head = $this->reparent_commit_range(
 			$this->get_branch_tip( 'HEAD' ),
@@ -889,10 +889,10 @@ class GitRepository {
 	public function reparent_commit_range( $head_oid, $last_ancestor_oid, $new_base_oid ) {
 		$commits_to_rebase = $this->get_commits_range( $head_oid, $last_ancestor_oid );
 
-		// Rebase $squash_into_commit_oid and its descenrants onto the parent
+		// Rebase $squash_into_commit_oid and its descenrants onto the parent.
 		// of the squashed range.
 		$new_parent_oid = $new_base_oid;
-		for ( $i = count( $commits_to_rebase ) - 1; $i >= 0; $i -- ) {
+		for ( $i = count( $commits_to_rebase ) - 1; $i >= 0; $i-- ) {
 			$parsed_old_commit       = $this->read_object( $commits_to_rebase[ $i ] )->as_commit();
 			$updated_commit          = clone $parsed_old_commit;
 			$updated_commit->parents = array( $new_parent_oid );
@@ -969,7 +969,7 @@ class GitRepository {
 	}
 
 	private function mark_tree_path_changed( &$changed_trees, $path ) {
-		while ( $path !== '/' ) {
+		while ( '/' !== $path ) {
 			if ( ! isset( $changed_trees[ $path ] ) ) {
 				$changed_trees[ $path ] = new Tree();
 			}
@@ -980,17 +980,17 @@ class GitRepository {
 	private function commit_tree( $path, $changed_trees ) {
 		$tree_objects = array();
 
-		// Load existing tree if it exists
+		// Load existing tree if it exists.
 		try {
 			$tree_objects = $this->read_object_by_path( $path )->as_tree()->entries;
 		} catch ( GitException $e ) {
-			// It's fine if the tree doesn't exist
+			// It's fine if the tree doesn't exist.
 		}
 
-		// Apply any changes to this tree
+		// Apply any changes to this tree.
 		if ( isset( $changed_trees[ $path ]->entries ) ) {
 			foreach ( $changed_trees[ $path ]->entries as $name => $entry ) {
-				if ( $entry === self::DELETE_PLACEHOLDER ) {
+				if ( self::DELETE_PLACEHOLDER === $entry ) {
 					unset( $tree_objects[ $name ] );
 				} else {
 					$tree_objects[ $name ] = $entry;
@@ -998,9 +998,9 @@ class GitRepository {
 			}
 		}
 
-		// Recursively process child trees
+		// Recursively process child trees.
 		foreach ( $changed_trees as $child_path => $child_tree ) {
-			if ( wp_unix_dirname( $child_path ) === $path && $child_path !== '/' ) {
+			if ( wp_unix_dirname( $child_path ) === $path && '/' !== $child_path ) {
 				$child_oid                               = $this->commit_tree( $child_path, $changed_trees );
 				$tree_objects[ basename( $child_path ) ] = new TreeEntry(
 					array(
@@ -1016,7 +1016,7 @@ class GitRepository {
 		// Or at least GitHub rejects the push if the tree objects are not sorted.
 		ksort( $tree_objects );
 
-		// Create new tree object
+		// Create new tree object.
 		return $this->add_object(
 			'tree',
 			GitProtocolEncoderPipe::encode_tree_bytes( new Tree( $tree_objects ) )
@@ -1037,7 +1037,7 @@ class GitRepository {
 		foreach ( $prefixes as $prefix ) {
 			$path       = ltrim( wp_unix_path_resolve_dots( $prefix ), '/' );
 			$first_path = $this->fs->is_dir( $path ) ? $path : wp_unix_dirname( $path );
-			if ( strncmp( $first_path, 'refs/', strlen( 'refs/' ) ) === 0 ) {
+			if ( 0 === strncmp( $first_path, 'refs/', strlen( 'refs/' ) ) ) {
 				$stack[] = $first_path;
 			}
 		}
@@ -1051,9 +1051,9 @@ class GitRepository {
 					array_push( $stack, $full_path );
 				}
 			} elseif ( $this->fs->is_file( $path ) ) {
-				// Check if path matches any of the prefixes
+				// Check if path matches any of the prefixes.
 				foreach ( $prefixes as $prefix ) {
-					if ( strncmp( $path, $prefix, strlen( $prefix ) ) === 0 ) {
+					if ( 0 === strncmp( $path, $prefix, strlen( $prefix ) ) ) {
 						$hash = trim( $this->fs->get_contents( $path ) );
 						if ( $hash ) {
 							$ref_name          = trim( $path, '/' );
@@ -1065,9 +1065,9 @@ class GitRepository {
 			}
 		}
 
-		// Check if we should include HEAD
+		// Check if we should include HEAD.
 		foreach ( $prefixes as $prefix ) {
-			if ( $prefix === '' || strncmp( 'HEAD', $prefix, strlen( $prefix ) ) === 0 ) {
+			if ( '' === $prefix || 0 === strncmp( 'HEAD', $prefix, strlen( $prefix ) ) ) {
 				$refs['HEAD'] = $this->get_branch_tip( 'HEAD' );
 				break;
 			}

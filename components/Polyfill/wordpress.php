@@ -106,7 +106,7 @@ if ( ! function_exists( 'apply_filters' ) ) {
 			return $value;
 		}
 		$args = func_get_args();
-		array_shift( $args ); // Remove hook name
+		array_shift( $args ); // Remove hook name.
 
 		ksort( $wp_filter[ $hook_name ] );
 		foreach ( $wp_filter[ $hook_name ] as $priority => $functions ) {
@@ -127,7 +127,7 @@ if ( ! function_exists( 'do_action' ) ) {
 			return;
 		}
 		$args = func_get_args();
-		array_shift( $args ); // Remove hook name
+		array_shift( $args ); // Remove hook name.
 
 		ksort( $wp_filter[ $hook_name ] );
 		foreach ( $wp_filter[ $hook_name ] as $priority => $functions ) {
@@ -158,7 +158,7 @@ if ( ! function_exists( 'serialize_block' ) ) {
 
 		$index = 0;
 		foreach ( $block['innerContent'] as $chunk ) {
-			$block_content .= is_string( $chunk ) ? $chunk : serialize_block( $block['innerBlocks'][ $index ++ ] );
+			$block_content .= is_string( $chunk ) ? $chunk : serialize_block( $block['innerBlocks'][ $index++ ] );
 		}
 
 		if ( ! is_array( $block['attrs'] ) ) {
@@ -198,7 +198,7 @@ if ( ! function_exists( 'get_comment_delimited_block_content' ) ) {
 
 if ( ! function_exists( 'strip_core_block_namespace' ) ) {
 	function strip_core_block_namespace( $block_name = null ) {
-		if ( is_string( $block_name ) && strncmp( $block_name, 'core/', strlen( 'core/' ) ) === 0 ) {
+		if ( is_string( $block_name ) && 0 === strncmp( $block_name, 'core/', strlen( 'core/' ) ) ) {
 			return substr( $block_name, 5 );
 		}
 
@@ -214,15 +214,15 @@ if ( ! function_exists( 'serialize_block_attributes' ) ) {
 		$encoded_attributes = preg_replace( '/</', '\\u003c', $encoded_attributes );
 		$encoded_attributes = preg_replace( '/>/', '\\u003e', $encoded_attributes );
 		$encoded_attributes = preg_replace( '/&/', '\\u0026', $encoded_attributes );
-		// Regex: /\\"/
+		// Regex: /\\"/.
 		$encoded_attributes = preg_replace( '/\\\\"/', '\\u0022', $encoded_attributes );
 
 		return $encoded_attributes;
 	}
 }
 
-if(!function_exists('wp_read_audio_metadata')) {
-	function wp_read_audio_metadata($file) {
+if ( ! function_exists( 'wp_read_audio_metadata' ) ) {
+	function wp_read_audio_metadata( $file ) {
 		return array();
 	}
 }

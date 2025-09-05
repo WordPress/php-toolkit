@@ -9,9 +9,9 @@ use WordPress\Git\GitException;
 class ProtocolDemultiplexer {
 
 	const STREAM_CODE_SIDE_BAND = 'side_band';
-	const STREAM_CODE_PROGRESS = 'progress';
-	const STREAM_CODE_FATAL = 'fatal';
-	const STREAM_CODE_UNKNOWN = 'unknown';
+	const STREAM_CODE_PROGRESS  = 'progress';
+	const STREAM_CODE_FATAL     = 'fatal';
+	const STREAM_CODE_UNKNOWN   = 'unknown';
 
 	const STREAM_CODE_MAP = array(
 		0x01 => self::STREAM_CODE_SIDE_BAND,
@@ -22,7 +22,7 @@ class ProtocolDemultiplexer {
 	/**
 	 * @var ByteReadStream
 	 */
-	protected $upstream = '';
+	protected $upstream                      = '';
 	protected $is_paused_at_incomplete_input = false;
 
 	protected $chunk;
@@ -50,7 +50,7 @@ class ProtocolDemultiplexer {
 
 		$this->upstream->pull( 4, ByteReadStream::PULL_EXACTLY );
 		$length_hex = $this->upstream->consume( 4 );
-		if ( $length_hex === 'PACK' ) {
+		if ( 'PACK' === $length_hex ) {
 			$this->seen_unmultiplexed_pack = true;
 		}
 		/**
@@ -64,7 +64,7 @@ class ProtocolDemultiplexer {
 
 				return;
 			} else {
-				if ( $length_hex !== '0000' ) {
+				if ( '0000' !== $length_hex ) {
 					throw new NotEnoughDataException( 'Could not read PACK packet at ' . $this->upstream->tell() );
 				}
 				$this->seen_unmultiplexed_pack = false;
@@ -89,7 +89,7 @@ class ProtocolDemultiplexer {
 			// Ignore.
 		}
 
-		if ( $length_hex === '0000' || $length_hex === '0001' || $length_hex === '0002' ) {
+		if ( '0000' === $length_hex || '0001' === $length_hex || '0002' === $length_hex ) {
 			$this->chunk       = $length_hex;
 			$this->stream_code = $stream_code;
 
@@ -106,11 +106,11 @@ class ProtocolDemultiplexer {
 		$chunk             = $this->upstream->consume( $length );
 		$this->stream_code = $stream_code;
 		if ( 'unknown' === $this->stream_code ) {
-			// $chunk is not actually multiplexed so we need to relay
+			// $chunk is not actually multiplexed so we need to relay.
 			// all the data we've read so far to the consumer.
 			$this->chunk = $length_hex . $chunk;
 		} else {
-			// $chunk is multiplexed and the downstream consumer
+			// $chunk is multiplexed and the downstream consumer.
 			// only expects the wrapped data.
 			$this->chunk = $chunk;
 		}

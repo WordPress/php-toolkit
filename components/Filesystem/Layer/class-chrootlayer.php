@@ -21,8 +21,8 @@ class ChrootLayer extends Layer {
 	private $chroot;
 
 	/**
-	 * @param  Filesystem  $fs  The filesystem to chroot.
-	 * @param  string  $root  The root path to chroot to.
+	 * @param  Filesystem $fs  The filesystem to chroot.
+	 * @param  string     $root  The root path to chroot to.
 	 */
 	function __construct( Filesystem $fs, $chroot ) {
 		parent::__construct( $fs );
@@ -34,35 +34,35 @@ class ChrootLayer extends Layer {
 	/**
 	 * Transforms an absolute path or relative path to be contained within a chroot.
 	 *
-	 * @param  string  $path  The path to normalize.
+	 * @param  string $path  The path to normalize.
 	 *
 	 * @return string The normalized path.
 	 */
 	public function chrooted_path( $path ) {
-		$path = $this->forward_slashes_on_local_filesystem_on_windows($path);
-		return wp_join_unix_paths( 
+		$path = $this->forward_slashes_on_local_filesystem_on_windows( $path );
+		return wp_join_unix_paths(
 			$this->chroot,
 			wp_unix_path_resolve_dots( $path )
 		);
 	}
 
 	/**
-	 * Make sure we use forward slashes when addressing a local filesystem on 
+	 * Make sure we use forward slashes when addressing a local filesystem on
 	 * a Windows host. This allows all the wp_unix_* functions to work.
-	 * 
+	 *
 	 * This is an abstraction leak! ChrootLayer is generic but it makes choices
 	 * on behalf of LocalFilesystem.
 	 *
 	 * @TODO: Reorganize the code to avoid this. Otherwise, every Layer class
 	 *        will need to implement this logic. That's error-prone.
-	 * 
-	 * @param  string  $path  The path to normalize.
-	 * 
+	 *
+	 * @param  string $path  The path to normalize.
+	 *
 	 * @return string The normalized path.
 	 */
-	private function forward_slashes_on_local_filesystem_on_windows($path) {
-		if(DIRECTORY_SEPARATOR === '\\' && $this->fs instanceof LocalFilesystem) {
-			return str_replace('\\', '/', $path);
+	private function forward_slashes_on_local_filesystem_on_windows( $path ) {
+		if ( '\\' === DIRECTORY_SEPARATOR && $this->fs instanceof LocalFilesystem ) {
+			return str_replace( '\\', '/', $path );
 		}
 		return $path;
 	}
@@ -148,6 +148,6 @@ class ChrootLayer extends Layer {
 	}
 
 	public function get_meta(): array {
-		return array_merge( [ 'chroot' => $this->chroot ], $this->fs->get_meta() );
+		return array_merge( array( 'chroot' => $this->chroot ), $this->fs->get_meta() );
 	}
 }

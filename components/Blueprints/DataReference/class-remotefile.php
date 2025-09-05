@@ -26,5 +26,4 @@ class RemoteFile extends File {
 
 		return $this->stream;
 	}
-
 }

@@ -2,12 +2,12 @@
 
 if ( ! function_exists( 'mbstring_binary_safe_encoding' ) ) {
 	function mbstring_binary_safe_encoding( $reset = false ) {
-		static $encodings = array();
+		static $encodings  = array();
 		static $overloaded = null;
 
 		if ( is_null( $overloaded ) ) {
 			if ( function_exists( 'mb_internal_encoding' )
-			     && ( (int) ini_get( 'mbstring.func_overload' ) & 2 ) // phpcs:ignore PHPCompatibility.IniDirectives.RemovedIniDirectives.mbstring_func_overloadDeprecated
+				&& ( (int) ini_get( 'mbstring.func_overload' ) & 2 ) // phpcs:ignore PHPCompatibility.IniDirectives.RemovedIniDirectives.mbstring_func_overloadDeprecated
 			) {
 				$overloaded = true;
 			} else {

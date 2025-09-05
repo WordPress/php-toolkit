@@ -4,17 +4,17 @@ namespace WordPress\HttpClient;
 
 class Request {
 
-	const STATE_CREATED = 'STATE_CREATED';
-	const STATE_ENQUEUED = 'STATE_ENQUEUED';
+	const STATE_CREATED            = 'STATE_CREATED';
+	const STATE_ENQUEUED           = 'STATE_ENQUEUED';
 	const STATE_WILL_ENABLE_CRYPTO = 'STATE_WILL_ENABLE_CRYPTO';
-	const STATE_WILL_SEND_HEADERS = 'STATE_WILL_SEND_HEADERS';
-	const STATE_WILL_SEND_BODY = 'STATE_WILL_SEND_BODY';
-	const STATE_SENT = 'STATE_SENT';
-	const STATE_RECEIVING_HEADERS = 'STATE_RECEIVING_HEADERS';
-	const STATE_RECEIVING_BODY = 'STATE_RECEIVING_BODY';
-	const STATE_RECEIVED = 'STATE_RECEIVED';
-	const STATE_FAILED = 'STATE_FAILED';
-	const STATE_FINISHED = 'STATE_FINISHED';
+	const STATE_WILL_SEND_HEADERS  = 'STATE_WILL_SEND_HEADERS';
+	const STATE_WILL_SEND_BODY     = 'STATE_WILL_SEND_BODY';
+	const STATE_SENT               = 'STATE_SENT';
+	const STATE_RECEIVING_HEADERS  = 'STATE_RECEIVING_HEADERS';
+	const STATE_RECEIVING_BODY     = 'STATE_RECEIVING_BODY';
+	const STATE_RECEIVED           = 'STATE_RECEIVED';
+	const STATE_FAILED             = 'STATE_FAILED';
+	const STATE_FINISHED           = 'STATE_FINISHED';
 
 	private static $last_id;
 
@@ -46,7 +46,7 @@ class Request {
 	public $response;
 
 	/**
-	 * @param  string  $url
+	 * @param  string $url
 	 */
 	public function __construct( string $url, $request_info = array() ) {
 		$request_info = array_merge(
@@ -61,20 +61,20 @@ class Request {
 		);
 
 		$this->id     = ++ self::$last_id;
-		$this->is_ssl = strpos( $url, 'https://' ) === 0;
+		$this->is_ssl = 0 === strpos( $url, 'https://' );
 
-		// Extract username/password from URL if present
-		// @TODO: Use the WHATWG URL parser
+		// Extract username/password from URL if present.
+		// @TODO: Use the WHATWG URL parser.
 		$url_parts = parse_url( $url );
 		if ( ! empty( $url_parts['user'] ) ) {
 			$auth = $url_parts['user'];
 			if ( ! empty( $url_parts['pass'] ) ) {
 				$auth .= ':' . $url_parts['pass'];
 			}
-			// Add basic auth header
+			// Add basic auth header.
 			$request_info['headers']['authorization'] = 'Basic ' . base64_encode( $auth );
 
-			// Remove credentials from URL
+			// Remove credentials from URL.
 			$url =
 				$url_parts['scheme'] . '://' .
 				$url_parts['host'] .

@@ -48,8 +48,8 @@ class DataReferenceResolver {
 	private $tmp_root;
 
 	public function __construct( Client $client, ?string $tmp_root = null ) {
-		$this->client  = $client;
-		$this->tmp_root = $tmp_root ?: wp_unix_sys_get_temp_dir();
+		$this->client   = $client;
+		$this->tmp_root = $tmp_root ? $tmp_root : wp_unix_sys_get_temp_dir();
 	}
 
 	public function setExecutionContext( ?Filesystem $execution_context ) {
@@ -58,8 +58,8 @@ class DataReferenceResolver {
 
 	public function startEagerResolution( array $data_references, Tracker $data_resolution_tracker ) {
 		$this->data_resolution_tracker = $data_resolution_tracker;
-		$this->data_references        = $data_references;
-		$nb_data_references          = count( $this->data_references );
+		$this->data_references         = $data_references;
+		$nb_data_references            = count( $this->data_references );
 		foreach ( $this->data_references as $data_reference ) {
 			$this->sub_trackers[ $data_reference->id ] = $this->data_resolution_tracker->stage(
 				1 / $nb_data_references,
@@ -70,6 +70,7 @@ class DataReferenceResolver {
 	}
 
 	/** Core service method shared by runner, target resolvers and steps
+	 *
 	 * @return File|Directory
 	 */
 	public function resolve( DataReference $reference ) {
@@ -80,10 +81,10 @@ class DataReferenceResolver {
 		return $this->resolved_data_references[ $reference->id ];
 	}
 
-	// @TODO: Clean up the semantics of this class. Resolve() and separate resolve_uncached() seem confusing. There's
-	//        a bunch of implicit behaviors related to caching. Ideally we would either have a self-contained resolution
-	//        method, or co-locate the resolution logic with the data reference classes and only use this class for
-	//        caching.
+	// @TODO: Clean up the semantics of this class. Resolve() and separate resolve_uncached() seem confusing. There's.
+	// a bunch of implicit behaviors related to caching. Ideally we would either have a self-contained resolution.
+	// method, or co-locate the resolution logic with the data reference classes and only use this class for.
+	// caching.
 	public function resolve_uncached( DataReference $reference ) {
 		$progress_tracker = $this->sub_trackers[ $reference->id ] ?? new Tracker();
 
@@ -122,8 +123,8 @@ class DataReferenceResolver {
 				$tracked_stream,
 				$filename
 			);
-			// TODO: Consider a clearer name. Some not-so-great ballpark ideas:
-			// BlueprintParentPath, BlueprintRootPath, BlueprintContextPath, BlueprintRelativePath
+			// TODO: Consider a clearer name. Some not-so-great ballpark ideas:.
+			// BlueprintParentPath, BlueprintRootPath, BlueprintContextPath, BlueprintRelativePath.
 		} elseif ( $reference instanceof ExecutionContextPath ) {
 			$path = $reference->get_path();
 			if ( ! $this->execution_context->exists( $path ) ) {
@@ -175,7 +176,7 @@ class DataReferenceResolver {
 			$client = $repo->get_remote_client( 'origin' );
 			$client->pull(
 				$reference->get_ref(),
-				// Sparse checkout
+				// Sparse checkout.
 				array(
 					'path'    => $reference->get_path(),
 					'shallow' => true,
@@ -184,7 +185,7 @@ class DataReferenceResolver {
 
 			return new Directory(
 				new ChrootLayer( GitFilesystem::create( $repo ), $reference->get_path() ),
-				basename( $reference->get_path() ) ?: 'git-repo'
+				basename( $reference->get_path() ) ? basename( $reference->get_path() ) : 'git-repo'
 			);
 		}
 

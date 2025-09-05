@@ -14,11 +14,11 @@ function get_all_descendant_oids_in_tree( GitRepository $repository, $tree_oid, 
 		$tree_hash = array_pop( $trees );
 		$tree      = $repository->read_object( $tree_hash )->as_tree();
 		foreach ( $tree->entries as $entry ) {
-			if ( $entry->get_mode_bucket() === TreeEntry::FILE_MODE_DIRECTORY ) {
+			if ( TreeEntry::FILE_MODE_DIRECTORY === $entry->get_mode_bucket() ) {
 				$trees[] = $entry->hash;
 			}
 
-			if ( $object_types === null || in_array( $entry->get_mode_bucket(), $object_types ) ) {
+			if ( null === $object_types || in_array( $entry->get_mode_bucket(), $object_types ) ) {
 				$oids[ $entry->hash ] = true;
 			}
 		}

@@ -13,19 +13,19 @@ use WordPress\HttpClient\Request;
 require __DIR__ . '/vendor/autoload.php';
 
 function get_target_url( $server_data = null ) {
-	if ( $server_data === null ) {
+	if ( null === $server_data ) {
 		$server_data = $_SERVER;
 	}
 	$request_uri = $server_data['REQUEST_URI'];
 	$target_url  = $request_uri;
 
-	// Remove the current script name from the beginning of $targetUrl
-	if ( strpos( $target_url, $server_data['SCRIPT_NAME'] ) === 0 ) {
+	// Remove the current script name from the beginning of $targetUrl.
+	if ( 0 === strpos( $target_url, $server_data['SCRIPT_NAME'] ) ) {
 		$target_url = substr( $target_url, strlen( $server_data['SCRIPT_NAME'] ) );
 	}
 
-	// Remove the leading slash
-	if ( $target_url[0] === '/' || $target_url[0] === '?' ) {
+	// Remove the leading slash.
+	if ( '/' === $target_url[0] || '?' === $target_url[0] ) {
 		$target_url = substr( $target_url, 1 );
 	}
 
@@ -39,8 +39,14 @@ $requests   = array(
 		$target_url,
 		array(
 			'method'      => $_SERVER['REQUEST_METHOD'],
-			'headers'     => array_merge( getallheaders(), [ 'Accept-Encoding' => 'gzip, deflate', 'Host' => $host ] ),
-			'body_stream' => $_SERVER['REQUEST_METHOD'] === 'POST' ? fopen( 'php://input', 'r' ) : null,
+			'headers'     => array_merge(
+				getallheaders(),
+				array(
+					'Accept-Encoding' => 'gzip, deflate',
+					'Host' => $host,
+				)
+			),
+			'body_stream' => 'POST' === $_SERVER['REQUEST_METHOD'] ? fopen( 'php://input', 'r' ) : null,
 		)
 	),
 );
@@ -56,9 +62,9 @@ while ( $client->await_next_event() ) {
 			http_response_code( $request->response->status_code );
 			foreach ( $request->response->headers as $name => $value ) {
 				if (
-					$name === 'transfer-encoding' ||
-					$name === 'set-cookie' ||
-					$name === 'content-encoding'
+					'transfer-encoding' === $name ||
+					'set-cookie' === $name ||
+					'content-encoding' === $name
 				) {
 					continue;
 				}

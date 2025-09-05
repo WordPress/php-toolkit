@@ -10,17 +10,17 @@ use WordPress\XML\XMLProcessor;
 class WXRWriter implements EntityWriter {
 
 	private $write_stream;
-	private $state = self::STATE_WRITING;
+	private $state     = self::STATE_WRITING;
 	private $open_tags = array();
 
-	const STATE_NEW = 'new';
+	const STATE_NEW     = 'new';
 	const STATE_WRITING = 'writing';
-	const STATE_CLOSED = 'closed';
+	const STATE_CLOSED  = 'closed';
 
 	public function __construct( ByteWriteStream $write_stream, $cursor = null ) {
 		$this->write_stream = $write_stream;
 
-		if ( $cursor === null ) {
+		if ( null === $cursor ) {
 			$this->write_stream->append_bytes( "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n<rss version=\"2.0\" xmlns:excerpt=\"http://wordpress.org/export/1.2/excerpt/\" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\" xmlns:wfw=\"http://wellformedweb.org/CommentAPI/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:wp=\"http://wordpress.org/export/1.2/\">\n<channel>\n" );
 		} else {
 			$this->open_tags = json_decode( $cursor, true )['open_tags'];
@@ -28,18 +28,18 @@ class WXRWriter implements EntityWriter {
 	}
 
 	public function append_entity( ImportEntity $entity ) {
-		if ( $this->state === self::STATE_CLOSED ) {
+		if ( self::STATE_CLOSED === $this->state ) {
 			throw new DataLiberationException( 'Cannot write to a closed writer' );
 		}
 
-		if ( $entity->get_type() !== 'comment' && ! empty( $this->open_tags ) && end( $this->open_tags ) === 'wp:comments' ) {
+		if ( 'comment' !== $entity->get_type() && ! empty( $this->open_tags ) && 'wp:comments' === end( $this->open_tags ) ) {
 			$this->write_stream->append_bytes( "</wp:comments>\n" );
 			array_pop( $this->open_tags );
 		}
 
 		switch ( $entity->get_type() ) {
 			case 'post':
-				if ( ! empty( $this->open_tags ) && end( $this->open_tags ) === 'item' ) {
+				if ( ! empty( $this->open_tags ) && 'item' === end( $this->open_tags ) ) {
 					$this->write_stream->append_bytes( "</item>\n" );
 					array_pop( $this->open_tags );
 				}
@@ -65,7 +65,7 @@ class WXRWriter implements EntityWriter {
 				$this->append_if_not_empty( 'wp:is_sticky', $entity->get_data()['is_sticky'] );
 				break;
 			case 'post_meta':
-				if ( empty( $this->open_tags ) || end( $this->open_tags ) !== 'item' ) {
+				if ( empty( $this->open_tags ) || 'item' !== end( $this->open_tags ) ) {
 					throw new DataLiberationException( 'Cannot append post_meta without a corresponding post' );
 				}
 				$meta = $entity->get_data();
@@ -75,7 +75,7 @@ class WXRWriter implements EntityWriter {
 				$this->write_stream->append_bytes( "</wp:postmeta>\n" );
 				break;
 			case 'term':
-				if ( empty( $this->open_tags ) || end( $this->open_tags ) !== 'item' ) {
+				if ( empty( $this->open_tags ) || 'item' !== end( $this->open_tags ) ) {
 					throw new DataLiberationException( 'Cannot append term without a corresponding post' );
 				}
 				$term = $entity->get_data();
@@ -90,11 +90,11 @@ class WXRWriter implements EntityWriter {
 				if ( empty( $this->open_tags ) ) {
 					throw new DataLiberationException( 'Cannot append comment without a corresponding post' );
 				}
-				if ( end( $this->open_tags ) === 'item' ) {
+				if ( 'item' === end( $this->open_tags ) ) {
 					$this->write_stream->append_bytes( "<wp:comments>\n" );
 					$this->open_tags[] = 'wp:comments';
 				}
-				if ( end( $this->open_tags ) !== 'wp:comments' ) {
+				if ( 'wp:comments' !== end( $this->open_tags ) ) {
 					throw new DataLiberationException( 'Cannot append comment outside of a comment list' );
 				}
 				$comment = $entity->get_data();
@@ -123,15 +123,20 @@ class WXRWriter implements EntityWriter {
 	}
 
 	private function create_xml_tag( $tag_name, $content ) {
-		$xml = XMLProcessor::create_from_string( "<$tag_name>text</$tag_name>\n", null, 'UTF-8', array(
-			'excerpt' => "http://wordpress.org/export/1.2/excerpt/",
-			'content' => "http://purl.org/rss/1.0/modules/content/",
-			'wfw' => "http://wellformedweb.org/CommentAPI/",
-			'dc' => "http://purl.org/dc/elements/1.1/",
-			'wp' => "http://wordpress.org/export/1.2/"
-		) );
-		$xml->next_token(); // Move to the opening tag
-		$xml->next_token(); // Move to the text node
+		$xml = XMLProcessor::create_from_string(
+			"<$tag_name>text</$tag_name>\n",
+			null,
+			'UTF-8',
+			array(
+				'excerpt' => 'http://wordpress.org/export/1.2/excerpt/',
+				'content' => 'http://purl.org/rss/1.0/modules/content/',
+				'wfw' => 'http://wellformedweb.org/CommentAPI/',
+				'dc' => 'http://purl.org/dc/elements/1.1/',
+				'wp' => 'http://wordpress.org/export/1.2/',
+			)
+		);
+		$xml->next_token(); // Move to the opening tag.
+		$xml->next_token(); // Move to the text node.
 		$xml->set_modifiable_text( $content );
 
 		return $xml->get_updated_xml();

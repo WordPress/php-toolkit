@@ -68,17 +68,17 @@ class MySQLDumpWriter implements EntityWriter {
 		$result = '';
 		$len    = strlen( $value );
 
-		for ( $i = 0; $i < $len; $i ++ ) {
+		for ( $i = 0; $i < $len; $i++ ) {
 			$char = $value[ $i ];
 			$ord  = ord( $char );
 
-			// Control characters need hex escaping
-			if ( $ord < 32 || $ord === 0x7F ) {
+			// Control characters need hex escaping.
+			if ( $ord < 32 || 0x7F === $ord ) {
 				$result .= sprintf( '\\x%02x', $ord );
 				continue;
 			}
 
-			// Only need to escape backslash and single quote
+			// Only need to escape backslash and single quote.
 			switch ( $char ) {
 				case '\\':
 					$result .= '\\\\';
@@ -102,6 +102,6 @@ class MySQLDumpWriter implements EntityWriter {
 	}
 
 	public function get_reentrancy_cursor(): string {
-		return ''; // Not needed for this writer
+		return ''; // Not needed for this writer.
 	}
 }

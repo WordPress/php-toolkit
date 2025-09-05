@@ -27,7 +27,7 @@ class GitEndpoint {
 		$git_response = new GitProtocolEncoderPipe();
 		switch ( $path ) {
 			case '/HEAD':
-				// $this->handle_head_request($request_bytes, $git_response);
+				// $this->handle_head_request($request_bytes, $git_response);.
 				break;
 			case '/info/refs?service=git-upload-pack':
 				$this->send_protocol_v2_headers( $http_response, 'git-upload-pack' );
@@ -86,11 +86,11 @@ class GitEndpoint {
 		}
 		$git_response->close_writing();
 
-		// @TODO: Simplify this with a method such as pipe_to() or
-		// a pulling class such as GitHttpResponse
+		// @TODO: Simplify this with a method such as pipe_to() or.
+		// a pulling class such as GitHttpResponse.
 		while ( true ) {
 			$available = $git_response->pull( 65536 );
-			if ( $available === 0 && $git_response->reached_end_of_data() ) {
+			if ( 0 === $available && $git_response->reached_end_of_data() ) {
 				break;
 			}
 			$http_response->append_bytes( $git_response->consume( $available ) );
@@ -138,14 +138,14 @@ class GitEndpoint {
 	 *
 	 * @see https://git-scm.com/docs/protocol-v2#_ls_refs
 	 *
-	 * @param  array  $request_bytes  The parsed request data
+	 * @param  array $request_bytes  The parsed request data
 	 *
 	 * @return string The response in Git protocol v2 format
 	 */
 	public function handle_ls_refs_request( $request_bytes, GitProtocolEncoderPipe $git_response ) {
 		$parsed = $this->parse_message( $request_bytes );
 		if ( ! $parsed ) {
-			// return false;
+			// return false;.
 		}
 
 		$this->respond_with_ls_refs(
@@ -169,12 +169,12 @@ class GitEndpoint {
 			if ( $ref_name === $first_ref ) {
 				$line .= "\0$capabilities_to_advertise";
 			}
-			// Format: <hash> <refname>\n
+			// Format: <hash> <refname>\n.
 			$git_response->append_packet_line(
 				$line . "\n"
 			);
 		}
-		// End the response with 0000
+		// End the response with 0000.
 		$git_response->append_packet_line( '0000' );
 	}
 
@@ -205,8 +205,8 @@ class GitEndpoint {
 	 */
 	public function capability_advertise() {
 		return "version 2\n" .
-		       "agent=git/2.37.3\n" .
-		       '0000';
+				"agent=git/2.37.3\n" .
+				'0000';
 	}
 
 	public function parse_message( $request_bytes_bytes ) {
@@ -217,20 +217,20 @@ class GitEndpoint {
 
 		$capabilities = array();
 		$arguments    = array();
-		// @TODO: Fix PacketParser to avoid emiting duplicate packets
+		// @TODO: Fix PacketParser to avoid emiting duplicate packets.
 		while ( $packet_parser->next_token() ) {
-			if ( $packet_parser->get_packet_type() !== '#packet' ) {
+			if ( '#packet' !== $packet_parser->get_packet_type() ) {
 				$mode = array_shift( $modes );
 				continue;
 			}
-			if ( $packet_parser->get_token_type() !== '#packet-body' ) {
+			if ( '#packet-body' !== $packet_parser->get_token_type() ) {
 				continue;
 			}
 			$packet = $packet_parser->get_body_chunk();
 			switch ( $mode ) {
 				case 'capabilities':
-					if ( strpos( $packet, '=' ) !== false ) {
-						list( $key, $value ) = explode( '=', $packet );
+					if ( false !== strpos( $packet, '=' ) ) {
+						list( $key, $value )  = explode( '=', $packet );
 						$capabilities[ $key ] = $value;
 					} else {
 						$capabilities[ $packet ] = true;
@@ -238,7 +238,7 @@ class GitEndpoint {
 					break;
 				case 'arguments':
 					$space_at = strpos( $packet, ' ' );
-					if ( $space_at === false ) {
+					if ( false === $space_at ) {
 						$key   = $packet;
 						$value = true;
 					} else {
@@ -265,7 +265,7 @@ class GitEndpoint {
 	/**
 	 * Handle Git protocol v2 fetch command with "want" packets
 	 *
-	 * @param  array  $request_bytes  The parsed request data
+	 * @param  array $request_bytes  The parsed request data
 	 *
 	 * @return string The response in Git protocol v2 format containing the pack data
 	 */
@@ -277,7 +277,7 @@ class GitEndpoint {
 
 		$filter_raw = $parsed['arguments']['filter'][0] ?? null;
 		$filter     = $this->parse_filter( $filter_raw );
-		if ( $filter === false ) {
+		if ( false === $filter ) {
 			throw new GitException( 'Invalid filter: ' . $filter_raw );
 		}
 
@@ -293,16 +293,16 @@ class GitEndpoint {
 		$objects_to_send = array();
 		$acks            = array();
 		foreach ( $parsed['arguments']['want'] as $want_hash ) {
-			// For all the requested non-shallow commits, find
-			// most recent parent commit the client we have in
+			// For all the requested non-shallow commits, find.
+			// most recent parent commit the client we have in.
 			// common with the client.
 			$common_parent_hash = Commit::NULL_HASH;
 			$commit_hash        = $want_hash;
 			while ( true ) {
 				$reader            = $this->repository->read_object( $commit_hash );
 				$objects_to_send[] = $commit_hash;
-				if ( $reader->get_object_type_name() !== 'commit' ) {
-					// Just send non-commit objects as they are. It would be lovely to
+				if ( 'commit' !== $reader->get_object_type_name() ) {
+					// Just send non-commit objects as they are. It would be lovely to.
 					// delta-compress them in the future.
 					continue 2;
 				}
@@ -313,7 +313,7 @@ class GitEndpoint {
 					break;
 				}
 
-				// @TODO: Support multiple parents
+				// @TODO: Support multiple parents.
 				$commit_hash = $parsed_commit->get_first_parent_hash();
 				if ( isset( $have_oids[ $commit_hash ] ) ) {
 					$common_parent_hash = $commit_hash;
@@ -321,7 +321,7 @@ class GitEndpoint {
 				}
 			}
 
-			// For each wanted commit, find objects not present in any of the have commits
+			// For each wanted commit, find objects not present in any of the have commits.
 			$new_objects = $this->repository->find_objects_added_in(
 				$want_hash,
 				$common_parent_hash
@@ -350,21 +350,21 @@ class GitEndpoint {
 			$git_response->append_packet_line( '0001' );
 		}
 
-		// Pack the objects
+		// Pack the objects.
 		$objects_to_send = array_unique( $objects_to_send );
 		$pack_objects    = array();
 		foreach ( $objects_to_send as $oid ) {
 			$reader = $this->repository->read_object( $oid );
 
-			// Apply blob filters if specified
-			if ( $reader->get_object_type_name() === 'blob' ) {
-				if ( $filter['type'] === 'blob' ) {
-					if ( $filter['filter'] === 'none' ) {
-						continue; // Skip all blobs
-					} elseif ( $filter['filter'] === 'limit' ) {
+			// Apply blob filters if specified.
+			if ( 'blob' === $reader->get_object_type_name() ) {
+				if ( 'blob' === $filter['type'] ) {
+					if ( 'none' === $filter['filter'] ) {
+						continue; // Skip all blobs.
+					} elseif ( 'limit' === $filter['filter'] ) {
 						$size = $reader->get_uncompressed_size();
 						if ( $size > $filter['size'] ) {
-							continue; // Skip large blobs
+							continue; // Skip large blobs.
 						}
 					}
 				}
@@ -373,11 +373,11 @@ class GitEndpoint {
 			$pack_objects[] = $oid;
 		}
 
-		// Handle deepen if specified
+		// Handle deepen if specified.
 		if ( isset( $parsed['arguments']['deepen'] ) ) {
-			// @TODO: Implement history truncation based on deepen value
-			// This would involve walking the commit history and including
-			// only commits within the specified depth
+			// @TODO: Implement history truncation based on deepen value.
+			// This would involve walking the commit history and including.
+			// only commits within the specified depth.
 			throw new GitException( 'Deepen is not implemented yet' );
 		}
 
@@ -391,8 +391,8 @@ class GitEndpoint {
 	/**
 	 * Handle Git protocol v2 push command
 	 *
-	 * @param  string  $request_bytes  Raw request bytes
-	 * @param  ResponseWriteStream  $response  Response writer
+	 * @param  string              $request_bytes  Raw request bytes
+	 * @param  ResponseWriteStream $response  Response writer
 	 *
 	 * @return bool Success status
 	 */
@@ -410,11 +410,11 @@ class GitEndpoint {
 		}
 
 		$old_oid = $header['old_oid'];
-		// @TODO: Verify the old_oid is the ref_name tip
+		// @TODO: Verify the old_oid is the ref_name tip.
 		$new_oid  = $header['new_oid'];
 		$ref_name = $header['ref_name'];
 
-		// Validate ref name
+		// Validate ref name.
 		if ( ! preg_match( '|^refs/|', $ref_name ) ) {
 			$git_response->append_error_packet_line( "error invalid ref name: $ref_name\n" );
 			$git_response->append_error_packet_line( '0000' );
@@ -423,7 +423,7 @@ class GitEndpoint {
 			return false;
 		}
 
-		// Handle deletion
+		// Handle deletion.
 		if ( Commit::is_null_hash( $new_oid ) ) {
 			if ( $this->repository->delete_branch( $ref_name ) ) {
 				$git_response->append_packet_line( "ok $ref_name\n" );
@@ -435,11 +435,11 @@ class GitEndpoint {
 			return false;
 		}
 
-		// Process the incoming pack
+		// Process the incoming pack.
 		try {
 			$had_pack = false;
 			while ( $protocol_reader->next_token() ) {
-				if ( $protocol_reader->get_token_type() === '#pack' ) {
+				if ( '#pack' === $protocol_reader->get_token_type() ) {
 					$had_pack = true;
 				}
 			}
@@ -472,7 +472,7 @@ class GitEndpoint {
 	/**
 	 * Parse a push request according to Git protocol v2
 	 *
-	 * @param  string  $request_bytes  Raw request bytes
+	 * @param  string $request_bytes  Raw request bytes
 	 *
 	 * @return array|false Parsed request data or false on error
 	 */
@@ -496,14 +496,14 @@ class GitEndpoint {
 	}
 
 	private function parse_filter( $filter ) {
-		if ( $filter === null ) {
+		if ( null === $filter ) {
 			return array( 'type' => 'none' );
-		} elseif ( $filter === 'blob:none' ) {
+		} elseif ( 'blob:none' === $filter ) {
 			return array(
 				'type'   => 'blob',
 				'filter' => 'none',
 			);
-		} elseif ( strncmp( $filter, 'blob:limit=', strlen( 'blob:limit=' ) ) === 0 ) {
+		} elseif ( 0 === strncmp( $filter, 'blob:limit=', strlen( 'blob:limit=' ) ) ) {
 			$limit = substr( $filter, strlen( 'blob:limit=' ) );
 
 			return array(
@@ -518,9 +518,9 @@ class GitEndpoint {
 
 	public static function decode_next_packet_line( $pack_bytes, &$offset ) {
 		$packet_length_bytes = substr( $pack_bytes, $offset, 4 );
-		$offset              += 4;
+		$offset             += 4;
 		if (
-			strlen( $packet_length_bytes ) !== 4 ||
+			4 !== strlen( $packet_length_bytes ) ||
 			! preg_match( '/^[0-9a-f]{4}$/', $packet_length_bytes )
 		) {
 			return false;
@@ -535,7 +535,7 @@ class GitEndpoint {
 			default:
 				$length  = intval( $packet_length_bytes, 16 ) - 4;
 				$payload = substr( $pack_bytes, $offset, $length );
-				if ( substr_compare( $payload, "\n", - strlen( "\n" ) ) === 0 ) {
+				if ( 0 === substr_compare( $payload, "\n", - strlen( "\n" ) ) ) {
 					$payload = substr( $payload, 0, - 1 );
 				}
 				$offset += $length;

@@ -92,12 +92,12 @@ class StreamImporter {
 	 */
 	protected $options;
 
-	const STAGE_INITIAL = '#initial';
-	const STAGE_INDEX_ENTITIES = '#index_entities';
+	const STAGE_INITIAL          = '#initial';
+	const STAGE_INDEX_ENTITIES   = '#index_entities';
 	const STAGE_TOPOLOGICAL_SORT = '#topological_sort';
 	const STAGE_FRONTLOAD_ASSETS = '#frontload_assets';
-	const STAGE_IMPORT_ENTITIES = '#import_entities';
-	const STAGE_FINISHED = '#finished';
+	const STAGE_IMPORT_ENTITIES  = '#import_entities';
+	const STAGE_FINISHED         = '#finished';
 
 	const STAGES_IN_ORDER = array(
 		self::STAGE_INITIAL,
@@ -222,9 +222,9 @@ class StreamImporter {
 	protected function set_source_site_url( $source_site_url ) {
 		$this->source_site_url = $source_site_url;
 		// -1 is a well-known index for the source site URL.
-		// Every subsequent call to set_source_site_url() will
+		// Every subsequent call to set_source_site_url() will.
 		// override that mapping.
-		$this->site_url_mapping[ - 1 ] = array(
+		$this->site_url_mapping[- 1] = array(
 			'from' => WPURL::parse( $source_site_url ),
 			'to'   => WPURL::parse( $this->options['new_site_content_root_url'] ),
 		);
@@ -284,11 +284,11 @@ class StreamImporter {
 	protected static function parse_options( $options ) {
 		if ( ! isset( $options['source_site_url'] ) ) {
 			// @TODO: Throw only if source_site_url is not set by the time we're processing the first encountered URL.
-			// throw new DataLiberationException( 'The "source_site_url" option is required' );
+			// throw new DataLiberationException( 'The "source_site_url" option is required' );.
 		}
 		if ( ! isset( $options['new_site_content_root_url'] ) ) {
-			if(!function_exists('get_site_url')) {
-				throw new InvalidArgumentException('Option "new_site_content_root_url" is required');
+			if ( ! function_exists( 'get_site_url' ) ) {
+				throw new InvalidArgumentException( 'Option "new_site_content_root_url" is required' );
 			}
 			$options['new_site_content_root_url'] = get_site_url();
 		}
@@ -300,8 +300,8 @@ class StreamImporter {
 		$options['uploads_path'] = rtrim( $options['uploads_path'], '/' );
 
 		if ( ! isset( $options['new_media_root_url'] ) ) {
-			if(!function_exists('get_site_url')) {
-				throw new InvalidArgumentException('Option "new_media_root_url" is required');
+			if ( ! function_exists( 'get_site_url' ) ) {
+				throw new InvalidArgumentException( 'Option "new_media_root_url" is required' );
 			}
 			$options['new_media_root_url'] = rtrim( get_site_url(), '/' ) . '/wp-content/uploads';
 		}
@@ -367,9 +367,9 @@ class StreamImporter {
 
 				return false;
 			case self::STAGE_TOPOLOGICAL_SORT:
-				// @TODO: Different modes:
-				// 1. skip, reprocess
-				// 2. sort topologically
+				// @TODO: Different modes:.
+				// 1. skip, reprocess.
+				// 2. sort topologically.
 				$this->next_stage = self::STAGE_FRONTLOAD_ASSETS;
 
 				return false;
@@ -411,7 +411,7 @@ class StreamImporter {
 	}
 
 	protected $indexed_entities_counts = array();
-	protected $indexed_assets_urls = array();
+	protected $indexed_assets_urls     = array();
 
 	protected function index_next_entities() {
 		if ( null !== $this->next_stage ) {
@@ -431,7 +431,7 @@ class StreamImporter {
 		$this->indexed_entities_counts = array();
 		$this->indexed_assets_urls     = array();
 
-		// We're done if all the entities are processed
+		// We're done if all the entities are processed.
 		if ( ! $this->entity_iterator->valid() ) {
 			$this->entity_iterator  = null;
 			$this->resume_at_entity = null;
@@ -443,7 +443,7 @@ class StreamImporter {
 		 * Internalize the loop to avoid computing the reentrancy cursor
 		 * on every entity in the imported data stream.
 		 */
-		for ( $i = 0; $i < $this->options['index_batch_size']; ++ $i ) {
+		for ( $i = 0; $i < $this->options['index_batch_size']; ++$i ) {
 			if ( ! $this->entity_iterator->valid() ) {
 				break;
 			}
@@ -459,7 +459,7 @@ class StreamImporter {
 			if ( ! isset( $this->indexed_entities_counts[ $type ] ) ) {
 				$this->indexed_entities_counts[ $type ] = 0;
 			}
-			++ $this->indexed_entities_counts[ $type ];
+			++$this->indexed_entities_counts[ $type ];
 
 			/**
 			 * Track unique assets URLs.
@@ -476,12 +476,12 @@ class StreamImporter {
 			$data = $entity->get_data();
 			switch ( $type ) {
 				case 'site_option':
-					if ( $data['option_name'] === 'home' ) {
+					if ( 'home' === $data['option_name'] ) {
 						$this->set_source_site_url( $data['option_value'] );
 					}
 					break;
 				case 'post':
-					if ( isset( $data['post_type'] ) && $data['post_type'] === 'attachment' ) {
+					if ( isset( $data['post_type'] ) && 'attachment' === $data['post_type'] ) {
 						/**
 						 * Keep track of alternative domains used to reference attachments,
 						 * e.g. Theme Unit Test Data site lives at https://wpthemetestdata.wordpress.com/
@@ -510,8 +510,8 @@ class StreamImporter {
 								continue;
 							}
 							// @TODO: Consider using sha1 hashes to prevent huge URLs from blowing up the memory.
-							// @TODO: Use a consistent identifier for tracking download progress. Unfortunately,
-							// $p->get_raw_url() does not line up with the resolved URL later on. The progress
+							// @TODO: Use a consistent identifier for tracking download progress. Unfortunately,.
+							// $p->get_raw_url() does not line up with the resolved URL later on. The progress.
 							// events are emited with the full, resolved URL.
 							$this->indexed_assets_urls[ $p->get_parsed_url() . '' ] = true;
 						}
@@ -682,11 +682,11 @@ class StreamImporter {
 				);
 				break;
 			case 'post':
-				if ( isset( $data['post_type'] ) && $data['post_type'] === 'attachment' ) {
+				if ( isset( $data['post_type'] ) && 'attachment' === $data['post_type'] ) {
 					if ( isset( $data['attachment_url'] ) ) {
 						$this->enqueue_attachment_download( $data['attachment_url'] );
 					} else {
-						// @TODO: Emit warning / error event
+						// @TODO: Emit warning / error event.
 						_doing_it_wrong( __METHOD__, 'No attachment URL or file path found in the post entity.', '1.0' );
 					}
 				} elseif ( isset( $data['post_content'] ) ) {
@@ -775,9 +775,9 @@ class StreamImporter {
 		switch ( $entity->get_type() ) {
 			case 'post':
 				$data = $entity->get_data();
-				if ( isset( $data['post_type'] ) && $data['post_type'] === 'attachment' ) {
+				if ( isset( $data['post_type'] ) && 'attachment' === $data['post_type'] ) {
 					if ( ! isset( $data['attachment_url'] ) ) {
-						// @TODO: Emit warning / error event
+						// @TODO: Emit warning / error event.
 						_doing_it_wrong( __METHOD__, 'No attachment URL or file path found in the post entity.', '1.0' );
 						break;
 					}
@@ -807,7 +807,7 @@ class StreamImporter {
 								continue;
 							}
 							// No need to rewrite anchor links.
-							if ( substr( $p->get_raw_url(), 0, 1 ) === '#' ) {
+							if ( '#' === substr( $p->get_raw_url(), 0, 1 ) ) {
 								continue;
 							}
 
@@ -897,7 +897,7 @@ class StreamImporter {
 		if ( ! array_key_exists( $type, $this->imported_entities_counts ) ) {
 			$this->imported_entities_counts[ $type ] = 0;
 		}
-		++ $this->imported_entities_counts[ $type ];
+		++$this->imported_entities_counts[ $type ];
 	}
 
 	public function get_imported_entities_counts() {
@@ -964,7 +964,7 @@ class StreamImporter {
 		if ( false !== $parsed_url ) {
 			$pathname = $parsed_url->pathname;
 		} else {
-			// Assume $raw_asset_url is a relative path when it cannot be
+			// Assume $raw_asset_url is a relative path when it cannot be.
 			// parsed as an absolute URL.
 			$pathname = $raw_asset_url;
 		}
@@ -1004,24 +1004,24 @@ class StreamImporter {
 	protected function url_processor_matched_asset_url( BlockMarkupUrlProcessor $p ) {
 		/**
 		 * Decide whether the URL is an asset URL worth downloading.
-		 * 
+		 *
 		 * All URLs with an image-like extension are treated as images,
-		 * 
+		 *
 		 * For example, the background image in the following block would be accepted:
 		 *
 		 *     <div style="background-image: url(https://example.com/image.jpg)">
 		 */
-		$path = $p->get_parsed_url()->pathname;
+		$path      = $p->get_parsed_url()->pathname;
 		$extension = pathinfo( $path, PATHINFO_EXTENSION );
-		if ( ! in_array($extension, array('jpg', 'jpeg', 'png', 'gif', 'webp', 'svg') ) ) {
+		if ( ! in_array( $extension, array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg' ) ) ) {
 			/**
 			 * Absent an extension, try to guess whether it's a static asset based
 			 * on its location in the document. For now, we only accept images.
 			 */
-			if ( $p->get_tag() !== 'IMG' ) {
+			if ( 'IMG' !== $p->get_tag() ) {
 				return false;
 			}
-			if ( $p->get_inspected_attribute_name() !== 'src' ) {
+			if ( 'src' !== $p->get_inspected_attribute_name() ) {
 				return false;
 			}
 		}
@@ -1039,7 +1039,7 @@ class StreamImporter {
 	}
 
 	protected function is_child_of_a_mapped_url( $url_detected_in_content ) {
-		return $this->get_url_mapping_pair( $url_detected_in_content ) !== false;
+		return false !== $this->get_url_mapping_pair( $url_detected_in_content );
 	}
 
 	protected function get_url_mapping_pair( $url_detected_in_content ) {

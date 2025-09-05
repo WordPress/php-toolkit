@@ -14,7 +14,7 @@ class LineMerger implements Merger {
 		$results = array();
 		$n       = max( count( $lines_a ), count( $lines_b ) );
 
-		for ( $i = 0; $i < $n; $i ++ ) {
+		for ( $i = 0; $i < $n; $i++ ) {
 			$line_a = $lines_a[ $i ] ?? array(
 				'base'     => null,
 				'deleted'  => false,
@@ -26,8 +26,8 @@ class LineMerger implements Merger {
 				'inserted' => '',
 			);
 
-			// Handle conflicting insertions
-			if ( $line_a['inserted'] !== '' && $line_b['inserted'] !== '' && $line_a['inserted'] !== $line_b['inserted'] ) {
+			// Handle conflicting insertions.
+			if ( '' !== $line_a['inserted'] && '' !== $line_b['inserted'] && $line_a['inserted'] !== $line_b['inserted'] ) {
 				$results[] = new MergeConflict(
 					$line_a['inserted'],
 					$line_b['inserted'],
@@ -38,17 +38,17 @@ class LineMerger implements Merger {
 				continue;
 			}
 
-			// Handle base line differences
-			if ( $line_a['base'] === null || $line_b['base'] === null ) {
-				if ( $line_a['base'] !== null ) {
+			// Handle base line differences.
+			if ( null === $line_a['base'] || null === $line_b['base'] ) {
+				if ( null !== $line_a['base'] ) {
 					$results[] = $line_a['base'] . $line_a['inserted'];
-				} elseif ( $line_b['base'] !== null ) {
+				} elseif ( null !== $line_b['base'] ) {
 					$results[] = $line_b['base'] . $line_b['inserted'];
 				}
 				continue;
 			}
 
-			// Conflict if base lines are different
+			// Conflict if base lines are different.
 			if ( $line_a['base'] !== $line_b['base'] ) {
 				$results[] = new MergeConflict(
 					$line_a['base'],
@@ -60,17 +60,17 @@ class LineMerger implements Merger {
 				continue;
 			}
 
-			// Handle deletions
+			// Handle deletions.
 			if ( $line_a['deleted'] || $line_b['deleted'] ) {
 				if ( $line_a['deleted'] && $line_b['deleted'] ) {
 					continue;
 				}
 
-				$deletion    = $line_a['deleted'] ? $line_a : $line_b;
+				$deletion     = $line_a['deleted'] ? $line_a : $line_b;
 				$non_deletion = $line_a['deleted'] ? $line_b : $line_a;
 
 				if ( $deletion['inserted'] ) {
-					if ( $non_deletion['inserted'] !== '' ) {
+					if ( '' !== $non_deletion['inserted'] ) {
 						$results[] = new MergeConflict(
 							$deletion['inserted'],
 							$non_deletion['inserted'],
@@ -86,10 +86,10 @@ class LineMerger implements Merger {
 				continue;
 			}
 
-			// Default case: use base line and any insertion
-			$results[]     = $line_a['base'];
-			$only_insertion = $line_a['inserted'] !== '' ? $line_a['inserted'] : $line_b['inserted'];
-			$results[]     = $only_insertion;
+			// Default case: use base line and any insertion.
+			$results[]      = $line_a['base'];
+			$only_insertion = '' !== $line_a['inserted'] ? $line_a['inserted'] : $line_b['inserted'];
+			$results[]      = $only_insertion;
 		}
 
 		return new MergeResult( $results );
@@ -110,8 +110,8 @@ class LineMerger implements Merger {
 		foreach ( $diff as $part ) {
 			list( $op, $text ) = $part;
 
-			if ( $op === Diff::DIFF_DELETE || $op === Diff::DIFF_EQUAL ) {
-				if ( $current['base'] !== null || $current['inserted'] !== '' ) {
+			if ( Diff::DIFF_DELETE === $op || Diff::DIFF_EQUAL === $op ) {
+				if ( null !== $current['base'] || '' !== $current['inserted'] ) {
 					$lines[] = $current;
 					$current = array(
 						'base'     => null,
@@ -120,13 +120,13 @@ class LineMerger implements Merger {
 					);
 				}
 				$current['base']    = $text;
-				$current['deleted'] = ( $op === Diff::DIFF_DELETE );
-			} elseif ( $op === Diff::DIFF_INSERT ) {
+				$current['deleted'] = ( Diff::DIFF_DELETE === $op );
+			} elseif ( Diff::DIFF_INSERT === $op ) {
 				$current['inserted'] .= $text;
 			}
 		}
 
-		if ( $current['base'] !== null || $current['inserted'] !== '' ) {
+		if ( null !== $current['base'] || '' !== $current['inserted'] ) {
 			$lines[] = $current;
 		}
 
@@ -143,8 +143,8 @@ class LineMerger implements Merger {
 			$line      = array_shift( $diff );
 			$next_line = $diff[0] ?? null;
 
-			$deletion  = $line[0] == Diff::DIFF_DELETE ? $line : ( $next_line && $next_line[0] == Diff::DIFF_DELETE ? $next_line : null );
-			$insertion = $line[0] == Diff::DIFF_INSERT ? $line : ( $next_line && $next_line[0] == Diff::DIFF_INSERT ? $next_line : null );
+			$deletion  = Diff::DIFF_DELETE == $line[0] ? $line : ( $next_line && Diff::DIFF_DELETE == $next_line[0] ? $next_line : null );
+			$insertion = Diff::DIFF_INSERT == $line[0] ? $line : ( $next_line && Diff::DIFF_INSERT == $next_line[0] ? $next_line : null );
 			if ( $deletion && $insertion ) {
 				$chunks[] = array(
 					'base'     => $deletion[1],

@@ -34,9 +34,9 @@ class UploadedFilesystem implements Filesystem {
 	/**
 	 * Create a new UploadedFilesystem instance.
 	 *
-	 * @param  REST_Request  $request  The request object containing uploaded files
-	 * @param  string  $tree_parameter_name  The name of the parameter containing the tree structure
-	 * @param  array  $options  The options array {
+	 * @param  REST_Request $request  The request object containing uploaded files
+	 * @param  string       $tree_parameter_name  The name of the parameter containing the tree structure
+	 * @param  array        $options  The options array {
 	 *
 	 * @return UploadedFilesystem The new instance
 	 * @var Filesystem $uploads_fs Optional. The filesystem to read the uploaded files from.
@@ -50,14 +50,13 @@ class UploadedFilesystem implements Filesystem {
 	}
 
 	/**
-	 * @param  array  $tree  The directory tree structure
-	 * @param  array  $options  The options array
-	 * @param  Filesystem  $uploads_fs  The filesystem to read the uploaded files from.
-	 * @param  REST_Request  $request  The request object containing uploaded files
+	 * @param  array        $tree  The directory tree structure
+	 * @param  array        $options  The options array
+	 * @param  Filesystem   $uploads_fs  The filesystem to read the uploaded files from.
+	 * @param  REST_Request $request  The request object containing uploaded files
 	 *
 	 * @internal
 	 * Use the static create() method instead.
-	 *
 	 */
 	private function __construct( $request, $tree_parameter_name, $options = array() ) {
 		$tree_json = $request->get_param( $tree_parameter_name );
@@ -70,7 +69,7 @@ class UploadedFilesystem implements Filesystem {
 			throw new FilesystemException( 'Invalid JSON structure' );
 		}
 
-		if ( ! isset( $tree['type'] ) || $tree['type'] !== 'directory' || ! isset( $tree['name'] ) || $tree['name'] !== '' ) {
+		if ( ! isset( $tree['type'] ) || 'directory' !== $tree['type'] || ! isset( $tree['name'] ) || '' !== $tree['name'] ) {
 			$tree = array(
 				'type'     => 'directory',
 				'name'     => '',
@@ -86,7 +85,7 @@ class UploadedFilesystem implements Filesystem {
 	public function ls( $parent = '/' ) {
 		$parent = '/' . ltrim( wp_unix_path_resolve_dots( $parent ), '/' );
 		$node   = $this->find_node( $parent );
-		if ( ! $node || $node['type'] !== 'directory' ) {
+		if ( ! $node || 'directory' !== $node['type'] ) {
 			return array();
 		}
 
@@ -101,17 +100,17 @@ class UploadedFilesystem implements Filesystem {
 	public function is_dir( $path ) {
 		$node = $this->find_node( $path );
 
-		return $node && $node['type'] === 'directory';
+		return $node && 'directory' === $node['type'];
 	}
 
 	public function is_file( $path ) {
 		$node = $this->find_node( $path );
 
-		return $node && $node['type'] === 'file';
+		return $node && 'file' === $node['type'];
 	}
 
 	public function exists( $path ) {
-		return $this->find_node( $path ) !== null;
+		return null !== $this->find_node( $path );
 	}
 
 	public function mkdir( $path, $options = array() ) {
@@ -128,22 +127,22 @@ class UploadedFilesystem implements Filesystem {
 
 	public function open_read_stream( $path ): ByteReadStream {
 		$node = $this->find_node( $path );
-		if ( ! $node || $node['type'] !== 'file' ) {
+		if ( ! $node || 'file' !== $node['type'] ) {
 			throw new FilesystemException(
 				sprintf( 'File not found: %s', $path )
 			);
 		}
 
-		// Handle file content from request
+		// Handle file content from request.
 		if ( ! isset( $node['content'] ) || ! is_string( $node['content'] ) ) {
 			$node['content'] = '';
 		}
 
-		if ( strpos( $node['content'], '@file:' ) === 0 ) {
+		if ( 0 === strpos( $node['content'], '@file:' ) ) {
 			$file_key      = substr( $node['content'], 6 );
 			$uploaded_file = $this->request->get_file_params()[ $file_key ] ?? null;
 
-			if ( ! $uploaded_file || $uploaded_file['error'] !== UPLOAD_ERR_OK ) {
+			if ( ! $uploaded_file || UPLOAD_ERR_OK !== $uploaded_file['error'] ) {
 				throw new FilesystemException(
 					sprintf( 'File upload error: %s', $uploaded_file['error'] )
 				);
@@ -152,20 +151,20 @@ class UploadedFilesystem implements Filesystem {
 			return $this->uploads_fs->open_read_stream( $uploaded_file['tmp_name'] );
 		}
 
-		// Handle inline content
+		// Handle inline content.
 		return new MemoryPipe( $node['content'] );
 	}
 
 	/**
 	 * Find a node in the tree by its path
 	 *
-	 * @param  string  $path  The path to find
+	 * @param  string $path  The path to find
 	 *
 	 * @return array|null The node if found, null otherwise
 	 */
 	private function find_node( $path ) {
 		$path = trim( $path, '/' );
-		if ( $path === '' ) {
+		if ( '' === $path ) {
 			return $this->tree;
 		}
 
