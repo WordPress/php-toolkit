@@ -24,7 +24,7 @@
     },
     "require-dev": {
         "yoast/phpunit-polyfills": "^4.0.0",
-        "phpcompatibility/php-compatibility": "10.x-dev",
+        "phpcompatibility/php-compatibility": "^9.3.5",
         "phpunit/phpunit": "8.5.x || ^9.5"
     },
     "autoload": {
@@ -73,8 +73,8 @@
         "build-blueprints-phar": "box compile -c phar-box.json",
         "regenerate-json-schema": "node components/Blueprints/Versions/Version2/json-schema/regenerate-schema.ts",
         "test": "phpunit -c phpunit.xml",
-        "lint": "phpcs --standard=WordPress .",
-        "lint-fix": "phpcbf --standard=WordPress ."
+        "lint": "phpcs .",
+        "lint-fix": "phpcbf ."
     },
     "repositories": [
         {
