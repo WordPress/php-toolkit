@@ -126,7 +126,7 @@ class CLILogger implements LoggerInterface {
 	}
 
 	/**
-	 * @param  string $level
+	 * @param  string            $level
 	 * @param  string|Stringable $message
 	 */
 	public function log( $level, $message, array $context = array() ): void {

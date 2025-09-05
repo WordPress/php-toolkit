@@ -333,11 +333,11 @@ class GitRepository {
 				return $branch_name;
 			}
 					$path = $this->resolve_branch_file_path( $branch_name );
-		if ( ! $path ) {
-			throw new GitException( sprintf( 'Failed to resolve branch file path: %s', esc_html( $branch_name ) ) );
+			if ( ! $path ) {
+				throw new GitException( sprintf( 'Failed to resolve branch file path: %s', esc_html( $branch_name ) ) );
 			}
-					if ( ! $this->fs->is_file( $path ) ) {
-			throw new GitException( sprintf( 'Branch file not found: %s', esc_html( $path ) ) );
+			if ( ! $this->fs->is_file( $path ) ) {
+				throw new GitException( sprintf( 'Branch file not found: %s', esc_html( $path ) ) );
 			}
 			$branch_name = trim( $this->fs->get_contents( $path ) );
 			if ( 0 === strncmp( $branch_name, 'ref: ', strlen( 'ref: ' ) ) && ( $options['follow_symrefs'] ?? true ) ) {
@@ -467,8 +467,8 @@ class GitRepository {
 							// Overwrite the current entry with the incoming entry.
 							$updates[ $path ] = $incoming_entry->content['text'];
 							break;
-											default:
-						throw new GitException( sprintf( 'Unsupported conflict resolution strategy: %s.', esc_html( $conflict_resolution_strategy ) ) );
+						default:
+							throw new GitException( sprintf( 'Unsupported conflict resolution strategy: %s.', esc_html( $conflict_resolution_strategy ) ) );
 					}
 				} elseif ( is_array( $incoming_entry->content ) ) {
 					$tree_stack[] = array(
@@ -597,12 +597,12 @@ class GitRepository {
 			if ( ! $this->has_object( $next_parent_hash ) ) {
 				if ( 'throw' === $on_missing ) {
 									throw new GitException(
-					sprintf(
-						'Commit %s (parent of %s) is not available in the local repository.',
-						esc_html( $next_parent_hash ),
-						esc_html( $parent_to_child[ $next_parent_hash ] ?? '<branch tip – not a parent>' )
-					)
-				);
+										sprintf(
+											'Commit %s (parent of %s) is not available in the local repository.',
+											esc_html( $next_parent_hash ),
+											esc_html( $parent_to_child[ $next_parent_hash ] ?? '<branch tip – not a parent>' )
+										)
+									);
 				} else {
 					continue;
 				}

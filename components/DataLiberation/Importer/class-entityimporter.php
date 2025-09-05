@@ -88,7 +88,7 @@ class EntityImporter {
 	 *
 	 * @var array
 	 */
-	protected $mapping = array();
+	protected $mapping            = array();
 	protected $requires_remapping = array();
 	protected $exists             = array();
 	protected $user_slug_override = array();

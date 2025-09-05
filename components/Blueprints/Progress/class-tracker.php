@@ -46,12 +46,12 @@ use function is_string;
  * stage2.finish();
  */
 class Tracker implements ArrayAccess {
-	private $self_weight = 1;
-	private $self_done = false;
+	private $self_weight   = 1;
+	private $self_done     = false;
 	private $self_progress = 0;
-	private $self_caption = '';
+	private $self_caption  = '';
 	private $weight;
-	private $sub_trackers = array();
+	private $sub_trackers    = array();
 	private $split_performed = false;
 
 	/**
@@ -250,8 +250,8 @@ class Tracker implements ArrayAccess {
 	}
 
 	/**
-	 * @param  float  $value
-	 * @param  string|null  $caption
+	 * @param  float       $value
+	 * @param  string|null $caption
 	 */
 	public function set( $value, $caption = null ) {
 		if ( $value < $this->self_progress ) {
