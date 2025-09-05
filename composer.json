@@ -54,6 +54,7 @@
             "components/Merge/",
             "components/Merge/vendor-patched",
             "components/ByteStream/",
+            "components/ToolkitCodingStandards/",
             "components/XML/",
             "components/Zip/"
         ],

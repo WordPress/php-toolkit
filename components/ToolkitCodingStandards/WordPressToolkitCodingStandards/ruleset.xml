@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<ruleset name="WordPressToolkitCodingStandards">
+    <description>Local custom sniffs for WordPress toolkit.</description>
+    <rule ref="WordPressToolkitCodingStandards.PHP.EnforceYodaComparison"/>
+</ruleset>
+
+

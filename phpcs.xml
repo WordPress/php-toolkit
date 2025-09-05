@@ -1,13 +1,13 @@
 <ruleset name="WordPressStandard">
     <description>PHP 7.2 compatibility.</description>
+    <autoload>vendor/autoload.php</autoload>
     <config name="testVersion" value="7.2"/>
     <exclude-pattern>vendor/*</exclude-pattern>
     <exclude-pattern>*/vendor-patched/*</exclude-pattern>
     <exclude-pattern>*/Tests/*</exclude-pattern>
     <rule ref="PHPCompatibility">
     </rule>
-    <rule ref="SlevomatCodingStandard.ControlStructures.DisallowYodaComparison">
-    </rule>
+    <rule ref="components/ToolkitCodingStandards/WordPressToolkitCodingStandards/ruleset.xml"/>
 	<rule ref="WordPress">
         <exclude name="Generic.Commenting.DocComment.MissingShort"/>
         <exclude name="Generic.PHP.DiscourageGoto.Found"/>
