@@ -4,4 +4,5 @@
     <rule ref="WordPressToolkitCodingStandards.PHP.EnforceYodaComparison"/>
     <rule ref="WordPressToolkitCodingStandards.Commenting.InlineCommentPunctuation"/>
     <rule ref="WordPressToolkitCodingStandards.PHP.DisallowShortTernary"/>
+    <rule ref="WordPressToolkitCodingStandards.Commenting.MemberVariableDocStyle"/>
 </ruleset>
