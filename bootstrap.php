@@ -13,3 +13,5 @@
  */
 
 require_once __DIR__ . '/vendor/autoload.php';
+
+polyfill_wordpress_apis();
