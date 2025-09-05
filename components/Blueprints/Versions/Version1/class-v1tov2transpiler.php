@@ -63,7 +63,7 @@ class V1ToV2Transpiler {
 	 * @param  array $v1
 	 *
 	 * @return array
-	 * @throws BlueprintExecutionException
+	 * @throws BlueprintExecutionException When the v1 blueprint cannot be upgraded.
 	 */
 	public function upgrade( array $validated_v1_blueprint ): array {
 		$v1      = $validated_v1_blueprint;

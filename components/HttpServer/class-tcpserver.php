@@ -91,7 +91,7 @@ class TcpServer {
 					error_log( 'Error closing socket write stream: ' . $e->getMessage() );
 				}
 				if ( isset( $response_writer, $request ) && $response_writer ) {
-					echo '[' . date( 'Y-m-d H:i:s' ) . '] ' . $response_writer->http_code . ' ' . $request->method . ' ' . $request->get_parsed_url()->pathname . "\n";
+					echo '[' . gmdate( 'Y-m-d H:i:s' ) . '] ' . $response_writer->http_code . ' ' . $request->method . ' ' . $request->get_parsed_url()->pathname . "\n";
 				}
 			}
 		}

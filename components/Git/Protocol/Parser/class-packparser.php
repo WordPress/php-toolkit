@@ -440,6 +440,7 @@ class PackParser {
 
 		$this->bytes_processed = $at;
 		$this->parser_state    = self::STATE_SCAN_FOR_OBJECT_HEADER;
+		return true;
 	}
 
 	public function get_pack_version() {

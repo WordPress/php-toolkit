@@ -79,7 +79,6 @@ $wp_customize->import_theme_starter_content();
 wp_publish_post( $wp_customize->changeset_post_id() );
 
 PHP
-			,
 		);
 	}
 }

@@ -1,5 +1,6 @@
 <?php
 
+// phpcs:disable
 use WordPress\Blueprints\DataReference\DataReference;
 use WordPress\Blueprints\DataReference\DataReferenceResolver;
 use WordPress\Blueprints\DataReference\Directory;
@@ -26,6 +27,7 @@ require_once getenv( 'DOCROOT' ) . '/php-toolkit.phar';
 
 // Progress reporting interfaces and implementations.
 
+// phpcs:disable Generic.Files.OneObjectStructurePerFile.MultipleFound
 interface ProgressReporter {
 	/**
 	 * Report progress update

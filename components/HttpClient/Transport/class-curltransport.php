@@ -34,7 +34,7 @@ class CurlTransport implements TransportInterface {
 	/**
 	 * Initializes a new CurlClient with optional settings.
 	 *
-	 * @param array $options Optional config: 'concurrency', 'max_redirects', 'timeout_ms'.
+	 * @param ClientState $state The client state containing configuration.
 	 */
 	public function __construct( ClientState $state ) {
 		$this->state = $state;

@@ -234,8 +234,10 @@ class SetSiteLanguageStep implements StepInterface {
 	/**
 	 * Get the translation package URL for a given WordPress version and language.
 	 *
-	 * @param  string $wpVersion  WordPress version
-	 * @param  string $language  Language code
+	 * @param  Runtime $runtime     The runtime instance
+	 * @param  string  $wp_version  WordPress version
+	 * @param  string  $language    Language code
+	 * @param  Client  $client      HTTP client
 	 *
 	 * @return string|false
 	 */

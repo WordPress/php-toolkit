@@ -21,8 +21,7 @@ class InlineFile extends DataReference {
 	/**
 	 * Constructor.
 	 *
-	 * @param  string $filename  The filename.
-	 * @param  string $content  The content.
+	 * @param  array $definition  The inline file definition containing filename and content.
 	 */
 	public function __construct( array $definition ) {
 		if ( ! isset( $definition['filename'] ) || ! isset( $definition['content'] ) ) {

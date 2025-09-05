@@ -65,18 +65,12 @@ class ZipEncoder {
 	}
 
 	/**
-	 * Streams a file from disk and writes it into a ZIP archive.
+	 * Computes file hash and size for a ZIP archive entry.
 	 *
-	 * This method reads the source file from the given path, computes necessary
-	 * metadata (CRC32 checksum, uncompressed size, and compressed size using Deflate),
-	 * and then writes the appropriate file entry header and data into the ZIP archive
-	 * stream. The file data is read and compressed in two passes: first to compute
-	 * the CRC32 and sizes, and second to write the actual compressed data.
+	 * This method calculates the CRC32, uncompressed size, and compressed size
+	 * for the given file entry. It handles deflate compression when needed.
 	 *
-	 * @param  string $sourcePathOnDisk  The filesystem path to the source file to be included in the ZIP archive.
-	 * @param  string $targetPathInZip  The desired path (including filename) of the file within the ZIP archive.
-	 *
-	 * @return number The number of bytes written to the ZIP archive stream.
+	 * @param  FileEntry $entry The file entry to compute hash and size for.
 	 *
 	 * @note This function is designed to handle large files without loading them entirely
 	 * into memory. It reads and compresses the file in chunks, making it suitable for streaming

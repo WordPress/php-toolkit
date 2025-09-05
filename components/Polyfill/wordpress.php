@@ -3,6 +3,8 @@
  * Polyfills WordPress core functions for running in non-WordPress environments
  */
 
+ // phpcs:disable
+
 if (
 	! isset( $html5_named_character_references ) &&
 	file_exists( __DIR__ . '/../HTML/html5-named-character-references.php' )

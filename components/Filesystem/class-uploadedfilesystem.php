@@ -50,10 +50,9 @@ class UploadedFilesystem implements Filesystem {
 	}
 
 	/**
-	 * @param  array        $tree  The directory tree structure
-	 * @param  array        $options  The options array
-	 * @param  Filesystem   $uploads_fs  The filesystem to read the uploaded files from.
-	 * @param  REST_Request $request  The request object containing uploaded files
+	 * @param  REST_Request $request             The request object containing uploaded files
+	 * @param  string       $tree_parameter_name The name of the parameter containing the tree structure
+	 * @param  array        $options             The options array
 	 *
 	 * @internal
 	 * Use the static create() method instead.

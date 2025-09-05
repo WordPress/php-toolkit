@@ -2,23 +2,7 @@
 
 namespace WordPress\Blueprints\Validator;
 
-// @TODO: Reconsider the need for the Symbol class. We use it.
-// as a unique reference that can't be possibly brought.
-// in with the validated data.
-class Symbol {
-	/**
-	 * @var string
-	 */
-	public $value;
-
-	public function __construct( string $value ) {
-		$this->value = $value;
-	}
-
-	public function __toString(): string {
-		return $this->value;
-	}
-}
+require_once __DIR__ . '/class-symbol.php';
 
 /**
  * A lite JSON schema validator with human-centric error messages.
@@ -237,7 +221,9 @@ final class HumanFriendlySchemaValidator {
 	// ───────────────────────────────────────────────────────── validation ─┐.
 
 	/**
+	 * @param  array $path
 	 * @param  mixed $data
+	 * @param  array $schema
 	 */
 	private function validate_node( array $path, $data, array $schema ): ?ValidationError {
 		if ( isset( $schema['$ref'] ) ) {
@@ -343,7 +329,9 @@ final class HumanFriendlySchemaValidator {
 	}
 
 	/**
+	 * @param  array $path
 	 * @param  mixed $data
+	 * @param  array $schema
 	 */
 	private function validate_any_of( array $path, $data, array $schema ): ?ValidationError {
 		$branches = $schema['anyOf'];
@@ -368,7 +356,9 @@ final class HumanFriendlySchemaValidator {
 	}
 
 	/**
+	 * @param  array $path
 	 * @param  mixed $data
+	 * @param  array $schema
 	 */
 	private function validate_one_of( array $path, $data, array $schema ): ?ValidationError {
 		$branches = $schema['oneOf'];
@@ -425,7 +415,12 @@ final class HumanFriendlySchemaValidator {
 	/**
 	 * Create a parent error for anyOf/oneOf mismatches.
 	 *
-	 * @param  mixed $data
+	 * @param  array  $path
+	 * @param  mixed  $data
+	 * @param  array  $branches
+	 * @param  array  $parent_schema
+	 * @param  string $keyword
+	 * @param  array  $child_errors
 	 */
 	private function explain_aggregate_mismatch(
 		array $path,
@@ -546,7 +541,9 @@ final class HumanFriendlySchemaValidator {
 	// ─────────────────────────────────────────── primitives / objects / arrays ─┐.
 
 	/**
+	 * @param  array $path
 	 * @param  mixed $data
+	 * @param  array $schema
 	 */
 	private function validate_type( array $path, $data, array $schema ): ?ValidationError {
 		$type = $schema['type'];

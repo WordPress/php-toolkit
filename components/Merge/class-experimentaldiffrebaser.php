@@ -10,6 +10,9 @@ use DiffMatchPatch\DiffMatchPatch;
 class DiffMatchPatchMergeDriver {
 	// implements MergeDriver {.
 
+	/**
+	 * @var DiffMatchPatch
+	 */
 	private $dmp;
 
 	public function __construct() {
@@ -17,7 +20,12 @@ class DiffMatchPatchMergeDriver {
 	}
 
 	/**
+	 * Performs a three-way merge of the given text strings.
 	 *
+	 * @param string $common_parent The common parent text.
+	 * @param string $branch_a      The first branch text.
+	 * @param string $branch_b      The second branch text.
+	 * @param array  $options       Optional merge options.
 	 */
 	public function three_way_merge( $common_parent, $branch_a, $branch_b, $options = array() ) {
 		$diff_a = $this->dmp->diff_main( $common_parent, $branch_a );

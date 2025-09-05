@@ -1,5 +1,7 @@
 <?php
 
+// phpcs:disable
+
 class CorsProxyException extends Exception {
 
 }

@@ -21,7 +21,7 @@ class Layer implements Filesystem {
 	/**
 	 * @param  Filesystem $fs  The filesystem to delegate to.
 	 */
-	function __construct( Filesystem $fs ) {
+	public function __construct( Filesystem $fs ) {
 		$this->fs = $fs;
 	}
 

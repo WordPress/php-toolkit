@@ -50,6 +50,7 @@ if ( 'Windows' === PHP_OS_FAMILY && function_exists( 'sapi_windows_vt100_support
 	@sapi_windows_vt100_support( STDOUT, true );
 }
 
+// phpcs:disable Generic.Files.OneObjectStructurePerFile.MultipleFound
 interface ProgressReporter {
 	/**
 	 * Report progress update
@@ -80,6 +81,7 @@ interface ProgressReporter {
 	public function close(): void;
 }
 
+// phpcs:disable Generic.Files.OneObjectStructurePerFile.MultipleFound
 class TerminalProgressReporter implements ProgressReporter {
 	private $stdout;
 	private $last_progress      = -1;
@@ -163,6 +165,7 @@ class TerminalProgressReporter implements ProgressReporter {
 	}
 }
 
+// phpcs:disable WordPress.NamingConventions.ValidClassName
 class JsonProgressReporter implements ProgressReporter {
 	private $output_file;
 
@@ -221,6 +224,7 @@ class JsonProgressReporter implements ProgressReporter {
 	}
 }
 
+// phpcs:disable Universal.Files.SeparateFunctionsFromOO.Mixed
 function createProgressReporter(): ProgressReporter {
 	$reporter = apply_filters( 'blueprint.progress_reporter', null );
 	if ( $reporter ) {

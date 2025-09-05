@@ -138,9 +138,8 @@ class GitEndpoint {
 	 *
 	 * @see https://git-scm.com/docs/protocol-v2#_ls_refs
 	 *
-	 * @param  array $request_bytes  The parsed request data
-	 *
-	 * @return string The response in Git protocol v2 format
+	 * @param  array                   $request_bytes  The parsed request data
+	 * @param  GitProtocolEncoderPipe  $git_response   The response encoder
 	 */
 	public function handle_ls_refs_request( $request_bytes, GitProtocolEncoderPipe $git_response ) {
 		$parsed = $this->parse_message( $request_bytes );
@@ -391,8 +390,8 @@ class GitEndpoint {
 	/**
 	 * Handle Git protocol v2 push command
 	 *
-	 * @param  string              $request_bytes  Raw request bytes
-	 * @param  ResponseWriteStream $response  Response writer
+	 * @param  array                   $request_bytes  The request data
+	 * @param  GitProtocolEncoderPipe  $git_response   The response encoder
 	 *
 	 * @return bool Success status
 	 */
@@ -472,7 +471,7 @@ class GitEndpoint {
 	/**
 	 * Parse a push request according to Git protocol v2
 	 *
-	 * @param  string $request_bytes  Raw request bytes
+	 * @param  GitProtocolDecoder $protocol_reader  The protocol decoder
 	 *
 	 * @return array|false Parsed request data or false on error
 	 */

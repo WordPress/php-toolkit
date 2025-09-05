@@ -40,7 +40,8 @@ class EnforceYodaComparisonSniff implements Sniff {
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-	 * @param int $comparisonTokenPointer
+	 * @param File $phpcs_file The file being processed.
+	 * @param int  $comparison_token_pointer The position of the comparison token.
 	 */
 	public function process( File $phpcs_file, $comparison_token_pointer ): void {
 		$tokens            = $phpcs_file->getTokens();

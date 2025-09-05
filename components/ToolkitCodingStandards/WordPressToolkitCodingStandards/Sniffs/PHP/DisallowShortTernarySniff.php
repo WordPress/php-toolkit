@@ -30,7 +30,8 @@ class DisallowShortTernarySniff implements Sniff {
 
 	/**
 	 * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
-	 * @param int $stackPtr
+	 * @param File $phpcs_file The file being processed.
+	 * @param int  $stack_ptr  The position of the token.
 	 */
 	public function process( File $phpcs_file, $stack_ptr ): void {
 		$tokens = $phpcs_file->getTokens();

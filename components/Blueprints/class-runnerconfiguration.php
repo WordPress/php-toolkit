@@ -133,7 +133,7 @@ class RunnerConfiguration {
 	 * @param  string $databaseEngine  Database engine to use ('mysql' or 'sqlite')
 	 *
 	 * @return self
-	 * @throws InvalidArgumentException If the database engine is invalid
+	 * @throws InvalidArgumentException If the database engine is invalid.
 	 */
 	public function setDatabaseEngine( string $database_engine ): self {
 		if ( ! in_array( $database_engine, array( 'mysql', 'sqlite' ) ) ) {
