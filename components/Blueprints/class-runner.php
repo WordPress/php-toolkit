@@ -1024,7 +1024,7 @@ PHP
 				$media = array();
 				foreach ( $data['media'] as $path => $content ) {
 					if ( is_string( $content ) ) {
-						$media[ $path ] = MediaFileDefinition::fromArray(
+						$media[ $path ] = MediaFileDefinition::from_array(
 							array(
 								'source' => $this->createDataReference( $content, array( ExecutionContextPath::class ) ),
 							)
@@ -1032,7 +1032,7 @@ PHP
 						continue;
 					}
 
-					$media[ $path ] = MediaFileDefinition::fromArray(
+					$media[ $path ] = MediaFileDefinition::from_array(
 						array(
 							'source'      => $this->createDataReference( $content['source'], array( ExecutionContextPath::class ) ),
 							'title'       => $content['title'] ?? null,

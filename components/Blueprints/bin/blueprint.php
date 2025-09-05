@@ -31,6 +31,10 @@
  * ✅ @TODO: Prevent remote resources from using local bundle paths
  */
 
+// Disable phpcs for now – there's a few classes declared in this file. Let's split
+// them out into separate files eventually.
+
+// phpcs:disable
 require __DIR__ . '/../../../vendor/autoload.php';
 
 use WordPress\CLI\CLI;

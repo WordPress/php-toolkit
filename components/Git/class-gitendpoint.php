@@ -390,7 +390,7 @@ class GitEndpoint {
 	/**
 	 * Handle Git protocol v2 push command
 	 *
-	 * @param  array                  $request_bytes  The request data
+	 * @param  string                 $request_bytes  The request data
 	 * @param  GitProtocolEncoderPipe $git_response   The response encoder
 	 *
 	 * @return bool Success status

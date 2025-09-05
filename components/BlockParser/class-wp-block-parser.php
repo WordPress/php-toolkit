@@ -411,11 +411,11 @@ class WP_Block_Parser {
  *
  * Required for backward compatibility in WordPress Core.
  */
-require_once __DIR__ . '/class-wpblockparserblock.php';
+require_once __DIR__ . '/class-wp-block-parser-block.php';
 
 /**
  * WP_Block_Parser_Frame class.
  *
  * Required for backward compatibility in WordPress Core.
  */
-require_once __DIR__ . '/class-wpblockparserframe.php';
+require_once __DIR__ . '/class-wp-block-parser-frame.php';

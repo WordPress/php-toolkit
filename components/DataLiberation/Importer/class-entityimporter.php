@@ -797,8 +797,8 @@ class EntityImporter {
 	/**
 	 * If fetching attachments is enabled then attempt to create a new attachment
 	 *
-	 * @param  array  $post  Attachment post details from WXR
-	 * @param  string $meta  URL to fetch attachment from
+	 * @param  array           $post  Attachment post details from WXR
+	 * @param  iterable|object $meta  URL to fetch attachment from
 	 *
 	 * @return int|WP_Error Post ID on success, WP_Error otherwise
 	 */
