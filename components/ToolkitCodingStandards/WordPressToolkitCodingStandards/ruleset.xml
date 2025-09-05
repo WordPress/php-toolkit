@@ -3,5 +3,5 @@
     <description>Local custom sniffs for WordPress toolkit.</description>
     <rule ref="WordPressToolkitCodingStandards.PHP.EnforceYodaComparison"/>
     <rule ref="WordPressToolkitCodingStandards.Commenting.InlineCommentPunctuation"/>
+    <rule ref="WordPressToolkitCodingStandards.PHP.DisallowShortTernary"/>
 </ruleset>
-
