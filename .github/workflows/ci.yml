@@ -2,9 +2,8 @@ name: Continuous Integration
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ trunk ]
   pull_request:
-    branches: [ main, master, develop ]
 
 jobs:
   code-quality:
