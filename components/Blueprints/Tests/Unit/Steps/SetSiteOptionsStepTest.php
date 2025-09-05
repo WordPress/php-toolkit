@@ -32,7 +32,7 @@ PHP
 			[
 				'OPTIONS' => json_encode( $expected_options ),
 			]
-		)->outputFileContent;
+		)->output_file_content;
 
 		$actual_options = json_decode( $result, true );
 
@@ -113,7 +113,7 @@ update_option('users_can_register', 0);
 update_option('default_role', 'subscriber');
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		// Now update them
 		$options = [

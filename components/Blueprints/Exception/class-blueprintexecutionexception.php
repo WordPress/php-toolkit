@@ -10,10 +10,10 @@ class BlueprintExecutionException extends Exception {
 	/**
 	 * @var ValidationError|null
 	 */
-	public $schemaError;
+	public $schema_error;
 
-	public function __construct( string $message, $code = 0, ?Throwable $previous = null, ?ValidationError $schemaError = null ) {
+	public function __construct( string $message, $code = 0, ?Throwable $previous = null, ?ValidationError $schema_error = null ) {
 		parent::__construct( $message, $code, $previous );
-		$this->schemaError = $schemaError;
+		$this->schema_error = $schema_error;
 	}
 }

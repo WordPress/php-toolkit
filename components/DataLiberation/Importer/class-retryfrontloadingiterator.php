@@ -50,7 +50,7 @@ class RetryFrontloadingIterator implements Iterator {
 			return null;
 		}
 
-		return $this->current->ID;
+		return $this->current->id;
 	}
 
 	public function valid(): bool {
@@ -92,21 +92,21 @@ class RetryFrontloadingIterator implements Iterator {
 		);
 		$last_placeholder   = end( $this->placeholders );
 		if ( $last_placeholder ) {
-			$this->last_id_on_page = $last_placeholder->ID;
+			$this->last_id_on_page = $last_placeholder->id;
 		}
 
 		update_meta_cache(
 			'post',
 			array_map(
 				function ( $placeholder ) {
-					return $placeholder->ID;
+					return $placeholder->id;
 				},
 				$this->placeholders
 			)
 		);
 
 		foreach ( $this->placeholders as $placeholder ) {
-			$placeholder->meta = get_all_post_meta_flat( $placeholder->ID );
+			$placeholder->meta = get_all_post_meta_flat( $placeholder->id );
 		}
 	}
 }

@@ -10,7 +10,7 @@ use WordPress\Blueprints\VersionStrings\VersionConstraint;
 use WordPress\Blueprints\VersionStrings\WordPressVersion;
 
 class ExistingSiteResolver {
-	static public function resolve( Runtime $runtime, Tracker $progress, ?VersionConstraint $wpVersionConstraint = null ) {
+	static public function resolve( Runtime $runtime, Tracker $progress, ?VersionConstraint $wp_version_constraint = null ) {
 		$progress->split( [
 			'verify_installation' => 3,
 			'check_compatibility' => 3,
@@ -18,11 +18,11 @@ class ExistingSiteResolver {
 		] );
 
 		$config    = $runtime->getConfiguration();
-		$targetFs  = $runtime->getTargetFilesystem();
+		$target_fs  = $runtime->getTargetFilesystem();
 
 		// 1. Verify it's a valid WordPress installation
 		$progress['verify_installation']->setCaption( 'Verifying WordPress installation' );
-		if ( ! $targetFs->exists( 'wp-load.php' ) ) {
+		if ( ! $target_fs->exists( 'wp-load.php' ) ) {
 			throw new BlueprintExecutionException(
 				'The target site does not appear to be a valid WordPress installation (wp-load.php not found)'
 			);
@@ -36,7 +36,7 @@ class ExistingSiteResolver {
 				$is_installed = function_exists("is_blog_installed") && is_blog_installed() ? "true" : "false";
 				append_output("WordPress is installed: " . $is_installed);
 				'
-			)->outputFileContent;
+			)->output_file_content;
 
 			if ( $result !== 'WordPress is installed: true' ) {
 				throw new BlueprintExecutionException(
@@ -53,25 +53,25 @@ class ExistingSiteResolver {
 
 		// 2. Check WordPress version compatibility
 		$progress['check_compatibility']->setCaption( 'Checking WordPress version compatibility' );
-		if ( $wpVersionConstraint ) {
+		if ( $wp_version_constraint ) {
 			// Get current WordPress version
-			$currentWordPressVersion = WordPressVersion::fromString(
+			$current_word_press_version = WordPressVersion::fromString(
 				trim(
 					$runtime->evalPhpCodeInSubProcess(
 						'<?php
 						require_once(getenv("DOCROOT") . "/wp-includes/version.php");
 						append_output( $wp_version );
 						'
-					)->outputFileContent
+					)->output_file_content
 				)
 			);
 
-			if ( ! $wpVersionConstraint->satisfiedBy( $currentWordPressVersion ) ) {
+			if ( ! $wp_version_constraint->satisfiedBy( $current_word_press_version ) ) {
 				throw new BlueprintExecutionException(
 					sprintf(
 						'WordPress version incompatible. Blueprint requires %s, but the site has version %s',
-						$wpVersionConstraint->__toString(),
-						$currentWordPressVersion->__toString()
+						$wp_version_constraint->__toString(),
+						$current_word_press_version->__toString()
 					)
 				);
 			}
@@ -84,11 +84,11 @@ class ExistingSiteResolver {
 
 		// 4. Verify database engine matches
 		$progress['verify_database']->setCaption( 'Verifying database configuration' );
-		$requiredEngine = $config->getDatabaseEngine();
+		$required_engine = $config->getDatabaseEngine();
 
 		// Check if SQLite integration plugin is active when using SQLite
-		if ( $requiredEngine === 'sqlite' ) {
-			$sqliteActive = $runtime->evalPhpCodeInSubProcess(
+		if ( $required_engine === 'sqlite' ) {
+			$sqlite_active = $runtime->evalPhpCodeInSubProcess(
 				'<?php
 				require_once(getenv("DOCROOT") . "/wp-load.php");
 				
@@ -100,16 +100,16 @@ class ExistingSiteResolver {
 				$is_db_file = file_exists(WP_CONTENT_DIR . "/db.php");                    
 				append_output( ($plugin_exists && $is_db_file) ? "true" : "false" );
 				'
-			)->outputFileContent;
+			)->output_file_content;
 
-			if ( trim( $sqliteActive ) !== 'true' ) {
+			if ( trim( $sqlite_active ) !== 'true' ) {
 				throw new BlueprintExecutionException(
 					'The Blueprint requires SQLite database engine, but the site is not using SQLite integration'
 				);
 			}
-		} elseif ( $requiredEngine === 'mysql' ) {
+		} elseif ( $required_engine === 'mysql' ) {
 			// For MySQL, verify it's not using SQLite
-			$usingMysql = $runtime->evalPhpCodeInSubProcess(
+			$using_mysql = $runtime->evalPhpCodeInSubProcess(
 				'<?php
 				require_once(getenv("DOCROOT") . "/wp-load.php");
 				
@@ -125,9 +125,9 @@ class ExistingSiteResolver {
 				// Using MySQL if NOT using SQLite
 				append_output( (!$is_sqlite_active && !$is_sqlite_db_file) ? "true" : "false" );
 				'
-			)->outputFileContent;
+			)->output_file_content;
 
-			if ( trim( $usingMysql ) !== 'true' ) {
+			if ( trim( $using_mysql ) !== 'true' ) {
 				throw new BlueprintExecutionException(
 					'The Blueprint requires MySQL database engine, but the site appears to be using SQLite'
 				);

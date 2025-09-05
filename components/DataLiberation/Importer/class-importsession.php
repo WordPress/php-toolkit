@@ -158,7 +158,7 @@ class ImportSession {
 			return false;
 		}
 
-		return new self( $posts[0]->ID );
+		return new self( $posts[0]->id );
 	}
 
 	public function __construct( $post_id ) {
@@ -367,13 +367,13 @@ class ImportSession {
 		$posts = $query->posts;
 		$ids   = array_map(
 			function ( $post ) {
-				return $post->ID;
+				return $post->id;
 			},
 			$posts
 		);
 		update_meta_cache( 'post', $ids );
 		foreach ( $posts as $post ) {
-			$post->meta = get_all_post_meta_flat( $post->ID );
+			$post->meta = get_all_post_meta_flat( $post->id );
 		}
 
 		return $posts;
@@ -527,9 +527,9 @@ class ImportSession {
 				continue;
 			}
 
-			update_post_meta( $placeholder->ID, 'last_error', $event->error );
+			update_post_meta( $placeholder->id, 'last_error', $event->error );
 
-			$attempts     = get_post_meta( $placeholder->ID, 'attempts', true );
+			$attempts     = get_post_meta( $placeholder->id, 'attempts', true );
 			$new_attempts = $attempts;
 			$new_status   = $placeholder->post_status;
 			switch ( $event->type ) {
@@ -547,13 +547,13 @@ class ImportSession {
 			}
 
 			if ( $new_attempts !== $attempts ) {
-				update_post_meta( $placeholder->ID, 'attempts', $new_attempts );
+				update_post_meta( $placeholder->id, 'attempts', $new_attempts );
 			}
 
 			if ( $new_status !== $placeholder->post_status ) {
 				wp_update_post(
 					array(
-						'ID'          => $placeholder->ID,
+						'ID'          => $placeholder->id,
 						'post_status' => $new_status,
 					)
 				);

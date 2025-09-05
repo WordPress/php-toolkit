@@ -32,7 +32,7 @@ $result = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
 append_output( ($result === $table_name) ? 'true' : 'false' );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		$this->assertEquals( 'true', $table_exists );
 	}
@@ -67,7 +67,7 @@ append_output( json_encode([
 ]) );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		$data = json_decode( $result, true );
 		$this->assertEquals( 3, $data['count'] );
@@ -98,7 +98,7 @@ require_once getenv('DOCROOT') . '/wp-load.php';
 append_output( get_option('sql_test_option') );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		$this->assertEquals( 'updated_via_sql', $option_value );
 	}
@@ -135,7 +135,7 @@ append_output( json_encode([
 ]) );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		$data = json_decode( $result, true );
 		$this->assertEquals( 'table_1_data', $data['table1'] );
@@ -164,7 +164,7 @@ $result = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
 append_output( ($result === $table_name) ? 'true' : 'false' );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		$this->assertEquals( 'true', $table_exists );
 	}

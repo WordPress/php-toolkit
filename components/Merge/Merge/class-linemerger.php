@@ -7,30 +7,30 @@ use WordPress\Merge\MergeConflictException;
 
 class LineMerger implements Merger {
 
-	public function merge( Diff $diffAB, Diff $diffAC ): MergeResult {
-		$linesA = $this->to_chunks( $diffAB->get_changes() );
-		$linesB = $this->to_chunks( $diffAC->get_changes() );
+	public function merge( Diff $diff_ab, Diff $diff_ac ): MergeResult {
+		$lines_a = $this->to_chunks( $diff_ab->get_changes() );
+		$lines_b = $this->to_chunks( $diff_ac->get_changes() );
 
 		$results = array();
-		$n       = max( count( $linesA ), count( $linesB ) );
+		$n       = max( count( $lines_a ), count( $lines_b ) );
 
 		for ( $i = 0; $i < $n; $i ++ ) {
-			$lineA = $linesA[ $i ] ?? array(
+			$line_a = $lines_a[ $i ] ?? array(
 				'base'     => null,
 				'deleted'  => false,
 				'inserted' => '',
 			);
-			$lineB = $linesB[ $i ] ?? array(
+			$line_b = $lines_b[ $i ] ?? array(
 				'base'     => null,
 				'deleted'  => false,
 				'inserted' => '',
 			);
 
 			// Handle conflicting insertions
-			if ( $lineA['inserted'] !== '' && $lineB['inserted'] !== '' && $lineA['inserted'] !== $lineB['inserted'] ) {
+			if ( $line_a['inserted'] !== '' && $line_b['inserted'] !== '' && $line_a['inserted'] !== $line_b['inserted'] ) {
 				$results[] = new MergeConflict(
-					$lineA['inserted'],
-					$lineB['inserted'],
+					$line_a['inserted'],
+					$line_b['inserted'],
 					array(
 						'message' => 'Conflicting insertions',
 					)
@@ -39,20 +39,20 @@ class LineMerger implements Merger {
 			}
 
 			// Handle base line differences
-			if ( $lineA['base'] === null || $lineB['base'] === null ) {
-				if ( $lineA['base'] !== null ) {
-					$results[] = $lineA['base'] . $lineA['inserted'];
-				} elseif ( $lineB['base'] !== null ) {
-					$results[] = $lineB['base'] . $lineB['inserted'];
+			if ( $line_a['base'] === null || $line_b['base'] === null ) {
+				if ( $line_a['base'] !== null ) {
+					$results[] = $line_a['base'] . $line_a['inserted'];
+				} elseif ( $line_b['base'] !== null ) {
+					$results[] = $line_b['base'] . $line_b['inserted'];
 				}
 				continue;
 			}
 
 			// Conflict if base lines are different
-			if ( $lineA['base'] !== $lineB['base'] ) {
+			if ( $line_a['base'] !== $line_b['base'] ) {
 				$results[] = new MergeConflict(
-					$lineA['base'],
-					$lineB['base'],
+					$line_a['base'],
+					$line_b['base'],
 					array(
 						'message' => 'Mismatched base lines',
 					)
@@ -61,19 +61,19 @@ class LineMerger implements Merger {
 			}
 
 			// Handle deletions
-			if ( $lineA['deleted'] || $lineB['deleted'] ) {
-				if ( $lineA['deleted'] && $lineB['deleted'] ) {
+			if ( $line_a['deleted'] || $line_b['deleted'] ) {
+				if ( $line_a['deleted'] && $line_b['deleted'] ) {
 					continue;
 				}
 
-				$deletion    = $lineA['deleted'] ? $lineA : $lineB;
-				$nonDeletion = $lineA['deleted'] ? $lineB : $lineA;
+				$deletion    = $line_a['deleted'] ? $line_a : $line_b;
+				$non_deletion = $line_a['deleted'] ? $line_b : $line_a;
 
 				if ( $deletion['inserted'] ) {
-					if ( $nonDeletion['inserted'] !== '' ) {
+					if ( $non_deletion['inserted'] !== '' ) {
 						$results[] = new MergeConflict(
 							$deletion['inserted'],
-							$nonDeletion['inserted'],
+							$non_deletion['inserted'],
 							array(
 								'message' => 'Deletion with conflicting insertion',
 							)
@@ -87,9 +87,9 @@ class LineMerger implements Merger {
 			}
 
 			// Default case: use base line and any insertion
-			$results[]     = $lineA['base'];
-			$onlyInsertion = $lineA['inserted'] !== '' ? $lineA['inserted'] : $lineB['inserted'];
-			$results[]     = $onlyInsertion;
+			$results[]     = $line_a['base'];
+			$only_insertion = $line_a['inserted'] !== '' ? $line_a['inserted'] : $line_b['inserted'];
+			$results[]     = $only_insertion;
 		}
 
 		return new MergeResult( $results );

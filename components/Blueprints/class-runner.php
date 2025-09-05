@@ -83,35 +83,35 @@ class Runner {
 	/**
 	 * @var LocalFilesystem
 	 */
-	private $blueprintExecutionContext;
+	private $blueprint_execution_context;
 	/**
 	 * @var mixed[]
 	 */
-	private $blueprintArray;
+	private $blueprint_array;
 	/**
 	 * @var mixed[]
 	 */
-	private $dataReferencesToAutoResolve = [];
+	private $data_references_to_auto_resolve = [];
 	/**
 	 * @var VersionConstraint|null
 	 */
-	private $phpVersionConstraint;
+	private $php_version_constraint;
 	/**
 	 * @var VersionConstraint|null
 	 */
-	private $wpVersionConstraint;
+	private $wp_version_constraint;
 	/**
 	 * @var string
 	 */
-	private $recommendedWpVersion = 'latest';
+	private $recommended_wp_version = 'latest';
 	/**
 	 * @var Tracker
 	 */
-	private $mainTracker;
+	private $main_tracker;
 	/**
 	 * @var ProgressObserver
 	 */
-	private $progressObserver;
+	private $progress_observer;
 	/**
 	 * @var Runtime|null
 	 */
@@ -122,15 +122,15 @@ class Runner {
 		$this->validateConfiguration( $configuration );
 
 		$this->client      = apply_filters('blueprint.http_client', new Client());
-		$this->mainTracker = new Tracker();
+		$this->main_tracker = new Tracker();
 
 		// Set up progress logging
-		$this->progressObserver = $configuration->getProgressObserver() ?? new ProgressObserver();
-		$this->progressObserver->attachTo( $this->mainTracker );
+		$this->progress_observer = $configuration->getProgressObserver() ?? new ProgressObserver();
+		$this->progress_observer->attachTo( $this->main_tracker );
 	}
 
 	public function getExecutionContext(): Filesystem {
-		return $this->blueprintExecutionContext;
+		return $this->blueprint_execution_context;
 	}
 
 	private function validateConfiguration( RunnerConfiguration $config ): void {
@@ -149,34 +149,34 @@ class Runner {
 		// Validate site URL
 		// Note: $options is not defined in this context, so we skip this block.
 		// If you want to validate the site URL, you should use $config->getTargetSiteUrl().
-		$siteUrl = $config->getTargetSiteUrl();
+		$site_url = $config->getTargetSiteUrl();
 		if ( $mode === self::EXECUTION_MODE_CREATE_NEW_SITE ) {
-			if ( empty( $siteUrl ) ) {
+			if ( empty( $site_url ) ) {
 				throw new BlueprintExecutionException( sprintf( "Site URL is required when the execution mode is '%s'.", self::EXECUTION_MODE_CREATE_NEW_SITE ) );
 			}
 		}
-		if ( ! empty( $siteUrl ) && ! filter_var( $siteUrl, FILTER_VALIDATE_URL ) ) {
+		if ( ! empty( $site_url ) && ! filter_var( $site_url, FILTER_VALIDATE_URL ) ) {
 			throw new BlueprintExecutionException( "Site URL is not a valid URL." );
 		}
 
 		// Validate database engine
-		$dbEngine = $config->getDatabaseEngine();
-		if ( ! in_array( $dbEngine, [ 'mysql', 'sqlite' ], true ) ) {
+		$db_engine = $config->getDatabaseEngine();
+		if ( ! in_array( $db_engine, [ 'mysql', 'sqlite' ], true ) ) {
 			throw new BlueprintExecutionException( "Database engine must be either 'mysql' or 'sqlite'." );
 		}
 
 		// Validate database credentials
-		$dbCreds = $config->getDatabaseCredentials();
-		if ( $dbEngine === 'mysql' ) {
-			if ( empty( $dbCreds['username'] ) || empty( $dbCreds['databaseName'] ) ) {
+		$db_creds = $config->getDatabaseCredentials();
+		if ( $db_engine === 'mysql' ) {
+			if ( empty( $db_creds['username'] ) || empty( $db_creds['databaseName'] ) ) {
 				throw new BlueprintExecutionException( "MySQL credentials are required when database engine is 'mysql'." );
 			}
 			// Check if you can connect to the database
-			$host     = $dbCreds['host'] ?? '127.0.0.1';
-			$port     = $dbCreds['port'] ?? 3306;
-			$username = $dbCreds['username'] ?? '';
-			$password = $dbCreds['password'] ?? '';
-			$database = $dbCreds['databaseName'] ?? '';
+			$host     = $db_creds['host'] ?? '127.0.0.1';
+			$port     = $db_creds['port'] ?? 3306;
+			$username = $db_creds['username'] ?? '';
+			$password = $db_creds['password'] ?? '';
+			$database = $db_creds['databaseName'] ?? '';
 			$dsn      = "mysql:host=$host;port=$port;dbname=$database;charset=utf8mb4";
 			try {
 				new PDO( $dsn, $username, $password, [
@@ -193,21 +193,21 @@ class Runner {
 					$e
 				);
 			}
-		} elseif ( $dbEngine === 'sqlite' ) {
-			if ( empty( $dbCreds['path'] ) ) {
-				$dbCreds['path'] = 'wp-content/.ht.sqlite';
+		} elseif ( $db_engine === 'sqlite' ) {
+			if ( empty( $db_creds['path'] ) ) {
+				$db_creds['path'] = 'wp-content/.ht.sqlite';
 			}
 		}
 	}
 
 	public function run(): void {
-		$tempRoot = wp_unix_sys_get_temp_dir() . '/wp-blueprints-runtime-' . uniqid();
+		$temp_root = wp_unix_sys_get_temp_dir() . '/wp-blueprints-runtime-' . uniqid();
 
 		// TODO: Are there cases where we should not have these permissions?
-		mkdir( $tempRoot, 0777, true );
+		mkdir( $temp_root, 0777, true );
 
 		try {
-			$progress = $this->mainTracker;
+			$progress = $this->main_tracker;
 			// Create all top-level progress stages upfront so the tracker knows what %
 			// of the total work is being done with every progress update.
 			$progress->split( [
@@ -225,17 +225,17 @@ class Runner {
 			$progress['blueprint']->setCaption( 'Loading Blueprint data' );
 			$this->loadBlueprint();
 			$this->validateBlueprint();
-			$this->assets->setExecutionContext( $this->blueprintExecutionContext );
+			$this->assets->setExecutionContext( $this->blueprint_execution_context );
 			// Create the execution plan early on to surface any errors before
 			// making the user wait for any downloads or site resolution.
 			$plan = $this->createExecutionPlan();
 			$progress['blueprint']->finish();
 
 			$progress['targetResolution']->setCaption( 'Resolving target site' );
-			$targetSiteFs   = LocalFilesystem::create( $this->configuration->getTargetSiteRoot() );
-			$wpCliReference = $this->configuration->getWpCliReference();
+			$target_site_fs   = LocalFilesystem::create( $this->configuration->getTargetSiteRoot() );
+			$wp_cli_reference = $this->configuration->getWpCliReference();
 
-			$execution_context = $this->blueprintExecutionContext->get_meta();
+			$execution_context = $this->blueprint_execution_context->get_meta();
 			if(
 				isset($execution_context['root']) &&
 				( !is_string($execution_context['root']) || strlen($execution_context['root']) === 0)
@@ -244,33 +244,33 @@ class Runner {
 			}
 
 			$this->runtime  = new Runtime(
-				$targetSiteFs,
+				$target_site_fs,
 				$this->configuration,
 				$this->assets,
 				$this->client,
-				$this->blueprintArray,
-				$tempRoot,
-				$wpCliReference,
+				$this->blueprint_array,
+				$temp_root,
+				$wp_cli_reference,
 				isset($execution_context['root']) ? $execution_context['root'] : null
 			);
-			$this->progressObserver->setRuntime( $this->runtime );
+			$this->progress_observer->setRuntime( $this->runtime );
 			$progress['wpCli']->setCaption( 'Downloading WP-CLI' );
 			$this->assets->startEagerResolution( [
-				'wp-cli' => $wpCliReference,
+				'wp-cli' => $wp_cli_reference,
 			], $progress['wpCli'] );
 
 			$progress['targetResolution']->setCaption( 'Resolving target site' );
 			if ( $this->configuration->getExecutionMode() === self::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ) {
-				ExistingSiteResolver::resolve( $this->runtime, $progress['targetResolution'], $this->wpVersionConstraint );
+				ExistingSiteResolver::resolve( $this->runtime, $progress['targetResolution'], $this->wp_version_constraint );
 			} else {
-				NewSiteResolver::resolve( $this->runtime, $progress['targetResolution'], $this->wpVersionConstraint, $this->recommendedWpVersion );
+				NewSiteResolver::resolve( $this->runtime, $progress['targetResolution'], $this->wp_version_constraint, $this->recommended_wp_version );
 			}
 			$progress['targetResolution']->finish();
 
 			do_action('blueprint.target_resolved');
 
 			$progress['data']->setCaption( 'Resolving data references' );
-			$this->assets->startEagerResolution( $this->dataReferencesToAutoResolve, $progress['data'] );
+			$this->assets->startEagerResolution( $this->data_references_to_auto_resolve, $progress['data'] );
 			$this->executePlan( $progress['execution'], $plan, $this->runtime );
 
 			// @TODO: Assert WordPress is still correctly installed
@@ -278,7 +278,7 @@ class Runner {
 			$progress->finish();
 		} finally {
 			// TODO: Optionally preserve workspace in case of error? Support resuming after error?
-			LocalFilesystem::create( $tempRoot )->rmdir( '/', [
+			LocalFilesystem::create( $temp_root )->rmdir( '/', [
 				'recursive' => true,
 			] );
 		}
@@ -289,8 +289,8 @@ class Runner {
 		$reference = $this->configuration->getBlueprint();
 
 		if ( is_array( $reference ) ) {
-			$this->blueprintArray            = $reference;
-			$this->blueprintExecutionContext = InMemoryFilesystem::create();
+			$this->blueprint_array            = $reference;
+			$this->blueprint_execution_context = InMemoryFilesystem::create();
 
 			return;
 		}
@@ -304,8 +304,8 @@ class Runner {
 				FileReadStream::from_path( $reference->get_path() ),
 				$reference->get_filename()
 			);
-			$blueprintString                 = $resolved->getStream()->consume_all();
-			$this->blueprintExecutionContext = LocalFilesystem::create( dirname( $reference->get_path() ) );
+			$blueprint_string                 = $resolved->getStream()->consume_all();
+			$this->blueprint_execution_context = LocalFilesystem::create( dirname( $reference->get_path() ) );
 		} else {
 			// For the purposes of Blueprint resolution, the execution context is the
 			// current working directory. This way, a path such as ./blueprint.json
@@ -334,30 +334,30 @@ class Runner {
 				}
 
 				if ( is_zip_file_stream( $stream ) ) {
-					$blueprintString                 = $this->blueprintExecutionContext->get_contents( '/blueprint.json' );
-					$this->blueprintExecutionContext = new ZipFilesystem( $stream );
+					$blueprint_string                 = $this->blueprint_execution_context->get_contents( '/blueprint.json' );
+					$this->blueprint_execution_context = new ZipFilesystem( $stream );
 				} else {
 					// JSON file
-					$blueprintString = $stream->consume_all();
+					$blueprint_string = $stream->consume_all();
 					if ( $reference instanceof URLReference ) {
 						// @TODO: Only display this if the Blueprint references any bundled files. And in that case,
 						//        make it a fatal error.
 						$this->configuration->getLogger()->warning( 'Blueprints loaded from remote URLs have no execution context.' );
-						$this->blueprintExecutionContext = InMemoryFilesystem::create();
+						$this->blueprint_execution_context = InMemoryFilesystem::create();
 					} elseif ( $reference instanceof ExecutionContextPath ) {
 						// It was resolved as an ExecutionContextPath, but it's actually a local
 						// filesystem path at this point.
 						// The execution context is the directory containing the blueprint.json file.
-						$this->blueprintExecutionContext = LocalFilesystem::create( dirname( $reference->get_path() ) );
+						$this->blueprint_execution_context = LocalFilesystem::create( dirname( $reference->get_path() ) );
 					} elseif ( $reference instanceof InlineFile ) {
-						$this->blueprintExecutionContext = InMemoryFilesystem::create();
+						$this->blueprint_execution_context = InMemoryFilesystem::create();
 					} else {
 						throw new BlueprintExecutionException( 'Unsupported blueprint reference type: ' . get_class( $reference ) );
 					}
 				}
 			} elseif ( $resolved instanceof Directory ) {
-				$blueprintString                 = $resolved->filesystem->get_contents( '/blueprint.json' );
-				$this->blueprintExecutionContext = $resolved->filesystem;
+				$blueprint_string                 = $resolved->filesystem->get_contents( '/blueprint.json' );
+				$this->blueprint_execution_context = $resolved->filesystem;
 			} else {
 				throw new BlueprintExecutionException( 'Invalid blueprint reference type: ' . get_class( $reference ) );
 			}
@@ -368,9 +368,9 @@ class Runner {
 		// **UTF-8 Encoding:** Assert the Blueprint input is UTF-8 encoded.
 		$is_valid_utf8 = false;
 		if ( function_exists( 'mb_check_encoding' ) ) {
-			$is_valid_utf8 = mb_check_encoding( $blueprintString, 'UTF-8' );
+			$is_valid_utf8 = mb_check_encoding( $blueprint_string, 'UTF-8' );
 		} else {
-			$is_valid_utf8 = utf8_is_valid_byte_stream( $blueprintString );
+			$is_valid_utf8 = utf8_is_valid_byte_stream( $blueprint_string );
 		}
 
 		if ( ! $is_valid_utf8 ) {
@@ -378,46 +378,46 @@ class Runner {
 		}
 
 		// **JSON Validity:** Assert the input is a valid JSON document.
-		$this->blueprintArray = json_decode( $blueprintString, true );
+		$this->blueprint_array = json_decode( $blueprint_string, true );
 		if ( json_last_error() !== JSON_ERROR_NONE ) {
 			throw new BlueprintExecutionException( 'Blueprint must be a valid JSON document.' );
 		}
 
-		if ( ! is_array( $this->blueprintArray ) ) {
+		if ( ! is_array( $this->blueprint_array ) ) {
 			throw new BlueprintExecutionException( 'Blueprint must be an array.' );
 		}
 	}
 
 	private function validateBlueprint(): void {
-		if ( ! isset( $this->blueprintArray['version'] ) ) {
-			$error = V1ToV2Transpiler::validate_v1_blueprint( $this->blueprintArray );
+		if ( ! isset( $this->blueprint_array['version'] ) ) {
+			$error = V1ToV2Transpiler::validate_v1_blueprint( $this->blueprint_array );
 			if ( $error ) {
 				throw new BlueprintExecutionException( 'Invalid Blueprint v1 provided.', 0, null, $error );
 			}
 			$this->configuration->getLogger()->debug( 'Blueprint v1 detected. Transpiling to v2...' );
 
 			$transpiler           = new V1ToV2Transpiler( $this->configuration->getLogger() );
-			$this->blueprintArray = $transpiler->upgrade( $this->blueprintArray );
+			$this->blueprint_array = $transpiler->upgrade( $this->blueprint_array );
 		}
 
-		$this->configuration->getLogger()->debug( 'Final resolved Blueprint: ' . json_encode( $this->blueprintArray, JSON_PRETTY_PRINT ) );
+		$this->configuration->getLogger()->debug( 'Final resolved Blueprint: ' . json_encode( $this->blueprint_array, JSON_PRETTY_PRINT ) );
 
-		$this->blueprintArray = apply_filters( 'blueprint.resolved', $this->blueprintArray );
+		$this->blueprint_array = apply_filters( 'blueprint.resolved', $this->blueprint_array );
 
 		// Assert the Blueprint conforms to the latest JSON schema.
 		$v     = new HumanFriendlySchemaValidator(
 			json_decode( file_get_contents( __DIR__ . '/Versions/Version2/json-schema/schema-v2.json' ), true )
 		);
-		$error = $v->validate( $this->blueprintArray );
+		$error = $v->validate( $this->blueprint_array );
 		if ( $error ) {
 			throw new BlueprintExecutionException( 'Blueprint does not conform to the schema.', 0, null, $error );
 		}
 
 		// PHP Version Constraint
-		if ( isset( $this->blueprintArray['phpVersion'] ) ) {
+		if ( isset( $this->blueprint_array['phpVersion'] ) ) {
 			$min = $max = $recommended = null;
 
-			$php_version = $this->blueprintArray['phpVersion'];
+			$php_version = $this->blueprint_array['phpVersion'];
 			if ( is_string( $php_version ) ) {
 				$parsed_version = PHPVersion::fromString( $php_version );
 				if ( ! $parsed_version ) {
@@ -444,31 +444,31 @@ class Runner {
 					}
 				}
 			}
-			$this->phpVersionConstraint = new VersionConstraint( $min, $max, $recommended );
-			$phpConstraintErrors        = $this->phpVersionConstraint->validate();
-			if ( ! empty( $phpConstraintErrors ) ) {
-				throw new BlueprintExecutionException( 'Invalid PHP version constraint: ' . implode( '; ', $phpConstraintErrors ) );
+			$this->php_version_constraint = new VersionConstraint( $min, $max, $recommended );
+			$php_constraint_errors        = $this->php_version_constraint->validate();
+			if ( ! empty( $php_constraint_errors ) ) {
+				throw new BlueprintExecutionException( 'Invalid PHP version constraint: ' . implode( '; ', $php_constraint_errors ) );
 			}
 
 			// Confirm the environment satisfies the PHP version constraint.
-			$currentPhpVersion = PHPVersion::fromString( PHP_VERSION );
-			if ( ! $this->phpVersionConstraint->satisfiedBy( $currentPhpVersion ) ) {
+			$current_php_version = PHPVersion::fromString( PHP_VERSION );
+			if ( ! $this->php_version_constraint->satisfiedBy( $current_php_version ) ) {
 				throw new BlueprintExecutionException(
 					sprintf(
 						'PHP version requirement not satisfied. Blueprint requires %s, but current version is %s',
-						$this->phpVersionConstraint->__toString(),
-						$currentPhpVersion
+						$this->php_version_constraint->__toString(),
+						$current_php_version
 					)
 				);
 			}
 		}
 
 		// WordPress Version Constraint
-		if ( isset( $this->blueprintArray['wordpressVersion'] ) ) {
-			$wp_version = $this->blueprintArray['wordpressVersion'];
+		if ( isset( $this->blueprint_array['wordpressVersion'] ) ) {
+			$wp_version = $this->blueprint_array['wordpressVersion'];
 			$min = $max = $recommended = null;
 			if ( is_string( $wp_version ) ) {
-				$this->recommendedWpVersion = $wp_version;
+				$this->recommended_wp_version = $wp_version;
 				$recommended = WordPressVersion::fromString( $wp_version );
 				if ( false === $recommended ) {
 					throw new BlueprintExecutionException( 'Invalid WordPress version string in wordpressVersion: ' . $wp_version );
@@ -490,7 +490,7 @@ class Runner {
 				// existing sites and VersionConstraint doesn't support it. It doesn't have
 				// enough information anyway – the meaning of "latest" changes over time.
 				if ( isset( $wp_version['max'] ) && $wp_version['max'] !== 'latest' ) {
-					$this->recommendedWpVersion = $wp_version['max'];
+					$this->recommended_wp_version = $wp_version['max'];
 					$max = WordPressVersion::fromString( $wp_version['max'] );
 					if ( ! $max ) {
 						// @TODO: Reuse this error message
@@ -499,7 +499,7 @@ class Runner {
 					}
 				}
 				if ( isset( $wp_version['recommended'] ) && $wp_version['recommended'] !== 'latest' ) {
-					$this->recommendedWpVersion = $wp_version['recommended'];
+					$this->recommended_wp_version = $wp_version['recommended'];
 					$recommended = WordPressVersion::fromString( $wp_version['recommended'] );
 					if ( false === $recommended ) {
 						throw new BlueprintExecutionException( 'Invalid WordPress version string in wordpressVersion.recommended: ' . $wp_version['recommended'] );
@@ -507,10 +507,10 @@ class Runner {
 				}
 			}
 
-			$this->wpVersionConstraint = new VersionConstraint( $min, $max, $recommended );
-			$wpConstraintErrors        = $this->wpVersionConstraint->validate();
-			if ( ! empty( $wpConstraintErrors ) ) {
-				throw new BlueprintExecutionException( 'Invalid WordPress version constraint: ' . implode( '; ', $wpConstraintErrors ) );
+			$this->wp_version_constraint = new VersionConstraint( $min, $max, $recommended );
+			$wp_constraint_errors        = $this->wp_version_constraint->validate();
+			if ( ! empty( $wp_constraint_errors ) ) {
+				throw new BlueprintExecutionException( 'Invalid WordPress version constraint: ' . implode( '; ', $wp_constraint_errors ) );
 			}
 			// Note: In here's we're only checking if the version constraint is defined
 			// correctly. The actual version check for WordPress is done in
@@ -518,16 +518,16 @@ class Runner {
 		}
 
 		// Validate the override constraint if it was set
-		if ( $this->wpVersionConstraint ) {
-			$wpConstraintErrors = $this->wpVersionConstraint->validate();
-			if ( ! empty( $wpConstraintErrors ) ) {
-				throw new BlueprintExecutionException( 'Invalid WordPress version constraint from CLI override: ' . implode( '; ', $wpConstraintErrors ) );
+		if ( $this->wp_version_constraint ) {
+			$wp_constraint_errors = $this->wp_version_constraint->validate();
+			if ( ! empty( $wp_constraint_errors ) ) {
+				throw new BlueprintExecutionException( 'Invalid WordPress version constraint from CLI override: ' . implode( '; ', $wp_constraint_errors ) );
 			}
 		}
 	}
 
 	private function createExecutionPlan(): array {
-		$validated_array = $this->blueprintArray;
+		$validated_array = $this->blueprint_array;
 		// --- Process Declarative Properties into Steps (in order) ---
 
 		$plan = [];
@@ -548,12 +548,12 @@ class Runner {
 		// 3. muPlugins - Install via writeFiles step
 		if ( ! empty( $validated_array['muPlugins'] ) && is_array( $validated_array['muPlugins'] ) ) {
 			$files = [];
-			foreach ( $validated_array['muPlugins'] as $pluginPath => $pluginContent ) {
-				if ( is_string( $pluginPath ) && is_string( $pluginContent ) ) {
-					$files[ '/wp-content/mu-plugins/' . $pluginPath ] = $pluginContent;
-				} elseif ( is_string( $pluginContent ) ) {
+			foreach ( $validated_array['muPlugins'] as $plugin_path => $plugin_content ) {
+				if ( is_string( $plugin_path ) && is_string( $plugin_content ) ) {
+					$files[ '/wp-content/mu-plugins/' . $plugin_path ] = $plugin_content;
+				} elseif ( is_string( $plugin_content ) ) {
 					// Handle numeric keys
-					$files[ '/wp-content/mu-plugins/' . basename( $pluginContent ) ] = $pluginContent;
+					$files[ '/wp-content/mu-plugins/' . basename( $plugin_content ) ] = $plugin_content;
 				}
 			}
 			if ( ! empty( $files ) ) {
@@ -563,20 +563,20 @@ class Runner {
 
 		// 4. themes (install non-active)
 		if ( ! empty( $validated_array['themes'] ) && is_array( $validated_array['themes'] ) ) {
-			foreach ( $validated_array['themes'] as $themeRef ) {
-				if ( is_string( $themeRef ) ) {
+			foreach ( $validated_array['themes'] as $theme_ref ) {
+				if ( is_string( $theme_ref ) ) {
 					$plan[] = $this->createStepObject( 'installTheme', [
-						'source'               => $themeRef,
+						'source'               => $theme_ref,
 						'active'               => false,
 						'importStarterContent' => false,
 					] );
-				} elseif ( is_array( $themeRef ) && isset( $themeRef['source'] ) && is_string( $themeRef['source'] ) ) {
+				} elseif ( is_array( $theme_ref ) && isset( $theme_ref['source'] ) && is_string( $theme_ref['source'] ) ) {
 					// Pass through the raw definition for extensibility.
 					$plan[] = $this->createStepObject( 'installTheme', [
-						'source'               => $themeRef['source'],
-						'active'               => $themeRef['active'] ?? false,
-						'importStarterContent' => $themeRef['importStarterContent'] ?? false,
-						'targetDirectoryName'  => $themeRef['targetDirectoryName'] ?? null,
+						'source'               => $theme_ref['source'],
+						'active'               => $theme_ref['active'] ?? false,
+						'importStarterContent' => $theme_ref['importStarterContent'] ?? false,
+						'targetDirectoryName'  => $theme_ref['targetDirectoryName'] ?? null,
 					] );
 				} else {
 					throw new InvalidArgumentException( 'Invalid theme reference format in "themes" array.' );
@@ -586,19 +586,19 @@ class Runner {
 
 		// 5. activeTheme (install and activate)
 		if ( isset( $validated_array['activeTheme'] ) ) {
-			$themeRef = $validated_array['activeTheme'];
-			if ( is_string( $themeRef ) ) {
+			$theme_ref = $validated_array['activeTheme'];
+			if ( is_string( $theme_ref ) ) {
 				$plan[] = $this->createStepObject( 'installTheme', [
-					'source'               => $themeRef,
+					'source'               => $theme_ref,
 					'active'               => true,
 					'importStarterContent' => false,
 				] );
-			} elseif ( is_array( $themeRef ) && isset( $themeRef['source'] ) && is_string( $themeRef['source'] ) ) {
+			} elseif ( is_array( $theme_ref ) && isset( $theme_ref['source'] ) && is_string( $theme_ref['source'] ) ) {
 				$plan[] = $this->createStepObject( 'installTheme', [
-					'source'               => $themeRef['source'],
+					'source'               => $theme_ref['source'],
 					'active'               => true,
-					'importStarterContent' => $themeRef['importStarterContent'] ?? false,
-					'targetDirectoryName'  => $themeRef['targetDirectoryName'] ?? null,
+					'importStarterContent' => $theme_ref['importStarterContent'] ?? false,
+					'targetDirectoryName'  => $theme_ref['targetDirectoryName'] ?? null,
 				] );
 			} else {
 				throw new InvalidArgumentException( 'Invalid theme reference format for "activeTheme".' );
@@ -607,13 +607,13 @@ class Runner {
 
 		// 6. plugins
 		if ( ! empty( $validated_array['plugins'] ) && is_array( $validated_array['plugins'] ) ) {
-			foreach ( $validated_array['plugins'] as $pluginDef ) {
-				if ( is_string( $pluginDef ) ) {
-					$pluginDef = [
-						'source' => $pluginDef,
+			foreach ( $validated_array['plugins'] as $plugin_def ) {
+				if ( is_string( $plugin_def ) ) {
+					$plugin_def = [
+						'source' => $plugin_def,
 					];
 				}
-				$plan[] = $this->createStepObject( 'installPlugin', $pluginDef );
+				$plan[] = $this->createStepObject( 'installPlugin', $plugin_def );
 			}
 		}
 
@@ -655,8 +655,8 @@ class Runner {
 
 		// 14. additionalStepsAfterExecution
 		if ( ! empty( $validated_array['additionalStepsAfterExecution'] ) && is_array( $validated_array['additionalStepsAfterExecution'] ) ) {
-			foreach ( $validated_array['additionalStepsAfterExecution'] as $stepData ) {
-				$plan[] = $this->createStepObject( $stepData['step'], $stepData );
+			foreach ( $validated_array['additionalStepsAfterExecution'] as $step_data ) {
+				$plan[] = $this->createStepObject( $step_data['step'], $step_data );
 			}
 		}
 
@@ -701,8 +701,8 @@ class Runner {
 	 * @return mixed A Step object instance.
 	 * @throws InvalidArgumentException If the step type is unknown or data is invalid.
 	 */
-	private function createStepObject( string $stepType, array $data ) {
-		switch ( $stepType ) {
+	private function createStepObject( string $step_type, array $data ) {
+		switch ( $step_type ) {
 			case 'activatePlugin':
 				return new ActivatePluginStep( $data['pluginPath'] );
 			case 'activateTheme':
@@ -738,8 +738,8 @@ class Runner {
 				 *     ]
 				 */
 				$content = [];
-				foreach($data['content'] as $contentDefinition) {
-					$source = $contentDefinition['source'];
+				foreach($data['content'] as $content_definition) {
+					$source = $content_definition['source'];
 					$source_is_list = is_array($source) && array_keys($source) === range(0, count($source) - 1);
 					if(!$source_is_list) {
 						$source = [$source];
@@ -747,7 +747,7 @@ class Runner {
 					foreach($source as $source_item) {
 						$data_reference = $this->createDataReference( $source_item, [ ExecutionContextPath::class ], [ 'auto_resolve' => false ] );
 						$content[] = array_merge(
-							$contentDefinition,
+							$content_definition,
 							[ 'source' => $data_reference ]
 						);
 					}
@@ -763,9 +763,9 @@ class Runner {
 				] );
 				$active  = $data['active'] ?? true;
 				$options = $data['activationOptions'] ?? null;
-				$onError = isset( $pluginDef['onError'] ) ? $pluginDef['onError'] : 'throw';
+				$on_error = isset( $plugin_def['onError'] ) ? $plugin_def['onError'] : 'throw';
 
-				return new InstallPluginStep( $source, $active, $options, $onError );
+				return new InstallPluginStep( $source, $active, $options, $on_error );
 			case 'installTheme':
 				$source = $this->createDataReference( $data['source'], [
 					ExecutionContextPath::class,
@@ -917,17 +917,17 @@ class Runner {
 					}
 
 					// Build a safe file name for the MU-plugin.
-					$fileSlug   = preg_replace( '/[^a-z0-9\-]+/i', '-', strtolower( $slug ) );
-					$pluginPath = "wp-content/mu-plugins/blueprint-post-type-{$fileSlug}.php";
+					$file_slug   = preg_replace( '/[^a-z0-9\-]+/i', '-', strtolower( $slug ) );
+					$plugin_path = "wp-content/mu-plugins/blueprint-post-type-{$file_slug}.php";
 
 					// Human-friendly default label.
-					$defaultLabel = addslashes( ucwords( str_replace( [ '-', '_' ], ' ', $slug ) ) );
+					$default_label = addslashes( ucwords( str_replace( [ '-', '_' ], ' ', $slug ) ) );
 					if ( ! isset( $args['label'] ) ) {
-						$args['label'] = $defaultLabel;
+						$args['label'] = $default_label;
 					}
 
 					// Compose the plugin source.
-					$pluginCode = sprintf(
+					$plugin_code = sprintf(
 						<<<'PHP'
 <?php
 /**
@@ -948,9 +948,9 @@ PHP
 						var_export( $args, true )
 					);
 
-					$files[ $pluginPath ] = $this->createDataReference( [
-						'filename' => $pluginPath,
-						'content'  => $pluginCode,
+					$files[ $plugin_path ] = $this->createDataReference( [
+						'filename' => $plugin_path,
+						'content'  => $plugin_code,
 					] );
 				}
 
@@ -961,9 +961,9 @@ PHP
 				return new WriteFilesStep( $files );
 
 			case 'unzip':
-				$zipFile = $this->createDataReference( $data['zipFile'], [ ExecutionContextPath::class ] );
+				$zip_file = $this->createDataReference( $data['zipFile'], [ ExecutionContextPath::class ] );
 
-				return new UnzipStep( $zipFile, $data['extractToPath'] );
+				return new UnzipStep( $zip_file, $data['extractToPath'] );
 			case 'wp-cli':
 				return new WPCLIStep( $data['command'], $data['wpCliPath'] ?? null );
 			case 'writeFiles':
@@ -994,7 +994,7 @@ PHP
 
 				return new ImportMediaStep( $media );
 			default:
-				throw new InvalidArgumentException( "Unknown step type: {$stepType}" );
+				throw new InvalidArgumentException( "Unknown step type: {$step_type}" );
 		}
 	}
 
@@ -1010,9 +1010,9 @@ PHP
 		 * at the Blueprint resolution stage, execution context is the entire filesystem. Only
 		 * then we narrow it down to the Blueprint parent directory.
 		 */
-		$executionContextIsLocal = $this->configuration->getBlueprint() instanceof ExecutionContextPath;
+		$execution_context_is_local = $this->configuration->getBlueprint() instanceof ExecutionContextPath;
 		if (
-			$executionContextIsLocal &&
+			$execution_context_is_local &&
 			! $this->configuration->isAllowedLocalFilesystemAccess() &&
 			$reference instanceof ExecutionContextPath
 		) {
@@ -1027,7 +1027,7 @@ PHP
 		}
 
 		if($options['auto_resolve'] ?? true) {
-			$this->dataReferencesToAutoResolve[ $reference->id ] = $reference;
+			$this->data_references_to_auto_resolve[ $reference->id ] = $reference;
 		}
 
 		return $reference;
@@ -1045,32 +1045,32 @@ PHP
 		 * Execute the steps in the execution plan with progress tracking
 		 */
 		$results   = [];
-		$stepCount = count( $steps );
+		$step_count = count( $steps );
 
-		if ( $stepCount === 0 ) {
+		if ( $step_count === 0 ) {
 			$progress->finish();
 
 			return $results;
 		}
 
 		// Create progress trackers for each step upfront
-		$progress->split( range( 0, $stepCount ) );
-		for ( $i = 0; $i < $stepCount; $i ++ ) {
+		$progress->split( range( 0, $step_count ) );
+		for ( $i = 0; $i < $step_count; $i ++ ) {
 			$step        = $steps[ $i ];
-			$stepTracker = $progress[ $i ];
+			$step_tracker = $progress[ $i ];
 
 			try {
-				$results[ $i ] = $step->run( $runtime, $stepTracker );
+				$results[ $i ] = $step->run( $runtime, $step_tracker );
 
 				// If step didn't call finish(), do it for them
-				if ( ! $stepTracker->isDone() ) {
-					$stepTracker->finish();
+				if ( ! $step_tracker->isDone() ) {
+					$step_tracker->finish();
 				}
 			} catch ( \Exception $e ) {
 				$results[ $i ] = $e;
 				// Determine if we should continue or stop execution
-				$continueOnError = $this->continueOnError ?? false;
-				if ( ! $continueOnError ) {
+				$continue_on_error = $this->continue_on_error ?? false;
+				if ( ! $continue_on_error ) {
 					// @TODO: Correlate this message with the original Blueprint,
 					//        as in – was the step created because of "installPlugin" or not?
 					//  	  Which entry of it? etc.
@@ -1084,11 +1084,11 @@ PHP
 					);
 				}
 
-				$stepTracker->setCaption( sprintf( "%s (FAILED: %s)",
-					$stepTracker->getCaption(),
+				$step_tracker->setCaption( sprintf( "%s (FAILED: %s)",
+					$step_tracker->getCaption(),
 					$e->getMessage()
 				) );
-				$stepTracker->finish();
+				$step_tracker->finish();
 			}
 		}
 

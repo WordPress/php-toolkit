@@ -27,10 +27,10 @@ class InlineCommentPunctuationSniff implements Sniff
      * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
      * @param int $stackPtr
      */
-    public function process(File $phpcsFile, $stackPtr): void
+    public function process(File $phpcs_file, $stack_ptr): void
     {
-        $tokens = $phpcsFile->getTokens();
-        $content = $tokens[$stackPtr]['content'];
+        $tokens = $phpcs_file->getTokens();
+        $content = $tokens[$stack_ptr]['content'];
 
         // Ignore multi-line block comments; focus on inline comments only.
         if (substr_count($content, "\n") > 1) {
@@ -40,10 +40,10 @@ class InlineCommentPunctuationSniff implements Sniff
         $trimmed = ltrim($content);
 
         // Only consider //, #, or single-line /* ... */ block comments.
-        $isDoubleSlash = strncmp($trimmed, '//', 2) === 0;
-        $isHash = !$isDoubleSlash && strncmp($trimmed, '#', 1) === 0;
-        $isSingleLineBlock = !$isDoubleSlash && !$isHash && strncmp($trimmed, '/*', 2) === 0 && substr(rtrim($trimmed), -2) === '*/';
-        if (!$isDoubleSlash && !$isHash && !$isSingleLineBlock) {
+        $is_double_slash = strncmp($trimmed, '//', 2) === 0;
+        $is_hash = !$is_double_slash && strncmp($trimmed, '#', 1) === 0;
+        $is_single_line_block = !$is_double_slash && !$is_hash && strncmp($trimmed, '/*', 2) === 0 && substr(rtrim($trimmed), -2) === '*/';
+        if (!$is_double_slash && !$is_hash && !$is_single_line_block) {
             return;
         }
 
@@ -54,36 +54,36 @@ class InlineCommentPunctuationSniff implements Sniff
         }
 
         // Skip comments that are just the markers with no text.
-        $commentText = $this->extractCommentText($content);
-        if ($commentText === '') {
+        $comment_text = $this->extractCommentText($content);
+        if ($comment_text === '') {
             return;
         }
 
         // Skip obviously URL-only comments.
-        if (stripos($commentText, 'http://') !== false || stripos($commentText, 'https://') !== false) {
+        if (stripos($comment_text, 'http://') !== false || stripos($comment_text, 'https://') !== false) {
             return;
         }
 
         // Determine the last non-whitespace character which should be punctuation.
-        $lastChar = $this->getLastNonWhitespaceChar($commentText);
-        if ($lastChar === null) {
+        $last_char = $this->getLastNonWhitespaceChar($comment_text);
+        if ($last_char === null) {
             return; // Only whitespace; ignore.
         }
 
-        if ($lastChar === '.' || $lastChar === '!' || $lastChar === '?') {
+        if ($last_char === '.' || $last_char === '!' || $last_char === '?') {
             return; // Already properly punctuated.
         }
 
-        $fix = $phpcsFile->addFixableError(
+        $fix = $phpcs_file->addFixableError(
             'Inline comments must end in full-stops, exclamation marks, or question marks.',
-            $stackPtr,
+            $stack_ptr,
             self::CODE_MISSING_PUNCTUATION
         );
 
         if ($fix === true) {
-            $phpcsFile->fixer->beginChangeset();
-            $phpcsFile->fixer->replaceToken($stackPtr, $this->appendPunctuation($content));
-            $phpcsFile->fixer->endChangeset();
+            $phpcs_file->fixer->beginChangeset();
+            $phpcs_file->fixer->replaceToken($stack_ptr, $this->appendPunctuation($content));
+            $phpcs_file->fixer->endChangeset();
         }
     }
 
@@ -120,25 +120,25 @@ class InlineCommentPunctuationSniff implements Sniff
 
     private function appendPunctuation(string $content): string
     {
-        $trimRight = rtrim($content);
+        $trim_right = rtrim($content);
 
         // Handle single-line block comment: place punctuation before closing */
-        if (substr($trimRight, -2) === '*/') {
-            $before = rtrim(substr($trimRight, 0, -2));
+        if (substr($trim_right, -2) === '*/') {
+            $before = rtrim(substr($trim_right, 0, -2));
             // If nothing to punctuate, return as-is.
             if ($before === '' || $this->endsWithPunctuation($before)) {
                 return $content;
             }
             $new = $before . '.' . ' */';
             // Preserve original trailing whitespace (if any).
-            return $new . substr($content, strlen($trimRight));
+            return $new . substr($content, strlen($trim_right));
         }
 
         // For // or # comments: insert punctuation before trailing whitespace/newline.
-        if ($this->endsWithPunctuation($trimRight)) {
+        if ($this->endsWithPunctuation($trim_right)) {
             return $content;
         }
-        return $trimRight . '.' . substr($content, strlen($trimRight));
+        return $trim_right . '.' . substr($content, strlen($trim_right));
     }
 
     private function endsWithPunctuation(string $text): bool

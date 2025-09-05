@@ -12,29 +12,29 @@ class CpStep implements StepInterface {
 	/**
 	 * @var string
 	 */
-	public $fromPath;
+	public $from_path;
 	/**
 	 * @var string
 	 */
-	public $toPath;
+	public $to_path;
 
 	/**
 	 * @param  string  $fromPath  The source path to copy from.
 	 * @param  string  $toPath  The destination path to copy to.
 	 */
-	public function __construct( string $fromPath, string $toPath ) {
-		$this->fromPath = $fromPath;
-		$this->toPath   = $toPath;
+	public function __construct( string $from_path, string $to_path ) {
+		$this->from_path = $from_path;
+		$this->to_path   = $to_path;
 	}
 
 	/**
 	 * Executes the cp step.
 	 */
 	public function run( Runtime $runtime, Tracker $tracker ) {
-		$tracker->setCaption( 'Copying from ' . $this->fromPath . ' to ' . $this->toPath );
+		$tracker->setCaption( 'Copying from ' . $this->from_path . ' to ' . $this->to_path );
 		$runtime->getTargetFilesystem()->copy(
-			$this->fromPath,
-			$this->toPath,
+			$this->from_path,
+			$this->to_path,
 			[ 'recursive' => true ]
 		);
 	}

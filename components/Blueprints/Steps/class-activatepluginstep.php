@@ -45,24 +45,24 @@ PHP
 	 * Examples: '/wordpress/wp-content/plugins/plugin-name', 'plugin-name/plugin-name.php'
 	 * @var string
 	 */
-	public $pluginPath;
+	public $plugin_path;
 
 	/**
 	 * @param  string  $pluginPath  Path to the plugin directory or entry file.
 	 */
-	public function __construct( string $pluginPath ) {
-		$this->pluginPath = $pluginPath;
+	public function __construct( string $plugin_path ) {
+		$this->plugin_path = $plugin_path;
 	}
 
 	/**
 	 * Executes the activatePlugin step.
 	 */
 	public function run( Runtime $runtime, Tracker $tracker ) {
-		$tracker->setCaption( 'Activating plugin ' . ( $this->pluginPath ?? '' ) );
+		$tracker->setCaption( 'Activating plugin ' . ( $this->plugin_path ?? '' ) );
 		$runtime->evalPhpCodeInSubProcess(
 			self::ACTIVATE_PLUGIN_SCRIPT,
 			[
-				'PLUGIN_PATH' => $this->pluginPath,
+				'PLUGIN_PATH' => $this->plugin_path,
 			]
 		);
 	}

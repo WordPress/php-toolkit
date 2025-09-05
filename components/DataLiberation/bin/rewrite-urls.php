@@ -25,12 +25,12 @@ if ( ! isset( $options['file'] ) ) {
 	exit( 1 );
 }
 
-$inputFile = $options['file'];
-if ( ! file_exists( $inputFile ) ) {
-	echo "The file $inputFile does not exist.\n";
+$input_file = $options['file'];
+if ( ! file_exists( $input_file ) ) {
+	echo "The file $input_file does not exist.\n";
 	exit( 1 );
 }
-$block_markup = file_get_contents( $inputFile );
+$block_markup = file_get_contents( $input_file );
 
 // @TODO: Decide – should the current site URL be always required to
 // populate $base_url?

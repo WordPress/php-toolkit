@@ -29,13 +29,13 @@ class MergeStrategy {
 	 *
 	 * @return MergeResult The merged result
 	 */
-	public function merge( string $base, string $branchA, string $branchB ): MergeResult {
+	public function merge( string $base, string $branch_a, string $branch_b ): MergeResult {
 		// Compute diffs between base and each branch
-		$diffAB = $this->differ->diff( $base, $branchA );
-		$diffAC = $this->differ->diff( $base, $branchB );
+		$diff_ab = $this->differ->diff( $base, $branch_a );
+		$diff_ac = $this->differ->diff( $base, $branch_b );
 
 		// Perform the merge using the configured merge strategy
-		$merge_result = $this->merger->merge( $diffAB, $diffAC );
+		$merge_result = $this->merger->merge( $diff_ab, $diff_ac );
 
 		if ( ! $this->validator ) {
 			return $merge_result;
@@ -47,8 +47,8 @@ class MergeStrategy {
 			return new MergeResult(
 				array(
 					new MergeConflict(
-						$branchA,
-						$branchB,
+						$branch_a,
+						$branch_b,
 						array(
 							'message' => $e->getMessage(),
 						)

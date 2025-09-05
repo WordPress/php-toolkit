@@ -35,13 +35,13 @@ class InstallThemeStep implements StepInterface {
 	 * Whether to import the theme's starter content after installing it. Defaults to false.
 	 * @var bool
 	 */
-	public $importStarterContent;
+	public $import_starter_content;
 
 	/**
 	 * Optional target folder name. Defaults based on source.
 	 * @var string|null
 	 */
-	public $targetFolderName;
+	public $target_folder_name;
 
 	/**
 	 * @param  DataReference  $source  Theme source identifier.
@@ -52,13 +52,13 @@ class InstallThemeStep implements StepInterface {
 	public function __construct(
 		DataReference $source,
 		bool $active = false,
-		bool $importStarterContent = false,
-		?string $targetFolderName = null
+		bool $import_starter_content = false,
+		?string $target_folder_name = null
 	) {
 		$this->source               = $source;
 		$this->active               = $active;
-		$this->importStarterContent = $importStarterContent;
-		$this->targetFolderName     = $targetFolderName;
+		$this->import_starter_content = $import_starter_content;
+		$this->target_folder_name     = $target_folder_name;
 	}
 
 	public function run( Runtime $runtime, Tracker $tracker ) {
@@ -232,7 +232,7 @@ PHP
 				[ 'THEME_ZIP_PATH' => $zip_absolute_path ]
 			);
 
-			$theme_folder_name = trim( $output->outputFileContent );
+			$theme_folder_name = trim( $output->output_file_content );
 			if ( empty( $theme_folder_name ) ) {
 				throw new RuntimeException(
 					"Theme installation script did not return the theme stylesheet name."

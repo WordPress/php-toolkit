@@ -59,7 +59,7 @@ class SetSiteLanguageStep implements StepInterface {
             require getenv("DOCROOT") . "/wp-includes/version.php";
             append_output( $wp_version );
             '
-		)->outputFileContent );
+		)->output_file_content );
 
 		// Get plugin translations
 		$plugins_data = json_decode( $runtime->evalPhpCodeInSubProcess(
@@ -86,7 +86,7 @@ class SetSiteLanguageStep implements StepInterface {
 					)
 				)
 			);"
-		)->outputFileContent, true );
+		)->output_file_content, true );
 
 		// Get theme translations
 		$themes_data = json_decode( $runtime->evalPhpCodeInSubProcess(
@@ -108,7 +108,7 @@ class SetSiteLanguageStep implements StepInterface {
 					)
 				)
 			);"
-		)->outputFileContent, true );
+		)->output_file_content, true );
 
 		$client = $runtime->getHttpClient();
 
@@ -177,9 +177,9 @@ class SetSiteLanguageStep implements StepInterface {
 
 		foreach ( $download_targets as $target ) {
 			try {
-				$zipFs = ZipFilesystem::create( $target['stream'] );
+				$zip_fs = ZipFilesystem::create( $target['stream'] );
 				copy_between_filesystems( [
-					'source_filesystem' => $zipFs,
+					'source_filesystem' => $zip_fs,
 					'source_path'       => '/',
 					'target_filesystem' => $runtime->getTargetFilesystem(),
 					'target_path'       => $target['target_dir'],
@@ -226,9 +226,9 @@ class SetSiteLanguageStep implements StepInterface {
 	 *
 	 * @return string|false
 	 */
-	private function getWordPressTranslationUrl( Runtime $runtime, string $wpVersion, string $language, Client $client ) {
+	private function getWordPressTranslationUrl( Runtime $runtime, string $wp_version, string $language, Client $client ) {
 		try {
-			$api_url           = "https://api.wordpress.org/translations/core/1.0/?version={$wpVersion}";
+			$api_url           = "https://api.wordpress.org/translations/core/1.0/?version={$wp_version}";
 			$translations_data = $client->fetch( new Request( $api_url ) )->json();
 
 			if ( ! isset( $translations_data['translations'] ) || ! is_array( $translations_data['translations'] ) ) {

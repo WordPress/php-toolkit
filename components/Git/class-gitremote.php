@@ -512,7 +512,7 @@ class GitRemote {
 		);
 	}
 
-	private function http_request( $path, $postData = null, $headers = array() ) {
+	private function http_request( $path, $post_data = null, $headers = array() ) {
 		$remote = $this->repository->get_remote( $this->remote_name );
 		if ( ! $remote ) {
 			throw new GitRemoteException( 'Remote "' . $this->remote_name . '" not found' );
@@ -523,9 +523,9 @@ class GitRemote {
 		$request_info = array(
 			'headers' => $headers,
 		);
-		if ( $postData ) {
+		if ( $post_data ) {
 			$request_info['method']      = 'POST';
-			$request_info['body_stream'] = is_string( $postData ) ? new MemoryPipe( $postData ) : $postData;
+			$request_info['body_stream'] = is_string( $post_data ) ? new MemoryPipe( $post_data ) : $post_data;
 		}
 
 		$request = new Request( $url, $request_info );

@@ -67,7 +67,7 @@ class ZipEncoderTest extends TestCase {
 		$zipWriter->append_file(
 			new FileEntry(
 				array(
-					'compressionMethod' => $should_deflate ? ZipDecoder::COMPRESSION_DEFLATE : ZipDecoder::COMPRESSION_NONE,
+					'compression_method' => $should_deflate ? ZipDecoder::COMPRESSION_DEFLATE : ZipDecoder::COMPRESSION_NONE,
 					'path'              => 'file.txt',
 					'body_reader'       => new MemoryPipe( 'Hello' ),
 				)

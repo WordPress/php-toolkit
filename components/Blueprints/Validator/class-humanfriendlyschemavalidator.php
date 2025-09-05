@@ -103,17 +103,17 @@ final class HumanFriendlySchemaValidator {
 	/**
 	 * @var bool
 	 */
-	private $arrayIsValidObject;
+	private $array_is_valid_object;
 
-	private $MISSING;
+	private $missing;
 
 	public function __construct(
 		array $schema,
 		array $options = []
 	) {
 		$this->schema             = $schema;
-		$this->arrayIsValidObject = $options['array_is_valid_object'] ?? true;
-		$this->MISSING            = new Symbol( 'missing' );
+		$this->array_is_valid_object = $options['array_is_valid_object'] ?? true;
+		$this->missing            = new Symbol( 'missing' );
 	}
 
 	/**
@@ -158,7 +158,7 @@ final class HumanFriendlySchemaValidator {
 	 * @param  mixed  $data
 	 */
 	private function typeMatches( $data, ?string $type ): bool {
-		$arrayIsListFunction = function ( array $array ): bool {
+		$array_is_list_function = function ( array $array ): bool {
 			if ( function_exists( 'array_is_list' ) ) {
 				return array_is_list( $array );
 			}
@@ -177,9 +177,9 @@ final class HumanFriendlySchemaValidator {
 		};
 		switch ( $type ) {
 			case 'object':
-				return is_object( $data ) || ( $this->arrayIsValidObject && is_array( $data ) && ( ! $arrayIsListFunction( $data ) || count( $data ) === 0 ) );
+				return is_object( $data ) || ( $this->array_is_valid_object && is_array( $data ) && ( ! $array_is_list_function( $data ) || count( $data ) === 0 ) );
 			case 'array':
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -196,7 +196,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -213,7 +213,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -230,7 +230,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -247,7 +247,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -264,7 +264,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -281,7 +281,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -298,7 +298,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -315,7 +315,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -332,7 +332,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -349,7 +349,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -366,7 +366,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -383,7 +383,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -400,7 +400,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -417,7 +417,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -434,7 +434,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -451,7 +451,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -468,7 +468,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -485,7 +485,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -502,7 +502,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -519,7 +519,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -536,7 +536,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -553,7 +553,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -570,7 +570,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -587,7 +587,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -604,7 +604,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -621,7 +621,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -638,7 +638,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -655,7 +655,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -672,7 +672,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -689,7 +689,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -706,7 +706,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -723,7 +723,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -740,7 +740,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -757,7 +757,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -774,7 +774,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -791,7 +791,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -808,7 +808,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -825,7 +825,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -842,7 +842,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -859,7 +859,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -876,7 +876,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -893,7 +893,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -910,7 +910,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -927,7 +927,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -944,7 +944,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -961,7 +961,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -978,7 +978,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -995,7 +995,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1012,7 +1012,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1029,7 +1029,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1046,7 +1046,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1063,7 +1063,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1080,7 +1080,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1097,7 +1097,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1114,7 +1114,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1131,7 +1131,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1148,7 +1148,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1165,7 +1165,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1182,7 +1182,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1199,7 +1199,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1216,7 +1216,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1233,7 +1233,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1250,7 +1250,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1267,7 +1267,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1284,7 +1284,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1301,7 +1301,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1318,7 +1318,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1335,7 +1335,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1352,7 +1352,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1369,7 +1369,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1386,7 +1386,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1403,7 +1403,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1420,7 +1420,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1437,7 +1437,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1454,7 +1454,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1471,7 +1471,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1488,7 +1488,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1505,7 +1505,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1522,7 +1522,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1539,7 +1539,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1556,7 +1556,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1573,7 +1573,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1590,7 +1590,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1607,7 +1607,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1624,7 +1624,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1641,7 +1641,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1658,7 +1658,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1675,7 +1675,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1692,7 +1692,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1709,7 +1709,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1726,7 +1726,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1743,7 +1743,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1760,7 +1760,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1777,7 +1777,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1794,7 +1794,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1811,7 +1811,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1828,7 +1828,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1845,7 +1845,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1862,7 +1862,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1879,7 +1879,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1896,7 +1896,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1913,7 +1913,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1930,7 +1930,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1947,7 +1947,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1964,7 +1964,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1981,7 +1981,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -1998,7 +1998,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2015,7 +2015,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2032,7 +2032,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2049,7 +2049,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2066,7 +2066,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2083,7 +2083,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2100,7 +2100,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2117,7 +2117,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2134,7 +2134,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2151,7 +2151,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2168,7 +2168,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2185,7 +2185,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2202,7 +2202,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2219,7 +2219,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2236,7 +2236,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2253,7 +2253,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2270,7 +2270,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2287,7 +2287,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2304,7 +2304,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2321,7 +2321,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2338,7 +2338,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2355,7 +2355,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2372,7 +2372,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2389,7 +2389,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2406,7 +2406,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2423,7 +2423,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2440,7 +2440,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2457,7 +2457,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2474,7 +2474,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2491,7 +2491,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2508,7 +2508,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2525,7 +2525,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2542,7 +2542,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2559,7 +2559,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2576,7 +2576,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2593,7 +2593,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2610,7 +2610,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2627,7 +2627,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2644,7 +2644,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2661,7 +2661,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2678,7 +2678,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2695,7 +2695,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2712,7 +2712,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2729,7 +2729,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2746,7 +2746,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2763,7 +2763,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2780,7 +2780,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2797,7 +2797,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2814,7 +2814,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2831,7 +2831,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2848,7 +2848,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2865,7 +2865,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2882,7 +2882,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2899,7 +2899,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2916,7 +2916,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2933,7 +2933,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2950,7 +2950,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2967,7 +2967,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -2984,7 +2984,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3001,7 +3001,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3018,7 +3018,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3035,7 +3035,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3052,7 +3052,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3069,7 +3069,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3086,7 +3086,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3103,7 +3103,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3120,7 +3120,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3137,7 +3137,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3154,7 +3154,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3171,7 +3171,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3188,7 +3188,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3205,7 +3205,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3222,7 +3222,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3239,7 +3239,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3256,7 +3256,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3273,7 +3273,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3290,7 +3290,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3307,7 +3307,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3324,7 +3324,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3341,7 +3341,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3358,7 +3358,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3375,7 +3375,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3392,7 +3392,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3409,7 +3409,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3426,7 +3426,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3443,7 +3443,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3460,7 +3460,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3477,7 +3477,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3494,7 +3494,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3511,7 +3511,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3528,7 +3528,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3545,7 +3545,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3562,7 +3562,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3579,7 +3579,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3596,7 +3596,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3613,7 +3613,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3630,7 +3630,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3647,7 +3647,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3664,7 +3664,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3681,7 +3681,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3698,7 +3698,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3715,7 +3715,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3732,7 +3732,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3749,7 +3749,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3766,7 +3766,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3783,7 +3783,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3800,7 +3800,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3817,7 +3817,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3834,7 +3834,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3851,7 +3851,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3868,7 +3868,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3885,7 +3885,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3902,7 +3902,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3919,7 +3919,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3936,7 +3936,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3953,7 +3953,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3970,7 +3970,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -3987,7 +3987,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4004,7 +4004,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4021,7 +4021,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4038,7 +4038,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4055,7 +4055,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4072,7 +4072,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4089,7 +4089,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4106,7 +4106,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4123,7 +4123,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4140,7 +4140,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4157,7 +4157,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4174,7 +4174,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4191,7 +4191,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4208,7 +4208,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4225,7 +4225,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4242,7 +4242,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4259,7 +4259,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4276,7 +4276,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4293,7 +4293,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4310,7 +4310,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4327,7 +4327,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4344,7 +4344,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4361,7 +4361,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4378,7 +4378,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4395,7 +4395,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4412,7 +4412,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4429,7 +4429,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4446,7 +4446,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4463,7 +4463,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4480,7 +4480,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4497,7 +4497,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4514,7 +4514,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4531,7 +4531,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4548,7 +4548,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4565,7 +4565,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4582,7 +4582,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4599,7 +4599,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4616,7 +4616,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4633,7 +4633,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4650,7 +4650,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4667,7 +4667,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4684,7 +4684,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4701,7 +4701,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4718,7 +4718,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4735,7 +4735,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4752,7 +4752,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4769,7 +4769,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4786,7 +4786,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4803,7 +4803,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4820,7 +4820,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4837,7 +4837,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4854,7 +4854,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4871,7 +4871,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4888,7 +4888,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4905,7 +4905,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4922,7 +4922,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4939,7 +4939,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4956,7 +4956,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4973,7 +4973,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -4990,7 +4990,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5007,7 +5007,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5024,7 +5024,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5041,7 +5041,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5058,7 +5058,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5075,7 +5075,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5092,7 +5092,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5109,7 +5109,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5126,7 +5126,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5143,7 +5143,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5160,7 +5160,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5177,7 +5177,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5194,7 +5194,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5211,7 +5211,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5228,7 +5228,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5245,7 +5245,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5262,7 +5262,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5279,7 +5279,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5296,7 +5296,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5313,7 +5313,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5330,7 +5330,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5347,7 +5347,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5364,7 +5364,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5381,7 +5381,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5398,7 +5398,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5415,7 +5415,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5432,7 +5432,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5449,7 +5449,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5466,7 +5466,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5483,7 +5483,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5500,7 +5500,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5517,7 +5517,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5534,7 +5534,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5551,7 +5551,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5568,7 +5568,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5585,7 +5585,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5602,7 +5602,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5619,7 +5619,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5636,7 +5636,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5653,7 +5653,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5670,7 +5670,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5687,7 +5687,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5704,7 +5704,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5721,7 +5721,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5738,7 +5738,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5755,7 +5755,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5772,7 +5772,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5789,7 +5789,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5806,7 +5806,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5823,7 +5823,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5840,7 +5840,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5857,7 +5857,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5874,7 +5874,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5891,7 +5891,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5908,7 +5908,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5925,7 +5925,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5942,7 +5942,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5959,7 +5959,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5976,7 +5976,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -5993,7 +5993,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6010,7 +6010,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6027,7 +6027,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6044,7 +6044,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6061,7 +6061,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6078,7 +6078,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6095,7 +6095,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6112,7 +6112,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6129,7 +6129,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6146,7 +6146,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6163,7 +6163,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6180,7 +6180,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6197,7 +6197,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6214,7 +6214,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6231,7 +6231,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6248,7 +6248,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6265,7 +6265,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6282,7 +6282,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6299,7 +6299,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6316,7 +6316,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6333,7 +6333,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6350,7 +6350,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6367,7 +6367,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6384,7 +6384,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6401,7 +6401,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6418,7 +6418,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6435,7 +6435,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6452,7 +6452,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6469,7 +6469,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6486,7 +6486,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6503,7 +6503,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6520,7 +6520,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6537,7 +6537,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6554,7 +6554,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6571,7 +6571,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6588,7 +6588,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6605,7 +6605,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6622,7 +6622,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6639,7 +6639,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6656,7 +6656,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6673,7 +6673,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6690,7 +6690,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6707,7 +6707,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6724,7 +6724,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6741,7 +6741,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6758,7 +6758,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6775,7 +6775,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6792,7 +6792,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6809,7 +6809,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6826,7 +6826,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6843,7 +6843,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6860,7 +6860,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6877,7 +6877,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6894,7 +6894,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6911,7 +6911,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6928,7 +6928,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6945,7 +6945,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6962,7 +6962,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6979,7 +6979,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -6996,7 +6996,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7013,7 +7013,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7030,7 +7030,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7047,7 +7047,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7064,7 +7064,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7081,7 +7081,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7098,7 +7098,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7115,7 +7115,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7132,7 +7132,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7149,7 +7149,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7166,7 +7166,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7183,7 +7183,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7200,7 +7200,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7217,7 +7217,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7234,7 +7234,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7251,7 +7251,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7268,7 +7268,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7285,7 +7285,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7302,7 +7302,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7319,7 +7319,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7336,7 +7336,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7353,7 +7353,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7370,7 +7370,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7387,7 +7387,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7404,7 +7404,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7421,7 +7421,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7438,7 +7438,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7455,7 +7455,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7472,7 +7472,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7489,7 +7489,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7506,7 +7506,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7523,7 +7523,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7540,7 +7540,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7557,7 +7557,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7574,7 +7574,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7591,7 +7591,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7608,7 +7608,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7625,7 +7625,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7642,7 +7642,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7659,7 +7659,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7676,7 +7676,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7693,7 +7693,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7710,7 +7710,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7727,7 +7727,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7744,7 +7744,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7761,7 +7761,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7778,7 +7778,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7795,7 +7795,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7812,7 +7812,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7829,7 +7829,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7846,7 +7846,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7863,7 +7863,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7880,7 +7880,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7897,7 +7897,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7914,7 +7914,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7931,7 +7931,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7948,7 +7948,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7965,7 +7965,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7982,7 +7982,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -7999,7 +7999,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8016,7 +8016,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8033,7 +8033,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8050,7 +8050,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8067,7 +8067,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8084,7 +8084,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8101,7 +8101,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8118,7 +8118,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8135,7 +8135,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8152,7 +8152,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8169,7 +8169,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8186,7 +8186,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8203,7 +8203,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8220,7 +8220,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8237,7 +8237,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8254,7 +8254,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8271,7 +8271,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8288,7 +8288,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8305,7 +8305,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8322,7 +8322,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8339,7 +8339,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8356,7 +8356,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8373,7 +8373,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8390,7 +8390,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8407,7 +8407,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8424,7 +8424,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8441,7 +8441,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8458,7 +8458,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8475,7 +8475,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8492,7 +8492,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8509,7 +8509,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8526,7 +8526,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8543,7 +8543,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8560,7 +8560,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8577,7 +8577,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8594,7 +8594,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8611,7 +8611,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8628,7 +8628,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8645,7 +8645,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8662,7 +8662,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8679,7 +8679,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8696,7 +8696,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8713,7 +8713,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8730,7 +8730,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8747,7 +8747,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8764,7 +8764,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8781,7 +8781,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8798,7 +8798,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8815,7 +8815,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8832,7 +8832,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8849,7 +8849,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8866,7 +8866,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8883,7 +8883,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8900,7 +8900,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8917,7 +8917,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8934,7 +8934,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8951,7 +8951,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8968,7 +8968,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -8985,7 +8985,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9002,7 +9002,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9019,7 +9019,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9036,7 +9036,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9053,7 +9053,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9070,7 +9070,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9087,7 +9087,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9104,7 +9104,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9121,7 +9121,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9138,7 +9138,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9155,7 +9155,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9172,7 +9172,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9189,7 +9189,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9206,7 +9206,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9223,7 +9223,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9240,7 +9240,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9257,7 +9257,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9274,7 +9274,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9291,7 +9291,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9308,7 +9308,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9325,7 +9325,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9342,7 +9342,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9359,7 +9359,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9376,7 +9376,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9393,7 +9393,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9410,7 +9410,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9427,7 +9427,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9444,7 +9444,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9461,7 +9461,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9478,7 +9478,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9495,7 +9495,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9512,7 +9512,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9529,7 +9529,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9546,7 +9546,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9563,7 +9563,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9580,7 +9580,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9597,7 +9597,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9614,7 +9614,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9631,7 +9631,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9648,7 +9648,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9665,7 +9665,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9682,7 +9682,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9699,7 +9699,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9716,7 +9716,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9733,7 +9733,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9750,7 +9750,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9767,7 +9767,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9784,7 +9784,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9801,7 +9801,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9818,7 +9818,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9835,7 +9835,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9852,7 +9852,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9869,7 +9869,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9886,7 +9886,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9903,7 +9903,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9920,7 +9920,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9937,7 +9937,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9954,7 +9954,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9971,7 +9971,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -9988,7 +9988,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10005,7 +10005,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10022,7 +10022,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10039,7 +10039,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10056,7 +10056,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10073,7 +10073,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10090,7 +10090,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10107,7 +10107,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10124,7 +10124,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10141,7 +10141,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10158,7 +10158,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10175,7 +10175,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10192,7 +10192,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10209,7 +10209,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10226,7 +10226,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10243,7 +10243,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10260,7 +10260,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10277,7 +10277,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10294,7 +10294,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10311,7 +10311,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10328,7 +10328,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10345,7 +10345,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10362,7 +10362,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10379,7 +10379,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10396,7 +10396,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10413,7 +10413,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10430,7 +10430,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10447,7 +10447,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10464,7 +10464,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10481,7 +10481,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10498,7 +10498,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10515,7 +10515,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10532,7 +10532,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10549,7 +10549,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10566,7 +10566,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10583,7 +10583,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10600,7 +10600,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10617,7 +10617,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10634,7 +10634,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10651,7 +10651,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10668,7 +10668,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10685,7 +10685,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10702,7 +10702,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10719,7 +10719,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10736,7 +10736,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10753,7 +10753,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10770,7 +10770,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10787,7 +10787,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10804,7 +10804,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10821,7 +10821,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10838,7 +10838,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10855,7 +10855,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10872,7 +10872,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10889,7 +10889,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10906,7 +10906,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10923,7 +10923,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10940,7 +10940,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10957,7 +10957,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10974,7 +10974,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -10991,7 +10991,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11008,7 +11008,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11025,7 +11025,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11042,7 +11042,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11059,7 +11059,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11076,7 +11076,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11093,7 +11093,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11110,7 +11110,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11127,7 +11127,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11144,7 +11144,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11161,7 +11161,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11178,7 +11178,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11195,7 +11195,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11212,7 +11212,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11229,7 +11229,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11246,7 +11246,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11263,7 +11263,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11280,7 +11280,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11297,7 +11297,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11314,7 +11314,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11331,7 +11331,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11348,7 +11348,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11365,7 +11365,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11382,7 +11382,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11399,7 +11399,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11416,7 +11416,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11433,7 +11433,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11450,7 +11450,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11467,7 +11467,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11484,7 +11484,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11501,7 +11501,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11518,7 +11518,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11535,7 +11535,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11552,7 +11552,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11569,7 +11569,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11586,7 +11586,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11603,7 +11603,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11620,7 +11620,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11637,7 +11637,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11654,7 +11654,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11671,7 +11671,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11688,7 +11688,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11705,7 +11705,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11722,7 +11722,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11739,7 +11739,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11756,7 +11756,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11773,7 +11773,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11790,7 +11790,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11807,7 +11807,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11824,7 +11824,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11841,7 +11841,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11858,7 +11858,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11875,7 +11875,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11892,7 +11892,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11909,7 +11909,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11926,7 +11926,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11943,7 +11943,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11960,7 +11960,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11977,7 +11977,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -11994,7 +11994,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12011,7 +12011,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12028,7 +12028,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12045,7 +12045,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12062,7 +12062,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12079,7 +12079,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12096,7 +12096,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12113,7 +12113,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12130,7 +12130,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12147,7 +12147,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12164,7 +12164,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12181,7 +12181,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12198,7 +12198,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12215,7 +12215,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12232,7 +12232,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12249,7 +12249,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12266,7 +12266,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12283,7 +12283,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12300,7 +12300,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12317,7 +12317,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12334,7 +12334,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12351,7 +12351,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12368,7 +12368,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12385,7 +12385,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12402,7 +12402,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12419,7 +12419,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12436,7 +12436,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12453,7 +12453,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12470,7 +12470,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12487,7 +12487,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12504,7 +12504,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12521,7 +12521,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12538,7 +12538,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12555,7 +12555,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12572,7 +12572,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12589,7 +12589,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12606,7 +12606,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12623,7 +12623,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12640,7 +12640,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12657,7 +12657,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12674,7 +12674,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12691,7 +12691,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12708,7 +12708,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12725,7 +12725,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12742,7 +12742,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12759,7 +12759,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12776,7 +12776,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12793,7 +12793,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12810,7 +12810,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12827,7 +12827,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12844,7 +12844,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12861,7 +12861,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12878,7 +12878,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12895,7 +12895,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12912,7 +12912,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12929,7 +12929,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12946,7 +12946,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12963,7 +12963,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12980,7 +12980,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -12997,7 +12997,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13014,7 +13014,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13031,7 +13031,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13048,7 +13048,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13065,7 +13065,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13082,7 +13082,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13099,7 +13099,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13116,7 +13116,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13133,7 +13133,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13150,7 +13150,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13167,7 +13167,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13184,7 +13184,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13201,7 +13201,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13218,7 +13218,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13235,7 +13235,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13252,7 +13252,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13269,7 +13269,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13286,7 +13286,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13303,7 +13303,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13320,7 +13320,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13337,7 +13337,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13354,7 +13354,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13371,7 +13371,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13388,7 +13388,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13405,7 +13405,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13422,7 +13422,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13439,7 +13439,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13456,7 +13456,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13473,7 +13473,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13490,7 +13490,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13507,7 +13507,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13524,7 +13524,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13541,7 +13541,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13558,7 +13558,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13575,7 +13575,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13592,7 +13592,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13609,7 +13609,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13626,7 +13626,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13643,7 +13643,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13660,7 +13660,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13677,7 +13677,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13694,7 +13694,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13711,7 +13711,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13728,7 +13728,7 @@ final class HumanFriendlySchemaValidator {
 
 					return true;
 				};
-				$arrayIsListFunction = function ( array $array ): bool {
+				$array_is_list_function = function ( array $array ): bool {
 					if ( function_exists( 'array_is_list' ) ) {
 						return array_is_list( $array );
 					}
@@ -13746,7 +13746,7 @@ final class HumanFriendlySchemaValidator {
 					return true;
 				};
 
-				return is_array( $data ) && $arrayIsListFunction( $data );
+				return is_array( $data ) && $array_is_list_function( $data );
 			case 'string':
 				return is_string( $data );
 			case 'integer':
@@ -13794,7 +13794,7 @@ final class HumanFriendlySchemaValidator {
 		}
 
 		// Check for unsupported keywords
-		$unsupportedKeywords = [
+		$unsupported_keywords = [
 			'not',
 			'patternProperties',
 			'dependencies',
@@ -13805,7 +13805,7 @@ final class HumanFriendlySchemaValidator {
 			'contentEncoding',
 			'contentSchema',
 		];
-		foreach ( $unsupportedKeywords as $keyword ) {
+		foreach ( $unsupported_keywords as $keyword ) {
 			if ( isset( $schema[ $keyword ] ) ) {
 				// This should remain an exception as it's a schema configuration issue, not a data validation issue.
 				throw new UnsupportedSchemaException( "The schema keyword \"{$keyword}\" is not supported." );
@@ -13847,10 +13847,10 @@ final class HumanFriendlySchemaValidator {
 		// 2. filter by discriminator (explicit or inferred)
 		$disc = $this->inferDiscriminator( $schema['discriminator'] ?? null, $branches );
 		if ( $disc && ( is_array( $data ) || is_object( $data ) ) ) { // Discriminator implies object/array data
-			$dataArr = (array) $data; // Cast to array for consistent access
+			$data_arr = (array) $data; // Cast to array for consistent access
 			[ $prop, $allowed ] = $disc;
-			if ( array_key_exists( $prop, $dataArr ) ) {
-				$wanted     = $dataArr[ $prop ];
+			if ( array_key_exists( $prop, $data_arr ) ) {
+				$wanted     = $data_arr[ $prop ];
 				$candidates = array_values( array_filter( $candidates, function ( $b ) use ( $prop, $wanted ) {
 					$r = isset( $b['$ref'] ) ? $this->resolveReference( $b['$ref'] ) : $b;
 					// Ensure properties exist before accessing
@@ -13888,7 +13888,7 @@ final class HumanFriendlySchemaValidator {
 		$branches = $schema['anyOf'];
 		$cands    = $this->narrowBranches( $data, $branches, $schema );
 		// $narrowed = count($cands) < count($branches); // This logic changes
-		$childErrors = [];
+		$child_errors = [];
 
 		foreach ( $cands as $b ) {
 			// $label = $this->branchLabel($b); // branchLabel might be used in error message context
@@ -13897,13 +13897,13 @@ final class HumanFriendlySchemaValidator {
 				return null;
 			} // Success, one branch matched
 			// $this->tagBranch($label, $r); // tagBranch is removed
-			$childErrors[] = $error;
+			$child_errors[] = $error;
 		}
 
 		// If we are here, no candidate branch validated successfully.
 		// The old logic for $narrowed seems less relevant. We always create a parent error with children.
 		// The explanation for aggregate mismatch needs to be adapted.
-		return $this->explainAggregateMismatch( $path, $data, $branches, $schema, 'anyOf', $childErrors );
+		return $this->explainAggregateMismatch( $path, $data, $branches, $schema, 'anyOf', $child_errors );
 	}
 
 	/**
@@ -13914,25 +13914,25 @@ final class HumanFriendlySchemaValidator {
 		$cands    = $this->narrowBranches( $data, $branches, $schema );
 		// $narrowed = count($cands) < count($branches);
 
-		$validResults = [];
-		$childErrors  = [];
+		$valid_results = [];
+		$child_errors  = [];
 		foreach ( $cands as $b ) {
 			// $label=$this->branchLabel($b);
 			$error = $this->validateNode( $path, $data, isset( $b['$ref'] ) ? $this->resolveReference( $b['$ref'] ) : $b );
 			if ( $error === null ) {
-				$validResults[] = $b; // Store the schema of the valid branch
+				$valid_results[] = $b; // Store the schema of the valid branch
 			} else {
 				// $this->tagBranch($label,$r); // tagBranch removed
-				$childErrors[] = $error;
+				$child_errors[] = $error;
 			}
 		}
 
-		if ( count( $validResults ) === 1 ) {
+		if ( count( $valid_results ) === 1 ) {
 			return null;
 		} // Exactly one schema matched
 
-		if ( count( $validResults ) > 1 ) {
-			$matchedShapes = array_map( function ( $b ) {
+		if ( count( $valid_results ) > 1 ) {
+			$matched_shapes = array_map( function ( $b ) {
 				if ( isset( $b['$ref'] ) ) {
 					$resolved = $this->resolveReference( $b['$ref'] );
 
@@ -13940,20 +13940,20 @@ final class HumanFriendlySchemaValidator {
 				}
 
 				return $this->branchLabel( $b );
-			}, $validResults );
+			}, $valid_results );
 
 			return new ValidationError(
 				$this->convertPathToString( $path ),
 				'oneOf-multiple-matches',
 				'Data matches more than one allowed shape - you need to make it unambiguous. Matched shapes: ' . implode( ', ',
-					$matchedShapes ) . '.',
-				[ 'matchedShapes' => $matchedShapes ]
+					$matched_shapes ) . '.',
+				[ 'matchedShapes' => $matched_shapes ]
 			);
 		}
 
 		// No schema matched, or narrowing didn't help / wasn't conclusive
 		// The old logic for $narrowed seems less relevant. We always create a parent error with children.
-		return $this->explainAggregateMismatch( $path, $data, $branches, $schema, 'oneOf', $childErrors );
+		return $this->explainAggregateMismatch( $path, $data, $branches, $schema, 'oneOf', $child_errors );
 	}
 
 	/**
@@ -13965,43 +13965,43 @@ final class HumanFriendlySchemaValidator {
 		array $path,
 		$data,
 		array $branches, // Original branches before narrowing
-		array $parentSchema, // The schema containing anyOf/oneOf
+		array $parent_schema, // The schema containing anyOf/oneOf
 		string $keyword, // 'anyOf' or 'oneOf'
-		array $childErrors // Errors from validating against candidate branches
+		array $child_errors // Errors from validating against candidate branches
 	): ValidationError {
 		$pointer = $this->convertPathToString( $path );
 
 		// 1. Type mismatch (if data type doesn't match any of the branch types)
-		$allowedTypes = [];
+		$allowed_types = [];
 		foreach ( $branches as $b ) {
 			$s    = isset( $b['$ref'] ) ? $this->resolveReference( $b['$ref'] ) : $b;
 			$type = $s['type'] ?? null;
 			if ( $type !== null ) {
 				if ( is_array( $type ) ) {
 					foreach ( $type as $t ) {
-						if ( ! in_array( $t, $allowedTypes, true ) ) {
-							$allowedTypes[] = $t;
+						if ( ! in_array( $t, $allowed_types, true ) ) {
+							$allowed_types[] = $t;
 						}
 					}
 				} else {
-					if ( ! in_array( $type, $allowedTypes, true ) ) {
-						$allowedTypes[] = $type;
+					if ( ! in_array( $type, $allowed_types, true ) ) {
+						$allowed_types[] = $type;
 					}
 				}
 			}
 		}
 
-		if ( ! empty( $allowedTypes ) && ! $this->typeMatchesAny( $data, $allowedTypes ) ) {
-			if ( count( $allowedTypes ) === 1 ) {
+		if ( ! empty( $allowed_types ) && ! $this->typeMatchesAny( $data, $allowed_types ) ) {
+			if ( count( $allowed_types ) === 1 ) {
 				$message = sprintf(
 					'Expected type "%s" but got type "%s".',
-					$allowedTypes[0],
+					$allowed_types[0],
 					gettype( $data )
 				);
 			} else {
 				$message = sprintf(
 					'Value must be one of the following types: [%s], but it was of type "%s".',
-					implode( ', ', $allowedTypes ),
+					implode( ', ', $allowed_types ),
 					gettype( $data )
 				);
 			}
@@ -14011,25 +14011,25 @@ final class HumanFriendlySchemaValidator {
 				'type-mismatch',
 				$message,
 				[
-					'expected' => [ 'types' => $allowedTypes ],
+					'expected' => [ 'types' => $allowed_types ],
 					'actual'   => [ 'type' => gettype( $data ), 'snippet' => $this->valueSnippet( $data ) ],
 				]
 			);
 		}
 
 		// 2. Discriminator check (if applicable and discriminator value is invalid)
-		$disc = $this->inferDiscriminator( $parentSchema['discriminator'] ?? null, $branches );
+		$disc = $this->inferDiscriminator( $parent_schema['discriminator'] ?? null, $branches );
 		if ( $disc ) {
-			[ $prop, $allowedDiscriminatorValues ] = $disc;
-			$actualValue = $this->MISSING; // Default to missing
+			[ $prop, $allowed_discriminator_values ] = $disc;
+			$actual_value = $this->missing; // Default to missing
 			if ( is_array( $data ) && array_key_exists( $prop, $data ) ) {
-				$actualValue = $data[ $prop ];
+				$actual_value = $data[ $prop ];
 			} elseif ( is_object( $data ) && property_exists( $data, $prop ) ) {
-				$actualValue = $data->$prop;
+				$actual_value = $data->$prop;
 			}
 
-			if ( ! in_array( $actualValue, $allowedDiscriminatorValues, true ) ) {
-				$actual_humanized = ( $actualValue === $this->MISSING ) ? 'missing' : $this->valueSnippet( $actualValue );
+			if ( ! in_array( $actual_value, $allowed_discriminator_values, true ) ) {
+				$actual_humanized = ( $actual_value === $this->missing ) ? 'missing' : $this->valueSnippet( $actual_value );
 
 				return new ValidationError(
 					$pointer,
@@ -14037,13 +14037,13 @@ final class HumanFriendlySchemaValidator {
 					sprintf(
 						'Property "%s" must be one of [%s], but it was %s.',
 						$prop,
-						implode( ', ', $allowedDiscriminatorValues ),
+						implode( ', ', $allowed_discriminator_values ),
 						$actual_humanized
 					),
 					[
-						'expected' => [ 'property' => $prop, 'allowedValues' => $allowedDiscriminatorValues ],
-						'actual'   => [ 'value'   => ( $actualValue === $this->MISSING ) ? null : $actualValue,
-						                'snippet' => $this->valueSnippet( $actualValue ),
+						'expected' => [ 'property' => $prop, 'allowedValues' => $allowed_discriminator_values ],
+						'actual'   => [ 'value'   => ( $actual_value === $this->missing ) ? null : $actual_value,
+						                'snippet' => $this->valueSnippet( $actual_value ),
 						],
 					]
 				);
@@ -14052,8 +14052,8 @@ final class HumanFriendlySchemaValidator {
 
 		// 3. If there's only one child error, return it directly.
 		//    No need to wrap it in a parent error.
-		if ( count( $childErrors ) === 1 ) {
-			return $childErrors[0];
+		if ( count( $child_errors ) === 1 ) {
+			return $child_errors[0];
 		}
 
 		// 4. Fallback: Generic message with children errors
@@ -14068,7 +14068,7 @@ final class HumanFriendlySchemaValidator {
 			$keyword . '-mismatch', // e.g., 'anyOf-mismatch'
 			$message,
 			[ 'allowedShapes' => $labels ],
-			$childErrors // Attach all child errors here
+			$child_errors // Attach all child errors here
 		);
 	}
 
@@ -14094,26 +14094,26 @@ final class HumanFriendlySchemaValidator {
 
 		// Schema integrity checks (throw exceptions as these are schema definition issues)
 		if ( $type === 'string' ) {
-			$unsupportedStringKeywords = [ 'pattern', 'minLength', 'maxLength', 'format' ];
-			foreach ( $unsupportedStringKeywords as $keyword ) {
+			$unsupported_string_keywords = [ 'pattern', 'minLength', 'maxLength', 'format' ];
+			foreach ( $unsupported_string_keywords as $keyword ) {
 				if ( isset( $schema[ $keyword ] ) ) {
 					throw new UnsupportedSchemaException( "The string constraint \"{$keyword}\" is not supported." );
 				}
 			}
 		}
 		if ( $type === 'number' || $type === 'integer' ) {
-			$unsupportedNumericKeywords = [ 'minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf' ];
-			foreach ( $unsupportedNumericKeywords as $keyword ) {
+			$unsupported_numeric_keywords = [ 'minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf' ];
+			foreach ( $unsupported_numeric_keywords as $keyword ) {
 				if ( isset( $schema[ $keyword ] ) ) {
 					throw new UnsupportedSchemaException( "The numeric constraint \"{$keyword}\" is not supported." );
 				}
 			}
 		}
 		if ( isset( $schema['enum'] ) ) {
-			foreach ( $schema['enum'] as $enumValue ) {
-				if ( ! $this->typeMatches( $enumValue, $type ) ) {
+			foreach ( $schema['enum'] as $enum_value ) {
+				if ( ! $this->typeMatches( $enum_value, $type ) ) {
 					throw new UnsupportedSchemaException(
-						"Enum value " . json_encode( $enumValue ) . " does not match the declared type \"{$type}\"."
+						"Enum value " . json_encode( $enum_value ) . " does not match the declared type \"{$type}\"."
 					);
 				}
 			}
@@ -14168,7 +14168,7 @@ final class HumanFriendlySchemaValidator {
 	 */
 	private function validateObject( array $path, $data, array $schema ): ?ValidationError {
 		$arr            = is_object( $data ) ? (array) $data : $data;
-		$childrenErrors = [];
+		$children_errors = [];
 
 		if ( ! empty( $schema['required'] ) ) {
 			$missing = array_diff( $schema['required'], array_keys( $arr ) );
@@ -14176,7 +14176,7 @@ final class HumanFriendlySchemaValidator {
 				foreach ( $missing as $m ) {
 					// For missing fields, the error pointer should be to the parent object,
 					// as the field itself doesn't exist yet to point to.
-					$childrenErrors[] = new ValidationError(
+					$children_errors[] = new ValidationError(
 						$this->convertPathToString( $path ), // Error is about the object at $path
 						'required-field-missing',
 						'Missing required field: ' . $m . '.',
@@ -14187,11 +14187,11 @@ final class HumanFriendlySchemaValidator {
 		}
 
 		if ( ! empty( $schema['properties'] ) ) {
-			foreach ( $schema['properties'] as $name => $propSpec ) {
+			foreach ( $schema['properties'] as $name => $prop_spec ) {
 				if ( array_key_exists( $name, $arr ) ) {
-					$error = $this->validateNode( array_merge( $path, [ $name ] ), $arr[ $name ], $propSpec );
+					$error = $this->validateNode( array_merge( $path, [ $name ] ), $arr[ $name ], $prop_spec );
 					if ( $error ) {
-						$childrenErrors[] = $error;
+						$children_errors[] = $error;
 					}
 				}
 			}
@@ -14203,10 +14203,10 @@ final class HumanFriendlySchemaValidator {
 					continue;
 				} // Handled by 'properties' validation
 
-				$currentPropPath = array_merge( $path, [ $name ] );
+				$current_prop_path = array_merge( $path, [ $name ] );
 				if ( $schema['additionalProperties'] === false ) {
-					$childrenErrors[] = new ValidationError(
-						$this->convertPathToString( $currentPropPath ),
+					$children_errors[] = new ValidationError(
+						$this->convertPathToString( $current_prop_path ),
 						'additional-property-not-allowed',
 						sprintf( 'Property "%s" isn\'t allowed here. Allowed properties are: %s.', $name,
 							implode( ', ', array_keys( $schema['properties'] ) ) ),
@@ -14214,9 +14214,9 @@ final class HumanFriendlySchemaValidator {
 					);
 				} elseif ( is_array( $schema['additionalProperties'] ) ) {
 					if ( count( $schema['additionalProperties'] ) ) {
-						$error = $this->validateNode( $currentPropPath, $v, $schema['additionalProperties'] );
+						$error = $this->validateNode( $current_prop_path, $v, $schema['additionalProperties'] );
 						if ( $error ) {
-							$childrenErrors[] = $error;
+							$children_errors[] = $error;
 						}
 					}
 				} else {
@@ -14227,9 +14227,9 @@ final class HumanFriendlySchemaValidator {
 		}
 
 
-		if ( ! empty( $childrenErrors ) ) {
-			if ( count( $childrenErrors ) === 1 ) {
-				return $childrenErrors[0];
+		if ( ! empty( $children_errors ) ) {
+			if ( count( $children_errors ) === 1 ) {
+				return $children_errors[0];
 			}
 
 			return new ValidationError(
@@ -14237,7 +14237,7 @@ final class HumanFriendlySchemaValidator {
 				'object-validation-failed',
 				'Object validation failed.',
 				[],
-				$childrenErrors
+				$children_errors
 			);
 		}
 
@@ -14247,28 +14247,28 @@ final class HumanFriendlySchemaValidator {
 	// ───────────────────────────────────────────────────────────── array ─┐
 
 	private function validateArray( array $path, array $data, array $schema ): ?ValidationError {
-		$childrenErrors = [];
+		$children_errors = [];
 		if ( isset( $schema['items'] ) ) {
 			foreach ( $data as $idx => $item ) {
 				$error = $this->validateNode( array_merge( $path, [ $idx ] ), $item, $schema['items'] );
 				if ( $error ) {
-					$childrenErrors[] = $error;
+					$children_errors[] = $error;
 				}
 			}
 		}
 
-		$currentPathStr = $this->convertPathToString( $path );
+		$current_path_str = $this->convertPathToString( $path );
 		if ( isset( $schema['minItems'] ) && count( $data ) < $schema['minItems'] ) {
-			$childrenErrors[] = new ValidationError(
-				$currentPathStr,
+			$children_errors[] = new ValidationError(
+				$current_path_str,
 				'minItems-not-met',
 				'Need at least ' . $schema['minItems'] . ' items, found ' . count( $data ) . '.',
 				[ 'expectedMin' => $schema['minItems'], 'actualCount' => count( $data ) ]
 			);
 		}
 		if ( isset( $schema['maxItems'] ) && count( $data ) > $schema['maxItems'] ) {
-			$childrenErrors[] = new ValidationError(
-				$currentPathStr,
+			$children_errors[] = new ValidationError(
+				$current_path_str,
 				'maxItems-exceeded',
 				'May contain at most ' . $schema['maxItems'] . ' items, found ' . count( $data ) . '.',
 				[ 'expectedMax' => $schema['maxItems'], 'actualCount' => count( $data ) ]
@@ -14279,17 +14279,17 @@ final class HumanFriendlySchemaValidator {
 			throw new UnsupportedSchemaException( "The array constraint \"uniqueItems\" is not supported." );
 		}
 
-		if ( count( $childrenErrors ) === 1 ) {
-			return $childrenErrors[0];
+		if ( count( $children_errors ) === 1 ) {
+			return $children_errors[0];
 		}
 
-		if ( ! empty( $childrenErrors ) ) {
+		if ( ! empty( $children_errors ) ) {
 			return new ValidationError(
-				$currentPathStr,
+				$current_path_str,
 				'array-validation-failed',
 				'Array validation failed.',
 				[],
-				$childrenErrors
+				$children_errors
 			);
 		}
 
@@ -14303,8 +14303,8 @@ final class HumanFriendlySchemaValidator {
 			throw new UnsupportedSchemaException( 'Only local #/ refs are supported' );
 		}
 		$node      = $this->schema;
-		$pathParts = explode( '/', substr( $ref, 2 ) );
-		foreach ( $pathParts as $p ) {
+		$path_parts = explode( '/', substr( $ref, 2 ) );
+		foreach ( $path_parts as $p ) {
 			// Need to handle cases where $p could be an encoded character like ~0 for ~ or ~1 for /
 			$p = str_replace( [ '~1', '~0' ], [ '/', '~' ], $p );
 			if ( is_array( $node ) && array_key_exists( $p, $node ) ) {
@@ -14359,29 +14359,29 @@ final class HumanFriendlySchemaValidator {
 		// Auto‑guess single‑value enums and consts
 		$candidates = [];
 		if ( isset( $objs[0] ) ) {
-			$firstObjSchema = isset( $objs[0]['$ref'] ) ? $this->resolveReference( $objs[0]['$ref'] ) : $objs[0];
-			if ( ! isset( $firstObjSchema['properties'] ) ) {
+			$first_obj_schema = isset( $objs[0]['$ref'] ) ? $this->resolveReference( $objs[0]['$ref'] ) : $objs[0];
+			if ( ! isset( $first_obj_schema['properties'] ) ) {
 				return null;
 			} // Should not happen due to filter above
 
-			foreach ( array_keys( $firstObjSchema['properties'] ) as $prop ) {
-				$possibleValues          = [];
-				$allObjsHaveThisEnumProp = true;
+			foreach ( array_keys( $first_obj_schema['properties'] ) as $prop ) {
+				$possible_values          = [];
+				$all_objs_have_this_enum_prop = true;
 				foreach ( $objs as $s_wrapper ) {
 					$s = isset( $s_wrapper['$ref'] ) ? $this->resolveReference( $s_wrapper['$ref'] ) : $s_wrapper;
 					if ( isset( $s['properties'][ $prop ]['const'] ) ) {
-						$possibleValues[] = $s['properties'][ $prop ]['const'];
+						$possible_values[] = $s['properties'][ $prop ]['const'];
 						continue;
 					}
 					if ( isset( $s['properties'][ $prop ]['enum'] ) && count( $s['properties'][ $prop ]['enum'] ) === 1 ) {
-						$possibleValues[] = $s['properties'][ $prop ]['enum'][0];
+						$possible_values[] = $s['properties'][ $prop ]['enum'][0];
 						continue;
 					}
-					$allObjsHaveThisEnumProp = false;
+					$all_objs_have_this_enum_prop = false;
 					break;
 				}
-				if ( $allObjsHaveThisEnumProp && count( array_unique( $possibleValues ) ) === count( $objs ) ) {
-					$candidates[ $prop ] = $possibleValues;
+				if ( $all_objs_have_this_enum_prop && count( array_unique( $possible_values ) ) === count( $objs ) ) {
+					$candidates[ $prop ] = $possible_values;
 				}
 			}
 		}

@@ -13,7 +13,7 @@ class ProgressObserver {
 	/**
 	 * @var callable
 	 */
-	private $logCallback;
+	private $log_callback;
 
 	/**
 	 * @var Runtime|null
@@ -25,8 +25,8 @@ class ProgressObserver {
 	 *
 	 * @param  callable  $logCallback  Function that receives progress updates
 	 */
-	public function __construct( ?callable $logCallback = null ) {
-		$this->logCallback = $logCallback ?? function () {
+	public function __construct( ?callable $log_callback = null ) {
+		$this->log_callback = $log_callback ?? function () {
 			// noop
 		};
 	}
@@ -40,14 +40,14 @@ class ProgressObserver {
 		$tracker->events->addListener(
 			ProgressEvent::class,
 			function ( ProgressEvent $event ) {
-				call_user_func( $this->logCallback, $event->getProgress(), $event->getCaption(), $this->runtime );
+				call_user_func( $this->log_callback, $event->getProgress(), $event->getCaption(), $this->runtime );
 			}
 		);
 
 		$tracker->events->addListener(
 			DoneEvent::class,
 			function () {
-				call_user_func( $this->logCallback, 100, 'Complete', $this->runtime );
+				call_user_func( $this->log_callback, 100, 'Complete', $this->runtime );
 			}
 		);
 	}

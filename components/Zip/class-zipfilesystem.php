@@ -125,7 +125,7 @@ class ZipFilesystem implements Filesystem {
 				sprintf( 'Path %s is not a file', $path )
 			);
 		}
-		$this->zip->seek_to_record( $this->central_directory[ $path ]->firstByteAt );
+		$this->zip->seek_to_record( $this->central_directory[ $path ]->first_byte_at );
 		if ( ! $this->zip->next_object() ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to open file %s', $path )
@@ -192,13 +192,13 @@ class ZipFilesystem implements Filesystem {
 	private function central_directory_size() {
 		$this->collect_central_directory_end_header();
 
-		return $this->central_directory_end_header->centralDirectorySize;
+		return $this->central_directory_end_header->central_directory_size;
 	}
 
 	private function seek_to_central_directory_index() {
 		$this->collect_central_directory_end_header();
 
-		return $this->zip->seek_to_record( $this->central_directory_end_header->centralDirectoryOffset );
+		return $this->zip->seek_to_record( $this->central_directory_end_header->central_directory_offset );
 	}
 
 	private function collect_central_directory_end_header() {

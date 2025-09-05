@@ -42,25 +42,25 @@ class CentralDirectoryEntry {
 	 */
 	const HEADER_SIZE = 42;
 
-	public $firstByteAt;
-	public $versionCreated = 2;
-	public $versionNeeded = 2;
-	public $generalPurpose = 0;
-	public $compressionMethod = 0;
-	public $lastModifiedTime = 0;
-	public $lastModifiedDate = 0;
+	public $first_byte_at;
+	public $version_created = 2;
+	public $version_needed = 2;
+	public $general_purpose = 0;
+	public $compression_method = 0;
+	public $last_modified_time = 0;
+	public $last_modified_date = 0;
 	public $crc;
-	public $compressedSize;
-	public $uncompressedSize;
-	public $diskNumber = 0;
-	public $internalAttributes = 0;
-	public $externalAttributes = 0;
-	public $pathLength;
-	public $extraLength;
-	public $fileCommentLength;
+	public $compressed_size;
+	public $uncompressed_size;
+	public $disk_number = 0;
+	public $internal_attributes = 0;
+	public $external_attributes = 0;
+	public $path_length;
+	public $extra_length;
+	public $file_comment_length;
 	public $path;
 	public $extra;
-	public $fileComment;
+	public $file_comment;
 
 	public function __construct( $header_fields ) {
 		$valid_properties = array_keys( get_object_vars( $this ) );
@@ -72,15 +72,15 @@ class CentralDirectoryEntry {
 		}
 
 		if ( null !== $this->path ) {
-			$this->pathLength = strlen( $this->path );
+			$this->path_length = strlen( $this->path );
 		}
 
 		if ( null !== $this->extra ) {
-			$this->extraLength = strlen( $this->extra );
+			$this->extra_length = strlen( $this->extra );
 		}
 
-		if ( null !== $this->fileComment ) {
-			$this->fileCommentLength = strlen( $this->fileComment );
+		if ( null !== $this->file_comment ) {
+			$this->file_comment_length = strlen( $this->file_comment );
 		}
 	}
 

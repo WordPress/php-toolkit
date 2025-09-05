@@ -112,21 +112,21 @@ class V1ToV2Transpiler {
 		//               permissions to access the network, disk, etc.
 		// * landingPage -> runtimeOptions.landingPage
 		// * login -> runtimeOptions.login
-		$unsupportedFields        = [
+		$unsupported_fields        = [
 			'features',
 			'landingPage',
 			'login',
 			'phpExtensionBundles',
 		];
-		$presentUnsupportedFields = [];
-		foreach ( $unsupportedFields as $field ) {
+		$present_unsupported_fields = [];
+		foreach ( $unsupported_fields as $field ) {
 			if ( isset( $v1[ $field ] ) ) {
-				$presentUnsupportedFields[] = $field;
+				$present_unsupported_fields[] = $field;
 			}
 		}
-		if ( ! empty( $presentUnsupportedFields ) ) {
+		if ( ! empty( $present_unsupported_fields ) ) {
 			$this->logger->warning( sprintf( 'The following fields are not yet supported by the v1->v2 Blueprint transpiler and will be ignored: %s.',
-				implode( ', ', $presentUnsupportedFields ) ) );
+				implode( ', ', $present_unsupported_fields ) ) );
 		}
 
 		// SHORTHANDS:
@@ -620,10 +620,10 @@ PHP
 			$code = '<?php ' . $code;
 		}
 		$tokens        = token_get_all( $code );
-		$convertedCode = '';
+		$converted_code = '';
 		foreach ( $tokens as $token ) {
 			if ( !is_array( $token ) ) {
-				$convertedCode .= $token;
+				$converted_code .= $token;
 			}
 			[ $id, $text ] = $token;
 			switch ( $id ) {
@@ -637,28 +637,28 @@ PHP
 							&& strncmp($unquoted, '/wordpress/', strlen('/wordpress/')) === 0
 						)
 					) {
-						$convertedCode .= 'getenv(\'DOCROOT\') . ' . var_export(substr($unquoted, strlen('/wordpress')), true);
+						$converted_code .= 'getenv(\'DOCROOT\') . ' . var_export(substr($unquoted, strlen('/wordpress')), true);
 					} else if (
 						(
 							($quote === "'" || $quote === '"')
 							&& strncmp($unquoted, 'wordpress/', strlen('wordpress/')) === 0
 						)
 					) {
-						$convertedCode .= 'getenv(\'DOCROOT\') . ' . var_export(substr($unquoted, strlen('wordpress')), true);
+						$converted_code .= 'getenv(\'DOCROOT\') . ' . var_export(substr($unquoted, strlen('wordpress')), true);
 					} else {
-						$convertedCode .= $text;
+						$converted_code .= $text;
 					}
 					break;
 				default:
-					$convertedCode .= $text;
+					$converted_code .= $text;
 					break;
 			}
 		}
-		$convertedCode = trim($convertedCode);
-		if(!$had_php_tag && substr($convertedCode, 0, 5) === '<?php') {
-			$convertedCode = substr( $convertedCode, 5); // Remove the initial '<?php' added for tokenization
+		$converted_code = trim($converted_code);
+		if(!$had_php_tag && substr($converted_code, 0, 5) === '<?php') {
+			$converted_code = substr( $converted_code, 5); // Remove the initial '<?php' added for tokenization
 		}
-		return $convertedCode;
+		return $converted_code;
 	}
 
 

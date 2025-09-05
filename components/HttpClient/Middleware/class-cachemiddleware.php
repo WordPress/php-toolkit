@@ -24,8 +24,8 @@ final class CacheMiddleware implements MiddlewareInterface {
 	private $replay = [];
 
 	/** writers keyed by spl_object_hash(req) */
-	private $tempHandle = [];
-	private $tempPath = [];
+	private $temp_handle = [];
+	private $temp_path = [];
 
 	public function __construct( $client_state, $next_middleware, $options = array() ) {
 		$this->next_middleware = $next_middleware;
@@ -173,8 +173,8 @@ final class CacheMiddleware implements MiddlewareInterface {
 				
 				$tmp = $this->tempPath( $request->cache_key );
 
-				$this->tempPath[ spl_object_hash( $request ) ]   = $tmp;
-				$this->tempHandle[ spl_object_hash( $request ) ] = fopen( $tmp, 'wb' );
+				$this->temp_path[ spl_object_hash( $request ) ]   = $tmp;
+				$this->temp_handle[ spl_object_hash( $request ) ] = fopen( $tmp, 'wb' );
 			}
 			return true;
 		}
@@ -182,18 +182,18 @@ final class CacheMiddleware implements MiddlewareInterface {
 		if ( $event === Client::EVENT_BODY_CHUNK_AVAILABLE ) {
 			$chunk = $this->state->response_body_chunk;
 			$hash  = spl_object_hash( $request );
-			if ( isset( $this->tempHandle[ $hash ] ) ) {
-				fwrite( $this->tempHandle[ $hash ], $chunk );
+			if ( isset( $this->temp_handle[ $hash ] ) ) {
+				fwrite( $this->temp_handle[ $hash ], $chunk );
 			}
 			return true;
 		}
 		/* FINISH */
 		if ( $event === Client::EVENT_FINISHED ) {
 			$hash = spl_object_hash( $request );
-			if ( isset( $this->tempHandle[ $hash ] ) ) {
-				fclose( $this->tempHandle[ $hash ] );
-				$this->commit( $request, $response, $this->tempPath[ $hash ] );
-				unset( $this->tempHandle[ $hash ], $this->tempPath[ $hash ] );
+			if ( isset( $this->temp_handle[ $hash ] ) ) {
+				fclose( $this->temp_handle[ $hash ] );
+				$this->commit( $request, $response, $this->temp_path[ $hash ] );
+				unset( $this->temp_handle[ $hash ], $this->temp_path[ $hash ] );
 			}
 			return true;
 		}
@@ -346,7 +346,7 @@ final class CacheMiddleware implements MiddlewareInterface {
 		}
 	}
 
-	protected function commit( Request $request, Response $response, string $tempFile ) {
+	protected function commit( Request $request, Response $response, string $temp_file ) {
 		$url   = $request->url;
 		$meta = [
 			'url' => $url,
@@ -364,9 +364,9 @@ final class CacheMiddleware implements MiddlewareInterface {
 		}
 		
 		// Parse Cache-Control for max-age, if present
-		$cacheControl = $response->get_header( 'Cache-Control' );
-		if ( $cacheControl ) {
-			$directives = self::directives( $cacheControl );
+		$cache_control = $response->get_header( 'Cache-Control' );
+		if ( $cache_control ) {
+			$directives = self::directives( $cache_control );
 			if ( isset( $directives['max-age'] ) && is_int( $directives['max-age'] ) ) {
 				$meta['max_age'] = $directives['max-age'];
 			}
@@ -377,23 +377,23 @@ final class CacheMiddleware implements MiddlewareInterface {
 
 		// Determine file paths
 		$key      = $request->cache_key;
-		$bodyFile = $this->bodyPath( $key, $url );
-		$metaFile = $this->metaPath( $key, $url );
+		$body_file = $this->bodyPath( $key, $url );
+		$meta_file = $this->metaPath( $key, $url );
 
 		// Atomically replace/rename the temp body file to final cache file
-		if ( ! rename( $tempFile, $bodyFile ) ) {
+		if ( ! rename( $temp_file, $body_file ) ) {
 			// Handle error (e.g., log failure and abort caching)
 			return;
 		}
 
 		// Write metadata with exclusive lock
-		$fp = fopen( $metaFile, 'c' );
+		$fp = fopen( $meta_file, 'c' );
 		if ( $fp ) {
 			flock( $fp, LOCK_EX );
 			ftruncate( $fp, 0 );
 			// Serialize or encode CacheEntry (e.g., JSON)
-			$metaData = json_encode( $meta );
-			fwrite( $fp, $metaData );
+			$meta_data = json_encode( $meta );
+			fwrite( $fp, $meta_data );
 			fflush( $fp );
 			flock( $fp, LOCK_UN );
 			fclose( $fp );
@@ -408,16 +408,16 @@ final class CacheMiddleware implements MiddlewareInterface {
 		}
 		
 		$key      = $request->cache_key;
-		$bodyFile = $this->bodyPath( $key, $request->url );
-		$metaFile = $this->metaPath( $key, $request->url );
+		$body_file = $this->bodyPath( $key, $request->url );
+		$meta_file = $this->metaPath( $key, $request->url );
 
 		// Optionally, acquire lock on meta file to prevent concurrent writes
-		if ( $fp = @fopen( $metaFile, 'c' ) ) {
+		if ( $fp = @fopen( $meta_file, 'c' ) ) {
 			flock( $fp, LOCK_EX );
 		}
 
 		// Delete cache files if they exist
-		@unlink( $bodyFile );
+		@unlink( $body_file );
 		if ( 'Windows' === PHP_OS_FAMILY && PHP_VERSION_ID < 70300 && isset( $fp ) && $fp ) {
 			// On Windows, PHP 7.2 or earlier can't "unlink()" files with handles in use.
 			// In that case, we need to first release the lock, and then unlink the file.
@@ -425,10 +425,10 @@ final class CacheMiddleware implements MiddlewareInterface {
 			fclose( $fp );
 			unset( $fp );
 		}
-		@unlink( $metaFile );
+		@unlink( $meta_file );
 
 		// Also remove any temp files for this entry
-		foreach ( glob( $bodyFile . '.tmp*' ) as $tmp ) {
+		foreach ( glob( $body_file . '.tmp*' ) as $tmp ) {
 			@unlink( $tmp );
 		}
 		if ( isset( $fp ) && $fp ) {

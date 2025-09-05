@@ -79,7 +79,7 @@ require_once getenv('DOCROOT') . '/wp-load.php';
 append_output( get_option('stylesheet') );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		$this->assertEquals( 'test-theme', trim( $active_theme ) );
 	}
@@ -119,7 +119,7 @@ require_once getenv('DOCROOT') . '/wp-load.php';
 append_output( get_option('stylesheet') );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		$this->assertNotEquals( 'test-theme', trim( $active_theme ) );
 	}
@@ -155,7 +155,7 @@ require_once getenv('DOCROOT') . '/wp-load.php';
 append_output( get_option('stylesheet') );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		$this->assertEquals( 'test-theme', trim( $active_theme ) );
 	}

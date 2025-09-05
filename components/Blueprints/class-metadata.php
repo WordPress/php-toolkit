@@ -25,11 +25,11 @@ class Metadata {
 	/**
 	 * @var string|null
 	 */
-	public $authorUrl;
+	public $author_url;
 	/**
 	 * @var string|null
 	 */
-	public $donateLink;
+	public $donate_link;
 	/**
 	 * @var mixed[]
 	 */
@@ -59,8 +59,8 @@ class Metadata {
 		$metadata->description = $data['description'] ?? 'No description provided';
 		$metadata->version     = $data['version'] ?? '1.0.0';
 		$metadata->authors     = $data['authors'] ?? [];
-		$metadata->authorUrl   = $data['authorUrl'] ?? null;
-		$metadata->donateLink  = $data['donateLink'] ?? null;
+		$metadata->author_url   = $data['authorUrl'] ?? null;
+		$metadata->donate_link  = $data['donateLink'] ?? null;
 		$metadata->tags        = $data['tags'] ?? [];
 		$metadata->license     = $data['license'] ?? null;
 

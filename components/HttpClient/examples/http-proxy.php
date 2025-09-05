@@ -16,20 +16,20 @@ function get_target_url( $server_data = null ) {
 	if ( $server_data === null ) {
 		$server_data = $_SERVER;
 	}
-	$requestUri = $server_data['REQUEST_URI'];
-	$targetUrl  = $requestUri;
+	$request_uri = $server_data['REQUEST_URI'];
+	$target_url  = $request_uri;
 
 	// Remove the current script name from the beginning of $targetUrl
-	if ( strpos( $targetUrl, $server_data['SCRIPT_NAME'] ) === 0 ) {
-		$targetUrl = substr( $targetUrl, strlen( $server_data['SCRIPT_NAME'] ) );
+	if ( strpos( $target_url, $server_data['SCRIPT_NAME'] ) === 0 ) {
+		$target_url = substr( $target_url, strlen( $server_data['SCRIPT_NAME'] ) );
 	}
 
 	// Remove the leading slash
-	if ( $targetUrl[0] === '/' || $targetUrl[0] === '?' ) {
-		$targetUrl = substr( $targetUrl, 1 );
+	if ( $target_url[0] === '/' || $target_url[0] === '?' ) {
+		$target_url = substr( $target_url, 1 );
 	}
 
-	return $targetUrl;
+	return $target_url;
 }
 
 $target_url = get_target_url();

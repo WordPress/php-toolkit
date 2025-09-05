@@ -19,7 +19,7 @@ class RunnerConfiguration {
 	/**
 	 * @var DataReference|mixed[]
 	 */
-	private $blueprintRef;
+	private $blueprint_ref;
 	/**
 	 * @var string
 	 */
@@ -27,20 +27,20 @@ class RunnerConfiguration {
 	/**
 	 * @var string
 	 */
-	private $rootDir = '';
+	private $root_dir = '';
 	/**
 	 * @var string
 	 */
-	private $siteUrl = '';
+	private $site_url = '';
 	/**
 	 * @var string
 	 */
-	private $databaseEngine = 'mysql';
+	private $database_engine = 'mysql';
 	/**
 	 * @var mixed[]
 	 */
-	private $databaseCredentials = [];
-	private $progressObserver = null;
+	private $database_credentials = [];
+	private $progress_observer = null;
 	/**
 	 * @var LoggerInterface
 	 */
@@ -54,17 +54,17 @@ class RunnerConfiguration {
 	 * @var DataReference|null
 	 * Reference to the sqlite-database-integration plugin zip, if configured.
 	 */
-	private $sqliteIntegrationPlugin;
+	private $sqlite_integration_plugin;
 
 	/**
 	 * @var DataReference|null
 	 * Reference to the WP-CLI phar file, if configured.
 	 */
-	private $wpCliReference;
+	private $wp_cli_reference;
 
 	public function __construct() {
-		$this->sqliteIntegrationPlugin = DataReference::create( 'https://downloads.wordpress.org/plugin/sqlite-database-integration.zip' );
-		$this->wpCliReference          = DataReference::create( 'https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar' );
+		$this->sqlite_integration_plugin = DataReference::create( 'https://downloads.wordpress.org/plugin/sqlite-database-integration.zip' );
+		$this->wp_cli_reference          = DataReference::create( 'https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar' );
 		$this->logger                  = new NoopLogger();
 		$this->permissions             = [
 			self::PERMISSION_LOCAL_FILESYSTEM_ACCESS => false,
@@ -75,7 +75,7 @@ class RunnerConfiguration {
 	 * @param  DataReference|mixed[]  $r
 	 */
 	public function setBlueprint( $r ): self {
-		$this->blueprintRef = $r;
+		$this->blueprint_ref = $r;
 
 		return $this;
 	}
@@ -84,7 +84,7 @@ class RunnerConfiguration {
 	 * @return DataReference|mixed[]
 	 */
 	public function getBlueprint() {
-		return $this->blueprintRef;
+		return $this->blueprint_ref;
 	}
 
 	public function setLogger( LoggerInterface $logger ): self {
@@ -108,23 +108,23 @@ class RunnerConfiguration {
 	}
 
 	public function setTargetSiteRoot( string $d ): self {
-		$this->rootDir = $d;
+		$this->root_dir = $d;
 
 		return $this;
 	}
 
 	public function getTargetSiteRoot(): string {
-		return $this->rootDir;
+		return $this->root_dir;
 	}
 
 	public function setTargetSiteUrl( string $u ): self {
-		$this->siteUrl = $u;
+		$this->site_url = $u;
 
 		return $this;
 	}
 
 	public function getTargetSiteUrl(): string {
-		return $this->siteUrl;
+		return $this->site_url;
 	}
 
 	/**
@@ -135,18 +135,18 @@ class RunnerConfiguration {
 	 * @return self
 	 * @throws InvalidArgumentException If the database engine is invalid
 	 */
-	public function setDatabaseEngine( string $databaseEngine ): self {
-		if ( ! in_array( $databaseEngine, [ 'mysql', 'sqlite' ] ) ) {
-			throw new InvalidArgumentException( "Invalid database engine: {$databaseEngine}" );
+	public function setDatabaseEngine( string $database_engine ): self {
+		if ( ! in_array( $database_engine, [ 'mysql', 'sqlite' ] ) ) {
+			throw new InvalidArgumentException( "Invalid database engine: {$database_engine}" );
 		}
 
-		$this->databaseEngine = $databaseEngine;
+		$this->database_engine = $database_engine;
 
 		return $this;
 	}
 
 	public function getDatabaseEngine(): string {
-		return $this->databaseEngine;
+		return $this->database_engine;
 	}
 
 	/**
@@ -156,14 +156,14 @@ class RunnerConfiguration {
 	 *
 	 * @return self
 	 */
-	public function setDatabaseCredentials( array $databaseCredentials ): self {
-		$this->databaseCredentials = $databaseCredentials;
+	public function setDatabaseCredentials( array $database_credentials ): self {
+		$this->database_credentials = $database_credentials;
 
 		return $this;
 	}
 
 	public function getDatabaseCredentials(): array {
-		return $this->databaseCredentials;
+		return $this->database_credentials;
 	}
 
 	/**
@@ -174,7 +174,7 @@ class RunnerConfiguration {
 	 * @return self
 	 */
 	public function setProgressObserver( ProgressObserver $observer ): self {
-		$this->progressObserver = $observer;
+		$this->progress_observer = $observer;
 
 		return $this;
 	}
@@ -185,7 +185,7 @@ class RunnerConfiguration {
 	 * @return callable|null
 	 */
 	public function getProgressObserver() {
-		return $this->progressObserver;
+		return $this->progress_observer;
 	}
 
 	/**
@@ -196,7 +196,7 @@ class RunnerConfiguration {
 	 * @return self
 	 */
 	public function setSqliteIntegrationPlugin( DataReference $ref ): self {
-		$this->sqliteIntegrationPlugin = $ref;
+		$this->sqlite_integration_plugin = $ref;
 
 		return $this;
 	}
@@ -207,7 +207,7 @@ class RunnerConfiguration {
 	 * @return DataReference|null
 	 */
 	public function getSqliteIntegrationPlugin(): ?DataReference {
-		return $this->sqliteIntegrationPlugin;
+		return $this->sqlite_integration_plugin;
 	}
 
 	/**
@@ -218,7 +218,7 @@ class RunnerConfiguration {
 	 * @return self
 	 */
 	public function setWpCliReference( DataReference $ref ): self {
-		$this->wpCliReference = $ref;
+		$this->wp_cli_reference = $ref;
 
 		return $this;
 	}
@@ -229,7 +229,7 @@ class RunnerConfiguration {
 	 * @return DataReference
 	 */
 	public function getWpCliReference(): DataReference {
-		return $this->wpCliReference;
+		return $this->wp_cli_reference;
 	}
 
 	/**

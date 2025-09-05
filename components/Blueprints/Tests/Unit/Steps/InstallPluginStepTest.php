@@ -62,7 +62,7 @@ require_once getenv('DOCROOT') . '/wp-load.php';
 append_output( json_encode(get_option('active_plugins')) );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		$active_plugins = json_decode( $active_plugins, true );
 		$this->assertContains( 'test-plugin/test-plugin.php', $active_plugins );
@@ -105,7 +105,7 @@ $inactive_plugins = array_diff(array_keys($all_plugins), $active_plugins);
 append_output( json_encode($inactive_plugins) );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 		$inactive_plugins = json_decode( $inactive_plugins, true );
 		$this->assertContains( 'test-plugin/test-plugin.php', $inactive_plugins );
 
@@ -117,7 +117,7 @@ require_once getenv('DOCROOT') . '/wp-load.php';
 append_output( json_encode(get_option('active_plugins')) );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		$active_plugins = json_decode( $active_plugins, true );
 		$this->assertNotContains( 'test-plugin/test-plugin.php', $active_plugins );
@@ -154,7 +154,7 @@ require_once getenv('DOCROOT') . '/wp-load.php';
 append_output( json_encode(get_option('active_plugins')) );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		$active_plugins = json_decode( $active_plugins, true );
 		$this->assertContains( 'zipped-test-plugin/test-plugin.php', $active_plugins );
@@ -191,7 +191,7 @@ require_once getenv('DOCROOT') . '/wp-load.php';
 append_output( json_encode(get_option('active_plugins')) );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		$active_plugins = json_decode( $active_plugins, true );
 		$this->assertContains( 'subfolder-name/test-plugin.php', $active_plugins );
@@ -228,7 +228,7 @@ require_once getenv('DOCROOT') . '/wp-load.php';
 append_output( json_encode(get_option('active_plugins')) );
 PHP
 
-		)->outputFileContent;
+		)->output_file_content;
 
 		$active_plugins = json_decode( $active_plugins, true );
 		$this->assertContains( 'plugin-directory/test-plugin.php', $active_plugins );

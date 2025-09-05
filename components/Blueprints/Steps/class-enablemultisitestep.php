@@ -102,13 +102,13 @@ PHP;
 			throw new BlueprintExecutionException( $e->getMessage() );
 		}
 
-		if ( '' === $result->outputFileContent ) {
+		if ( '' === $result->output_file_content ) {
 			throw new BlueprintExecutionException( 'Failed to enable multisite' );
 		}
 
 		// Reuse DefineConstantsStep to set the multisite constants.
-		$wpConfigConstants   = json_decode( $result->outputFileContent, true );
-		$defineConstantsStep = new DefineConstantsStep( $wpConfigConstants );
-		$defineConstantsStep->run( $runtime, $tracker );
+		$wp_config_constants   = json_decode( $result->output_file_content, true );
+		$define_constants_step = new DefineConstantsStep( $wp_config_constants );
+		$define_constants_step->run( $runtime, $tracker );
 	}
 }

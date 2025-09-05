@@ -19,21 +19,21 @@ class UnzipStep implements StepInterface {
 	 * Zip file source identifier (URL, ./path, /path).
 	 * @var DataReference
 	 */
-	public $zipFile;
+	public $zip_file;
 
 	/**
 	 * The path to extract the zip file to.
 	 * @var string
 	 */
-	public $extractToPath;
+	public $extract_to_path;
 
 	/**
 	 * @param  DataReference  $zipFile  Zip file source identifier.
 	 * @param  string  $extractToPath  The path to extract the zip file to.
 	 */
-	public function __construct( DataReference $zipFile, string $extractToPath ) {
-		$this->zipFile       = $zipFile;
-		$this->extractToPath = $extractToPath;
+	public function __construct( DataReference $zip_file, string $extract_to_path ) {
+		$this->zip_file       = $zip_file;
+		$this->extract_to_path = $extract_to_path;
 	}
 
 	public function run( Runtime $runtime, Tracker $tracker ) {
@@ -42,7 +42,7 @@ class UnzipStep implements StepInterface {
 		$target_fs = $runtime->getTargetFilesystem();
 
 		// Get the data reference for the zip file
-		$zip_stream = $runtime->resolve( $this->zipFile );
+		$zip_stream = $runtime->resolve( $this->zip_file );
 
 		if ( ! $zip_stream instanceof File ) {
 			throw new InvalidArgumentException( 'The provided resource is not a zip file.' );
@@ -56,7 +56,7 @@ class UnzipStep implements StepInterface {
 			'source_filesystem' => $zip_fs,
 			'source_path'       => '/',
 			'target_filesystem' => $target_fs,
-			'target_path'       => $this->extractToPath,
+			'target_path'       => $this->extract_to_path,
 			'recursive'         => true,
 		] );
 

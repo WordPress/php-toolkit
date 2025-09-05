@@ -22,8 +22,8 @@ function get_target_url( $server_data = null ) {
 	return false;
 }
 
-function get_current_script_uri( $targetUrl, $request_uri ) {
-	return substr( $request_uri, 0, - strlen( $targetUrl ) );
+function get_current_script_uri( $target_url, $request_uri ) {
+	return substr( $request_uri, 0, - strlen( $target_url ) );
 }
 
 function url_validate_and_resolve( $url, $resolve_function = 'gethostbynamel' ) {
@@ -32,19 +32,19 @@ function url_validate_and_resolve( $url, $resolve_function = 'gethostbynamel' ) 
 	}
 
 	// Parse the URL to get its components
-	$parsedUrl = parse_url( $url );
+	$parsed_url = parse_url( $url );
 
 	// Allow only http and https protocols
-	if ( ! in_array( $parsedUrl['scheme'], array( 'http', 'https' ) ) ) {
-		throw new CorsProxyException( 'Invalid protocol: ' . $parsedUrl['scheme'] );
+	if ( ! in_array( $parsed_url['scheme'], array( 'http', 'https' ) ) ) {
+		throw new CorsProxyException( 'Invalid protocol: ' . $parsed_url['scheme'] );
 	}
 
 	// Reject URLs containing username or password before the hostname
-	if ( isset( $parsedUrl['user'] ) || isset( $parsedUrl['pass'] ) ) {
+	if ( isset( $parsed_url['user'] ) || isset( $parsed_url['pass'] ) ) {
 		throw new CorsProxyException( 'URL containing forbidden user or password information' );
 	}
 
-	$host = $parsedUrl['host'];
+	$host = $parsed_url['host'];
 
 	if (
 		( isset( $_SERVER['HTTP_HOST'] ) &&
@@ -104,7 +104,7 @@ class IpUtils {
 	 * @return bool
 	 */
 	private static function isPrivateIpv4( $ip ) {
-		$privateRanges = array(
+		$private_ranges = array(
 			/**
 			 * Private addresses according to RFC 1918.
 			 *
@@ -156,7 +156,7 @@ class IpUtils {
 			array( '233.252.0.0', '233.252.0.255' ),
 		);
 
-		foreach ( $privateRanges as $range ) {
+		foreach ( $private_ranges as $range ) {
 			if ( self::ipv4InRange( $ip, $range[0], $range[1] ) ) {
 				return true;
 			}
@@ -173,7 +173,7 @@ class IpUtils {
 	 * @return bool
 	 */
 	private static function isPrivateIpv6( $ip ) {
-		$privateRanges = array(
+		$private_ranges = array(
 			/**
 			 * The Local IPv6 addresses are created using a pseudo-randomly
 			 * allocated global ID (RFC 4193).
@@ -246,7 +246,7 @@ class IpUtils {
 			array( 'ff00::', 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff' ),
 		);
 
-		foreach ( $privateRanges as $range ) {
+		foreach ( $private_ranges as $range ) {
 			if ( self::ipv6InRange( $ip, $range[0], $range[1] ) ) {
 				return true;
 			}

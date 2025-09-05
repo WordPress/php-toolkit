@@ -14,23 +14,23 @@ $phar->startBuffering();
  *
  * Therefore, we're giving all the HumbugBox classes a unique suffix.
  */
-$autoloadSuffix = substr( md5( __FILE__ ), 0, 8 );
+$autoload_suffix = substr( md5( __FILE__ ), 0, 8 );
 foreach ( new RecursiveIteratorIterator( $phar ) as $file ) {
 	if ( ! $file->isFile() ) {
 		continue;
 	}
-	$relativePath     = $file->getPathname();
-	$relativePath     = str_replace( 'phar://', '', $relativePath );
-	$relativePath     = str_replace( $phar->getPath() . '/', '', $relativePath );
+	$relative_path     = $file->getPathname();
+	$relative_path     = str_replace( 'phar://', '', $relative_path );
+	$relative_path     = str_replace( $phar->getPath() . '/', '', $relative_path );
 	$contents         = $file->getContent();
 	$updated_contents = $contents;
 	foreach ( array(
 		'InitHumbugBox',
 	) as $class ) {
-		$updated_contents = str_replace( $class, $class . $autoloadSuffix, $updated_contents );
+		$updated_contents = str_replace( $class, $class . $autoload_suffix, $updated_contents );
 	}
 	if ( $updated_contents !== $contents ) {
-		$phar[ $relativePath ] = $updated_contents;
+		$phar[ $relative_path ] = $updated_contents;
 	}
 }
 

@@ -33,24 +33,24 @@ class DisallowShortTernarySniff implements Sniff
      * @phpcsSuppress SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint
      * @param int $stackPtr
      */
-    public function process(File $phpcsFile, $stackPtr): void
+    public function process(File $phpcs_file, $stack_ptr): void
     {
-        $tokens = $phpcsFile->getTokens();
+        $tokens = $phpcs_file->getTokens();
 
         // Find the next effective token after '?'.
-        $nextEffective = TokenHelper::findNextEffective($phpcsFile, $stackPtr + 1);
-        if ($nextEffective === null) {
+        $next_effective = TokenHelper::findNextEffective($phpcs_file, $stack_ptr + 1);
+        if ($next_effective === null) {
             return;
         }
 
         // If the next effective token is ':', this is a short ternary (Elvis) operator.
-        if ($tokens[$nextEffective]['code'] !== T_INLINE_ELSE) {
+        if ($tokens[$next_effective]['code'] !== T_INLINE_ELSE) {
             return;
         }
 
-        $fix = $phpcsFile->addFixableError(
+        $fix = $phpcs_file->addFixableError(
             'Using short ternaries is not allowed as they are rarely used correctly.',
-            $stackPtr,
+            $stack_ptr,
             self::CODE_SHORT_TERNARY_USED
         );
 
@@ -59,20 +59,20 @@ class DisallowShortTernarySniff implements Sniff
         }
 
         // Expand `cond ?: else` into `cond ? cond : else` while preserving original condition text.
-        $startPtr = TernaryOperatorHelper::getStartPointer($phpcsFile, $stackPtr);
-        $elsePtr = TernaryOperatorHelper::getElsePointer($phpcsFile, $stackPtr);
+        $start_ptr = TernaryOperatorHelper::getStartPointer($phpcs_file, $stack_ptr);
+        $else_ptr = TernaryOperatorHelper::getElsePointer($phpcs_file, $stack_ptr);
 
         $condition = '';
-        for ($i = $startPtr; $i < $stackPtr; $i++) {
+        for ($i = $start_ptr; $i < $stack_ptr; $i++) {
             $condition .= $tokens[$i]['content'];
         }
         $condition = rtrim($condition);
 
-        $phpcsFile->fixer->beginChangeset();
+        $phpcs_file->fixer->beginChangeset();
         // Remove anything between '?' and ':' (whitespace/comments).
-        FixerHelper::removeBetween($phpcsFile, $stackPtr, $elsePtr);
+        FixerHelper::removeBetween($phpcs_file, $stack_ptr, $else_ptr);
         // Insert the duplicated condition with spaces around.
-        FixerHelper::add($phpcsFile, $stackPtr, ' ' . $condition . ' ');
-        $phpcsFile->fixer->endChangeset();
+        FixerHelper::add($phpcs_file, $stack_ptr, ' ' . $condition . ' ');
+        $phpcs_file->fixer->endChangeset();
     }
 }

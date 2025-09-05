@@ -427,7 +427,7 @@ class EntityImporter {
 		$posts = $wpdb->get_results( "SELECT ID, guid FROM {$wpdb->posts}" );
 
 		foreach ( $posts as $item ) {
-			$this->exists['post'][ $item->guid ] = $item->ID;
+			$this->exists['post'][ $item->guid ] = $item->id;
 		}
 	}
 

@@ -20,10 +20,10 @@ class DataReference {
 	/**
 	 * @var int
 	 */
-	private static $instanceCounter = 0;
+	private static $instance_counter = 0;
 
 	public function __construct($original_definition = null) {
-		$this->id = self::$instanceCounter ++;
+		$this->id = self::$instance_counter ++;
 		$this->original_definition = $original_definition;
 	}
 

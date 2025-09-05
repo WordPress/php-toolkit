@@ -34,37 +34,37 @@ class EndCentralDirectoryEntry {
 	/**
 	 * @var int
 	 */
-	public $diskNumber = 0;
+	public $disk_number = 0;
 
 	/**
 	 * @var int
 	 */
-	public $centralDirectoryStartDisk = 0;
+	public $central_directory_start_disk = 0;
 
 	/**
 	 * @var int
 	 */
-	public $numberCentralDirectoryRecordsOnThisDisk;
+	public $number_central_directory_records_on_this_disk;
 
 	/**
 	 * @var int
 	 */
-	public $numberCentralDirectoryRecords;
+	public $number_central_directory_records;
 
 	/**
 	 * @var int
 	 */
-	public $centralDirectorySize;
+	public $central_directory_size;
 
 	/**
 	 * @var int
 	 */
-	public $centralDirectoryOffset;
+	public $central_directory_offset;
 
 	/**
 	 * @var int
 	 */
-	public $commentLength = 0;
+	public $comment_length = 0;
 
 	/**
 	 * @var string

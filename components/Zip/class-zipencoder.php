@@ -13,7 +13,7 @@ use function WordPress\Filesystem\wp_join_unix_paths;
 class ZipEncoder {
 
 	private $output;
-	private $centralDirectory = array();
+	private $central_directory = array();
 	private $bytes_written = 0;
 
 	public function __construct( ByteWriteStream $output ) {
@@ -43,7 +43,7 @@ class ZipEncoder {
 		$this->append_file_entry_header( $entry );
 
 		try {
-			if ( $entry->compressionMethod === ZipDecoder::COMPRESSION_DEFLATE ) {
+			if ( $entry->compression_method === ZipDecoder::COMPRESSION_DEFLATE ) {
 				$body_stream = new DeflateReadStream( $entry->body_reader, ZLIB_ENCODING_RAW, 9 );
 			} else {
 				$body_stream = $entry->body_reader;
@@ -52,9 +52,9 @@ class ZipEncoder {
 			while ( $bytes = $body_stream->pull( 10 ) ) {
 				$this->output->append_bytes( $body_stream->consume( $bytes ) );
 			}
-			$this->bytes_written += $entry->compressedSize;
+			$this->bytes_written += $entry->compressed_size;
 		} finally {
-			if ( $entry->compressionMethod === ZipDecoder::COMPRESSION_DEFLATE ) {
+			if ( $entry->compression_method === ZipDecoder::COMPRESSION_DEFLATE ) {
 				$body_stream->close_reading();
 			}
 		}
@@ -80,7 +80,7 @@ class ZipEncoder {
 	 */
 	private function compute_file_hash_and_size( FileEntry $entry ) {
 		// Pass 1: Calculate the CRC32, uncompressed size, and compressed size
-		if ( $entry->compressionMethod === ZipDecoder::COMPRESSION_DEFLATE ) {
+		if ( $entry->compression_method === ZipDecoder::COMPRESSION_DEFLATE ) {
 			$reader = new DeflateReadStream( $entry->body_reader, ZLIB_ENCODING_RAW, 9 );
 		} else {
 			$reader = $entry->body_reader;
@@ -100,12 +100,12 @@ class ZipEncoder {
 			$stream->consume( $n );
 		}
 
-		if ( $entry->compressionMethod === ZipDecoder::COMPRESSION_DEFLATE ) {
+		if ( $entry->compression_method === ZipDecoder::COMPRESSION_DEFLATE ) {
 			$reader->close_reading();
 		}
 
-		$entry->compressedSize   = $reader->tell();
-		$entry->uncompressedSize = $entry->body_reader->length();
+		$entry->compressed_size   = $reader->tell();
+		$entry->uncompressed_size = $entry->body_reader->length();
 		$entry->crc              = hexdec( $stream['checksum']->get_hash() );
 
 		// Reset the reader to the beginning of the file
@@ -114,24 +114,24 @@ class ZipEncoder {
 
 
 	private function recordFileForCentralDirectory( FileEntry $file_entry ) {
-		$this->centralDirectory[] = new CentralDirectoryEntry(
+		$this->central_directory[] = new CentralDirectoryEntry(
 			array(
-				'versionCreated'     => 2,
-				'versionNeeded'      => 2,
-				'generalPurpose'     => $file_entry->generalPurpose,
-				'compressionMethod'  => $file_entry->compressionMethod,
-				'lastModifiedTime'   => $file_entry->lastModifiedTime,
-				'lastModifiedDate'   => $file_entry->lastModifiedDate,
+				'version_created'     => 2,
+				'version_needed'      => 2,
+				'general_purpose'     => $file_entry->general_purpose,
+				'compression_method'  => $file_entry->compression_method,
+				'last_modified_time'   => $file_entry->last_modified_time,
+				'last_modified_date'   => $file_entry->last_modified_date,
 				'crc'                => $file_entry->crc,
-				'compressedSize'     => $file_entry->compressedSize,
-				'uncompressedSize'   => $file_entry->uncompressedSize,
-				'diskNumber'         => 0,
-				'internalAttributes' => 0,
-				'externalAttributes' => 0,
-				'firstByteAt'        => $this->bytes_written,
+				'compressed_size'     => $file_entry->compressed_size,
+				'uncompressed_size'   => $file_entry->uncompressed_size,
+				'disk_number'         => 0,
+				'internal_attributes' => 0,
+				'external_attributes' => 0,
+				'first_byte_at'        => $this->bytes_written,
 				'path'               => $file_entry->path,
 				'extra'              => $file_entry->extra,
-				'fileComment'        => '',
+				'file_comment'        => '',
 			)
 		);
 	}
@@ -147,20 +147,20 @@ class ZipEncoder {
 	 * the end of central directory record, finalizing the ZIP archive structure.
 	 */
 	private function flushCentralDirectory() {
-		$centralDirectoryOffset = $this->bytes_written;
+		$central_directory_offset = $this->bytes_written;
 
 		// Write all central directory entries
-		foreach ( $this->centralDirectory as $entry ) {
+		foreach ( $this->central_directory as $entry ) {
 			$this->append_central_directory_entry( $entry );
 		}
 
 		$this->append_end_central_directory_entry(
 			new EndCentralDirectoryEntry(
 				array(
-					'numberCentralDirectoryRecordsOnThisDisk' => count( $this->centralDirectory ),
-					'numberCentralDirectoryRecords'           => count( $this->centralDirectory ),
-					'centralDirectorySize'                    => $this->bytes_written - $centralDirectoryOffset,
-					'centralDirectoryOffset'                  => $centralDirectoryOffset,
+					'number_central_directory_records_on_this_disk' => count( $this->central_directory ),
+					'number_central_directory_records'           => count( $this->central_directory ),
+					'central_directory_size'                    => $this->bytes_written - $central_directory_offset,
+					'central_directory_offset'                  => $central_directory_offset,
 				)
 			)
 		);
@@ -171,15 +171,15 @@ class ZipEncoder {
 			          'VvvvvvVVVvv',
 			          FileEntry::SIGNATURE,
 			          $entry->version,
-			          $entry->generalPurpose,
-			          $entry->compressionMethod,
-			          $entry->lastModifiedTime,
-			          $entry->lastModifiedDate,
+			          $entry->general_purpose,
+			          $entry->compression_method,
+			          $entry->last_modified_time,
+			          $entry->last_modified_date,
 			          $entry->crc,
-			          $entry->compressedSize,
-			          $entry->uncompressedSize,
-			          $entry->pathLength,
-			          $entry->extraLength
+			          $entry->compressed_size,
+			          $entry->uncompressed_size,
+			          $entry->path_length,
+			          $entry->extra_length
 		          ) . $entry->path . $entry->extra;
 
 		$this->output->append_bytes( $header );
@@ -195,23 +195,23 @@ class ZipEncoder {
 		$object = pack(
 			          'VvvvvvvVVVvvvvvVV',
 			          CentralDirectoryEntry::SIGNATURE,
-			          $entry->versionCreated,
-			          $entry->versionNeeded,
-			          $entry->generalPurpose,
-			          $entry->compressionMethod,
-			          $entry->lastModifiedTime,
-			          $entry->lastModifiedDate,
+			          $entry->version_created,
+			          $entry->version_needed,
+			          $entry->general_purpose,
+			          $entry->compression_method,
+			          $entry->last_modified_time,
+			          $entry->last_modified_date,
 			          $entry->crc,
-			          $entry->compressedSize,
-			          $entry->uncompressedSize,
-			          $entry->pathLength,
-			          $entry->extraLength,
-			          $entry->fileCommentLength,
-			          $entry->diskNumber,
-			          $entry->internalAttributes,
-			          $entry->externalAttributes,
-			          $entry->firstByteAt
-		          ) . $entry->path . $entry->extra . $entry->fileComment;
+			          $entry->compressed_size,
+			          $entry->uncompressed_size,
+			          $entry->path_length,
+			          $entry->extra_length,
+			          $entry->file_comment_length,
+			          $entry->disk_number,
+			          $entry->internal_attributes,
+			          $entry->external_attributes,
+			          $entry->first_byte_at
+		          ) . $entry->path . $entry->extra . $entry->file_comment;
 
 		$this->output->append_bytes( $object );
 		$this->bytes_written += strlen( $object );
@@ -224,13 +224,13 @@ class ZipEncoder {
 		$object = pack(
 			          'VvvvvVVv',
 			          EndCentralDirectoryEntry::SIGNATURE,
-			          $entry->diskNumber,
-			          $entry->centralDirectoryStartDisk,
-			          $entry->numberCentralDirectoryRecordsOnThisDisk,
-			          $entry->numberCentralDirectoryRecords,
-			          $entry->centralDirectorySize,
-			          $entry->centralDirectoryOffset,
-			          $entry->commentLength
+			          $entry->disk_number,
+			          $entry->central_directory_start_disk,
+			          $entry->number_central_directory_records_on_this_disk,
+			          $entry->number_central_directory_records,
+			          $entry->central_directory_size,
+			          $entry->central_directory_offset,
+			          $entry->comment_length
 		          ) . $entry->comment;
 
 		$this->output->append_bytes( $object );

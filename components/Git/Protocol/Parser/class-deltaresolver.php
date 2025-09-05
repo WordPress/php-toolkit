@@ -114,8 +114,8 @@ class DeltaResolver {
 			$this->delta_reader->pull( 1, ByteReadStream::PULL_EXACTLY );
 			$command_byte = ord( $this->delta_reader->consume( 1 ) );
 			if ( $command_byte & 0b10000000 ) {
-				$copyOffset = 0;
-				$copySize   = 0;
+				$copy_offset = 0;
+				$copy_size   = 0;
 
 				$needed_bytes = 0;
 				for ( $i = 0; $i < 7; $i ++ ) {
@@ -129,32 +129,32 @@ class DeltaResolver {
 				$offset_bytes = $this->delta_reader->consume( $needed_bytes );
 				$read_offset  = 0;
 				if ( $command_byte & 0b00000001 ) {
-					$copyOffset |= ord( $offset_bytes[ $read_offset ++ ] );
+					$copy_offset |= ord( $offset_bytes[ $read_offset ++ ] );
 				}
 				if ( $command_byte & 0b00000010 ) {
-					$copyOffset |= ord( $offset_bytes[ $read_offset ++ ] ) << 8;
+					$copy_offset |= ord( $offset_bytes[ $read_offset ++ ] ) << 8;
 				}
 				if ( $command_byte & 0b00000100 ) {
-					$copyOffset |= ord( $offset_bytes[ $read_offset ++ ] ) << 16;
+					$copy_offset |= ord( $offset_bytes[ $read_offset ++ ] ) << 16;
 				}
 				if ( $command_byte & 0b00001000 ) {
-					$copyOffset |= ord( $offset_bytes[ $read_offset ++ ] ) << 24;
+					$copy_offset |= ord( $offset_bytes[ $read_offset ++ ] ) << 24;
 				}
 				if ( $command_byte & 0b00010000 ) {
-					$copySize |= ord( $offset_bytes[ $read_offset ++ ] );
+					$copy_size |= ord( $offset_bytes[ $read_offset ++ ] );
 				}
 				if ( $command_byte & 0b00100000 ) {
-					$copySize |= ord( $offset_bytes[ $read_offset ++ ] ) << 8;
+					$copy_size |= ord( $offset_bytes[ $read_offset ++ ] ) << 8;
 				}
 				if ( $command_byte & 0b01000000 ) {
-					$copySize |= ord( $offset_bytes[ $read_offset ++ ] ) << 16;
+					$copy_size |= ord( $offset_bytes[ $read_offset ++ ] ) << 16;
 				}
-				if ( $copySize === 0 ) {
-					$copySize = 0x10000;
+				if ( $copy_size === 0 ) {
+					$copy_size = 0x10000;
 				}
-				$this->base_object_reader->seek( $copyOffset );
-				$this->base_object_reader->pull( $copySize, ByteReadStream::PULL_EXACTLY );
-				$this->resolved_chunk = $this->base_object_reader->consume( $copySize );
+				$this->base_object_reader->seek( $copy_offset );
+				$this->base_object_reader->pull( $copy_size, ByteReadStream::PULL_EXACTLY );
+				$this->resolved_chunk = $this->base_object_reader->consume( $copy_size );
 			} else {
 				$this->delta_reader->pull( $command_byte, ByteReadStream::PULL_EXACTLY );
 				$this->resolved_chunk = $this->delta_reader->consume( $command_byte );
