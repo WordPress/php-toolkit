@@ -89,4 +89,5 @@ class FileReadWriteStream extends BaseByteReadStream implements BytePipe {
 			$this->file_pointer = null;
 		}
 	}
+
 }

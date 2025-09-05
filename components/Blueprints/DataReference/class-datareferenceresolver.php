@@ -70,7 +70,6 @@ class DataReferenceResolver {
 	}
 
 	/** Core service method shared by runner, target resolvers and steps
-	 *
 	 * @return File|Directory
 	 */
 	public function resolve( DataReference $reference ) {
@@ -82,9 +81,9 @@ class DataReferenceResolver {
 	}
 
 	// @TODO: Clean up the semantics of this class. Resolve() and separate resolve_uncached() seem confusing. There's
-	// a bunch of implicit behaviors related to caching. Ideally we would either have a self-contained resolution
-	// method, or co-locate the resolution logic with the data reference classes and only use this class for
-	// caching.
+	//        a bunch of implicit behaviors related to caching. Ideally we would either have a self-contained resolution
+	//        method, or co-locate the resolution logic with the data reference classes and only use this class for
+	//        caching.
 	public function resolve_uncached( DataReference $reference ) {
 		$progress_tracker = $this->subTrackers[ $reference->id ] ?? new Tracker();
 

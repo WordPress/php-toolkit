@@ -22,21 +22,18 @@ class DataReference {
 	 */
 	private static $instanceCounter = 0;
 
-	public function __construct( $original_definition = null ) {
-		$this->id                  = self::$instanceCounter++;
+	public function __construct($original_definition = null) {
+		$this->id = self::$instanceCounter ++;
 		$this->original_definition = $original_definition;
 	}
 
-	public static function create( $reference, array $additional_reference_classes = array() ) {
-		$classes = array_merge(
-			array(
-				URLReference::class,
-				GitPath::class,
-				InlineDirectory::class,
-				InlineFile::class,
-			),
-			$additional_reference_classes
-		);
+	static public function create( $reference, array $additional_reference_classes = [] ) {
+		$classes = array_merge( [
+			URLReference::class,
+			GitPath::class,
+			InlineDirectory::class,
+			InlineFile::class,
+		], $additional_reference_classes );
 		foreach ( $classes as $class ) {
 			if ( $class::is_valid( $reference ) ) {
 				return new $class( $reference );
@@ -57,4 +54,5 @@ class DataReference {
 	public function get_human_readable_name(): string {
 		throw new NotImplementedException( 'get_human_readable_name is not implemented for this data reference' );
 	}
+
 }

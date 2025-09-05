@@ -14,18 +14,18 @@ class StaticPostFilesWriter implements EntityWriter {
 	private $filesystem;
 	private $state = self::STATE_WRITING;
 	private $directory_scheme;
-	private $parent_stack        = array();
+	private $parent_stack = array();
 	private $pending_parent_path = '/';
 	private $pending_post;
 	private $pending_metadata;
 	private $static_content_producer_factory;
 	private $file_extension;
 
-	const STATE_WRITING    = 'writing';
+	const STATE_WRITING = 'writing';
 	const STATE_FINALIZING = 'finalizing';
-	const STATE_CLOSED     = 'closed';
+	const STATE_CLOSED = 'closed';
 
-	const SCHEME_DATE         = 'date';
+	const SCHEME_DATE = 'date';
 	const SCHEME_PARENT_TRAIL = 'parent_trail';
 
 	public function __construct( Filesystem $filesystem, $options = array() ) {

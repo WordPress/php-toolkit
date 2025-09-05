@@ -56,7 +56,7 @@ class GitProtocolDecoder {
 	}
 
 	public function get_progress_data() {
-		if ( $this->demuxer->get_stream_code() !== ProtocolDemultiplexer::STREAM_CODE_PROGRESS ) {
+		if ( ProtocolDemultiplexer::STREAM_CODE_PROGRESS !== $this->demuxer->get_stream_code() ) {
 			return null;
 		}
 
@@ -64,7 +64,7 @@ class GitProtocolDecoder {
 	}
 
 	public function get_error_data() {
-		if ( $this->demuxer->get_stream_code() !== ProtocolDemultiplexer::STREAM_CODE_FATAL ) {
+		if ( ProtocolDemultiplexer::STREAM_CODE_FATAL !== $this->demuxer->get_stream_code() ) {
 			return null;
 		}
 
@@ -73,8 +73,8 @@ class GitProtocolDecoder {
 
 	public function get_packet_body() {
 		if (
-			$this->get_token_type() !== '#packet-body' &&
-			$this->get_token_type() !== '#packet-footer'
+			'#packet-body' !== $this->get_token_type() &&
+			'#packet-footer' !== $this->get_token_type()
 		) {
 			return null;
 		}
@@ -83,10 +83,10 @@ class GitProtocolDecoder {
 	}
 
 	public function get_token_type() {
-		if ( $this->demuxer->get_stream_code() === ProtocolDemultiplexer::STREAM_CODE_PROGRESS ) {
+		if ( ProtocolDemultiplexer::STREAM_CODE_PROGRESS === $this->demuxer->get_stream_code() ) {
 			return '#progress';
 		}
-		if ( $this->demuxer->get_stream_code() === ProtocolDemultiplexer::STREAM_CODE_FATAL ) {
+		if ( ProtocolDemultiplexer::STREAM_CODE_FATAL === $this->demuxer->get_stream_code() ) {
 			return '#error';
 		}
 		if ( $this->pack_parser->get_token_type() ) {
@@ -107,7 +107,7 @@ class GitProtocolDecoder {
 	}
 
 	public function next_token() {
-		if ( $this->get_token_type() === '#error' ) {
+		if ( '#error' === $this->get_token_type() ) {
 			return false;
 		}
 		$this->packet_body = '';

@@ -16,7 +16,7 @@ class EntityReaderIterator implements Iterator {
 	 */
 	private $entity_reader;
 	private $is_initialized = false;
-	private $key            = 0;
+	private $key = 0;
 
 	public function __construct( EntityReader $entity_reader ) {
 		$this->entity_reader = $entity_reader;
@@ -85,7 +85,7 @@ class EntityReaderIterator implements Iterator {
 
 	private function advance_to_next_entity() {
 		if ( $this->entity_reader->next_entity() ) {
-			++$this->key;
+			++ $this->key;
 		}
 	}
 

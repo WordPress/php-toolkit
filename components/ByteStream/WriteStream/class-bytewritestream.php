@@ -7,7 +7,7 @@ interface ByteWriteStream {
 	/**
 	 * Append bytes to the stream.
 	 *
-	 * @param  string $bytes
+	 * @param  string  $bytes
 	 *
 	 * @return void
 	 */

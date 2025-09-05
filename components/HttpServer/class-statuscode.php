@@ -134,4 +134,5 @@ class StatusCode {
 				return '';
 		}
 	}
+
 }

@@ -21,17 +21,17 @@ require_once getenv( 'DOCROOT' ) . '/wp-load.php';
 // Set current user to admin
 set_current_user( get_users( array( 'role' => 'Administrator' ) )[0] );
 switch_theme( getenv( 'THEME_FOLDER_NAME' ) );
-PHP;
+PHP
+	;
 
 	/**
 	 * The name of the theme folder inside wp-content/themes/.
-	 *
 	 * @var string
 	 */
 	public $themeFolderName;
 
 	/**
-	 * @param  string $themeFolderName  The name of the theme folder.
+	 * @param  string  $themeFolderName  The name of the theme folder.
 	 */
 	public function __construct( string $themeFolderName ) {
 		$this->themeFolderName = $themeFolderName;
@@ -44,9 +44,9 @@ PHP;
 		$tracker->setCaption( 'Activating theme ' . $this->themeFolderName );
 		$runtime->evalPhpCodeInSubProcess(
 			self::ACTIVATE_THEME_SCRIPT,
-			array(
+			[
 				'THEME_FOLDER_NAME' => $this->themeFolderName,
-			)
+			]
 		);
 	}
 }

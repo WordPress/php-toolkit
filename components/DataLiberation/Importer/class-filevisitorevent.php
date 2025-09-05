@@ -8,7 +8,7 @@ class FileVisitorEvent {
 	public $files;
 
 	const EVENT_ENTER = 'entering';
-	const EVENT_EXIT  = 'exiting';
+	const EVENT_EXIT = 'exiting';
 
 	public function __construct( $type, $dir, $files = array() ) {
 		$this->type  = $type;

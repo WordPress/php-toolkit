@@ -11,13 +11,12 @@ use WordPress\Blueprints\Runtime;
 class SetSiteOptionsStep implements StepInterface {
 	/**
 	 * An associative array of option names to their JSON-compatible values.
-	 *
 	 * @var array<string, mixed>
 	 */
 	public $options;
 
 	/**
-	 * @param  array<string, mixed> $options  Site options to set.
+	 * @param  array<string, mixed>  $options  Site options to set.
 	 */
 	public function __construct( array $options ) {
 		$this->options = $options;

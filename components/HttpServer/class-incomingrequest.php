@@ -13,18 +13,18 @@ use WordPress\HttpClient\Request;
 
 class IncomingRequest extends Request {
 
-	public static function from_resource( $upstream ) {
+	static public function from_resource( $upstream ) {
 		// Read request line
 		$line = fgets( $upstream );
 		if ( $line === false ) {
-			throw new Exception( 'Failed to read request line' );
+			throw new Exception( "Failed to read request line" );
 		}
 		$parts        = explode( ' ', trim( $line ), 3 );
-		$request_info = array(
+		$request_info = [
 			'method'   => $parts[0] ?? 'GET',
 			'pathname' => $parts[1] ?? '/',
-			'headers'  => array(),
-		);
+			'headers'  => [],
+		];
 
 		// Read headers
 		while ( ( $line = fgets( $upstream ) ) !== false ) {
@@ -48,7 +48,7 @@ class IncomingRequest extends Request {
 
 		$body_stream = FileReadStream::from_resource( $upstream );
 
-		$wrapped_streams = array();
+		$wrapped_streams = [];
 
 		$encoding = $request->get_header( 'Content-Encoding' );
 		if ( $encoding ) {
@@ -117,9 +117,9 @@ class IncomingRequest extends Request {
 	}
 
 	public function get_parsed_url() {
-		if ( $this->parsed_url === null ) {
+		if ( null === $this->parsed_url ) {
 			$parsed_url = WPURL::parse( $this->url );
-			if ( $parsed_url === false ) {
+			if ( false === $parsed_url ) {
 				throw new Exception( "Invalid URL: {$this->url}" );
 			}
 			$this->parsed_url = $parsed_url;

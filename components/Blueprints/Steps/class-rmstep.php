@@ -16,7 +16,7 @@ class RmStep implements StepInterface {
 	public $path;
 
 	/**
-	 * @param  string $path  The file path to remove.
+	 * @param  string  $path  The file path to remove.
 	 */
 	public function __construct( string $path ) {
 		$this->path = $path;
@@ -33,7 +33,7 @@ class RmStep implements StepInterface {
 		}
 
 		if ( $filesystem->is_dir( $path ) ) {
-			$filesystem->rmdir( $path, array( 'recursive' => true ) );
+			$filesystem->rmdir( $path, [ 'recursive' => true ] );
 		} else {
 			$filesystem->rm( $path );
 		}

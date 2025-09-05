@@ -13,18 +13,18 @@ class DeflateTransformer implements ByteTransformer {
 
 	public function __construct( string $encoding = ZLIB_ENCODING_DEFLATE ) {
 		$this->deflate_handle = deflate_init( $encoding );
-		if ( $this->deflate_handle === false ) {
+		if ( false === $this->deflate_handle ) {
 			throw new ByteStreamException( 'Failed to initialize deflate handle' );
 		}
 	}
 
 	public function filter_bytes( string $bytes ) {
-		if ( $this->deflate_handle === null ) {
+		if ( null === $this->deflate_handle ) {
 			throw new ByteStreamException( 'Deflate handle is not initialized' );
 		}
 
 		$chunk = deflate_add( $this->deflate_handle, $bytes, ZLIB_NO_FLUSH );
-		if ( $chunk === false ) {
+		if ( false === $chunk ) {
 			throw new ByteStreamException( 'Failed to deflate bytes' );
 		}
 
@@ -32,7 +32,7 @@ class DeflateTransformer implements ByteTransformer {
 	}
 
 	public function flush(): string {
-		if ( $this->deflate_handle === null ) {
+		if ( null === $this->deflate_handle ) {
 			throw new ByteStreamException( 'closing the deflate filter?' );
 		}
 		$last_chunk           = deflate_add( $this->deflate_handle, '', ZLIB_FINISH );

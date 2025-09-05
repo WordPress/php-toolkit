@@ -68,7 +68,7 @@ class MySQLDumpWriter implements EntityWriter {
 		$result = '';
 		$len    = strlen( $value );
 
-		for ( $i = 0; $i < $len; $i++ ) {
+		for ( $i = 0; $i < $len; $i ++ ) {
 			$char = $value[ $i ];
 			$ord  = ord( $char );
 

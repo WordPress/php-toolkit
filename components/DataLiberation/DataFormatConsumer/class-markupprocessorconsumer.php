@@ -39,13 +39,13 @@ use WP_HTML_Tag_Processor;
  */
 class MarkupProcessorConsumer implements DataFormatConsumer {
 	private $markup_processor;
-	private $ignore_text            = false;
+	private $ignore_text = false;
 	private $in_ephemeral_paragraph = false;
-	private $block_stack            = array();
+	private $block_stack = array();
 
 	private $parsed;
 	private $block_markup = '';
-	private $metadata     = array();
+	private $metadata = array();
 
 	public function __construct( $markup_processor ) {
 		$this->markup_processor = $markup_processor;
@@ -89,8 +89,8 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 	}
 
 	private function handle_tag() {
-		$html = $this->markup_processor;
-		if ( $html instanceof WP_HTML_Processor ) {
+		$html          = $this->markup_processor;
+		if($html instanceof WP_HTML_Processor) {
 			$tag = strtoupper( $html->get_tag() );
 		} else {
 			$tag = strtoupper( $html->get_tag_local_name() );
@@ -302,18 +302,18 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 	}
 
 	private function get_tag_name() {
-		if ( $this->markup_processor instanceof WP_HTML_Processor ) {
+		if($this->markup_processor instanceof WP_HTML_Processor) {
 			return $this->markup_processor->get_tag();
 		} else {
 			return $this->markup_processor->get_tag_local_name();
 		}
 	}
 
-	private function get_attribute( $key ) {
-		if ( $this->markup_processor instanceof WP_HTML_Processor ) {
-			return $this->markup_processor->get_attribute( $key );
+	private function get_attribute($key) {
+		if($this->markup_processor instanceof WP_HTML_Processor) {
+			return $this->markup_processor->get_attribute($key);
 		} else {
-			return $this->markup_processor->get_attribute( '', $key );
+			return $this->markup_processor->get_attribute('', $key);
 		}
 	}
 
@@ -337,7 +337,7 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 	 * <b> tags are meaningful from the rich text perspective, but
 	 * <div> tags are not.
 	 *
-	 * @param  string $tag  The tag to check.
+	 * @param  string  $tag  The tag to check.
 	 *
 	 * @return bool Whether the tag should be preserved in rich text.
 	 */
@@ -392,7 +392,7 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 	 * Ensures given $html is a part of a block. If no block is
 	 * currently open, it appends a new paragraph block.
 	 *
-	 * @param  string $html  The HTML snippet to append.
+	 * @param  string  $html  The HTML snippet to append.
 	 */
 	private function append_rich_text( $html ) {
 		$html = trim( $html );
@@ -409,7 +409,7 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 	 * Pushes a new block onto the stack of open blocks and appends the block
 	 * opener to the block markup.
 	 *
-	 * @param  string $name  The name of the block to push.
+	 * @param  string  $name  The name of the block to push.
 	 * @param  array  $attributes  The attributes of the block to push.
 	 */
 	private function push_block( $name, $attributes = array() ) {
@@ -427,7 +427,7 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 	 */
 	private function pop_block() {
 		if ( ! empty( $this->block_stack ) ) {
-			$popped              = array_pop( $this->block_stack );
+			$popped             = array_pop( $this->block_stack );
 			$this->block_markup .= ImportUtils::block_closer( $popped->block_name ) . "\n";
 
 			return $popped;
@@ -441,8 +441,8 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 	 */
 	private function ensure_open_block() {
 		if ( empty( $this->block_stack ) && ! $this->in_ephemeral_paragraph ) {
-			$this->block_markup          .= ImportUtils::block_opener( 'paragraph' ) . "\n";
-			$this->block_markup          .= '<p>';
+			$this->block_markup           .= ImportUtils::block_opener( 'paragraph' ) . "\n";
+			$this->block_markup           .= '<p>';
 			$this->in_ephemeral_paragraph = true;
 		}
 	}
@@ -452,8 +452,8 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 	 */
 	private function close_ephemeral_paragraph() {
 		if ( $this->in_ephemeral_paragraph ) {
-			$this->block_markup          .= '</p>';
-			$this->block_markup          .= ImportUtils::block_closer( 'paragraph' );
+			$this->block_markup           .= '</p>';
+			$this->block_markup           .= ImportUtils::block_closer( 'paragraph' );
 			$this->in_ephemeral_paragraph = false;
 		}
 	}

@@ -92,12 +92,12 @@ class StreamImporter {
 	 */
 	protected $options;
 
-	const STAGE_INITIAL          = '#initial';
-	const STAGE_INDEX_ENTITIES   = '#index_entities';
+	const STAGE_INITIAL = '#initial';
+	const STAGE_INDEX_ENTITIES = '#index_entities';
 	const STAGE_TOPOLOGICAL_SORT = '#topological_sort';
 	const STAGE_FRONTLOAD_ASSETS = '#frontload_assets';
-	const STAGE_IMPORT_ENTITIES  = '#import_entities';
-	const STAGE_FINISHED         = '#finished';
+	const STAGE_IMPORT_ENTITIES = '#import_entities';
+	const STAGE_FINISHED = '#finished';
 
 	const STAGES_IN_ORDER = array(
 		self::STAGE_INITIAL,
@@ -187,7 +187,7 @@ class StreamImporter {
 	) {
 		$options  = static::parse_options( $options );
 		$importer = new static( $entity_reader_factory, $options );
-		if ( $cursor !== null && $importer->initialize_from_cursor( $cursor ) !== true ) {
+		if ( null !== $cursor && true !== $importer->initialize_from_cursor( $cursor ) ) {
 			return false;
 		}
 
@@ -224,7 +224,7 @@ class StreamImporter {
 		// -1 is a well-known index for the source site URL.
 		// Every subsequent call to set_source_site_url() will
 		// override that mapping.
-		$this->site_url_mapping[- 1] = array(
+		$this->site_url_mapping[ - 1 ] = array(
 			'from' => WPURL::parse( $source_site_url ),
 			'to'   => WPURL::parse( $this->options['new_site_content_root_url'] ),
 		);
@@ -232,12 +232,12 @@ class StreamImporter {
 
 	public function get_site_url_mapping_candidates() {
 		// Only return the candidates that have been spotted in the last index_entities() call.
-		if ( $this->stage !== self::STAGE_INDEX_ENTITIES ) {
+		if ( self::STAGE_INDEX_ENTITIES !== $this->stage ) {
 			return array();
 		}
 		$new_candidates = array();
 		foreach ( $this->site_url_mapping_candidates as $base_url => $status ) {
-			if ( $status === false ) {
+			if ( false === $status ) {
 				$new_candidates[] = $base_url;
 			}
 		}
@@ -287,8 +287,8 @@ class StreamImporter {
 			// throw new DataLiberationException( 'The "source_site_url" option is required' );
 		}
 		if ( ! isset( $options['new_site_content_root_url'] ) ) {
-			if ( ! function_exists( 'get_site_url' ) ) {
-				throw new InvalidArgumentException( 'Option "new_site_content_root_url" is required' );
+			if(!function_exists('get_site_url')) {
+				throw new InvalidArgumentException('Option "new_site_content_root_url" is required');
 			}
 			$options['new_site_content_root_url'] = get_site_url();
 		}
@@ -300,8 +300,8 @@ class StreamImporter {
 		$options['uploads_path'] = rtrim( $options['uploads_path'], '/' );
 
 		if ( ! isset( $options['new_media_root_url'] ) ) {
-			if ( ! function_exists( 'get_site_url' ) ) {
-				throw new InvalidArgumentException( 'Option "new_media_root_url" is required' );
+			if(!function_exists('get_site_url')) {
+				throw new InvalidArgumentException('Option "new_media_root_url" is required');
 			}
 			$options['new_media_root_url'] = rtrim( get_site_url(), '/' ) . '/wp-content/uploads';
 		}
@@ -360,7 +360,7 @@ class StreamImporter {
 
 				return false;
 			case self::STAGE_INDEX_ENTITIES:
-				if ( $this->index_next_entities() === true ) {
+				if ( true === $this->index_next_entities() ) {
 					return true;
 				}
 				$this->next_stage = self::STAGE_TOPOLOGICAL_SORT;
@@ -374,14 +374,14 @@ class StreamImporter {
 
 				return false;
 			case self::STAGE_FRONTLOAD_ASSETS:
-				if ( $this->frontload_next_entity() === true ) {
+				if ( true === $this->frontload_next_entity() ) {
 					return true;
 				}
 				$this->next_stage = self::STAGE_IMPORT_ENTITIES;
 
 				return false;
 			case self::STAGE_IMPORT_ENTITIES:
-				if ( $this->import_next_entity() === true ) {
+				if ( true === $this->import_next_entity() ) {
 					return true;
 				}
 				$this->next_stage = self::STAGE_FINISHED;
@@ -401,7 +401,7 @@ class StreamImporter {
 	}
 
 	public function advance_to_next_stage() {
-		if ( $this->next_stage === null ) {
+		if ( null === $this->next_stage ) {
 			return false;
 		}
 		$this->stage      = $this->next_stage;
@@ -411,14 +411,14 @@ class StreamImporter {
 	}
 
 	protected $indexed_entities_counts = array();
-	protected $indexed_assets_urls     = array();
+	protected $indexed_assets_urls = array();
 
 	protected function index_next_entities() {
-		if ( $this->next_stage !== null ) {
+		if ( null !== $this->next_stage ) {
 			return false;
 		}
 
-		if ( $this->entity_iterator === null ) {
+		if ( null === $this->entity_iterator ) {
 			$this->entity_iterator = $this->create_entity_iterator();
 		}
 
@@ -443,7 +443,7 @@ class StreamImporter {
 		 * Internalize the loop to avoid computing the reentrancy cursor
 		 * on every entity in the imported data stream.
 		 */
-		for ( $i = 0; $i < $this->options['index_batch_size']; ++$i ) {
+		for ( $i = 0; $i < $this->options['index_batch_size']; ++ $i ) {
 			if ( ! $this->entity_iterator->valid() ) {
 				break;
 			}
@@ -459,7 +459,7 @@ class StreamImporter {
 			if ( ! isset( $this->indexed_entities_counts[ $type ] ) ) {
 				$this->indexed_entities_counts[ $type ] = 0;
 			}
-			++$this->indexed_entities_counts[ $type ];
+			++ $this->indexed_entities_counts[ $type ];
 
 			/**
 			 * Track unique assets URLs.
@@ -529,7 +529,7 @@ class StreamImporter {
 	public function get_new_site_content_root_url_mapping_candidates() {
 		$candidates = array();
 		foreach ( $this->site_url_mapping_candidates as $base_url => $status ) {
-			if ( $status === false ) {
+			if ( false === $status ) {
 				$candidates[] = $base_url;
 			}
 		}
@@ -607,12 +607,12 @@ class StreamImporter {
 	 * all its attachments downloaded.
 	 */
 	protected function frontload_next_entity() {
-		if ( $this->entity_iterator === null ) {
+		if ( null === $this->entity_iterator ) {
 			$this->entity_iterator = new EntityIteratorChain();
-			if ( $this->frontloading_retries_iterator !== null ) {
+			if ( null !== $this->frontloading_retries_iterator ) {
 				$this->entity_iterator->set_assets_attempts_iterator( $this->frontloading_retries_iterator );
 			}
-			if ( $this->next_stage === null ) {
+			if ( null === $this->next_stage ) {
 				$this->entity_iterator->set_entities_iterator( $this->create_entity_iterator() );
 			}
 			$this->downloader = new AttachmentDownloader(
@@ -641,7 +641,7 @@ class StreamImporter {
 			 * * After every downloaded file.
 			 * * For large files, every time a full megabyte is downloaded above 10MB.
 			 */
-			if ( $this->downloader->poll() === true ) {
+			if ( true === $this->downloader->poll() ) {
 				$this->frontloading_advance_reentrancy_cursor();
 
 				return true;
@@ -748,13 +748,13 @@ class StreamImporter {
 	 *        the API consumer?
 	 */
 	protected function import_next_entity() {
-		if ( $this->next_stage !== null ) {
+		if ( null !== $this->next_stage ) {
 			return false;
 		}
 
 		$this->imported_entities_counts = array();
 
-		if ( $this->entity_iterator === null ) {
+		if ( null === $this->entity_iterator ) {
 			$this->entity_iterator = $this->create_entity_iterator();
 			$this->entity_sink     = $this->options['entity_sink'] ?? new EntityImporter();
 		}
@@ -844,7 +844,7 @@ class StreamImporter {
 
 							$raw_url_before          = $p->get_raw_url();
 							$mapping_pair            = $this->get_url_mapping_pair( $p->get_parsed_url() );
-							$should_rewrite_base_url = $mapping_pair !== false;
+							$should_rewrite_base_url = false !== $mapping_pair;
 							if ( $should_rewrite_base_url ) {
 								$p->replace_base_url( $mapping_pair['to'], $mapping_pair['from'] );
 							}
@@ -866,7 +866,7 @@ class StreamImporter {
 		}
 
 		$post_id = $this->entity_sink->import_entity( $entity );
-		if ( $post_id !== false ) {
+		if ( false !== $post_id ) {
 			$this->count_imported_entity( $entity->get_type() );
 		} else {
 			// @TODO: Store error.
@@ -874,7 +874,7 @@ class StreamImporter {
 		foreach ( $attachments as $filepath ) {
 			// @TODO: Monitor failures.
 			$attachment_id = $this->entity_sink->import_attachment( $filepath, $post_id );
-			if ( $attachment_id !== false ) {
+			if ( false !== $attachment_id ) {
 				// @TODO: How to count attachments?
 				$this->count_imported_entity( 'post' );
 			} else {
@@ -897,7 +897,7 @@ class StreamImporter {
 		if ( ! array_key_exists( $type, $this->imported_entities_counts ) ) {
 			$this->imported_entities_counts[ $type ] = 0;
 		}
-		++$this->imported_entities_counts[ $type ];
+		++ $this->imported_entities_counts[ $type ];
 	}
 
 	public function get_imported_entities_counts() {
@@ -911,7 +911,7 @@ class StreamImporter {
 		);
 		$download_url    = $this->rewrite_attachment_url( $raw_url, $options['base_url'] ?? null );
 		$enqueued        = $this->downloader->enqueue_if_not_exists( $download_url, $output_filename );
-		if ( $enqueued === false ) {
+		if ( false === $enqueued ) {
 			_doing_it_wrong( __METHOD__, sprintf( 'Failed to enqueue attachment download: %s', $raw_url ), '1.0' );
 
 			return false;
@@ -961,7 +961,7 @@ class StreamImporter {
 
 		$filename   = md5( $raw_asset_url );
 		$parsed_url = WPURL::parse( $raw_asset_url );
-		if ( $parsed_url !== false ) {
+		if ( false !== $parsed_url ) {
 			$pathname = $parsed_url->pathname;
 		} else {
 			// Assume $raw_asset_url is a relative path when it cannot be
@@ -987,7 +987,7 @@ class StreamImporter {
 		}
 		$parsed_url = WPURL::parse( $raw_url, $base_url );
 
-		if ( $parsed_url === false ) {
+		if ( false === $parsed_url ) {
 			return false;
 		}
 
@@ -1004,16 +1004,16 @@ class StreamImporter {
 	protected function url_processor_matched_asset_url( BlockMarkupUrlProcessor $p ) {
 		/**
 		 * Decide whether the URL is an asset URL worth downloading.
-		 *
+		 * 
 		 * All URLs with an image-like extension are treated as images,
-		 *
+		 * 
 		 * For example, the background image in the following block would be accepted:
 		 *
 		 *     <div style="background-image: url(https://example.com/image.jpg)">
 		 */
-		$path      = $p->get_parsed_url()->pathname;
+		$path = $p->get_parsed_url()->pathname;
 		$extension = pathinfo( $path, PATHINFO_EXTENSION );
-		if ( ! in_array( $extension, array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg' ) ) ) {
+		if ( ! in_array($extension, array('jpg', 'jpeg', 'png', 'gif', 'webp', 'svg') ) ) {
 			/**
 			 * Absent an extension, try to guess whether it's a static asset based
 			 * on its location in the document. For now, we only accept images.

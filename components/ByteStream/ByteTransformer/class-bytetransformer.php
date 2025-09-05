@@ -13,7 +13,7 @@ interface ByteTransformer {
 	/**
 	 * Appends bytes to the filter and transforms them.
 	 *
-	 * @param  string $bytes  The bytes to append.
+	 * @param  string  $bytes  The bytes to append.
 	 *
 	 * @return string|false The filtered bytes, or false if no bytes were filtered.
 	 */

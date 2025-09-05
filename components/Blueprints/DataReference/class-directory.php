@@ -22,8 +22,8 @@ class Directory extends DataReference {
 	/**
 	 * Constructor.
 	 *
-	 * @param  Filesystem $filesystem  The filesystem representing the directory content.
-	 * @param  string     $dirname  The name of the directory.
+	 * @param  Filesystem  $filesystem  The filesystem representing the directory content.
+	 * @param  string  $dirname  The name of the directory.
 	 */
 	public function __construct( Filesystem $filesystem, string $dirname ) {
 		$this->filesystem = $filesystem;
@@ -38,6 +38,6 @@ class Directory extends DataReference {
 	 * @return string The human-readable name.
 	 */
 	public function get_human_readable_name(): string {
-		return 'Directory: ' . $this->dirname;
+		return "Directory: " . $this->dirname;
 	}
 }

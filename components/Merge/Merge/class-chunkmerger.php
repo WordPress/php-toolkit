@@ -13,12 +13,12 @@ class ChunkMerger implements Merger {
 
 	public function merge( Diff $diffAB, Diff $diffAC ): MergeResult {
 		list( $chunksA, $chunksB ) = $this->ensureChunks( $diffAB->get_changes(), $diffAC->get_changes() );
-		$this->chunksA             = $chunksA;
-		$this->chunksB             = $chunksB;
+		$this->chunksA = $chunksA;
+		$this->chunksB = $chunksB;
 
 		$results = array();
 		$n       = max( count( $chunksA ), count( $chunksB ) );
-		for ( $i = 0; $i < $n; $i++ ) {
+		for ( $i = 0; $i < $n; $i ++ ) {
 			$chunkA = $chunksA[ $i ] ?? array(
 				'base'     => null,
 				'deleted'  => false,
@@ -207,7 +207,7 @@ class ChunkMerger implements Merger {
 				$boundaryIndex < count( $boundaries ) &&
 				$boundaries[ $boundaryIndex ] <= $startOffset
 			) {
-				++$boundaryIndex;
+				++ $boundaryIndex;
 			}
 
 			while (
@@ -222,9 +222,9 @@ class ChunkMerger implements Merger {
 					$resliced[] = array( $op, $sliceText );
 				}
 
-				$text         = substr( $text, $sliceLength );
+				$text        = substr( $text, $sliceLength );
 				$startOffset += $sliceLength;
-				++$boundaryIndex;
+				++ $boundaryIndex;
 				if ( ! $text ) {
 					break;
 				}

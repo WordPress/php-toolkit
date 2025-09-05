@@ -43,23 +43,23 @@ class CLI {
 	 * @throws InvalidArgumentException for unknown options or missing required values.
 	 */
 	public static function parseCommandArgsAndOptions( array $argv, array $optionDefs ): array {
-		$positionals = array();
-		$options     = array();
-		$short2long  = array();
-
+		$positionals = [];
+		$options     = [];
+		$short2long  = [];
+	
 		// Initialise defaults & maps
 		foreach ( $optionDefs as $long => $def ) {
 			[ $short, , $default ] = $def;
-			$options[ $long ]      = $default;
+			$options[ $long ] = $default;
 			if ( $short ) {
 				$short2long[ $short ] = $long;
 			}
 		}
-
+	
 		$i = 0; // Start from the first command argument
 		while ( $i < count( $argv ) ) {
 			$token = $argv[ $i ];
-
+	
 			// Long option --foo or --foo=bar
 			if ( preg_match( '/^--([^=]+)(=(.*))?$/', $token, $m ) ) {
 				$long = $m[1];
@@ -68,7 +68,7 @@ class CLI {
 				}
 				[ $short, $hasVal ] = $optionDefs[ $long ];
 				if ( $hasVal ) {
-					$val = $m[3] ?? ( $argv[ ++$i ] ?? null );
+					$val = $m[3] ?? ( $argv[ ++ $i ] ?? null );
 					if ( $val === null ) {
 						throw new InvalidArgumentException( "Option --$long requires a value" );
 					}
@@ -76,10 +76,10 @@ class CLI {
 				} else {
 					$options[ $long ] = true;
 				}
-				++$i;
+				$i ++;
 				continue;
 			}
-
+	
 			// Short option(s): -abc or -e mysql or -e=mysql
 			if ( preg_match( '/^-([A-Za-z]{1,})(=(.*))?$/', $token, $m ) ) {
 				$bundle    = str_split( $m[1] );
@@ -94,7 +94,7 @@ class CLI {
 						if ( $inlineVal !== null && $idx === 0 ) {
 							$options[ $long ] = $inlineVal;
 						} else {
-							$val = ( $idx === count( $bundle ) - 1 ) ? ( $argv[ ++$i ] ?? null ) : null;
+							$val = ( $idx === count( $bundle ) - 1 ) ? ( $argv[ ++ $i ] ?? null ) : null;
 							if ( $val === null ) {
 								throw new InvalidArgumentException( "Option -$short requires a value" );
 							}
@@ -105,15 +105,15 @@ class CLI {
 						$options[ $long ] = true;
 					}
 				}
-				++$i;
+				$i ++;
 				continue;
 			}
-
+	
 			// Positional argument
 			$positionals[] = $token;
-			++$i;
+			$i ++;
 		}
-
-		return array( $positionals, $options );
+	
+		return [ $positionals, $options ];
 	}
 }

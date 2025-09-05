@@ -5,7 +5,7 @@ namespace WordPress\Merge\Diff;
 class Diff {
 	const DIFF_DELETE = - 1;
 	const DIFF_INSERT = 1;
-	const DIFF_EQUAL  = 0;
+	const DIFF_EQUAL = 0;
 
 	private $changes;
 
@@ -67,7 +67,7 @@ class Diff {
 		$options['b_source']     = $options['b_source'] ?? 'b/string';
 
 		// Format the diff to Git-style with context.
-		$formatted_diff  = 'diff --git ' . $options['a_source'] . ' ' . $options['b_source'] . "\n";
+		$formatted_diff = 'diff --git ' . $options['a_source'] . ' ' . $options['b_source'] . "\n";
 		$formatted_diff .= '--- ' . $options['a_source'] . "\n";
 		$formatted_diff .= '+++ ' . $options['b_source'] . "\n";
 

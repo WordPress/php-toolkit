@@ -43,16 +43,16 @@ class CentralDirectoryEntry {
 	const HEADER_SIZE = 42;
 
 	public $firstByteAt;
-	public $versionCreated    = 2;
-	public $versionNeeded     = 2;
-	public $generalPurpose    = 0;
+	public $versionCreated = 2;
+	public $versionNeeded = 2;
+	public $generalPurpose = 0;
 	public $compressionMethod = 0;
-	public $lastModifiedTime  = 0;
-	public $lastModifiedDate  = 0;
+	public $lastModifiedTime = 0;
+	public $lastModifiedDate = 0;
 	public $crc;
 	public $compressedSize;
 	public $uncompressedSize;
-	public $diskNumber         = 0;
+	public $diskNumber = 0;
 	public $internalAttributes = 0;
 	public $externalAttributes = 0;
 	public $pathLength;
@@ -71,15 +71,15 @@ class CentralDirectoryEntry {
 			$this->$key = $value;
 		}
 
-		if ( $this->path !== null ) {
+		if ( null !== $this->path ) {
 			$this->pathLength = strlen( $this->path );
 		}
 
-		if ( $this->extra !== null ) {
+		if ( null !== $this->extra ) {
 			$this->extraLength = strlen( $this->extra );
 		}
 
-		if ( $this->fileComment !== null ) {
+		if ( null !== $this->fileComment ) {
 			$this->fileCommentLength = strlen( $this->fileComment );
 		}
 	}

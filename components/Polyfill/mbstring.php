@@ -2,12 +2,12 @@
 
 if ( ! function_exists( 'mbstring_binary_safe_encoding' ) ) {
 	function mbstring_binary_safe_encoding( $reset = false ) {
-		static $encodings  = array();
+		static $encodings = array();
 		static $overloaded = null;
 
 		if ( is_null( $overloaded ) ) {
 			if ( function_exists( 'mb_internal_encoding' )
-				&& ( (int) ini_get( 'mbstring.func_overload' ) & 2 ) // phpcs:ignore PHPCompatibility.IniDirectives.RemovedIniDirectives.mbstring_func_overloadDeprecated
+			     && ( (int) ini_get( 'mbstring.func_overload' ) & 2 ) // phpcs:ignore PHPCompatibility.IniDirectives.RemovedIniDirectives.mbstring_func_overloadDeprecated
 			) {
 				$overloaded = true;
 			} else {
@@ -15,7 +15,7 @@ if ( ! function_exists( 'mbstring_binary_safe_encoding' ) ) {
 			}
 		}
 
-		if ( $overloaded === false ) {
+		if ( false === $overloaded ) {
 			return;
 		}
 
@@ -40,7 +40,7 @@ if ( ! function_exists( 'reset_mbstring_encoding' ) ) {
 
 if ( ! function_exists( 'mb_str_split' ) ) {
 	function mb_str_split( $string, $split_length = 1, $encoding = null ) {
-		if ( $encoding !== null ) {
+		if ( null !== $encoding ) {
 			$old_encoding = mb_internal_encoding();
 			mb_internal_encoding( $encoding );
 		}
@@ -51,7 +51,7 @@ if ( ! function_exists( 'mb_str_split' ) ) {
 			$result[] = mb_substr( $string, $i, $split_length );
 		}
 
-		if ( $encoding !== null ) {
+		if ( null !== $encoding ) {
 			mb_internal_encoding( $old_encoding );
 		}
 

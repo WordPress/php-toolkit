@@ -9,7 +9,7 @@ class CLILogger implements LoggerInterface {
 	private $stream;
 	private $verbosity;
 
-	const LEVELS = array(
+	const LEVELS = [
 		'emergency' => 0,
 		'alert'     => 1,
 		'critical'  => 2,
@@ -18,9 +18,9 @@ class CLILogger implements LoggerInterface {
 		'notice'    => 5,
 		'info'      => 6,
 		'debug'     => 7,
-	);
+	];
 
-	const COLORS = array(
+	const COLORS = [
 		'emergency' => "\033[1;31m", // Red
 		'alert'     => "\033[1;31m",     // Red
 		'critical'  => "\033[1;31m",  // Red
@@ -29,15 +29,15 @@ class CLILogger implements LoggerInterface {
 		'notice'    => "\033[0;32m",   // Green
 		'info'      => "\033[0;36m",     // Cyan
 		'debug'     => "\033[0;37m",    // White
-	);
+	];
 
-	const VERBOSITY_DEBUG     = 7;
-	const VERBOSITY_INFO      = 6;
-	const VERBOSITY_NOTICE    = 5;
-	const VERBOSITY_WARNING   = 4;
-	const VERBOSITY_ERROR     = 3;
-	const VERBOSITY_CRITICAL  = 2;
-	const VERBOSITY_ALERT     = 1;
+	const VERBOSITY_DEBUG = 7;
+	const VERBOSITY_INFO = 6;
+	const VERBOSITY_NOTICE = 5;
+	const VERBOSITY_WARNING = 4;
+	const VERBOSITY_ERROR = 3;
+	const VERBOSITY_CRITICAL = 2;
+	const VERBOSITY_ALERT = 1;
 	const VERBOSITY_EMERGENCY = 0;
 
 	public function __construct( $stream = 'php://stdout', $verbosity = self::VERBOSITY_DEBUG ) {
@@ -49,7 +49,7 @@ class CLILogger implements LoggerInterface {
 		fclose( $this->stream );
 	}
 
-	private function logMessage( $level, string $message, array $context = array() ): void {
+	private function logMessage( $level, string $message, array $context = [] ): void {
 		if ( self::LEVELS[ $level ] > $this->verbosity ) {
 			return;
 		}
@@ -60,8 +60,8 @@ class CLILogger implements LoggerInterface {
 		fwrite( $this->stream, "\n{$color}[{$level}] {$formattedMessage}{$reset}\n" );
 	}
 
-	private function interpolate( string $message, array $context = array() ): string {
-		$replace = array();
+	private function interpolate( string $message, array $context = [] ): string {
+		$replace = [];
 		foreach ( $context as $key => $val ) {
 			$replace[ '{' . $key . '}' ] = $val;
 		}
@@ -70,68 +70,69 @@ class CLILogger implements LoggerInterface {
 	}
 
 	/**
-	 * @param  string|Stringable $message
+	 * @param  string|Stringable  $message
 	 */
-	public function emergency( $message, array $context = array() ): void {
+	public function emergency( $message, array $context = [] ): void {
 		$this->logMessage( 'emergency', $message, $context );
 	}
 
 	/**
-	 * @param  string|Stringable $message
+	 * @param  string|Stringable  $message
 	 */
-	public function alert( $message, array $context = array() ): void {
+	public function alert( $message, array $context = [] ): void {
 		$this->logMessage( 'alert', $message, $context );
 	}
 
 	/**
-	 * @param  string|Stringable $message
+	 * @param  string|Stringable  $message
 	 */
-	public function critical( $message, array $context = array() ): void {
+	public function critical( $message, array $context = [] ): void {
 		$this->logMessage( 'critical', $message, $context );
 	}
 
 	/**
-	 * @param  string|Stringable $message
+	 * @param  string|Stringable  $message
 	 */
-	public function error( $message, array $context = array() ): void {
+	public function error( $message, array $context = [] ): void {
 		$this->logMessage( 'error', $message, $context );
 	}
 
 	/**
-	 * @param  string|Stringable $message
+	 * @param  string|Stringable  $message
 	 */
-	public function warning( $message, array $context = array() ): void {
+	public function warning( $message, array $context = [] ): void {
 		$this->logMessage( 'warning', $message, $context );
 	}
 
 	/**
-	 * @param  string|Stringable $message
+	 * @param  string|Stringable  $message
 	 */
-	public function notice( $message, array $context = array() ): void {
+	public function notice( $message, array $context = [] ): void {
 		$this->logMessage( 'notice', $message, $context );
 	}
 
 	/**
-	 * @param  string|Stringable $message
+	 * @param  string|Stringable  $message
 	 */
-	public function info( $message, array $context = array() ): void {
+	public function info( $message, array $context = [] ): void {
 		$this->logMessage( 'info', $message, $context );
 	}
 
 	/**
-	 * @param  string|Stringable $message
+	 * @param  string|Stringable  $message
 	 */
-	public function debug( $message, array $context = array() ): void {
+	public function debug( $message, array $context = [] ): void {
 		$this->logMessage( 'debug', $message, $context );
 	}
 
 	/**
-	 * @param  string|Stringable $message
+	 * @param  string|Stringable  $message
 	 */
-	public function log( $level, $message, array $context = array() ): void {
+	public function log( $level, $message, array $context = [] ): void {
 		if ( ! isset( self::LEVELS[ $level ] ) ) {
 			throw new InvalidArgumentException( 'Invalid log level: ' . $level );
 		}
 		$this->logMessage( $level, $message, $context );
 	}
 }
+

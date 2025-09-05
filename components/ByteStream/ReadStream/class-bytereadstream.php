@@ -12,7 +12,7 @@ namespace WordPress\ByteStream\ReadStream;
 interface ByteReadStream {
 
 	const PULL_NO_MORE_THAN = '#pull-no-more-than';
-	const PULL_EXACTLY      = '#pull-exactly';
+	const PULL_EXACTLY = '#pull-exactly';
 
 	/**
 	 * Get the total length of the data stream.
@@ -31,7 +31,7 @@ interface ByteReadStream {
 	/**
 	 * Seek to a specific position in the data stream.
 	 *
-	 * @param  int $offset  The byte offset to seek to.
+	 * @param  int  $offset  The byte offset to seek to.
 	 *
 	 * @return void
 	 * @throws ByteStreamException If the offset is invalid.

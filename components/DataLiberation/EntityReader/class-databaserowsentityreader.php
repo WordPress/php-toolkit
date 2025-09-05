@@ -23,11 +23,11 @@ class DatabaseRowsEntityReader implements EntityReader {
 	/**
 	 * State constants for the finite state machine
 	 */
-	const STATE_INIT         = 'init';
-	const STATE_NEXT_ROW     = 'next_row';
-	const STATE_NEXT_TABLE   = 'next_table';
+	const STATE_INIT = 'init';
+	const STATE_NEXT_ROW = 'next_row';
+	const STATE_NEXT_TABLE = 'next_table';
 	const STATE_CREATE_TABLE = 'create_table';
-	const STATE_FINISHED     = 'finished';
+	const STATE_FINISHED = 'finished';
 
 	/**
 	 * The database connection used to fetch records.
@@ -118,10 +118,11 @@ class DatabaseRowsEntityReader implements EntityReader {
 	/**
 	 * Constructor.
 	 *
-	 * @param  PDO   $db  The database connection to use.
-	 * @param  array $options  The options to configure the reader.
+	 * @param  PDO  $db  The database connection to use.
+	 * @param  array  $options  The options to configure the reader.
 	 *
 	 * @since WP_VERSION
+	 *
 	 */
 	public function __construct( PDO $db, $options = array() ) {
 		$this->db                 = $db;
@@ -151,6 +152,7 @@ class DatabaseRowsEntityReader implements EntityReader {
 	 *
 	 * @return int|null The record ID, or null if no records have been processed.
 	 * @since WP_VERSION
+	 *
 	 */
 	public function get_last_record_id() {
 		return $this->last_record_id;
@@ -165,6 +167,7 @@ class DatabaseRowsEntityReader implements EntityReader {
 	 *
 	 * @return bool Whether another entity was found.
 	 * @since WP_VERSION
+	 *
 	 */
 	public function next_entity() {
 		if ( $this->is_finished() ) {
@@ -172,7 +175,7 @@ class DatabaseRowsEntityReader implements EntityReader {
 		}
 
 		if ( $this->state === self::STATE_INIT ) {
-			if ( $this->tables_to_process === null ) {
+			if ( null === $this->tables_to_process ) {
 				$this->initialize_tables_to_process();
 			}
 			$this->state = self::STATE_NEXT_TABLE;
@@ -217,6 +220,7 @@ class DatabaseRowsEntityReader implements EntityReader {
 	 *
 	 * @return bool Whether another entity was found.
 	 * @since WP_VERSION
+	 *
 	 */
 	private function read_next_entity() {
 		if ( ! $this->current_result_set ) {
@@ -238,7 +242,7 @@ class DatabaseRowsEntityReader implements EntityReader {
 			)
 		);
 		$this->last_record_id = $record['ID'] ?? null;
-		++$this->entities_read_so_far;
+		++ $this->entities_read_so_far;
 
 		return true;
 	}
@@ -248,6 +252,7 @@ class DatabaseRowsEntityReader implements EntityReader {
 	 *
 	 * @return bool Whether there is another table to process.
 	 * @since WP_VERSION
+	 *
 	 */
 	private function move_to_next_table() {
 		if ( ! $this->current_table ) {
@@ -280,7 +285,7 @@ class DatabaseRowsEntityReader implements EntityReader {
 		}
 
 		$this->current_entity = new ImportEntity( 'sql_query', $sql );
-		++$this->entities_read_so_far;
+		++ $this->entities_read_so_far;
 	}
 
 	/**
@@ -311,9 +316,10 @@ class DatabaseRowsEntityReader implements EntityReader {
 	/**
 	 * Initializes the reader from a cursor.
 	 *
-	 * @param  string $cursor  The cursor to initialize from.
+	 * @param  string  $cursor  The cursor to initialize from.
 	 *
 	 * @since WP_VERSION
+	 *
 	 */
 	private function initialize_from_cursor( $cursor ) {
 		$cursor_data = json_decode( $cursor, true );

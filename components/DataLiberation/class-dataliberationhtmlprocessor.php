@@ -8,7 +8,7 @@ use WP_HTML_Tag_Processor;
 class DataLiberationHTMLProcessor extends WP_HTML_Processor {
 
 	public function get_inner_html() {
-		if ( $this->get_token_type() !== '#tag' ) {
+		if ( '#tag' !== $this->get_token_type() ) {
 			return false;
 		}
 
@@ -16,13 +16,13 @@ class DataLiberationHTMLProcessor extends WP_HTML_Processor {
 			return false;
 		}
 
-		if ( WP_HTML_Tag_Processor::set_bookmark( 'tag-start' ) === false ) {
+		if ( false === WP_HTML_Tag_Processor::set_bookmark( 'tag-start' ) ) {
 			return false;
 		}
 
 		$this->skip_to_closer();
 
-		if ( WP_HTML_Tag_Processor::set_bookmark( 'tag-end' ) === false ) {
+		if ( false === WP_HTML_Tag_Processor::set_bookmark( 'tag-end' ) ) {
 			WP_HTML_Tag_Processor::release_bookmark( 'tag-start' );
 
 			return false;

@@ -27,7 +27,7 @@ use WordPress\HttpClient\Response;
  */
 class SocketTransport implements TransportInterface {
 
-	protected const STREAM_SELECT_READ  = 1;
+	protected const STREAM_SELECT_READ = 1;
 	protected const STREAM_SELECT_WRITE = 2;
 
 	/**
@@ -44,17 +44,15 @@ class SocketTransport implements TransportInterface {
 			return false;
 		}
 
-		foreach ( $this->state->get_active_requests(
-			array(
-				Request::STATE_WILL_ENABLE_CRYPTO,
-				Request::STATE_WILL_SEND_HEADERS,
-				Request::STATE_WILL_SEND_BODY,
-				Request::STATE_SENT,
-				Request::STATE_RECEIVING_HEADERS,
-				Request::STATE_RECEIVING_BODY,
-				Request::STATE_RECEIVED,
-			)
-		) as $request ) {
+		foreach ( $this->state->get_active_requests([
+			Request::STATE_WILL_ENABLE_CRYPTO,
+			Request::STATE_WILL_SEND_HEADERS,
+			Request::STATE_WILL_SEND_BODY,
+			Request::STATE_SENT,
+			Request::STATE_RECEIVING_HEADERS,
+			Request::STATE_RECEIVING_BODY,
+			Request::STATE_RECEIVED,
+		]) as $request ) {
 			$time_elapsed_ms = $this->state->connections[ $request->id ]->time_elapsed_ms();
 			if ( $time_elapsed_ms > $this->state->request_timeout_ms ) {
 				$this->set_error( $request, new HttpError( sprintf( 'Request timed out after %d ms.', (int) $time_elapsed_ms ) ) );
@@ -109,6 +107,7 @@ class SocketTransport implements TransportInterface {
 			$this->state->get_active_requests( Request::STATE_RECEIVING_BODY )
 		);
 
+
 		return true;
 	}
 
@@ -121,7 +120,7 @@ class SocketTransport implements TransportInterface {
 	 * until the SSL handshake is complete.
 	 * The actual socket it then switched to non-blocking mode using stream_set_blocking().
 	 *
-	 * @param  Request $request  The Request to open the socket for.
+	 * @param  Request  $request  The Request to open the socket for.
 	 *
 	 * @return bool Whether the stream was opened successfully.
 	 */
@@ -173,7 +172,7 @@ class SocketTransport implements TransportInterface {
 			stream_set_blocking( $stream, false );
 
 			$this->state->connections[ $request->id ]->http_socket = $stream;
-			$this->state->connections[ $request->id ]->started_at  = microtime( true );
+			$this->state->connections[ $request->id ]->started_at = microtime( true );
 			if ( $is_ssl ) {
 				$request->state = Request::STATE_WILL_ENABLE_CRYPTO;
 			} else {
@@ -187,7 +186,7 @@ class SocketTransport implements TransportInterface {
 	/**
 	 * Handle transfer encodings.
 	 *
-	 * @param  Request $request
+	 * @param  Request  $request
 	 *
 	 * @return false|resource
 	 */
@@ -245,7 +244,7 @@ class SocketTransport implements TransportInterface {
 	 *
 	 * Enables crypto on the $requests HTTP socksts and sends the request body asynchronously.
 	 *
-	 * @param  Request[] $requests  An array of HTTP requests.
+	 * @param  Request[]  $requests  An array of HTTP requests.
 	 */
 	protected function enable_crypto( array $requests ) {
 		foreach ( $this->stream_select( $requests, static::STREAM_SELECT_WRITE ) as $request ) {
@@ -257,14 +256,13 @@ class SocketTransport implements TransportInterface {
 				true,
 				STREAM_CRYPTO_METHOD_TLS_CLIENT
 			);
-			if ( $enabled_crypto === false ) {
+			if ( false === $enabled_crypto ) {
 				$last_error = error_get_last();
-				$this->set_error(
-					$request,
+				$this->set_error( $request,
 					new HttpError( 'Failed to enable crypto: ' . ( is_array( $last_error ) ? $last_error['message'] : 'unknown' ) )
 				);
 				continue;
-			} elseif ( $enabled_crypto === 0 ) {
+			} elseif ( 0 === $enabled_crypto ) {
 				// The SSL handshake isn't finished yet, let's skip it
 				// for now and try again on the next event loop pass.
 				continue;
@@ -277,16 +275,15 @@ class SocketTransport implements TransportInterface {
 	/**
 	 * Sends HTTP request headers.
 	 *
-	 * @param  Request[] $requests  An array of HTTP requests.
+	 * @param  Request[]  $requests  An array of HTTP requests.
 	 */
 	protected function send_request_headers( array $requests ) {
 		foreach ( $this->stream_select( $requests, static::STREAM_SELECT_WRITE ) as $request ) {
 			$header_bytes = static::prepare_request_headers( $request );
-			if ( @fwrite( $this->state->connections[ $request->id ]->http_socket, $header_bytes ) === false ) {
-				$last_error         = error_get_last();
+			if ( false === @fwrite( $this->state->connections[ $request->id ]->http_socket, $header_bytes ) ) {
+				$last_error = error_get_last();
 				$last_error_message = is_array( $last_error ) ? $last_error['message'] : 'unknown';
-				$this->set_error(
-					$request,
+				$this->set_error( $request,
 					new HttpError( 'Failed to write request bytes - ' . $last_error_message )
 				);
 				continue;
@@ -310,7 +307,7 @@ class SocketTransport implements TransportInterface {
 	/**
 	 * Sends HTTP request body.
 	 *
-	 * @param  Request[] $requests  An array of HTTP requests.
+	 * @param  Request[]  $requests  An array of HTTP requests.
 	 */
 	protected function send_request_body( array $requests ) {
 		foreach ( $this->stream_select( $requests, self::STREAM_SELECT_WRITE ) as $request ) {
@@ -331,7 +328,7 @@ class SocketTransport implements TransportInterface {
 
 			$chunk = $request->upload_body_stream->consume( $available_bytes );
 			if ( ! @fwrite( $this->state->connections[ $request->id ]->http_socket, $chunk ) ) {
-				$last_error         = error_get_last();
+				$last_error = error_get_last();
 				$last_error_message = is_array( $last_error ) ? $last_error['message'] : 'unknown';
 				$this->set_error( $request, new HttpError( 'Failed to write request bytes: ' . $last_error_message ) );
 				continue;
@@ -342,7 +339,7 @@ class SocketTransport implements TransportInterface {
 	/**
 	 * Reads the next received portion of HTTP response headers for multiple requests.
 	 *
-	 * @param  array $requests  An array of requests.
+	 * @param  array  $requests  An array of requests.
 	 */
 	protected function receive_response_headers( $requests ) {
 		$nb_headers_received = 0;
@@ -358,23 +355,23 @@ class SocketTransport implements TransportInterface {
 				// @TODO: Use a larger chunk size here and then scan for \r\n\r\n.
 				// 1 seems slow and overly conservative.
 				if (
-					! $this->state->connections[ $request->id ]->http_socket ||
-					! is_resource( $this->state->connections[ $request->id ]->http_socket ) ||
-					@feof( $this->state->connections[ $request->id ]->http_socket )
+					!$this->state->connections[ $request->id ]->http_socket ||
+					!is_resource($this->state->connections[ $request->id ]->http_socket) ||
+					@feof($this->state->connections[ $request->id ]->http_socket)
 				) {
-					$this->set_error( $request, new HttpError( 'Connection closed while reading response headers.' ) );
+					$this->set_error($request, new HttpError('Connection closed while reading response headers.'));
 					break;
 				}
 
 				$header_byte = fread( $this->state->connections[ $request->id ]->http_socket, 1 );
 
-				if ( $header_byte === false || $header_byte === '' ) {
+				if ( false === $header_byte || '' === $header_byte ) {
 					if (
-						! $this->state->connections[ $request->id ]->http_socket ||
-						! is_resource( $this->state->connections[ $request->id ]->http_socket ) ||
-						@feof( $this->state->connections[ $request->id ]->http_socket )
+						!$this->state->connections[ $request->id ]->http_socket ||
+						!is_resource($this->state->connections[ $request->id ]->http_socket) ||
+						@feof($this->state->connections[ $request->id ]->http_socket)
 					) {
-						$this->set_error( $request, new HttpError( 'Connection closed while reading response headers.' ) );
+						$this->set_error($request, new HttpError('Connection closed while reading response headers.'));
 						break;
 					}
 					break;
@@ -392,18 +389,18 @@ class SocketTransport implements TransportInterface {
 					continue;
 				}
 
-				$request->response           = Response::from_http_headers(
+				$request->response = Response::from_http_headers(
 					$connection->response_buffer,
 					$request
 				);
 				$connection->response_buffer = '';
-				if ( $request->response === false ) {
+				if(false === $request->response) {
 					$this->set_error( $request, new HttpError( 'Malformed HTTP headers received from the server.' ) );
 					break;
 				}
 
 				$this->state->events[ $request->id ][ Client::EVENT_GOT_HEADERS ] = true;
-				++$nb_headers_received;
+				$nb_headers_received ++;
 
 				if ( $response->total_bytes === 0 ) {
 					$request->state = Request::STATE_RECEIVED;
@@ -422,7 +419,7 @@ class SocketTransport implements TransportInterface {
 	/**
 	 * Reads the next received portion of HTTP response headers for multiple requests.
 	 *
-	 * @param  array $requests  An array of requests.
+	 * @param  array  $requests  An array of requests.
 	 */
 	protected function receive_response_body( $requests ) {
 		// @TODO: Assume body is fully received when either
@@ -435,9 +432,9 @@ class SocketTransport implements TransportInterface {
 			while ( true ) {
 				$available_bytes = $stream->pull( 65536 );
 				if ( $available_bytes > 0 ) {
-					$body_chunk                         = $stream->consume( $available_bytes );
-					$request->response->received_bytes += $available_bytes;
-					$this->state->connections[ $request->id ]->response_buffer                .= $body_chunk;
+					$body_chunk                                         = $stream->consume( $available_bytes );
+					$request->response->received_bytes                  += $available_bytes;
+					$this->state->connections[ $request->id ]->response_buffer .= $body_chunk;
 					$this->state->events[ $request->id ][ Client::EVENT_BODY_CHUNK_AVAILABLE ] = true;
 					break; // Process one chunk per loop iteration
 				} elseif ( $stream->reached_end_of_data() ) {
@@ -451,7 +448,7 @@ class SocketTransport implements TransportInterface {
 	/**
 	 * Prepares an HTTP request string for a given URL.
 	 *
-	 * @param  Request $request  The Request to prepare the HTTP headers for.
+	 * @param  Request  $request  The Request to prepare the HTTP headers for.
 	 *
 	 * @return string The prepared HTTP request string.
 	 */
@@ -572,4 +569,5 @@ class SocketTransport implements TransportInterface {
 			}
 		}
 	}
+
 }
