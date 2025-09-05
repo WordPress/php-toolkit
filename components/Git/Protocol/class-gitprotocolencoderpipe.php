@@ -21,7 +21,7 @@ class GitProtocolEncoderPipe extends BaseByteReadStream {
 	}
 
 	public static function encode_packet_line( string $payload, $channel_code = '' ): string {
-		if ( $payload === '0000' || $payload === '0001' || $payload === '0002' ) {
+		if ( '0000' === $payload || '0001' === $payload || '0002' === $payload ) {
 			if ( ! $channel_code ) {
 				return $payload;
 			}
@@ -38,7 +38,7 @@ class GitProtocolEncoderPipe extends BaseByteReadStream {
 	public static function encode_variable_length( $number ) {
 		$result = '';
 		do {
-			$byte   = $number & 0x7F;
+			$byte     = $number & 0x7F;
 			$number >>= 7;
 			if ( $number > 0 ) {
 				$byte |= 0x80;

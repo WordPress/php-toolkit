@@ -7,10 +7,10 @@ $suffixes = file_get_contents( 'https://publicsuffix.org/list/public_suffix_list
 $lines    = explode( "\n", $suffixes );
 $tlds     = array();
 foreach ( $lines as $line ) {
-	if ( empty( $line ) || $line[0] === '/' ) {
+	if ( empty( $line ) || '/' === $line[0] ) {
 		continue;
 	}
-	if ( strpos( $line, '.' ) !== false ) {
+	if ( false !== strpos( $line, '.' ) ) {
 		continue;
 	}
 	$tlds[] = $line;

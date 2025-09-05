@@ -38,14 +38,14 @@ class BlockMarkupMergeValidator implements MergeValidator {
 		 * Validate the resulting HTML
 		 */
 
-		// Validate the entire document
+		// Validate the entire document.
 		self::assert_html_is_structurally_sound( $html );
 
-		// Validate the inner HTML of each block separately in case
+		// Validate the inner HTML of each block separately in case.
 		// there's a structural error spanning the block boundary.
 		$block_markup_processor = new BlockMarkupProcessor( $html );
 		while ( $block_markup_processor->next_token() ) {
-			if ( $block_markup_processor->get_token_type() !== '#block-comment' ) {
+			if ( '#block-comment' !== $block_markup_processor->get_token_type() ) {
 				continue;
 			}
 			$inner_html = $block_markup_processor->skip_and_get_block_inner_html();
@@ -54,7 +54,7 @@ class BlockMarkupMergeValidator implements MergeValidator {
 	}
 
 	private function assert_html_is_structurally_sound( $html ) {
-		$html           .= '<TERMINATE-PROCESSING>';
+		$html          .= '<TERMINATE-PROCESSING>';
 		$html_processor = WP_HTML_Processor::create_fragment( $html );
 
 		/**
@@ -101,10 +101,10 @@ class BlockMarkupMergeValidator implements MergeValidator {
 			 * still waiting for more input and do not wish to close open elements
 			 * just because we've processed the entire HTML chunk.
 			 */
-			if ( $html_processor->get_tag() === 'TERMINATE-PROCESSING' ) {
+			if ( 'TERMINATE-PROCESSING' === $html_processor->get_tag() ) {
 				$seen_terminate_tag = true;
 				$breadcrumbs        = $html_processor->get_breadcrumbs();
-				if ( $breadcrumbs !== array( 'HTML', 'BODY', 'TERMINATE-PROCESSING' ) ) {
+				if ( array( 'HTML', 'BODY', 'TERMINATE-PROCESSING' ) !== $breadcrumbs ) {
 					array_pop( $breadcrumbs );
 					throw new InvalidMergeException(
 						sprintf(

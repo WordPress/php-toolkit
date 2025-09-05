@@ -11,12 +11,13 @@ use WordPress\Blueprints\Runtime;
 class DefineConstantsStep implements StepInterface {
 	/**
 	 * An associative array of constant names to their values (string, bool, int, float).
+	 *
 	 * @var array<string, scalar>
 	 */
 	public $constants;
 
 	/**
-	 * @param  array<string, scalar>  $constants  Constants to define.
+	 * @param  array<string, scalar> $constants  Constants to define.
 	 */
 	public function __construct( array $constants ) {
 		$this->constants = $constants;
@@ -27,10 +28,10 @@ class DefineConstantsStep implements StepInterface {
 	 */
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Defining wp-config constants' );
-		// Inline PHP script to avoid reading a static script.php file via
+		// Inline PHP script to avoid reading a static script.php file via.
 		// file_get_contents() inside the built blueprints.phar file.
 		$runtime->evalPhpCodeInSubProcess(
-<<<'PHP'
+			<<<'PHP'
 <?php
 
 /**

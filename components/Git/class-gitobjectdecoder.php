@@ -26,13 +26,15 @@ class GitObjectDecoder extends BaseByteReadStream {
 	/**
 	 * @var int
 	 */
-	private $header_length = 0; // Uncompressed header length (in bytes, incl. trailing NUL)
+	private $header_length = 0; // Uncompressed header length (in bytes, incl. trailing NUL).
 	/** Decompressed view of the full object (header+body).
+	 *
 	 * @var InflateReadStream
 	 */
 	private $inflated_reader;
 
 	/** Points to the body inside $inflated_reader; seek(0) == body start.
+	 *
 	 * @var ByteReadStream
 	 */
 	private $body_source;
@@ -65,7 +67,7 @@ class GitObjectDecoder extends BaseByteReadStream {
 	}
 
 	public function as_commit() {
-		if ( $this->get_object_type_name() !== 'commit' ) {
+		if ( 'commit' !== $this->get_object_type_name() ) {
 			throw new GitException( sprintf( 'Object is %s, expected commit', $this->get_object_type_name() ) );
 		}
 
@@ -73,7 +75,7 @@ class GitObjectDecoder extends BaseByteReadStream {
 	}
 
 	public function as_tree() {
-		if ( $this->get_object_type_name() !== 'tree' ) {
+		if ( 'tree' !== $this->get_object_type_name() ) {
 			throw new GitException( sprintf( 'Object is %s, expected tree', $this->get_object_type_name() ) );
 		}
 
@@ -97,7 +99,7 @@ class GitObjectDecoder extends BaseByteReadStream {
 			if ( 0 === $this->inflated_reader->pull( 1, ByteReadStream::PULL_EXACTLY ) ) {
 				throw new GitException( 'Unexpected end of data while reading object header' );
 			}
-			$byte   = $this->inflated_reader->consume( 1 );
+			$byte    = $this->inflated_reader->consume( 1 );
 			$header .= $byte;
 			if ( "\x00" === $byte ) {
 				break;
@@ -126,7 +128,7 @@ class GitObjectDecoder extends BaseByteReadStream {
 		$absolute_offset = $this->header_length + $target_offset;
 		$this->body_source->seek( $absolute_offset );
 
-		// Reset local buffer tracking
+		// Reset local buffer tracking.
 		$this->buffer                   = '';
 		$this->offset_in_current_buffer = 0;
 		$this->bytes_already_forgotten  = $target_offset;

@@ -14,7 +14,7 @@ class FileVisitorEvent {
 	public $files;
 
 	const EVENT_ENTER = 'entering';
-	const EVENT_EXIT = 'exiting';
+	const EVENT_EXIT  = 'exiting';
 
 	public function __construct( $type, $dir, $files = array() ) {
 		$this->type  = $type;
@@ -23,10 +23,10 @@ class FileVisitorEvent {
 	}
 
 	public function is_entering() {
-		return $this->type === self::EVENT_ENTER;
+		return self::EVENT_ENTER === $this->type;
 	}
 
 	public function is_exiting() {
-		return $this->type === self::EVENT_EXIT;
+		return self::EVENT_EXIT === $this->type;
 	}
 }

@@ -27,7 +27,7 @@ class TransformedWriteStream implements ByteWriteStream, ArrayAccess {
 	public function append_bytes( string $chunk ): void {
 		foreach ( $this->filters as $filter ) {
 			$chunk = $filter->filter_bytes( $chunk );
-			if ( $chunk === false ) {
+			if ( false === $chunk ) {
 				return;
 			}
 		}

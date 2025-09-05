@@ -32,7 +32,7 @@ class Crawler {
 	private $responses = array();
 
 	/**
-	 * @param  string  $base_url  The starting URL to crawl
+	 * @param  string $base_url  The starting URL to crawl
 	 * @param  array  $options  Client options
 	 */
 	public function __construct( $base_url, array $options = array() ) {
@@ -72,13 +72,13 @@ class Crawler {
 		while ( $this->client->await_next_event() ) {
 			$current_request = $this->client->get_request();
 			if ( $current_request->error ) {
-				// Skip failed requests
-				// @TODO: Error handling
+				// Skip failed requests.
+				// @TODO: Error handling.
 				continue;
 			}
 
 			if ( $current_request->redirected_to ) {
-				// Handle redirects by following the redirect chain
+				// Handle redirects by following the redirect chain.
 				$current_request = $current_request->latest_redirect();
 			}
 			if ( ! is_child_url_of( $current_request->url, $this->base_url ) ) {
@@ -99,7 +99,7 @@ class Crawler {
 					if ( ! isset( $this->responses[ $this->current_url ] ) ) {
 						continue 2;
 					}
-					// Extract new URLs from content
+					// Extract new URLs from content.
 					$p = new BlockMarkupUrlProcessor( $this->responses[ $this->current_url ], $this->current_url );
 					while ( $p->next_url() ) {
 						$this->enqueue_url( $p->get_parsed_url() );
@@ -120,7 +120,7 @@ class Crawler {
 
 		if ( $this->preprocess_url ) {
 			$parsed = call_user_func( $this->preprocess_url, $parsed );
-			if ( $parsed === false ) {
+			if ( false === $parsed ) {
 				return;
 			}
 		}

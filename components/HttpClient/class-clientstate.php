@@ -38,7 +38,7 @@ class ClientState {
 	 * @since Next Release
 	 * @var Request[]
 	 */
-	public $requests = [];
+	public $requests = array();
 
 	/**
 	 * Network connection details managed privately by this Client.
@@ -51,12 +51,12 @@ class ClientState {
 	 *
 	 * @var array
 	 */
-	public $connections = [];
-	public $events = [];
-	public $event = null;
-	public $request = null;
+	public $connections         = array();
+	public $events              = array();
+	public $event               = null;
+	public $request             = null;
 	public $response_body_chunk = null;
-	public $request_timeout_ms = null;
+	public $request_timeout_ms  = null;
 
 	public function __construct( $options = array() ) {
 		$this->concurrency        = $options['concurrency'] ?? 10;
@@ -122,13 +122,13 @@ class ClientState {
 		);
 		$available_slots    = $this->concurrency - count( $processed_requests );
 		$enqueued_requests  = $this->get_requests( Request::STATE_ENQUEUED );
-		for ( $i = 0; $i < $available_slots; $i ++ ) {
+		for ( $i = 0; $i < $available_slots; $i++ ) {
 			if ( ! isset( $enqueued_requests[ $i ] ) ) {
 				break;
 			}
 			$processed_requests[] = $enqueued_requests[ $i ];
 		}
-		if ( $states !== null ) {
+		if ( null !== $states ) {
 			$processed_requests = static::filter_requests_by_state( $processed_requests, $states );
 		}
 
@@ -143,7 +143,7 @@ class ClientState {
 		return static::filter_requests_by_state( $this->requests, $states );
 	}
 
-	static public function filter_requests_by_state( array $requests, $states ) {
+	public static function filter_requests_by_state( array $requests, $states ) {
 		if ( ! is_array( $states ) ) {
 			$states = array( $states );
 		}
@@ -177,14 +177,14 @@ class ClientState {
 		}
 		$connection = $this->connections[ $request->id ];
 		if (
-			$request->state === Request::STATE_RECEIVING_BODY ||
-			$request->state === Request::STATE_RECEIVED ||
-			$request->state === Request::STATE_FINISHED
+			Request::STATE_RECEIVING_BODY === $request->state ||
+			Request::STATE_RECEIVED === $request->state ||
+			Request::STATE_FINISHED === $request->state
 		) {
 			return $connection->consume_buffer();
 		}
 
-		$end_of_data = $request->state === Request::STATE_FINISHED && (
+		$end_of_data = Request::STATE_FINISHED === $request->state && (
 			! is_resource( $this->connections[ $request->id ]->http_socket ) ||
 			$this->connections[ $request->id ]->decoded_response_stream->reached_end_of_data()
 		);
@@ -196,8 +196,8 @@ class ClientState {
 	}
 
 	public function set_request_error( Request $request, $error ) {
-		$request->error                                     = $error;
-		$request->state                                     = Request::STATE_FAILED;
+		$request->error                                       = $error;
+		$request->state                                       = Request::STATE_FAILED;
 		$this->events[ $request->id ][ Client::EVENT_FAILED ] = true;
 	}
 
@@ -205,5 +205,4 @@ class ClientState {
 		$request->state = Request::STATE_FINISHED;
 		$this->events[ $request->id ][ Client::EVENT_FINISHED ] = true;
 	}
-
 }

@@ -27,11 +27,11 @@ class DatabaseContentEntityReader implements EntityReader {
 	 * State constants for the finite state machine
 	 */
 	const STATE_ADVANCE_TO_NEXT_POST = 'advance_to_next_post';
-	const STATE_POST = 'post';
-	const STATE_META = 'meta';
-	const STATE_TERMS = 'terms';
-	const STATE_COMMENTS = 'comments';
-	const STATE_FINISHED = 'finished';
+	const STATE_POST                 = 'post';
+	const STATE_META                 = 'meta';
+	const STATE_TERMS                = 'terms';
+	const STATE_COMMENTS             = 'comments';
+	const STATE_FINISHED             = 'finished';
 
 	/**
 	 * The database connection used to fetch records.
@@ -117,11 +117,10 @@ class DatabaseContentEntityReader implements EntityReader {
 	/**
 	 * Constructor.
 	 *
-	 * @param  PDO  $db  The database connection to use.
-	 * @param  array  $options  The options to configure the reader.
+	 * @param  PDO   $db  The database connection to use.
+	 * @param  array $options  The options to configure the reader.
 	 *
 	 * @since WP_VERSION
-	 *
 	 */
 	public function __construct( PDO $db, $options = array() ) {
 		$this->db           = $db;
@@ -142,7 +141,7 @@ class DatabaseContentEntityReader implements EntityReader {
 	}
 
 	public function is_finished(): bool {
-		return $this->state === self::STATE_FINISHED;
+		return self::STATE_FINISHED === $this->state;
 	}
 
 	/**
@@ -150,14 +149,13 @@ class DatabaseContentEntityReader implements EntityReader {
 	 *
 	 * @return bool Whether another entity was found.
 	 * @since WP_VERSION
-	 *
 	 */
 	public function next_entity() {
 		if ( $this->is_finished() ) {
 			return false;
 		}
 
-		// Process current post and its related data
+		// Process current post and its related data.
 		while ( true ) {
 			switch ( $this->state ) {
 				case self::STATE_POST:
@@ -210,12 +208,12 @@ class DatabaseContentEntityReader implements EntityReader {
 			$parent_info = end( $this->parent_stack );
 			$post        = $this->next_post_at_level( $parent_info['parent_id'], $parent_info['last_processed_child'] );
 			if ( $post ) {
-				// Acknowledge we've processed the next child of the last recorded parent
+				// Acknowledge we've processed the next child of the last recorded parent.
 				if ( count( $this->parent_stack ) > 0 ) {
-					$last_key                                                = count( $this->parent_stack ) - 1;
+					$last_key = count( $this->parent_stack ) - 1;
 					$this->parent_stack[ $last_key ]['last_processed_child'] = $post['ID'];
 				}
-				// Push current post to parent stack to process its children later
+				// Push current post to parent stack to process its children later.
 				array_push(
 					$this->parent_stack,
 					array(
@@ -225,7 +223,7 @@ class DatabaseContentEntityReader implements EntityReader {
 				);
 				break;
 			} else {
-				// No more posts at this level, move up the stack and try again
+				// No more posts at this level, move up the stack and try again.
 				array_pop( $this->parent_stack );
 			}
 		}
@@ -246,7 +244,7 @@ class DatabaseContentEntityReader implements EntityReader {
 	}
 
 	private function read_post_meta() {
-		if ( $this->current_meta_result_set === null ) {
+		if ( null === $this->current_meta_result_set ) {
 			$stmt = $this->db->prepare(
 				"SELECT * FROM {$this->table_prefix}postmeta WHERE post_id = ? ORDER BY meta_id"
 			);
@@ -268,7 +266,7 @@ class DatabaseContentEntityReader implements EntityReader {
 	}
 
 	private function read_post_terms() {
-		if ( $this->current_term_result_set === null ) {
+		if ( null === $this->current_term_result_set ) {
 			$stmt = $this->db->prepare(
 				"SELECT t.*, tt.* FROM {$this->table_prefix}term_relationships tr
                  JOIN {$this->table_prefix}term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
@@ -294,7 +292,7 @@ class DatabaseContentEntityReader implements EntityReader {
 	}
 
 	private function read_post_comments() {
-		if ( $this->current_comment_result_set === null ) {
+		if ( null === $this->current_comment_result_set ) {
 			$stmt = $this->db->prepare(
 				"SELECT * FROM {$this->table_prefix}comments WHERE comment_post_ID = ? ORDER BY comment_ID"
 			);
@@ -328,10 +326,9 @@ class DatabaseContentEntityReader implements EntityReader {
 	/**
 	 * Initializes the reader from a cursor.
 	 *
-	 * @param  string  $cursor  The cursor to initialize from.
+	 * @param  string $cursor  The cursor to initialize from.
 	 *
 	 * @since WP_VERSION
-	 *
 	 */
 	private function initialize_from_cursor( $cursor ) {
 		$cursor_data = json_decode( $cursor, true );

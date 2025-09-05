@@ -1,4 +1,7 @@
 <?php
+
+namespace WordPress\Git;
+
 /**
  * @TODO: Support different ref formats:
  * – nice branch names like "trunk"
@@ -8,9 +11,9 @@
  * - ... what else? ...
  *
  * Currently, we only support full branch names.
+ * 
+ * This comment is below the namespace so PHPCS doesn't complain.
  */
-
-namespace WordPress\Git;
 
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\Filesystem\InMemoryFilesystem;
@@ -76,7 +79,7 @@ class GitRemote {
 						continue 2;
 					}
 
-					if ( strncmp( $ref['ref_name'], 'refs/heads/', strlen( 'refs/heads/' ) ) === 0 ) {
+					if ( 0 === strncmp( $ref['ref_name'], 'refs/heads/', strlen( 'refs/heads/' ) ) ) {
 						$branch_name = substr( $ref['ref_name'], strlen( 'refs/heads/' ) );
 						$this->repository->set_branch_tip( 'refs/remotes/' . $this->remote_name . '/' . $branch_name, $ref['hash'] );
 					}
@@ -102,13 +105,13 @@ class GitRemote {
 
 	private function parse_ref_line( $ref_line ) {
 		$space_pos = strpos( $ref_line, ' ' );
-		if ( $space_pos === false ) {
+		if ( false === $space_pos ) {
 			return false;
 		}
 		$hash     = substr( $ref_line, 0, $space_pos );
 		$ref_name = substr( $ref_line, $space_pos + 1 );
 
-		// Check for peeled hash at end
+		// Check for peeled hash at end.
 		if ( preg_match( '/^(.+) peeled:([a-f0-9]{40})$/', $ref_name, $matches ) ) {
 			$ref_name = $matches[1];
 			$hash     = $matches[2];
@@ -137,11 +140,11 @@ class GitRemote {
 			$remote_commit = Commit::NULL_HASH;
 		}
 
-		// @TODO: Respect a subpath
+		// @TODO: Respect a subpath.
 		$common_ancestor = $this->resolve_first_common_ancestor( $remote_commit, $push_commit );
 		$delta           = $this->repository->find_objects_added_since( $push_commit, $common_ancestor );
 		if ( ! count( $delta ) ) {
-			// Don't push empty commits
+			// Don't push empty commits.
 			return;
 		}
 
@@ -185,10 +188,10 @@ class GitRemote {
 	}
 
 	private function localize_ref_name( $ref_name ) {
-		if ( strncmp( $ref_name, 'ref: ', strlen( 'ref: ' ) ) === 0 ) {
+		if ( 0 === strncmp( $ref_name, 'ref: ', strlen( 'ref: ' ) ) ) {
 			$ref_name = trim( substr( $ref_name, 5 ) );
 		}
-		if ( strncmp( $ref_name, 'refs/heads/', strlen( 'refs/heads/' ) ) === 0 ) {
+		if ( 0 === strncmp( $ref_name, 'refs/heads/', strlen( 'refs/heads/' ) ) ) {
 			return substr( $ref_name, strlen( 'refs/heads/' ) );
 		}
 
@@ -267,7 +270,7 @@ class GitRemote {
 	public function pull( $full_branch_name = null, $options = array() ) {
 		$full_branch_name = $full_branch_name ?? $this->repository->get_current_branch_name();
 		if ( isset( $options['path'] ) && $options['path'] ) {
-			// Sparse pull
+			// Sparse pull.
 			$remote_head = $this->fetch(
 				$full_branch_name,
 				array(
@@ -276,7 +279,7 @@ class GitRemote {
 				)
 			);
 		} else {
-			// Full pull
+			// Full pull.
 			$remote_head = $this->fetch( $full_branch_name, array() );
 		}
 
@@ -294,7 +297,7 @@ class GitRemote {
 			return $remote_head;
 		}
 
-		// Fetch the commits we need to perform the three-way merge
+		// Fetch the commits we need to perform the three-way merge.
 		$common_ancestor  = $this->resolve_first_common_ancestor(
 			$remote_head,
 			$local_head
@@ -336,7 +339,7 @@ class GitRemote {
 				return $remote_head;
 			}
 			if ( isset( $options['path'] ) && $options['path'] ) {
-				if ( ! isset( $options['shallow'] ) || $options['shallow'] !== true ) {
+				if ( ! isset( $options['shallow'] ) || true !== $options['shallow'] ) {
 					throw new GitRemoteException( 'When you pass a "path" to fetch(), you must also set the "shallow" option to true. Deep partial fetches are not supported.' );
 				}
 				$missing_oids = $this->resolve_missing_blobs_oids(
@@ -363,9 +366,9 @@ class GitRemote {
 			return $remote_head;
 		} finally {
 			// Make double sure we have all the relevant objects from the remote commit.
-			// @TODO: investigate why sometimes the root tree is missing and address the
+			// @TODO: investigate why sometimes the root tree is missing and address the.
 			// root cause instead of plugging the hole with a bandaid.
-			if ( ! isset( $options['path'] ) || $options['path'] === '/' || $options['path'] === '' ) {
+			if ( ! isset( $options['path'] ) || '/' === $options['path'] || '' === $options['path'] ) {
 				if ( ! $this->repository->has_all_objects_from_commit( $remote_head ) ) {
 					$this->git_upload_pack(
 						array(
@@ -401,13 +404,13 @@ class GitRemote {
 						// @TODO: Find an exact solution instead of handwaving.
 						'count'       => 100,
 
-						// Just get as many parents as we have. Don't enforce having
+						// Just get as many parents as we have. Don't enforce having.
 						// exactly 100 hashes available.
 						'on_missing'  => 'return-early',
 					)
 				),
 				// Only fetch the commits. Ignore any associated trees and blobs.
-				// We're answering a question about a common ancestor in the commit
+				// We're answering a question about a common ancestor in the commit.
 				// graph. We don't need all the extra downloads to do that.
 				'filter'    => 'tree:0',
 			)
@@ -419,18 +422,18 @@ class GitRemote {
 				$local_commit_hash
 			);
 		} catch ( GitException $e ) {
-			// Still no common ancestor available, let's fetch all the remote commit
+			// Still no common ancestor available, let's fetch all the remote commit.
 			// ancestors.
 		}
 
 		$this->git_upload_pack(
 			array(
 				'want_refs' => array( $remote_commit_hash ),
-				// Don't advertise we have any related commits available. This way the remote
+				// Don't advertise we have any related commits available. This way the remote.
 				// will send all the ancestor commits of $remote_commit_hash.
 				'have_refs' => array(),
 				// Only fetch the commits. Ignore any associated trees and blobs.
-				// We're answering a question about a common ancestor in the commit
+				// We're answering a question about a common ancestor in the commit.
 				// graph. We don't need all the extra downloads to do that.
 				'filter'    => 'tree:0',
 			)
@@ -456,12 +459,12 @@ class GitRemote {
 		}
 		$want_refs    = $options['want_refs'];
 		$packet_lines = array();
-		for ( $i = 0; $i < count( $want_refs ); $i ++ ) {
+		for ( $i = 0; $i < count( $want_refs ); $i++ ) {
 			$packet_line = "want {$want_refs[$i]}";
-			if ( $i === 0 ) {
+			if ( 0 === $i ) {
 				$packet_line .= ' multi_ack_detailed no-done side-band-64k ofs-delta thin-pack agent=git/2.37.3 filter';
 			}
-			$packet_line    .= "\n";
+			$packet_line   .= "\n";
 			$packet_lines[] = $packet_line;
 		}
 
@@ -519,7 +522,7 @@ class GitRemote {
 		}
 		$url = $remote['url'] . $path;
 
-		// @TODO: Make it configurable in Playground, maybe via a filter
+		// @TODO: Make it configurable in Playground, maybe via a filter.
 		$request_info = array(
 			'headers' => $headers,
 		);
@@ -534,7 +537,7 @@ class GitRemote {
 		$response = $reader->await_response();
 		if ( $response->status_code > 299 || $response->status_code < 200 ) {
 			// GitHub sometimes responds with 100 status code when the request is successful.
-			if ( $response->status_code !== 100 ) {
+			if ( 100 !== $response->status_code ) {
 				$reader->pull( 100 );
 				throw new GitRemoteException( 'HTTP request failed with status code ' . $response->status_code . '. First 100 body bytes: ' . $reader->peek( 100 ) );
 			}

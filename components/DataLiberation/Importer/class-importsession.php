@@ -34,16 +34,16 @@ class ImportSession {
 	);
 
 	const FRONTLOAD_STATUS_AWAITING_DOWNLOAD = 'awaiting_download';
-	const FRONTLOAD_STATUS_IGNORED = 'ignored';
-	const FRONTLOAD_STATUS_ERROR = 'error';
-	const FRONTLOAD_STATUS_SUCCEEDED = 'succeeded';
+	const FRONTLOAD_STATUS_IGNORED           = 'ignored';
+	const FRONTLOAD_STATUS_ERROR             = 'error';
+	const FRONTLOAD_STATUS_SUCCEEDED         = 'succeeded';
 	private $post_id;
 	private $cached_stage;
 
 	/**
 	 * Creates a new import session.
 	 *
-	 * @param  array  $args  {
+	 * @param  array $args  {
 	 *
 	 * @type string $data_source The data source (e.g. 'wxr_file', 'wxr_url', 'markdown_zip')
 	 * @type string $source_url Optional. URL of the source file for remote imports
@@ -117,13 +117,13 @@ class ImportSession {
 	/**
 	 * Gets an existing import session by ID.
 	 *
-	 * @param  int  $post_id  The import session post ID
+	 * @param  int $post_id  The import session post ID
 	 *
 	 * @return WP_Import_Model|null The import model instance or null if not found
 	 */
 	public static function by_id( $post_id ) {
 		$post = get_post( $post_id );
-		if ( ! $post || $post->post_type !== self::POST_TYPE ) {
+		if ( ! $post || self::POST_TYPE !== $post->post_type ) {
 			return false;
 		}
 
@@ -145,11 +145,11 @@ class ImportSession {
 				'order'          => 'DESC',
 				'meta_query'     => array(
 					// @TODO: This somehow makes $post empty.
-					// array(
-					// 'key' => 'current_stage',
-					// 'value' => WP_Stream_Importer::STAGE_FINISHED,
-					// 'compare' => '!='
-					// )
+					// array(.
+					// 'key' => 'current_stage',.
+					// 'value' => WP_Stream_Importer::STAGE_FINISHED,.
+					// 'compare' => '!='.
+					// ).
 				),
 			)
 		);
@@ -257,7 +257,7 @@ class ImportSession {
 	/**
 	 * Updates the progress information.
 	 *
-	 * @param  array  $newly_imported_entities  The new progress data with keys: posts, comments, terms, attachments, users
+	 * @param  array $newly_imported_entities  The new progress data with keys: posts, comments, terms, attachments, users
 	 */
 	public function bump_imported_entities_counts( $newly_imported_entities ) {
 		foreach ( $newly_imported_entities as $field => $count ) {
@@ -270,15 +270,15 @@ class ImportSession {
 				continue;
 			}
 
-			// Get current count from cache or database
+			// Get current count from cache or database.
 			if ( ! isset( $this->cached_imported_counts[ $field ] ) ) {
 				$this->cached_imported_counts[ $field ] = (int) get_post_meta( $this->post_id, 'imported_' . $field, true );
 			}
 
-			// Add new count to total
+			// Add new count to total.
 			$new_count = $this->cached_imported_counts[ $field ] + $count;
 
-			// Update database and cache
+			// Update database and cache.
 			update_post_meta( $this->post_id, 'imported_' . $field, $new_count );
 			$this->cached_imported_counts[ $field ] = $new_count;
 			/*
@@ -336,7 +336,7 @@ class ImportSession {
 			array( 'post_status' => self::FRONTLOAD_STATUS_IGNORED ),
 			array(
 				'post_type' => 'frontloading_stub',
-				// 'post_status !=' => self::FRONTLOAD_STATUS_SUCCEEDED,
+				// 'post_status !=' => self::FRONTLOAD_STATUS_SUCCEEDED,.
 			)
 		);
 	}
@@ -493,15 +493,15 @@ class ImportSession {
 				continue;
 			}
 
-			// Get current total from cache or database
+			// Get current total from cache or database.
 			if ( ! isset( $this->cached_totals[ $field ] ) ) {
 				$this->cached_totals[ $field ] = (int) get_post_meta( $this->post_id, 'total_' . $field, true );
 			}
 
-			// Add new count to total
+			// Add new count to total.
 			$new_total = $this->cached_totals[ $field ] + $count;
 
-			// Update database and cache
+			// Update database and cache.
 			update_post_meta( $this->post_id, 'total_' . $field, $new_total );
 			$this->cached_totals[ $field ] = $new_total;
 		}
@@ -592,7 +592,7 @@ class ImportSession {
 	/**
 	 * Updates the current import stage.
 	 *
-	 * @param  string  $stage  The new stage
+	 * @param  string $stage  The new stage
 	 */
 	public function set_stage( $stage ) {
 		if ( $stage === $this->get_stage() ) {
@@ -629,10 +629,10 @@ class ImportSession {
 	/**
 	 * Updates the importer cursor.
 	 *
-	 * @param  string  $cursor  The new cursor data
+	 * @param  string $cursor  The new cursor data
 	 */
 	public function set_reentrancy_cursor( $cursor ) {
-		// WordPress, sadly, removes single slashes from the meta value and
+		// WordPress, sadly, removes single slashes from the meta value and.
 		// requires an addslashes() call to preserve them.
 		update_post_meta( $this->post_id, 'importer_cursor', addslashes( $cursor ) );
 	}

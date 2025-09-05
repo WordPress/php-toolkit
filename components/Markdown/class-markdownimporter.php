@@ -12,7 +12,7 @@ class MarkdownImporter extends StreamImporter {
 	public static function create_for_markdown_directory( $markdown_directory, $options = array(), $cursor = null ) {
 		return self::create(
 			function ( $cursor = null ) use ( $markdown_directory ) {
-				// @TODO: Handle $cursor
+				// @TODO: Handle $cursor.
 				return new FilesystemEntityReader(
 					LocalFilesystem::create( $markdown_directory ),
 					array(
@@ -57,11 +57,11 @@ class MarkdownImporter extends StreamImporter {
 			str_starts_with( $raw_url, $this->options['local_markdown_assets_url_prefix'] )
 		) {
 			// @TODO: Source the file from the current input stream if we can.
-			// This would allow stream-importing zipped Markdown and WXR directory
+			// This would allow stream-importing zipped Markdown and WXR directory.
 			// structures.
-			// Maybe for v1 we could just support importing them from ZIP files
-			// that are already downloaded and available in a local directory just
-			// to avoid additional data transfer and the hurdle with implementing
+			// Maybe for v1 we could just support importing them from ZIP files.
+			// that are already downloaded and available in a local directory just.
+			// to avoid additional data transfer and the hurdle with implementing.
 			// multiple range requests.
 			$relative_asset_path = substr( $raw_url, strlen( $this->options['local_markdown_assets_url_prefix'] ) );
 			$relative_asset_path = '/' . ltrim( $relative_asset_path, '/' );
@@ -85,8 +85,8 @@ class MarkdownImporter extends StreamImporter {
 	 */
 	protected function url_processor_matched_asset_url( BlockMarkupUrlProcessor $p ) {
 		return (
-			$p->get_tag() === 'IMG' &&
-			$p->get_inspected_attribute_name() === 'src'
+			'IMG' === $p->get_tag() &&
+			'src' === $p->get_inspected_attribute_name()
 		);
 	}
 }

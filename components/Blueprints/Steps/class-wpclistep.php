@@ -12,40 +12,45 @@ use WordPress\Blueprints\Runtime;
 class WPCLIStep implements StepInterface {
 	/**
 	 * The WP-CLI command arguments string (e.g., "plugin install woocommerce --activate").
+	 *
 	 * @var string
 	 */
 	public $command;
 
 	/**
 	 * Optional path to the WP-CLI executable.
+	 *
 	 * @var string|null
 	 */
 	public $wp_cli_path;
 
 	/**
-	 * @param  string  $command  The WP-CLI command string.
-	 * @param  string|null  $wpCliPath  Optional path to WP-CLI executable.
+	 * @param  string      $command  The WP-CLI command string.
+	 * @param  string|null $wpCliPath  Optional path to WP-CLI executable.
 	 */
 	public function __construct( string $command, ?string $wp_cli_path = null ) {
-		$this->command   = $command;
+		$this->command     = $command;
 		$this->wp_cli_path = $wp_cli_path;
 	}
 
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Running WP-CLI command: ' . $this->command );
 		$command = $this->command;
-		if ( substr( $command, 0, 3 ) !== 'wp ' ) {
+		if ( 'wp ' !== substr( $command, 0, 3 ) ) {
 			throw new Exception( 'WP-CLI command must start with "wp ".' );
 		}
-		
-		$command = implode(' ', [
-			$this->wp_cli_path ?? $runtime->getWpCliPath(),
-			// For Docker compatibility. If we got this far, the Blueprint runner was already
-			// allowed to run as root.
-			'--allow-root',
-			'--path=' . $runtime->getConfiguration()->getTargetSiteRoot(),
-			substr($command, 3),
-		]);
+
+		$command = implode(
+			' ',
+			array(
+				$this->wp_cli_path ?? $runtime->getWpCliPath(),
+				// For Docker compatibility. If we got this far, the Blueprint runner was already.
+				// allowed to run as root.
+				'--allow-root',
+				'--path=' . $runtime->getConfiguration()->getTargetSiteRoot(),
+				substr( $command, 3 ),
+			)
+		);
 		$process = $runtime->startShellCommand( $command );
 		$process->mustRun();
 	}

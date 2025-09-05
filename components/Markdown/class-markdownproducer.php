@@ -128,7 +128,7 @@ class MarkdownProducer implements DataFormatProducer {
 				return str_repeat( '#', $level ) . ' ' . $content . "\n\n";
 
 			case 'core/table':
-				// Accumulate all the table contents to compute the markdown
+				// Accumulate all the table contents to compute the markdown.
 				// column widths.
 				$processor   = DataLiberationHTMLProcessor::create_fragment( $inner_html );
 				$rows        = array();
@@ -137,25 +137,25 @@ class MarkdownProducer implements DataFormatProducer {
 				$current_row = array();
 
 				while ( $processor->next_token() ) {
-					if ( $processor->get_token_type() !== '#tag' ) {
+					if ( '#tag' !== $processor->get_token_type() ) {
 						continue;
 					}
 
 					$tag       = $processor->get_tag();
 					$is_closer = $processor->is_tag_closer();
 
-					if ( $tag === 'THEAD' && ! $is_closer ) {
+					if ( 'THEAD' === $tag && ! $is_closer ) {
 						$in_header = true;
-					} elseif ( $tag === 'THEAD' && $is_closer ) {
+					} elseif ( 'THEAD' === $tag && $is_closer ) {
 						$in_header = false;
-					} elseif ( $tag === 'TR' && $is_closer ) {
+					} elseif ( 'TR' === $tag && $is_closer ) {
 						if ( $in_header ) {
 							$header = $current_row;
 						} else {
 							$rows[] = $current_row;
 						}
 						$current_row = array();
-					} elseif ( ( $tag === 'TH' || $tag === 'TD' ) && ! $is_closer ) {
+					} elseif ( ( 'TH' === $tag || 'TD' === $tag ) && ! $is_closer ) {
 						$cell_content  = $processor->get_inner_html();
 						$current_row[] = $this->html_to_markdown( $cell_content );
 						$processor->skip_to_closer();
@@ -296,10 +296,10 @@ class MarkdownProducer implements DataFormatProducer {
 
 		$last_href = null;
 		while ( $processor->next_token() ) {
-			if ( $processor->get_token_type() === '#text' ) {
+			if ( '#text' === $processor->get_token_type() ) {
 				$markdown .= $processor->get_modifiable_text();
 				continue;
-			} elseif ( $processor->get_token_type() !== '#tag' ) {
+			} elseif ( '#tag' !== $processor->get_token_type() ) {
 				continue;
 			}
 
@@ -357,20 +357,20 @@ class MarkdownProducer implements DataFormatProducer {
 			}
 		}
 
-		// The HTML processor gives us all the whitespace verbatim
+		// The HTML processor gives us all the whitespace verbatim.
 		// as it was encountered in the byte stream.
 		// Let's normalize it to a single space.
 		$markdown = trim( $markdown, "\n" );
 
-		// The ltrim() here is arbitrary and potentially wrong,
-		// @TODO: Investigate this further and potentially remove
+		// The ltrim() here is arbitrary and potentially wrong,.
+		// @TODO: Investigate this further and potentially remove.
 		// all trimming of space characters.
 		$markdown = ltrim( $markdown, "\n " );
 		$markdown = preg_replace( '/\n+/', "\n", $markdown );
 		return $markdown;
 	}
 
-	// @TODO: Figure out the correct markdown escaping for URLs
+	// @TODO: Figure out the correct markdown escaping for URLs.
 	private static function escape_url( $url ) {
 		$escaped_url = str_replace( ' ', '%20', $url );
 		$escaped_url = str_replace( ')', '%29', $escaped_url );
@@ -382,7 +382,7 @@ class MarkdownProducer implements DataFormatProducer {
 	}
 
 	private function get_list_bullet( $item ) {
-		if ( $item['style'] === '-' ) {
+		if ( '-' === $item['style'] ) {
 			return '-';
 		}
 		return $item['count'] . '.';

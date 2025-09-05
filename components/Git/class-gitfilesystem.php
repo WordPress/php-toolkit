@@ -45,9 +45,9 @@ class GitFilesystem implements Filesystem {
 		$this->repo              = $repo;
 		$this->auto_push         = $options['auto_push'] ?? false;
 		$this->amend_time_window = $options['amend_time_window'] ?? false;
-		// if ( false !== amend_time_window ) {
+		// if ( false !== amend_time_window ) {.
 
-		// }
+		// }.
 		if ( $this->auto_push ) {
 			$this->remote = $options['remote'] ?? null;
 			if ( ! $this->remote ) {
@@ -74,7 +74,7 @@ class GitFilesystem implements Filesystem {
 		try {
 			$reader = $this->repo->read_object_by_path( $path );
 
-			return $reader->get_object_type_name() === 'tree';
+			return 'tree' === $reader->get_object_type_name();
 		} catch ( GitException $e ) {
 			return false;
 		}
@@ -84,7 +84,7 @@ class GitFilesystem implements Filesystem {
 		try {
 			$reader = $this->repo->read_object_by_path( $path );
 
-			return $reader->get_object_type_name() === 'blob';
+			return 'blob' === $reader->get_object_type_name();
 		} catch ( GitException $e ) {
 			return false;
 		}
@@ -133,7 +133,7 @@ class GitFilesystem implements Filesystem {
 		if ( ! $this->is_dir( $path ) ) {
 			return false;
 		}
-		// There are no empty directories in Git. We're assuming
+		// There are no empty directories in Git. We're assuming.
 		// there are always files in the directory.
 		if ( ! $options['recursive'] ) {
 			return false;
@@ -213,7 +213,7 @@ class GitFilesystem implements Filesystem {
 			// Pull and retry.
 			$this->remote->pull();
 
-			// If pull succeeded, try pushing again
+			// If pull succeeded, try pushing again.
 			$this->remote->push();
 		}
 	}
@@ -250,19 +250,21 @@ class GitFilesystem implements Filesystem {
 		}
 
 		$full_branch_name   = $this->get_repository()->get_current_branch_name();
-		$short_branch_name  = strncmp( $full_branch_name, 'refs/heads/', strlen( 'refs/heads/' ) ) === 0 ? substr( $full_branch_name,
-			11 ) : $full_branch_name;
+		$short_branch_name  = 0 === strncmp( $full_branch_name, 'refs/heads/', strlen( 'refs/heads/' ) ) ? substr(
+			$full_branch_name,
+			11
+		) : $full_branch_name;
 		$remote_name        = $this->remote->get_name();
 		$remote_branch_name = "refs/remotes/{$remote_name}/{$short_branch_name}";
 		$remote_branch_hash = $this->get_repository()->get_branch_tip( $remote_branch_name );
 
 		// Very naively check whether we've already pushed this commit to the remote.
-		// @TODO: Either improve the graph algebra here or use "Draft: " prefix in these
-		// amended commits (and remove it before pushing?)
+		// @TODO: Either improve the graph algebra here or use "Draft: " prefix in these.
+		// amended commits (and remove it before pushing?).
 		return $remote_branch_hash !== $head_commit_hash;
 	}
 
 	public function get_meta(): array {
-		return [];
+		return array();
 	}
 }

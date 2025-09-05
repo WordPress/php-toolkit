@@ -58,27 +58,27 @@ class EntityImporter {
 			)[\'"]
 		)!ix';
 
-	// information to import from WXR file
+	// information to import from WXR file.
 	protected $categories = array();
-	protected $tags = array();
-	protected $base_url = '';
+	protected $tags       = array();
+	protected $base_url   = '';
 
 	protected $logger;
 	protected $options = array();
 
-	// NEW STYLE
-	protected $mapping = array();
+	// NEW STYLE.
+	protected $mapping            = array();
 	protected $requires_remapping = array();
-	protected $exists = array();
+	protected $exists             = array();
 	protected $user_slug_override = array();
 
-	protected $url_remap = array();
+	protected $url_remap       = array();
 	protected $featured_images = array();
 
 	/**
 	 * Constructor
 	 *
-	 * @param  array  $options  {
+	 * @param  array $options  {
 	 *
 	 * @var bool $prefill_existing_posts Should we prefill `post_exists` calls? (True prefills and uses more memory, false checks once per imported post and takes longer. Default is true.)
 	 * @var bool $prefill_existing_comments Should we prefill `comment_exists` calls? (True prefills and uses more memory, false checks once per imported comment and takes longer. Default is true.)
@@ -88,7 +88,7 @@ class EntityImporter {
 	 * }
 	 */
 	public function __construct( $options = array() ) {
-		// Initialize some important variables
+		// Initialize some important variables.
 		$empty_types = array(
 			'post'    => array(),
 			'comment' => array(),
@@ -114,8 +114,8 @@ class EntityImporter {
 			)
 		);
 
-		// Load the function wp_read_audio_metadata
-		if(!function_exists('wp_read_audio_metadata')) {
+		// Load the function wp_read_audio_metadata.
+		if ( ! function_exists( 'wp_read_audio_metadata' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/media.php';
 		}
 	}
@@ -156,13 +156,13 @@ class EntityImporter {
 		 * We may need to revisit this approach if this class is ever used to import
 		 * from data sources different than static content files, e.g. a database dump.
 		 */
-		if($data['option_name'] === 'siteurl' || $data['option_name'] === 'home') {
+		if ( 'siteurl' === $data['option_name'] || 'home' === $data['option_name'] ) {
 			return;
 		}
 
 		$this->logger->info(
 			sprintf(
-			/* translators: %s: option name */
+			/* translators: %s: option name. */
 				__( 'Imported site option "%s"', 'wordpress-importer' ),
 				$data['option_name']
 			)
@@ -189,7 +189,7 @@ class EntityImporter {
 		if ( isset( $this->mapping['user'][ $original_id ] ) ) {
 			$existing = $this->mapping['user'][ $original_id ];
 
-			// Note the slug mapping if we need to too
+			// Note the slug mapping if we need to too.
 			if ( ! isset( $this->mapping['user_slug'][ $original_slug ] ) ) {
 				$this->mapping['user_slug'][ $original_slug ] = $existing;
 			}
@@ -200,13 +200,13 @@ class EntityImporter {
 		if ( isset( $this->mapping['user_slug'][ $original_slug ] ) ) {
 			$existing = $this->mapping['user_slug'][ $original_slug ];
 
-			// Ensure we note the mapping too
+			// Ensure we note the mapping too.
 			$this->mapping['user'][ $original_id ] = $existing;
 
 			return false;
 		}
 
-		// Allow overriding the user's slug
+		// Allow overriding the user's slug.
 		$login = $original_slug;
 		if ( isset( $this->user_slug_override[ $login ] ) ) {
 			$login = $this->user_slug_override[ $login ];
@@ -235,7 +235,7 @@ class EntityImporter {
 		if ( is_wp_error( $user_id ) ) {
 			$this->logger->error(
 				sprintf(
-				/* translators: %s: user login */
+				/* translators: %s: user login. */
 					__( 'Failed to import user "%s"', 'wordpress-importer' ),
 					$userdata['user_login']
 				)
@@ -260,21 +260,21 @@ class EntityImporter {
 
 		$this->logger->info(
 			sprintf(
-			/* translators: %s: user login */
+			/* translators: %s: user login. */
 				__( 'Imported user "%s"', 'wordpress-importer' ),
 				$userdata['user_login']
 			)
 		);
 		$this->logger->debug(
 			sprintf(
-			/* translators: 1: original user ID, 2: new user ID */
+			/* translators: 1: original user ID, 2: new user ID. */
 				__( 'User %1$d remapped to %2$d', 'wordpress-importer' ),
 				$original_id,
 				$user_id
 			)
 		);
 
-		// TODO: Implement meta handling once WXR includes it
+		// TODO: Implement meta handling once WXR includes it.
 		/**
 		 * User processing completed.
 		 *
@@ -315,7 +315,7 @@ class EntityImporter {
 			return false;
 		}
 
-		// WP really likes to repeat itself in export files
+		// WP really likes to repeat itself in export files.
 		if ( isset( $this->mapping['term'][ $mapping_key ] ) ) {
 			return false;
 		}
@@ -326,19 +326,19 @@ class EntityImporter {
 			'description' => true,
 		);
 
-		// Map the parent comment, or mark it as one we need to fix
-		// TODO: add parent mapping and remapping
+		// Map the parent comment, or mark it as one we need to fix.
+		// TODO: add parent mapping and remapping.
 		/*
 		$requires_remapping = false;
 		if ( $parent_id ) {
 			if ( isset( $this->mapping['term'][ $parent_id ] ) ) {
 				$data['parent'] = $this->mapping['term'][ $parent_id ];
 			} else {
-				// Prepare for remapping later
+				// Prepare for remapping later.
 				$meta[] = array( 'meta_key' => '_wxr_import_parent', 'meta_value' => $parent_id );
 				$requires_remapping = true;
 
-				// Wipe the parent for now
+				// Wipe the parent for now.
 				$data['parent'] = 0;
 			}
 		}*/
@@ -355,7 +355,7 @@ class EntityImporter {
 		if ( is_wp_error( $result ) ) {
 			$this->logger->warning(
 				sprintf(
-				/* translators: 1: taxonomy name, 2: term name */
+				/* translators: 1: taxonomy name, 2: term name. */
 					__( 'Failed to import %1$s %2$s', 'wordpress-importer' ),
 					$data['taxonomy'],
 					$data['name']
@@ -383,7 +383,7 @@ class EntityImporter {
 
 		$this->logger->info(
 			sprintf(
-			/* translators: 1: term name, 2: taxonomy name */
+			/* translators: 1: term name, 2: taxonomy name. */
 				__( 'Imported "%1$s" (%2$s)', 'wordpress-importer' ),
 				$data['name'],
 				$data['taxonomy']
@@ -391,7 +391,7 @@ class EntityImporter {
 		);
 		$this->logger->debug(
 			sprintf(
-			/* translators: 1: original term ID, 2: new term ID */
+			/* translators: 1: original term ID, 2: new term ID. */
 				__( 'Term %1$d remapped to %2$d', 'wordpress-importer' ),
 				$original_id,
 				$term_id
@@ -434,24 +434,24 @@ class EntityImporter {
 	/**
 	 * Does the post exist?
 	 *
-	 * @param  array  $data  Post data to check against.
+	 * @param  array $data  Post data to check against.
 	 *
 	 * @return int|bool Existing post ID if it exists, false otherwise.
 	 */
 	protected function post_exists( $data ) {
-		// Constant-time lookup if we prefilled
+		// Constant-time lookup if we prefilled.
 		$exists_key = $data['guid'] ?? null;
 
 		if ( $this->options['prefill_existing_posts'] ) {
 			return isset( $this->exists['post'][ $exists_key ] ) ? $this->exists['post'][ $exists_key ] : false;
 		}
 
-		// No prefilling, but might have already handled it
+		// No prefilling, but might have already handled it.
 		if ( isset( $this->exists['post'][ $exists_key ] ) ) {
 			return $this->exists['post'][ $exists_key ];
 		}
 
-		// Still nothing, try post_exists, and cache it
+		// Still nothing, try post_exists, and cache it.
 		$exists                              = post_exists( $data['post_title'], $data['post_content'], $data['post_date'] );
 		$this->exists['post'][ $exists_key ] = $exists;
 
@@ -500,7 +500,7 @@ class EntityImporter {
 		if ( ! $post_type_object ) {
 			$this->logger->warning(
 				sprintf(
-				/* translators: 1: post title, 2: post type */
+				/* translators: 1: post title, 2: post type. */
 					__( 'Failed to import "%1$s": Invalid post type %2$s', 'wordpress-importer' ),
 					$data['post_title'],
 					$post_type
@@ -514,7 +514,7 @@ class EntityImporter {
 		if ( $post_exists ) {
 			$this->logger->info(
 				sprintf(
-				/* translators: 1: post type name, 2: post title */
+				/* translators: 1: post type name, 2: post title. */
 					__( '%1$s "%2$s" already exists.', 'wordpress-importer' ),
 					$post_type_object->labels->singular_name,
 					$data['post_title']
@@ -531,13 +531,13 @@ class EntityImporter {
 			return false;
 		}
 
-		// Map the parent post, or mark it as one we need to fix
+		// Map the parent post, or mark it as one we need to fix.
 		if ( isset( $data['post_parent'] ) ) {
 			$data['post_parent'] = $this->map_post_id( (int) $data['post_parent'] );
 		}
 		$requires_remapping = false;
 
-		// Map the author, or mark it as one we need to fix
+		// Map the author, or mark it as one we need to fix.
 		$author = sanitize_user( $data['post_author'] ?? '', true );
 		if ( empty( $author ) ) {
 			// Missing or invalid author, use default if available.
@@ -554,7 +554,7 @@ class EntityImporter {
 			$data['post_author'] = (int) get_current_user_id();
 		}
 
-		// Whitelist to just the keys we allow
+		// Whitelist to just the keys we allow.
 		$postdata = array(
 			'import_id' => $data['post_id'] ?? null,
 		);
@@ -602,7 +602,7 @@ class EntityImporter {
 		if ( is_wp_error( $post_id ) ) {
 			$this->logger->error(
 				sprintf(
-				/* translators: 1: post title, 2: post type name */
+				/* translators: 1: post title, 2: post type name. */
 					__( 'Failed to import "%1$s" (%2$s)', 'wordpress-importer' ),
 					$data['post_title'],
 					$post_type_object->labels->singular_name
@@ -624,13 +624,13 @@ class EntityImporter {
 			return false;
 		}
 
-		// Ensure stickiness is handled correctly too
+		// Ensure stickiness is handled correctly too.
 		$is_sticky = $data['is_sticky'] ?? '0';
-		if ( $is_sticky === '1' ) {
+		if ( '1' === $is_sticky ) {
 			stick_post( $post_id );
 		}
 
-		// map pre-import ID to local ID
+		// map pre-import ID to local ID.
 		$this->mapping['post'][ $original_id ] = (int) $post_id;
 		if ( $requires_remapping ) {
 			$this->requires_remapping['post'][ $post_id ] = true;
@@ -639,7 +639,7 @@ class EntityImporter {
 
 		$this->logger->info(
 			sprintf(
-			/* translators: 1: post title, 2: post type name */
+			/* translators: 1: post title, 2: post type name. */
 				__( 'Imported "%1$s" (%2$s)', 'wordpress-importer' ),
 				$data['post_title'] ?? '',
 				$post_type_object->labels->singular_name
@@ -647,7 +647,7 @@ class EntityImporter {
 		);
 		$this->logger->debug(
 			sprintf(
-			/* translators: 1: original post ID, 2: new post ID */
+			/* translators: 1: original post ID, 2: new post ID. */
 				__( 'Post %1$d remapped to %2$d', 'wordpress-importer' ),
 				$original_id,
 				$post_id
@@ -686,28 +686,28 @@ class EntityImporter {
 		return $id;
 	}
 
-	// @TOOD handle terms
-	// $terms = apply_filters( 'wp_import_post_terms', $terms, $post_id, $data );
+	// @TOOD handle terms.
+	// $terms = apply_filters( 'wp_import_post_terms', $terms, $post_id, $data );.
 
-	// if ( ! empty( $terms ) ) {
-	// $term_ids = array();
-	// foreach ( $terms as $term ) {
-	// $taxonomy = $term['taxonomy'];
-	// $key = sha1( $taxonomy . ':' . $term['slug'] );
+	// if ( ! empty( $terms ) ) {.
+	// $term_ids = array();.
+	// foreach ( $terms as $term ) {.
+	// $taxonomy = $term['taxonomy'];.
+	// $key = sha1( $taxonomy . ':' . $term['slug'] );.
 
-	// if ( isset( $this->mapping['term'][ $key ] ) ) {
-	// $term_ids[ $taxonomy ][] = (int) $this->mapping['term'][ $key ];
-	// } else {
-	// $meta[] = array( 'meta_key' => '_wxr_import_term', 'meta_value' => $term );
-	// $requires_remapping = true;
-	// }
-	// }
+	// if ( isset( $this->mapping['term'][ $key ] ) ) {.
+	// $term_ids[ $taxonomy ][] = (int) $this->mapping['term'][ $key ];.
+	// } else {.
+	// $meta[] = array( 'meta_key' => '_wxr_import_term', 'meta_value' => $term );.
+	// $requires_remapping = true;.
+	// }.
+	// }.
 
-	// foreach ( $term_ids as $tax => $ids ) {
-	// $tt_ids = wp_set_post_terms( $post_id, $ids, $tax );
-	// do_action( 'wp_import_set_post_terms', $tt_ids, $ids, $tax, $post_id, $data );
-	// }
-	// }
+	// foreach ( $term_ids as $tax => $ids ) {.
+	// $tt_ids = wp_set_post_terms( $post_id, $ids, $tax );.
+	// do_action( 'wp_import_set_post_terms', $tt_ids, $ids, $tax, $post_id, $data );.
+	// }.
+	// }.
 
 	/**
 	 * Attempt to create a new menu item from import data
@@ -717,7 +717,7 @@ class EntityImporter {
 	 * represents doesn't exist then the menu item will not be imported (waits until the
 	 * end of the import to retry again before discarding).
 	 *
-	 * @param  array  $item  Menu item details from WXR file
+	 * @param  array $item  Menu item details from WXR file
 	 */
 	protected function process_menu_item_meta( $post_id, $data, $meta ) {
 		$item_type          = get_post_meta( $post_id, '_menu_item_type', true );
@@ -752,8 +752,8 @@ class EntityImporter {
 				break;
 
 			default:
-				// associated object is missing or not imported yet, we'll retry later
-				// $this->missing_menu_items[] = $item;
+				// associated object is missing or not imported yet, we'll retry later.
+				// $this->missing_menu_items[] = $item;.
 				$this->logger->debug( 'Unknown menu item type' );
 				break;
 		}
@@ -775,7 +775,7 @@ class EntityImporter {
 	 * If fetching attachments is enabled then attempt to create a new attachment
 	 *
 	 * @param  array  $post  Attachment post details from WXR
-	 * @param  string  $url  URL to fetch attachment from
+	 * @param  string $url  URL to fetch attachment from
 	 *
 	 * @return int|WP_Error Post ID on success, WP_Error otherwise
 	 */
@@ -784,11 +784,11 @@ class EntityImporter {
 			throw new DataLiberationException( 'attachment_processing_error', __( 'File does not exist', 'wordpress-importer' ) );
 		}
 
-		// try to use _wp_attached file for upload folder placement to ensure the same location as the export site
-		// e.g. location is 2003/05/image.jpg but the attachment post_date is 2010/09, see media_handle_upload()
+		// try to use _wp_attached file for upload folder placement to ensure the same location as the export site.
+		// e.g. location is 2003/05/image.jpg but the attachment post_date is 2010/09, see media_handle_upload().
 		$post['upload_date'] = $post['post_date'];
 		foreach ( $meta as $meta_item ) {
-			if ( $meta_item['meta_key'] !== '_wp_attached_file' ) {
+			if ( '_wp_attached_file' !== $meta_item['meta_key'] ) {
 				continue;
 			}
 
@@ -805,7 +805,7 @@ class EntityImporter {
 
 		$post['post_mime_type'] = $info['type'];
 
-		// as per wp-admin/includes/upload.php
+		// as per wp-admin/includes/upload.php.
 		$post_id = wp_insert_attachment( $post, $post['local_file_path'] );
 		if ( is_wp_error( $post_id ) ) {
 			return $post_id;
@@ -828,7 +828,7 @@ class EntityImporter {
 	 */
 	public function import_attachment( $filepath, $post_id ) {
 		$filename = basename( $filepath );
-		// Check if attachment with this guid already exists
+		// Check if attachment with this guid already exists.
 		$existing_attachment = get_posts(
 			array(
 				'post_type'      => 'attachment',
@@ -851,23 +851,23 @@ class EntityImporter {
 		} else {
 			$attach_id = $existing_attachment[0];
 		}
-		// @TODO: Check for attachment creation errors
-		// @TODO: Make it work with Asyncify
-		// Generate and update attachment metadata
-		// if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {
-		// include( ABSPATH . 'wp-admin/includes/image.php' );
-		// }
-		// $attach_data = wp_generate_attachment_metadata($attach_id, $filepath);
-		// wp_update_attachment_metadata($attach_id, $attach_data);
+		// @TODO: Check for attachment creation errors.
+		// @TODO: Make it work with Asyncify.
+		// Generate and update attachment metadata.
+		// if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {.
+		// include( ABSPATH . 'wp-admin/includes/image.php' );.
+		// }.
+		// $attach_data = wp_generate_attachment_metadata($attach_id, $filepath);.
+		// wp_update_attachment_metadata($attach_id, $attach_data);.
 		return $attach_id;
 	}
 
 	/**
 	 * Process and import post meta items.
 	 *
-	 * @param  array  $meta  List of meta data arrays
-	 * @param  int  $post_id  Post to associate with
-	 * @param  array  $post  Post data
+	 * @param  array $meta  List of meta data arrays
+	 * @param  int   $post_id  Post to associate with
+	 * @param  array $post  Post data
 	 *
 	 * @return int|WP_Error Number of meta items imported on success, error otherwise.
 	 */
@@ -903,7 +903,7 @@ class EntityImporter {
 		}
 
 		if ( $key ) {
-			// export gets meta straight from the DB so could have a serialized string
+			// export gets meta straight from the DB so could have a serialized string.
 			if ( ! $value ) {
 				$value = maybe_unserialize( $meta_item['meta_value'] );
 			}
@@ -911,7 +911,7 @@ class EntityImporter {
 			update_post_meta( $post_id, $key, $value );
 			do_action( 'import_post_meta', $post_id, $key, $value );
 
-			// if the post has a featured image, take note of this in case of remap
+			// if the post has a featured image, take note of this in case of remap.
 			if ( '_thumbnail_id' === $key ) {
 				$this->featured_images[ $post_id ] = (int) $value;
 			}
@@ -923,9 +923,9 @@ class EntityImporter {
 	/**
 	 * Process and import comment data.
 	 *
-	 * @param  array  $comments  List of comment data arrays.
-	 * @param  int  $post_id  Post to associate with.
-	 * @param  array  $post  Post data.
+	 * @param  array $comments  List of comment data arrays.
+	 * @param  int   $post_id  Post to associate with.
+	 * @param  array $post  Post data.
 	 *
 	 * @return int|WP_Error Number of comments imported on success, error otherwise.
 	 */
@@ -937,7 +937,7 @@ class EntityImporter {
 
 		$num_comments = 0;
 
-		// Sort by ID to avoid excessive remapping later
+		// Sort by ID to avoid excessive remapping later.
 		usort( $comments, array( $this, 'sort_comments_by_id' ) );
 
 		/**
@@ -955,8 +955,8 @@ class EntityImporter {
 		$parent_id   = isset( $comment['comment_parent'] ) ? (int) $comment['comment_parent'] : 0;
 		$author_id   = isset( $comment['comment_user_id'] ) ? (int) $comment['comment_user_id'] : 0;
 
-		// if this is a new post we can skip the comment_exists() check
-		// TODO: Check comment_exists for performance
+		// if this is a new post we can skip the comment_exists() check.
+		// TODO: Check comment_exists for performance.
 		if ( ! $post_just_imported ) {
 			$existing = $this->comment_exists( $comment );
 			if ( $existing ) {
@@ -973,42 +973,42 @@ class EntityImporter {
 			}
 		}
 
-		// Map the parent comment, or mark it as one we need to fix
+		// Map the parent comment, or mark it as one we need to fix.
 		$requires_remapping = false;
 		if ( $parent_id ) {
 			if ( isset( $this->mapping['comment'][ $parent_id ] ) ) {
 				$comment['comment_parent'] = $this->mapping['comment'][ $parent_id ];
 			} else {
-				// Prepare for remapping later
+				// Prepare for remapping later.
 				$meta[]             = array(
 					'meta_key'   => '_wxr_import_parent',
 					'meta_value' => $parent_id,
 				);
 				$requires_remapping = true;
 
-				// Wipe the parent for now
+				// Wipe the parent for now.
 				$comment['comment_parent'] = 0;
 			}
 		}
 
-		// Map the author, or mark it as one we need to fix
+		// Map the author, or mark it as one we need to fix.
 		if ( $author_id ) {
 			if ( isset( $this->mapping['user'][ $author_id ] ) ) {
 				$comment['user_id'] = $this->mapping['user'][ $author_id ];
 			} else {
-				// Prepare for remapping later
+				// Prepare for remapping later.
 				$meta[]             = array(
 					'meta_key'   => '_wxr_import_user',
 					'meta_value' => $author_id,
 				);
 				$requires_remapping = true;
 
-				// Wipe the user for now
+				// Wipe the user for now.
 				$comment['user_id'] = 0;
 			}
 		}
 
-		// Run standard core filters
+		// Run standard core filters.
 		$comment['comment_post_ID'] = $post_id;
 		// @TODO: How to handle missing fields? Use sensible defaults? What defaults?
 		if ( ! isset( $comment['comment_author_IP'] ) ) {
@@ -1025,7 +1025,7 @@ class EntityImporter {
 		}
 
 		$comment = wp_filter_comment( $comment );
-		// wp_insert_comment expects slashed data
+		// wp_insert_comment expects slashed data.
 		$comment_id                               = wp_insert_comment( wp_slash( $comment ) );
 		$this->mapping['comment'][ $original_id ] = $comment_id;
 		if ( $requires_remapping ) {
@@ -1062,8 +1062,8 @@ class EntityImporter {
 	/**
 	 * Mark the post as existing.
 	 *
-	 * @param  array  $data  Post data to mark as existing.
-	 * @param  int  $post_id  Post ID.
+	 * @param  array $data  Post data to mark as existing.
+	 * @param  int   $post_id  Post ID.
 	 */
 	protected function mark_post_exists( $data, $post_id ) {
 		$exists_key                          = $data['guid'] ?? false;
@@ -1088,7 +1088,7 @@ class EntityImporter {
 	/**
 	 * Does the comment exist?
 	 *
-	 * @param  array  $data  Comment data to check against.
+	 * @param  array $data  Comment data to check against.
 	 *
 	 * @return int|bool Existing comment ID if it exists, false otherwise.
 	 */
@@ -1096,17 +1096,17 @@ class EntityImporter {
 		$comment_date = $data['comment_date'] ?? gmdate( 'Y-m-d H:i:s' );
 		$exists_key   = sha1( $data['comment_author'] . ':' . $comment_date );
 
-		// Constant-time lookup if we prefilled
+		// Constant-time lookup if we prefilled.
 		if ( $this->options['prefill_existing_comments'] ) {
 			return isset( $this->exists['comment'][ $exists_key ] ) ? $this->exists['comment'][ $exists_key ] : false;
 		}
 
-		// No prefilling, but might have already handled it
+		// No prefilling, but might have already handled it.
 		if ( isset( $this->exists['comment'][ $exists_key ] ) ) {
 			return $this->exists['comment'][ $exists_key ];
 		}
 
-		// Still nothing, try comment_exists, and cache it
+		// Still nothing, try comment_exists, and cache it.
 		$exists                                 = comment_exists( $data['comment_author'], $comment_date );
 		$this->exists['comment'][ $exists_key ] = $exists;
 
@@ -1116,8 +1116,8 @@ class EntityImporter {
 	/**
 	 * Mark the comment as existing.
 	 *
-	 * @param  array  $data  Comment data to mark as existing.
-	 * @param  int  $comment_id  Comment ID.
+	 * @param  array $data  Comment data to mark as existing.
+	 * @param  int   $comment_id  Comment ID.
 	 */
 	protected function mark_comment_exists( $data, $comment_id ) {
 		$exists_key                             = sha1( $data['comment_author'] . ':' . $data['comment_date'] );
@@ -1131,7 +1131,7 @@ class EntityImporter {
 	 */
 	protected function prefill_existing_terms() {
 		global $wpdb;
-		$query = "SELECT t_term_id, tt.taxonomy, t.slug FROM {$wpdb->terms} AS t";
+		$query  = "SELECT t_term_id, tt.taxonomy, t.slug FROM {$wpdb->terms} AS t";
 		$query .= " JOIN {$wpdb->term_taxonomy} AS tt ON t_term_id = tt_term_id";
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 		$terms = $wpdb->get_results( $query );
@@ -1145,24 +1145,24 @@ class EntityImporter {
 	/**
 	 * Does the term exist?
 	 *
-	 * @param  array  $data  Term data to check against.
+	 * @param  array $data  Term data to check against.
 	 *
 	 * @return int|bool Existing term ID if it exists, false otherwise.
 	 */
 	protected function term_exists( $data ) {
 		$exists_key = sha1( $data['taxonomy'] . ':' . $data['slug'] );
 
-		// Constant-time lookup if we prefilled
+		// Constant-time lookup if we prefilled.
 		if ( $this->options['prefill_existing_terms'] ) {
 			return isset( $this->exists['term'][ $exists_key ] ) ? $this->exists['term'][ $exists_key ] : false;
 		}
 
-		// No prefilling, but might have already handled it
+		// No prefilling, but might have already handled it.
 		if ( isset( $this->exists['term'][ $exists_key ] ) ) {
 			return $this->exists['term'][ $exists_key ];
 		}
 
-		// Still nothing, try comment_exists, and cache it
+		// Still nothing, try comment_exists, and cache it.
 		$exists = term_exists( $data['slug'], $data['taxonomy'] );
 		if ( is_array( $exists ) ) {
 			$exists = $exists['term_id'];
@@ -1176,8 +1176,8 @@ class EntityImporter {
 	/**
 	 * Mark the term as existing.
 	 *
-	 * @param  array  $data  Term data to mark as existing.
-	 * @param  int  $term_id  Term ID.
+	 * @param  array $data  Term data to mark as existing.
+	 * @param  int   $term_id  Term ID.
 	 */
 	protected function mark_term_exists( $data, $term_id ) {
 		$exists_key                          = sha1( $data['taxonomy'] . ':' . $data['slug'] );
@@ -1187,8 +1187,8 @@ class EntityImporter {
 	/**
 	 * Callback for `usort` to sort comments by ID
 	 *
-	 * @param  array  $a  Comment data for the first comment
-	 * @param  array  $b  Comment data for the second comment
+	 * @param  array $a  Comment data for the first comment
+	 * @param  array $b  Comment data for the second comment
 	 *
 	 * @return int
 	 */
@@ -1216,7 +1216,7 @@ class Logger {
 	/**
 	 * Log a debug message.
 	 *
-	 * @param  string  $message  Message to log
+	 * @param  string $message  Message to log
 	 */
 	public function debug( $message ) {
 		echo( '[DEBUG] ' . $message . "\n" );
@@ -1225,7 +1225,7 @@ class Logger {
 	/**
 	 * Log an info message.
 	 *
-	 * @param  string  $message  Message to log
+	 * @param  string $message  Message to log
 	 */
 	public function info( $message ) {
 		echo( '[INFO] ' . $message . "\n" );
@@ -1234,7 +1234,7 @@ class Logger {
 	/**
 	 * Log a warning message.
 	 *
-	 * @param  string  $message  Message to log
+	 * @param  string $message  Message to log
 	 */
 	public function warning( $message ) {
 		echo( '[WARNING] ' . $message . "\n" );
@@ -1243,7 +1243,7 @@ class Logger {
 	/**
 	 * Log an error message.
 	 *
-	 * @param  string  $message  Message to log
+	 * @param  string $message  Message to log
 	 */
 	public function error( $message ) {
 		echo( '[ERROR] ' . $message . "\n" );
@@ -1252,7 +1252,7 @@ class Logger {
 	/**
 	 * Log a notice message.
 	 *
-	 * @param  string  $message  Message to log
+	 * @param  string $message  Message to log
 	 */
 	public function notice( $message ) {
 		echo( '[NOTICE] ' . $message . "\n" );

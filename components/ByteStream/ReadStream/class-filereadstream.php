@@ -69,7 +69,7 @@ class FileReadStream extends BaseByteReadStream {
 			return;
 		}
 		$this->is_read_closed = true;
-		$this->buffer    = '';
+		$this->buffer         = '';
 		if ( ! fclose( $this->file_pointer ) ) {
 			throw new ByteStreamException( 'Failed to close file pointer' );
 		}

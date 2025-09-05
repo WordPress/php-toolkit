@@ -16,11 +16,11 @@ class URLReference extends DataReference {
 	/**
 	 * Constructor.
 	 *
-	 * @param  string  $url  The URL.
+	 * @param  string $url  The URL.
 	 */
 	public function __construct( string $url ) {
 		$this->url = $url;
-		parent::__construct($url);
+		parent::__construct( $url );
 	}
 
 	/**
@@ -39,12 +39,12 @@ class URLReference extends DataReference {
 	/**
 	 * Check if a string is a valid URL reference.
 	 *
-	 * @param  string  $url  The URL to check.
+	 * @param  string $url  The URL to check.
 	 *
 	 * @return bool Whether the URL is valid.
 	 */
 	public static function is_valid( $url ): bool {
-		return is_string( $url ) && ( strpos( $url, 'http://' ) === 0 || strpos( $url, 'https://' ) === 0 );
+		return is_string( $url ) && ( 0 === strpos( $url, 'http://' ) || 0 === strpos( $url, 'https://' ) );
 	}
 
 	/**
@@ -56,5 +56,4 @@ class URLReference extends DataReference {
 	public function get_human_readable_name(): string {
 		return $this->url;
 	}
-
 }

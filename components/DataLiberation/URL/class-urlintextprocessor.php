@@ -195,8 +195,8 @@ class URLInTextProcessor {
 
 			$matched_url = $matches[0][0];
 			if (
-				$matched_url[ strlen( $matched_url ) - 1 ] === ')' ||
-				$matched_url[ strlen( $matched_url ) - 1 ] === '.'
+				')' === $matched_url[ strlen( $matched_url ) - 1 ] ||
+				'.' === $matched_url[ strlen( $matched_url ) - 1 ]
 			) {
 				$matched_url = substr( $matched_url, 0, - 1 );
 			}
@@ -239,7 +239,7 @@ class URLInTextProcessor {
 				}
 
 				$tld = strtolower( substr( $parsed_url->hostname, $last_dot_position + 1 ) );
-				if ( empty( self::$public_suffix_list[ $tld ] ) && $tld !== 'internal' ) {
+				if ( empty( self::$public_suffix_list[ $tld ] ) && 'internal' !== $tld ) {
 					// This TLD is not in the public suffix list. It's not a valid domain name.
 					continue;
 				}
@@ -320,7 +320,7 @@ class URLInTextProcessor {
 				$this->url_starts_at = strlen( $output_buffer );
 				$this->url_length    = strlen( $diff->text );
 			}
-			$output_buffer        .= $diff->text;
+			$output_buffer       .= $diff->text;
 			$bytes_already_copied = $diff->start + $diff->length;
 		}
 

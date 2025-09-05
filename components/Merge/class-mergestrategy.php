@@ -23,18 +23,18 @@ class MergeStrategy {
 	/**
 	 * Performs a three-way merge between a common base and two branches.
 	 *
-	 * @param  string  $base  The common base version
-	 * @param  string  $branchA  First branch version
-	 * @param  string  $branchB  Second branch version
+	 * @param  string $base  The common base version
+	 * @param  string $branchA  First branch version
+	 * @param  string $branchB  Second branch version
 	 *
 	 * @return MergeResult The merged result
 	 */
 	public function merge( string $base, string $branch_a, string $branch_b ): MergeResult {
-		// Compute diffs between base and each branch
+		// Compute diffs between base and each branch.
 		$diff_ab = $this->differ->diff( $base, $branch_a );
 		$diff_ac = $this->differ->diff( $base, $branch_b );
 
-		// Perform the merge using the configured merge strategy
+		// Perform the merge using the configured merge strategy.
 		$merge_result = $this->merger->merge( $diff_ab, $diff_ac );
 
 		if ( ! $this->validator ) {

@@ -14,12 +14,13 @@ use WordPress\Blueprints\Runtime;
 class RunSqlStep implements StepInterface {
 	/**
 	 * SQL source identifier (URL, ./path, /path).
+	 *
 	 * @var DataReference
 	 */
 	public $source;
 
 	/**
-	 * @param  DataReference  $source  SQL source identifier.
+	 * @param  DataReference $source  SQL source identifier.
 	 */
 	public function __construct( DataReference $source ) {
 		$this->source = $source;
@@ -28,7 +29,7 @@ class RunSqlStep implements StepInterface {
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Running SQL queries' );
 
-		// Get the data reference for the SQL file
+		// Get the data reference for the SQL file.
 		$sql = $runtime->resolve( $this->source );
 
 		if ( ! $sql instanceof File ) {

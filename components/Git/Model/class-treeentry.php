@@ -57,11 +57,11 @@ class TreeEntry {
 		}
 	}
 
-	const FILE_MODE_DIRECTORY = '040000';
+	const FILE_MODE_DIRECTORY              = '040000';
 	const FILE_MODE_REGULAR_NON_EXECUTABLE = '100644';
-	const FILE_MODE_REGULAR_EXECUTABLE = '100755';
-	const FILE_MODE_SYMBOLIC_LINK = '120000';
-	const FILE_MODE_COMMIT = '160000';
+	const FILE_MODE_REGULAR_EXECUTABLE     = '100755';
+	const FILE_MODE_SYMBOLIC_LINK          = '120000';
+	const FILE_MODE_COMMIT                 = '160000';
 
 	const FILE_MODE_NAMES = array(
 		self::FILE_MODE_DIRECTORY              => 'directory',
@@ -72,10 +72,10 @@ class TreeEntry {
 	);
 
 	public function is_file() {
-		return $this->get_mode_bucket() === self::FILE_MODE_REGULAR_NON_EXECUTABLE || $this->get_mode_bucket() === self::FILE_MODE_REGULAR_EXECUTABLE;
+		return self::FILE_MODE_REGULAR_NON_EXECUTABLE === $this->get_mode_bucket() || self::FILE_MODE_REGULAR_EXECUTABLE === $this->get_mode_bucket();
 	}
 
 	public function is_tree() {
-		return $this->get_mode_bucket() === self::FILE_MODE_DIRECTORY;
+		return self::FILE_MODE_DIRECTORY === $this->get_mode_bucket();
 	}
 }

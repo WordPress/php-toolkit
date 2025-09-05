@@ -14,24 +14,24 @@ class StaticPostFilesWriter implements EntityWriter {
 	private $filesystem;
 	private $state = self::STATE_WRITING;
 	private $directory_scheme;
-	private $parent_stack = array();
+	private $parent_stack        = array();
 	private $pending_parent_path = '/';
 	private $pending_post;
 	private $pending_metadata;
 	private $static_content_producer_factory;
 	private $file_extension;
 
-	const STATE_WRITING = 'writing';
+	const STATE_WRITING    = 'writing';
 	const STATE_FINALIZING = 'finalizing';
-	const STATE_CLOSED = 'closed';
+	const STATE_CLOSED     = 'closed';
 
-	const SCHEME_DATE = 'date';
+	const SCHEME_DATE         = 'date';
 	const SCHEME_PARENT_TRAIL = 'parent_trail';
 
 	public function __construct( Filesystem $filesystem, $options = array() ) {
 		$this->filesystem       = $filesystem;
 		$this->directory_scheme = $options['directory_scheme'] ?? self::SCHEME_DATE;
-		if ( $this->directory_scheme !== self::SCHEME_DATE && $this->directory_scheme !== self::SCHEME_PARENT_TRAIL ) {
+		if ( self::SCHEME_DATE !== $this->directory_scheme && self::SCHEME_PARENT_TRAIL !== $this->directory_scheme ) {
 			throw new DataLiberationException( 'Invalid directory scheme: ' . $this->directory_scheme );
 		}
 		if ( ! isset( $options['static_content_producer_factory'] ) ) {
@@ -48,7 +48,7 @@ class StaticPostFilesWriter implements EntityWriter {
 	}
 
 	public function append_entity( ImportEntity $entity ) {
-		if ( $this->state === self::STATE_CLOSED ) {
+		if ( self::STATE_CLOSED === $this->state ) {
 			throw new DataLiberationException( 'Cannot write to a closed writer' );
 		}
 
@@ -60,7 +60,7 @@ class StaticPostFilesWriter implements EntityWriter {
 				$post_data['post_parent'] = $post_data['post_parent'] ?? 0;
 				$parent_id                = $post_data['post_parent'];
 
-				// Update the parent stack
+				// Update the parent stack.
 				$pending_post_was_a_parent = true;
 				while ( ! empty( $this->parent_stack ) && end( $this->parent_stack )['post_id'] !== $parent_id ) {
 					array_pop( $this->parent_stack );
@@ -70,9 +70,9 @@ class StaticPostFilesWriter implements EntityWriter {
 				if ( $this->pending_post ) {
 					$this->finalize_pending_post( $pending_post_was_a_parent );
 				}
-				if ( $this->directory_scheme === self::SCHEME_PARENT_TRAIL ) {
+				if ( self::SCHEME_PARENT_TRAIL === $this->directory_scheme ) {
 					$this->pending_parent_path = $this->create_parent_trail_directory();
-				} elseif ( $this->directory_scheme === self::SCHEME_DATE ) {
+				} elseif ( self::SCHEME_DATE === $this->directory_scheme ) {
 					$this->pending_parent_path = $this->create_date_based_directory( $post_data );
 				}
 				$this->pending_post     = $post_data;
@@ -82,7 +82,7 @@ class StaticPostFilesWriter implements EntityWriter {
 				break;
 
 			case 'post_meta':
-				// Attach meta to the current pending post
+				// Attach meta to the current pending post.
 				$this->pending_metadata[ $data['meta_key'] ] = array( $data['meta_value'] );
 				break;
 		}
@@ -95,7 +95,7 @@ class StaticPostFilesWriter implements EntityWriter {
 
 		$path = $this->pending_parent_path;
 		$slug = $this->slugify( $this->pending_post['post_title'] );
-		if ( $this->directory_scheme === self::SCHEME_PARENT_TRAIL ) {
+		if ( self::SCHEME_PARENT_TRAIL === $this->directory_scheme ) {
 			if ( $pending_post_was_a_parent ) {
 				$path = wp_join_unix_paths( $path, $slug, 'index.' . $this->file_extension );
 			} else {

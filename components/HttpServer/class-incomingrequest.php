@@ -13,42 +13,42 @@ use WordPress\HttpClient\Request;
 
 class IncomingRequest extends Request {
 
-	static public function from_resource( $upstream ) {
-		// Read request line
+	public static function from_resource( $upstream ) {
+		// Read request line.
 		$line = fgets( $upstream );
-		if ( $line === false ) {
-			throw new Exception( "Failed to read request line" );
+		if ( false === $line ) {
+			throw new Exception( 'Failed to read request line' );
 		}
 		$parts        = explode( ' ', trim( $line ), 3 );
-		$request_info = [
+		$request_info = array(
 			'method'   => $parts[0] ?? 'GET',
 			'pathname' => $parts[1] ?? '/',
-			'headers'  => [],
-		];
+			'headers'  => array(),
+		);
 
-		// Read headers
-		while ( ( $line = fgets( $upstream ) ) !== false ) {
+		// Read headers.
+		while ( false !== ( $line = fgets( $upstream ) ) ) {
 			$line = trim( $line );
-			if ( $line === '' ) {
+			if ( '' === $line ) {
 				break;
 			}
 			$header_parts = explode( ':', $line, 2 );
-			if ( count( $header_parts ) == 2 ) {
+			if ( 2 == count( $header_parts ) ) {
 				$name                             = strtolower( trim( $header_parts[0] ) );
 				$request_info['headers'][ $name ] = trim( $header_parts[1] );
 			}
 		}
 
-		// @TODOL: Validate the Host, URL, throw an error if invalid
+		// @TODOL: Validate the Host, URL, throw an error if invalid.
 		$request = new IncomingRequest(
-		// @TODO: figure out protocol
+		// @TODO: figure out protocol.
 			'http://' . ( $request_info['headers']['host'] ?? 'unknown-host' ) . $request_info['pathname'],
 			$request_info
 		);
 
 		$body_stream = FileReadStream::from_resource( $upstream );
 
-		$wrapped_streams = [];
+		$wrapped_streams = array();
 
 		$encoding = $request->get_header( 'Content-Encoding' );
 		if ( $encoding ) {
@@ -69,7 +69,7 @@ class IncomingRequest extends Request {
 			}
 		}
 
-		// Support chunked transfer decoding
+		// Support chunked transfer decoding.
 		$transfer_encoding = $request->get_header( 'transfer-encoding' );
 		if ( $transfer_encoding ) {
 			foreach ( explode( ',', $transfer_encoding ) as $te ) {
@@ -79,9 +79,9 @@ class IncomingRequest extends Request {
 						$wrapped_streams[] = $body_stream;
 						$body_stream       = new ChunkedDecoderReadStream( $body_stream );
 						break;
-					// You can add support for other transfer-encodings here if needed
+					// You can add support for other transfer-encodings here if needed.
 					default:
-						// Ignore or throw for unknown encodings if desired
+						// Ignore or throw for unknown encodings if desired.
 						break;
 				}
 			}
@@ -106,10 +106,10 @@ class IncomingRequest extends Request {
 	 */
 	private $parsed_url;
 
-	// @TODO: Bake this into the body stream instance
+	// @TODO: Bake this into the body stream instance.
 	public function close_body_stream() {
-		// Do not close $this->body_stream as it would close
-		// the tcp connection with the client. We need that
+		// Do not close $this->body_stream as it would close.
+		// the tcp connection with the client. We need that.
 		// connection to send the response.
 		foreach ( $this->wrapped_streams as $stream ) {
 			$stream->close_reading();

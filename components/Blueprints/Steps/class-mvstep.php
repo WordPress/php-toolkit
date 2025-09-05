@@ -19,8 +19,8 @@ class MvStep implements StepInterface {
 	public $to_path;
 
 	/**
-	 * @param  string  $fromPath  The source path to move from.
-	 * @param  string  $toPath  The destination path to move to.
+	 * @param  string $fromPath  The source path to move from.
+	 * @param  string $toPath  The destination path to move to.
 	 */
 	public function __construct( string $from_path, string $to_path ) {
 		$this->from_path = $from_path;

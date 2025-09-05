@@ -10,17 +10,19 @@ use WordPress\Blueprints\VersionStrings\VersionConstraint;
 use WordPress\Blueprints\VersionStrings\WordPressVersion;
 
 class ExistingSiteResolver {
-	static public function resolve( Runtime $runtime, Tracker $progress, ?VersionConstraint $wp_version_constraint = null ) {
-		$progress->split( [
-			'verify_installation' => 3,
-			'check_compatibility' => 3,
-			'verify_database'     => 4,
-		] );
+	public static function resolve( Runtime $runtime, Tracker $progress, ?VersionConstraint $wp_version_constraint = null ) {
+		$progress->split(
+			array(
+				'verify_installation' => 3,
+				'check_compatibility' => 3,
+				'verify_database'     => 4,
+			)
+		);
 
 		$config    = $runtime->getConfiguration();
-		$target_fs  = $runtime->getTargetFilesystem();
+		$target_fs = $runtime->getTargetFilesystem();
 
-		// 1. Verify it's a valid WordPress installation
+		// 1. Verify it's a valid WordPress installation.
 		$progress['verify_installation']->setCaption( 'Verifying WordPress installation' );
 		if ( ! $target_fs->exists( 'wp-load.php' ) ) {
 			throw new BlueprintExecutionException(
@@ -28,7 +30,7 @@ class ExistingSiteResolver {
 			);
 		}
 
-		// Additional check to ensure we can actually load WordPress
+		// Additional check to ensure we can actually load WordPress.
 		try {
 			$result = $runtime->evalPhpCodeInSubProcess(
 				'<?php
@@ -38,7 +40,7 @@ class ExistingSiteResolver {
 				'
 			)->output_file_content;
 
-			if ( $result !== 'WordPress is installed: true' ) {
+			if ( 'WordPress is installed: true' !== $result ) {
 				throw new BlueprintExecutionException(
 					'The target site exists but WordPress is not properly installed or configured'
 				);
@@ -51,10 +53,10 @@ class ExistingSiteResolver {
 
 		$progress['verify_installation']->finish();
 
-		// 2. Check WordPress version compatibility
+		// 2. Check WordPress version compatibility.
 		$progress['check_compatibility']->setCaption( 'Checking WordPress version compatibility' );
 		if ( $wp_version_constraint ) {
-			// Get current WordPress version
+			// Get current WordPress version.
 			$current_word_press_version = WordPressVersion::fromString(
 				trim(
 					$runtime->evalPhpCodeInSubProcess(
@@ -77,17 +79,17 @@ class ExistingSiteResolver {
 			}
 		}
 
-		// 3. Check PHP version compatibility (already verified at the Blueprint runner level)
-		// See BlueprintRunner::validateBlueprint()
+		// 3. Check PHP version compatibility (already verified at the Blueprint runner level).
+		// See BlueprintRunner::validateBlueprint().
 
 		$progress['check_compatibility']->finish();
 
-		// 4. Verify database engine matches
+		// 4. Verify database engine matches.
 		$progress['verify_database']->setCaption( 'Verifying database configuration' );
 		$required_engine = $config->getDatabaseEngine();
 
-		// Check if SQLite integration plugin is active when using SQLite
-		if ( $required_engine === 'sqlite' ) {
+		// Check if SQLite integration plugin is active when using SQLite.
+		if ( 'sqlite' === $required_engine ) {
 			$sqlite_active = $runtime->evalPhpCodeInSubProcess(
 				'<?php
 				require_once(getenv("DOCROOT") . "/wp-load.php");
@@ -102,13 +104,13 @@ class ExistingSiteResolver {
 				'
 			)->output_file_content;
 
-			if ( trim( $sqlite_active ) !== 'true' ) {
+			if ( 'true' !== trim( $sqlite_active ) ) {
 				throw new BlueprintExecutionException(
 					'The Blueprint requires SQLite database engine, but the site is not using SQLite integration'
 				);
 			}
-		} elseif ( $required_engine === 'mysql' ) {
-			// For MySQL, verify it's not using SQLite
+		} elseif ( 'mysql' === $required_engine ) {
+			// For MySQL, verify it's not using SQLite.
 			$using_mysql = $runtime->evalPhpCodeInSubProcess(
 				'<?php
 				require_once(getenv("DOCROOT") . "/wp-load.php");
@@ -127,7 +129,7 @@ class ExistingSiteResolver {
 				'
 			)->output_file_content;
 
-			if ( trim( $using_mysql ) !== 'true' ) {
+			if ( 'true' !== trim( $using_mysql ) ) {
 				throw new BlueprintExecutionException(
 					'The Blueprint requires MySQL database engine, but the site appears to be using SQLite'
 				);

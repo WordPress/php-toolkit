@@ -18,8 +18,8 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 	use Mixin\CopyRecursiveViaStreaming;
 
 	private $last_write_stream_id = 0;
-	private $write_streams = array();
-	private $files = array();
+	private $write_streams        = array();
+	private $files                = array();
 
 	public static function create() {
 		return new ChrootLayer(
@@ -40,7 +40,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 	}
 
 	public function ls( $parent = '/' ) {
-		if ( ! isset( $this->files[ $parent ] ) || $this->files[ $parent ]['type'] !== 'dir' ) {
+		if ( ! isset( $this->files[ $parent ] ) || 'dir' !== $this->files[ $parent ]['type'] ) {
 			throw new FilesystemException(
 				sprintf( 'Directory not found: %s', $parent )
 			);
@@ -50,11 +50,11 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 	}
 
 	public function is_dir( $path ) {
-		return isset( $this->files[ $path ] ) && $this->files[ $path ]['type'] === 'dir';
+		return isset( $this->files[ $path ] ) && 'dir' === $this->files[ $path ]['type'];
 	}
 
 	public function is_file( $path ) {
-		return isset( $this->files[ $path ] ) && $this->files[ $path ]['type'] === 'file';
+		return isset( $this->files[ $path ] ) && 'file' === $this->files[ $path ]['type'];
 	}
 
 	public function exists( $path ) {
@@ -173,7 +173,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 
 	protected function write_stream_internal_open( string $path ): int {
 		$this->put_contents( $path, '' );
-		$stream_id                         = $this->last_write_stream_id ++;
+		$stream_id                         = $this->last_write_stream_id++;
 		$this->write_streams[ $stream_id ] = $path;
 
 		return $stream_id;
@@ -185,7 +185,7 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 				sprintf( 'Cannot append bytes to a write stream that is not open' )
 			);
 		}
-		$path                             = $this->write_streams[ $stream_id ];
+		$path                              = $this->write_streams[ $stream_id ];
 		$this->files[ $path ]['contents'] .= $data;
 
 		return true;
@@ -201,6 +201,6 @@ class InMemoryFilesystem implements Filesystem, InternalizedWriteStream {
 	}
 
 	public function get_meta(): array {
-		return [];
+		return array();
 	}
 }

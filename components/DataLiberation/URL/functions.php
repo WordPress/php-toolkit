@@ -30,7 +30,7 @@ use WordPress\DataLiberation\BlockMarkup\BlockMarkupUrlProcessor;
  */
 function wp_rewrite_urls( $options ) {
 	if ( empty( $options['base_url'] ) ) {
-		// Use first from-url as base_url if not specified
+		// Use first from-url as base_url if not specified.
 		$from_urls           = array_keys( $options['url-mapping'] );
 		$options['base_url'] = $from_urls[0];
 	}
@@ -60,8 +60,8 @@ function wp_rewrite_urls( $options ) {
 /**
  * Check if a given URL matches the current site URL.
  *
- * @param  URL  $parent  The URL to check.
- * @param  string  $child  The current site URL to compare against.
+ * @param  URL    $parent  The URL to check.
+ * @param  string $child  The current site URL to compare against.
  *
  * @return bool Whether the URL matches the current site URL.
  */
@@ -85,11 +85,11 @@ function is_child_url_of( $child, $parent_url ) {
 	$parent_pathname = urldecode( $parent_url->pathname );
 
 	return (
-		// Direct match
+		// Direct match.
 		$parent_pathname === $child_pathname_no_trailing_slash ||
 		$parent_pathname === $child_pathname_no_trailing_slash . '/' ||
-		// Path prefix
-		strncmp( $child_pathname_no_trailing_slash . '/', $parent_pathname, strlen( $parent_pathname ) ) === 0
+		// Path prefix.
+		0 === strncmp( $child_pathname_no_trailing_slash . '/', $parent_pathname, strlen( $parent_pathname ) )
 	);
 }
 
@@ -99,8 +99,8 @@ function is_child_url_of( $child, $parent_url ) {
  * For example, `urldecode_n( '%22is 6 %3C 6?%22 – asked Achilles', 1 )` returns
  * '"is 6 %3C 6?%22 – asked Achilles' because only the first encoded byte is decoded.
  *
- * @param  string  $string  The string to decode.
- * @param  int  $decode_n  The number of bytes to decode in $input
+ * @param  string $string  The string to decode.
+ * @param  int    $decode_n  The number of bytes to decode in $input
  *
  * @return string The decoded string.
  */
@@ -113,7 +113,7 @@ function urldecode_n( $input, $decode_n ) {
 		}
 
 		$last_at = $at;
-		$at      += strcspn( $input, '%', $at );
+		$at     += strcspn( $input, '%', $at );
 		// Consume bytes except for the percent sign.
 		$result .= substr( $input, $last_at, $at - $last_at );
 
@@ -122,7 +122,7 @@ function urldecode_n( $input, $decode_n ) {
 			break;
 		}
 
-		++ $at;
+		++$at;
 		if ( $at > strlen( $input ) ) {
 			break;
 		}
@@ -134,7 +134,7 @@ function urldecode_n( $input, $decode_n ) {
 			2
 		);
 
-		if ( $decodable_length === 2 ) {
+		if ( 2 === $decodable_length ) {
 			// Decode the hex sequence.
 			$result .= chr( hexdec( $input[ $at ] . $input[ $at + 1 ] ) );
 			$at     += 2;

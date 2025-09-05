@@ -13,10 +13,10 @@ use WordPress\HttpClient\Transport\TransportInterface;
 
 class HttpMiddleware implements MiddlewareInterface {
 
-	const EVENT_GOT_HEADERS = 'EVENT_GOT_HEADERS';
+	const EVENT_GOT_HEADERS          = 'EVENT_GOT_HEADERS';
 	const EVENT_BODY_CHUNK_AVAILABLE = 'EVENT_BODY_CHUNK_AVAILABLE';
-	const EVENT_FAILED = 'EVENT_FAILED';
-	const EVENT_FINISHED = 'EVENT_FINISHED';
+	const EVENT_FAILED               = 'EVENT_FAILED';
+	const EVENT_FINISHED             = 'EVENT_FINISHED';
 
 	/**
 	 * @var ClientState
@@ -28,7 +28,7 @@ class HttpMiddleware implements MiddlewareInterface {
 	private $transport;
 
 	public function __construct( $client_state, $options = array() ) {
-		$this->state = $client_state;
+		$this->state     = $client_state;
 		$this->transport = $options['transport'];
 	}
 
@@ -38,10 +38,10 @@ class HttpMiddleware implements MiddlewareInterface {
 	 * an internal queue. Network transmission is delayed until one of the returned
 	 * streams is read from.
 	 *
-	 * @param  Request|Request[]  $requests  The HTTP request(s) to enqueue. Can be a single request or an array of requests.
+	 * @param  Request|Request[] $requests  The HTTP request(s) to enqueue. Can be a single request or an array of requests.
 	 */
 	public function enqueue( Request $request ) {
-		$request->state                    = Request::STATE_ENQUEUED;
+		$request->state                           = Request::STATE_ENQUEUED;
 		$this->state->requests[]                  = apply_filters( 'wp_http_client_request', $request );
 		$this->state->events[ $request->id ]      = array();
 		$this->state->connections[ $request->id ] = new Connection( $request );
@@ -101,8 +101,8 @@ class HttpMiddleware implements MiddlewareInterface {
 	 *
 	 * @return bool
 	 */
-	public function await_next_event( $requests_ids ) :bool {
-		$ordered_events            = array(
+	public function await_next_event( $requests_ids ): bool {
+		$ordered_events                   = array(
 			Client::EVENT_GOT_HEADERS,
 			Client::EVENT_BODY_CHUNK_AVAILABLE,
 			Client::EVENT_FAILED,
@@ -133,9 +133,9 @@ class HttpMiddleware implements MiddlewareInterface {
 							break;
 						case Client::EVENT_FAILED:
 						case Client::EVENT_FINISHED:
-							// We don't need the response buffer anymore. It's
-							// safe to clean up the connection object now. The
-							// HTTP resource have been closed by now via the
+							// We don't need the response buffer anymore. It's.
+							// safe to clean up the connection object now. The.
+							// HTTP resource have been closed by now via the.
 							// close_connection() method.
 							unset( $this->state->connections[ $request_id ] );
 							break;
@@ -147,7 +147,7 @@ class HttpMiddleware implements MiddlewareInterface {
 
 			// After we've checked for any available events, see if we've run out of time.
 			// This way, we always return any events that were ready before worrying about the timeout.
-			// If we checked the timeout first, we might miss events that were already waiting for us
+			// If we checked the timeout first, we might miss events that were already waiting for us.
 			// when the timeout is set to zero.
 			$time_elapsed_ms = ( microtime( true ) - $start_time ) * 1000;
 			if ( $timeout_ms && $time_elapsed_ms >= $timeout_ms ) {
@@ -157,5 +157,4 @@ class HttpMiddleware implements MiddlewareInterface {
 
 		return false;
 	}
-
 }

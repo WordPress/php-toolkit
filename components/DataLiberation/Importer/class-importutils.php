@@ -16,7 +16,7 @@ class ImportUtils {
 	/**
 	 * Generates a block opener comment with given attributes.
 	 *
-	 * @param  string  $block_name  The name of the block.
+	 * @param  string $block_name  The name of the block.
 	 * @param  array  $attrs  The attributes of the block.
 	 *
 	 * @return string The block opener.
@@ -33,7 +33,7 @@ class ImportUtils {
 	/**
 	 * Generates a block closer comment.
 	 *
-	 * @param  string  $block_name  The name of the block.
+	 * @param  string $block_name  The name of the block.
 	 *
 	 * @return string The block closer.
 	 */
@@ -44,7 +44,7 @@ class ImportUtils {
 	/**
 	 * Convert an array of WP_Block_Object objects to HTML markup.
 	 *
-	 * @param  array  $blocks  The blocks to convert to markup.
+	 * @param  array $blocks  The blocks to convert to markup.
 	 *
 	 * @return string The HTML markup.
 	 */
@@ -57,7 +57,7 @@ class ImportUtils {
 				$block_markup .= $block;
 				continue;
 			}
-			// Start of block comment
+			// Start of block comment.
 			$block_markup .= self::block_opener( $block->block_name, $block->attrs );
 			$block_markup .= $block->attrs['content'] ?? '';
 			$block_markup .= self::convert_blocks_to_markup( $block->inner_blocks );
@@ -85,7 +85,7 @@ class ImportUtils {
 		if ( false === $p->next_tag() ) {
 			return false;
 		}
-		if ( $p->get_tag() !== 'H1' ) {
+		if ( 'H1' !== $p->get_tag() ) {
 			return false;
 		}
 		$depth = $p->get_current_depth();
@@ -94,7 +94,7 @@ class ImportUtils {
 			if ( false === $p->next_token() ) {
 				break;
 			}
-			if ( $p->get_token_type() === '#text' ) {
+			if ( '#text' === $p->get_token_type() ) {
 				$title .= $p->get_modifiable_text() . ' ';
 			}
 		} while ( $p->get_current_depth() > $depth );
@@ -103,12 +103,12 @@ class ImportUtils {
 			return false;
 		}
 
-		// Move past the closing comment
+		// Move past the closing comment.
 		$p->next_token();
-		if ( $p->get_token_type() === '#text' ) {
+		if ( '#text' === $p->get_token_type() ) {
 			$p->next_token();
 		}
-		if ( $p->get_token_type() !== '#comment' ) {
+		if ( '#comment' !== $p->get_token_type() ) {
 			return false;
 		}
 

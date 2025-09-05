@@ -112,7 +112,7 @@ class GitProtocolDecoder {
 		}
 		$this->packet_body = '';
 
-		// Process the next multiplexed chunk
+		// Process the next multiplexed chunk.
 		while ( $this->demuxer->next_chunk() ) {
 			switch ( $this->demuxer->get_stream_code() ) {
 				case ProtocolDemultiplexer::STREAM_CODE_UNKNOWN:
@@ -126,9 +126,9 @@ class GitProtocolDecoder {
 			}
 		}
 
-		// Process the demultiplexed packets. Accumulate the body
-		// of all non-PACK packets for simplicity. They're unlikely
-		// to be large and it's easier to handle them as fully-loaded
+		// Process the demultiplexed packets. Accumulate the body.
+		// of all non-PACK packets for simplicity. They're unlikely.
+		// to be large and it's easier to handle them as fully-loaded.
 		// strings.
 		while ( $this->packet_parser->next_token() ) {
 			switch ( $this->packet_parser->get_token_type() ) {
@@ -161,8 +161,8 @@ class GitProtocolDecoder {
 
 		while ( $this->pack_parser->next_token() ) {
 			$is_delta = (
-				$this->pack_parser->get_object_type() === PackParser::OBJECT_TYPE_REF_DELTA ||
-				$this->pack_parser->get_object_type() === PackParser::OBJECT_TYPE_OFS_DELTA
+				PackParser::OBJECT_TYPE_REF_DELTA === $this->pack_parser->get_object_type() ||
+				PackParser::OBJECT_TYPE_OFS_DELTA === $this->pack_parser->get_object_type()
 			);
 
 			if ( $is_delta ) {

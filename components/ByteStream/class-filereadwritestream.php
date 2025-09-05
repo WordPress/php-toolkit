@@ -46,7 +46,7 @@ class FileReadWriteStream extends BaseByteReadStream implements BytePipe {
 		$this->buffer                   = '';
 		$this->bytes_already_forgotten  = $target_offset;
 		$this->offset_in_current_buffer = 0;
-		if ( fseek( $this->file_pointer, $target_offset ) !== 0 ) {
+		if ( 0 !== fseek( $this->file_pointer, $target_offset ) ) {
 			throw new ByteStreamException( 'fseek() failed' );
 		}
 	}
@@ -55,7 +55,7 @@ class FileReadWriteStream extends BaseByteReadStream implements BytePipe {
 		if ( $this->is_write_closed ) {
 			throw new ByteStreamException( 'Cannot append after close_writing()' );
 		}
-		if ( $bytes === '' ) {
+		if ( '' === $bytes ) {
 			return;
 		}
 
@@ -63,12 +63,12 @@ class FileReadWriteStream extends BaseByteReadStream implements BytePipe {
 		fseek( $this->file_pointer, 0, SEEK_END );
 
 		$len = fwrite( $this->file_pointer, $bytes );
-		if ( $len === false || $len !== strlen( $bytes ) ) {
+		if ( false === $len || $len !== strlen( $bytes ) ) {
 			throw new ByteStreamException( 'fwrite() failed' );
 		}
-		fflush( $this->file_pointer ); // ensures visibility for concurrent readers
+		fflush( $this->file_pointer ); // ensures visibility for concurrent readers.
 
-		// Rewind to the starting offset so we don't affect the reading position
+		// Rewind to the starting offset so we don't affect the reading position.
 		fseek( $this->file_pointer, $offset_before_append );
 
 		$this->expected_length += strlen( $bytes );
@@ -89,5 +89,4 @@ class FileReadWriteStream extends BaseByteReadStream implements BytePipe {
 			$this->file_pointer = null;
 		}
 	}
-
 }

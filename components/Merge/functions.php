@@ -14,7 +14,7 @@ function print_diff_chunks( array $chunks_a, array $chunks_b ): void {
 	echo str_repeat( '-', $width ) . "\n";
 
 	$n = max( count( $chunks_a ), count( $chunks_b ) );
-	for ( $i = 0; $i < $n; $i ++ ) {
+	for ( $i = 0; $i < $n; $i++ ) {
 		$chunk_a = $chunks_a[ $i ];
 		$chunk_b = $chunks_b[ $i ];
 
@@ -22,7 +22,7 @@ function print_diff_chunks( array $chunks_a, array $chunks_b ): void {
 		$right_lines = explode( "\n", format_chunk_side( $chunk_b, $half_width ) );
 
 		$max_lines = max( count( $left_lines ), count( $right_lines ) );
-		for ( $j = 0; $j < $max_lines; $j ++ ) {
+		for ( $j = 0; $j < $max_lines; $j++ ) {
 			printf(
 				"%3d: %s | %s\n",
 				$i,
@@ -34,28 +34,28 @@ function print_diff_chunks( array $chunks_a, array $chunks_b ): void {
 }
 
 function mb_wordwrap( string $text, int $width, string $break = "\n", bool $cut = true, string $encoding = 'UTF-8' ): array {
-	// Split text into words while keeping unprintable characters
+	// Split text into words while keeping unprintable characters.
 	$words = preg_split( '/(\s+)/u', $text, - 1, PREG_SPLIT_DELIM_CAPTURE );
 
 	$lines        = array();
 	$current_line = '';
 
-	for ( $i = 0; $i < count( $words ); $i ++ ) {
+	for ( $i = 0; $i < count( $words ); $i++ ) {
 		$word = $words[ $i ];
-		if ( strpos( $word, "\n" ) !== false ) {
+		if ( false !== strpos( $word, "\n" ) ) {
 			$offset = strpos( $word, "\n" );
-			// Slice until the newline character while keeping the number of
+			// Slice until the newline character while keeping the number of.
 			// characters the same.
 			$before = substr( $word, 0, $offset ) . ' ';
 			$after  = substr( $word, $offset + 1 );
 			array_splice( $words, $i, 1, array( $before, $after ) );
-			-- $i;
+			--$i;
 			continue;
 		}
-		// Strip unprintable characters for length calculation
+		// Strip unprintable characters for length calculation.
 		$length = mb_strlen( $word, $encoding );
 
-		// Handle cases where a single word is longer than the width
+		// Handle cases where a single word is longer than the width.
 		if ( $cut && $length > $width ) {
 			if ( ! empty( $current_line ) ) {
 				$lines[]      = $current_line;
@@ -73,7 +73,7 @@ function mb_wordwrap( string $text, int $width, string $break = "\n", bool $cut 
 			continue;
 		}
 
-		// Check if adding the next word exceeds the width
+		// Check if adding the next word exceeds the width.
 		$current_length = mb_strlen( $current_line, $encoding );
 
 		if ( $current_length + $length >= $width ) {
@@ -148,10 +148,10 @@ function format_chunk_side( array $chunk, $width ): string {
 
 		if ( $padding_length > 0 ) {
 			// Tab characters have variable length in terminal which breaks the side-by-side formatting.
-			// We cannot easily preserve them and display nice diff columns. At the same time, removing
-			// them in favor of spaces may confuse the viewer – "why are spaces replaced with spaces here?"
+			// We cannot easily preserve them and display nice diff columns. At the same time, removing.
+			// them in favor of spaces may confuse the viewer – "why are spaces replaced with spaces here?".
 			//
-			// @TODO: Investigate how other diff tools solve that problem and find a useful and established
+			// @TODO: Investigate how other diff tools solve that problem and find a useful and established.
 			// pattern. Perhaps display UTF-8 arrows instead of tabs and dots instead of spaces?
 			$wrapped[ $k ] = str_replace( "\t", ' ', $wrapped[ $k ] );
 			$wrapped[ $k ] = trim( $wrapped[ $k ] ) . str_repeat( ' ', $padding_length );

@@ -21,185 +21,189 @@ use WordPress\Zip\ZipFilesystem;
 
 use function WordPress\Filesystem\wp_join_unix_paths;
 
-require_once getenv('DOCROOT') . '/wp-load.php';
-require_once getenv('DOCROOT') . '/php-toolkit.phar';
+require_once getenv( 'DOCROOT' ) . '/wp-load.php';
+require_once getenv( 'DOCROOT' ) . '/php-toolkit.phar';
 
-// Progress reporting interfaces and implementations
+// Progress reporting interfaces and implementations.
 
 interface ProgressReporter {
-    /**
-     * Report progress update
-     * 
-     * @param float $progress Progress percentage (0-100)
-     * @param string $caption Progress caption/message
-     */
-    public function reportProgress(float $progress, string $caption): void;
+	/**
+	 * Report progress update
+	 *
+	 * @param float  $progress Progress percentage (0-100)
+	 * @param string $caption Progress caption/message
+	 */
+	public function reportProgress( float $progress, string $caption ): void;
 
-    /**
-     * Report an error
-     * 
-     * @param string $message Error message
-     * @param \Throwable|null $exception Optional exception details
-     */
-    public function reportError(string $message, ?\Throwable $exception = null): void;
+	/**
+	 * Report an error
+	 *
+	 * @param string          $message Error message
+	 * @param \Throwable|null $exception Optional exception details
+	 */
+	public function reportError( string $message, ?\Throwable $exception = null ): void;
 
-    /**
-     * Report completion
-     * 
-     * @param string $message Completion message
-     */
-    public function reportCompletion(string $message): void;
+	/**
+	 * Report completion
+	 *
+	 * @param string $message Completion message
+	 */
+	public function reportCompletion( string $message ): void;
 
-    /**
-     * Close/cleanup the reporter
-     */
-    public function close(): void;
+	/**
+	 * Close/cleanup the reporter
+	 */
+	public function close(): void;
 }
 
 class TerminalProgressReporter implements ProgressReporter {
-    private $stdout;
-    private $last_progress = -1;
-    private $last_caption = '';
-    private $progress_bar_width = 50;
+	private $stdout;
+	private $last_progress      = -1;
+	private $last_caption       = '';
+	private $progress_bar_width = 50;
 
-    public function __construct() {
-        $this->stdout = fopen('php://stdout', 'w');
-    }
+	public function __construct() {
+		$this->stdout = fopen( 'php://stdout', 'w' );
+	}
 
-    public function reportProgress(float $progress, string $caption): void {
-        // Don't repeat identical progress
-        if ($this->last_progress === $progress && $this->last_caption === $caption) {
-            return;
-        }
+	public function reportProgress( float $progress, string $caption ): void {
+		// Don't repeat identical progress.
+		if ( $this->last_progress === $progress && $this->last_caption === $caption ) {
+			return;
+		}
 
-        $this->last_progress = $progress;
-        $this->last_caption = $caption;
+		$this->last_progress = $progress;
+		$this->last_caption  = $caption;
 
-        $percentage = min(100, max(0, $progress));
-        $filled = (int)round($this->progress_bar_width * ($percentage / 100));
-        $empty = $this->progress_bar_width - $filled;
-        
-        $bar = str_repeat('=', $filled);
-        if ($empty > 0 && $filled < $this->progress_bar_width) {
-            $bar .= '>';
-            $bar .= str_repeat(' ', $empty - 1);
-        } else {
-            $bar .= str_repeat(' ', $empty);
-        }
+		$percentage = min( 100, max( 0, $progress ) );
+		$filled     = (int) round( $this->progress_bar_width * ( $percentage / 100 ) );
+		$empty      = $this->progress_bar_width - $filled;
 
-        $status = sprintf(
-            "\r[%s] %3.1f%% - %s",
-            $bar,
-            $percentage,
-            $caption
-        );
+		$bar = str_repeat( '=', $filled );
+		if ( $empty > 0 && $filled < $this->progress_bar_width ) {
+			$bar .= '>';
+			$bar .= str_repeat( ' ', $empty - 1 );
+		} else {
+			$bar .= str_repeat( ' ', $empty );
+		}
 
-        if ($this->isTty()) {
-            // Clear line and write new progress
-            fwrite($this->stdout, "\r\033[K" . $status);
-        } else {
-            // Non-TTY, just write new line
-            fwrite($this->stdout, $status . "\n");
-        }
-        fflush($this->stdout);
-    }
+		$status = sprintf(
+			"\r[%s] %3.1f%% - %s",
+			$bar,
+			$percentage,
+			$caption
+		);
 
-    public function reportError(string $message, ?\Throwable $exception = null): void {
-        $this->clearCurrentLine();
-        
-        $error_msg = "\033[1;31mError:\033[0m " . $message;
-        if ($exception) {
-            $error_msg .= " (" . $exception->getMessage() . ")";
-        }
-        
-        fwrite($this->stdout, $error_msg . "\n");
-        fflush($this->stdout);
-    }
+		if ( $this->isTty() ) {
+			// Clear line and write new progress.
+			fwrite( $this->stdout, "\r\033[K" . $status );
+		} else {
+			// Non-TTY, just write new line.
+			fwrite( $this->stdout, $status . "\n" );
+		}
+		fflush( $this->stdout );
+	}
 
-    public function reportCompletion(string $message): void {
-        $this->clearCurrentLine();
-        fwrite($this->stdout, "\033[1;32m" . $message . "\033[0m\n");
-        fflush($this->stdout);
-    }
+	public function reportError( string $message, ?\Throwable $exception = null ): void {
+		$this->clearCurrentLine();
 
-    public function close(): void {
-        if ($this->stdout) {
-            fclose($this->stdout);
-        }
-    }
+		$error_msg = "\033[1;31mError:\033[0m " . $message;
+		if ( $exception ) {
+			$error_msg .= ' (' . $exception->getMessage() . ')';
+		}
 
-    private function clearCurrentLine(): void {
-        if ($this->isTty()) {
-            fwrite($this->stdout, "\r\033[K");
-        }
-    }
+		fwrite( $this->stdout, $error_msg . "\n" );
+		fflush( $this->stdout );
+	}
 
-    private function isTty(): bool {
-        return stream_isatty($this->stdout);
-    }
+	public function reportCompletion( string $message ): void {
+		$this->clearCurrentLine();
+		fwrite( $this->stdout, "\033[1;32m" . $message . "\033[0m\n" );
+		fflush( $this->stdout );
+	}
+
+	public function close(): void {
+		if ( $this->stdout ) {
+			fclose( $this->stdout );
+		}
+	}
+
+	private function clearCurrentLine(): void {
+		if ( $this->isTty() ) {
+			fwrite( $this->stdout, "\r\033[K" );
+		}
+	}
+
+	private function isTty(): bool {
+		return stream_isatty( $this->stdout );
+	}
 }
 
 class JsonProgressReporter implements ProgressReporter {
-    private $output_file;
+	private $output_file;
 
-    public function __construct() {
-        $output_path = getenv('OUTPUT_FILE') ?: 'php://stdout';
-        $this->output_file = fopen($output_path, 'w');
-    }
+	public function __construct() {
+		$output_path       = getenv( 'OUTPUT_FILE' ) ? getenv( 'OUTPUT_FILE' ) : 'php://stdout';
+		$this->output_file = fopen( $output_path, 'w' );
+	}
 
-    public function reportProgress(float $progress, string $caption): void {
-        $this->writeJsonMessage([
-            'type' => 'progress',
-            'progress' => round($progress, 2),
-            'caption' => $caption
-        ]);
-    }
+	public function reportProgress( float $progress, string $caption ): void {
+		$this->writeJsonMessage(
+			array(
+				'type' => 'progress',
+				'progress' => round( $progress, 2 ),
+				'caption' => $caption,
+			)
+		);
+	}
 
-    public function reportError(string $message, ?\Throwable $exception = null): void {
-        $error_data = [
-            'type' => 'error',
-            'message' => $message
-        ];
+	public function reportError( string $message, ?\Throwable $exception = null ): void {
+		$error_data = array(
+			'type' => 'error',
+			'message' => $message,
+		);
 
-        if ($exception) {
-            $error_data['details'] = [
-                'exception' => get_class($exception),
-                'message' => $exception->getMessage(),
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-                'trace' => $exception->getTraceAsString()
-            ];
-        }
+		if ( $exception ) {
+			$error_data['details'] = array(
+				'exception' => get_class( $exception ),
+				'message' => $exception->getMessage(),
+				'file' => $exception->getFile(),
+				'line' => $exception->getLine(),
+				'trace' => $exception->getTraceAsString(),
+			);
+		}
 
-        $this->writeJsonMessage($error_data);
-    }
+		$this->writeJsonMessage( $error_data );
+	}
 
-    public function reportCompletion(string $message): void {
-        $this->writeJsonMessage([
-            'type' => 'completion',
-            'message' => $message
-        ]);
-    }
+	public function reportCompletion( string $message ): void {
+		$this->writeJsonMessage(
+			array(
+				'type' => 'completion',
+				'message' => $message,
+			)
+		);
+	}
 
-    public function close(): void {
-        if ($this->output_file) {
-            fclose($this->output_file);
-        }
-    }
+	public function close(): void {
+		if ( $this->output_file ) {
+			fclose( $this->output_file );
+		}
+	}
 
-    private function writeJsonMessage(array $data): void {
-        fwrite($this->output_file, json_encode($data) . "\n");
-        fflush($this->output_file);
-    }
+	private function writeJsonMessage( array $data ): void {
+		fwrite( $this->output_file, json_encode( $data ) . "\n" );
+		fflush( $this->output_file );
+	}
 }
 
 function createProgressReporter(): ProgressReporter {
-    // Use JSON mode if OUTPUT_FILE is set or if we're not in a TTY
-    if (getenv('OUTPUT_FILE') || !stream_isatty(STDOUT)) {
-        return new JsonProgressReporter();
-    }
-    
-    return new TerminalProgressReporter();
+	// Use JSON mode if OUTPUT_FILE is set or if we're not in a TTY.
+	if ( getenv( 'OUTPUT_FILE' ) || ! stream_isatty( STDOUT ) ) {
+		return new JsonProgressReporter();
+	}
+
+	return new TerminalProgressReporter();
 }
 
 function bail_out( $message ) {
@@ -207,73 +211,92 @@ function bail_out( $message ) {
 }
 
 function run_content_import( $options ) {
-	$reporter = createProgressReporter();
+	$reporter     = createProgressReporter();
 	$main_tracker = new Tracker();
 
-	// Set up progress reporting
+	// Set up progress reporting.
 	$main_tracker->events->addListener(
 		'WordPress\Blueprints\Progress\ProgressEvent',
-		function($event) use ($reporter) {
-			$reporter->reportProgress($event->getProgress(), $event->getCaption());
+		function ( $event ) use ( $reporter ) {
+			$reporter->reportProgress( $event->getProgress(), $event->getCaption() );
 		}
 	);
 
 	try {
 		define( 'NEW_SITE_CONTENT_ROOT', get_site_url() );
-		$reporter->reportProgress(0, 'Target site URL: ' . NEW_SITE_CONTENT_ROOT);
+		$reporter->reportProgress( 0, 'Target site URL: ' . NEW_SITE_CONTENT_ROOT );
 
-		$accepted_modes = [
+		$accepted_modes = array(
 			'git',
 			'local_directory',
 			'wxr',
 			'epub',
-		];
+		);
 
-		if ( !isset( $options['mode'] ) ) {
+		if ( ! isset( $options['mode'] ) ) {
 			bail_out( 'The "mode" option is required.' );
 		}
 
-		if ( !in_array( $options['mode'], $accepted_modes ) ) {
-			bail_out( sprintf(
-				'Invalid "mode" option: %s. Accepted modes are: %s.',
-				$options['mode'],
-				implode( ', ', $accepted_modes )
-			) );
+		if ( ! in_array( $options['mode'], $accepted_modes ) ) {
+			bail_out(
+				sprintf(
+					'Invalid "mode" option: %s. Accepted modes are: %s.',
+					$options['mode'],
+					implode( ', ', $accepted_modes )
+				)
+			);
 		}
 
-		if(!isset($options['source'])) {
+		if ( ! isset( $options['source'] ) ) {
 			bail_out( 'The "source" option is required.' );
 		}
 
-		// Set up progress stages
-		$main_tracker->split([
-			'setup' => ['ratio' => 10, 'caption' => 'Setting up import'],
-			'indexing' => ['ratio' => 20, 'caption' => 'Indexing entities'],
-			'assets' => ['ratio' => 30, 'caption' => 'Processing assets'],
-			'importing' => ['ratio' => 40, 'caption' => 'Importing content']
-		]);
+		// Set up progress stages.
+		$main_tracker->split(
+			array(
+				'setup' => array(
+					'ratio' => 10,
+					'caption' => 'Setting up import',
+				),
+				'indexing' => array(
+					'ratio' => 20,
+					'caption' => 'Indexing entities',
+				),
+				'assets' => array(
+					'ratio' => 30,
+					'caption' => 'Processing assets',
+				),
+				'importing' => array(
+					'ratio' => 40,
+					'caption' => 'Importing content',
+				),
+			)
+		);
 
 		$setup_tracker = $main_tracker['setup'];
-		$setup_tracker->set(10, 'Resolving content source');
+		$setup_tracker->set( 10, 'Resolving content source' );
 
-		$http_client = new Client();
-		$content_source = DataReference::create($options['source'], [
-			ExecutionContextPath::class,
-		]);
-		$resolver = new DataReferenceResolver($http_client);
-		if(isset($options['execution_context_root']) && $options['execution_context_root'] !== '') {
+		$http_client    = new Client();
+		$content_source = DataReference::create(
+			$options['source'],
+			array(
+				ExecutionContextPath::class,
+			)
+		);
+		$resolver       = new DataReferenceResolver( $http_client );
+		if ( isset( $options['execution_context_root'] ) && '' !== $options['execution_context_root'] ) {
 			$resolver->setExecutionContext(
-				LocalFilesystem::create($options['execution_context_root'])
+				LocalFilesystem::create( $options['execution_context_root'] )
 			);
 		}
-		$resolved_source = $resolver->resolve_uncached($content_source);
+		$resolved_source = $resolver->resolve_uncached( $content_source );
 
-		$setup_tracker->set(30, 'Configuring import mode');
+		$setup_tracker->set( 30, 'Configuring import mode' );
 
 		$chrooted_fs     = null;
 		$source_site_url = null;
 		if ( in_array( $options['mode'], array( 'local_directory', 'git' ) ) ) {
-			// Validate required options
+			// Validate required options.
 			if ( ! isset( $options['source_site_url'] ) ) {
 				bail_out( 'The source_site_url option is required.' );
 			}
@@ -281,11 +304,11 @@ function run_content_import( $options ) {
 			$import_path_prefix = '/imported-content';
 			$source_site_url    = $options['source_site_url'];
 
-			if(!($resolved_source instanceof Directory)) {
+			if ( ! ( $resolved_source instanceof Directory ) ) {
 				bail_out( 'The "source" option must resolve to a directory.' );
 			}
 			$chrooted_fs = $resolved_source->filesystem;
-			if ( $options['mode'] === 'local_directory' ) {
+			if ( 'local_directory' === $options['mode'] ) {
 				// @TODO: Rethink this, consider which values should we choose for git repos.
 				$options['source_site_url'] = 'file:///';
 			}
@@ -449,7 +472,7 @@ function run_content_import( $options ) {
 				'data_liberation.stream_importer.preprocess_entity',
 				function ( $entity ) use ( &$import_path_prefix, $index_file_pattern ) {
 					static $preprocessed_an_entity = false;
-					if ( $entity->get_type() !== 'post' ) {
+					if ( 'post' !== $entity->get_type() ) {
 						return $entity;
 					}
 
@@ -469,7 +492,7 @@ function run_content_import( $options ) {
 						if ( ! $preprocessed_an_entity ) {
 							$preprocessed_an_entity           = true;
 							$dirname                          = dirname( $data['local_file_path'] );
-							$dirname_makes_a_bad_slug         = $dirname !== '.' && $dirname === '/';
+							$dirname_makes_a_bad_slug         = '.' !== $dirname && '/' === $dirname;
 							$is_index_file                    = 1 === preg_match( $index_file_pattern, $data['local_file_path'] );
 							$post_title_not_derived_from_path = $data['post_title'] !== ImportUtils::slug_to_title( basename( $data['local_file_path'] ) );
 
@@ -495,40 +518,40 @@ function run_content_import( $options ) {
 				10,
 				2
 			);
-		} elseif ( $options['mode'] === 'wxr' ) {
+		} elseif ( 'wxr' === $options['mode'] ) {
 			if ( ! isset( $options['source'] ) ) {
 				help_message_and_die( 'The "wxr file" option is required.' );
 			}
-			if(!($resolved_source instanceof File)) {
+			if ( ! ( $resolved_source instanceof File ) ) {
 				bail_out( 'The "source" option must resolve to a file.' );
 			}
 			$entity_reader_factory = function ( $cursor ) use ( $resolved_source ) {
 				$stream = $resolved_source->getStream();
-				$stream->seek(0);
+				$stream->seek( 0 );
 				return WXREntityReader::create(
 					$stream,
 					$cursor
 				);
 			};
-		} elseif ( $options['mode'] === 'epub' ) {
+		} elseif ( 'epub' === $options['mode'] ) {
 			if ( ! isset( $options['source'] ) ) {
 				help_message_and_die( 'The "epub file" option is required.' );
 			}
 
-			if(!($resolved_source instanceof File)) {
+			if ( ! ( $resolved_source instanceof File ) ) {
 				bail_out( 'The "source" option must resolve to a file.' );
 			}
-			$zip_fs = ZipFilesystem::create($resolved_source->getStream());
+			$zip_fs                = ZipFilesystem::create( $resolved_source->getStream() );
 			$entity_reader_factory = function ( $cursor = null ) use ( $zip_fs ) {
 				return new EPubEntityReader(
 					$zip_fs,
-					1000000 // This is first post ID. We should really also accept a cursor
+					1000000 // This is first post ID. We should really also accept a cursor.
 				);
 			};
 			$reader                = $entity_reader_factory();
 			$source_site_url       = 'file://' . dirname( $reader->get_manifest_path() );
 
-			// To source the media files from the EPUB bundle:
+			// To source the media files from the EPUB bundle:.
 			$chrooted_fs = $zip_fs;
 
 			/**
@@ -556,11 +579,11 @@ function run_content_import( $options ) {
 		$setup_tracker->finish();
 
 		$source = $options['source'];
-		$reporter->reportProgress($main_tracker->getProgress(), "Importing static files from $source");
+		$reporter->reportProgress( $main_tracker->getProgress(), "Importing static files from $source" );
 
-		// Parse URL mapping options
+		// Parse URL mapping options.
 		$additional_url_mappings = array();
-		foreach ( $options['additional_site_urls'] ?? [] as $url ) {
+		foreach ( $options['additional_site_urls'] ?? array() as $url ) {
 			$additional_url_mappings[] = array(
 				'from' => $url,
 				'to' => NEW_SITE_CONTENT_ROOT,
@@ -585,9 +608,9 @@ function run_content_import( $options ) {
 		$import_session   = ImportSession::create(
 			array(
 				'data_source' => 'local_directory',
-				// @TODO: the phrase "file_name" doesn't make sense here. We're sourcing
-				// data from a directory, not a file. This string is used to tell
-				// the user in the UI what this they're importing in this import
+				// @TODO: the phrase "file_name" doesn't make sense here. We're sourcing.
+				// data from a directory, not a file. This string is used to tell.
+				// the user in the UI what this they're importing in this import.
 				// session. Let's rename it to something more descriptive.
 				'file_name' => $options['source'],
 			)
@@ -595,19 +618,19 @@ function run_content_import( $options ) {
 		$retries_iterator = new RetryFrontloadingIterator( $import_session->get_id() );
 		$importer->set_frontloading_retries_iterator( $retries_iterator );
 
-		// Run the import with progress tracking
+		// Run the import with progress tracking.
 		$ignored_message_printed = false;
 		do {
-			$result = data_liberation_import_step_customized( 
-				$import_session, 
-				$importer, 
+			$result = data_liberation_import_step_customized(
+				$import_session,
+				$importer,
 				$main_tracker,
 				$reporter
 			);
-			
-			if ( $importer->get_stage() === StreamImporter::STAGE_FINISHED ) {
-				$reporter->reportProgress(100, 'Import completed successfully');
-				
+
+			if ( StreamImporter::STAGE_FINISHED === $importer->get_stage() ) {
+				$reporter->reportProgress( 100, 'Import completed successfully' );
+
 				// Get the first page with non-empty content.
 				$posts = get_posts(
 					array(
@@ -626,25 +649,25 @@ function run_content_import( $options ) {
 						break;
 					}
 				}
-				
-				$reporter->reportCompletion("Import finished! See your imported content at: " . $url);
+
+				$reporter->reportCompletion( 'Import finished! See your imported content at: ' . $url );
 				break;
 			} elseif ( false === $result ) {
-				if ( $importer->get_stage() === StreamImporter::STAGE_FRONTLOAD_ASSETS ) {
+				if ( StreamImporter::STAGE_FRONTLOAD_ASSETS === $importer->get_stage() ) {
 					if ( ! $ignored_message_printed ) {
-						$reporter->reportProgress($main_tracker->getProgress(), "Some assets could not be downloaded – they will be ignored so we can continue with the import.");
+						$reporter->reportProgress( $main_tracker->getProgress(), 'Some assets could not be downloaded – they will be ignored so we can continue with the import.' );
 						$ignored_message_printed = true;
 					}
-					// $import_session->mark_frontloading_errors_as_ignored();
+					// $import_session->mark_frontloading_errors_as_ignored();.
 				} else {
-					$reporter->reportError("Import failed, aborting");
+					$reporter->reportError( 'Import failed, aborting' );
 					break;
 				}
 			}
 		} while ( true );
 
 	} catch ( \Throwable $e ) {
-		$reporter->reportError("Import failed: " . $e->getMessage(), $e);
+		$reporter->reportError( 'Import failed: ' . $e->getMessage(), $e );
 		throw $e;
 	} finally {
 		$reporter->close();
@@ -673,7 +696,7 @@ function data_liberation_import_step_customized( ImportSession $session, StreamI
 	while ( true ) {
 		$time_taken = microtime( true ) - $start_time;
 		if ( $time_taken >= $soft_time_limit_seconds ) {
-			if ( $importer->get_stage() === StreamImporter::STAGE_FRONTLOAD_ASSETS ) {
+			if ( StreamImporter::STAGE_FRONTLOAD_ASSETS === $importer->get_stage() ) {
 				if ( $fetched_files > 0 ) {
 					return true;
 				}
@@ -691,15 +714,15 @@ function data_liberation_import_step_customized( ImportSession $session, StreamI
 			$should_advance_to_next_stage = null !== $importer->get_next_stage();
 			if ( ! $should_advance_to_next_stage ) {
 				// @TODO: Report error?
-				append_output('Step failed in the middle of a stage: ' . $session->get_stage() . "\n");
+				append_output( 'Step failed in the middle of a stage: ' . $session->get_stage() . "\n" );
 				continue;
-				// throw new \Exception('Step failed in the middle of a stage: ' . $session->get_stage());
+				// throw new \Exception('Step failed in the middle of a stage: ' . $session->get_stage());.
 			}
 
 			if ( StreamImporter::STAGE_FRONTLOAD_ASSETS === $importer->get_stage() ) {
-				$resolved_all_failures = $session->count_unfinished_frontloading_stubs() === 0;
+				$resolved_all_failures = 0 === $session->count_unfinished_frontloading_stubs();
 				if ( ! $resolved_all_failures ) {
-					// return false;
+					// return false;.
 				}
 			}
 
@@ -708,7 +731,7 @@ function data_liberation_import_step_customized( ImportSession $session, StreamI
 			}
 			$session->set_stage( $importer->get_stage() );
 			$session->set_reentrancy_cursor( $importer->get_reentrancy_cursor() );
-			if ( $session->get_stage() === StreamImporter::STAGE_FINISHED ) {
+			if ( StreamImporter::STAGE_FINISHED === $session->get_stage() ) {
 				return true;
 			}
 
@@ -720,10 +743,10 @@ function data_liberation_import_step_customized( ImportSession $session, StreamI
 				$entities_counts = $importer->get_indexed_entities_counts();
 				$session->create_frontloading_stubs( $importer->get_indexed_assets_urls() );
 				$session->bump_total_number_of_entities( $entities_counts );
-				
+
 				$total_entities = array_sum( $session->get_total_number_of_entities() );
 				$main_tracker['indexing']->set(
-					min(100, ($total_entities / 100) * 100), // Rough progress calculation
+					min( 100, ( $total_entities / 100 ) * 100 ), // Rough progress calculation.
 					'Indexing entities (' . $total_entities . ' found)'
 				);
 				break;
@@ -737,7 +760,7 @@ function data_liberation_import_step_customized( ImportSession $session, StreamI
 
 				$remaining = $session->count_unfinished_frontloading_stubs();
 				$main_tracker['assets']->set(
-					max(0, 100 - ($remaining / max(1, $remaining + ($progress['downloaded'] ?? 0)) * 100)),
+					max( 0, 100 - ( $remaining / max( 1, $remaining + ( $progress['downloaded'] ?? 0 ) ) * 100 ) ),
 					'Fetching media files (' . $remaining . ' remaining)'
 				);
 				break;
@@ -747,9 +770,9 @@ function data_liberation_import_step_customized( ImportSession $session, StreamI
 				$session->bump_imported_entities_counts( $imported_counts );
 
 				$imported = $session->count_all_imported_entities();
-				$total = $session->count_remaining_entities() + $imported;
-				$progress = $total > 0 ? ($imported / $total) * 100 : 0;
-				
+				$total    = $session->count_remaining_entities() + $imported;
+				$progress = $total > 0 ? ( $imported / $total ) * 100 : 0;
+
 				$main_tracker['importing']->set(
 					$progress,
 					'Importing entities (' . $imported . '/' . $total . ')'
@@ -770,5 +793,3 @@ function data_liberation_import_step_customized( ImportSession $session, StreamI
 function wp_import_slugify( $title ) {
 	return preg_replace( '/[^a-z0-9]+/i', '-', trim( strtolower( $title ) ) );
 }
-
-?>

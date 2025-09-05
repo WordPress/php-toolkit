@@ -59,7 +59,7 @@ class DeflateReadStream extends BaseByteReadStream {
 	}
 
 	protected function internal_reached_end_of_data(): bool {
-		return $this->deflate_context === null && $this->upstream->reached_end_of_data();
+		return null === $this->deflate_context && $this->upstream->reached_end_of_data();
 	}
 
 	protected function seek_outside_of_buffer( $target_offset ): void {
@@ -76,7 +76,7 @@ class DeflateReadStream extends BaseByteReadStream {
 			$remaining_bytes = $target_offset - $this->tell();
 			$next_chunk_size = min( 50 * 1024, $remaining_bytes );
 			$pulled          = $this->pull( $next_chunk_size );
-			// Keep skipping bytes until we've consumed enough
+			// Keep skipping bytes until we've consumed enough.
 			$this->consume( min( $remaining_bytes, $pulled ) );
 		}
 	}

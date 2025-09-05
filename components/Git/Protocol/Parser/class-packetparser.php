@@ -8,19 +8,19 @@ use WordPress\Git\GitException;
 class PacketParser {
 
 	const STATE_SCAN_FOR_EXPECTED_LENGTH = 'scan_for_expected_length';
-	const STATE_READ_PACKET_BODY = 'read_packet_body';
-	const STATE_PACKET_FOOTER = 'packet_footer';
+	const STATE_READ_PACKET_BODY         = 'read_packet_body';
+	const STATE_PACKET_FOOTER            = 'packet_footer';
 
-	protected $bytes = '';
-	protected $bytes_read_so_far = 0;
-	protected $bytes_already_forgotten = 0;
-	protected $is_finished = false;
+	protected $bytes                         = '';
+	protected $bytes_read_so_far             = 0;
+	protected $bytes_already_forgotten       = 0;
+	protected $is_finished                   = false;
 	protected $is_paused_at_incomplete_input = false;
-	protected $packet_type = null;
-	protected $expected_length = 0;
-	protected $packet_bytes_read = 0;
-	protected $body_chunk = '';
-	protected $state = self::STATE_SCAN_FOR_EXPECTED_LENGTH;
+	protected $packet_type                   = null;
+	protected $expected_length               = 0;
+	protected $packet_bytes_read             = 0;
+	protected $body_chunk                    = '';
+	protected $state                         = self::STATE_SCAN_FOR_EXPECTED_LENGTH;
 
 	public function next_token() {
 		if ( $this->is_paused_at_incomplete_input ) {
@@ -42,7 +42,7 @@ class PacketParser {
 					case self::STATE_READ_PACKET_BODY:
 						if (
 							$this->packet_type &&
-							$this->packet_type !== '#pack' &&
+							'#pack' !== $this->packet_type &&
 							$this->packet_bytes_read >= $this->expected_length
 						) {
 							// We've read the entire packet body.
@@ -64,7 +64,7 @@ class PacketParser {
 	}
 
 	public function get_token_type() {
-		if ( $this->state === self::STATE_PACKET_FOOTER ) {
+		if ( self::STATE_PACKET_FOOTER === $this->state ) {
 			return '#packet-footer';
 		} elseif ( $this->packet_type && ! $this->packet_bytes_read ) {
 			return '#packet-header';
@@ -79,13 +79,13 @@ class PacketParser {
 		$this->reset_after_packet();
 		$at = $this->bytes_read_so_far;
 
-		// Need at least 4 bytes for the length hex
+		// Need at least 4 bytes for the length hex.
 		if ( $at + 4 > strlen( $this->bytes ) ) {
 			throw new NotEnoughDataException();
 		}
 
 		$length_hex = substr( $this->bytes, $at, 4 );
-		if ( $length_hex === 'PACK' ) {
+		if ( 'PACK' === $length_hex ) {
 			$this->packet_type       = '#pack';
 			$this->body_chunk        = '';
 			$this->expected_length   = 0;
@@ -139,9 +139,9 @@ class PacketParser {
 
 	public function is_command() {
 		return (
-			$this->packet_type === '#flush' ||
-			$this->packet_type === '#delimiter' ||
-			$this->packet_type === '#response-end'
+			'#flush' === $this->packet_type ||
+			'#delimiter' === $this->packet_type ||
+			'#response-end' === $this->packet_type
 		);
 	}
 
@@ -163,7 +163,7 @@ class PacketParser {
 			if ( ! $next_chunk ) {
 				throw new NotEnoughDataException();
 			}
-			$this->body_chunk        = $next_chunk;
+			$this->body_chunk         = $next_chunk;
 			$this->bytes_read_so_far += strlen( $next_chunk );
 			$this->packet_bytes_read += strlen( $next_chunk );
 
@@ -176,23 +176,23 @@ class PacketParser {
 			throw new NotEnoughDataException();
 		}
 
-		$chunk                   = substr( $this->bytes, $this->bytes_read_so_far, $chunk_size );
+		$chunk                    = substr( $this->bytes, $this->bytes_read_so_far, $chunk_size );
 		$this->bytes_read_so_far += $chunk_size;
 		$this->packet_bytes_read += $chunk_size;
-		$this->body_chunk        = $chunk;
+		$this->body_chunk         = $chunk;
 
 		if ( $this->packet_bytes_read === $this->expected_length ) {
-			if ( substr_compare( $this->body_chunk, "\n", - strlen( "\n" ) ) === 0 ) {
+			if ( 0 === substr_compare( $this->body_chunk, "\n", - strlen( "\n" ) ) ) {
 				$this->body_chunk = substr( $this->body_chunk, 0, - 1 );
 			}
 		}
 	}
 
 	public function append_bytes( $bytes ) {
-		$this->bytes_already_forgotten       += $this->bytes_read_so_far;
+		$this->bytes_already_forgotten      += $this->bytes_read_so_far;
 		$this->bytes                         = substr( $this->bytes, $this->bytes_read_so_far );
 		$this->bytes_read_so_far             = 0;
-		$this->bytes                         .= $bytes;
+		$this->bytes                        .= $bytes;
 		$this->is_paused_at_incomplete_input = false;
 	}
 

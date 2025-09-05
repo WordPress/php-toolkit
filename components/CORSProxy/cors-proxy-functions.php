@@ -5,12 +5,12 @@ class CorsProxyException extends Exception {
 }
 
 function get_target_url( $server_data = null ) {
-	if ( $server_data === null ) {
+	if ( null === $server_data ) {
 		$server_data = $_SERVER;
 	}
 
 	$path_info = $server_data['PATH_INFO'] ?? '';
-	if ( strncmp( $path_info, '/', strlen( '/' ) ) === 0 && strlen( $path_info ) > 1 ) {
+	if ( 0 === strncmp( $path_info, '/', strlen( '/' ) ) && strlen( $path_info ) > 1 ) {
 		return substr( $path_info, 1 );
 	}
 
@@ -31,15 +31,15 @@ function url_validate_and_resolve( $url, $resolve_function = 'gethostbynamel' ) 
 		throw new CorsProxyException( 'Invalid URL: ' . $url );
 	}
 
-	// Parse the URL to get its components
+	// Parse the URL to get its components.
 	$parsed_url = parse_url( $url );
 
-	// Allow only http and https protocols
+	// Allow only http and https protocols.
 	if ( ! in_array( $parsed_url['scheme'], array( 'http', 'https' ) ) ) {
 		throw new CorsProxyException( 'Invalid protocol: ' . $parsed_url['scheme'] );
 	}
 
-	// Reject URLs containing username or password before the hostname
+	// Reject URLs containing username or password before the hostname.
 	if ( isset( $parsed_url['user'] ) || isset( $parsed_url['pass'] ) ) {
 		throw new CorsProxyException( 'URL containing forbidden user or password information' );
 	}
@@ -48,16 +48,16 @@ function url_validate_and_resolve( $url, $resolve_function = 'gethostbynamel' ) 
 
 	if (
 		( isset( $_SERVER['HTTP_HOST'] ) &&
-		  strcasecmp( $_SERVER['HTTP_HOST'], $host ) === 0 ) ||
+			0 === strcasecmp( $_SERVER['HTTP_HOST'], $host ) ) ||
 		( isset( $_SERVER['SERVER_ADDR'] ) &&
-		  strcasecmp( $_SERVER['SERVER_ADDR'], $host ) === 0 )
+			0 === strcasecmp( $_SERVER['SERVER_ADDR'], $host ) )
 	) {
 		throw new CorsProxyException( 'URL cannot target the CORS proxy host.' );
 	}
 
-	// Ensure the hostname does not resolve to a private IP
+	// Ensure the hostname does not resolve to a private IP.
 	$resolved_ips = $resolve_function( $host );
-	if ( $resolved_ips === false ) {
+	if ( false === $resolved_ips ) {
 		throw new CorsProxyException( 'Hostname could not be resolved' );
 	}
 
@@ -82,7 +82,7 @@ class IpUtils {
 	/**
 	 * Checks if the given IP address is a private IP address.
 	 *
-	 * @param  string  $ip
+	 * @param  string $ip
 	 *
 	 * @return bool
 	 */
@@ -99,7 +99,7 @@ class IpUtils {
 	/**
 	 * Checks if the given IPv4 address is private.
 	 *
-	 * @param  string  $ip
+	 * @param  string $ip
 	 *
 	 * @return bool
 	 */
@@ -168,7 +168,7 @@ class IpUtils {
 	/**
 	 * Checks if the given IPv6 address is private.
 	 *
-	 * @param  string  $ip
+	 * @param  string $ip
 	 *
 	 * @return bool
 	 */
@@ -258,9 +258,9 @@ class IpUtils {
 	/**
 	 * Checks if the given IPv4 address is within the specified range.
 	 *
-	 * @param  string  $ip
-	 * @param  string  $start
-	 * @param  string  $end
+	 * @param  string $ip
+	 * @param  string $start
+	 * @param  string $end
 	 *
 	 * @return bool
 	 */
@@ -269,30 +269,30 @@ class IpUtils {
 		$start = ip2long( $start );
 		$end   = ip2long( $end );
 
-		return $ip !== false && $start !== false && $end !== false && $ip >= $start && $ip <= $end;
+		return false !== $ip && false !== $start && false !== $end && $ip >= $start && $ip <= $end;
 	}
 
 	/**
 	 * Checks if the given IPv6 address is within the specified range.
 	 *
-	 * @param  string  $ip
-	 * @param  string  $start
-	 * @param  string  $end
+	 * @param  string $ip
+	 * @param  string $start
+	 * @param  string $end
 	 *
 	 * @return bool
 	 */
 	private static function ipv6InRange( $ip, $start, $end ) {
-		// Convert IP addresses to binary format
+		// Convert IP addresses to binary format.
 		$ip   = inet_pton( $ip );
 		$from = inet_pton( $start );
 		$to   = inet_pton( $end );
 
-		// Check if the IP is valid and within the range
-		if ( $ip === false || $from === false || $to === false ) {
-			return false; // Invalid IP format
+		// Check if the IP is valid and within the range.
+		if ( false === $ip || false === $from || false === $to ) {
+			return false; // Invalid IP format.
 		}
 
-		// Compare the binary representations
+		// Compare the binary representations.
 		return ( $ip >= $from && $ip <= $to );
 	}
 }
@@ -300,15 +300,15 @@ class IpUtils {
 /**
  * Filters headers by name, removing disallowed headers and enforcing opt-in requirements.
  *
- * @param  array  $php_headers  {
- *  An associative array of headers.
+ * @param  array $php_headers  {
+ * An associative array of headers.
  *
  * @type string $key Header name.
  * }
  *
- * @param  array  $disallowed_headers  List of header names that are disallowed.
- * @param  array  $headers_requiring_opt_in  List of header names that require opt-in
- *                                        via the X-Cors-Proxy-Allowed-Request-Headers header.
+ * @param  array $disallowed_headers  List of header names that are disallowed.
+ * @param  array $headers_requiring_opt_in  List of header names that require opt-in
+ *                                       via the X-Cors-Proxy-Allowed-Request-Headers header.
  *
  * @return array {
  *  Filtered headers.
@@ -323,7 +323,7 @@ function filter_headers_by_name(
 	$disallowed_headers       = array_map( 'strtolower', $disallowed_headers );
 	$headers_requiring_opt_in = array_map( 'strtolower', $headers_requiring_opt_in );
 
-	// Get explicitly allowed headers from X-Cors-Proxy-Allowed-Request-Headers
+	// Get explicitly allowed headers from X-Cors-Proxy-Allowed-Request-Headers.
 	$headers_opt_in_str  =
 		$lowercased_php_headers['x-cors-proxy-allowed-request-headers'] ?? '';
 	$headers_with_opt_in = $headers_opt_in_str
@@ -331,7 +331,7 @@ function filter_headers_by_name(
 		: array();
 	$headers_with_opt_in = array_map( 'strtolower', $headers_with_opt_in );
 
-	// Filter headers
+	// Filter headers.
 	return array_filter(
 		$php_headers,
 		function (
@@ -343,12 +343,12 @@ function filter_headers_by_name(
 		) {
 			$lower_key = strtolower( $key );
 
-			// Skip if disallowed
+			// Skip if disallowed.
 			if ( in_array( $lower_key, $disallowed_headers ) ) {
 				return false;
 			}
 
-			// Skip if opt-in is required but not provided
+			// Skip if opt-in is required but not provided.
 			if (
 				in_array( $lower_key, $headers_requiring_opt_in ) &&
 				! in_array( $lower_key, $headers_with_opt_in )
@@ -379,7 +379,7 @@ function rewrite_relative_redirect(
 	$target_hostname = parse_url( $request_url, PHP_URL_HOST );
 	if ( ! parse_url( $redirect_location, PHP_URL_HOST ) ) {
 		$redirect_path = parse_url( $redirect_location, PHP_URL_PATH );
-		if ( $redirect_path && $redirect_path[0] !== '/' ) {
+		if ( $redirect_path && '/' !== $redirect_path[0] ) {
 			$request_path        = parse_url( $request_url, PHP_URL_PATH );
 			$request_path_parent = dirname( $request_path );
 			$redirect_location   = $request_path_parent . '/' . $redirect_path;
@@ -389,12 +389,12 @@ function rewrite_relative_redirect(
 	}
 
 	if ( ! parse_url( $redirect_location, PHP_URL_SCHEME ) ) {
-		$target_scheme     = parse_url( $request_url, PHP_URL_SCHEME ) ?: 'https';
+		$target_scheme     = parse_url( $request_url, PHP_URL_SCHEME ) ? PHP_URL_SCHEME ) : 'https';
 		$redirect_location = "$target_scheme://$redirect_location";
 	}
 
 	$last_char = $proxy_absolute_url[ strlen( $proxy_absolute_url ) - 1 ];
-	if ( $last_char !== '/' && $last_char !== '?' ) {
+	if ( '/' !== $last_char && '?' !== $last_char ) {
 		$proxy_absolute_url .= '?';
 	}
 
@@ -409,8 +409,8 @@ function should_respond_with_cors_headers( $host, $origin ) {
 		return false;
 	}
 
-	$is_request_from_playground_web_app = $origin === 'https://playground.wordpress.net';
-	$not_hosted_with_playground_web_app = $host !== 'playground.wordpress.net';
+	$is_request_from_playground_web_app = 'https://playground.wordpress.net' === $origin;
+	$not_hosted_with_playground_web_app = 'playground.wordpress.net' !== $host;
 	if (
 		$is_request_from_playground_web_app &&
 		$not_hosted_with_playground_web_app

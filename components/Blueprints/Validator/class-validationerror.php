@@ -21,20 +21,20 @@ class ValidationError {
 	/**
 	 * @var array
 	 */
-	public $context = [];
+	public $context = array();
 	/**
 	 * @var ValidationError[]
 	 */
-	public $children = [];
+	public $children = array();
 
 	/**
-	 * @param  string  $pointer  JSON Pointer like /steps/0/data/url
-	 * @param  string  $code  short, stable key: required, type-mismatch …
-	 * @param  string  $message  human sentence
-	 * @param  array  $context  expected/actual/allowed, always associative
-	 * @param  ValidationError[]  $children  nested causes
+	 * @param  string            $pointer  JSON Pointer like /steps/0/data/url
+	 * @param  string            $code  short, stable key: required, type-mismatch …
+	 * @param  string            $message  human sentence
+	 * @param  array             $context  expected/actual/allowed, always associative
+	 * @param  ValidationError[] $children  nested causes
 	 */
-	public function __construct( string $pointer, string $code, string $message, array $context = [], array $children = [] ) {
+	public function __construct( string $pointer, string $code, string $message, array $context = array(), array $children = array() ) {
 		$this->pointer  = $pointer;
 		$this->code     = $code;
 		$this->message  = $message;
@@ -45,14 +45,14 @@ class ValidationError {
 	public function getPath(): array {
 		$path_string = substr( $this->pointer, 2 );
 		if ( ! $path_string ) {
-			return [];
+			return array();
 		}
 
 		return explode( '/', $path_string );
 	}
 
 	public function getPrettyPath(): string {
-		$segments = [ 'Blueprint root' ];
+		$segments = array( 'Blueprint root' );
 		foreach ( $this->getPath() as $segment ) {
 			if ( ctype_digit( $segment ) ) {
 				$segment = (int) $segment;
@@ -74,7 +74,7 @@ class ValidationError {
 			return null;
 		}
 
-		$min_child            = null;
+		$min_child             = null;
 		$min_descendants_count = PHP_INT_MAX;
 
 		/**
@@ -86,15 +86,15 @@ class ValidationError {
 			$current_child_descendants_count = count( $child->children );
 			if ( $current_child_descendants_count < $min_descendants_count ) {
 				$min_descendants_count = $current_child_descendants_count;
-				$min_child            = $child;
+				$min_child             = $child;
 			}
 		}
 
-		// Collapse all required-field-missing errors into a single error
-		if ( $min_child->code === 'required-field-missing' ) {
-			$missing_fields = [];
+		// Collapse all required-field-missing errors into a single error.
+		if ( 'required-field-missing' === $min_child->code ) {
+			$missing_fields = array();
 			foreach ( $this->children as $child ) {
-				if ( $child->code === 'required-field-missing' ) {
+				if ( 'required-field-missing' === $child->code ) {
 					$missing_fields[] = $child->context['missingField'];
 				}
 			}

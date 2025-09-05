@@ -43,16 +43,16 @@ class CentralDirectoryEntry {
 	const HEADER_SIZE = 42;
 
 	public $first_byte_at;
-	public $version_created = 2;
-	public $version_needed = 2;
-	public $general_purpose = 0;
+	public $version_created    = 2;
+	public $version_needed     = 2;
+	public $general_purpose    = 0;
 	public $compression_method = 0;
 	public $last_modified_time = 0;
 	public $last_modified_date = 0;
 	public $crc;
 	public $compressed_size;
 	public $uncompressed_size;
-	public $disk_number = 0;
+	public $disk_number         = 0;
 	public $internal_attributes = 0;
 	public $external_attributes = 0;
 	public $path_length;
@@ -85,6 +85,6 @@ class CentralDirectoryEntry {
 	}
 
 	public function is_directory() {
-		return substr_compare( $this->path, '/', - strlen( '/' ) ) === 0;
+		return 0 === substr_compare( $this->path, '/', - strlen( '/' ) );
 	}
 }

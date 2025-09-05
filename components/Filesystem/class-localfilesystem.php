@@ -25,21 +25,19 @@ class LocalFilesystem implements Filesystem {
 		// Make sure the root path uses forward slashes on Windows.
 		// This allows us to use all wp_unix_* functions across the board.
 		if ( null === $root ) {
-			if ( strtoupper( substr( PHP_OS, 0, 3 ) ) === 'WIN' ) {
+			if ( 'WIN' === strtoupper( substr( PHP_OS, 0, 3 ) ) ) {
 				$system_drive = getenv( 'SystemDrive' );
-				$root = $system_drive ? $system_drive . '\\' : 'C:\\';
+				$root         = $system_drive ? $system_drive . '\\' : 'C:\\';
 			} else {
 				$root = '/';
 			}
-		} else {
-			if ( strtoupper( substr( PHP_OS, 0, 3 ) ) === 'WIN' ) {
+		} elseif ( 'WIN' === strtoupper( substr( PHP_OS, 0, 3 ) ) ) {
 				$root = self::normalize_path( $root );
-			}
 		}
 
 		if ( ! is_dir( $root ) ) {
 			if ( false === mkdir( $root, 0755, true ) ) {
-				throw new FilesystemException( sprintf( 'Root directory did not exist and could not be created: %s', var_export($root, true) ) );
+				throw new FilesystemException( sprintf( 'Root directory did not exist and could not be created: %s', var_export( $root, true ) ) );
 			}
 		}
 
@@ -64,9 +62,9 @@ class LocalFilesystem implements Filesystem {
 	}
 
 	public function get_meta(): array {
-		return [
+		return array(
 			'root' => $this->root,
-		];
+		);
 	}
 
 	public function ls( $path = '/' ) {
@@ -80,7 +78,7 @@ class LocalFilesystem implements Filesystem {
 		$children = array();
 		while ( true ) {
 			$filename = readdir( $dh );
-			if ( $filename === false ) {
+			if ( false === $filename ) {
 				break;
 			}
 			if ( '.' === $filename || '..' === $filename ) {
@@ -162,9 +160,9 @@ class LocalFilesystem implements Filesystem {
 
 	public function put_contents( $path, $data, $options = array() ) {
 		if ( false === @file_put_contents(
-				$path,
-				$data
-			) ) {
+			$path,
+			$data
+		) ) {
 			throw new FilesystemException(
 				sprintf( 'Failed to write to file: %s', $path )
 			);
@@ -190,7 +188,7 @@ class LocalFilesystem implements Filesystem {
 	 * OS-specific path separators is specific to the LocalFilesystem
 	 * class
 	 */
-	static private function normalize_path( $path ) {
+	private static function normalize_path( $path ) {
 		return str_replace( DIRECTORY_SEPARATOR, '/', $path );
 	}
 }

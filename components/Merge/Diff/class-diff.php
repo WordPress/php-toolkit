@@ -5,7 +5,7 @@ namespace WordPress\Merge\Diff;
 class Diff {
 	const DIFF_DELETE = - 1;
 	const DIFF_INSERT = 1;
-	const DIFF_EQUAL = 0;
+	const DIFF_EQUAL  = 0;
 
 	private $changes;
 
@@ -20,9 +20,9 @@ class Diff {
 	public function get_old_document(): string {
 		$merged = array();
 		foreach ( $this->changes as $change ) {
-			if ( $change[0] === self::DIFF_EQUAL ) {
+			if ( self::DIFF_EQUAL === $change[0] ) {
 				$merged[] = $change[1];
-			} elseif ( $change[0] === self::DIFF_DELETE ) {
+			} elseif ( self::DIFF_DELETE === $change[0] ) {
 				$merged[] = $change[1];
 			}
 		}
@@ -33,9 +33,9 @@ class Diff {
 	public function get_new_document(): string {
 		$merged = array();
 		foreach ( $this->changes as $change ) {
-			if ( $change[0] === self::DIFF_EQUAL ) {
+			if ( self::DIFF_EQUAL === $change[0] ) {
 				$merged[] = $change[1];
-			} elseif ( $change[0] === self::DIFF_INSERT ) {
+			} elseif ( self::DIFF_INSERT === $change[0] ) {
 				$merged[] = $change[1];
 			}
 		}
@@ -67,7 +67,7 @@ class Diff {
 		$options['b_source']     = $options['b_source'] ?? 'b/string';
 
 		// Format the diff to Git-style with context.
-		$formatted_diff = 'diff --git ' . $options['a_source'] . ' ' . $options['b_source'] . "\n";
+		$formatted_diff  = 'diff --git ' . $options['a_source'] . ' ' . $options['b_source'] . "\n";
 		$formatted_diff .= '--- ' . $options['a_source'] . "\n";
 		$formatted_diff .= '+++ ' . $options['b_source'] . "\n";
 
@@ -77,7 +77,7 @@ class Diff {
 		$last_changed_lineno = null;
 		foreach ( $this->changes as $lineno => $change ) {
 			$type = $change[0];
-			if ( $type === self::DIFF_EQUAL ) {
+			if ( self::DIFF_EQUAL === $type ) {
 				if ( empty( $current_block ) ) {
 					continue;
 				}
@@ -94,7 +94,7 @@ class Diff {
 
 			$current_block[] = $change;
 
-			if ( $type !== self::DIFF_EQUAL ) {
+			if ( self::DIFF_EQUAL !== $type ) {
 				$last_changed_lineno = $lineno;
 			}
 		}
@@ -111,13 +111,13 @@ class Diff {
 			$new_start_line = null;
 
 			foreach ( $changes as $change ) {
-				if ( $change[0] !== self::DIFF_INSERT ) {
-					if ( $old_start_line === null ) {
+				if ( self::DIFF_INSERT !== $change[0] ) {
+					if ( null === $old_start_line ) {
 						$old_start_line = $old_line_cursor;
 					}
 				}
-				if ( $change[0] !== self::DIFF_DELETE ) {
-					if ( $new_start_line === null ) {
+				if ( self::DIFF_DELETE !== $change[0] ) {
+					if ( null === $new_start_line ) {
 						$new_start_line = $new_line_cursor;
 					}
 				}

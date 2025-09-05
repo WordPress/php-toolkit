@@ -10,7 +10,7 @@ use function WordPress\Filesystem\wp_join_unix_paths;
 class FilesystemVisitor {
 	private $filesystem;
 	private $directories = array();
-	private $files = array();
+	private $files       = array();
 	private $current_event;
 	private $iterator_stack = array();
 	private $current_iterator;
@@ -37,17 +37,17 @@ class FilesystemVisitor {
 			$this->current_iterator->next();
 
 			if ( ! ( $current instanceof FileVisitorEvent ) ) {
-				// It's a directory path, push a new iterator onto the stack
+				// It's a directory path, push a new iterator onto the stack.
 				$this->iterator_stack[] = $this->create_iterator( $current );
 				continue;
 			}
 
 			if ( $current->is_entering() ) {
-				++ $this->depth;
+				++$this->depth;
 			}
 			$this->current_event = $current;
 			if ( $current->is_exiting() ) {
-				-- $this->depth;
+				--$this->depth;
 			}
 
 			return true;
@@ -66,7 +66,7 @@ class FilesystemVisitor {
 
 		$filesystem = $this->filesystem;
 		$children   = $filesystem->ls( $dir );
-		if ( $children === false ) {
+		if ( false === $children ) {
 			return new ArrayIterator( array() );
 		}
 
@@ -80,9 +80,9 @@ class FilesystemVisitor {
 
 		$events   = array();
 		$events[] = new FileVisitorEvent( FileVisitorEvent::EVENT_ENTER, $dir, $this->files );
-		$prefix   = $dir === '/' ? '' : $dir;
+		$prefix   = '/' === $dir ? '' : $dir;
 		foreach ( $this->directories as $directory ) {
-			$events[] = $prefix . '/' . $directory; // Placeholder for recursion
+			$events[] = $prefix . '/' . $directory; // Placeholder for recursion.
 		}
 		$events[] = new FileVisitorEvent( FileVisitorEvent::EVENT_EXIT, $dir );
 

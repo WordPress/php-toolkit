@@ -166,8 +166,8 @@ class FilesystemEntityReader implements EntityReader {
 	/**
 	 * Initializes the reader with filesystem and options.
 	 *
-	 * @param  Filesystem  $filesystem  The filesystem to traverse.
-	 * @param  array  $options  Configuration options.
+	 * @param  Filesystem $filesystem  The filesystem to traverse.
+	 * @param  array      $options  Configuration options.
 	 */
 	public function __construct(
 		Filesystem $filesystem,
@@ -208,7 +208,7 @@ class FilesystemEntityReader implements EntityReader {
 		}
 		$this->base_url = $options['base_url'];
 		if ( isset( $options['root_parent_id'] ) ) {
-			$this->parent_ids[ - 1 ] = $options['root_parent_id'];
+			$this->parent_ids[- 1] = $options['root_parent_id'];
 		}
 	}
 
@@ -264,7 +264,7 @@ class FilesystemEntityReader implements EntityReader {
 				'local_file_path' => $post_tree_node['local_file_path'],
 				'link'            => WPURL::append_path( $this->base_url, $post_tree_node['local_file_path'] ),
 			);
-			if ( $post_tree_node['type'] === 'file' ) {
+			if ( 'file' === $post_tree_node['type'] ) {
 				$extension = pathinfo( $post_tree_node['local_file_path'], PATHINFO_EXTENSION );
 				$content   = $this->fs->get_contents( $post_tree_node['local_file_path'] );
 				switch ( $extension ) {
@@ -291,13 +291,13 @@ class FilesystemEntityReader implements EntityReader {
 						$metadata['post_mime_type'] = $filetype;
 						$metadata['post_status']    = 'inherit';
 						$metadata['post_title']     = ImportUtils::slug_to_title( basename( $post_tree_node['local_file_path'] ) );
-						// The importer will use the same Filesystem instance to
+						// The importer will use the same Filesystem instance to.
 						// source the attachment.
 						$metadata['attachment_url'] = 'file://' . $post_tree_node['local_file_path'];
 						$result                     = new BlocksWithMetadata( '', array() );
 						break;
 				}
-			} elseif ( $post_tree_node['type'] === 'index_file_placeholder' ) {
+			} elseif ( 'index_file_placeholder' === $post_tree_node['type'] ) {
 				$result                 = new BlocksWithMetadata( '', array() );
 				$metadata['post_title'] = ImportUtils::slug_to_title( basename( $post_tree_node['local_file_path'] ) );
 			} else {
@@ -312,7 +312,7 @@ class FilesystemEntityReader implements EntityReader {
 			while ( $reader->next_entity() ) {
 				$entity = $reader->get_entity();
 				$data   = $entity->get_data();
-				if ( $entity->get_type() === 'post' ) {
+				if ( 'post' === $entity->get_type() ) {
 					$data = array_merge( $metadata, $data );
 					if ( ! $data['post_title'] ) {
 						$data['post_title'] = ImportUtils::slug_to_title( basename( $metadata['local_file_path'] ) );
@@ -322,7 +322,7 @@ class FilesystemEntityReader implements EntityReader {
 				$this->entities[] = $entity;
 			}
 
-			// Also emit:
+			// Also emit:.
 			$additional_meta = array(
 				'local_file_path' => $metadata['local_file_path'],
 			);
@@ -362,26 +362,26 @@ class FilesystemEntityReader implements EntityReader {
 				$parent_id = $this->parent_ids[ $depth - 1 ] ?? null;
 				if ( null === $parent_id && $depth > 1 ) {
 					// There's no parent ID even though we're a few levels deep.
-					// This is a scenario where `next_file()` skipped a few levels
-					// of directories with no relevant content in them:
+					// This is a scenario where `next_file()` skipped a few levels.
+					// of directories with no relevant content in them:.
 					//
-					// - /docs/
-					// - /foo/
-					// - /bar/
-					// - /baz.md
+					// - /docs/.
+					// - /foo/.
+					// - /bar/.
+					// - /baz.md.
 					//
-					// In this case, we need to backtrack and create the missing
+					// In this case, we need to backtrack and create the missing.
 					// parent pages for /bar/ and /foo/.
 
-					// Find the topmost missing parent ID
+					// Find the topmost missing parent ID.
 					$missing_parent_id_depth = 1;
 					while ( isset( $this->parent_ids[ $missing_parent_id_depth ] ) ) {
-						++ $missing_parent_id_depth;
+						++$missing_parent_id_depth;
 					}
 
-					// Move up to the corresponding directory
+					// Move up to the corresponding directory.
 					$missing_parent_path = $dir;
-					for ( $i = $missing_parent_id_depth; $i < $depth; $i ++ ) {
+					for ( $i = $missing_parent_id_depth; $i < $depth; $i++ ) {
 						$missing_parent_path = dirname( $missing_parent_path );
 					}
 
@@ -394,10 +394,10 @@ class FilesystemEntityReader implements EntityReader {
 					);
 				} elseif ( false === $this->pending_directory_index ) {
 					// No directory index candidate found in the current directory.
-					if ( $depth === 0 && isset( $this->parent_ids[ - 1 ] ) && $parent_id === $this->parent_ids[ - 1 ] ) {
-						// We're at the root directory and we have a root parent ID. Let's
+					if ( 0 === $depth && isset( $this->parent_ids[- 1] ) && $parent_id === $this->parent_ids[- 1] ) {
+						// We're at the root directory and we have a root parent ID. Let's.
 						// reuse that as the top-level parent.
-						$this->parent_ids[ $depth ] = $this->parent_ids[ - 1 ];
+						$this->parent_ids[ $depth ] = $this->parent_ids[- 1];
 						// We're no longer looking for a directory index.
 						$this->pending_directory_index = null;
 						continue;
@@ -463,7 +463,7 @@ class FilesystemEntityReader implements EntityReader {
 			$event = $this->file_visitor->get_event();
 
 			if ( $event->is_exiting() ) {
-				// Clean up stale IDs to save some memory when processing
+				// Clean up stale IDs to save some memory when processing.
 				// large directory trees.
 				unset( $this->parent_ids[ $event->dir ] );
 				continue;
@@ -476,8 +476,8 @@ class FilesystemEntityReader implements EntityReader {
 				}
 				$this->pending_files = array();
 				foreach ( $abs_paths as $path ) {
-					// Add all the subdirectory into the pending files list – there's
-					// a chance the directory wouldn't match the filter pattern, but
+					// Add all the subdirectory into the pending files list – there's.
+					// a chance the directory wouldn't match the filter pattern, but.
 					// a descendant file might.
 					if ( $this->fs->is_dir( $path ) ) {
 						$this->pending_files[] = $path;
@@ -490,18 +490,18 @@ class FilesystemEntityReader implements EntityReader {
 				}
 				if ( ! count( $this->pending_files ) ) {
 					// Only consider directories with relevant files in them.
-					// Otherwise we'll create fake pages for media directories
+					// Otherwise we'll create fake pages for media directories.
 					// and other directories that don't contain any content.
 					//
-					// One corner case is when there's a few levels of directories
-					// with a single relevant file at the bottom:
+					// One corner case is when there's a few levels of directories.
+					// with a single relevant file at the bottom:.
 					//
-					// - /docs/
-					// - /foo/
-					// - /bar/
-					// - /baz.md
+					// - /docs/.
+					// - /foo/.
+					// - /bar/.
+					// - /baz.md.
 					//
-					// In this case, `next_entity()` will backtrack at baz.md and
+					// In this case, `next_entity()` will backtrack at baz.md and.
 					// create the missing parent pages.
 					continue;
 				}
@@ -525,20 +525,20 @@ class FilesystemEntityReader implements EntityReader {
 	/**
 	 * Emits a WordPress post entity based on the provided options.
 	 *
-	 * @param  array  $options  Configuration for the post entity.
+	 * @param  array $options  Configuration for the post entity.
 	 *
 	 * @return int The ID of the created post.
 	 */
 	protected function emit_filesystem_node( $options ) {
 		$post_id = $this->next_post_id;
-		++ $this->next_post_id;
+		++$this->next_post_id;
 		$this->current_filesystem_node = array_merge(
 			array(
 				'post_id' => $post_id,
 			),
 			$options
 		);
-		++ $this->fs_nodes_emited_so_far;
+		++$this->fs_nodes_emited_so_far;
 
 		return $post_id;
 	}
@@ -546,7 +546,7 @@ class FilesystemEntityReader implements EntityReader {
 	/**
 	 * Chooses an index file from the list of pending files.
 	 *
-	 * @param  array  $files  List of files to choose from.
+	 * @param  array $files  List of files to choose from.
 	 *
 	 * @return int The index of the chosen file or -1 if none.
 	 */
@@ -566,7 +566,7 @@ class FilesystemEntityReader implements EntityReader {
 	/**
 	 * Determines if a file path matches the index file pattern.
 	 *
-	 * @param  string  $path  The file path to check.
+	 * @param  string $path  The file path to check.
 	 *
 	 * @return bool True if it matches, false otherwise.
 	 */

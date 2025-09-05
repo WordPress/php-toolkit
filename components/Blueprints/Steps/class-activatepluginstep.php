@@ -9,7 +9,7 @@ use WordPress\Blueprints\Runtime;
  * Represents the 'activatePlugin' step.
  */
 class ActivatePluginStep implements StepInterface {
-	// Inline PHP script to avoid reading a static script.php file via
+	// Inline PHP script to avoid reading a static script.php file via.
 	// file_get_contents() inside the built blueprints.phar file.
 	const ACTIVATE_PLUGIN_SCRIPT = <<<'PHP'
 <?php
@@ -37,18 +37,18 @@ foreach ( ( glob( $pluginPath . '/*.php' ) ?: array() ) as $file ) {
 
 // If we got here, the plugin was not found.
 exit( 1 );
-PHP
-	;
+PHP;
 
 	/**
 	 * Path to the plugin directory or entry file.
 	 * Examples: '/wordpress/wp-content/plugins/plugin-name', 'plugin-name/plugin-name.php'
+	 *
 	 * @var string
 	 */
 	public $plugin_path;
 
 	/**
-	 * @param  string  $pluginPath  Path to the plugin directory or entry file.
+	 * @param  string $pluginPath  Path to the plugin directory or entry file.
 	 */
 	public function __construct( string $plugin_path ) {
 		$this->plugin_path = $plugin_path;
@@ -61,10 +61,9 @@ PHP
 		$tracker->setCaption( 'Activating plugin ' . ( $this->plugin_path ?? '' ) );
 		$runtime->evalPhpCodeInSubProcess(
 			self::ACTIVATE_PLUGIN_SCRIPT,
-			[
+			array(
 				'PLUGIN_PATH' => $this->plugin_path,
-			]
+			)
 		);
 	}
-
 }

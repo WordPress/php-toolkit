@@ -36,29 +36,29 @@ class RedirectionMiddleware implements MiddlewareInterface {
 
 	public function __construct( $client_state, $next_middleware, $options = array() ) {
 		$this->next_middleware = $next_middleware;
-		$this->max_redirects = $options['max_redirects'] ?? 5;
-		$this->state = $client_state;
-		$this->client = $options['client'];
+		$this->max_redirects   = $options['max_redirects'] ?? 5;
+		$this->state           = $client_state;
+		$this->client          = $options['client'];
 	}
 
 	public function enqueue( Request $request ) {
 		return $this->next_middleware->enqueue( $request );
 	}
 
-	public function await_next_event( $requests_ids ) : bool {
-		if(!$this->next_middleware->await_next_event( $requests_ids )) {
+	public function await_next_event( $requests_ids ): bool {
+		if ( ! $this->next_middleware->await_next_event( $requests_ids ) ) {
 			return false;
 		}
 		switch ( $this->state->event ) {
 			case Client::EVENT_GOT_HEADERS:
-				$this->handle_redirect($this->state->request);
+				$this->handle_redirect( $this->state->request );
 				break;
 		}
 		return true;
 	}
 
 	/**
-	 * @param  array  $requests  An array of requests.
+	 * @param  array $requests  An array of requests.
 	 */
 	protected function handle_redirect( Request $request ) {
 		$response = $request->response;
@@ -66,7 +66,7 @@ class RedirectionMiddleware implements MiddlewareInterface {
 			return;
 		}
 		$code = $response->status_code;
-		if ( ! in_array($code, [301, 302, 303, 307, 308]) ) {
+		if ( ! in_array( $code, array( 301, 302, 303, 307, 308 ) ) ) {
 			return;
 		}
 
@@ -78,7 +78,7 @@ class RedirectionMiddleware implements MiddlewareInterface {
 		$redirects_so_far = 0;
 		$cause            = $request;
 		while ( $cause->redirected_from ) {
-			++ $redirects_so_far;
+			++$redirects_so_far;
 			$cause = $cause->redirected_from;
 		}
 
@@ -88,8 +88,8 @@ class RedirectionMiddleware implements MiddlewareInterface {
 		}
 
 		$redirect_url = $location;
-		$parsed = WPURL::parse($redirect_url, $request->url);
-		if(false === $parsed) {
+		$parsed       = WPURL::parse( $redirect_url, $request->url );
+		if ( false === $parsed ) {
 			$this->state->set_request_error( $request, new HttpError( sprintf( 'Invalid redirect URL: %s', $redirect_url ) ) );
 			return;
 		}
@@ -99,12 +99,11 @@ class RedirectionMiddleware implements MiddlewareInterface {
 			new Request(
 				$redirect_url,
 				array(
-					// Redirects are always GET requests
+					// Redirects are always GET requests.
 					'method'          => 'GET',
 					'redirected_from' => $request,
 				)
 			)
 		);
 	}
-
 }
