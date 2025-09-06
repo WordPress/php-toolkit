@@ -19,6 +19,7 @@ return static function ( MBConfig $config ): void {
 			__DIR__ . '/components',
 		)
 	);
+    $config->defaultBranch('trunk');
 	// release workers - in order to execute
 	$config->workers(
 		array(
