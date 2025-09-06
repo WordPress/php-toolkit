@@ -14,12 +14,12 @@ use Symplify\MonorepoBuilder\Release\ReleaseWorker\UpdateReplaceReleaseWorker;
 
 return static function ( MBConfig $config ): void {
 	// Where packages live.
-    $config->packageDirectories(
-        array(
-            __DIR__ . '/components',
-        )
-    );
-    $config->defaultBranch('trunk');
+	$config->packageDirectories(
+		array(
+			__DIR__ . '/components',
+		)
+	);
+	$config->defaultBranch( 'trunk' );
 	// Release workers - in order to execute.
 	$config->workers(
 		array(
