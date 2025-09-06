@@ -1,5 +1,5 @@
 {
-	"name": "wordpress/corsproxy",
+	"name": "wp-php-toolkit/corsproxy",
 	"description": "CORSProxy component for WordPress.",
 	"type": "library",
 	"authors": [

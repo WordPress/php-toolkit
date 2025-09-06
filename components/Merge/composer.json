@@ -1,5 +1,5 @@
 {
-	"name": "wordpress/merge",
+	"name": "wp-php-toolkit/merge",
 	"description": "Merge component for WordPress with configurable diffing and merging strategies.",
 	"type": "library",
 	"license": "GPL-2.0-or-later",

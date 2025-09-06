@@ -1,5 +1,5 @@
 {
-	"name": "wordpress/bytestream",
+	"name": "wp-php-toolkit/bytestream",
 	"description": "ByteStream component for WordPress.",
 	"type": "library",
 	"authors": [

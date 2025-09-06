@@ -1,5 +1,5 @@
 {
-	"name": "wordpress/blockparser",
+	"name": "wp-php-toolkit/blockparser",
 	"description": "BlockParser component for WordPress.",
 	"type": "library",
 	"require": {

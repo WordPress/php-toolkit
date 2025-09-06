@@ -1,5 +1,5 @@
 {
-	"name": "wordpress/zip",
+	"name": "wp-php-toolkit/zip",
 	"description": "Zip component for WordPress.",
 	"type": "library",
 	"authors": [
@@ -13,7 +13,10 @@
 		}
 	],
 	"require": {
-		"php": ">=7.2"
+		"php": ">=7.2",
+		"wp-php-toolkit/bytestream": "*",
+		"wp-php-toolkit/filesystem": "*",
+		"wp-php-toolkit/http-client": "*"
 	},
 	"autoload": {
 		"psr-4": {

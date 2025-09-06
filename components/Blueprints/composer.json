@@ -1,6 +1,6 @@
 {
-	"name": "wp-php-toolkit/data-liberation",
-	"description": "Data Liberation component for WordPress.",
+	"name": "wp-php-toolkit/blueprints",
+	"description": "Blueprints component for WordPress.",
 	"type": "library",
 	"authors": [
 		{
@@ -15,17 +15,15 @@
 	"require": {
 		"php": ">=7.2",
 		"wp-php-toolkit/bytestream": "*",
+		"wp-php-toolkit/blueprints": "*",
 		"wp-php-toolkit/filesystem": "*",
 		"wp-php-toolkit/http-client": "*",
-		"wp-php-toolkit/xml": "*"
+		"wp-php-toolkit/xml": "*",
+		"wp-php-toolkit/zip": "*"
 	},
 	"autoload": {
 		"classmap": [
-			"./",
-			"vendor-patched/"
-		],
-		"files": [
-			"URL/functions.php"
+			"./"
 		],
 		"exclude-from-classmap": [
 			"/Tests/"

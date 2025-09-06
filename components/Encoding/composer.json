@@ -1,5 +1,5 @@
 {
-	"name": "wordpress/encoding",
+	"name": "wp-php-toolkit/encoding",
 	"description": "Encoding component for WordPress.",
 	"type": "library",
 	"authors": [

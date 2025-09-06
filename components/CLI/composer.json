@@ -1,5 +1,5 @@
 {
-	"name": "wordpress/cli",
+	"name": "wp-php-toolkit/cli",
 	"description": "CLI component for WordPress.",
 	"type": "library",
 	"authors": [
