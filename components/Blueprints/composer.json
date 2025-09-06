@@ -1,39 +1,39 @@
 {
-	"name": "wp-php-toolkit/blueprints",
-	"description": "Blueprints component for WordPress.",
-	"type": "library",
-	"authors": [
-		{
-			"name": "Adam Zielinski",
-			"email": "adam@adamziel.com"
-		},
-		{
-			"name": "WordPress Team",
-			"email": "wordpress@wordpress.org"
-		}
-	],
-	"require": {
-		"php": ">=7.2",
-		"wp-php-toolkit/bytestream": "dev-trunk",
-		"wp-php-toolkit/blueprints": "dev-trunk",
-		"wp-php-toolkit/filesystem": "dev-trunk",
-		"wp-php-toolkit/http-client": "dev-trunk",
-		"wp-php-toolkit/xml": "dev-trunk",
-		"wp-php-toolkit/zip": "dev-trunk"
-	},
-	"autoload": {
-		"classmap": [
-			"./"
-		],
-		"exclude-from-classmap": [
-			"/Tests/"
-		]
-	},
-	"archive": {
-		"exclude": [
-			"**/.github/",
-			"**/Tests/",
-			"**/bin/"
-		]
-	}
+    "name": "wp-php-toolkit/blueprints",
+    "description": "Blueprints component for WordPress.",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Adam Zielinski",
+            "email": "adam@adamziel.com"
+        },
+        {
+            "name": "WordPress Team",
+            "email": "wordpress@wordpress.org"
+        }
+    ],
+    "require": {
+        "php": ">=7.2",
+        "wp-php-toolkit/bytestream": "^0.0.6",
+        "wp-php-toolkit/blueprints": "^0.0.6",
+        "wp-php-toolkit/filesystem": "^0.0.6",
+        "wp-php-toolkit/http-client": "^0.0.6",
+        "wp-php-toolkit/xml": "^0.0.6",
+        "wp-php-toolkit/zip": "^0.0.6"
+    },
+    "autoload": {
+        "classmap": [
+            "./"
+        ],
+        "exclude-from-classmap": [
+            "/Tests/"
+        ]
+    },
+    "archive": {
+        "exclude": [
+            "**/.github/",
+            "**/Tests/",
+            "**/bin/"
+        ]
+    }
 }
