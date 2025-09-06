@@ -94,6 +94,17 @@ register_packagist() {
     -d "{\"repository\":{\"url\":\"${url}\"}}" >/dev/null || echo "Packagist create-package call failed (maybe already exists)."
 }
 
+update_packagist() {
+  local org="$1" repo="$2"
+  [[ -n "$PACKAGIST_USERNAME" && -n "$PACKAGIST_TOKEN" ]] || return 0
+  local package_name="${org}/${repo}"
+  echo "Updating Packagist package: ${package_name}"
+  curl -fsS -X POST \
+    "https://packagist.org/api/update-package?username=${PACKAGIST_USERNAME}&apiToken=${PACKAGIST_TOKEN}" \
+    -H 'Content-Type: application/json' \
+    -d "{\"repository\":{\"url\":\"https://github.com/${org}/${repo}\"}}" >/dev/null || echo "Packagist update-package call failed."
+}
+
 # Iterate packages
 shopt -s nullglob
 for composer in ${PKG_GLOB}/composer.json; do
@@ -116,6 +127,7 @@ for composer in ${PKG_GLOB}/composer.json; do
   create_repo_if_needed "$org" "$repo_name" "$desc" "$homepage"
   split_and_push "$pkg_dir" "$org" "$repo_name"
   register_packagist "$org" "$repo_name"
+  update_packagist "$org" "$repo_name"
 
   echo ""
 done
