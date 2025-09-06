@@ -22,5 +22,11 @@
 		"exclude-from-classmap": [
 			"/Tests/"
 		]
+	},
+	"archive": {
+		"exclude": [
+			"/Tests/",
+			"/bin/"
+		]
 	}
 }

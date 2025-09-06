@@ -16,7 +16,7 @@
 	"require": {
 		"php": ">=7.4",
 		"yetanotherape/diff-match-patch": "^1.0",
-		"wordpress/data-liberation": "*",
+		"wordpress/data-liberation": "dev-trunk",
 		"ext-mbstring": "*"
 	},
 	"require-dev": {
@@ -32,5 +32,11 @@
 	},
 	"config": {
 		"sort-packages": true
+	},
+	"archive": {
+		"exclude": [
+			"/Tests/",
+			"/bin/"
+		]
 	}
 }

@@ -14,9 +14,9 @@
 	],
 	"require": {
 		"php": ">=7.2",
-		"wp-php-toolkit/bytestream": "*",
-		"wp-php-toolkit/filesystem": "*",
-		"wp-php-toolkit/http-client": "*",
+		"wp-php-toolkit/bytestream": "dev-trunk",
+		"wp-php-toolkit/filesystem": "dev-trunk",
+		"wp-php-toolkit/http-client": "dev-trunk",
 		"wp-php-toolkit/xml": "*"
 	},
 	"autoload": {
@@ -29,6 +29,12 @@
 		],
 		"exclude-from-classmap": [
 			"/Tests/"
+		]
+	},
+	"archive": {
+		"exclude": [
+			"/Tests/",
+			"/bin/"
 		]
 	}
 }

@@ -25,5 +25,11 @@
 	},
 	"require-dev": {
 		"phpunit/phpunit": "^9.5"
+	},
+	"archive": {
+		"exclude": [
+			"/Tests/",
+			"/bin/"
+		]
 	}
 }

@@ -14,11 +14,11 @@
 	],
 	"require": {
 		"php": ">=7.2",
-		"wp-php-toolkit/bytestream": "*",
-		"wp-php-toolkit/blueprints": "*",
-		"wp-php-toolkit/filesystem": "*",
-		"wp-php-toolkit/http-client": "*",
-		"wp-php-toolkit/xml": "*",
+		"wp-php-toolkit/bytestream": "dev-trunk",
+		"wp-php-toolkit/blueprints": "dev-trunk",
+		"wp-php-toolkit/filesystem": "dev-trunk",
+		"wp-php-toolkit/http-client": "dev-trunk",
+		"wp-php-toolkit/xml": "dev-trunk",
 		"wp-php-toolkit/zip": "*"
 	},
 	"autoload": {
@@ -27,6 +27,12 @@
 		],
 		"exclude-from-classmap": [
 			"/Tests/"
+		]
+	},
+	"archive": {
+		"exclude": [
+			"/Tests/",
+			"/bin/"
 		]
 	}
 }
