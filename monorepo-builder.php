@@ -19,13 +19,6 @@ return static function ( MBConfig $config ): void {
             __DIR__ . '/components',
         )
     );
-    // List all vendor-patched directories to exclude them from package discovery.
-    $config->packageDirectoriesExcludes(
-        array(
-            __DIR__ . '/components/Blueprints/vendor-patched',
-            __DIR__ . '/components/DataLiberation/vendor-patched',
-        )
-    );
     $config->defaultBranch('trunk');
 	// Release workers - in order to execute.
 	$config->workers(

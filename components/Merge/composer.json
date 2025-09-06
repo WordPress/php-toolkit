@@ -1,43 +1,43 @@
 {
-    "name": "wp-php-toolkit/merge",
-    "description": "Merge component for WordPress with configurable diffing and merging strategies.",
-    "type": "library",
-    "license": "GPL-2.0-or-later",
-    "autoload": {
-        "psr-4": {
-            "WordPress\\Merge\\": ""
-        }
-    },
-    "authors": [
-        {
-            "name": "WordPress Contributors"
-        }
-    ],
-    "require": {
-        "php": ">=7.4",
-        "yetanotherape/diff-match-patch": "^0.1",
-        "wordpress/data-liberation": "dev-trunk",
-        "ext-mbstring": "*"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^9.5",
-        "squizlabs/php_codesniffer": "^3.6",
-        "wp-coding-standards/wpcs": "^2.3",
-        "phpstan/phpstan": "^1.0"
-    },
-    "scripts": {
-        "test": "phpunit",
-        "cs": "phpcs",
-        "cs-fix": "phpcbf"
-    },
-    "config": {
-        "sort-packages": true
-    },
-    "archive": {
-        "exclude": [
-            "**/.github/",
-            "**/Tests/",
-            "**/bin/"
-        ]
-    }
+	"name": "wp-php-toolkit/merge",
+	"description": "Merge component for WordPress with configurable diffing and merging strategies.",
+	"type": "library",
+	"license": "GPL-2.0-or-later",
+	"autoload": {
+		"psr-4": {
+			"WordPress\\Merge\\": ""
+		}
+	},
+	"authors": [
+		{
+			"name": "WordPress Contributors"
+		}
+	],
+	"require": {
+		"php": ">=7.4",
+		"yetanotherape/diff-match-patch": "^1.0",
+		"wordpress/data-liberation": "dev-trunk",
+		"ext-mbstring": "*"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^9.5",
+		"squizlabs/php_codesniffer": "^3.6",
+		"wp-coding-standards/wpcs": "^2.3",
+		"phpstan/phpstan": "^1.0"
+	},
+	"scripts": {
+		"test": "phpunit",
+		"cs": "phpcs",
+		"cs-fix": "phpcbf"
+	},
+	"config": {
+		"sort-packages": true
+	},
+	"archive": {
+		"exclude": [
+			"**/.github/",
+			"**/Tests/",
+			"**/bin/"
+		]
+	}
 }
