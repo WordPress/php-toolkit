@@ -28,8 +28,9 @@
 	},
 	"archive": {
 		"exclude": [
-			"/Tests/",
-			"/bin/"
+			"**/.github/",
+			"**/Tests/",
+			"**/bin/"
 		]
 	}
 }

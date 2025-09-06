@@ -15,7 +15,7 @@
 	"require": {
 		"php": ">=7.2",
 		"wp-php-toolkit/data-liberation": "dev-trunk",
-		"wp-php-toolkit/filesystem": "*"
+		"wp-php-toolkit/filesystem": "dev-trunk"
 	},
 	"autoload": {
 		"classmap": [
@@ -30,8 +30,9 @@
 	},
 	"archive": {
 		"exclude": [
-			"/Tests/",
-			"/bin/"
+			"**/.github/",
+			"**/Tests/",
+			"**/bin/"
 		]
 	}
 }

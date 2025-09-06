@@ -19,7 +19,7 @@
 		"wp-php-toolkit/filesystem": "dev-trunk",
 		"wp-php-toolkit/http-client": "dev-trunk",
 		"wp-php-toolkit/xml": "dev-trunk",
-		"wp-php-toolkit/zip": "*"
+		"wp-php-toolkit/zip": "dev-trunk"
 	},
 	"autoload": {
 		"classmap": [
@@ -31,8 +31,9 @@
 	},
 	"archive": {
 		"exclude": [
-			"/Tests/",
-			"/bin/"
+			"**/.github/",
+			"**/Tests/",
+			"**/bin/"
 		]
 	}
 }

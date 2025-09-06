@@ -14,7 +14,7 @@
 	],
 	"require": {
 		"php": ">=7.2",
-		"wp-php-toolkit/encoding": "*"
+		"wp-php-toolkit/encoding": "dev-trunk"
 	},
 	"autoload": {
 		"classmap": [
@@ -29,8 +29,9 @@
 	},
 	"archive": {
 		"exclude": [
-			"/Tests/",
-			"/bin/"
+			"**/.github/",
+			"**/Tests/",
+			"**/bin/"
 		]
 	}
 }

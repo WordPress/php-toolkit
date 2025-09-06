@@ -14,7 +14,7 @@
 	],
 	"require": {
 		"php": ">=7.2",
-		"wp-php-toolkit/bytestream": "*"
+		"wp-php-toolkit/bytestream": "dev-trunk"
 	},
 	"autoload": {
 		"psr-4": {
@@ -32,8 +32,9 @@
 	},
 	"archive": {
 		"exclude": [
-			"/Tests/",
-			"/bin/"
+			"**/.github/",
+			"**/Tests/",
+			"**/bin/"
 		]
 	}
 }

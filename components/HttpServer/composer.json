@@ -16,7 +16,7 @@
 		"php": ">=7.2",
 		"wp-php-toolkit/bytestream": "dev-trunk",
 		"wp-php-toolkit/data-liberation": "dev-trunk",
-		"wp-php-toolkit/http-client": "*"
+		"wp-php-toolkit/http-client": "dev-trunk"
 	},
 	"autoload": {
 		"psr-4": {
@@ -31,8 +31,9 @@
 	},
 	"archive": {
 		"exclude": [
-			"/Tests/",
-			"/bin/"
+			"**/.github/",
+			"**/Tests/",
+			"**/bin/"
 		]
 	}
 }

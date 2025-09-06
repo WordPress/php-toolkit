@@ -17,7 +17,7 @@
 		"wp-php-toolkit/bytestream": "dev-trunk",
 		"wp-php-toolkit/filesystem": "dev-trunk",
 		"wp-php-toolkit/http-client": "dev-trunk",
-		"wp-php-toolkit/xml": "*"
+		"wp-php-toolkit/xml": "dev-trunk"
 	},
 	"autoload": {
 		"classmap": [
@@ -33,8 +33,9 @@
 	},
 	"archive": {
 		"exclude": [
-			"/Tests/",
-			"/bin/"
+			"**/.github/",
+			"**/Tests/",
+			"**/bin/"
 		]
 	}
 }
