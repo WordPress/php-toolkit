@@ -1,27 +1,27 @@
 {
-	"name": "wordpress/polyfill",
-	"description": "Polyfill component for WordPress.",
-	"type": "library",
-	"authors": [
-		{
-			"name": "Adam Zielinski",
-			"email": "adam@adamziel.com"
-		},
-		{
-			"name": "WordPress Team",
-			"email": "wordpress@wordpress.org"
-		}
-	],
-	"require": {
-		"php": ">=7.2"
-	},
-	"autoload": {
-		"files": [
-			"wordpress.php",
-			"mbstring.php"
-		],
-		"exclude-from-classmap": [
-			"/Tests/"
-		]
-	}
+    "name": "wordpress/polyfill",
+    "description": "Polyfill component for WordPress.",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Adam Zielinski",
+            "email": "adam@adamziel.com"
+        },
+        {
+            "name": "WordPress Team",
+            "email": "wordpress@wordpress.org"
+        }
+    ],
+    "require": {
+        "php": ">=7.2"
+    },
+    "autoload": {
+        "files": [
+            "wordpress.php",
+            "mbstring.php"
+        ],
+        "exclude-from-classmap": [
+            "/Tests/"
+        ]
+    }
 }

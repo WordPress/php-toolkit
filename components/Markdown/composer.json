@@ -1,7 +1,7 @@
 {
-	"name": "wordpress/markdown",
-	"description": "Markdown component for WordPress.",
-	"type": "library",
+    "name": "wordpress/markdown",
+    "description": "Markdown component for WordPress.",
+    "type": "library",
     "authors": [
         {
             "name": "Adam Zielinski",
@@ -12,18 +12,18 @@
             "email": "wordpress@wordpress.org"
         }
     ],
-	"require": {
-		"php": ">=7.2"
-	},
-	"autoload": {
-		"classmap": [
-			"vendor-patched"
-		],
-		"psr-4": {
-			"WordPress\\Markdown\\": ""
-		},
+    "require": {
+        "php": ">=7.2"
+    },
+    "autoload": {
+        "classmap": [
+            "vendor-patched"
+        ],
+        "psr-4": {
+            "WordPress\\Markdown\\": ""
+        },
         "exclude-from-classmap": [
             "/Tests/"
         ]
-	}
+    }
 }
