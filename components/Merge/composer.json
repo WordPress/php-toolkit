@@ -15,7 +15,7 @@
     ],
     "require": {
         "php": ">=7.4",
-        "yetanotherape/diff-match-patch": "^0.1",
+        "yetanotherape/diff-match-patch": "^0.0.7",
         "wordpress/data-liberation": "dev-trunk",
         "ext-mbstring": "*"
     },

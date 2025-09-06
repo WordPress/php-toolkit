@@ -14,9 +14,9 @@
     ],
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/bytestream": "^0.1",
-        "wp-php-toolkit/data-liberation": "^0.1",
-        "wp-php-toolkit/http-client": "^0.1"
+        "wp-php-toolkit/bytestream": "^0.0.7",
+        "wp-php-toolkit/data-liberation": "^0.0.7",
+        "wp-php-toolkit/http-client": "^0.0.7"
     },
     "autoload": {
         "psr-4": {
