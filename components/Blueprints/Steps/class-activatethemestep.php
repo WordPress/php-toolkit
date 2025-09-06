@@ -31,7 +31,7 @@ PHP;
 	public $theme_folder_name;
 
 	/**
-	 * @param  string $themeFolderName  The name of the theme folder.
+	 * @param  string $theme_folder_name  The name of the theme folder.
 	 */
 	public function __construct( string $theme_folder_name ) {
 		$this->theme_folder_name = $theme_folder_name;

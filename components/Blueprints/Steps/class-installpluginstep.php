@@ -48,8 +48,8 @@ class InstallPluginStep implements StepInterface {
 	/**
 	 * @param  DataReference             $source  Plugin source reference.
 	 * @param  bool                      $active  Activate after install?
-	 * @param  array<string, mixed>|null $activationOptions  Optional activation data.
-	 * @param  string                    $onError  Error handling behavior.
+	 * @param  array<string, mixed>|null $activation_options  Optional activation data.
+	 * @param  string                    $on_error  Error handling behavior.
 	 */
 	public function __construct(
 		DataReference $source,

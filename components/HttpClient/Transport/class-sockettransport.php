@@ -121,7 +121,7 @@ class SocketTransport implements TransportInterface {
 	 * until the SSL handshake is complete.
 	 * The actual socket it then switched to non-blocking mode using stream_set_blocking().
 	 *
-	 * @param  Request $request  The Request to open the socket for.
+	 * @param  Request $requests  The Request to open the socket for.
 	 *
 	 * @return bool Whether the stream was opened successfully.
 	 */

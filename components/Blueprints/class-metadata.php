@@ -46,7 +46,7 @@ class Metadata {
 	 *
 	 * @return self A new BlueprintMetadata object with data or defaults
 	 */
-	public static function fromArray( ?array $data ): self {
+	public static function from_array( ?array $data ): self {
 		if ( null === $data ) {
 			return new self(
 				'Untitled Blueprint',

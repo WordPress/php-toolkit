@@ -42,7 +42,7 @@ class ValidationError {
 		$this->children = $children;
 	}
 
-	public function getPath(): array {
+	public function get_path(): array {
 		$path_string = substr( $this->pointer, 2 );
 		if ( ! $path_string ) {
 			return array();
@@ -51,9 +51,9 @@ class ValidationError {
 		return explode( '/', $path_string );
 	}
 
-	public function getPrettyPath(): string {
+	public function get_pretty_path(): string {
 		$segments = array( 'Blueprint root' );
-		foreach ( $this->getPath() as $segment ) {
+		foreach ( $this->get_path() as $segment ) {
 			if ( ctype_digit( $segment ) ) {
 				$segment = (int) $segment;
 			}
@@ -69,7 +69,7 @@ class ValidationError {
 	 * Otherwise, it recursively calls getMostProbableCause on its children
 	 * and returns the one with the fewest descendants (naïve: first child if counts are equal).
 	 */
-	public function getMostProbableCause(): ?ValidationError {
+	public function get_most_probable_cause(): ?ValidationError {
 		if ( empty( $this->children ) ) {
 			return null;
 		}

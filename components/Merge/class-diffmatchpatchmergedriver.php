@@ -52,7 +52,7 @@ class DiffMatchPatchMergeDriver {
 				$diff_b   = $this->rebase_diff( $diff_a, $diff_b, $merged_a );
 				$patch_b  = $this->dmp->patch_make( $merged_a, $diff_b );
 				$merged_b = $this->apply_patch( $merged_a, $patch_b );
-			} catch ( MergeConflictException $e ) {
+			} catch ( MergeException $e ) {
 				if ( 'rebase' === $mode ) {
 					throw $e;
 				}
@@ -112,19 +112,23 @@ class DiffMatchPatchMergeDriver {
 
 			if ( $change_a['start'] === $change_b['start'] ) {
 				/**
+				 * Imagine the following scenario:
+				 *
+				 * ```
 				 * version a: {"level": 1}
 				 * version b: {"level": 20}
 				 * patch b:   =10\t-1\t+20
 				 *
 				 * version c: {"level": 3}
 				 * patch c:   =10\t-1\t+3
+				 * ```
 				 *
 				 * If we apply insertions from both patches, we'll get {"level": 320}
 				 * which is not what we want. Let's throw and fall back to the fuzzy
 				 * merging from diff-match-patch.
 				 */
 				if ( Diff::INSERT === $change_a['type'] && Diff::INSERT === $change_b['type'] ) {
-					throw new MergeConflictException( 'Two insertions at the same start position' );
+					throw new MergeException( 'Two insertions at the same start position' );
 				}
 			}
 
@@ -141,7 +145,7 @@ class DiffMatchPatchMergeDriver {
 							switch ( $change_b['type'] ) {
 								case Diff::INSERT:
 									if ( $change_a['start'] !== $change_b['start'] ) {
-										throw new MergeConflictException( 'Deletion in A intersects with an insertion in B' );
+										throw new MergeException( 'Deletion in A intersects with an insertion in B' );
 									}
 									break;
 								case Diff::DELETE:

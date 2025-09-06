@@ -26,7 +26,7 @@ class CLI {
 	 *     'help'      => [ 'h', false, false, 'Show help' ],
 	 *   ];
 	 *   $argv = ['--site-url=https://mysite.test', '--site-path', '/var/www', '-h', 'blueprint.json'];
-	 *   [$positionals, $options] = CLI::parseCommandArgsAndOptions($argv, $optionDefs);
+	 *   [$positionals, $options] = CLI::parse_command_args_and_options($argv, $optionDefs);
 	 *   // $positionals = ['blueprint.json']
 	 *   // $options = [
 	 *   //   'site-url'  => 'https://mysite.test',
@@ -38,11 +38,11 @@ class CLI {
 	 *   php blueprint.php exec my-blueprint.json --site-url https://mysite.test --site-path ./mysite --help
 	 *
 	 * @param array $argv       The CLI arguments (excluding the script name and command).
-	 * @param array $optionDefs Option definitions as described above.
+	 * @param array $option_defs Option definitions as described above.
 	 * @return array            [ $positionals, $options ]
 	 * @throws InvalidArgumentException for unknown options or missing required values.
 	 */
-	public static function parseCommandArgsAndOptions( array $argv, array $option_defs ): array {
+	public static function parse_command_args_and_options( array $argv, array $option_defs ): array {
 		$positionals = array();
 		$options     = array();
 		$short2long  = array();
@@ -94,7 +94,7 @@ class CLI {
 						if ( null !== $inline_val && 0 === $idx ) {
 							$options[ $long ] = $inline_val;
 						} else {
-							$val = ( $idx === count( $bundle ) - 1 ) ? ( $argv[ ++$i ] ?? null ) : null;
+							$val = ( count( $bundle ) - 1 === $idx ) ? ( $argv[ ++$i ] ?? null ) : null;
 							if ( null === $val ) {
 								throw new InvalidArgumentException( "Option -$short requires a value" );
 							}

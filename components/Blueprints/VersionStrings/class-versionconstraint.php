@@ -26,15 +26,15 @@ class VersionConstraint {
 		$this->recommended = $recommended;
 	}
 
-	public function getMin(): ?object {
+	public function get_min(): ?object {
 		return $this->min;
 	}
 
-	public function getMax(): ?object {
+	public function get_max(): ?object {
 		return $this->max;
 	}
 
-	public function getRecommended(): ?object {
+	public function get_recommended(): ?object {
 		return $this->recommended;
 	}
 
@@ -64,7 +64,7 @@ class VersionConstraint {
 	/**
 	 * Checks if a version string satisfies the constraint.
 	 */
-	public function satisfiedBy( Version $version ): bool {
+	public function satisfied_by( Version $version ): bool {
 		if ( null !== $this->min && ! $version->is( '>=', $this->min ) ) {
 			return false;
 		}

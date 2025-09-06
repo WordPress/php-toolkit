@@ -19,8 +19,8 @@ class CpStep implements StepInterface {
 	public $to_path;
 
 	/**
-	 * @param  string $fromPath  The source path to copy from.
-	 * @param  string $toPath  The destination path to copy to.
+	 * @param  string $from_path  The source path to copy from.
+	 * @param  string $to_path  The destination path to copy to.
 	 */
 	public function __construct( string $from_path, string $to_path ) {
 		$this->from_path = $from_path;

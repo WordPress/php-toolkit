@@ -112,7 +112,7 @@ class URLInTextProcessor {
 	public function __construct( $text, $base_url = null ) {
 		if ( ! self::$public_suffix_list ) {
 			// @TODO: Parse wildcards and exceptions from the public suffix list.
-			self::$public_suffix_list = require_once __DIR__ . '/public_suffix_list.php';
+			self::$public_suffix_list = require_once __DIR__ . '/public-suffix-list.php';
 		}
 		$this->text          = $text;
 		$this->base_url      = $base_url;

@@ -207,7 +207,7 @@ class CurlTransport implements TransportInterface {
 	}
 
 	/**
-	 * cURL callback to handle incoming header lines.
+	 * `cURL` callback to handle incoming header lines.
 	 * Triggers an EVENT_GOT_HEADERS event when the header section is complete.
 	 *
 	 * @param resource $ch         The cURL handle.
@@ -246,7 +246,7 @@ class CurlTransport implements TransportInterface {
 	}
 
 	/**
-	 * cURL callback to handle chunks of response body data.
+	 * `cURL` callback to handle chunks of response body data.
 	 * Triggers an EVENT_BODY_CHUNK_AVAILABLE event for each chunk received.
 	 *
 	 * @param resource $ch   The cURL handle.

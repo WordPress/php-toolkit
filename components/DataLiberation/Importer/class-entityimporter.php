@@ -362,7 +362,8 @@ class EntityImporter {
 				// Wipe the parent for now.
 				$data['parent'] = 0;
 			}
-		}*/
+		}
+		*/
 
 		foreach ( $data as $key => $value ) {
 			if ( ! isset( $allowed[ $key ] ) ) {
@@ -796,8 +797,8 @@ class EntityImporter {
 	/**
 	 * If fetching attachments is enabled then attempt to create a new attachment
 	 *
-	 * @param  array  $post  Attachment post details from WXR
-	 * @param  string $url  URL to fetch attachment from
+	 * @param  array           $post  Attachment post details from WXR
+	 * @param  iterable|object $meta  URL to fetch attachment from
 	 *
 	 * @return int|WP_Error Post ID on success, WP_Error otherwise
 	 */

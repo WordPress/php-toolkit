@@ -55,8 +55,8 @@
         ],
         "files": [
             "components/DataLiberation/URL/functions.php",
-            "components/Encoding/utf8_decoder.php",
-            "components/Encoding/utf8_encoder.php",
+            "components/Encoding/utf8-decoder.php",
+            "components/Encoding/utf8-encoder.php",
             "components/Filesystem/functions.php",
             "components/Zip/functions.php",
             "components/Polyfill/wordpress.php",

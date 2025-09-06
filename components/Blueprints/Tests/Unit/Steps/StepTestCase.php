@@ -54,13 +54,13 @@ class StepTestCase extends TestCase {
 				[ 'recursive' => true ]
 			);
 			$config = ( new RunnerConfiguration() )
-				->setExecutionMode( 'apply-to-existing-site' )
-				->setTargetSiteRoot( $this->document_root )
+				->set_execution_mode( 'apply-to-existing-site' )
+				->set_target_site_root( $this->document_root )
 			;
 		} else {
 			$config = ( new RunnerConfiguration() )
-				->setExecutionMode( 'create-new-site' )
-				->setTargetSiteRoot( $base_site_root )
+				->set_execution_mode( 'create-new-site' )
+				->set_target_site_root( $base_site_root )
 			;
 		}
 
@@ -70,9 +70,9 @@ class StepTestCase extends TestCase {
 		);
 
 		$config
-			->setBlueprint( new AbsoluteLocalPath( wp_join_unix_paths( $this->execution_context_path, 'blueprint.json' ) ) )
-			->setDatabaseEngine( 'sqlite' )
-			->setTargetSiteUrl( 'http://127.0.0.1:2456' );
+			->set_blueprint( new AbsoluteLocalPath( wp_join_unix_paths( $this->execution_context_path, 'blueprint.json' ) ) )
+			->set_database_engine( 'sqlite' )
+			->set_target_site_url( 'http://127.0.0.1:2456' );
 
 		$runner = new Runner( $config );
 		try {

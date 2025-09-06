@@ -48,7 +48,7 @@ PHP;
 	public $plugin_path;
 
 	/**
-	 * @param  string $pluginPath  Path to the plugin directory or entry file.
+	 * @param  string $plugin_path  Path to the plugin directory or entry file.
 	 */
 	public function __construct( string $plugin_path ) {
 		$this->plugin_path = $plugin_path;

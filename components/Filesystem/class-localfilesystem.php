@@ -55,7 +55,7 @@ class LocalFilesystem implements Filesystem {
 	}
 
 	/**
-	 * for mkdir_recursive()
+	 * For mkdir_recursive().
 	 */
 	public function get_root(): string {
 		return $this->root;

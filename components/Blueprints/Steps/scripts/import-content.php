@@ -287,7 +287,7 @@ function run_content_import( $options ) {
 		);
 		$resolver       = new DataReferenceResolver( $http_client );
 		if ( isset( $options['execution_context_root'] ) && '' !== $options['execution_context_root'] ) {
-			$resolver->setExecutionContext(
+			$resolver->set_execution_context(
 				LocalFilesystem::create( $options['execution_context_root'] )
 			);
 		}

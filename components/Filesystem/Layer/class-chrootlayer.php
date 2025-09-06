@@ -22,7 +22,7 @@ class ChrootLayer extends Layer {
 
 	/**
 	 * @param  Filesystem $fs  The filesystem to chroot.
-	 * @param  string     $root  The root path to chroot to.
+	 * @param  string     $chroot  The root path to chroot to.
 	 */
 	public function __construct( Filesystem $fs, $chroot ) {
 		parent::__construct( $fs );

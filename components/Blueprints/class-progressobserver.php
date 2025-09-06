@@ -23,7 +23,7 @@ class ProgressObserver {
 	/**
 	 * Create a new progress logger with the given logging function
 	 *
-	 * @param  callable $logCallback  Function that receives progress updates
+	 * @param  callable $log_callback  Function that receives progress updates
 	 */
 	public function __construct( ?callable $log_callback = null ) {
 		$this->log_callback = $log_callback ?? function () {
@@ -36,7 +36,7 @@ class ProgressObserver {
 	 *
 	 * @param  Tracker $tracker  The tracker to log progress for
 	 */
-	public function attachTo( Tracker $tracker ) {
+	public function attach_to( Tracker $tracker ) {
 		$tracker->events->addListener(
 			ProgressEvent::class,
 			function ( ProgressEvent $event ) {
@@ -52,7 +52,7 @@ class ProgressObserver {
 		);
 	}
 
-	public function setRuntime( Runtime $runtime ) {
+	public function set_runtime( Runtime $runtime ) {
 		$this->runtime = $runtime;
 	}
 }

@@ -26,7 +26,7 @@ class WPCLIStep implements StepInterface {
 
 	/**
 	 * @param  string      $command  The WP-CLI command string.
-	 * @param  string|null $wpCliPath  Optional path to WP-CLI executable.
+	 * @param  string|null $wp_cli_path  Optional path to WP-CLI executable.
 	 */
 	public function __construct( string $command, ?string $wp_cli_path = null ) {
 		$this->command     = $command;
@@ -47,7 +47,7 @@ class WPCLIStep implements StepInterface {
 				// For Docker compatibility. If we got this far, the Blueprint runner was already.
 				// allowed to run as root.
 				'--allow-root',
-				'--path=' . $runtime->get_configuration()->getTargetSiteRoot(),
+				'--path=' . $runtime->get_configuration()->get_target_site_root(),
 				substr( $command, 3 ),
 			)
 		);

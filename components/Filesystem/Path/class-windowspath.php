@@ -8,18 +8,18 @@ final class WindowsPath {
 	private const SEP = '\\';
 
 	/** Converts every “/” to “\” so that later code can assume one separator. */
-	private static function normalizeSeparators( string $path ): string {
+	private static function normalize_separators( string $path ): string {
 		return str_replace( '/', self::SEP, $path );
 	}
 
 	/** Absolute = “C:\…\” or “\\server\share\…”. */
-	private static function isAbsolute( string $path ): bool {
-		$path = self::normalizeSeparators( $path );
+	private static function is_absolute( string $path ): bool {
+		$path = self::normalize_separators( $path );
 		return (bool) preg_match( '/^(?:[A-Za-z]:\\\\|\\\\\\\\[^\\\\]+\\\\[^\\\\]+)/', $path );
 	}
 
 	/** Returns “C:\foo\bar” → ["C:", "foo", "bar"]; “\\srv\share\dir” → ["srv", "share", "dir"]. */
-	public static function pathSegments( string $path ): array {
+	public static function path_segments( string $path ): array {
 		$canonical = self::canonicalize( $path );
 		$trimmed   = trim( $canonical, self::SEP );
 
@@ -31,7 +31,7 @@ final class WindowsPath {
 	}
 
 	/** Joins segments with a single backslash and keeps any drive-letter or UNC prefix intact. */
-	public static function joinPaths( string ...$segments ): string {
+	public static function join_paths( string ...$segments ): string {
 		if ( ! $segments ) {
 			return '';
 		}
@@ -45,28 +45,28 @@ final class WindowsPath {
 			if ( null === $first ) {
 				$first = $seg;
 			}
-			$pieces[] = trim( self::normalizeSeparators( $seg ), '\\/' );
+			$pieces[] = trim( self::normalize_separators( $seg ), '\\/' );
 		}
 		$joined = implode( self::SEP, $pieces );
 
 		// restore UNC double backslash if needed.
-		if ( preg_match( '/^\\\\\\\\/', self::normalizeSeparators( $first ) ) ) {
+		if ( preg_match( '/^\\\\\\\\/', self::normalize_separators( $first ) ) ) {
 			return '\\\\' . ltrim( $joined, self::SEP );
 		}
 		return $joined;
 	}
 
 	/** Mirrors Node.js path.resolve for Windows rules. */
-	public static function resolvePath( string ...$segments ): string {
+	public static function resolve_path( string ...$segments ): string {
 		for ( $i = count( $segments ) - 1; $i >= 0; --$i ) {
-			if ( self::isAbsolute( $segments[ $i ] ) ) {
+			if ( self::is_absolute( $segments[ $i ] ) ) {
 				return self::canonicalize(
-					self::joinPaths( ...array_slice( $segments, $i ) )
+					self::join_paths( ...array_slice( $segments, $i ) )
 				);
 			}
 		}
 		array_unshift( $segments, getcwd() );
-		return self::canonicalize( self::joinPaths( ...$segments ) );
+		return self::canonicalize( self::join_paths( ...$segments ) );
 	}
 
 	/**
@@ -74,9 +74,9 @@ final class WindowsPath {
 	 * Keeps trailing backslash only for drive-root (“C:\”) or UNC-root (“\\srv\share\”).
 	 */
 	public static function canonicalize( string $path ): string {
-		$path = self::normalizeSeparators( trim( $path ) );
+		$path = self::normalize_separators( trim( $path ) );
 
-		if ( ! self::isAbsolute( $path ) ) {
+		if ( ! self::is_absolute( $path ) ) {
 			$cwd  = rtrim( getcwd(), self::SEP );
 			$path = $cwd . self::SEP . $path;
 		}
@@ -113,7 +113,7 @@ final class WindowsPath {
 
 	/** Consistent dirname() that sticks to backslashes. */
 	public static function dirname( string $path ): string {
-		$path = self::normalizeSeparators( $path );
+		$path = self::normalize_separators( $path );
 		$dir  = dirname( $path );
 
 		// dirname("C:\foo") returns "C:\", keep that trailing sep; but dirname("C:\") yields "C:\".

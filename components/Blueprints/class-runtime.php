@@ -131,7 +131,7 @@ class Runtime {
 	}
 
 	public function get_logger(): LoggerInterface {
-		return $this->configuration->getLogger();
+		return $this->configuration->get_logger();
 	}
 
 	public function with_temporary_directory( callable $callback ) {
@@ -260,10 +260,10 @@ class Runtime {
 						$php_binary,
 						$actual_script_path,
 					),
-					$this->configuration->getTargetSiteRoot(),
+					$this->configuration->get_target_site_root(),
 					array_merge(
 						array(
-							'DOCROOT'     => $this->configuration->getTargetSiteRoot(),
+							'DOCROOT'     => $this->configuration->get_target_site_root(),
 							'OUTPUT_FILE' => $output_path,
 						),
 						$env ?? array()
@@ -296,7 +296,7 @@ class Runtime {
 	) {
 		return new Process(
 			$command,
-			$cwd ?? $this->configuration->getTargetSiteRoot(),
+			$cwd ?? $this->configuration->get_target_site_root(),
 			$env,
 			$input,
 			$timeout,

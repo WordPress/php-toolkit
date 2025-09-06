@@ -34,7 +34,7 @@ class DataReferenceResolverTest extends TestCase {
 		$this->resolver         = new DataReferenceResolver( $this->client );
 		$this->executionContext = $this->createMock( Filesystem::class );
 		$this->tracker          = $this->createMock( Tracker::class );
-		$this->resolver->setExecutionContext( $this->executionContext );
+		$this->resolver->set_execution_context( $this->executionContext );
 	}
 
 	public function testResolveExecutionContextPathFile() {

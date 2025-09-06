@@ -60,7 +60,7 @@ class V1ToV2Transpiler {
 	/**
 	 * Upgrade a v1 Blueprint array to a v2 Blueprint array.
 	 *
-	 * @param  array $v1
+	 * @param  array $validated_v1_blueprint
 	 *
 	 * @return array
 	 * @throws BlueprintExecutionException When the v1 blueprint cannot be upgraded.
@@ -140,7 +140,7 @@ class V1ToV2Transpiler {
 			foreach ( $v1['plugins'] as $plugin ) {
 				$v2steps[] = array(
 					'step'   => 'installPlugin',
-					'source' => self::convertV1ResourceToV2Reference( $plugin ),
+					'source' => self::convert_v1_resource_to_v2_reference( $plugin ),
 				);
 			}
 		}
@@ -191,8 +191,8 @@ class V1ToV2Transpiler {
 						}
 						$v2steps[] = array(
 							'step'     => 'cp',
-							'fromPath' => self::translatePath( $v1step['fromPath'] ),
-							'toPath'   => self::translatePath( $v1step['toPath'] ),
+							'fromPath' => self::translate_path( $v1step['fromPath'] ),
+							'toPath'   => self::translate_path( $v1step['toPath'] ),
 						);
 						break;
 					case 'defineWpConfigConsts':
@@ -233,7 +233,7 @@ class V1ToV2Transpiler {
 							'content' => array(
 								array(
 									'type'   => 'wxr',
-									'source' => self::convertV1ResourceToV2Reference( $v1step['file'] ),
+									'source' => self::convert_v1_resource_to_v2_reference( $v1step['file'] ),
 								),
 							),
 						);
@@ -257,7 +257,7 @@ class V1ToV2Transpiler {
 						}
 						$v2step = array(
 							'step'   => 'installPlugin',
-							'source' => self::convertV1ResourceToV2Reference(
+							'source' => self::convert_v1_resource_to_v2_reference(
 								$v1step['pluginZipFile'] ??
 								$v1step['pluginData']
 							),
@@ -291,7 +291,7 @@ class V1ToV2Transpiler {
 						}
 						$v2step = array(
 							'step'   => 'installTheme',
-							'source' => self::convertV1ResourceToV2Reference(
+							'source' => self::convert_v1_resource_to_v2_reference(
 								$v1step['themeData'] ??
 								$v1step['themeZipFile']
 							),
@@ -320,7 +320,7 @@ class V1ToV2Transpiler {
 						}
 						$v2steps[] = array(
 							'step' => 'mkdir',
-							'path' => self::translatePath( $v1step['path'] ),
+							'path' => self::translate_path( $v1step['path'] ),
 						);
 						break;
 					case 'mv':
@@ -329,8 +329,8 @@ class V1ToV2Transpiler {
 						}
 						$v2steps[] = array(
 							'step'     => 'mv',
-							'fromPath' => self::translatePath( $v1step['fromPath'] ),
-							'toPath'   => self::translatePath( $v1step['toPath'] ),
+							'fromPath' => self::translate_path( $v1step['fromPath'] ),
+							'toPath'   => self::translate_path( $v1step['toPath'] ),
 						);
 						break;
 					case 'request':
@@ -371,7 +371,7 @@ PHP
 						}
 						$v2steps[] = array(
 							'step' => 'rm',
-							'path' => self::translatePath( $v1step['path'] ),
+							'path' => self::translate_path( $v1step['path'] ),
 						);
 						break;
 					case 'rmDir':
@@ -380,7 +380,7 @@ PHP
 						}
 						$v2steps[] = array(
 							'step' => 'rmdir',
-							'path' => self::translatePath( $v1step['path'] ),
+							'path' => self::translate_path( $v1step['path'] ),
 						);
 						break;
 					case 'runPHP':
@@ -391,7 +391,7 @@ PHP
 							'step' => 'runPHP',
 							'code' => array(
 								'filename' => 'script.php',
-								'content'  => self::convertPhpCode( $v1step['code'] ),
+								'content'  => self::convert_php_code( $v1step['code'] ),
 							),
 						);
 						break;
@@ -431,11 +431,11 @@ PHP
 						}
 						$v2steps[] = array(
 							'step'          => 'unzip',
-							'zipFile'       => self::convertV1ResourceToV2Reference(
+							'zipFile'       => self::convert_v1_resource_to_v2_reference(
 								$v1step['zipPath'] ??
 								$v1step['zipFile']
 							),
-							'extractToPath' => self::translatePath( $v1step['extractToPath'] ),
+							'extractToPath' => self::translate_path( $v1step['extractToPath'] ),
 						);
 						break;
 					case 'updateUserMeta':
@@ -468,7 +468,7 @@ PHP
 						if ( isset( $v1step['progress'] ) ) {
 							$this->logger->warning( 'The `progress` option on writeFile step is not supported Blueprint v2 schema and will be ignored: %s. Use the runtime configuration to set the progress bar instead.' );
 						}
-						$path      = self::translatePath( $v1step['path'] );
+						$path      = self::translate_path( $v1step['path'] );
 						$v2steps[] = array(
 							'step'  => 'writeFiles',
 							'files' => array(
@@ -476,10 +476,10 @@ PHP
 									? array(
 										'filename' => basename( $path ),
 										'content'  => str_ends_with( $path, '.php' )
-											? self::convertPhpCode( $v1step['data'] )
+											? self::convert_php_code( $v1step['data'] )
 											: $v1step['data'],
 									)
-									: self::convertV1ResourceToV2Reference(
+									: self::convert_v1_resource_to_v2_reference(
 										$v1step['data']
 									),
 							),
@@ -495,9 +495,9 @@ PHP
 						);
 						// Prefix paths with "writeToPath".
 						// The rest of the data format is compliant with v2.
-						$base_path = self::translatePath( $v1step['writeToPath'] );
+						$base_path = self::translate_path( $v1step['writeToPath'] );
 						if ( isset( $v1step['filesTree']['resource'] ) ) {
-							$v2step['files']['/'] = self::convertV1ResourceToV2Reference( $v1step['filesTree'], $base_path );
+							$v2step['files']['/'] = self::convert_v1_resource_to_v2_reference( $v1step['filesTree'], $base_path );
 						} else {
 							foreach ( $v1step['filesTree'] as $path => $data ) {
 								$joined_path                     = wp_join_unix_paths( $base_path, $path );
@@ -505,10 +505,10 @@ PHP
 								? array(
 									'filename' => basename( $path ),
 									'content'  => str_ends_with( $path, '.php' )
-										? self::convertPhpCode( $data )
+										? self::convert_php_code( $data )
 										: $data,
 								)
-								: self::convertV1ResourceToV2Reference(
+								: self::convert_v1_resource_to_v2_reference(
 									$data
 								);
 							}
@@ -541,7 +541,7 @@ PHP
 		return $v2;
 	}
 
-	protected static function convertV1ResourceToV2Reference( $resource ) {
+	protected static function convert_v1_resource_to_v2_reference( $resource ) {
 		if ( is_string( $resource ) ) {
 			// Plugin or theme slug, preserve as-is.
 			return $resource;
@@ -571,7 +571,7 @@ PHP
 					// If it's a github.com URL, convert to raw.githubusercontent.com like WordPress Playground does.
 					if ( preg_match( '#^https://github\.com/([^/]+)/([^/]+)/(?:blob|raw)/(.+)$#', $url, $matches ) ) {
 						// e.g. https://github.com/user/repo/blob/branch/path/to/file
-						// => https://raw.githubusercontent.com/user/repo/branch/path/to/file
+						// => https://raw.githubusercontent.com/user/repo/branch/path/to/file.
 						$user = $matches[1];
 						$repo = $matches[2];
 						$rest = $matches[3];
@@ -598,7 +598,7 @@ PHP
 						if ( is_string( $file ) ) {
 							$files[ $name ] = $file;
 						} else {
-							$files[ $name ] = self::convertV1ResourceToV2Reference( $file );
+							$files[ $name ] = self::convert_v1_resource_to_v2_reference( $file );
 						}
 					}
 					return array(
@@ -618,7 +618,7 @@ PHP
 		}
 	}
 
-	protected static function translatePath( $path ) {
+	protected static function translate_path( $path ) {
 		// V1 Blueprint paths are absolute.
 		if ( 0 === strncmp( $path, '/wordpress/', strlen( '/wordpress/' ) ) ) {
 			return substr( $path, strlen( '/wordpress/' ) );
@@ -630,7 +630,7 @@ PHP
 		return $path;
 	}
 
-	protected static function convertPhpCode( $code ) {
+	protected static function convert_php_code( $code ) {
 		$had_php_tag = '<?php' === substr( $code, 0, 5 );
 		if ( ! $had_php_tag ) {
 			$code = '<?php ' . $code;

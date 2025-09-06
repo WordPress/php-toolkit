@@ -63,7 +63,7 @@ class FileReadWriteStream extends BaseByteReadStream implements BytePipe {
 		fseek( $this->file_pointer, 0, SEEK_END );
 
 		$len = fwrite( $this->file_pointer, $bytes );
-		if ( false === $len || $len !== strlen( $bytes ) ) {
+		if ( false === $len || strlen( $bytes ) !== $len ) {
 			throw new ByteStreamException( 'fwrite() failed' );
 		}
 		fflush( $this->file_pointer ); // ensures visibility for concurrent readers.

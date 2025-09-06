@@ -15,7 +15,7 @@ class ImportThemeStarterContentStep implements StepInterface {
 	public $theme_slug;
 
 	/**
-	 * @param  string|null $themeSlug  Optional theme slug.
+	 * @param  string|null $theme_slug  Optional theme slug.
 	 */
 	public function __construct( ?string $theme_slug = null ) {
 		$this->theme_slug = $theme_slug;

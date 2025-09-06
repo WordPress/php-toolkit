@@ -99,7 +99,7 @@ class WordPressVersion implements Version {
 		$this->stage_index     = $stage_index;
 	}
 
-	public function compareTo( Version $other ): int {
+	public function compare_to( Version $other ): int {
 		foreach ( array( 'major', 'minor' ) as $part ) {
 			if ( $this->$part !== $other->$part ) {
 				return ( $this->$part < $other->$part ) ? - 1 : 1;
@@ -126,15 +126,15 @@ class WordPressVersion implements Version {
 	public function is( string $comparison, Version $other ): bool {
 		switch ( $comparison ) {
 			case '>':
-				return $this->compareTo( $other ) > 0;
+				return $this->compare_to( $other ) > 0;
 			case '<':
-				return $this->compareTo( $other ) < 0;
+				return $this->compare_to( $other ) < 0;
 			case '>=':
-				return $this->compareTo( $other ) >= 0;
+				return $this->compare_to( $other ) >= 0;
 			case '<=':
-				return $this->compareTo( $other ) <= 0;
+				return $this->compare_to( $other ) <= 0;
 			case '==':
-				return 0 == $this->compareTo( $other );
+				return 0 == $this->compare_to( $other );
 			default:
 				throw new InvalidArgumentException( "Invalid comparison operator: {$comparison}" );
 		}
