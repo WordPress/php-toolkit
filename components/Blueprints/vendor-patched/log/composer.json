@@ -1,11 +1,7 @@
 {
     "name": "psr/log",
     "description": "Common interface for logging libraries",
-    "keywords": [
-        "psr",
-        "psr-3",
-        "log"
-    ],
+    "keywords": ["psr", "psr-3", "log"],
     "homepage": "https://github.com/php-fig/log",
     "license": "MIT",
     "authors": [
@@ -24,7 +20,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "0.1-dev"
+            "dev-master": "1.1.x-dev"
         }
     }
 }

@@ -1,33 +1,33 @@
 {
-    "name": "wp-php-toolkit/cli",
-    "description": "CLI component for WordPress.",
-    "type": "library",
-    "authors": [
-        {
-            "name": "Adam Zielinski",
-            "email": "adam@adamziel.com"
-        },
-        {
-            "name": "WordPress Team",
-            "email": "wordpress@wordpress.org"
-        }
-    ],
-    "require": {
-        "php": ">=7.2"
-    },
-    "autoload": {
-        "psr-4": {
-            "WordPress\\CLI\\": ""
-        },
-        "exclude-from-classmap": [
-            "/Tests/"
-        ]
-    },
-    "archive": {
-        "exclude": [
-            "**/.github/",
-            "**/Tests/",
-            "**/bin/"
-        ]
-    }
+	"name": "wp-php-toolkit/cli",
+	"description": "CLI component for WordPress.",
+	"type": "library",
+	"authors": [
+		{
+			"name": "Adam Zielinski",
+			"email": "adam@adamziel.com"
+		},
+		{
+			"name": "WordPress Team",
+			"email": "wordpress@wordpress.org"
+		}
+	],
+	"require": {
+		"php": ">=7.2"
+	},
+	"autoload": {
+		"psr-4": {
+			"WordPress\\CLI\\": ""
+		},
+		"exclude-from-classmap": [
+			"/Tests/"
+		]
+	},
+	"archive": {
+		"exclude": [
+			"**/.github/",
+			"**/Tests/",
+			"**/bin/"
+		]
+	}
 }
