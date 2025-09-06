@@ -125,7 +125,7 @@ class Runner {
 		$this->main_tracker = new Tracker();
 
 		// Set up progress logging.
-		$this->progress_observer = $configuration->getProgressObserver() ?? new ProgressObserver();
+		$this->progress_observer = $configuration->get_progress_observer() ?? new ProgressObserver();
 		$this->progress_observer->attach_to( $this->main_tracker );
 	}
 
@@ -135,21 +135,21 @@ class Runner {
 
 	private function validate_configuration( RunnerConfiguration $config ): void {
 		// Validate blueprint reference.
-		$blueprint = $config->getBlueprint();
+		$blueprint = $config->get_blueprint();
 		if ( empty( $blueprint ) ) {
 			throw new BlueprintExecutionException( 'A Blueprint reference is required.' );
 		}
 
 		// Validate execution mode.
-		$mode = $config->getExecutionMode();
+		$mode = $config->get_execution_mode();
 		if ( ! in_array( $mode, self::EXECUTION_MODES, true ) ) {
 			throw new BlueprintExecutionException( 'Execution mode must be one of: ' . implode( ', ', self::EXECUTION_MODES ) );
 		}
 
 		// Validate site URL.
 		// Note: $options is not defined in this context, so we skip this block.
-		// If you want to validate the site URL, you should use $config->getTargetSiteUrl().
-		$site_url = $config->getTargetSiteUrl();
+		// If you want to validate the site URL, you should use $config->get_target_site_url().
+		$site_url = $config->get_target_site_url();
 		if ( self::EXECUTION_MODE_CREATE_NEW_SITE === $mode ) {
 			if ( empty( $site_url ) ) {
 				throw new BlueprintExecutionException( sprintf( "Site URL is required when the execution mode is '%s'.", self::EXECUTION_MODE_CREATE_NEW_SITE ) );
@@ -160,13 +160,13 @@ class Runner {
 		}
 
 		// Validate database engine.
-		$db_engine = $config->getDatabaseEngine();
+		$db_engine = $config->get_database_engine();
 		if ( ! in_array( $db_engine, array( 'mysql', 'sqlite' ), true ) ) {
 			throw new BlueprintExecutionException( "Database engine must be either 'mysql' or 'sqlite'." );
 		}
 
 		// Validate database credentials.
-		$db_creds = $config->getDatabaseCredentials();
+		$db_creds = $config->get_database_credentials();
 		if ( 'mysql' === $db_engine ) {
 			if ( empty( $db_creds['username'] ) || empty( $db_creds['databaseName'] ) ) {
 				throw new BlueprintExecutionException( "MySQL credentials are required when database engine is 'mysql'." );
@@ -232,15 +232,15 @@ class Runner {
 			$progress['blueprint']->setCaption( 'Loading Blueprint data' );
 			$this->load_blueprint();
 			$this->validate_blueprint();
-			$this->assets->setExecutionContext( $this->blueprint_execution_context );
+			$this->assets->set_execution_context( $this->blueprint_execution_context );
 			// Create the execution plan early on to surface any errors before.
 			// making the user wait for any downloads or site resolution.
 			$plan = $this->create_execution_plan();
 			$progress['blueprint']->finish();
 
 			$progress['targetResolution']->setCaption( 'Resolving target site' );
-			$target_site_fs   = LocalFilesystem::create( $this->configuration->getTargetSiteRoot() );
-			$wp_cli_reference = $this->configuration->getWpCliReference();
+			$target_site_fs   = LocalFilesystem::create( $this->configuration->get_target_site_root() );
+			$wp_cli_reference = $this->configuration->get_wp_cli_reference();
 
 			$execution_context = $this->blueprint_execution_context->get_meta();
 			if (
@@ -262,7 +262,7 @@ class Runner {
 			);
 			$this->progress_observer->set_runtime( $this->runtime );
 			$progress['wpCli']->setCaption( 'Downloading WP-CLI' );
-			$this->assets->startEagerResolution(
+			$this->assets->start_eager_resolution(
 				array(
 					'wp-cli' => $wp_cli_reference,
 				),
@@ -270,7 +270,7 @@ class Runner {
 			);
 
 			$progress['targetResolution']->setCaption( 'Resolving target site' );
-			if ( self::EXECUTION_MODE_APPLY_TO_EXISTING_SITE === $this->configuration->getExecutionMode() ) {
+			if ( self::EXECUTION_MODE_APPLY_TO_EXISTING_SITE === $this->configuration->get_execution_mode() ) {
 				ExistingSiteResolver::resolve( $this->runtime, $progress['targetResolution'], $this->wp_version_constraint );
 			} else {
 				NewSiteResolver::resolve( $this->runtime, $progress['targetResolution'], $this->wp_version_constraint, $this->recommended_wp_version );
@@ -280,7 +280,7 @@ class Runner {
 			do_action( 'blueprint.target_resolved' );
 
 			$progress['data']->setCaption( 'Resolving data references' );
-			$this->assets->startEagerResolution( $this->data_references_to_auto_resolve, $progress['data'] );
+			$this->assets->start_eager_resolution( $this->data_references_to_auto_resolve, $progress['data'] );
 			$this->execute_plan( $progress['execution'], $plan, $this->runtime );
 
 			// @TODO: Assert WordPress is still correctly installed.
@@ -299,7 +299,7 @@ class Runner {
 
 	/*──────────────── Blueprint load / validation / createExecutionPlan ─────────────. */
 	private function load_blueprint() {
-		$reference = $this->configuration->getBlueprint();
+		$reference = $this->configuration->get_blueprint();
 
 		if ( is_array( $reference ) ) {
 			$this->blueprint_array             = $reference;
@@ -324,9 +324,9 @@ class Runner {
 			// current working directory. This way, a path such as ./blueprint.json.
 			// will mean "a blueprint.json file in the current working directory" and not.
 			// "a ./blueprint.json path without a point of reference".
-			$this->assets->setExecutionContext( LocalFilesystem::create( getcwd() ) );
+			$this->assets->set_execution_context( LocalFilesystem::create( getcwd() ) );
 			$resolved = $this->assets->resolve( $reference );
-			$this->assets->setExecutionContext( null );
+			$this->assets->set_execution_context( null );
 
 			if ( $resolved instanceof File ) {
 				$stream = $resolved->getStream();
@@ -355,7 +355,7 @@ class Runner {
 					if ( $reference instanceof URLReference ) {
 						// @TODO: Only display this if the Blueprint references any bundled files. And in that case,.
 						// make it a fatal error.
-						$this->configuration->getLogger()->warning( 'Blueprints loaded from remote URLs have no execution context.' );
+						$this->configuration->get_logger()->warning( 'Blueprints loaded from remote URLs have no execution context.' );
 						$this->blueprint_execution_context = InMemoryFilesystem::create();
 					} elseif ( $reference instanceof ExecutionContextPath ) {
 						// It was resolved as an ExecutionContextPath, but it's actually a local.
@@ -407,13 +407,13 @@ class Runner {
 			if ( $error ) {
 				throw new BlueprintExecutionException( 'Invalid Blueprint v1 provided.', 0, null, $error );
 			}
-			$this->configuration->getLogger()->debug( 'Blueprint v1 detected. Transpiling to v2...' );
+			$this->configuration->get_logger()->debug( 'Blueprint v1 detected. Transpiling to v2...' );
 
-			$transpiler            = new V1ToV2Transpiler( $this->configuration->getLogger() );
+			$transpiler            = new V1ToV2Transpiler( $this->configuration->get_logger() );
 			$this->blueprint_array = $transpiler->upgrade( $this->blueprint_array );
 		}
 
-		$this->configuration->getLogger()->debug( 'Final resolved Blueprint: ' . json_encode( $this->blueprint_array, JSON_PRETTY_PRINT ) );
+		$this->configuration->get_logger()->debug( 'Final resolved Blueprint: ' . json_encode( $this->blueprint_array, JSON_PRETTY_PRINT ) );
 
 		$this->blueprint_array = apply_filters( 'blueprint.resolved', $this->blueprint_array );
 
@@ -465,7 +465,7 @@ class Runner {
 
 			// Confirm the environment satisfies the PHP version constraint.
 			$current_php_version = PHPVersion::fromString( PHP_VERSION );
-			if ( ! $this->php_version_constraint->satisfiedBy( $current_php_version ) ) {
+			if ( ! $this->php_version_constraint->satisfied_by( $current_php_version ) ) {
 				throw new BlueprintExecutionException(
 					sprintf(
 						'PHP version requirement not satisfied. Blueprint requires %s, but current version is %s',
@@ -689,7 +689,7 @@ class Runner {
 			// @TODO: Make sure this doesn't get included twice in the execution plan,.
 			// e.g. if the Blueprint specified this step manually.
 			if ( $step instanceof ImportContentStep ) {
-				// if($this->configuration->isRunningAsPhar()) {.
+				// if($this->configuration->is_running_as_phar()) {.
 				// throw new InvalidArgumentException( '@TODO: Importing content is not supported when running as phar.' );.
 				// } else {.
 					$libraries_phar_path = __DIR__ . '/../../dist/php-toolkit.phar';
@@ -699,7 +699,7 @@ class Runner {
 						'It generates a `dist/php-toolkit.phar` file bundling all the libraries required for importing content.'
 					);
 				}
-					$this->configuration->getLogger()->info( 'Loading importer libraries from ' . $libraries_phar_path );
+					$this->configuration->get_logger()->info( 'Loading importer libraries from ' . $libraries_phar_path );
 					$source = $this->create_data_reference(
 						new InlineFile(
 							array(
@@ -1061,10 +1061,10 @@ PHP
 		 * at the Blueprint resolution stage, execution context is the entire filesystem. Only
 		 * then we narrow it down to the Blueprint parent directory.
 		 */
-		$execution_context_is_local = $this->configuration->getBlueprint() instanceof ExecutionContextPath;
+		$execution_context_is_local = $this->configuration->get_blueprint() instanceof ExecutionContextPath;
 		if (
 			$execution_context_is_local &&
-			! $this->configuration->isAllowedLocalFilesystemAccess() &&
+			! $this->configuration->is_allowed_local_filesystem_access() &&
 			$reference instanceof ExecutionContextPath
 		) {
 			throw new PermissionsException(

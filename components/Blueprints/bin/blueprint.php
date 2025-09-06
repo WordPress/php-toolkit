@@ -359,7 +359,7 @@ function handleExecCommand( array $positional_args, array $options, array $comma
 	try {
 		// Convert CLI arguments to RunnerConfiguration.
 		$config = cliArgsToRunnerConfiguration( $positional_args, $options );
-		$config->setProgressObserver(
+		$config->set_progress_observer(
 			new ProgressObserver(
 				function ( $progress, $caption ) use ( $progress_reporter ) {
 					$progress_reporter->reportProgress( $progress, $caption );
@@ -369,21 +369,21 @@ function handleExecCommand( array $positional_args, array $options, array $comma
 		$runner = new Runner( $config );
 
 		// Execute the Blueprint.
-		if ( Runner::EXECUTION_MODE_CREATE_NEW_SITE === $config->getExecutionMode() ) {
+		if ( Runner::EXECUTION_MODE_CREATE_NEW_SITE === $config->get_execution_mode() ) {
 			$progress_reporter->reportProgress( 0, 'Creating a new site' );
 		} else {
 			$progress_reporter->reportProgress( 0, 'Updating an existing site' );
 		}
-		$progress_reporter->reportProgress( 0, sprintf( '  Site URL:  %s', $config->getTargetSiteUrl() ) );
-		$progress_reporter->reportProgress( 0, sprintf( '  Site path: %s', $config->getTargetSiteRoot() ) );
-		$progress_reporter->reportProgress( 0, sprintf( '  Blueprint: %s', $config->getBlueprint()->get_human_readable_name() ) );
+		$progress_reporter->reportProgress( 0, sprintf( '  Site URL:  %s', $config->get_target_site_url() ) );
+		$progress_reporter->reportProgress( 0, sprintf( '  Site path: %s', $config->get_target_site_root() ) );
+		$progress_reporter->reportProgress( 0, sprintf( '  Blueprint: %s', $config->get_blueprint()->get_human_readable_name() ) );
 
 		$runner->run();
 
 		$progress_reporter->reportCompletion( 'Blueprint successfully executed.' );
 	} catch ( PermissionsException $ex ) {
 		$permission = $ex->getPermission();
-		$flag       = RunnerConfiguration::getPermissionCliFlag( $permission );
+		$flag       = RunnerConfiguration::get_permission_cli_flag( $permission );
 
 		$progress_reporter->reportError( sprintf( 'Permission Error: %s', $ex->getMessage() ), $ex );
 		$progress_reporter->reportError( sprintf( 'Tip: Run with --allow=%s to grant this permission.', $flag ) );
@@ -415,7 +415,7 @@ function cliArgsToRunnerConfiguration( array $positional_args, array $options ):
 	// The first positional is the blueprint reference.
 	try {
 		$blueprint_reference = $positional_args[0];
-		$config->setBlueprint(
+		$config->set_blueprint(
 			DataReference::create(
 				$blueprint_reference,
 				array(
@@ -431,9 +431,9 @@ function cliArgsToRunnerConfiguration( array $positional_args, array $options ):
 	if ( ! empty( $options['mode'] ) ) {
 		$mode = $options['mode'];
 		if ( Runner::EXECUTION_MODE_CREATE_NEW_SITE === $mode ) {
-			$config->setExecutionMode( Runner::EXECUTION_MODE_CREATE_NEW_SITE );
+			$config->set_execution_mode( Runner::EXECUTION_MODE_CREATE_NEW_SITE );
 		} elseif ( Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE === $mode ) {
-			$config->setExecutionMode( Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE );
+			$config->set_execution_mode( Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE );
 			if ( ! empty( $options['wp'] ) ) {
 				throw new InvalidArgumentException( sprintf( 'The --wp option cannot be used with --mode=%s. The WordPress version is whatever the existing site has.', Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ) );
 			}
@@ -472,12 +472,12 @@ function cliArgsToRunnerConfiguration( array $positional_args, array $options ):
 	if ( false === $absolute_target_site_root || ! is_dir( $absolute_target_site_root ) ) {
 		throw new InvalidArgumentException( "The --site-path path does not exist: {$target_site_root}" );
 	}
-	$config->setTargetSiteRoot( $absolute_target_site_root );
-	$config->setTargetSiteUrl( $options['site-url'] );
+	$config->set_target_site_root( $absolute_target_site_root );
+	$config->set_target_site_url( $options['site-url'] );
 
 	// Set database engine.
 	if ( ! empty( $options['db-engine'] ) ) {
-		$config->setDatabaseEngine( $options['db-engine'] );
+		$config->set_database_engine( $options['db-engine'] );
 	}
 
 	// Set database credentials.
@@ -495,7 +495,7 @@ function cliArgsToRunnerConfiguration( array $positional_args, array $options ):
 			'path' => $options['db-path'] ?? 'wp.db',
 		);
 	}
-	$config->setDatabaseCredentials( $db_creds );
+	$config->set_database_credentials( $db_creds );
 
 	// Set allow options.
 	if ( ! empty( $options['allow'] ) ) {
@@ -503,7 +503,7 @@ function cliArgsToRunnerConfiguration( array $positional_args, array $options ):
 		foreach ( $allow as $permission ) {
 			switch ( $permission ) {
 				case 'read-local-fs':
-					$config->setAllowLocalFilesystemAccess( true );
+					$config->set_allow_local_filesystem_access( true );
 					break;
 				default:
 					throw new InvalidArgumentException(
@@ -516,7 +516,7 @@ function cliArgsToRunnerConfiguration( array $positional_args, array $options ):
 		}
 	}
 
-	$config->setLogger(
+	$config->set_logger(
 		new CLILogger( 'php://stdout', CLILogger::VERBOSITY_INFO )
 	);
 
@@ -641,7 +641,7 @@ try {
 
 	// Parse command arguments and options.
 	$command_argv                  = array_slice( $_SERVER['argv'], 2 ); // Skip "php script.php command".
-	[ $positional_args, $options ] = CLI::parseCommandArgsAndOptions( $command_argv, $command_configurations[ $command ]['options'] );
+	[ $positional_args, $options ] = CLI::parse_command_args_and_options( $command_argv, $command_configurations[ $command ]['options'] );
 
 	// Dispatch to appropriate command handler.
 	switch ( $command ) {

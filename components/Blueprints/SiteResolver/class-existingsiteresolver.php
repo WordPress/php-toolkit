@@ -57,7 +57,7 @@ class ExistingSiteResolver {
 		$progress['check_compatibility']->setCaption( 'Checking WordPress version compatibility' );
 		if ( $wp_version_constraint ) {
 			// Get current WordPress version.
-			$current_word_press_version = WordPressVersion::fromString(
+			$current_wordpress_version = WordPressVersion::fromString(
 				trim(
 					$runtime->eval_php_code_in_subprocess(
 						'<?php
@@ -68,25 +68,25 @@ class ExistingSiteResolver {
 				)
 			);
 
-			if ( ! $wp_version_constraint->satisfiedBy( $current_word_press_version ) ) {
+			if ( ! $wp_version_constraint->satisfied_by( $current_wordpress_version ) ) {
 				throw new BlueprintExecutionException(
 					sprintf(
 						'WordPress version incompatible. Blueprint requires %s, but the site has version %s',
 						$wp_version_constraint->__toString(),
-						$current_word_press_version->__toString()
+						$current_wordpress_version->__toString()
 					)
 				);
 			}
 		}
 
 		// 3. Check PHP version compatibility (already verified at the Blueprint runner level).
-		// See BlueprintRunner::validateBlueprint().
+		// See BlueprintRunner::validate_blueprint().
 
 		$progress['check_compatibility']->finish();
 
 		// 4. Verify database engine matches.
 		$progress['verify_database']->setCaption( 'Verifying database configuration' );
-		$required_engine = $config->getDatabaseEngine();
+		$required_engine = $config->get_database_engine();
 
 		// Check if SQLite integration plugin is active when using SQLite.
 		if ( 'sqlite' === $required_engine ) {

@@ -17,7 +17,7 @@ class RunPHPStepTest extends StepTestCase {
 	 * Test running simple PHP code
 	 */
 	public function testRunSimplePHPCode() {
-		$output_file = wp_join_unix_paths( $this->runtime->get_configuration()->getTargetSiteRoot(), 'output.txt' );
+		$output_file = wp_join_unix_paths( $this->runtime->get_configuration()->get_target_site_root(), 'output.txt' );
 
 		$step = new RunPHPStep(new InlineFile(
 			[
@@ -40,8 +40,8 @@ PHP
 	 * Test running PHP code that creates a file
 	 */
 	public function testRunPHPCodeCreatingFile() {
-		$test_file_path = wp_join_unix_paths( $this->runtime->get_configuration()->getTargetSiteRoot(), 'test_file.txt' );
-		$output_file = wp_join_unix_paths( $this->runtime->get_configuration()->getTargetSiteRoot(), 'output.txt' );
+		$test_file_path = wp_join_unix_paths( $this->runtime->get_configuration()->get_target_site_root(), 'test_file.txt' );
+		$output_file = wp_join_unix_paths( $this->runtime->get_configuration()->get_target_site_root(), 'output.txt' );
 		$test_content = 'This is a test file created by PHP';
 
 		$step = new RunPHPStep(
@@ -72,7 +72,7 @@ PHP
 	 * Test running PHP code that loads WordPress
 	 */
 	public function testRunPHPCodeWithWordPress() {
-		$output_file = wp_join_unix_paths( $this->runtime->get_configuration()->getTargetSiteRoot(), 'output.txt' );
+		$output_file = wp_join_unix_paths( $this->runtime->get_configuration()->get_target_site_root(), 'output.txt' );
 
 		$step = new RunPHPStep(
 			new InlineFile(
@@ -115,7 +115,7 @@ PHP
 	 * Test running PHP code that returns complex data
 	 */
 	public function testRunPHPCodeReturningComplexData() {
-		$output_file = wp_join_unix_paths( $this->runtime->get_configuration()->getTargetSiteRoot(), 'output.txt' );
+		$output_file = wp_join_unix_paths( $this->runtime->get_configuration()->get_target_site_root(), 'output.txt' );
 
 		$step = new RunPHPStep(
 			new InlineFile(

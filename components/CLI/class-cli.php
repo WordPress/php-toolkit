@@ -26,7 +26,7 @@ class CLI {
 	 *     'help'      => [ 'h', false, false, 'Show help' ],
 	 *   ];
 	 *   $argv = ['--site-url=https://mysite.test', '--site-path', '/var/www', '-h', 'blueprint.json'];
-	 *   [$positionals, $options] = CLI::parseCommandArgsAndOptions($argv, $optionDefs);
+	 *   [$positionals, $options] = CLI::parse_command_args_and_options($argv, $optionDefs);
 	 *   // $positionals = ['blueprint.json']
 	 *   // $options = [
 	 *   //   'site-url'  => 'https://mysite.test',
@@ -42,7 +42,7 @@ class CLI {
 	 * @return array            [ $positionals, $options ]
 	 * @throws InvalidArgumentException for unknown options or missing required values.
 	 */
-	public static function parseCommandArgsAndOptions( array $argv, array $option_defs ): array {
+	public static function parse_command_args_and_options( array $argv, array $option_defs ): array {
 		$positionals = array();
 		$options     = array();
 		$short2long  = array();

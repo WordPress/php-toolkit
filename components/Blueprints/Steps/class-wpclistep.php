@@ -47,7 +47,7 @@ class WPCLIStep implements StepInterface {
 				// For Docker compatibility. If we got this far, the Blueprint runner was already.
 				// allowed to run as root.
 				'--allow-root',
-				'--path=' . $runtime->get_configuration()->getTargetSiteRoot(),
+				'--path=' . $runtime->get_configuration()->get_target_site_root(),
 				substr( $command, 3 ),
 			)
 		);

@@ -74,7 +74,7 @@ class RunnerConfiguration {
 	/**
 	 * @param  DataReference|mixed[] $r
 	 */
-	public function setBlueprint( $r ): self {
+	public function set_blueprint( $r ): self {
 		$this->blueprint_ref = $r;
 
 		return $this;
@@ -83,47 +83,47 @@ class RunnerConfiguration {
 	/**
 	 * @return DataReference|mixed[]
 	 */
-	public function getBlueprint() {
+	public function get_blueprint() {
 		return $this->blueprint_ref;
 	}
 
-	public function setLogger( LoggerInterface $logger ): self {
+	public function set_logger( LoggerInterface $logger ): self {
 		$this->logger = $logger;
 
 		return $this;
 	}
 
-	public function getLogger(): LoggerInterface {
+	public function get_logger(): LoggerInterface {
 		return $this->logger;
 	}
 
-	public function setExecutionMode( string $m ): self {
+	public function set_execution_mode( string $m ): self {
 		$this->mode = $m;
 
 		return $this;
 	}
 
-	public function getExecutionMode(): string {
+	public function get_execution_mode(): string {
 		return $this->mode;
 	}
 
-	public function setTargetSiteRoot( string $d ): self {
+	public function set_target_site_root( string $d ): self {
 		$this->root_dir = $d;
 
 		return $this;
 	}
 
-	public function getTargetSiteRoot(): string {
+	public function get_target_site_root(): string {
 		return $this->root_dir;
 	}
 
-	public function setTargetSiteUrl( string $u ): self {
+	public function set_target_site_url( string $u ): self {
 		$this->site_url = $u;
 
 		return $this;
 	}
 
-	public function getTargetSiteUrl(): string {
+	public function get_target_site_url(): string {
 		return $this->site_url;
 	}
 
@@ -135,7 +135,7 @@ class RunnerConfiguration {
 	 * @return self
 	 * @throws InvalidArgumentException If the database engine is invalid.
 	 */
-	public function setDatabaseEngine( string $database_engine ): self {
+	public function set_database_engine( string $database_engine ): self {
 		if ( ! in_array( $database_engine, array( 'mysql', 'sqlite' ) ) ) {
 			throw new InvalidArgumentException( "Invalid database engine: {$database_engine}" );
 		}
@@ -145,7 +145,7 @@ class RunnerConfiguration {
 		return $this;
 	}
 
-	public function getDatabaseEngine(): string {
+	public function get_database_engine(): string {
 		return $this->database_engine;
 	}
 
@@ -156,13 +156,13 @@ class RunnerConfiguration {
 	 *
 	 * @return self
 	 */
-	public function setDatabaseCredentials( array $database_credentials ): self {
+	public function set_database_credentials( array $database_credentials ): self {
 		$this->database_credentials = $database_credentials;
 
 		return $this;
 	}
 
-	public function getDatabaseCredentials(): array {
+	public function get_database_credentials(): array {
 		return $this->database_credentials;
 	}
 
@@ -173,7 +173,7 @@ class RunnerConfiguration {
 	 *
 	 * @return self
 	 */
-	public function setProgressObserver( ProgressObserver $observer ): self {
+	public function set_progress_observer( ProgressObserver $observer ): self {
 		$this->progress_observer = $observer;
 
 		return $this;
@@ -184,7 +184,7 @@ class RunnerConfiguration {
 	 *
 	 * @return callable|null
 	 */
-	public function getProgressObserver() {
+	public function get_progress_observer() {
 		return $this->progress_observer;
 	}
 
@@ -195,7 +195,7 @@ class RunnerConfiguration {
 	 *
 	 * @return self
 	 */
-	public function setSqliteIntegrationPlugin( DataReference $ref ): self {
+	public function set_sqlite_integration_plugin( DataReference $ref ): self {
 		$this->sqlite_integration_plugin = $ref;
 
 		return $this;
@@ -206,7 +206,7 @@ class RunnerConfiguration {
 	 *
 	 * @return DataReference|null
 	 */
-	public function getSqliteIntegrationPlugin(): ?DataReference {
+	public function get_sqlite_integration_plugin(): ?DataReference {
 		return $this->sqlite_integration_plugin;
 	}
 
@@ -217,7 +217,7 @@ class RunnerConfiguration {
 	 *
 	 * @return self
 	 */
-	public function setWpCliReference( DataReference $ref ): self {
+	public function set_wp_cli_reference( DataReference $ref ): self {
 		$this->wp_cli_reference = $ref;
 
 		return $this;
@@ -228,7 +228,7 @@ class RunnerConfiguration {
 	 *
 	 * @return DataReference
 	 */
-	public function getWpCliReference(): DataReference {
+	public function get_wp_cli_reference(): DataReference {
 		return $this->wp_cli_reference;
 	}
 
@@ -239,7 +239,7 @@ class RunnerConfiguration {
 	 *
 	 * @return self
 	 */
-	public function setAllowLocalFilesystemAccess( bool $allow ): self {
+	public function set_allow_local_filesystem_access( bool $allow ): self {
 		$this->permissions[ self::PERMISSION_LOCAL_FILESYSTEM_ACCESS ] = $allow;
 
 		return $this;
@@ -250,7 +250,7 @@ class RunnerConfiguration {
 	 *
 	 * @return bool True if filesystem access is allowed, false otherwise.
 	 */
-	public function isAllowedLocalFilesystemAccess(): bool {
+	public function is_allowed_local_filesystem_access(): bool {
 		return $this->permissions[ self::PERMISSION_LOCAL_FILESYSTEM_ACCESS ];
 	}
 
@@ -261,11 +261,11 @@ class RunnerConfiguration {
 	 *
 	 * @return string The CLI flag name
 	 */
-	public static function getPermissionCliFlag( string $permission ): string {
+	public static function get_permission_cli_flag( string $permission ): string {
 		return $permission;
 	}
 
-	public function isRunningAsPhar(): bool {
+	public function is_running_as_phar(): bool {
 		return '' !== \Phar::running( false );
 	}
 }

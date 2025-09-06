@@ -43,7 +43,7 @@ class ZipEncoder {
 	 */
 	public function append_file( FileEntry $entry ) {
 		$this->compute_file_hash_and_size( $entry );
-		$this->recordFileForCentralDirectory( $entry );
+		$this->record_file_for_central_directory( $entry );
 		$this->append_file_entry_header( $entry );
 
 		try {
@@ -111,7 +111,7 @@ class ZipEncoder {
 	}
 
 
-	private function recordFileForCentralDirectory( FileEntry $file_entry ) {
+	private function record_file_for_central_directory( FileEntry $file_entry ) {
 		$this->central_directory[] = new CentralDirectoryEntry(
 			array(
 				'version_created'     => 2,
@@ -135,7 +135,7 @@ class ZipEncoder {
 	}
 
 	public function close() {
-		$this->flushCentralDirectory();
+		$this->flush_central_directory();
 	}
 
 	/**
@@ -144,7 +144,7 @@ class ZipEncoder {
 	 * This method writes all the central directory entries stored and then writes
 	 * the end of central directory record, finalizing the ZIP archive structure.
 	 */
-	private function flushCentralDirectory() {
+	private function flush_central_directory() {
 		$central_directory_offset = $this->bytes_written;
 
 		// Write all central directory entries.

@@ -78,7 +78,7 @@ class ImportMediaStep implements StepInterface {
 		}
 
 		// Get the upload path relative to the WordPress root.
-		$upload_base_dir = ltrim( substr( $upload_dir['path'], strlen( $runtime->get_configuration()->getTargetSiteRoot() ) ), '/' );
+		$upload_base_dir = ltrim( substr( $upload_dir['path'], strlen( $runtime->get_configuration()->get_target_site_root() ) ), '/' );
 
 		// Ensure the uploads directory exists.
 		$fs = $runtime->get_target_filesystem();
@@ -86,7 +86,7 @@ class ImportMediaStep implements StepInterface {
 			$fs->mkdir( $upload_base_dir, array( 'recursive' => true ) );
 		}
 
-		$resolved = $runtime->get_data_reference_resolver()->startEagerResolution(
+		$resolved = $runtime->get_data_reference_resolver()->start_eager_resolution(
 			array_map(
 				function ( $media ) {
 					return $media->source;

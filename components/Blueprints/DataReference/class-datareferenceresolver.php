@@ -52,11 +52,11 @@ class DataReferenceResolver {
 		$this->tmp_root = $tmp_root ? $tmp_root : wp_unix_sys_get_temp_dir();
 	}
 
-	public function setExecutionContext( ?Filesystem $execution_context ) {
+	public function set_execution_context( ?Filesystem $execution_context ) {
 		$this->execution_context = $execution_context;
 	}
 
-	public function startEagerResolution( array $data_references, Tracker $data_resolution_tracker ) {
+	public function start_eager_resolution( array $data_references, Tracker $data_resolution_tracker ) {
 		$this->data_resolution_tracker = $data_resolution_tracker;
 		$this->data_references         = $data_references;
 		$nb_data_references            = count( $this->data_references );
