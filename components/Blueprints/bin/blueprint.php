@@ -669,12 +669,12 @@ try {
 	$last_pretty_path = '';
 	$current_error    = $ex->schema_error;
 	while ( $current_error ) {
-		$pretty_path = $current_error->getPrettyPath();
+		$pretty_path = $current_error->get_pretty_path();
 		if ( $pretty_path !== $last_pretty_path ) {
 			$progress_reporter->reportError( $pretty_path . ':' );
 		}
 		$progress_reporter->reportError( $current_error->message );
-		$current_error    = $current_error->getMostProbableCause();
+		$current_error    = $current_error->get_most_probable_cause();
 		$last_pretty_path = $pretty_path;
 	}
 	exit( 1 );

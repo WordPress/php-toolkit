@@ -36,7 +36,7 @@ class ProgressObserver {
 	 *
 	 * @param  Tracker $tracker  The tracker to log progress for
 	 */
-	public function attachTo( Tracker $tracker ) {
+	public function attach_to( Tracker $tracker ) {
 		$tracker->events->addListener(
 			ProgressEvent::class,
 			function ( ProgressEvent $event ) {
@@ -52,7 +52,7 @@ class ProgressObserver {
 		);
 	}
 
-	public function setRuntime( Runtime $runtime ) {
+	public function set_runtime( Runtime $runtime ) {
 		$this->runtime = $runtime;
 	}
 }

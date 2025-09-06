@@ -712,7 +712,7 @@ class HumanFriendlySchemaValidatorTest extends TestCase {
 		if ( ! $shouldBeValid && $expectedErrorMessage ) {
 			$this->assertEquals( $expectedErrorMessage, $result->message );
 			if ( $expectedExplanation ) {
-				$this->assertEquals( $expectedExplanation, $result->getMostProbableCause()->message );
+				$this->assertEquals( $expectedExplanation, $result->get_most_probable_cause()->message );
 			}
 		}
 	}
@@ -965,7 +965,7 @@ class HumanFriendlySchemaValidatorTest extends TestCase {
 		$result = $validator->validate( [ 'mixed' => [ 'name' => 123, 'count' => 'not a number' ] ] );
 		$this->assertInstanceOf( ValidationError::class, $result );
 		$this->assertEquals( 'Object validation failed.', $result->message );
-		$this->assertEquals( 'Expected type "string" but got type "integer".', $result->getMostProbableCause()->message );
+		$this->assertEquals( 'Expected type "string" but got type "integer".', $result->get_most_probable_cause()->message );
 	}
 
 	/**
@@ -1546,7 +1546,7 @@ class HumanFriendlySchemaValidatorTest extends TestCase {
 		$result2 = $validator->validate( [ 1, 2, 3 ] );
 		$this->assertInstanceOf( ValidationError::class, $result2 );
 		$this->assertEquals( 'Array validation failed.', $result2->message );
-		$this->assertEquals( 'Expected type "string" but got type "integer".', $result2->getMostProbableCause()->message );
+		$this->assertEquals( 'Expected type "string" but got type "integer".', $result2->get_most_probable_cause()->message );
 
 		// Invalid: completely wrong type
 		$result3 = $validator->validate( true );
