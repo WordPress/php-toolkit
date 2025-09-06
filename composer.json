@@ -29,7 +29,8 @@
         "slevomat/coding-standard": "^8.21.1",
         "wp-coding-standards/wpcs": "^3.2.0",
         "phpunit/phpunit": "^9.5",
-        "phpstan/phpstan": "^1.0"
+        "phpstan/phpstan": "^1.0",
+        "symplify/monorepo-builder": "^11.2"
     },
     "autoload": {
         "exclude-from-classmap": [

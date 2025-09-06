@@ -1,0 +1,118 @@
+name: Release (MB + Split + Atomic Publish)
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "patch | minor | major | vX.Y.Z"
+        required: true
+        default: patch
+      run_smoke:
+        type: boolean
+        default: true
+        description: "Install each package from its ZIP before publishing"
+      publish_packagist:
+        type: boolean
+        default: true
+        description: "Trigger Packagist at the end"
+
+permissions:
+  contents: write
+
+env:
+  DEFAULT_BRANCH: main
+  SPLIT_ORG: ${{ vars.SPLIT_GH_ORG || github.repository_owner }}
+  # Use a fine-grained PAT with repo:write on target repos if not same org
+  GITHUB_TOKEN: ${{ secrets.MONOREPO_SPLIT_TOKEN || secrets.GITHUB_TOKEN }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.2', coverage: none }
+
+      - name: Install tools
+        run: composer install --no-interaction --no-progress
+
+      - name: Run Monorepo Builder release
+        run: |
+          vendor/bin/monorepo-builder release '${{ inputs.bump }}'
+          git push --follow-tags
+        # MB supports 'release patch|minor|major' or explicit 'release vX.Y.Z'
+        # and runs workers to tag+push in order. Ref MB docs.
+
+      - name: Resolve tag we just created
+        id: tag
+        run: |
+          # last tag on current HEAD
+          T=$(git describe --abbrev=0 --tags)
+          echo "tag=$T" >> $GITHUB_OUTPUT
+          echo "Created tag: $T"
+
+  prepare_matrix:
+    runs-on: ubuntu-latest
+    needs: release
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate split matrix from composer names
+        id: gen
+        run: |
+          php tools/list-packages.php | tee /tmp/matrix.json
+          echo "matrix=$(cat /tmp/matrix.json)" >> $GITHUB_OUTPUT
+
+  split:
+    runs-on: ubuntu-latest
+    needs: [release, prepare_matrix]
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare_matrix.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Split ${{ matrix.path }} -> ${{ matrix.org }}/${{ matrix.repo }}
+        uses: symplify/monorepo-split-github-action@v2
+        with:
+          # run the "tag mode" so leaf repos get the same tag
+          tag: ${{ needs.release.outputs.tag }}
+          package_directory: ${{ matrix.path }}
+          repository_organization: ${{ matrix.org }}
+          repository_name: ${{ matrix.repo }}
+          user_name: monorepo-bot
+          user_email: monorepo-bot@users.noreply.github.com
+
+  prepublish_smoke:
+    if: ${{ inputs.run_smoke }}
+    runs-on: ubuntu-latest
+    needs: [split, prepare_matrix]
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.2', coverage: none }
+      - name: Smoke install from ZIP
+        run: |
+          chmod +x tools/prepublish-test.sh
+          # test all packages (mono-version); change to "changed only" if you like
+          pkgs=$(jq -r '.include[].path' <<< '${{ needs.prepare_matrix.outputs.matrix }}')
+          ./tools/prepublish-test.sh $pkgs
+
+  publish_packagist:
+    if: ${{ inputs.publish_packagist }}
+    runs-on: ubuntu-latest
+    needs: [split, prepublish_smoke]
+    env:
+      PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+      PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
+    steps:
+      - name: Trigger Packagist updates (atomic reveal)
+        run: |
+          test -n "$PACKAGIST_USERNAME" && test -n "$PACKAGIST_TOKEN"
+          repos=$(jq -r '.include[] | "\("${{ env.SPLIT_ORG }})/\(.repo)"' <<< '${{ needs.prepare_matrix.outputs.matrix }}')
+          bash tools/packagist-publish.sh $repos
