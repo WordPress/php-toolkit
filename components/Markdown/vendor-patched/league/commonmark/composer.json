@@ -32,10 +32,10 @@
     "require": {
         "php": "^7.4 || ^8.0",
         "ext-mbstring": "*",
-        "league/config": "^0.0.10",
-        "psr/event-dispatcher": "^0.0.10",
-        "symfony/deprecation-contracts": "^0.0.10",
-        "symfony/polyfill-php80": "^0.0.10"
+        "league/config": "^0.1",
+        "psr/event-dispatcher": "^0.1",
+        "symfony/deprecation-contracts": "^0.1",
+        "symfony/polyfill-php80": "^0.1"
     },
     "require-dev": {
         "ext-json": "*",
@@ -52,8 +52,8 @@
         "phpunit/phpunit": "^9.5.21 || ^10.5.9 || ^11.0.0",
         "scrutinizer/ocular": "^1.8.1",
         "symfony/finder": "^5.3 | ^6.0 | ^7.0",
-        "symfony/process": "^0.0.10",
-        "symfony/yaml": "^0.0.10",
+        "symfony/process": "^0.1",
+        "symfony/yaml": "^0.1",
         "unleashedtech/php-coding-standard": "^3.1.1",
         "vimeo/psalm": "^4.24.0 || ^5.0.0"
     },
