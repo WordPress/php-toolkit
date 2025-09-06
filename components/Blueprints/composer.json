@@ -14,12 +14,12 @@
     ],
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/bytestream": "^0.0.11",
-        "wp-php-toolkit/blueprints": "^0.0.11",
-        "wp-php-toolkit/filesystem": "^0.0.11",
-        "wp-php-toolkit/http-client": "^0.0.11",
-        "wp-php-toolkit/xml": "^0.0.11",
-        "wp-php-toolkit/zip": "^0.0.11"
+        "wp-php-toolkit/bytestream": "^0.1",
+        "wp-php-toolkit/blueprints": "^0.1",
+        "wp-php-toolkit/filesystem": "^0.1",
+        "wp-php-toolkit/http-client": "^0.1",
+        "wp-php-toolkit/xml": "^0.1",
+        "wp-php-toolkit/zip": "^0.1"
     },
     "autoload": {
         "classmap": [
