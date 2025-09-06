@@ -65,7 +65,7 @@ jobs:
       - name: Generate split matrix from composer names
         id: gen
         run: |
-          php tools/list-packages.php | tee /tmp/matrix.json
+          php bin/list-packages.php | tee /tmp/matrix.json
           echo "matrix=$(cat /tmp/matrix.json)" >> $GITHUB_OUTPUT
 
   split:
@@ -98,10 +98,10 @@ jobs:
         with: { php-version: '8.2', coverage: none }
       - name: Smoke install from ZIP
         run: |
-          chmod +x tools/prepublish-test.sh
+          chmod +x bin/prepublish-test.sh
           # test all packages (mono-version); change to "changed only" if you like
           pkgs=$(jq -r '.include[].path' <<< '${{ needs.prepare_matrix.outputs.matrix }}')
-          ./tools/prepublish-test.sh $pkgs
+          ./bin/prepublish-test.sh $pkgs
 
   publish_packagist:
     if: ${{ inputs.publish_packagist }}
@@ -115,4 +115,4 @@ jobs:
         run: |
           test -n "$PACKAGIST_USERNAME" && test -n "$PACKAGIST_TOKEN"
           repos=$(jq -r '.include[] | "\("${{ env.SPLIT_ORG }})/\(.repo)"' <<< '${{ needs.prepare_matrix.outputs.matrix }}')
-          bash tools/packagist-publish.sh $repos
+          bash bin/packagist-publish.sh $repos

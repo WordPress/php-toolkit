@@ -14,7 +14,6 @@ use Symplify\MonorepoBuilder\Release\ReleaseWorker\PushNextDevReleaseWorker;
 return static function (MBConfig $config): void {
     // Where packages live
     $config->packageDirectories([
-        __DIR__ . '/packages',
         __DIR__ . '/components',
     ]);
 
