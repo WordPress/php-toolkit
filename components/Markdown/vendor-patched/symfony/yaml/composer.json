@@ -16,8 +16,8 @@
     ],
     "require": {
         "php": ">=8.2",
-        "symfony/deprecation-contracts": "^0.0.7",
-        "symfony/polyfill-ctype": "^0.0.7"
+        "symfony/deprecation-contracts": "^0.1",
+        "symfony/polyfill-ctype": "^0.1"
     },
     "require-dev": {
         "symfony/console": "^6.4|^7.0"
