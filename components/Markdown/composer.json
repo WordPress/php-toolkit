@@ -1,7 +1,7 @@
 {
-	"name": "wp-php-toolkit/markdown",
-	"description": "Markdown component for WordPress.",
-	"type": "library",
+    "name": "wp-php-toolkit/markdown",
+    "description": "Markdown component for WordPress.",
+    "type": "library",
     "authors": [
         {
             "name": "Adam Zielinski",
@@ -12,27 +12,27 @@
             "email": "wordpress@wordpress.org"
         }
     ],
-	"require": {
-		"php": ">=7.2",
-		"wp-php-toolkit/data-liberation": "dev-trunk",
-		"wp-php-toolkit/filesystem": "dev-trunk"
-	},
-	"autoload": {
-		"classmap": [
-			"vendor-patched"
-		],
-		"psr-4": {
-			"WordPress\\Markdown\\": ""
-		},
+    "require": {
+        "php": ">=7.2",
+        "wp-php-toolkit/data-liberation": "^0.0.11",
+        "wp-php-toolkit/filesystem": "^0.0.11"
+    },
+    "autoload": {
+        "classmap": [
+            "vendor-patched"
+        ],
+        "psr-4": {
+            "WordPress\\Markdown\\": ""
+        },
         "exclude-from-classmap": [
             "/Tests/"
         ]
-	},
-	"archive": {
-		"exclude": [
-			"**/.github/",
-			"**/Tests/",
-			"**/bin/"
-		]
-	}
+    },
+    "archive": {
+        "exclude": [
+            "**/.github/",
+            "**/Tests/",
+            "**/bin/"
+        ]
+    }
 }
