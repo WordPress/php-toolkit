@@ -1,0 +1,66 @@
+name: Monorepo Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type (patch, minor, major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  monorepo-release:
+    runs-on: ubuntu-latest
+    environment: composer_deploy
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Configure Git user
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Run MonorepoBuilder release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          vendor/bin/monorepo-builder release ${{ github.event.inputs.bump }}
+
+      - name: Ensure GitHub CLI and jq are installed
+        run: |
+          if ! command -v gh >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y gh jq
+          else
+            gh --version
+            jq --version || (sudo apt-get update && sudo apt-get install -y jq)
+          fi
+
+      - name: Split code into component repositories
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+          PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
+          GH_ORG: ${{ secrets.GH_ORG }}
+          DEFAULT_BRANCH: trunk
+        run: bash bin/split-code.sh
+

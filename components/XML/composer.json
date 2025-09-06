@@ -1,7 +1,6 @@
 {
     "name": "wp-php-toolkit/xml",
     "description": "XML component for WordPress.",
-    "version": "0.0.1",
     "type": "library",
     "authors": [
         {
@@ -15,7 +14,7 @@
     ],
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/encoding": "^0.1"
+        "wp-php-toolkit/encoding": "^0.0.11"
     },
     "autoload": {
         "classmap": [

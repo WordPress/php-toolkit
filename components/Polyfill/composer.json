@@ -1,7 +1,6 @@
 {
     "name": "wp-php-toolkit/polyfill",
     "description": "Polyfill component for WordPress.",
-    "version": "0.0.1",
     "type": "library",
     "authors": [
         {

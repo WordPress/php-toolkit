@@ -1,7 +1,6 @@
 {
-    "name": "wordpress/php-toolkit",
+    "name": "wp-php-toolkit/php-toolkit",
     "type": "library",
-    "version": "0.0.1",
     "description": "WordPress Components",
     "keywords": [
         "wordpress",

@@ -1,7 +1,6 @@
 {
     "name": "wp-php-toolkit/http-client",
     "description": "HttpClient component for WordPress.",
-    "version": "0.0.1",
     "type": "library",
     "authors": [
         {
@@ -15,9 +14,9 @@
     ],
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/data-liberation": "^0.1",
-        "wp-php-toolkit/bytestream": "^0.1",
-        "wp-php-toolkit/filesystem": "^0.1"
+        "wp-php-toolkit/data-liberation": "^0.0.11",
+        "wp-php-toolkit/bytestream": "^0.0.11",
+        "wp-php-toolkit/filesystem": "^0.0.11"
     },
     "autoload": {
         "psr-4": {

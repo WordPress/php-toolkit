@@ -1,7 +1,6 @@
 {
     "name": "wp-php-toolkit/merge",
     "description": "Merge component for WordPress with configurable diffing and merging strategies.",
-    "version": "0.0.1",
     "type": "library",
     "license": "GPL-2.0-or-later",
     "autoload": {
@@ -16,8 +15,8 @@
     ],
     "require": {
         "php": ">=7.4",
-        "yetanotherape/diff-match-patch": "^0.1",
-        "wordpress/data-liberation": "dev-trunk",
+        "yetanotherape/diff-match-patch": "^0.0.11",
+        "wp-php-toolkit/data-liberation": "^0.0.11",
         "ext-mbstring": "*"
     },
     "require-dev": {
