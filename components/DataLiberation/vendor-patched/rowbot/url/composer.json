@@ -21,9 +21,9 @@
     "require": {
         "php": ">=8.1",
         "ext-mbstring": "*",
-        "brick/math": "^0.1",
-        "psr/log": "^0.1",
-        "rowbot/idna": "^0.1"
+        "brick/math": "^0.0.8",
+        "psr/log": "^0.0.8",
+        "rowbot/idna": "^0.0.8"
     },
     "require-dev": {
         "guzzlehttp/guzzle": "^7.0",

@@ -1,6 +1,7 @@
 {
     "name": "wp-php-toolkit/markdown",
     "description": "Markdown component for WordPress.",
+    "version": "0.0.1",
     "type": "library",
     "authors": [
         {
@@ -14,8 +15,8 @@
     ],
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/data-liberation": "^0.1",
-        "wp-php-toolkit/filesystem": "^0.1"
+        "wp-php-toolkit/data-liberation": "^0.0.8",
+        "wp-php-toolkit/filesystem": "^0.0.8"
     },
     "autoload": {
         "classmap": [

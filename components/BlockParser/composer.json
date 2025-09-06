@@ -1,6 +1,7 @@
 {
     "name": "wp-php-toolkit/blockparser",
     "description": "BlockParser component for WordPress.",
+    "version": "0.0.1",
     "type": "library",
     "require": {
         "php": ">=7.2"

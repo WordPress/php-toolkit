@@ -25,12 +25,12 @@
     ],
     "require": {
         "php": "^7.4 || ^8.0",
-        "symfony/yaml": "^0.1"
+        "symfony/yaml": "^0.0.8"
     },
     "require-dev": {
         "ext-json": "*",
         "friendsofphp/php-cs-fixer": "^3.41",
-        "league/commonmark": "^0.1",
+        "league/commonmark": "^0.0.8",
         "mthaml/mthaml": "^1.3",
         "nette/neon": "^2.2 || ^3.0",
         "phpunit/phpunit": "^9.6",

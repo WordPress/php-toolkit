@@ -1,6 +1,7 @@
 {
     "name": "wp-php-toolkit/zip",
     "description": "Zip component for WordPress.",
+    "version": "0.0.1",
     "type": "library",
     "authors": [
         {
@@ -14,9 +15,9 @@
     ],
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/bytestream": "^0.1",
-        "wp-php-toolkit/filesystem": "^0.1",
-        "wp-php-toolkit/http-client": "^0.1"
+        "wp-php-toolkit/bytestream": "^0.0.8",
+        "wp-php-toolkit/filesystem": "^0.0.8",
+        "wp-php-toolkit/http-client": "^0.0.8"
     },
     "autoload": {
         "psr-4": {
