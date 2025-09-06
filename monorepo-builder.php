@@ -20,7 +20,7 @@ return static function ( MBConfig $config ): void {
 		)
 	);
     $config->defaultBranch('trunk');
-	// release workers - in order to execute
+	// Release workers - in order to execute.
 	$config->workers(
 		array(
 			UpdateReplaceReleaseWorker::class,
