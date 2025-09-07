@@ -34,6 +34,9 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist
 
+      - name: Install Monorepo Builder
+        run: composer global require symplify/monorepo-builder:^12.2
+
       - name: Configure Git user
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -43,7 +46,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          vendor/bin/monorepo-builder release ${{ github.event.inputs.bump }} --no-interaction --push-tags
+          $(composer global config bin-dir --absolute)/monorepo-builder release ${{ github.event.inputs.bump }} --no-interaction --push-tags
 
       - name: Ensure GitHub CLI and jq are installed
         run: |
