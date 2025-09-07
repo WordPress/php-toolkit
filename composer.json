@@ -23,13 +23,13 @@
         "ext-mbstring": "*"
     },
     "require-dev": {
-        "yoast/phpunit-polyfills": "2.0.0",
+        "yoast/phpunit-polyfills": "2.0.5",
         "squizlabs/php_codesniffer": "^3.13.4",
         "phpcompatibility/php-compatibility": "^9.3.5",
-        "slevomat/coding-standard": "^8.21.1",
+        "slevomat/coding-standard": "^8.22.0",
         "wp-coding-standards/wpcs": "^3.2.0",
-        "phpunit/phpunit": "^9.5",
-        "phpstan/phpstan": "^1.0",
+        "phpunit/phpunit": "^9.6",
+        "phpstan/phpstan": "^1.12.28",
         "symplify/monorepo-builder": "^9.4"
     },
     "autoload": {
