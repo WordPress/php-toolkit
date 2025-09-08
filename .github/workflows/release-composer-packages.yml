@@ -58,9 +58,15 @@ jobs:
             jq --version || (sudo apt-get update && sudo apt-get install -y jq)
           fi
 
+      - name: Install git-filter-repo
+        run: |
+          python3 -m pip install --user git-filter-repo
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
       - name: Split code into component repositories
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
           PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
           GH_CODESPLIT_EMAIL: ${{ secrets.GH_CODESPLIT_EMAIL }}

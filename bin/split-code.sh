@@ -55,7 +55,12 @@ split_and_push() {
   # Prefer GH_TOKEN; fall back to GITHUB_TOKEN for GitHub Actions
   token="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
 
-  repo_url="https://x-access-token:${token}@github.com/${org}/${repo_name}.git"
+  if [[ -n "$token" ]]; then
+    git config --global url."https://x-access-token:${token}@github.com/".insteadOf "https://github.com/" || true
+    repo_url="https://github.com/${org}/${repo_name}.git"
+  else
+    repo_url="git@github.com:${org}/${repo_name}.git"
+  fi
   
   echo "==> Splitting ${pkg_dir} -> ${org}/${repo_name}"
 
