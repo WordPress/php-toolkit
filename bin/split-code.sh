@@ -56,9 +56,7 @@ split_and_push() {
   token="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
 
   if [[ -n "$token" ]]; then
-    # Configure git to inject token for any https://github.com URLs
-    git config --global url."https://x-access-token:${token}@github.com/".insteadOf "https://github.com/" || true
-    repo_url="https://github.com/${org}/${repo_name}.git"
+    repo_url="https://x-access-token:${token}@github.com/${org}/${repo_name}.git"
   else
     repo_url="git@github.com:${org}/${repo_name}.git"
   fi
