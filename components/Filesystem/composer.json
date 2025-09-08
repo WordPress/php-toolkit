@@ -14,7 +14,7 @@
     ],
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/bytestream": "^0.1"
+        "wp-php-toolkit/bytestream": "^0.0.19"
     },
     "autoload": {
         "psr-4": {
