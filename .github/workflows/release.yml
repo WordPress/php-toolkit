@@ -50,7 +50,7 @@ jobs:
       - name: Determine next version
         id: semver
         run: |
-          last="$(git describe --tags --abbrev=0 --match 'v[0-9]*' || echo 'v0.1.0')"
+          last="$(git tag --list 'v[0-9]*' --sort=-version:refname | head -n 1 || echo 'v0.1.0')"
           bump="${{ github.event.inputs.bump }}"
           case "$bump" in
             patch|minor|major) inc="$bump" ;;
