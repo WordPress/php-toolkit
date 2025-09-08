@@ -1,4 +1,4 @@
-name: Monorepo Release
+name: Release new version
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ on:
           - major
 
 jobs:
-  monorepo-release:
+  release-composer-packages:
     runs-on: ubuntu-latest
     environment: composer_deploy
     permissions:
@@ -42,11 +42,11 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      # - name: Run MonorepoBuilder release
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: |
-      #     $(composer global config bin-dir --absolute)/monorepo-builder release ${{ github.event.inputs.bump }} 
+      - name: Run MonorepoBuilder release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $(composer global config bin-dir --absolute)/monorepo-builder release ${{ github.event.inputs.bump }} 
 
       - name: Ensure GitHub CLI and jq are installed
         run: |
@@ -76,3 +76,110 @@ jobs:
           git config --global user.email ${{ secrets.GH_CODESPLIT_EMAIL }}
           git config --global user.name "github-actions[bot]"
           bash bin/split-code.sh
+
+  build-phar-files:
+    runs-on: ubuntu-latest
+    permissions:
+        contents: write
+        packages: write
+
+    steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+
+        - name: Set up PHP
+          uses: shivammathur/setup-php@v2
+          with:
+              php-version: '8.0' # Specify the PHP version you need
+
+        - name: Install Composer dependencies
+          run: composer install --no-dev --prefer-dist
+
+        - name: Install Box
+          run: composer global require humbug/box
+
+        - name: Set up Node.js
+          uses: actions/setup-node@v2
+          with:
+              node-version: '22'
+
+        - name: Install npm dependencies for static-files-editor
+          run: |
+            cd plugins/static-files-editor
+            npm install
+
+        - name: Build all components
+          run: bash bin/build-all.sh
+
+        - name: Create GitHub Release
+          id: create_release
+          uses: actions/create-release@v1
+          env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+              tag_name: v0.0.${{ github.run_number }}-alpha
+              release_name: Release v0.0.${{ github.run_number }}-alpha
+              draft: false
+              prerelease: false
+
+        - name: Upload Data Liberation Asset
+          uses: actions/upload-release-asset@v1
+          env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+              upload_url: ${{ steps.create_release.outputs.upload_url }}
+              asset_path: ./dist/plugins/data-liberation.zip
+              asset_name: data-liberation.zip
+              asset_content_type: application/zip
+
+        - name: Upload URL Updater Asset
+          uses: actions/upload-release-asset@v1
+          env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+              upload_url: ${{ steps.create_release.outputs.upload_url }}
+              asset_path: ./dist/plugins/url-updater.zip
+              asset_name: url-updater.zip
+              asset_content_type: application/zip
+
+        - name: Upload Static Files Editor Asset
+          uses: actions/upload-release-asset@v1
+          env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+              upload_url: ${{ steps.create_release.outputs.upload_url }}
+              asset_path: ./dist/plugins/static-files-editor.zip
+              asset_name: static-files-editor.zip
+              asset_content_type: application/zip
+
+        - name: Upload Import Static Files Example Asset
+          uses: actions/upload-release-asset@v1
+          env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+              upload_url: ${{ steps.create_release.outputs.upload_url }}
+              asset_path: ./dist/examples/create-wp-site.tar.gz
+              asset_name: create-wp-site.tar.gz
+              asset_content_type: application/gzip
+
+
+        - name: Upload Blueprints Asset
+          uses: actions/upload-release-asset@v1
+          env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+              upload_url: ${{ steps.create_release.outputs.upload_url }}
+              asset_path: ./dist/blueprints.phar
+              asset_name: blueprints.phar
+              asset_content_type: application/phar
+
+        - name: Upload PHP toolkit .phar Asset
+          uses: actions/upload-release-asset@v1
+          env:
+              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+              upload_url: ${{ steps.create_release.outputs.upload_url }}
+              asset_path: ./dist/php-toolkit.phar
+              asset_name: php-toolkit.phar
+              asset_content_type: application/phar
+    
