@@ -77,7 +77,10 @@ split_and_push() {
       fi
       git remote remove origin 2>/dev/null || true
       git remote add origin "$repo_url"
-      git push -u origin --all
+      # Fetch remote default branch if exists (for safer force-with-lease in the future)
+      git fetch origin "${DEFAULT_BRANCH}" --depth=1 || true
+      # Push the filtered history to the remote default branch, overwriting if needed
+      git push -u origin HEAD:"${DEFAULT_BRANCH}" --force
       git push origin --tags || true
     popd >/dev/null
     rm -rf "$tmp"
@@ -85,7 +88,7 @@ split_and_push() {
     # Fallback: subtree split creates a synthetic branch with the path history
     local split_branch="split-$(basename "$pkg_dir")-$(date +%s)"
     git subtree split --prefix="$pkg_dir" -b "$split_branch" >/dev/null
-    git push "$repo_url" "$split_branch:${DEFAULT_BRANCH}"
+    git push --force "$repo_url" "$split_branch:${DEFAULT_BRANCH}"
     # Push tags that include this history is non-trivial with subtree; skipping here
     git branch -D "$split_branch" >/dev/null
   fi
