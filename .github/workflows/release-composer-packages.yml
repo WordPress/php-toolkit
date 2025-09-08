@@ -46,7 +46,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $(composer global config bin-dir --absolute)/monorepo-builder release ${{ github.event.inputs.bump }} --no-interaction --push-tags
+          $(composer global config bin-dir --absolute)/monorepo-builder release ${{ github.event.inputs.bump }} 
 
       - name: Ensure GitHub CLI and jq are installed
         run: |
