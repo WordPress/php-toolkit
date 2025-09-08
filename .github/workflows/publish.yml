@@ -1,4 +1,4 @@
-name: Release new version
+name: Publish new composer packages and phar files
 
 on:
   workflow_dispatch:
