@@ -55,12 +55,8 @@ split_and_push() {
   # Prefer GH_TOKEN; fall back to GITHUB_TOKEN for GitHub Actions
   token="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
 
-  if [[ -n "$token" ]]; then
-    repo_url="https://x-access-token:${token}@github.com/${org}/${repo_name}.git"
-  else
-    repo_url="git@github.com:${org}/${repo_name}.git"
-  fi
-
+  repo_url="https://x-access-token:${token}@github.com/${org}/${repo_name}.git"
+  
   echo "==> Splitting ${pkg_dir} -> ${org}/${repo_name}"
 
   if [[ "$USE_FILTER_REPO" -eq 1 ]]; then
