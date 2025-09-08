@@ -65,5 +65,7 @@ jobs:
           PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
           GH_ORG: ${{ secrets.GH_ORG }}
           DEFAULT_BRANCH: trunk
-        run: bash bin/split-code.sh
-
+        run: |
+          git config --global user.email ${{ secrets.GH_CODESPLIT_EMAIL }}
+          git config --global user.name "github-actions[bot]"
+          bash bin/split-code.sh
