@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6285ae7dea77d3b2f0ed2edf7adb5486",
+    "content-hash": "6049e854fd8e985d5ad905e3efd70567",
     "packages": [],
     "packages-dev": [
         {
@@ -2337,47 +2337,6 @@
                 }
             ],
             "time": "2025-09-05T06:01:21+00:00"
-        },
-        {
-            "name": "symplify/monorepo-builder",
-            "version": "9.4.70",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symplify/monorepo-builder.git",
-                "reference": "49260ac962cbeadb1670adc115c3dbe80abdd2b1"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symplify/monorepo-builder/zipball/49260ac962cbeadb1670adc115c3dbe80abdd2b1",
-                "reference": "49260ac962cbeadb1670adc115c3dbe80abdd2b1",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=7.1"
-            },
-            "bin": [
-                "bin/monorepo-builder"
-            ],
-            "type": "library",
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "description": "Prefixed version of Not only Composer tools to build a Monorepo.",
-            "support": {
-                "source": "https://github.com/symplify/monorepo-builder/tree/9.4.70"
-            },
-            "funding": [
-                {
-                    "url": "https://www.paypal.me/rectorphp",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/tomasvotruba",
-                    "type": "github"
-                }
-            ],
-            "time": "2021-10-02T16:07:18+00:00"
         },
         {
             "name": "theseer/tokenizer",
