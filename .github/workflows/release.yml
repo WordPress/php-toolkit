@@ -42,11 +42,35 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Determine next version
+        id: semver
+        run: |
+          last="$(git describe --tags --abbrev=0 --match 'v[0-9]*' || echo 'v0.1.0')"
+          bump="${{ github.event.inputs.bump }}"
+          case "$bump" in
+            patch|minor|major) inc="$bump" ;;
+            *) echo "Invalid bump: $bump" ; exit 1 ;;
+          esac
+          new="$(npx -y semver -i "$inc" "$last")"
+          new="${new#v}"
+          echo "new_version=$new" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare VERSION file
+        run: |
+          echo "${{ steps.semver.outputs.new_version }}" > VERSION
+          git add VERSION
+          git commit -m "chore(release): record version v${{ steps.semver.outputs.new_version }}"
+
       - name: Run MonorepoBuilder release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $(composer global config bin-dir --absolute)/monorepo-builder release ${{ github.event.inputs.bump }} 
+          $(composer global config bin-dir --absolute)/monorepo-builder release v${{ steps.semver.outputs.new_version }} 
 
       - name: Ensure GitHub CLI and jq are installed
         run: |
