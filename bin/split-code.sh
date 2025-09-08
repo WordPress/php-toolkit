@@ -2,6 +2,7 @@
 set -euo pipefail
 
 # ---- Config (override with env vars) ----
+# Set GH_TOKEN environment variable for CI authentication (will use HTTPS instead of SSH)
 DEFAULT_BRANCH="${DEFAULT_BRANCH:-trunk}"
 VISIBILITY="${VISIBILITY:-public}"   # public|private|internal (internal only for orgs)
 TOPICS="${TOPICS:-php,composer,monorepo,split}"
@@ -49,7 +50,14 @@ create_repo_if_needed() {
 
 split_and_push() {
   local pkg_dir="$1" org="$2" repo_name="$3"
-  local repo_ssh="git@github.com:${org}/${repo_name}.git"
+  local repo_url
+  
+  # Use HTTPS with token if GH_TOKEN is available, otherwise fall back to SSH
+  if [[ -n "${GH_TOKEN:-}" ]]; then
+    repo_url="https://${GH_TOKEN}@github.com/${org}/${repo_name}.git"
+  else
+    repo_url="git@github.com:${org}/${repo_name}.git"
+  fi
 
   echo "==> Splitting ${pkg_dir} -> ${org}/${repo_name}"
 
@@ -65,7 +73,7 @@ split_and_push() {
         git checkout -q "${DEFAULT_BRANCH}"
       fi
       git remote remove origin 2>/dev/null || true
-      git remote add origin "$repo_ssh"
+      git remote add origin "$repo_url"
       git push -u origin --all
       git push origin --tags || true
     popd >/dev/null
@@ -74,7 +82,7 @@ split_and_push() {
     # Fallback: subtree split creates a synthetic branch with the path history
     local split_branch="split-$(basename "$pkg_dir")-$(date +%s)"
     git subtree split --prefix="$pkg_dir" -b "$split_branch" >/dev/null
-    git push "$repo_ssh" "$split_branch:${DEFAULT_BRANCH}"
+    git push "$repo_url" "$split_branch:${DEFAULT_BRANCH}"
     # Push tags that include this history is non-trivial with subtree; skipping here
     git branch -D "$split_branch" >/dev/null
   fi
