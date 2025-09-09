@@ -19,7 +19,6 @@ class AttachmentDownloader {
 	 */
 	private $source_from_filesystem;
 
-	private $current_event;
 	private $pending_events = array();
 	private $enqueued_url;
 	private $progress = array();
@@ -151,19 +150,15 @@ class AttachmentDownloader {
 		return count( $this->client->get_active_requests() ) >= 10;
 	}
 
-	public function get_event() {
-		return $this->current_event;
-	}
-
-	public function next_event() {
-		$this->current_event = null;
-		if ( 0 === count( $this->pending_events ) ) {
-			return false;
-		}
-
-		$this->current_event = array_shift( $this->pending_events );
-
-		return true;
+	/**
+	 * Returns and clears all pending events.
+	 *
+	 * @return AttachmentDownloaderEvent[]
+	 */
+	public function get_events() {
+		$events               = $this->pending_events;
+		$this->pending_events = array();
+		return $events;
 	}
 
 	public function poll() {
@@ -194,6 +189,7 @@ class AttachmentDownloader {
 					if ( file_exists( $this->output_paths[ $original_request_id ] . '.partial' ) ) {
 						unlink( $this->output_paths[ $original_request_id ] . '.partial' );
 					}
+					echo $this->output_paths[ $original_request_id ] . "\n";
 					$fp = fopen( $this->output_paths[ $original_request_id ] . '.partial', 'wb' );
 					if ( false !== $fp ) {
 						$this->fps[ $original_request_id ]           = $fp;
@@ -232,7 +228,10 @@ class AttachmentDownloader {
 
 	private function on_failure( $original_url, $original_request_id, $error = null ) {
 		if ( isset( $this->fps[ $original_request_id ] ) ) {
-			fclose( $this->fps[ $original_request_id ] );
+			if ( is_resource( $this->fps[ $original_request_id ] ) ) {
+				fclose( $this->fps[ $original_request_id ] );
+			}
+			unset( $this->fps[ $original_request_id ] );
 		}
 		if ( isset( $this->output_paths[ $original_request_id ] ) ) {
 			$partial_file = $this->output_paths[ $original_request_id ] . '.partial';
@@ -252,7 +251,10 @@ class AttachmentDownloader {
 	private function on_success( $original_url, $original_request_id ) {
 		// Only clean up if this was the last request in the chain.
 		if ( isset( $this->fps[ $original_request_id ] ) ) {
-			fclose( $this->fps[ $original_request_id ] );
+			if ( is_resource( $this->fps[ $original_request_id ] ) ) {
+				fclose( $this->fps[ $original_request_id ] );
+			}
+			unset( $this->fps[ $original_request_id ] );
 		}
 		if ( isset( $this->output_paths[ $original_request_id ] ) ) {
 			if ( false === rename(
@@ -268,5 +270,16 @@ class AttachmentDownloader {
 		);
 		unset( $this->progress[ $original_url ] );
 		unset( $this->output_paths[ $original_request_id ] );
+	}
+
+	public function __destruct() {
+		// Ensure any remaining open file descriptors are closed.
+		foreach ( $this->fps as $request_id => $fp ) {
+			if ( is_resource( $fp ) ) {
+				// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+				@fclose( $fp );
+			}
+			unset( $this->fps[ $request_id ] );
+		}
 	}
 }

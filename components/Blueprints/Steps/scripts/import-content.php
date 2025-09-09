@@ -400,7 +400,7 @@ function run_content_import( $options ) {
 			 * to the format they will have after being imported into WordPress (e.g. /docs/getting-started).
 			 */
 			add_action(
-				'data_liberation.stream_importer.postprocess_url',
+				'data_liberation_stream_importer_postprocess_url',
 				function (
 					$processor,
 					$context
@@ -471,7 +471,7 @@ function run_content_import( $options ) {
 			 * Assigns post_name to every imported static page.
 			 */
 			add_filter(
-				'data_liberation.stream_importer.preprocess_entity',
+				'data_liberation_stream_importer_preprocess_entity',
 				function ( $entity ) use ( &$import_path_prefix, $index_file_pattern ) {
 					static $preprocessed_an_entity = false;
 					if ( 'post' !== $entity->get_type() ) {
@@ -560,7 +560,7 @@ function run_content_import( $options ) {
 			 * Drop .xhtml extension from the links.
 			 */
 			add_action(
-				'data_liberation.stream_importer.postprocess_url',
+				'data_liberation_stream_importer_postprocess_url',
 				function ( $processor ) {
 					$parsed_url = $processor->get_parsed_url();
 					if ( ! str_ends_with( $parsed_url->pathname, '.xhtml' ) ) {

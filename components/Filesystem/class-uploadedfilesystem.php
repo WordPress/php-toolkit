@@ -81,9 +81,9 @@ class UploadedFilesystem implements Filesystem {
 		$this->uploads_fs = $options['uploads_fs'] ?? LocalFilesystem::create( '/' );
 	}
 
-	public function ls( $parent = '/' ) {
-		$parent = '/' . ltrim( wp_unix_path_resolve_dots( $parent ), '/' );
-		$node   = $this->find_node( $parent );
+	public function ls( $parent_path = '/' ) {
+		$parent_path = '/' . ltrim( wp_unix_path_resolve_dots( $parent_path ), '/' );
+		$node        = $this->find_node( $parent_path );
 		if ( ! $node || 'directory' !== $node['type'] ) {
 			return array();
 		}

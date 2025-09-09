@@ -50,13 +50,13 @@ class ZipFilesystem implements Filesystem {
 		$this->byte_reader = $byte_reader;
 	}
 
-	public function ls( $parent = '/' ) {
+	public function ls( $dir = '/' ) {
 		$this->load_central_directory();
 		$descendants = $this->central_directory;
 
 		// Only keep the descendants of the given parent.
-		$parent = trim( $parent, '/' );
-		$prefix = $parent ? $parent . '/' : '';
+		$dir    = trim( $dir, '/' );
+		$prefix = $dir ? $dir . '/' : '';
 		if ( strlen( $prefix ) > 1 ) {
 			$filtered_descendants = array();
 			foreach ( $descendants as $entry ) {

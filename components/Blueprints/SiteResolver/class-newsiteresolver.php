@@ -152,15 +152,17 @@ class NewSiteResolver {
 	private static function is_wordpress_installed( Runtime $runtime, Tracker $progress ) {
 		$install_check = $runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
-			<?php
-			$wp_load = getenv('DOCROOT') . '/wp-load.php';
-			if (!file_exists($wp_load)) {
-				append_output('0');
-				exit;
-			}
-			require $wp_load;
+<?php
+		$wp_load = getenv('DOCROOT') . '/wp-load.php';
+		error_reporting(E_ALL);
+		ini_set('display_errors', '1');
+		if (!file_exists($wp_load)) {
+			append_output('0');
+			exit;
+		}
+		require $wp_load;
 
-			append_output( function_exists('is_blog_installed') && is_blog_installed() ? '1' : '0' );
+		append_output( function_exists('is_blog_installed') && is_blog_installed() ? '1' : '0' );
 PHP
 			,
 			array(
