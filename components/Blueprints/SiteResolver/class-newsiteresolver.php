@@ -154,8 +154,6 @@ class NewSiteResolver {
 			<<<'PHP'
 <?php
 		$wp_load = getenv('DOCROOT') . '/wp-load.php';
-		error_reporting(E_ALL);
-		ini_set('display_errors', '1');
 		if (!file_exists($wp_load)) {
 			append_output('0');
 			exit;
