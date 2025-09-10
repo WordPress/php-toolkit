@@ -5642,9 +5642,10 @@
 		"hash": "#foo%3Cbar"
 	},
 	{
+		"description": "Trade-off: Match the URL up until the first unescaped syntax-like character",
 		"input": "http://foo.bar/baz?qux#foo>bar",
 		"base": null,
-		"href": "http://foo.bar/baz?qux#foo%3Ebar",
+		"href": "http://foo.bar/baz?qux#foo",
 		"origin": "http://foo.bar",
 		"protocol": "http:",
 		"username": "",
@@ -5655,7 +5656,7 @@
 		"pathname": "/baz",
 		"search": "?qux",
 		"searchParams": "qux=",
-		"hash": "#foo%3Ebar"
+		"hash": "#foo"
 	},
 	{
 		"input": "http://foo.bar/baz?qux#foo`bar",
