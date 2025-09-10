@@ -113,6 +113,11 @@ function is_child_url_of( $child, $parent_url ) {
  * @return string The decoded string.
  */
 function urldecode_n( $input, $decode_n ) {
+	// Fast paths: nothing to do.
+	if ( $decode_n <= 0 || false === strpos( $input, '%' ) ) {
+			return $input;
+	}
+
 	$result = '';
 	$at     = 0;
 	while ( true ) {
