@@ -19,16 +19,8 @@ class URLInTextProcessorWHATWGComplianceTest extends TestCase {
 		
 		$processor = new URLInTextProcessor( "Visit $input_url for more info", $base_url );
 		if ( ! $should_be_valid ) {
-			if ( false === $processor->next_url() ) {
-				$this->assertTrue( true, "Should not have found URL in text: '$input_url'" );
-				return;
-			}
-			$parsed_url = $processor->get_parsed_url();
-			if ( ! $parsed_url ) {
-				$this->assertTrue( true, "Should not have parsed URL: '$input_url'" );
-				return;
-			}
-			$this->fail( "Should not have parsed URL: '$input_url'" );
+			$this->assertFalse( $processor->next_url(), "Should not have found URL in text: '$input_url'" );
+			$this->assertFalse( $processor->get_parsed_url(), "Should not have parsed URL: '$input_url'" );
 			return;
 		}
 
@@ -89,18 +81,14 @@ class URLInTextProcessorWHATWGComplianceTest extends TestCase {
 		static $test_examples = null;
 		if ( null === $test_examples ) {
 			$json = file_get_contents( __DIR__ . '/whatwg_url_inline_detection_test_data.json' );
-			$test_examples = json_decode( $json, true );
-		}
-
-		$filtered_examples = array();
-		foreach ( $test_examples as $example ) {
-			if ( is_string( $example ) ) {
-				continue;
+			$decoded_examples = json_decode( $json, true );
+			$test_examples = [];
+			foreach ( $decoded_examples as $example ) {
+				if ( is_array ( $example ) ) {
+					$test_examples[] = array( $example );
+				}
 			}
-			
-			$filtered_examples[] = array( $example );
 		}
-
-		return $filtered_examples;
+		return $test_examples;
 	}
 }
