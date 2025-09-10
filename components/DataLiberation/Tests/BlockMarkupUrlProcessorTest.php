@@ -74,6 +74,11 @@ class BlockMarkupUrlProcessorTest extends TestCase {
 				'<a href=""></a><a href="https://developer.w.org"></a>',
 				null,
 			),
+			'Skips over a class name in the <a> tag' => array(
+				'https://developer.w.org',
+				'<a class="http://example.com" href="https://developer.w.org"></a>',
+				null,
+			),
 		);
 	}
 

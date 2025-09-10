@@ -22,7 +22,14 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	private $base_url_object;
 	private $url_in_text_processor;
 	private $url_in_text_node_updated;
-	private $inspected_url_attribute_idx = - 1;
+	private $attributes_to_inspect;
+
+	/**
+	 * The name of the URL attribute whose value is currently being inspected.
+	 *
+	 * @var string|null
+	 */
+	private $currently_inspected_url_attribute_name;
 
 	public function __construct( $html, ?string $base_url_string = null ) {
 		parent::__construct( $html );
@@ -50,10 +57,11 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	public function next_token(): bool {
 		$this->get_updated_html();
 
-		$this->raw_url                     = null;
-		$this->parsed_url                  = null;
-		$this->inspected_url_attribute_idx = - 1;
-		$this->url_in_text_processor       = null;
+		$this->raw_url                                = null;
+		$this->parsed_url                             = null;
+		$this->attributes_to_inspect                  = null;
+		$this->currently_inspected_url_attribute_name = null;
+		$this->url_in_text_processor                  = null;
 		// Do not reset url_in_text_node_updated – it's reset in get_updated_html() which.
 		// is called in parent::next_token().
 
@@ -116,20 +124,22 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 
 	private function next_url_attribute() {
 		$tag = $this->get_tag();
-		if (
-			! array_key_exists( $tag, self::URL_ATTRIBUTES ) &&
-			'INPUT' !== $tag // type=image => src,.
-		) {
+
+		if ( ! array_key_exists( $tag, self::URL_ATTRIBUTES ) ) {
 			return false;
 		}
 
-		while ( ++$this->inspected_url_attribute_idx < count( self::URL_ATTRIBUTES[ $tag ] ) ) {
-			$attr = self::URL_ATTRIBUTES[ $tag ][ $this->inspected_url_attribute_idx ];
-			if ( false === $attr ) {
-				return false;
+		if ( null === $this->attributes_to_inspect ) {
+			$this->attributes_to_inspect = self::URL_ATTRIBUTES[ $tag ];
+		}
+
+		while ( count( $this->attributes_to_inspect ) > 0 ) {
+			$attr      = array_shift( $this->attributes_to_inspect );
+			$url_maybe = $this->get_attribute( $attr );
+			if ( ! is_string( $url_maybe ) ) {
+				continue;
 			}
 
-			$url_maybe = $this->get_attribute( $attr );
 			/*
 			 * Use base URL to resolve known URI attributes as we are certain we're
 			 * dealing with URI values.
@@ -137,18 +147,16 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			 * be correctly recognized as a URL.
 			 * Without a base URL, this Processor would incorrectly skip it.
 			 */
+			$parsed_url = WPURL::parse( $url_maybe, $this->base_url_string );
 
-			if ( is_string( $url_maybe ) ) {
-				$parsed_url = WPURL::parse( $url_maybe, $this->base_url_string );
-
-				if ( false === $parsed_url ) {
-					return false;
-				}
-				$this->raw_url    = $url_maybe;
-				$this->parsed_url = $parsed_url;
-
-				return true;
+			if ( false === $parsed_url ) {
+				continue;
 			}
+			$this->raw_url                                = $url_maybe;
+			$this->parsed_url                             = $parsed_url;
+			$this->currently_inspected_url_attribute_name = $attr;
+
+			return true;
 		}
 
 		return false;
@@ -324,19 +332,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			return false;
 		}
 
-		$tag = $this->get_tag();
-		if ( ! array_key_exists( $tag, self::URL_ATTRIBUTES ) ) {
-			return false;
-		}
-
-		if (
-			$this->inspected_url_attribute_idx < 0 ||
-			$this->inspected_url_attribute_idx >= count( self::URL_ATTRIBUTES[ $tag ] )
-		) {
-			return false;
-		}
-
-		return self::URL_ATTRIBUTES[ $tag ][ $this->inspected_url_attribute_idx ];
+		return $this->currently_inspected_url_attribute_name ?? false;
 	}
 
 
