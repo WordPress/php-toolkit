@@ -26,7 +26,15 @@ use WordPress\DataLiberation\BlockMarkup\BlockMarkupUrlProcessor;
  * * Support UTF-16 characters
  * * Gracefully handle recoverable encoding issues
  * * Avoid changing the whitespace in the same manner as
- *   we do in WP_HTML_Tag_Processor
+ *   we do in WP_HTML_Tag_Processor. e.g. if we start with:
+ *
+ * ```html
+ * <!-- wp:block {"url":"https://w.org"}` -->
+ *                     ^ no space here
+ * ```
+ *
+ * then it would be nice to re-encode that block markup also without the space character. This is similar
+ * to how the tag processor avoids changing parts of the tag it doesn't need to change.
  */
 function wp_rewrite_urls( $options ) {
 	if ( empty( $options['base_url'] ) ) {
