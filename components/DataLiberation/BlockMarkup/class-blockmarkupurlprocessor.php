@@ -22,14 +22,20 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	private $base_url_object;
 	private $url_in_text_processor;
 	private $url_in_text_node_updated;
-	private $attributes_to_inspect;
+
+	/**
+	 * The list of HTML attributes whose values haven't been yet processed.
+	 *
+	 * @var array<string>|null
+	 */
+	private $inspecting_html_attributes;
 
 	/**
 	 * The name of the URL attribute whose value is currently being inspected.
 	 *
 	 * @var string|null
 	 */
-	private $currently_inspected_url_attribute_name;
+	private $currently_inspected_url_html_attribute;
 
 	public function __construct( $html, ?string $base_url_string = null ) {
 		parent::__construct( $html );
@@ -59,8 +65,8 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 
 		$this->raw_url                                = null;
 		$this->parsed_url                             = null;
-		$this->attributes_to_inspect                  = null;
-		$this->currently_inspected_url_attribute_name = null;
+		$this->inspecting_html_attributes             = null;
+		$this->currently_inspected_url_html_attribute = null;
 		$this->url_in_text_processor                  = null;
 		// Do not reset url_in_text_node_updated – it's reset in get_updated_html() which.
 		// is called in parent::next_token().
@@ -129,12 +135,12 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			return false;
 		}
 
-		if ( null === $this->attributes_to_inspect ) {
-			$this->attributes_to_inspect = self::URL_ATTRIBUTES[ $tag ];
+		if ( null === $this->inspecting_html_attributes ) {
+			$this->inspecting_html_attributes = self::URL_ATTRIBUTES[ $tag ];
 		}
 
-		while ( count( $this->attributes_to_inspect ) > 0 ) {
-			$attr      = array_shift( $this->attributes_to_inspect );
+		while ( count( $this->inspecting_html_attributes ) > 0 ) {
+			$attr      = array_shift( $this->inspecting_html_attributes );
 			$url_maybe = $this->get_attribute( $attr );
 			if ( ! is_string( $url_maybe ) ) {
 				continue;
@@ -154,7 +160,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			}
 			$this->raw_url                                = $url_maybe;
 			$this->parsed_url                             = $parsed_url;
-			$this->currently_inspected_url_attribute_name = $attr;
+			$this->currently_inspected_url_html_attribute = $attr;
 
 			return true;
 		}
@@ -332,7 +338,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			return false;
 		}
 
-		return $this->currently_inspected_url_attribute_name ?? false;
+		return $this->currently_inspected_url_html_attribute ?? false;
 	}
 
 
