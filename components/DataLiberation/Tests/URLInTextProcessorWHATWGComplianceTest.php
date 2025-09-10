@@ -168,7 +168,7 @@ class URLInTextProcessorWHATWGComplianceTest extends TestCase {
 			
 			// Skip inputs that are just fragments or queries without a domain
 			if ( preg_match( '/^[?#]/', $input ) ) {
-				// continue;
+				continue;
 			}
 			
 			$filtered_examples[] = array( $example );
