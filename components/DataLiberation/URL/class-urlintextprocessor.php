@@ -70,7 +70,11 @@ class URLInTextProcessor {
 	/**
 	 * @var string
 	 */
-	private $raw_url;
+	public $matched_url;
+	/**
+	 * @var string
+	 */
+	public $preprocessed_url;
 	/**
 	 * @var URL
 	 */
@@ -135,7 +139,7 @@ class URLInTextProcessor {
                 (?<host>                                                   # host prefixed by scheme or userinfo (less strict)
                     (?<=\/\/|@)                                               # prefixed with \/\/ or @
                     (?=[^\-])                                                  # label start, not: -
-                    (?:[^\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{C}\p{P}]|-){1,63}           # label not: whitespace, mathematical, currency, modifier symbol, control point, punctuation | except -
+                    (?:%|[^\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{C}\p{P}]|-){1,63}         # label not: whitespace, mathematical, currency, modifier symbol, control point, punctuation | except -
                     (?<=[^\-])                                                 # label end, not: -
                     (?:                                                        # more label parts
                         \.
@@ -147,18 +151,18 @@ class URLInTextProcessor {
                 |                                                          # or
                 (?<host>                                                   # host with tld (no scheme or userinfo)
                     (?=[^\-])                                                  # label start, not: -
-                    (?:[^\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{C}\p{P}]|-){1,63}           # label not: whitespace, mathematical, currency, modifier symbol, control point, punctuation | except -
+                    (?:%|[^\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{C}\p{P}]|-){1,63}         # label not: whitespace, mathematical, currency, modifier symbol, control point, punctuation | except -
                     (?<=[^\-])                                                 # label end, not: -
                     (?:                                                        # more label parts
                         \.
                         (?=[^\-])                                                  # label start, not: -
-                        (?:[^\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{C}\p{P}]|-){1,63}           # label not: whitespace, mathematical, currency, modifier symbol, control point, punctuation | except -
+                        (?:%|[^\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{C}\p{P}]|-){1,63}         # label not: whitespace, mathematical, currency, modifier symbol, control point, punctuation | except -
                         (?<=[^\-])                                                 # label end, not: -
                     )*
                     \.(?<tld>\w{2,63})                                         # tld
                 )
             )
-            (?:\:(?<port>\d+))?                                        # port
+            (?:\:(?<port>\d{1,5}))?                                    # port
             (?<path>                                                   # path, query, fragment
                 [\/?#]                                                 # prefixed with \/ or ? or #
                 [^\s<>]*                                               # any chars except whitespace and <>
@@ -171,7 +175,8 @@ class URLInTextProcessor {
 	 * @return string
 	 */
 	public function next_url() {
-		$this->raw_url              = null;
+		$this->preprocessed_url              = null;
+		$this->matched_url              = null;
 		$this->parsed_url           = null;
 		$this->url_starts_at        = null;
 		$this->url_length           = null;
@@ -186,27 +191,27 @@ class URLInTextProcessor {
 				return false;
 			}
 
-			$matched_url = $matches[0][0];
+			$this->matched_url = $matches[0][0];
 			if (
-				')' === $matched_url[ strlen( $matched_url ) - 1 ] ||
-				'.' === $matched_url[ strlen( $matched_url ) - 1 ]
+				')' === $this->matched_url[ strlen( $this->matched_url ) - 1 ] ||
+				'.' === $this->matched_url[ strlen( $this->matched_url ) - 1 ]
 			) {
-				$matched_url = substr( $matched_url, 0, - 1 );
+				$this->matched_url = substr( $this->matched_url, 0, - 1 );
 			}
-			$this->bytes_already_parsed = $matches[0][1] + strlen( $matched_url );
+			$this->bytes_already_parsed = $matches[0][1] + strlen( $this->matched_url );
 
-			$had_double_slash = WPURL::has_double_slash( $matched_url );
+			$had_double_slash = WPURL::has_double_slash( $this->matched_url );
 
-			$url_to_parse = $matched_url;
+			$this->preprocessed_url = $this->matched_url;
 			if ( $this->base_url && $this->base_protocol && ! $had_double_slash ) {
-				$url_to_parse               = WPURL::ensure_protocol( $url_to_parse, $this->base_protocol );
+				$this->preprocessed_url               = WPURL::ensure_protocol( $this->preprocessed_url, $this->base_protocol );
 				$this->did_prepend_protocol = true;
 			}
 
 			/*
 			 * Extra fine sieve – parse the candidates using a WHATWG-compliant parser to rule out false positives.
 			 */
-			$parsed_url = WPURL::parse( $url_to_parse, $this->base_url );
+			$parsed_url = WPURL::parse( $this->preprocessed_url, $this->base_url );
 			if ( false === $parsed_url ) {
 				continue;
 			}
@@ -239,7 +244,6 @@ class URLInTextProcessor {
 			}
 
 			$this->parsed_url    = $parsed_url;
-			$this->raw_url       = $matched_url;
 			$this->url_starts_at = $matches[0][1];
 			$this->url_length    = strlen( $matches[0][0] );
 
@@ -248,7 +252,7 @@ class URLInTextProcessor {
 	}
 
 	public function get_raw_url() {
-		return $this->raw_url ?? false;
+		return $this->matched_url ?? false;
 	}
 
 	public function get_parsed_url() {
@@ -260,13 +264,13 @@ class URLInTextProcessor {
 	}
 
 	public function set_raw_url( $new_url ) {
-		if ( null === $this->raw_url ) {
+		if ( null === $this->matched_url ) {
 			return false;
 		}
 		if ( $this->did_prepend_protocol ) {
 			$new_url = substr( $new_url, strpos( $new_url, '://' ) + 3 );
 		}
-		$this->raw_url                                 = $new_url;
+		$this->matched_url                                 = $new_url;
 		$this->lexical_updates[ $this->url_starts_at ] = new WP_HTML_Text_Replacement(
 			$this->url_starts_at,
 			$this->url_length,
