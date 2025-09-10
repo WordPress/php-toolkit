@@ -99,6 +99,7 @@ class WPURL {
 			$public_suffix_list = require_once __DIR__ . '/public-suffix-list.php';
 		}
 
+		// @TODO: Parse wildcards and exceptions from the public suffix list.
 		$tld = strtolower( $tld );
 		return ! empty( $public_suffix_list[ $tld ] ) || 'internal' === $tld;
 	}
