@@ -359,31 +359,36 @@ class URLInTextProcessorTest extends TestCase {
 
 	public static function provider_test_no_url_should_be_found() {
 		return array(
-			'No URL Present'               => array( 'This text has no URL.' ),
-			'Malformed URL without Scheme' => array( 'Invalid link: example..com' ),
-			'Not a URL - Math Expression'  => array( 'Calculate x/y where y ≠ 0' ),
-			'Text with Version Number'     => array( 'Version 1.2.3 is released' ),
-			'Text with a filename'         => array( 'Edit the plugins.php file' ),
-			'Random Text with Symbols'     => array( 'Check this out: !@#$%^&*()' ),
-			'Magnet URI'                   => array( 'magnet:?xt=urn:btih:123456789abcdef' ),
-			'Single Word'                  => array( 'example' ),
-			'Random Special Characters'    => array( '{}[]|\;:"<>,./?' ),
-			'Plain Text with Colon'        => array( 'This is not a URL: it is just text.' ),
-			'Numeric Only Text'            => array( '1234567890' ),
-			'Only TLD'                     => array( 'http://.org' ),
-			'Missing protocol'             => array( '://.org' ),
-			'Incomplete IPv6'              => array( 'http://[2001:db8::' ),
-			'IPv6 with Zone Index'         => array( 'http://[fe80::1%25eth0]' ),
-			'Protocol without Domain'      => array( 'http://' ),
+			'No URL Present'                   => array( 'This text has no URL.' ),
+			'Malformed URL without Scheme'     => array( 'Invalid link: example..com' ),
+			'Not a URL - Math Expression'      => array( 'Calculate x/y where y ≠ 0' ),
+			'Text with Version Number'         => array( 'Version 1.2.3 is released' ),
+			'Text with a filename'             => array( 'Edit the plugins.php file' ),
+			'Random Text with Symbols'         => array( 'Check this out: !@#$%^&*()' ),
+			'Magnet URI'                       => array( 'magnet:?xt=urn:btih:123456789abcdef' ),
+			'Single Word'                      => array( 'example' ),
+			'Random Special Characters'        => array( '{}[]|\;:"<>,./?' ),
+			'Plain Text with Colon'            => array( 'This is not a URL: it is just text.' ),
+			'Numeric Only Text'                => array( '1234567890' ),
+			'Only TLD'                         => array( 'http://.org' ),
+			'Missing protocol'                 => array( '://.org' ),
+			'Incomplete IPv6'                  => array( 'http://[2001:db8::' ),
+			'IPv6 with Zone Index'             => array( 'http://[fe80::1%25eth0]' ),
+			'Protocol without Domain'          => array( 'http://' ),
 
 			// Only HTTP and HTTPS URLs are supported
-			'Tel Protocol'                 => array( 'tel:+123456789' ),
-			'Data URL'                     => array( 'data:text/plain;base64,SGVsbG8sIFdvcmxkIQ==' ),
-			// @TODO fix failures
-			// 'Custom protocol' => ['myapp://open?param=value'],
-			// 'File Protocol' => ['file:///C:/path/to/file'],
-			// 'FTP Protocol' => ['ftp://example.com/resource'],
-			// 'Mailto Protocol' => ['mailto:user@example.com'],
+			'Tel Protocol'                     => array( 'tel:+123456789' ),
+			'Data URL'                         => array( 'data:text/plain;base64,SGVsbG8sIFdvcmxkIQ==' ),
+			'Custom protocol'                  => array( 'myapp://open?param=value' ),
+			'FTP Protocol'                     => array( 'ftp://example.com/resource' ),
+			'Mailto Protocol'                  => array( 'mailto:user@example.com' ),
+			'File Protocol'                    => array( 'file:///C:/path/to/file' ),
+
+			// Usernames and Passwords are not supposed to be detected
+			'With Username'                    => array( 'Visit http://user@example.com' ),
+			'With Username and Password'       => array( 'Visit http://user:pass@example.com' ),
+			'Username with Special Characters' => array( 'Link: http://user%40name:pass@example.com' ),
+			'Password with Special Characters' => array( 'Secure link: http://user:pa%40ss@example.com' ),
 		);
 	}
 
