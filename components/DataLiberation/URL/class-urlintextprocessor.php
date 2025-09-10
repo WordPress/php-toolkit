@@ -162,7 +162,7 @@ class URLInTextProcessor {
                     \.(?<tld>\w{2,63})                                         # tld
                 )
             )
-            (?:\:(?<port>\d{1,5}))?                                    # port
+            (?:\:(?<port>\d{1,5}(?!\d)))?                              # port
             (?<path>                                                   # path, query, fragment
                 [\/?#]                                                 # prefixed with \/ or ? or #
                 [^\s<>]*                                               # any chars except whitespace and <>
