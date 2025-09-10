@@ -72,10 +72,6 @@ class URLInTextProcessor {
 	 */
 	private $matched_url;
 	/**
-	 * @var string
-	 */
-	private $preprocessed_url;
-	/**
 	 * @var URL
 	 */
 	private $parsed_url;
@@ -175,7 +171,6 @@ class URLInTextProcessor {
 	 */
 	public function next_url() {
 		while ( true ) {
-			$this->preprocessed_url     = null;
 			$this->matched_url          = null;
 			$this->parsed_url           = null;
 			$this->url_starts_at        = null;
@@ -207,16 +202,16 @@ class URLInTextProcessor {
 
 			$had_protocol = WPURL::has_http_https_protocol( $this->matched_url );
 
-			$this->preprocessed_url = $this->matched_url;
+			$preprocessed_url = $this->matched_url;
 			if ( $this->base_url && $this->base_protocol && ! $had_protocol ) {
-				$this->preprocessed_url     = WPURL::ensure_protocol( $this->preprocessed_url, $this->base_protocol );
+				$preprocessed_url           = WPURL::ensure_protocol( $preprocessed_url, $this->base_protocol );
 				$this->did_prepend_protocol = true;
 			}
 
 			/*
 			 * Extra fine sieve – parse the candidates using a WHATWG-compliant parser to rule out false positives.
 			 */
-			$parsed_url = WPURL::parse( $this->preprocessed_url, $this->base_url );
+			$parsed_url = WPURL::parse( $preprocessed_url, $this->base_url );
 			if ( false === $parsed_url ) {
 				continue;
 			}
