@@ -168,7 +168,7 @@ class URLInTextProcessorWHATWGComplianceTest extends TestCase {
 			
 			// Skip empty inputs or very short inputs
 			if ( empty( $input ) || strlen( $input ) < 3 ) {
-				continue;
+				// continue;
 			}
 			
 			// Skip inputs that are just fragments or queries without a domain

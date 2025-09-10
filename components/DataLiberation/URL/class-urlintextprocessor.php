@@ -121,9 +121,8 @@ class URLInTextProcessor {
 		// Source: https://github.com/vstelmakh/url-highlight/blob/master/src/Matcher/Matcher.php.
 		$this->regex = '/' . $prefix . '
             (?:                                                      # scheme
-                (?<scheme>https?:)?                                  # Only consider http and https
-                \/\/                                                 # The protocol does not have to be there, but when
-                                                                     # it is, is must be followed by \/\/
+                (?<scheme>[a-z0-9\+]+?:)?                            #
+                (?:\/|\/\/)?                                         # The protocol may optionally be followed by one or two slashes
             )?
             (?:                                                        # userinfo
                 (?:
@@ -175,36 +174,43 @@ class URLInTextProcessor {
 	 * @return string
 	 */
 	public function next_url() {
-		$this->preprocessed_url     = null;
-		$this->matched_url          = null;
-		$this->parsed_url           = null;
-		$this->url_starts_at        = null;
-		$this->url_length           = null;
-		$this->did_prepend_protocol = false;
 		while ( true ) {
+			$this->preprocessed_url     = null;
+			$this->matched_url          = null;
+			$this->parsed_url           = null;
+			$this->url_starts_at        = null;
+			$this->url_length           = null;
+			$this->did_prepend_protocol = false;
+
 			/**
 			 * Thick sieve – eagerly match things that look like URLs but turn out to not be URLs in the end.
 			 */
 			$matches = array();
 			$found   = preg_match( $this->regex, $this->text, $matches, PREG_OFFSET_CAPTURE, $this->bytes_already_parsed );
 			if ( 1 !== $found ) {
+				// var_dump("0");
 				return false;
 			}
 
 			$this->matched_url = $matches[0][0];
+			// Do not consider just :: as a URL.
+			if ( '::' === $this->matched_url ) {
+				continue;
+			}
 			if (
 				')' === $this->matched_url[ strlen( $this->matched_url ) - 1 ] ||
 				'.' === $this->matched_url[ strlen( $this->matched_url ) - 1 ]
 			) {
 				$this->matched_url = substr( $this->matched_url, 0, - 1 );
 			}
-			$this->bytes_already_parsed = $matches[0][1] + strlen( $this->matched_url );
+			$url_starts_at = $matches[0][1];
+			$this->bytes_already_parsed = $url_starts_at + strlen( $this->matched_url );
 
-			$had_double_slash = WPURL::has_double_slash( $this->matched_url );
+			$had_protocol = WPURL::has_http_https_protocol( $this->matched_url );
 
 			$this->preprocessed_url = $this->matched_url;
-			if ( $this->base_url && $this->base_protocol && ! $had_double_slash ) {
-				$this->preprocessed_url               = WPURL::ensure_protocol( $this->preprocessed_url, $this->base_protocol );
+			if ( $this->base_url && $this->base_protocol && ! $had_protocol ) {
+				$this->preprocessed_url     = WPURL::ensure_protocol( $this->preprocessed_url, $this->base_protocol );
 				$this->did_prepend_protocol = true;
 			}
 
@@ -213,11 +219,24 @@ class URLInTextProcessor {
 			 */
 			$parsed_url = WPURL::parse( $this->preprocessed_url, $this->base_url );
 			if ( false === $parsed_url ) {
+				// var_dump("1");
+				continue;
+			}
+
+			// Only consider HTTP and HTTPS URLs
+			if ( $parsed_url->protocol && ! in_array( $parsed_url->protocol, ['http:', 'https:'], true ) ) {
+				// var_dump("2");
+				continue;
+			}
+
+			// Disregard URLs with auth details.
+			if ( $parsed_url->username || $parsed_url->password ) {
+				// var_dump("3");
 				continue;
 			}
 
 			// Additional rigor for URLs that are not explicitly preceded by a double slash.
-			if ( ! $had_double_slash ) {
+			if ( ! $had_protocol ) {
 				/*
 				 * Skip TLDs that are not in the public suffix.
 				 * This reduces false positives like `index.html` or `plugins.php`.
@@ -233,23 +252,20 @@ class URLInTextProcessor {
 					 *        URLs without a dot in the hostname when they're not preceeded
 					 *        by a protocol.
 					 */
+					// var_dump("4");
 					continue;
 				}
 
 				$tld = substr( $parsed_url->hostname, $last_dot_position + 1 );
 				if ( ! WPURL::is_known_public_domain( $tld ) ) {
 					// This TLD is not in the public suffix list. It's not a valid domain name.
+					// var_dump("5");
 					continue;
 				}
 			}
 
-			// Only consider HTTP and HTTPS URLs
-			if($parsed_url->protocol && ! in_array( $parsed_url->protocol, ['http', 'https'], true )) {
-				continue;
-			}
-
 			$this->parsed_url    = $parsed_url;
-			$this->url_starts_at = $matches[0][1];
+			$this->url_starts_at = $url_starts_at;
 			$this->url_length    = strlen( $matches[0][0] );
 
 			return true;

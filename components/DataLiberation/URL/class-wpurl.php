@@ -36,7 +36,7 @@ class WPURL {
 	 * `https://myblog.com` before parsing.
 	 */
 	public static function ensure_protocol( $raw_url, $protocol = 'https' ) {
-		if ( ! self::has_double_slash( $raw_url ) ) {
+		if ( ! self::has_http_https_protocol( $raw_url ) ) {
 			$raw_url = $protocol . '://' . $raw_url;
 		}
 
@@ -46,7 +46,7 @@ class WPURL {
 	/**
 	 * This method only considers http and https protocols.
 	 */
-	public static function has_double_slash( $raw_url ) {
+	public static function has_http_https_protocol( $raw_url ) {
 		return (
 			(
 				// Protocol-relative URLs.
@@ -54,24 +54,20 @@ class WPURL {
 				'/' === $raw_url[0] &&
 				'/' === $raw_url[1]
 			) || (
-				strlen( $raw_url ) > 7 &&
+				strlen( $raw_url ) > 5 &&
 				( 'h' === $raw_url[0] || 'H' === $raw_url[0] ) &&
 				( 't' === $raw_url[1] || 'T' === $raw_url[1] ) &&
 				( 't' === $raw_url[2] || 'T' === $raw_url[2] ) &&
 				( 'p' === $raw_url[3] || 'P' === $raw_url[3] ) &&
-				':' === $raw_url[4] &&
-				'/' === $raw_url[5] &&
-				'/' === $raw_url[6]
+				':' === $raw_url[4]
 			) || (
-				strlen( $raw_url ) > 8 &&
+				strlen( $raw_url ) > 6 &&
 				( 'h' === $raw_url[0] || 'H' === $raw_url[0] ) &&
 				( 't' === $raw_url[1] || 'T' === $raw_url[1] ) &&
 				( 't' === $raw_url[2] || 'T' === $raw_url[2] ) &&
 				( 'p' === $raw_url[3] || 'P' === $raw_url[3] ) &&
 				( 's' === $raw_url[4] || 'S' === $raw_url[4] ) &&
-				':' === $raw_url[5] &&
-				'/' === $raw_url[6] &&
-				'/' === $raw_url[7]
+				':' === $raw_url[5]
 			)
 		);
 	}
