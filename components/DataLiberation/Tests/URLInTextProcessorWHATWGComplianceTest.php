@@ -176,15 +176,6 @@ class URLInTextProcessorWHATWGComplianceTest extends TestCase {
 				continue;
 			}
 			
-			// Include only HTTP and HTTPs URLs
-			if ( ! str_starts_with( $input, 'http' ) ) {
-				continue;
-			}
-
-			// if($example['input'] !== 'http://foo.09..') {
-			// 	continue;
-			// }
-
 			$filtered_examples[] = array( $example );
 		}
 

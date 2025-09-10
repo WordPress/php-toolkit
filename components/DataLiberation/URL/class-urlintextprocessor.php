@@ -175,8 +175,8 @@ class URLInTextProcessor {
 	 * @return string
 	 */
 	public function next_url() {
-		$this->preprocessed_url              = null;
-		$this->matched_url              = null;
+		$this->preprocessed_url     = null;
+		$this->matched_url          = null;
 		$this->parsed_url           = null;
 		$this->url_starts_at        = null;
 		$this->url_length           = null;
@@ -241,6 +241,11 @@ class URLInTextProcessor {
 					// This TLD is not in the public suffix list. It's not a valid domain name.
 					continue;
 				}
+			}
+
+			// Only consider HTTP and HTTPS URLs
+			if($parsed_url->protocol && ! in_array( $parsed_url->protocol, ['http', 'https'], true )) {
+				continue;
 			}
 
 			$this->parsed_url    = $parsed_url;

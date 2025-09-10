@@ -1644,32 +1644,15 @@
 		"hash": ""
 	},
 	{
+		"description": "Only consider HTTP and HTTPS URLs for matching",
 		"input": "//",
 		"base": "file:///tmp/mock/path",
-		"href": "file:///",
-		"protocol": "file:",
-		"username": "",
-		"password": "",
-		"host": "",
-		"hostname": "",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
 		"input": "///",
 		"base": "file:///tmp/mock/path",
-		"href": "file:///",
-		"protocol": "file:",
-		"username": "",
-		"password": "",
-		"host": "",
-		"hostname": "",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
 		"input": "///test",
@@ -3828,19 +3811,10 @@
 		"hash": ""
 	},
 	{
+		"description": "Only consider HTTP and HTTPS URLs for matching",
 		"input": "sc://faß.ExAmPlE/",
 		"base": null,
-		"href": "sc://fa%C3%9F.ExAmPlE/",
-		"origin": "null",
-		"protocol": "sc:",
-		"username": "",
-		"password": "",
-		"host": "fa%C3%9F.ExAmPlE",
-		"hostname": "fa%C3%9F.ExAmPlE",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	"Invalid escaped characters should fail and the percents should be escaped. https://www.w3.org/Bugs/Public/show_bug.cgi?id=24191",
 	{
@@ -7702,46 +7676,22 @@
 		"hash": ""
 	},
 	{
+		"description": "Only consider HTTP and HTTPS URLs for matching",
 		"input": "///",
 		"base": "sc://x/",
-		"href": "sc:///",
-		"protocol": "sc:",
-		"username": "",
-		"password": "",
-		"host": "",
-		"hostname": "",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
+		"description": "Only consider HTTP and HTTPS URLs for matching",
 		"input": "////",
 		"base": "sc://x/",
-		"href": "sc:////",
-		"protocol": "sc:",
-		"username": "",
-		"password": "",
-		"host": "",
-		"hostname": "",
-		"port": "",
-		"pathname": "//",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
+		"description": "Only consider HTTP and HTTPS URLs for matching",
 		"input": "////x/",
 		"base": "sc://x/",
-		"href": "sc:////x/",
-		"protocol": "sc:",
-		"username": "",
-		"password": "",
-		"host": "",
-		"hostname": "",
-		"port": "",
-		"pathname": "//x/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
 		"input": "tftp://foobar.com/someconfig;mode=netascii",
