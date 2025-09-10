@@ -98,14 +98,6 @@ class URLInTextProcessorWHATWGComplianceTest extends TestCase {
 				continue;
 			}
 			
-			// Filter out examples that are not relevant for text processing
-			$input = $example['input'] ?? '';
-			
-			// Skip inputs that are just fragments or queries without a domain
-			if ( preg_match( '/^[?#]/', $input ) ) {
-				// continue;
-			}
-			
 			$filtered_examples[] = array( $example );
 		}
 
