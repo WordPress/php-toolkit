@@ -106,14 +106,7 @@ class URLInTextProcessor {
 	 * If set to false, the matching will be more lenient, allowing for potential false positives.
 	 */
 	private $strict = false;
-	private static $public_suffix_list;
-
-
 	public function __construct( $text, $base_url = null ) {
-		if ( ! self::$public_suffix_list ) {
-			// @TODO: Parse wildcards and exceptions from the public suffix list.
-			self::$public_suffix_list = require_once __DIR__ . '/public-suffix-list.php';
-		}
 		$this->text          = $text;
 		$this->base_url      = $base_url;
 		$this->base_protocol = $base_url ? parse_url( $base_url, PHP_URL_SCHEME ) : null;
@@ -238,8 +231,8 @@ class URLInTextProcessor {
 					continue;
 				}
 
-				$tld = strtolower( substr( $parsed_url->hostname, $last_dot_position + 1 ) );
-				if ( empty( self::$public_suffix_list[ $tld ] ) && 'internal' !== $tld ) {
+				$tld = substr( $parsed_url->hostname, $last_dot_position + 1 );
+				if ( ! WPURL::is_known_public_domain( $tld ) ) {
 					// This TLD is not in the public suffix list. It's not a valid domain name.
 					continue;
 				}

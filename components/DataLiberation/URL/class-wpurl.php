@@ -82,4 +82,24 @@ class WPURL {
 
 		return $base_url->toString();
 	}
+
+	/**
+	 * Checks if a TLD is in the known public domain suffix list.
+	 * This reduces false positives like `index.html` or `plugins.php`.
+	 *
+	 * @see https://publicsuffix.org/
+	 *
+	 * @param string $tld The top-level domain to check.
+	 * @return bool True if the TLD is a known public domain, false otherwise.
+	 */
+	public static function is_known_public_domain( $tld ) {
+		static $public_suffix_list = null;
+
+		if ( null === $public_suffix_list ) {
+			$public_suffix_list = require_once __DIR__ . '/public-suffix-list.php';
+		}
+
+		$tld = strtolower( $tld );
+		return ! empty( $public_suffix_list[ $tld ] ) || 'internal' === $tld;
+	}
 }
