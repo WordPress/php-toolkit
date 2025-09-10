@@ -28,12 +28,6 @@ class URLInTextProcessorWHATWGComplianceTest extends TestCase {
 				$this->assertTrue( true, "Should not have parsed URL: '$input_url'" );
 				return;
 			}
-			// var_dump(WPURL::parse( 'http://ho%2Fst/', $base_url ));
-			// var_dump($parsed_url);
-			// var_dump($processor->matched_url);
-			// var_dump($processor->preprocessed_url);
-			// var_dump($example);
-			// die();
 			$this->fail( "Should not have parsed URL: '$input_url'" );
 			return;
 		}
@@ -49,65 +43,6 @@ class URLInTextProcessorWHATWGComplianceTest extends TestCase {
 		
 		// Additional validation for expected results
 		$this->assertParsedUrl( $example, $parsed_url );
-	}
-
-	public function myScratch() {
-		$regex = '/
-            (?:                                                      # scheme
-                (?<scheme>https?:)?                                  # Only consider http and https
-                \/\/                                                 # The protocol does not have to be there, but when
-                                                                     # it is, is must be followed by \/\/
-            )?
-            (?:                                                        # userinfo
-                (?:
-                    (?<=\/{2})                                             # prefixed with \/\/
-                    |                                                      # or
-                    (?=[^\p{Sm}\p{Sc}\p{Sk}\p{P}])                         # start with not: mathematical, currency, modifier symbol, punctuation
-                )
-                (?<userinfo>[^\s<>@\/]+)                                   # not: whitespace, < > @ \/
-                @                                                          # at
-            )?
-            (?=[^\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{C}\p{P}])                   # followed by valid host char
-            (?|                                                        # host
-                (?<host>                                                   # host prefixed by scheme or userinfo (less strict)
-                    (?<=\/\/|@)                                               # prefixed with \/\/ or @
-                    (?=[^\-])                                                  # label start, not: -
-                    (?:%|[^\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{C}\p{P}]|-){1,63}         # label not: whitespace, mathematical, currency, modifier symbol, control point, punctuation | except -
-                    (?<=[^\-])                                                 # label end, not: -
-                    (?:                                                        # more label parts
-                        \.
-                        (?=[^\-])                                                  # label start, not: -
-                        (?<tld>(?:[^\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{C}\p{P}]|-){1,63})   # label not: whitespace, mathematical, currency, modifier symbol, control point, punctuation | except -
-                        (?<=[^\-])                                                 # label end, not: -
-                    )*
-                )
-                |                                                          # or
-                (?<host>                                                   # host with tld (no scheme or userinfo)
-                    (?=[^\-])                                                  # label start, not: -
-                    (?:%|[^\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{C}\p{P}]|-){1,63}         # label not: whitespace, mathematical, currency, modifier symbol, control point, punctuation | except -
-                    (?<=[^\-])                                                 # label end, not: -
-                    (?:                                                        # more label parts
-                        \.
-                        (?=[^\-])                                                  # label start, not: -
-                        (?:%|[^\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{C}\p{P}]|-){1,63}         # label not: whitespace, mathematical, currency, modifier symbol, control point, punctuation | except -
-                        (?<=[^\-])                                                 # label end, not: -
-                    )*
-                    \.(?<tld>\w{2,63})                                         # tld
-                )
-            )
-            (?:\:(?<port>\d+))?                                        # port
-            (?<path>                                                   # path, query, fragment
-                [\/?#]                                                 # prefixed with \/ or ? or #
-                [^\s<>]*                                               # any chars except whitespace and <>
-                (?<=[^\s<>({\[`!;:\'".,?«»“”‘’])                       # end with not a space or some punctuation chars
-            )?
-        /ixuJ';
-
-		$example = 'Visit http://foo.09.. for more info';
-		$matches = array();
-		$found = preg_match( $regex, $example, $matches, PREG_OFFSET_CAPTURE );
-		var_dump($found);
-		die();
 	}
 
 	private function assertParsedUrl( $example, $parsed_url ) {
@@ -168,7 +103,7 @@ class URLInTextProcessorWHATWGComplianceTest extends TestCase {
 			
 			// Skip inputs that are just fragments or queries without a domain
 			if ( preg_match( '/^[?#]/', $input ) ) {
-				continue;
+				// continue;
 			}
 			
 			$filtered_examples[] = array( $example );

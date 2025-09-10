@@ -362,77 +362,32 @@
 	{
 		"input": "#",
 		"base": "http://example.org/foo/bar",
-		"href": "http://example.org/foo/bar#",
-		"origin": "http://example.org",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "example.org",
-		"hostname": "example.org",
-		"port": "",
-		"pathname": "/foo/bar",
-		"search": "",
-		"hash": ""
+		"failure": true,
+		"description": "Test case marked as expected failure"
 	},
 	{
 		"input": "#/",
 		"base": "http://example.org/foo/bar",
-		"href": "http://example.org/foo/bar#/",
-		"origin": "http://example.org",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "example.org",
-		"hostname": "example.org",
-		"port": "",
-		"pathname": "/foo/bar",
-		"search": "",
-		"hash": "#/"
+		"failure": true,
+		"description": "Test case marked as expected failure"
 	},
 	{
 		"input": "#\\",
 		"base": "http://example.org/foo/bar",
-		"href": "http://example.org/foo/bar#\\",
-		"origin": "http://example.org",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "example.org",
-		"hostname": "example.org",
-		"port": "",
-		"pathname": "/foo/bar",
-		"search": "",
-		"hash": "#\\"
+		"failure": true,
+		"description": "Test case marked as expected failure"
 	},
 	{
 		"input": "#;?",
 		"base": "http://example.org/foo/bar",
-		"href": "http://example.org/foo/bar#;?",
-		"origin": "http://example.org",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "example.org",
-		"hostname": "example.org",
-		"port": "",
-		"pathname": "/foo/bar",
-		"search": "",
-		"hash": "#;?"
+		"failure": true,
+		"description": "Test case marked as expected failure"
 	},
 	{
 		"input": "?",
 		"base": "http://example.org/foo/bar",
-		"href": "http://example.org/foo/bar?",
-		"origin": "http://example.org",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "example.org",
-		"hostname": "example.org",
-		"port": "",
-		"pathname": "/foo/bar",
-		"search": "",
-		"hash": ""
+		"failure": true,
+		"description": "Test case marked as expected failure"
 	},
 	{
 		"input": "/",
@@ -4369,34 +4324,14 @@
 	{
 		"input": "?a=b&c=d",
 		"base": "http://example.org/foo/bar",
-		"href": "http://example.org/foo/bar?a=b&c=d",
-		"origin": "http://example.org",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "example.org",
-		"hostname": "example.org",
-		"port": "",
-		"pathname": "/foo/bar",
-		"search": "?a=b&c=d",
-		"searchParams": "a=b&c=d",
-		"hash": ""
+		"failure": true,
+		"description": "Test case marked as expected failure"
 	},
 	{
 		"input": "??a=b&c=d",
 		"base": "http://example.org/foo/bar",
-		"href": "http://example.org/foo/bar??a=b&c=d",
-		"origin": "http://example.org",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "example.org",
-		"hostname": "example.org",
-		"port": "",
-		"pathname": "/foo/bar",
-		"search": "??a=b&c=d",
-		"searchParams": "%3Fa=b&c=d",
-		"hash": ""
+		"failure": true,
+		"description": "Test case marked as expected failure"
 	},
 	"# Scheme only",
 	{
@@ -6118,16 +6053,8 @@
 	{
 		"input": "#link",
 		"base": "https://example.org/##link",
-		"href": "https://example.org/#link",
-		"protocol": "https:",
-		"username": "",
-		"password": "",
-		"host": "example.org",
-		"hostname": "example.org",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": "#link"
+		"failure": true,
+		"description": "Test case marked as expected failure"
 	},
 	"UTF-8 percent-encode of C0 control percent-encode set and supersets",
 	{
