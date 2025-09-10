@@ -116,13 +116,6 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 
 	private function next_url_attribute() {
 		$tag = $this->get_tag();
-		if (
-			! array_key_exists( $tag, self::URL_ATTRIBUTES ) &&
-			'INPUT' !== $tag // type=image => src,.
-		) {
-			return false;
-		}
-
 		while ( ++$this->inspected_url_attribute_idx < count( self::URL_ATTRIBUTES[ $tag ] ) ) {
 			$attr = self::URL_ATTRIBUTES[ $tag ][ $this->inspected_url_attribute_idx ];
 			if ( false === $attr ) {
