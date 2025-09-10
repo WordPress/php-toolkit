@@ -70,11 +70,11 @@ class URLInTextProcessor {
 	/**
 	 * @var string
 	 */
-	public $matched_url;
+	private $matched_url;
 	/**
 	 * @var string
 	 */
-	public $preprocessed_url;
+	private $preprocessed_url;
 	/**
 	 * @var URL
 	 */
@@ -188,7 +188,6 @@ class URLInTextProcessor {
 			$matches = array();
 			$found   = preg_match( $this->regex, $this->text, $matches, PREG_OFFSET_CAPTURE, $this->bytes_already_parsed );
 			if ( 1 !== $found ) {
-				// var_dump("0");
 				return false;
 			}
 
@@ -203,7 +202,7 @@ class URLInTextProcessor {
 			) {
 				$this->matched_url = substr( $this->matched_url, 0, - 1 );
 			}
-			$url_starts_at = $matches[0][1];
+			$url_starts_at              = $matches[0][1];
 			$this->bytes_already_parsed = $url_starts_at + strlen( $this->matched_url );
 
 			$had_protocol = WPURL::has_http_https_protocol( $this->matched_url );
@@ -219,19 +218,16 @@ class URLInTextProcessor {
 			 */
 			$parsed_url = WPURL::parse( $this->preprocessed_url, $this->base_url );
 			if ( false === $parsed_url ) {
-				// var_dump("1");
 				continue;
 			}
 
-			// Only consider HTTP and HTTPS URLs
-			if ( $parsed_url->protocol && ! in_array( $parsed_url->protocol, ['http:', 'https:'], true ) ) {
-				// var_dump("2");
+			// Only consider HTTP and HTTPS URLs.
+			if ( $parsed_url->protocol && ! in_array( $parsed_url->protocol, array( 'http:', 'https:' ), true ) ) {
 				continue;
 			}
 
 			// Disregard URLs with auth details.
 			if ( $parsed_url->username || $parsed_url->password ) {
-				// var_dump("3");
 				continue;
 			}
 
@@ -252,14 +248,12 @@ class URLInTextProcessor {
 					 *        URLs without a dot in the hostname when they're not preceeded
 					 *        by a protocol.
 					 */
-					// var_dump("4");
 					continue;
 				}
 
 				$tld = substr( $parsed_url->hostname, $last_dot_position + 1 );
 				if ( ! WPURL::is_known_public_domain( $tld ) ) {
 					// This TLD is not in the public suffix list. It's not a valid domain name.
-					// var_dump("5");
 					continue;
 				}
 			}
@@ -291,7 +285,7 @@ class URLInTextProcessor {
 		if ( $this->did_prepend_protocol ) {
 			$new_url = substr( $new_url, strpos( $new_url, '://' ) + 3 );
 		}
-		$this->matched_url                                 = $new_url;
+		$this->matched_url                             = $new_url;
 		$this->lexical_updates[ $this->url_starts_at ] = new WP_HTML_Text_Replacement(
 			$this->url_starts_at,
 			$this->url_length,
