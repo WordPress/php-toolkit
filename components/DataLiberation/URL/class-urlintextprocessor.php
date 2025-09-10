@@ -60,6 +60,43 @@ use WP_HTML_Text_Replacement;
  * > Visit the WordPress plugins directory (https://w.org/plug(in)s
  *
  * Would yield `https://w.org/plug(in)s`.
+ *
+ * ### Rejecting URLs with embedded credentials
+ *
+ * `https://user:pass@wp.org` is not matched. Rewriting URLs that presume transferable
+ * credentials is hazardous and rarely correct for migrations.
+ *
+ * ### Reject non-HTTP(S) schemes
+ *
+ * Out of scope for site moves; all of these are rejected:
+ * `gopher://site.com`, `blob:afgh2-48189d`, `ahttp://site.com`, `mailto:user@site.com`, `file://asset.zip`.
+ * If we need additional schemes later, we can add them intentionally.
+ *
+ * ### Reject non‑absolute‑looking references
+ *
+ * While we do rely on a base URL, inputs like `::`, `/index.html`, `?query` are still ignored.
+ * Bare-domain forms like `mysite.org/?query` are still matched.
+ *
+ * ### Handle trailing punctuation sensibly
+ *
+ * `https://mysite.com/path/..` is interpreted as `https://mysite.com/path/` rather than
+ * collapsing to the origin. A final period is far more likely sentence punctuation than `../`.
+ * If a user truly writes `https://mysite.com/path/../`, we parse it as expected.
+ *
+ * ### Fuzzy matching for malformed ports
+ *
+ * * **WHATWG**: `"http://w.org:100000 plugins are in the directory" → failure`.
+ * * **Inline detection**: `"http://w.org:100000 plugins are in the directory" → "http://w.org/"`
+ *   (truncate at the invalid port).
+ *
+ * This is a best‑effort extraction of the valid prefix rather than an all‑or‑nothing rejection.
+ *
+ * ### Whitespace handling
+ *
+ * * **WHATWG**: `"http://example\t.\norg" → "http://example.org/"`.
+ * * **Inline detection**: stops at the first whitespace, yielding `"http://example/"`.
+ *
+ * This reflects how URLs actually appear in text blocks where whitespace often terminates a link.
  */
 class URLInTextProcessor {
 
