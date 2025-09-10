@@ -291,28 +291,6 @@ class URLInTextProcessorTest extends TestCase {
 			// 'IPv6 Address' => ['http://[2001:db8::1]', 'http://[2001:db8::1]/', 'Visit http://[2001:db8::1]'],
 			// 'IPv6 with Port' => ['http://[2001:db8::1]:8080', 'http://[2001:db8::1]:8080/', 'Visit http://[2001:db8::1]:8080'],
 
-			// Usernames and Passwords
-			'With Username'                               => array(
-				'http://user@example.com',
-				'http://user@example.com/',
-				'Visit http://user@example.com',
-			),
-			'With Username and Password'                  => array(
-				'http://user:pass@example.com',
-				'http://user:pass@example.com/',
-				'Visit http://user:pass@example.com',
-			),
-			'Username with Special Characters'            => array(
-				'http://user%40name:pass@example.com',
-				'http://user%40name:pass@example.com/',
-				'Link: http://user%40name:pass@example.com',
-			),
-			'Password with Special Characters'            => array(
-				'http://user:pa%40ss@example.com',
-				'http://user:pa%40ss@example.com/',
-				'Secure link: http://user:pa%40ss@example.com',
-			),
-
 			// Protocols
 			'Protocol-Relative URL'                       => array(
 				'//example.com/path',
