@@ -26,9 +26,9 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	/**
 	 * The list of names of URL-related HTML attributes that may be available on
 	 * the current token. They will be inspected by next_url_attribute().
-	 * 
+	 *
 	 * Possible values:
-	 * 
+	 *
 	 * - null: We haven't inspected any attribute yet.
 	 * - array: The first element is the currently inspected attribute
 	 *          and the rest of the list are elements yet to be inspected on
@@ -65,10 +65,10 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	public function next_token(): bool {
 		$this->get_updated_html();
 
-		$this->raw_url                                = null;
-		$this->parsed_url                             = null;
-		$this->inspecting_html_attributes             = null;
-		$this->url_in_text_processor                  = null;
+		$this->raw_url                    = null;
+		$this->parsed_url                 = null;
+		$this->inspecting_html_attributes = null;
+		$this->url_in_text_processor      = null;
 		// Do not reset url_in_text_node_updated – it's reset in get_updated_html() which.
 		// is called in parent::next_token().
 
@@ -172,8 +172,8 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 				array_pop( $this->inspecting_html_attributes );
 				continue;
 			}
-			$this->raw_url                                = $url_maybe;
-			$this->parsed_url                             = $parsed_url;
+			$this->raw_url    = $url_maybe;
+			$this->parsed_url = $parsed_url;
 
 			return true;
 		}
