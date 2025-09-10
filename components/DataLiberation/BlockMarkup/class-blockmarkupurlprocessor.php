@@ -24,18 +24,20 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	private $url_in_text_node_updated;
 
 	/**
-	 * The list of HTML attributes whose values haven't been yet processed.
+	 * The list of names of URL-related HTML attributes that may be available on
+	 * the current token. They will be inspected by next_url_attribute().
+	 * 
+	 * Possible values:
+	 * 
+	 * - null: We haven't inspected any attribute yet.
+	 * - array: The first element is the currently inspected attribute
+	 *          and the rest of the list are elements yet to be inspected on
+	 *          the upcoming next_url_attribute() call.
+	 * - empty array: We've already inspected all the URL-related attributes.
 	 *
 	 * @var array<string>|null
 	 */
 	private $inspecting_html_attributes;
-
-	/**
-	 * The name of the URL attribute whose value is currently being inspected.
-	 *
-	 * @var string|null
-	 */
-	private $currently_inspected_url_html_attribute;
 
 	public function __construct( $html, ?string $base_url_string = null ) {
 		parent::__construct( $html );
@@ -66,7 +68,6 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		$this->raw_url                                = null;
 		$this->parsed_url                             = null;
 		$this->inspecting_html_attributes             = null;
-		$this->currently_inspected_url_html_attribute = null;
 		$this->url_in_text_processor                  = null;
 		// Do not reset url_in_text_node_updated – it's reset in get_updated_html() which.
 		// is called in parent::next_token().
@@ -136,13 +137,25 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		}
 
 		if ( null === $this->inspecting_html_attributes ) {
+			/**
+			 * Initialize the list on the first call to next_url_attribute()
+			 * for the current token. The last element is the attribute we'll
+			 * inspect in the while() loop below.
+			 */
 			$this->inspecting_html_attributes = self::URL_ATTRIBUTES[ $tag ];
+		} else {
+			/**
+			 * Forget the attribute we've inspected on the previous call to
+			 * next_url_attribute().
+			 */
+			array_pop( $this->inspecting_html_attributes );
 		}
 
 		while ( count( $this->inspecting_html_attributes ) > 0 ) {
-			$attr      = array_shift( $this->inspecting_html_attributes );
+			$attr      = $this->inspecting_html_attributes[ count( $this->inspecting_html_attributes ) - 1 ];
 			$url_maybe = $this->get_attribute( $attr );
 			if ( ! is_string( $url_maybe ) ) {
+				array_pop( $this->inspecting_html_attributes );
 				continue;
 			}
 
@@ -156,11 +169,11 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			$parsed_url = WPURL::parse( $url_maybe, $this->base_url_string );
 
 			if ( false === $parsed_url ) {
+				array_pop( $this->inspecting_html_attributes );
 				continue;
 			}
 			$this->raw_url                                = $url_maybe;
 			$this->parsed_url                             = $parsed_url;
-			$this->currently_inspected_url_html_attribute = $attr;
 
 			return true;
 		}
@@ -338,7 +351,15 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			return false;
 		}
 
-		return $this->currently_inspected_url_html_attribute ?? false;
+		if ( null === $this->inspecting_html_attributes ) {
+			return false;
+		}
+
+		if ( empty( $this->inspecting_html_attributes ) ) {
+			return false;
+		}
+
+		return $this->inspecting_html_attributes[ count( $this->inspecting_html_attributes ) - 1 ];
 	}
 
 
