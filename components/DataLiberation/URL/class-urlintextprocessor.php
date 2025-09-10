@@ -134,7 +134,7 @@ class URLInTextProcessor {
                 (?<userinfo>[^\s<>@\/]+)                                   # not: whitespace, < > @ \/
                 @                                                          # at
             )?
-            (?=[^\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{C}\p{P}])                   # followed by valid host char
+            (?=%|[^\p{Z}\p{Sm}\p{Sc}\p{Sk}\p{C}\p{P}])                   # followed by valid host char
             (?|                                                        # host
                 (?<host>                                                   # host prefixed by scheme or userinfo (less strict)
                     (?<=\/\/|@)                                               # prefixed with \/\/ or @

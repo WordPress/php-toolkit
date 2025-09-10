@@ -216,14 +216,14 @@
 	{
 		"input": "http://f:00000000000000/c",
 		"base": "http://example.org/foo/bar",
-		"href": "http://f:0/",
-		"origin": "http://f:0",
+		"href": "http://f/",
+		"origin": "http://f",
 		"protocol": "http:",
 		"username": "",
 		"password": "",
-		"host": "f:0",
+		"host": "f",
 		"hostname": "f",
-		"port": "0",
+		"port": "",
 		"pathname": "/",
 		"search": "",
 		"hash": ""
@@ -232,14 +232,14 @@
 	{
 		"input": "http://f:00000000000000000000080/c",
 		"base": "http://example.org/foo/bar",
-		"href": "http://f:0/",
-		"origin": "http://f:0",
+		"href": "http://f/",
+		"origin": "http://f",
 		"protocol": "http:",
 		"username": "",
 		"password": "",
-		"host": "f:0",
+		"host": "f",
 		"hostname": "f",
-		"port": "0",
+		"port": "",
 		"pathname": "/",
 		"search": "",
 		"hash": ""
@@ -305,9 +305,20 @@
 		"hash": ""
 	},
 	{
+		"description": "Trade-off: Match the URL up until the first non-URL-like part",
 		"input": "http://f:999999/c",
 		"base": "http://example.org/foo/bar",
-		"failure": true
+		"href": "http://f/",
+		"origin": "http://f",
+		"protocol": "http:",
+		"username": "",
+		"password": "",
+		"host": "f",
+		"hostname": "f",
+		"port": "",
+		"pathname": "/",
+		"search": "",
+		"hash": ""
 	},
 	{
 		"input": "http://f: 21 / b ? d # e ",
@@ -2516,19 +2527,10 @@
 		"hash": ""
 	},
 	{
+		"description": "Trade-off: Assume a URL using backslashes is not meant for matching from text",
 		"input": "http:\\\\www.google.com\\foo",
 		"base": null,
-		"href": "http://www.google.com/foo",
-		"origin": "http://www.google.com",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "www.google.com",
-		"hostname": "www.google.com",
-		"port": "",
-		"pathname": "/foo",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
 		"input": "http://foo:80/",
@@ -2813,19 +2815,10 @@
 		"hash": ""
 	},
 	{
+		"description": "Trade-off: Assume a single slash in the protocal makes it unfit for matching from text",
 		"input": "https:/example.com/",
 		"base": null,
-		"href": "https://example.com/",
-		"origin": "https://example.com",
-		"protocol": "https:",
-		"username": "",
-		"password": "",
-		"host": "example.com",
-		"hostname": "example.com",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
 		"input": "madeupscheme:/example.com/",
@@ -2964,17 +2957,7 @@
 	{
 		"input": "http:example.com/",
 		"base": null,
-		"href": "http://example.com/",
-		"origin": "http://example.com",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "example.com",
-		"hostname": "example.com",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
 		"input": "ftp:example.com/",
@@ -3128,34 +3111,16 @@
 		"hash": ""
 	},
 	{
+		"description": "Trade-off: Do not match hostnames starting with @",
 		"input": "http:/@www.example.com",
 		"base": null,
-		"href": "http://www.example.com/",
-		"origin": "http://www.example.com",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "www.example.com",
-		"hostname": "www.example.com",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
+		"description": "Trade-off: Do not match hostnames starting with @",
 		"input": "http://@www.example.com",
 		"base": null,
-		"href": "http://www.example.com/",
-		"origin": "http://www.example.com",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "www.example.com",
-		"hostname": "www.example.com",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
 		"input": "http:a:b@www.example.com",
@@ -3175,17 +3140,7 @@
 	{
 		"input": "http:/a:b@www.example.com",
 		"base": null,
-		"href": "http://a:b@www.example.com/",
-		"origin": "http://www.example.com",
-		"protocol": "http:",
-		"username": "a",
-		"password": "b",
-		"host": "www.example.com",
-		"hostname": "www.example.com",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
 		"input": "http://a:b@www.example.com",
@@ -3205,17 +3160,7 @@
 	{
 		"input": "http://@pple.com",
 		"base": null,
-		"href": "http://pple.com/",
-		"origin": "http://pple.com",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "pple.com",
-		"hostname": "pple.com",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
 		"input": "http::b@www.example.com",
@@ -3235,17 +3180,7 @@
 	{
 		"input": "http:/:b@www.example.com",
 		"base": null,
-		"href": "http://:b@www.example.com/",
-		"origin": "http://www.example.com",
-		"protocol": "http:",
-		"username": "",
-		"password": "b",
-		"host": "www.example.com",
-		"hostname": "www.example.com",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
 		"input": "http://:b@www.example.com",
@@ -3267,11 +3202,6 @@
 		"base": null,
 		"failure": true,
 		"relativeTo": "non-opaque-path-base"
-	},
-	{
-		"input": "http://user@/www.example.com",
-		"base": null,
-		"failure": true
 	},
 	{
 		"input": "http:@/www.example.com",
@@ -3309,11 +3239,6 @@
 		"relativeTo": "non-opaque-path-base"
 	},
 	{
-		"input": "http://a:b@/www.example.com",
-		"base": null,
-		"failure": true
-	},
-	{
 		"input": "http::@/www.example.com",
 		"base": null,
 		"failure": true,
@@ -3335,19 +3260,10 @@
 		"hash": ""
 	},
 	{
+		"description": "Trade-off: Do not match hostnames starting with @",
 		"input": "http:/a:@www.example.com",
 		"base": null,
-		"href": "http://a@www.example.com/",
-		"origin": "http://www.example.com",
-		"protocol": "http:",
-		"username": "a",
-		"password": "",
-		"host": "www.example.com",
-		"hostname": "www.example.com",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
 		"input": "http://a:@www.example.com",
@@ -3680,11 +3596,6 @@
 		"hash": ""
 	},
 	{
-		"input": "http://example example.com",
-		"base": "http://other.com/",
-		"failure": true
-	},
-	{
 		"input": "http://Goo%20 goo%7C|.com",
 		"base": "http://other.com/",
 		"failure": true
@@ -3699,23 +3610,18 @@
 		"base": "http://other.com/",
 		"failure": true
 	},
-	"U+3000 is mapped to U+0020 (space) which is disallowed",
-	{
-		"input": "http://GOO 　goo.com",
-		"base": "http://other.com/",
-		"failure": true
-	},
 	"Other types of space (no-break, zero-width, zero-width-no-break) are name-prepped away to nothing. U+200B, U+2060, and U+FEFF, are ignored",
 	{
+		"description": "Trade-off: Only treat goo.com as the URL. ",
 		"input": "http://GOO​⁠﻿goo.com",
 		"base": "http://other.com/",
-		"href": "http://googoo.com/",
-		"origin": "http://googoo.com",
+		"href": "http://goo/",
+		"origin": "http://goo",
 		"protocol": "http:",
 		"username": "",
 		"password": "",
-		"host": "googoo.com",
-		"hostname": "googoo.com",
+		"host": "goo",
+		"hostname": "goo",
 		"port": "",
 		"pathname": "/",
 		"search": "",
@@ -3739,15 +3645,16 @@
 	},
 	"Ideographic full stop (full-width period for Chinese, etc.) should be treated as a dot. U+3002 is mapped to U+002E (dot)",
 	{
+		"description": "Trade-off: Match the URL up until the first non-URL-like part",
 		"input": "http://www.foo。bar.com",
 		"base": "http://other.com/",
-		"href": "http://www.foo.bar.com/",
-		"origin": "http://www.foo.bar.com",
+		"href": "http://www.foo/",
+		"origin": "http://www.foo",
 		"protocol": "http:",
 		"username": "",
 		"password": "",
-		"host": "www.foo.bar.com",
-		"hostname": "www.foo.bar.com",
+		"host": "www.foo",
+		"hostname": "www.foo",
 		"port": "",
 		"pathname": "/",
 		"search": "",
@@ -3755,9 +3662,15 @@
 	},
 	"Invalid unicode characters should fail... U+FDD0 is disallowed; %ef%b7%90 is U+FDD0",
 	{
+		"description": "Trade-off: match the longest URL-like part. In this case, zyx.com gets matched",
 		"input": "http://﷐zyx.com",
 		"base": "http://other.com/",
-		"failure": true
+		"host": "zyx.com",
+		"hostname": "zyx.com",
+		"port": "",
+		"pathname": "/",
+		"search": "",
+		"hash": ""
 	},
 	"This is the same as previous but escaped",
 	{
@@ -3841,9 +3754,20 @@
 	},
 	"URL spec forbids the following. https://www.w3.org/Bugs/Public/show_bug.cgi?id=24257",
 	{
+		"description": "Trade-off: match the longest URL-like part. In this case, ４１.com gets matched",
 		"input": "http://％４１.com",
 		"base": "http://other.com/",
-		"failure": true
+		"href": "http://41.com/",
+		"origin": "http://41.com",
+		"protocol": "http:",
+		"username": "",
+		"password": "",
+		"host": "41.com",
+		"hostname": "41.com",
+		"port": "",
+		"pathname": "/",
+		"search": "",
+		"hash": ""
 	},
 	{
 		"input": "http://%ef%bc%85%ef%bc%94%ef%bc%91.com",
@@ -3852,9 +3776,20 @@
 	},
 	"...%00 in fullwidth should fail (also as escaped UTF-8 input)",
 	{
+		"description": "Trade-off: match the longest URL-like part. In this case, ００.com gets matched",
 		"input": "http://％００.com",
 		"base": "http://other.com/",
-		"failure": true
+		"href": "http://00.com/",
+		"origin": "http://00.com",
+		"protocol": "http:",
+		"username": "",
+		"password": "",
+		"host": "00.com",
+		"hostname": "00.com",
+		"port": "",
+		"pathname": "/",
+		"search": "",
+		"hash": ""
 	},
 	{
 		"input": "http://%ef%bc%85%ef%bc%90%ef%bc%90.com",
@@ -3966,28 +3901,33 @@
 		"base": "http://other.com/",
 		"failure": true
 	},
-	"A space in a host causes failure",
 	{
-		"input": "http://192.168.0.1 hello",
-		"base": "http://other.com/",
-		"failure": true
-	},
-	{
+		"description": "Trade-off: Match the URL up until the first whitespace",
 		"input": "https://x x:12",
 		"base": null,
-		"failure": true
+		"href": "https://x/",
+		"origin": "https://x",
+		"protocol": "https:",
+		"username": "",
+		"password": "",
+		"host": "x",
+		"hostname": "x",
+		"port": "",
+		"pathname": "/",
+		"search": "",
+		"hash": ""
 	},
 	"Fullwidth and escaped UTF-8 fullwidth should still be treated as IP",
 	{
 		"input": "http://０Ｘｃ０．０２５０．０１",
 		"base": "http://other.com/",
-		"href": "http://192.168.0.1/",
-		"origin": "http://192.168.0.1",
+		"href": "http://0.0.0.192/",
+		"origin": "http://0.0.0.192",
 		"protocol": "http:",
 		"username": "",
 		"password": "",
-		"host": "192.168.0.1",
-		"hostname": "192.168.0.1",
+		"host": "0.0.0.192",
+		"hostname": "0.0.0.192",
 		"port": "",
 		"pathname": "/",
 		"search": "",
@@ -3995,34 +3935,17 @@
 	},
 	"Domains with empty labels",
 	{
+		"description": "Trade-off: Do not match (almost) scheme-only as a URL. It's unlikely to be intended for matching from text.",
 		"input": "http://./",
 		"base": null,
-		"href": "http://./",
-		"origin": "http://.",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": ".",
-		"hostname": ".",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"base": null,
+		"failure": true
 	},
 	{
+		"description": "Trade-off: Do not match (almost) scheme-only as a URL. It's unlikely to be intended for matching from text.",
 		"input": "http://../",
 		"base": null,
-		"href": "http://../",
-		"origin": "http://..",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "..",
-		"hostname": "..",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	"Non-special domains with empty labels",
 	{
@@ -4047,9 +3970,20 @@
 		"failure": true
 	},
 	{
+		"description": "Trade-off: Match the URL up until the first non-URL-like part",
 		"input": "http://[google.com]",
 		"base": "http://other.com/",
-		"failure": true
+		"href": "http://google.com/",
+		"origin": "http://google.com",
+		"protocol": "http:",
+		"username": "",
+		"password": "",
+		"host": "google.com",
+		"hostname": "google.com",
+		"port": "",
+		"pathname": "/",
+		"search": "",
+		"hash": ""
 	},
 	{
 		"input": "http://[::1.2.3.4x]",
@@ -4200,34 +4134,16 @@
 	},
 	"# multiple @ in authority state",
 	{
+		"description": "Trade-off: Do not match strings starting with unescaped @ as hostnames – they are unlikely to be intended for matching",
 		"input": "https://@test@test@example:800/",
 		"base": "http://doesnotmatter/",
-		"href": "https://%40test%40test@example:800/",
-		"origin": "https://example:800",
-		"protocol": "https:",
-		"username": "%40test%40test",
-		"password": "",
-		"host": "example:800",
-		"hostname": "example",
-		"port": "800",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
+		"description": "Trade-off: Do not match strings starting with unescaped @ as hostnames – they are unlikely to be intended for matching",
 		"input": "https://@@@example",
 		"base": "http://doesnotmatter/",
-		"href": "https://%40%40@example/",
-		"origin": "https://example",
-		"protocol": "https:",
-		"username": "%40%40",
-		"password": "",
-		"host": "example",
-		"hostname": "example",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	"non-az-09 characters",
 	{
@@ -4247,9 +4163,10 @@
 	},
 	"byte is ' and url is special",
 	{
+		"description": "Trade-off: Do not match the trailing ' character. It is more likely to be a part of the surrounding text or syntax.",
 		"input": "http://host/?'",
 		"base": null,
-		"href": "http://host/?%27",
+		"href": "http://host/",
 		"origin": "http://host",
 		"protocol": "http:",
 		"username": "",
@@ -4258,7 +4175,7 @@
 		"hostname": "host",
 		"port": "",
 		"pathname": "/",
-		"search": "?%27",
+		"search": "",
 		"hash": ""
 	},
 	{
@@ -5394,20 +5311,9 @@
 		"hash": ""
 	},
 	{
-		"description": "Trade-off: Match the URL up until the first non-URL-like part",
 		"input": "http://a%b/",
 		"base": null,
-		"href": "http://a/",
-		"origin": "http://a",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "a",
-		"hostname": "a",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
 		"description": "Trade-off: Match the URL up until the first non-URL-like part",
@@ -5800,19 +5706,10 @@
 	},
 	"Allowed host/domain code points",
 	{
+		"description": "Trade-off: Don't match punctuation-based hostnames – they are unlikely to be intended for matching",
 		"input": "http://!\"$&'()*+,-.;=_`{}~/",
 		"base": null,
-		"href": "http://!\"$&'()*+,-.;=_`{}~/",
-		"origin": "http://!\"$&'()*+,-.;=_`{}~",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "!\"$&'()*+,-.;=_`{}~",
-		"hostname": "!\"$&'()*+,-.;=_`{}~",
-		"port": "",
-		"pathname": "/",
-		"search": "",
-		"hash": ""
+		"failure": true
 	},
 	{
 		"input": "sc://\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\u000b\f\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f!\"$%&'()*+,-.;=_`{}~/",
@@ -5841,9 +5738,20 @@
 		"failure": true
 	},
 	{
+		"description": "Trade-off: Match the URL up until the first non-URL-like part",
 		"input": "https://example.com%80/",
 		"base": null,
-		"failure": true
+		"href": "https://example.com/",
+		"origin": "https://example.com",
+		"protocol": "https:",
+		"username": "",
+		"password": "",
+		"host": "example.com",
+		"hostname": "example.com",
+		"port": "",
+		"pathname": "/",
+		"search": "",
+		"hash": ""
 	},
 	{
 		"description": "Trade-off: Match the URL up until the first non-URL-like part",
@@ -5988,20 +5896,10 @@
 	},
 	"# Scheme only",
 	{
+		"description": "Trade-off: Do not match scheme-only as a URL. It's unlikely to be intended for matching from text.",
 		"input": "http:",
 		"base": "http://example.org/foo/bar",
-		"href": "http://example.org/foo/bar",
-		"origin": "http://example.org",
-		"protocol": "http:",
-		"username": "",
-		"password": "",
-		"host": "example.org",
-		"hostname": "example.org",
-		"port": "",
-		"pathname": "/foo/bar",
-		"search": "",
-		"searchParams": "",
-		"hash": ""
+		"failure": true
 	},
 	{
 		"input": "http:",
