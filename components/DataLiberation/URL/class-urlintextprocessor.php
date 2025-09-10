@@ -122,7 +122,7 @@ class URLInTextProcessor {
 		$this->regex = '/' . $prefix . '
             (?:                                                      # scheme
                 (?<scheme>[a-z0-9\+]+?:)?                            #
-                (?:\/|\/\/)?                                         # The protocol may optionally be followed by one or two slashes
+                (?:\/*)                                              # The protocol may optionally be followed by one or more slashes
             )?
             (?:                                                        # userinfo
                 (?:

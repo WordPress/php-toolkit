@@ -549,7 +549,8 @@
 	{
 		"input": "foo://///////bar.com/",
 		"base": "http://example.org/foo/bar",
-		"description": "foo protocol URLs are not supported for inline detection"
+		"description": "foo protocol URLs are not supported for inline detection",
+		"failure": true
 	},
 	{
 		"input": "foo:////://///",
