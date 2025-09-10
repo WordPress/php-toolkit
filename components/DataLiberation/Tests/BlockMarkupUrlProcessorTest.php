@@ -74,6 +74,11 @@ class BlockMarkupUrlProcessorTest extends TestCase {
 				'<a href=""></a><a href="https://developer.w.org"></a>',
 				null,
 			),
+			'Skips over a class name in the <a> tag' => array(
+				'https://developer.w.org',
+				'<a class="http://example.com" href="https://developer.w.org"></a>',
+				null,
+			),
 		);
 	}
 
@@ -120,10 +125,10 @@ class BlockMarkupUrlProcessorTest extends TestCase {
 		$markup = '<img longdesc="https://first-url.org" src="https://mysite.com/wp-content/image.png">';
 		$p      = new BlockMarkupUrlProcessor( $markup );
 		$this->assertTrue( $p->next_url(), 'Failed to find the URL in the markup.' );
-		$this->assertEquals( 'https://first-url.org', $p->get_raw_url(), 'Found a URL in the markup, but it wasn\'t the expected one.' );
+		$this->assertEquals( 'https://mysite.com/wp-content/image.png', $p->get_raw_url(), 'Found a URL in the markup, but it wasn\'t the expected one.' );
 
 		$this->assertTrue( $p->next_url(), 'Failed to find the URL in the markup.' );
-		$this->assertEquals( 'https://mysite.com/wp-content/image.png', $p->get_raw_url(),
+		$this->assertEquals( 'https://first-url.org', $p->get_raw_url(),
 			'Found a URL in the markup, but it wasn\'t the expected one.' );
 	}
 
@@ -131,10 +136,10 @@ class BlockMarkupUrlProcessorTest extends TestCase {
 		$markup = '<img longdesc="https://first-url.org" src="https://mysite.com/wp-content/image.png"><a href="https://third-url.org">';
 		$p      = new BlockMarkupUrlProcessor( $markup );
 		$this->assertTrue( $p->next_url(), 'Failed to find the URL in the markup.' );
-		$this->assertEquals( 'https://first-url.org', $p->get_raw_url(), 'Found a URL in the markup, but it wasn\'t the expected one.' );
+		$this->assertEquals( 'https://mysite.com/wp-content/image.png', $p->get_raw_url(), 'Found a URL in the markup, but it wasn\'t the expected one.' );
 
 		$this->assertTrue( $p->next_url(), 'Failed to find the URL in the markup.' );
-		$this->assertEquals( 'https://mysite.com/wp-content/image.png', $p->get_raw_url(),
+		$this->assertEquals( 'https://first-url.org', $p->get_raw_url(),
 			'Found a URL in the markup, but it wasn\'t the expected one.' );
 
 		$this->assertTrue( $p->next_url(), 'Failed to find the URL in the markup.' );
