@@ -35,7 +35,7 @@ class ProgressTrackedReadStream implements ByteReadStream {
 		return $this->stream->tell();
 	}
 
-	public function seek( int $offset ) {
+	public function seek( int $offset ): void {
 		$this->stream->seek( $offset );
 		$this->updateProgress();
 	}
@@ -49,18 +49,18 @@ class ProgressTrackedReadStream implements ByteReadStream {
 		return $is_end_of_data;
 	}
 
-	public function pull( $n, $mode = self::PULL_NO_MORE_THAN ): int {
+	public function pull( ?int $n, string $mode = self::PULL_NO_MORE_THAN ): int {
 		$bytes_pulled = $this->stream->pull( $n, $mode );
 		$this->updateProgress();
 
 		return $bytes_pulled;
 	}
 
-	public function peek( $n ): string {
+	public function peek( int $n ): string {
 		return $this->stream->peek( $n );
 	}
 
-	public function consume( $n ): string {
+	public function consume( int $n ): string {
 		$data = $this->stream->consume( $n );
 		$this->updateProgress();
 

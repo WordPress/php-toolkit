@@ -52,7 +52,7 @@ interface ByteReadStream {
 	 *
 	 * @return int how many bytes were pulled
 	 */
-	public function pull( int $n, string $mode = self::PULL_NO_MORE_THAN ): int;
+	public function pull( ?int $n, string $mode = self::PULL_NO_MORE_THAN ): int;
 
 	/**
 	 * Get the next $n bytes without advancing the pointer.
@@ -64,7 +64,7 @@ interface ByteReadStream {
 	/**
 	 * Returns $n bytes and advances the pointer.
 	 *
-	 * @param $n
+	 * @param  int $n
 	 *
 	 * @return string
 	 */

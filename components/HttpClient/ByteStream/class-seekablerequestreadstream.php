@@ -84,7 +84,7 @@ class SeekableRequestReadStream implements ByteReadStream {
 		return $this->cache->tell();
 	}
 
-	public function seek( int $offset ) {
+	public function seek( int $offset ): void {
 		$this->pipe_until( $offset );
 		$this->cache->seek( $offset );
 	}
@@ -93,19 +93,19 @@ class SeekableRequestReadStream implements ByteReadStream {
 		return $this->remote->reached_end_of_data() && $this->cache->reached_end_of_data();
 	}
 
-	public function pull( $n, $mode = self::PULL_NO_MORE_THAN ): int {
+	public function pull( ?int $n, string $mode = self::PULL_NO_MORE_THAN ): int {
 		$this->pipe_until( $this->tell() + $n );
 
 		return $this->cache->pull( $n, $mode );
 	}
 
-	public function peek( $n ): string {
+	public function peek( int $n ): string {
 		$this->pipe_until( $this->tell() + $n );
 
 		return $this->cache->peek( $n );
 	}
 
-	public function consume( $n ): string {
+	public function consume( int $n ): string {
 		return $this->cache->consume( $n );
 	}
 

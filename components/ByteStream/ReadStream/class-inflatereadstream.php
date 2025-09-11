@@ -83,12 +83,12 @@ class InflateReadStream extends BaseByteReadStream {
 		return null === $this->inflate_context && $this->upstream->reached_end_of_data();
 	}
 
-	public function seek( $target_offset ): void {
-		if ( null !== $this->length() && $target_offset > $this->length() ) {
+	public function seek( $offset ): void {
+		if ( null !== $this->length() && $offset > $this->length() ) {
 			throw new ByteStreamException( 'Cannot seek past the available data. Call append_bytes() first.' );
 		}
 
-		if ( $target_offset < $this->tell() ) {
+		if ( $offset < $this->tell() ) {
 			$this->upstream->seek( $this->delegate_offset_0 ?? 0 );
 			$this->buffer                   = '';
 			$this->bytes_already_forgotten  = 0;
@@ -97,8 +97,8 @@ class InflateReadStream extends BaseByteReadStream {
 			$this->inflate_init();
 		}
 
-		while ( $this->tell() < $target_offset ) {
-			$remaining_bytes = $target_offset - $this->tell();
+		while ( $this->tell() < $offset ) {
+			$remaining_bytes = $offset - $this->tell();
 			$next_chunk_size = min( 50 * 1024, $remaining_bytes );
 			$pulled          = $this->pull( $next_chunk_size );
 			// Keep skipping bytes until we've consumed enough.
