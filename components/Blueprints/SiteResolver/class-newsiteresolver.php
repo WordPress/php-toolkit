@@ -104,9 +104,9 @@ class NewSiteResolver {
 		}
 
 		// 3. Install WordPress if not installed yet.
-		// Technically, this is a "new site" resolver, but it's entirely possible.
-		// the developer-provided WordPress zip already has a sqlite database with the
-		// a WordPress site installed..
+		// Technically, this is a "new site" resolver, but it's entirely possible
+		// the developer-provided WordPress zip already has a sqlite database with
+		// a WordPress site installed.
 		if ( ! self::is_wordpress_installed( $runtime, $progress ) ) {
 			if ( ! $target_fs->exists( '/wp-config.php' ) ) {
 				if ( $target_fs->exists( 'wp-config-sample.php' ) ) {
