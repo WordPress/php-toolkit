@@ -708,27 +708,27 @@ class EntityImporter {
 		return $id;
 	}
 
-	// @TOOD handle terms.
+	// @TOOD handle terms
 	// $terms = apply_filters( 'wp_import_post_terms', $terms, $post_id, $data );.
 
-	// if ( ! empty( $terms ) ) {.
-	// $term_ids = array();.
-	// foreach ( $terms as $term ) {.
-	// $taxonomy = $term['taxonomy'];.
+	// if ( ! empty( $terms ) ) {
+	// $term_ids = array();
+	// foreach ( $terms as $term ) {
+	// $taxonomy = $term['taxonomy'];
 	// $key = sha1( $taxonomy . ':' . $term['slug'] );.
 
-	// if ( isset( $this->mapping['term'][ $key ] ) ) {.
-	// $term_ids[ $taxonomy ][] = (int) $this->mapping['term'][ $key ];.
-	// } else {.
-	// $meta[] = array( 'meta_key' => '_wxr_import_term', 'meta_value' => $term );.
-	// $requires_remapping = true;.
-	// }.
+	// if ( isset( $this->mapping['term'][ $key ] ) ) {
+	// $term_ids[ $taxonomy ][] = (int) $this->mapping['term'][ $key ];
+	// } else {
+	// $meta[] = array( 'meta_key' => '_wxr_import_term', 'meta_value' => $term );
+	// $requires_remapping = true;
+	// }
 	// }.
 
-	// foreach ( $term_ids as $tax => $ids ) {.
-	// $tt_ids = wp_set_post_terms( $post_id, $ids, $tax );.
-	// do_action( 'wp_import_set_post_terms', $tt_ids, $ids, $tax, $post_id, $data );.
-	// }.
+	// foreach ( $term_ids as $tax => $ids ) {
+	// $tt_ids = wp_set_post_terms( $post_id, $ids, $tax );
+	// do_action( 'wp_import_set_post_terms', $tt_ids, $ids, $tax, $post_id, $data );
+	// }
 	// }.
 
 	/**
@@ -807,7 +807,7 @@ class EntityImporter {
 			throw new DataLiberationException( 'attachment_processing_error', esc_html__( 'File does not exist', 'wordpress-importer' ) );
 		}
 
-		// try to use _wp_attached file for upload folder placement to ensure the same location as the export site.
+		// Try to use _wp_attached file for upload folder placement to ensure the same location as the export site
 		// e.g. location is 2003/05/image.jpg but the attachment post_date is 2010/09, see media_handle_upload().
 		$post['upload_date'] = $post['post_date'];
 		foreach ( $meta as $meta_item ) {
@@ -877,11 +877,11 @@ class EntityImporter {
 		// @TODO: Check for attachment creation errors.
 		// @TODO: Make it work with Asyncify.
 		// Generate and update attachment metadata.
-		// if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {.
-		// include( ABSPATH . 'wp-admin/includes/image.php' );.
-		// }.
-		// $attach_data = wp_generate_attachment_metadata($attach_id, $filepath);.
-		// wp_update_attachment_metadata($attach_id, $attach_data);.
+		// if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {
+		// include( ABSPATH . 'wp-admin/includes/image.php' );
+		// }
+		// $attach_data = wp_generate_attachment_metadata($attach_id, $filepath);
+		// wp_update_attachment_metadata($attach_id, $attach_data);
 		return $attach_id;
 	}
 

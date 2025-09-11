@@ -161,7 +161,7 @@ class CurlTransport implements TransportInterface {
 				CURLOPT_READFUNCTION,
 				function ( $ch, $fp, $length ) use ( $request ) {
 					$stream = $request->upload_body_stream;
-					// Pull at most $length bytes until we either get some bytes.
+					// Pull at most $length bytes until we either get some bytes
 					// or we reach the end of the stream.
 					while ( ! $stream->reached_end_of_data() ) {
 						$got_bytes = $stream->pull( $length );

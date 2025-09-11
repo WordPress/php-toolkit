@@ -10,7 +10,7 @@ use WordPress\Blueprints\Runtime;
  */
 class ActivateThemeStep implements StepInterface {
 
-	// Inline PHP script to avoid reading a static script.php file via.
+	// Inline PHP script to avoid reading a static script.php file via
 	// file_get_contents() inside the built blueprints.phar file.
 	const ACTIVATE_THEME_SCRIPT = <<<'PHP'
 <?php

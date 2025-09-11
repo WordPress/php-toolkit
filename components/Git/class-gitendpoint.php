@@ -86,7 +86,7 @@ class GitEndpoint {
 		}
 		$git_response->close_writing();
 
-		// @TODO: Simplify this with a method such as pipe_to() or.
+		// @TODO: Simplify this with a method such as pipe_to() or
 		// a pulling class such as GitHttpResponse.
 		while ( true ) {
 			$available = $git_response->pull( 65536 );
@@ -292,8 +292,8 @@ class GitEndpoint {
 		$objects_to_send = array();
 		$acks            = array();
 		foreach ( $parsed['arguments']['want'] as $want_hash ) {
-			// For all the requested non-shallow commits, find.
-			// most recent parent commit the client we have in.
+			// For all the requested non-shallow commits, find
+			// most recent parent commit the client we have in
 			// common with the client.
 			$common_parent_hash = Commit::NULL_HASH;
 			$commit_hash        = $want_hash;
@@ -301,7 +301,7 @@ class GitEndpoint {
 				$reader            = $this->repository->read_object( $commit_hash );
 				$objects_to_send[] = $commit_hash;
 				if ( 'commit' !== $reader->get_object_type_name() ) {
-					// Just send non-commit objects as they are. It would be lovely to.
+					// Just send non-commit objects as they are. It would be lovely to
 					// delta-compress them in the future.
 					continue 2;
 				}

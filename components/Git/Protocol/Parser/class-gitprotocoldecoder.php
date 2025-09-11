@@ -126,8 +126,8 @@ class GitProtocolDecoder {
 			}
 		}
 
-		// Process the demultiplexed packets. Accumulate the body.
-		// of all non-PACK packets for simplicity. They're unlikely.
+		// Process the demultiplexed packets. Accumulate the body
+		// of all non-PACK packets for simplicity. They're unlikely
 		// to be large and it's easier to handle them as fully-loaded.
 		// strings.
 		while ( $this->packet_parser->next_token() ) {

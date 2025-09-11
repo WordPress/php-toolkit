@@ -268,7 +268,7 @@ class SocketTransport implements TransportInterface {
 				);
 				continue;
 			} elseif ( 0 === $enabled_crypto ) {
-				// The SSL handshake isn't finished yet, let's skip it.
+				// The SSL handshake isn't finished yet, let's skip it
 				// for now and try again on the next event loop pass.
 				continue;
 			}
@@ -538,10 +538,10 @@ class SocketTransport implements TransportInterface {
 
 			return array();
 		} elseif ( $ready <= 0 ) {
-			// @TODO allow at most X stream_select attempts per request.
-			// foreach ( $unprocessed_requests as $request ) {.
-			// $this->>set_error($request, new HttpError( 'stream_select timed out' ));.
-			// }.
+			// @TODO allow at most X stream_select attempts per request
+			// foreach ( $unprocessed_requests as $request ) {
+			// $this->>set_error($request, new HttpError( 'stream_select timed out' ));
+			// }
 			return array();
 		}
 

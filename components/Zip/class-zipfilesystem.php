@@ -163,7 +163,7 @@ class ZipFilesystem implements Filesystem {
 			$central_directory[ $object->path ] = $object;
 		}
 
-		// Transform the central directory into a tree structure with.
+		// Transform the central directory into a tree structure with
 		// directories and files.
 		foreach ( $central_directory as $entry ) {
 			/**

@@ -404,13 +404,13 @@ class GitRemote {
 						// @TODO: Find an exact solution instead of handwaving.
 						'count'       => 100,
 
-						// Just get as many parents as we have. Don't enforce having.
+						// Just get as many parents as we have. Don't enforce having
 						// exactly 100 hashes available.
 						'on_missing'  => 'return-early',
 					)
 				),
 				// Only fetch the commits. Ignore any associated trees and blobs.
-				// We're answering a question about a common ancestor in the commit.
+				// We're answering a question about a common ancestor in the commit
 				// graph. We don't need all the extra downloads to do that.
 				'filter'    => 'tree:0',
 			)
@@ -429,11 +429,11 @@ class GitRemote {
 		$this->git_upload_pack(
 			array(
 				'want_refs' => array( $remote_commit_hash ),
-				// Don't advertise we have any related commits available. This way the remote.
+				// Don't advertise we have any related commits available. This way the remote
 				// will send all the ancestor commits of $remote_commit_hash.
 				'have_refs' => array(),
 				// Only fetch the commits. Ignore any associated trees and blobs.
-				// We're answering a question about a common ancestor in the commit.
+				// We're answering a question about a common ancestor in the commit
 				// graph. We don't need all the extra downloads to do that.
 				'filter'    => 'tree:0',
 			)

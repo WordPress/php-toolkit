@@ -213,7 +213,7 @@ class Runner {
 
 		try {
 			$progress = $this->main_tracker;
-			// Create all top-level progress stages upfront so the tracker knows what %.
+			// Create all top-level progress stages upfront so the tracker knows what %
 			// of the total work is being done with every progress update.
 			$progress->split(
 				array(
@@ -233,7 +233,7 @@ class Runner {
 			$this->load_blueprint();
 			$this->validate_blueprint();
 			$this->assets->set_execution_context( $this->blueprint_execution_context );
-			// Create the execution plan early on to surface any errors before.
+			// Create the execution plan early on to surface any errors before
 			// making the user wait for any downloads or site resolution.
 			$plan = $this->create_execution_plan();
 			$progress['blueprint']->finish();
@@ -308,8 +308,8 @@ class Runner {
 			return;
 		}
 
-		// AbsoluteLocalPath is a necessary special case to correctly support.
-		// Windows absolute paths. There's so much more to them than C:\.
+		// AbsoluteLocalPath is a necessary special case to correctly support
+		// Windows absolute paths. There's so much more to them than C:\
 		//
 		// See https://www.fileside.app/blog/2023-03-17_windows-file-paths/.
 		if ( $reference instanceof AbsoluteLocalPath ) {
@@ -320,9 +320,9 @@ class Runner {
 			$blueprint_string                  = $resolved->getStream()->consume_all();
 			$this->blueprint_execution_context = LocalFilesystem::create( dirname( $reference->get_path() ) );
 		} else {
-			// For the purposes of Blueprint resolution, the execution context is the.
-			// current working directory. This way, a path such as ./blueprint.json.
-			// will mean "a blueprint.json file in the current working directory" and not.
+			// For the purposes of Blueprint resolution, the execution context is the
+			// current working directory. This way, a path such as ./blueprint.json
+			// will mean "a blueprint.json file in the current working directory" and not
 			// "a ./blueprint.json path without a point of reference".
 			$this->assets->set_execution_context( LocalFilesystem::create( getcwd() ) );
 			$resolved = $this->assets->resolve( $reference );
@@ -353,13 +353,13 @@ class Runner {
 					// JSON file.
 					$blueprint_string = $stream->consume_all();
 					if ( $reference instanceof URLReference ) {
-						// @TODO: Only display this if the Blueprint references any bundled files. And in that case,.
+						// @TODO: Only display this if the Blueprint references any bundled files. And in that case,
 						// make it a fatal error.
 						$this->configuration->get_logger()->warning( 'Blueprints loaded from remote URLs have no execution context.' );
 						$this->blueprint_execution_context = InMemoryFilesystem::create();
 					} elseif ( $reference instanceof ExecutionContextPath ) {
-						// It was resolved as an ExecutionContextPath, but it's actually a local.
-						// filesystem path at this point.
+						// It was resolved as an ExecutionContextPath, but it's actually a local
+						// filesystem path at this point
 						// The execution context is the directory containing the blueprint.json file.
 						$this->blueprint_execution_context = LocalFilesystem::create( dirname( $reference->get_path() ) );
 					} elseif ( $reference instanceof InlineFile ) {
@@ -498,9 +498,9 @@ class Runner {
 						throw new BlueprintExecutionException( 'Invalid WordPress version string in wordpressVersion.min: ' . $wp_version['min'] );
 					}
 				}
-				// Latest version is implicitly the default and it's only for resolving.
-				// the WordPress version to install. It's not used for version checks on.
-				// existing sites and VersionConstraint doesn't support it. It doesn't have.
+				// Latest version is implicitly the default and it's only for resolving
+				// the WordPress version to install. It's not used for version checks on
+				// existing sites and VersionConstraint doesn't support it. It doesn't have
 				// enough information anyway – the meaning of "latest" changes over time.
 				if ( isset( $wp_version['max'] ) && 'latest' !== $wp_version['max'] ) {
 					$this->recommended_wp_version = $wp_version['max'];
@@ -525,8 +525,8 @@ class Runner {
 			if ( ! empty( $wp_constraint_errors ) ) {
 				throw new BlueprintExecutionException( 'Invalid WordPress version constraint: ' . implode( '; ', $wp_constraint_errors ) );
 			}
-			// Note: In here's we're only checking if the version constraint is defined.
-			// correctly. The actual version check for WordPress is done in.
+			// Note: In here's we're only checking if the version constraint is defined
+			// correctly. The actual version check for WordPress is done in
 			// NewSiteResolver and ExistingSiteResolver.
 		}
 
@@ -686,11 +686,11 @@ class Runner {
 		}
 
 		foreach ( $plan as $step ) {
-			// @TODO: Make sure this doesn't get included twice in the execution plan,.
+			// @TODO: Make sure this doesn't get included twice in the execution plan,
 			// e.g. if the Blueprint specified this step manually.
 			if ( $step instanceof ImportContentStep ) {
-				// if($this->configuration->is_running_as_phar()) {.
-				// throw new InvalidArgumentException( '@TODO: Importing content is not supported when running as phar.' );.
+				// if($this->configuration->is_running_as_phar()) {
+				// throw new InvalidArgumentException( '@TODO: Importing content is not supported when running as phar.' );
 				// } else {.
 					$libraries_phar_path = __DIR__ . '/../../dist/php-toolkit.phar';
 				if ( ! file_exists( $libraries_phar_path ) ) {
@@ -1122,7 +1122,7 @@ PHP
 				// Determine if we should continue or stop execution.
 				$continue_on_error = $this->continue_on_error ?? false;
 				if ( ! $continue_on_error ) {
-					// @TODO: Correlate this message with the original Blueprint,.
+					// @TODO: Correlate this message with the original Blueprint,
 					// as in – was the step created because of "installPlugin" or not?
 					// Which entry of it? etc.
 					throw new BlueprintExecutionException(

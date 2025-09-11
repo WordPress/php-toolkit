@@ -76,7 +76,7 @@ class ProgressTrackedReadStream implements ByteReadStream {
 
 	public function close_reading(): void {
 		$this->stream->close_reading();
-		// Optionally ensure tracker is set to 100% if not already.
+		// Optionally ensure tracker is set to 100% if not already
 		// This depends on whether closing implies completion.
 		// For now, we rely on consume_all or reaching end of data.
 		// If the stream is closed prematurely, the progress will reflect the last read amount.
@@ -102,7 +102,7 @@ class ProgressTrackedReadStream implements ByteReadStream {
 		}
 
 		$progress = ( $this->stream->tell() / $this->stream_length ) * 100;
-		// It's possible to seek() backwards. Let's make sure we never decrease.
+		// It's possible to seek() backwards. Let's make sure we never decrease
 		// the reported progress.
 		if ( $progress > $this->tracker->getProgress() ) {
 			$this->tracker->set( $progress );

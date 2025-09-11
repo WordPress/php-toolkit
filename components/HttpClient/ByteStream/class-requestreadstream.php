@@ -172,7 +172,7 @@ class RequestReadStream extends BaseByteReadStream {
 
 					return '';
 				case Client::EVENT_FAILED:
-					// TODO: Think through error handling. Errors are expected when working with.
+					// TODO: Think through error handling. Errors are expected when working with
 					// the network. Should we auto retry? Make it easy for the caller to retry?
 					// Something else?
 					throw new ByteStreamException( 'HTTP request failed: ' . $this->client->get_request()->error );

@@ -106,11 +106,11 @@ class ProtocolDemultiplexer {
 		$chunk             = $this->upstream->consume( $length );
 		$this->stream_code = $stream_code;
 		if ( 'unknown' === $this->stream_code ) {
-			// $chunk is not actually multiplexed so we need to relay.
+			// $chunk is not actually multiplexed so we need to relay
 			// all the data we've read so far to the consumer.
 			$this->chunk = $length_hex . $chunk;
 		} else {
-			// $chunk is multiplexed and the downstream consumer.
+			// $chunk is multiplexed and the downstream consumer
 			// only expects the wrapped data.
 			$this->chunk = $chunk;
 		}

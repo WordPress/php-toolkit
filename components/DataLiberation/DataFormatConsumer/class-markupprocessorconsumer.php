@@ -179,7 +179,7 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 					$this->block_markup .= '<' . $tag_lowercase . '  class="wp-block-code">';
 					break;
 				case 'CODE':
-					// Guess whether this is:.
+					// Guess whether this is:
 					// * An inline <code> element? Let's convert it into a formatting element.
 					// * A block <code> element? Let's convert it into a block.
 					if ( $this->is_at_inline_code_element() ) {
@@ -237,7 +237,7 @@ class MarkupProcessorConsumer implements DataFormatConsumer {
 				case 'SCRIPT':
 					$this->ignore_text = false;
 					break;
-				// Maintain the same lists as in the tag opener code branch above,.
+				// Maintain the same lists as in the tag opener code branch above,
 				// otherwise we won't pop the correct block.
 
 				// Block elements.

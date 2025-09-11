@@ -651,7 +651,7 @@ final class HumanFriendlySchemaValidator {
 			$missing = array_diff( $schema['required'], array_keys( $arr ) );
 			if ( $missing ) {
 				foreach ( $missing as $m ) {
-					// For missing fields, the error pointer should be to the parent object,.
+					// For missing fields, the error pointer should be to the parent object,
 					// as the field itself doesn't exist yet to point to.
 					$children_errors[] = new ValidationError(
 						$this->convert_path_to_string( $path ), // Error is about the object at $path.

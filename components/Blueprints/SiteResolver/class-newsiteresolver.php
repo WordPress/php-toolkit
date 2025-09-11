@@ -104,9 +104,9 @@ class NewSiteResolver {
 		}
 
 		// 3. Install WordPress if not installed yet.
-		// Technically, this is a "new site" resolver, but it's entirely possible.
-		// the developer-provided WordPress zip already has a sqlite database with the.
-		// a WordPress site installed..
+		// Technically, this is a "new site" resolver, but it's entirely possible
+		// the developer-provided WordPress zip already has a sqlite database with
+		// a WordPress site installed.
 		if ( ! self::is_wordpress_installed( $runtime, $progress ) ) {
 			if ( ! $target_fs->exists( '/wp-config.php' ) ) {
 				if ( $target_fs->exists( 'wp-config-sample.php' ) ) {
@@ -128,7 +128,7 @@ class NewSiteResolver {
 					'install',
 					'--path=' . $runtime->get_configuration()->get_target_site_root(),
 
-					// For Docker compatibility. If we got this far, Blueprint runner was already.
+					// For Docker compatibility. If we got this far, Blueprint runner was already
 					// allowed to run as root.
 					'--allow-root',
 					'--url=' . $runtime->get_configuration()->get_target_site_url(),
@@ -222,7 +222,7 @@ PHP
 				preg_match( '/^\d+\.\d+$/', $version_string ) &&
 				$version_string === $api_version['partial_version']
 			) {
-				// When the Blueprint provides a version like 6.6, we must match on the partial.
+				// When the Blueprint provides a version like 6.6, we must match on the partial
 				// version, e.g. "6.6".
 				return $api_version['download'];
 			}

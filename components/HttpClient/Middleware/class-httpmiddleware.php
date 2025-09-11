@@ -133,9 +133,9 @@ class HttpMiddleware implements MiddlewareInterface {
 							break;
 						case Client::EVENT_FAILED:
 						case Client::EVENT_FINISHED:
-							// We don't need the response buffer anymore. It's.
-							// safe to clean up the connection object now. The.
-							// HTTP resource have been closed by now via the.
+							// We don't need the response buffer anymore. It's
+							// safe to clean up the connection object now. The
+							// HTTP resource have been closed by now via the
 							// close_connection() method.
 							unset( $this->state->connections[ $request_id ] );
 							break;
@@ -146,8 +146,8 @@ class HttpMiddleware implements MiddlewareInterface {
 			}
 
 			// After we've checked for any available events, see if we've run out of time.
-			// This way, we always return any events that were ready before worrying about the timeout.
-			// If we checked the timeout first, we might miss events that were already waiting for us.
+			// This way, we always return any events that were ready before worrying about the timeout
+			// If we checked the timeout first, we might miss events that were already waiting for us
 			// when the timeout is set to zero.
 			$time_elapsed_ms = ( microtime( true ) - $start_time ) * 1000;
 			if ( $timeout_ms && $time_elapsed_ms >= $timeout_ms ) {

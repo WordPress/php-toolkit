@@ -41,7 +41,7 @@ class BlockMarkupMergeValidator implements MergeValidator {
 		// Validate the entire document.
 		self::assert_html_is_structurally_sound( $html );
 
-		// Validate the inner HTML of each block separately in case.
+		// Validate the inner HTML of each block separately in case
 		// there's a structural error spanning the block boundary.
 		$block_markup_processor = new BlockMarkupProcessor( $html );
 		while ( $block_markup_processor->next_token() ) {

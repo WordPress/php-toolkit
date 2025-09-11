@@ -81,9 +81,9 @@ class DataReferenceResolver {
 		return $this->resolved_data_references[ $reference->id ];
 	}
 
-	// @TODO: Clean up the semantics of this class. Resolve() and separate resolve_uncached() seem confusing. There's.
-	// a bunch of implicit behaviors related to caching. Ideally we would either have a self-contained resolution.
-	// method, or co-locate the resolution logic with the data reference classes and only use this class for.
+	// @TODO: Clean up the semantics of this class. Resolve() and separate resolve_uncached() seem confusing. There's
+	// a bunch of implicit behaviors related to caching. Ideally we would either have a self-contained resolution
+	// method, or co-locate the resolution logic with the data reference classes and only use this class for
 	// caching.
 	public function resolve_uncached( DataReference $reference ) {
 		$progress_tracker = $this->sub_trackers[ $reference->id ] ?? new Tracker();
@@ -123,7 +123,7 @@ class DataReferenceResolver {
 				$tracked_stream,
 				$filename
 			);
-			// TODO: Consider a clearer name. Some not-so-great ballpark ideas:.
+			// TODO: Consider a clearer name. Some not-so-great ballpark ideas:
 			// BlueprintParentPath, BlueprintRootPath, BlueprintContextPath, BlueprintRelativePath.
 		} elseif ( $reference instanceof ExecutionContextPath ) {
 			$path = $reference->get_path();

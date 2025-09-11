@@ -106,9 +106,9 @@ class V1ToV2Transpiler {
 		}
 
 		// Unsupported fields.
-		// @TODO: Actually transpile a few of them:.
+		// @TODO: Actually transpile a few of them:
 		// * features -> runtimeOptions.playground.features.
-		// -> or consider moving this to runtime configuration – as in.
+		// -> or consider moving this to runtime configuration – as in
 		// permissions to access the network, disk, etc.
 		// * landingPage -> runtimeOptions.landingPage.
 		// * login -> runtimeOptions.login.
@@ -516,7 +516,7 @@ PHP
 						$v2steps[] = $v2step;
 						break;
 					case 'wp-cli':
-						// @TODO: Don't naively replace on the entire command. Actually parse it and only replace at the beginning.
+						// @TODO: Don't naively replace on the entire command. Actually parse it and only replace at the beginning
 						// of each argument value.
 						$cmd       = str_replace( '/wordpress/', '', $v1step['command'] );
 						$cmd       = str_replace( 'wordpress/', '', $cmd );
@@ -583,7 +583,7 @@ PHP
 					}
 					return $url;
 				case 'bundled':
-					// BundledReference – must start with.
+					// BundledReference – must start with
 					// ./ or /.
 					$path = $resource['path'];
 					if ( 0 !== strncmp( $path, './', strlen( './' ) ) && 0 !== strncmp( $path, '/', strlen( '/' ) ) ) {

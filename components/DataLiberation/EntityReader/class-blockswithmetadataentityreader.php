@@ -61,7 +61,7 @@ class BlocksWithMetadataEntityReader implements EntityReader {
 		$post_fields['post_content']    = $this->block_markup;
 		$post_fields['parsed_metadata'] = $all_metadata;
 
-		// In Markdown, the frontmatter title can be a worse title candidate than.
+		// In Markdown, the frontmatter title can be a worse title candidate than
 		// the first H1 block. In block markup exports, it will be the opposite.
 		//
 		// @TODO: Enable the API consumer to customize the title resolution.

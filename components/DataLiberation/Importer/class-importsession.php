@@ -146,8 +146,8 @@ class ImportSession {
 				'meta_query'     => array(
 					// @TODO: This somehow makes $post empty.
 					// array(.
-					// 'key' => 'current_stage',.
-					// 'value' => WP_Stream_Importer::STAGE_FINISHED,.
+					// 'key' => 'current_stage',
+					// 'value' => WP_Stream_Importer::STAGE_FINISHED,
 					// 'compare' => '!='.
 					// ).
 				),
@@ -336,7 +336,7 @@ class ImportSession {
 			array( 'post_status' => self::FRONTLOAD_STATUS_IGNORED ),
 			array(
 				'post_type' => 'frontloading_stub',
-				// 'post_status !=' => self::FRONTLOAD_STATUS_SUCCEEDED,.
+				// 'post_status !=' => self::FRONTLOAD_STATUS_SUCCEEDED,
 			)
 		);
 	}

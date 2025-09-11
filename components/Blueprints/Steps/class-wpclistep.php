@@ -44,7 +44,7 @@ class WPCLIStep implements StepInterface {
 			' ',
 			array(
 				$this->wp_cli_path ?? $runtime->get_wp_cli_path(),
-				// For Docker compatibility. If we got this far, the Blueprint runner was already.
+				// For Docker compatibility. If we got this far, the Blueprint runner was already
 				// allowed to run as root.
 				'--allow-root',
 				'--path=' . $runtime->get_configuration()->get_target_site_root(),

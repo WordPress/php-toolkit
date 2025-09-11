@@ -175,7 +175,7 @@ class AttachmentDownloader {
 				continue;
 			}
 
-			// The request object we get from the client may be a redirect.
+			// The request object we get from the client may be a redirect
 			// Let's keep referring to the original request.
 			$original_url        = $request->original_request()->url;
 			$original_request_id = $request->original_request()->id;
