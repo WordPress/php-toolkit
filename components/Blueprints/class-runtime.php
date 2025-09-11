@@ -236,7 +236,7 @@ class Runtime {
 				// @TODO: Cleaning up the temporary directory is not done here.
 				$temp_dir = $this->create_temporary_directory();
 
-				// Still put the script in a temporary file as the path may be refering.
+				// Still put the script in a temporary file as the path may be refering
 				// to a file inside the currently executed .phar archive.
 				$actual_script_path = wp_join_unix_paths( $temp_dir, 'script.php' );
 				$code               = '<?php function append_output( $output ) { file_put_contents( getenv("OUTPUT_FILE"), $output, FILE_APPEND ); } $_SERVER["HTTP_HOST"] = "localhost"; ?>';

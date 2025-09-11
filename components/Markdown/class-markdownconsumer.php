@@ -85,7 +85,7 @@ class MarkdownConsumer implements DataFormatConsumer {
 		$this->frontmatter = array();
 		foreach ( $document->data->export() as $key => $value ) {
 			if ( 'attributes' === $key && empty( $value ) ) {
-				// The Frontmatter extension adds an 'attributes' key to the document data.
+				// The Frontmatter extension adds an 'attributes' key to the document data
 				// even when there is no actual "attributes" key in the frontmatter.
 				//
 				// Let's skip it when the value is empty.
@@ -115,7 +115,7 @@ class MarkdownConsumer implements DataFormatConsumer {
 							$level = 3;
 						}
 						$attrs = array();
-						// 2 is the default level and the editor-produced markup won't contain this attribute, leading to.
+						// 2 is the default level and the editor-produced markup won't contain this attribute, leading to
 						// permanent client-side three-way merges.
 						if ( 2 !== $level ) {
 							$attrs['level'] = $level;
@@ -251,7 +251,7 @@ class MarkdownConsumer implements DataFormatConsumer {
 						$children = $node->children();
 						if ( count( $children ) > 0 && $children[0] instanceof Inline\Text && $children[0]->getLiteral() ) {
 							$html->set_attribute( 'alt', $children[0]->getLiteral() );
-							// Empty the text node so it will not be rendered twice: once in as an alt="",.
+							// Empty the text node so it will not be rendered twice: once in as an alt="",
 							// and once as a new paragraph block.
 							$children[0]->setLiteral( '' );
 						}

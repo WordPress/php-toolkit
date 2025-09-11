@@ -44,7 +44,7 @@ function mb_wordwrap( string $text, int $width, string $break = "\n", bool $cut 
 		$word = $words[ $i ];
 		if ( false !== strpos( $word, "\n" ) ) {
 			$offset = strpos( $word, "\n" );
-			// Slice until the newline character while keeping the number of.
+			// Slice until the newline character while keeping the number of
 			// characters the same.
 			$before = substr( $word, 0, $offset ) . ' ';
 			$after  = substr( $word, $offset + 1 );
@@ -147,11 +147,11 @@ function format_chunk_side( array $chunk, $width ): string {
 		$cursor = $line_end + 1;
 
 		if ( $padding_length > 0 ) {
-			// Tab characters have variable length in terminal which breaks the side-by-side formatting.
-			// We cannot easily preserve them and display nice diff columns. At the same time, removing.
-			// them in favor of spaces may confuse the viewer – "why are spaces replaced with spaces here?".
+			// Tab characters have variable length in terminal which breaks the side-by-side formatting
+			// We cannot easily preserve them and display nice diff columns. At the same time, removing
+			// them in favor of spaces may confuse the viewer – "why are spaces replaced with spaces here?"
 			//
-			// @TODO: Investigate how other diff tools solve that problem and find a useful and established.
+			// @TODO: Investigate how other diff tools solve that problem and find a useful and established
 			// pattern. Perhaps display UTF-8 arrows instead of tabs and dots instead of spaces?
 			$wrapped[ $k ] = str_replace( "\t", ' ', $wrapped[ $k ] );
 			$wrapped[ $k ] = trim( $wrapped[ $k ] ) . str_repeat( ' ', $padding_length );

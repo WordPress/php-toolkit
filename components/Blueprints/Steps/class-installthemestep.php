@@ -93,7 +93,7 @@ class InstallThemeStep implements StepInterface {
 
 				$tracker->set( 50 );
 
-				// Inline PHP script to avoid reading a static script.php file via.
+				// Inline PHP script to avoid reading a static script.php file via
 				// file_get_contents() inside the built blueprints.phar file.
 				$output = $runtime->eval_php_code_in_subprocess(
 					<<<'PHP'

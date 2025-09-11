@@ -868,7 +868,7 @@ class GitRepository {
 		// Find the parent of the squashed range.
 		$new_base_oid = $this->read_object( $squash_until_ancestor_oid )->as_commit()->get_first_parent_hash();
 
-		// Reparent the commits from HEAD until $squash_into_commit_oid onto the parent.
+		// Reparent the commits from HEAD until $squash_into_commit_oid onto the parent
 		// of the squashed range.
 		$new_head = $this->reparent_commit_range(
 			$this->get_branch_tip( 'HEAD' ),

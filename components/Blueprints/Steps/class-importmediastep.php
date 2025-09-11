@@ -107,9 +107,9 @@ class ImportMediaStep implements StepInterface {
 				if ( ! $resolved instanceof File ) {
 					// TODO: What if the schema specifies a resource type that can only be resolved to a file?
 					// Then the resolver could throw the error instead of requiring each step to check.
-					// But since the resolve interface can return either a File or Directory,.
+					// But since the resolve interface can return either a File or Directory,
 					// would we have to check anyway?
-					// Would there be any value in the runtime having specific methods like resolveFile().
+					// Would there be any value in the runtime having specific methods like resolveFile()
 					// and resolveDirectory() that throw if they cannot resolve the requested type?
 					throw new RuntimeException( "Failed to resolve media file: $human_readable_name" );
 				}

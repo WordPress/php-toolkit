@@ -33,8 +33,8 @@ class ZipDecoder {
 	}
 
 	public function next_object(): bool {
-		// If we're calling next_object() when an object is ready,.
-		// it means we want to scan for the next object. Let's clear.
+		// If we're calling next_object() when an object is ready,
+		// it means we want to scan for the next object. Let's clear
 		// the state and start scanning again.
 		if ( self::STATE_OBJECT_READY === $this->state ) {
 			$this->after_record();

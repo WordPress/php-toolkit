@@ -128,7 +128,7 @@ class MarkdownProducer implements DataFormatProducer {
 				return str_repeat( '#', $level ) . ' ' . $content . "\n\n";
 
 			case 'core/table':
-				// Accumulate all the table contents to compute the markdown.
+				// Accumulate all the table contents to compute the markdown
 				// column widths.
 				$processor   = DataLiberationHTMLProcessor::create_fragment( $inner_html );
 				$rows        = array();
@@ -357,13 +357,13 @@ class MarkdownProducer implements DataFormatProducer {
 			}
 		}
 
-		// The HTML processor gives us all the whitespace verbatim.
-		// as it was encountered in the byte stream.
+		// The HTML processor gives us all the whitespace verbatim
+		// as it was encountered in the byte stream/
 		// Let's normalize it to a single space.
 		$markdown = trim( $markdown, "\n" );
 
-		// The ltrim() here is arbitrary and potentially wrong,.
-		// @TODO: Investigate this further and potentially remove.
+		// The ltrim() here is arbitrary and potentially wrong,
+		// @TODO: Investigate this further and potentially remove
 		// all trimming of space characters.
 		$markdown = ltrim( $markdown, "\n " );
 		$markdown = preg_replace( '/\n+/', "\n", $markdown );

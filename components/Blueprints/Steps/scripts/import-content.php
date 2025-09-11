@@ -610,9 +610,9 @@ function run_content_import( $options ) {
 		$import_session   = ImportSession::create(
 			array(
 				'data_source' => 'local_directory',
-				// @TODO: the phrase "file_name" doesn't make sense here. We're sourcing.
-				// data from a directory, not a file. This string is used to tell.
-				// the user in the UI what this they're importing in this import.
+				// @TODO: the phrase "file_name" doesn't make sense here. We're sourcing
+				// data from a directory, not a file. This string is used to tell
+				// the user in the UI what this they're importing in this import
 				// session. Let's rename it to something more descriptive.
 				'file_name' => $options['source'],
 			)

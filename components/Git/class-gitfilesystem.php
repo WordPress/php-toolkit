@@ -133,7 +133,7 @@ class GitFilesystem implements Filesystem {
 		if ( ! $this->is_dir( $path ) ) {
 			return false;
 		}
-		// There are no empty directories in Git. We're assuming.
+		// There are no empty directories in Git. We're assuming
 		// there are always files in the directory.
 		if ( ! $options['recursive'] ) {
 			return false;

@@ -493,11 +493,11 @@ class PackParser {
 			'offset'            => $header_offset,
 		);
 
-		// Deltas also have a reference to the original object.
+		// Deltas also have a reference to the original object
 		// before the object body starts.
 		if ( self::OBJECT_TYPE_OFS_DELTA === $type ) {
-			// Git uses a specific formula: ofs = ((ofs + 1) << 7) + (c & 0x7f).
-			// for each continuation byte. The first byte doesn't do the "ofs+1" part.
+			// Git uses a specific formula: ofs = ((ofs + 1) << 7) + (c & 0x7f)
+			// for each continuation byte. The first byte doesn't do the "ofs+1" part
 			// This code matches Git’s logic.
 			$offset = 0;
 

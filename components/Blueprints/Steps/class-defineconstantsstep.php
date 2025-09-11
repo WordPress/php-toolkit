@@ -28,7 +28,7 @@ class DefineConstantsStep implements StepInterface {
 	 */
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Defining wp-config constants' );
-		// Inline PHP script to avoid reading a static script.php file via.
+		// Inline PHP script to avoid reading a static script.php file via
 		// file_get_contents() inside the built blueprints.phar file.
 		$runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
@@ -296,7 +296,7 @@ function rewrite_wp_config_to_define_constants( $content, $constants = array() )
 			continue;
 		}
 
-		// We now have a define() call that defines a constant we're looking for.
+		// We now have a define() call that defines a constant we're looking for
 		// Let's rewrite its value to the one
 		$output = array_merge(
 			$output,

@@ -452,7 +452,7 @@ function cliArgsToRunnerConfiguration( array $positional_args, array $options ):
 			mkdir( $target_site_root, 0755, true );
 		} elseif ( is_dir( $absolute_target_site_root ) ) {
 			$fs = LocalFilesystem::create( $absolute_target_site_root );
-			// Delete all the files and directories in the target site root, but preserve the.
+			// Delete all the files and directories in the target site root, but preserve the
 			// target directory itself. Why? In Playground CLI, `/wordpress` is likely to be a.
 			// mount removing a mount root throws an Exception.
 			foreach ( $fs->ls( '/' ) as $file ) {

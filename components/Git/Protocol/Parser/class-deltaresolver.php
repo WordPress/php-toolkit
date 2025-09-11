@@ -65,7 +65,7 @@ class DeltaResolver {
 
 			return true;
 		} catch ( NotEnoughDataException $e ) {
-			// @TODO: Refactor GitProtocolReader to provide a ByteProducer we can pull from instead of.
+			// @TODO: Refactor GitProtocolReader to provide a ByteProducer we can pull from instead of
 			// a fixed MemoryPipe.
 			$this->delta_reader->seek( $position );
 			$this->paused_on_incomplete_input = true;

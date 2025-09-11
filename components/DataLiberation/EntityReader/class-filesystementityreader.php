@@ -293,7 +293,7 @@ class FilesystemEntityReader implements EntityReader {
 						$metadata['post_mime_type'] = $filetype;
 						$metadata['post_status']    = 'inherit';
 						$metadata['post_title']     = ImportUtils::slug_to_title( basename( $post_tree_node['local_file_path'] ) );
-						// The importer will use the same Filesystem instance to.
+						// The importer will use the same Filesystem instance to
 						// source the attachment.
 						$metadata['attachment_url'] = 'file://' . $post_tree_node['local_file_path'];
 						$result                     = new BlocksWithMetadata( '', array() );
@@ -365,14 +365,14 @@ class FilesystemEntityReader implements EntityReader {
 				if ( null === $parent_id && $depth > 1 ) {
 					// There's no parent ID even though we're a few levels deep.
 					// This is a scenario where `next_file()` skipped a few levels.
-					// of directories with no relevant content in them:.
+					// of directories with no relevant content in them:
 					//
-					// - /docs/.
-					// - /foo/.
-					// - /bar/.
-					// - /baz.md.
+					// - /docs/
+					// - /foo/
+					// - /bar/
+					// - /baz.md
 					//
-					// In this case, we need to backtrack and create the missing.
+					// In this case, we need to backtrack and create the missing
 					// parent pages for /bar/ and /foo/.
 
 					// Find the topmost missing parent ID.
@@ -397,7 +397,7 @@ class FilesystemEntityReader implements EntityReader {
 				} elseif ( false === $this->pending_directory_index ) {
 					// No directory index candidate found in the current directory.
 					if ( 0 === $depth && isset( $this->parent_ids[- 1] ) && $parent_id === $this->parent_ids[- 1] ) {
-						// We're at the root directory and we have a root parent ID. Let's.
+						// We're at the root directory and we have a root parent ID. Let's
 						// reuse that as the top-level parent.
 						$this->parent_ids[ $depth ] = $this->parent_ids[- 1];
 						// We're no longer looking for a directory index.
@@ -465,7 +465,7 @@ class FilesystemEntityReader implements EntityReader {
 			$event = $this->file_visitor->get_event();
 
 			if ( $event->is_exiting() ) {
-				// Clean up stale IDs to save some memory when processing.
+				// Clean up stale IDs to save some memory when processing
 				// large directory trees.
 				unset( $this->parent_ids[ $event->dir ] );
 				continue;
@@ -478,8 +478,8 @@ class FilesystemEntityReader implements EntityReader {
 				}
 				$this->pending_files = array();
 				foreach ( $abs_paths as $path ) {
-					// Add all the subdirectory into the pending files list – there's.
-					// a chance the directory wouldn't match the filter pattern, but.
+					// Add all the subdirectory into the pending files list – there's
+					// a chance the directory wouldn't match the filter pattern, but
 					// a descendant file might.
 					if ( $this->fs->is_dir( $path ) ) {
 						$this->pending_files[] = $path;
@@ -491,19 +491,19 @@ class FilesystemEntityReader implements EntityReader {
 					}
 				}
 				if ( ! count( $this->pending_files ) ) {
-					// Only consider directories with relevant files in them.
-					// Otherwise we'll create fake pages for media directories.
+					// Only consider directories with relevant files in them
+					// Otherwise we'll create fake pages for media directories
 					// and other directories that don't contain any content.
 					//
-					// One corner case is when there's a few levels of directories.
-					// with a single relevant file at the bottom:.
+					// One corner case is when there's a few levels of directories
+					// with a single relevant file at the bottom:
 					//
-					// - /docs/.
-					// - /foo/.
-					// - /bar/.
-					// - /baz.md.
+					// - /docs/
+					// - /foo/
+					// - /bar/
+					// - /baz.md
 					//
-					// In this case, `next_entity()` will backtrack at baz.md and.
+					// In this case, `next_entity()` will backtrack at baz.md and
 					// create the missing parent pages.
 					continue;
 				}

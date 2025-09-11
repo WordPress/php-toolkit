@@ -23,7 +23,7 @@ class ImportThemeStarterContentStep implements StepInterface {
 
 	public function run( Runtime $runtime, Tracker $tracker ) {
 		$tracker->setCaption( 'Importing theme starter content' . ( $this->theme_slug ? ' for ' . $this->theme_slug : '' ) );
-		// Inline PHP script to avoid reading a static script.php file via.
+		// Inline PHP script to avoid reading a static script.php file via
 		// file_get_contents() inside the built blueprints.phar file.
 		$runtime->eval_php_code_in_subprocess(
 			<<<'PHP'

@@ -30,11 +30,11 @@ class DiffMatchPatchMergeDriver {
 	public function three_way_merge( $common_parent, $branch_a, $branch_b, $options = array() ) {
 		$diff_a = $this->dmp->diff_main( $common_parent, $branch_a );
 		$this->dmp->diff_cleanupSemantic( $diff_a );
-		// $this->dmp->diff_cleanupEfficiency($diff_a);.
+		// $this->dmp->diff_cleanupEfficiency($diff_a);
 
 		$diff_b = $this->dmp->diff_main( $common_parent, $branch_b );
-		// $this->dmp->diff_cleanupSemantic($diff_b);.
-		// $this->dmp->diff_cleanupEfficiency($diff_b);.
+		// $this->dmp->diff_cleanupSemantic($diff_b);
+		// $this->dmp->diff_cleanupEfficiency($diff_b);
 
 		$patch_a                      = $this->dmp->patch_make( $common_parent, $diff_a );
 		list( $merged_a, $applied_a ) = $this->dmp->patch_apply( $patch_a, $common_parent );
@@ -67,7 +67,7 @@ class DiffMatchPatchMergeDriver {
 
 	private function apply_patch( $text, $patch ) {
 		list( $merged, $changes_applied ) = $this->dmp->patch_apply( $patch, $text );
-		// @TODO: Reason about $changes_applied. Sometimes it contains.
+		// @TODO: Reason about $changes_applied. Sometimes it contains
 		// false entries when the $merged value looks great.
 		return $merged;
 	}
@@ -86,12 +86,12 @@ class DiffMatchPatchMergeDriver {
 		// Convert the diffs to format that makes rebasing easier.
 		$diff_a = self::dmp_diff_to_annotated_diff( $base_diff );
 		$diff_b = self::dmp_diff_to_annotated_diff( $diff_to_rebase );
-		// print_r([.
-		// 'diff_a' => $diff_a,.
-		// 'diff_b' => $diff_b,.
-		// 'delta_a' => $this->diff_as_delta($base_diff),.
-		// 'delta_b' => $this->diff_as_delta($diff_to_rebase),.
-		// ]);.
+		// print_r([
+		// 'diff_a' => $diff_a,
+		// 'diff_b' => $diff_b,
+		// 'delta_a' => $this->diff_as_delta($base_diff),
+		// 'delta_b' => $this->diff_as_delta($diff_to_rebase),
+		// ]);
 
 		// Do the rebase.
 		$i_a = 0;
@@ -158,11 +158,11 @@ class DiffMatchPatchMergeDriver {
 												'change_b' => $change_b,
 											)
 										);
-										// if($change_b['start'] === $change_a['start']) {.
-										// Diff b already accounts for the shift from this change, let's add it to.
+										// if($change_b['start'] === $change_a['start']) {
+										// Diff b already accounts for the shift from this change, let's add it to
 										// the accumulator to make sure we won't count it twice.
 										$accumulated_shift += $change_b['length'];
-										// }.
+										// }
 										continue 3;
 									} else {
 										// Otherwise we can merge the two deletions.
@@ -186,7 +186,7 @@ class DiffMatchPatchMergeDriver {
 							}
 						}
 
-						// Shift by the number of characters that are being deleted, but.
+						// Shift by the number of characters that are being deleted, but
 						// only up to the point where deletion A starts.
 						$accumulated_shift -= min(
 							$change_a['length'],
@@ -234,12 +234,12 @@ class DiffMatchPatchMergeDriver {
 			);
 		}
 
-		// print_r([.
-		// 'diff' => $base_diff,.
-		// 'diff_a' => $this->diff_as_delta($base_diff),.
-		// 'diff_b' => $this->diff_as_delta($diff_to_rebase),.
-		// 'diff_r' => $this->diff_as_delta($dmp_diff),.
-		// ]);.
+		// print_r([
+		// 'diff' => $base_diff,
+		// 'diff_a' => $this->diff_as_delta($base_diff),
+		// 'diff_b' => $this->diff_as_delta($diff_to_rebase),
+		// 'diff_r' => $this->diff_as_delta($dmp_diff),
+		// ]);
 		return $dmp_diff;
 	}
 

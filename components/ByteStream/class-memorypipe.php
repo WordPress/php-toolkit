@@ -16,7 +16,7 @@ class MemoryPipe extends BaseByteReadStream implements ByteWriteStream {
 		if ( null !== $bytes ) {
 			$this->buffer          = $bytes;
 			$this->expected_length = strlen( $bytes );
-			// If we have a full buffer, it's already in memory and we don't need.
+			// If we have a full buffer, it's already in memory and we don't need
 			// to clean up old data as we stream it.
 			// If we did clean up old data, we would lose the ability to seek() to.
 			// the beginning of the buffer.

@@ -306,8 +306,8 @@ class StreamImporter {
 
 	protected static function parse_options( $options ) {
 		if ( ! isset( $options['source_site_url'] ) ) {
-			// @TODO: Throw only if source_site_url is not set by the time we're processing the first encountered URL.
-			// throw new DataLiberationException( 'The "source_site_url" option is required' );.
+			// @TODO: Throw only if source_site_url is not set by the time we're processing the first encountered URL
+			// throw new DataLiberationException( 'The "source_site_url" option is required' );
 		}
 		if ( ! isset( $options['new_site_content_root_url'] ) ) {
 			if ( ! function_exists( 'get_site_url' ) ) {
@@ -390,7 +390,7 @@ class StreamImporter {
 
 				return false;
 			case self::STAGE_TOPOLOGICAL_SORT:
-				// @TODO: Different modes:.
+				// @TODO: Different modes:
 				// 1. skip, reprocess.
 				// 2. sort topologically.
 				$this->next_stage = self::STAGE_FRONTLOAD_ASSETS;
@@ -533,8 +533,8 @@ class StreamImporter {
 								continue;
 							}
 							// @TODO: Consider using sha1 hashes to prevent huge URLs from blowing up the memory.
-							// @TODO: Use a consistent identifier for tracking download progress. Unfortunately,.
-							// $p->get_raw_url() does not line up with the resolved URL later on. The progress.
+							// @TODO: Use a consistent identifier for tracking download progress. Unfortunately,
+							// $p->get_raw_url() does not line up with the resolved URL later on. The progress
 							// events are emited with the full, resolved URL.
 							$this->indexed_assets_urls[ $p->get_parsed_url() . '' ] = true;
 						}
@@ -987,7 +987,7 @@ class StreamImporter {
 		if ( false !== $parsed_url ) {
 			$pathname = $parsed_url->pathname;
 		} else {
-			// Assume $raw_asset_url is a relative path when it cannot be.
+			// Assume $raw_asset_url is a relative path when it cannot be
 			// parsed as an absolute URL.
 			$pathname = $raw_asset_url;
 		}

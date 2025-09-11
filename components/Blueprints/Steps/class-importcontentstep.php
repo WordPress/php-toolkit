@@ -89,7 +89,7 @@ PHP
 		foreach ( $this->output_lines( $output ) as $line ) {
 			$data = @json_decode( $line, true );
 			if ( ! is_array( $data ) ) {
-				// Non-JSON output is treated as a crash. We use a dedicated file pipe.
+				// Non-JSON output is treated as a crash. We use a dedicated file pipe
 				// for communication and it should never contain a non-JSON line.
 				$import_process->stop();
 				throw new ProcessFailedException( $import_process );

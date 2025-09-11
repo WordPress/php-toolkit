@@ -126,8 +126,8 @@ function pipe_stream( $from_stream, $to_stream, $chunk_size = 65536 ) {
 	}
 
 	if ( 0 === $chunks_written ) {
-		// Make sure the file receives at least one chunk.
-		// so we can be sure it gets created in case the.
+		// Make sure the file receives at least one chunk
+		// so we can be sure it gets created in case the
 		// destination filesystem is lazy.
 		$to_stream->append_bytes( '' );
 		$chunks_written = 1;

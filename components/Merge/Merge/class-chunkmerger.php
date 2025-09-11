@@ -99,8 +99,8 @@ class ChunkMerger implements Merger {
 
 					$results[] = $deletion['inserted'];
 				} elseif ( '' === trim( $deletion['base'], ' ' ) && '' !== $non_deletion['inserted'] ) {
-					// Sometimes branch A is one space short (e.g. due to a trim()) and branch B.
-					// adds a meaningful span of text. In this case, we want to ignore the deletion.
+					// Sometimes branch A is one space short (e.g. due to a trim()) and branch B
+					// adds a meaningful span of text. In this case, we want to ignore the deletion
 					// and keep branch B's text.
 					$results[] = $non_deletion['base'];
 					$results[] = $non_deletion['inserted'];

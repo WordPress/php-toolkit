@@ -108,8 +108,8 @@ class IncomingRequest extends Request {
 
 	// @TODO: Bake this into the body stream instance.
 	public function close_body_stream() {
-		// Do not close $this->body_stream as it would close.
-		// the tcp connection with the client. We need that.
+		// Do not close $this->body_stream as it would close
+		// the tcp connection with the client. We need that
 		// connection to send the response.
 		foreach ( $this->wrapped_streams as $stream ) {
 			$stream->close_reading();

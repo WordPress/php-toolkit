@@ -99,14 +99,14 @@ $relay_http_code_and_initial_headers_if_not_already_sent = function () use ( $ch
 
 function send_response_chunk( $data ) {
 	if ( should_send_as_chunked_response() ) {
-		// We need to manually chunk the response when running in the PHP.
+		// We need to manually chunk the response when running in the PHP
 		// built-in server. It won't handle that for us.
 		printf( "%s\r\n%s\r\n", dechex( strlen( $data ) ), $data );
 	} else {
-		// When running behing an Apache or Nginx or another webserver,.
-		// it will handle the chunking for us. Manually sending the chunk.
-		// header, \r\n separator, body, and \r\n trailer isn't just.
-		// unnecessary, but it would actually include those bytes in the.
+		// When running behing an Apache or Nginx or another webserver,
+		// it will handle the chunking for us. Manually sending the chunk
+		// header, \r\n separator, body, and \r\n trailer isn't just
+		// unnecessary, but it would actually include those bytes in the
 		// response body.
 		echo $data;
 	}
@@ -146,7 +146,7 @@ $strictly_disallowed_headers = array(
 );
 $headers_requiring_opt_in    = array(
 	// Allow Authorization header to be forwarded only if the client.
-	// explicitly opts in to avoid undesirable situations such as:.
+	// explicitly opts in to avoid undesirable situations such as:
 	// - a browser auto-sending basic auth with every proxy request.
 	// - the proxy forwarding the basic auth values to all target servers.
 	'Authorization',
@@ -165,7 +165,7 @@ curl_setopt(
 		$curl_headers,
 		array(
 			"Host: $host",
-			// @TODO: Consider relaying client IP with the following reasoning:.
+			// @TODO: Consider relaying client IP with the following reasoning:
 			// Let's not take full credit for the proxied request.
 			// This is a CORS proxy, not an IP anonymizer.
 			// NOTE: We cannot do this reliably based on X-Forwarded-For unless.
@@ -229,14 +229,14 @@ curl_setopt(
 			);
 			header( 'Location: ' . $new_location, true );
 		} elseif (
-			// Safari fails with "Cannot connect to the server" if we let.
-			// the HTTP/2 line be relayed. This proxy doesn't support HTTP/2,.
+			// Safari fails with "Cannot connect to the server" if we let
+			// the HTTP/2 line be relayed. This proxy doesn't support HTTP/2,
 			// so let's not allow the HTTP line to explicitly pass through.
 			// PHP already provides the HTTP version in the response code anyway.
 			0 !== stripos( $header, 'HTTP/' ) &&
 			// The proxy server does not support relaying auth challenges.
-			// Specifically, we want to avoid browsers prompting for basic auth.
-			// credentials which they will send to the proxy server for the.
+			// Specifically, we want to avoid browsers prompting for basic auth
+			// credentials which they will send to the proxy server for the
 			// remainder of the session.
 			0 !== stripos( $header, 'Set-Cookie:' ) &&
 			0 !== stripos( $header, 'Authorization:' ) &&
