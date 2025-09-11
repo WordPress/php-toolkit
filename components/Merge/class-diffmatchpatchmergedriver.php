@@ -91,7 +91,7 @@ class DiffMatchPatchMergeDriver {
 		// 'diff_b' => $diff_b,
 		// 'delta_a' => $this->diff_as_delta($base_diff),
 		// 'delta_b' => $this->diff_as_delta($diff_to_rebase),
-		// ]);
+		// ]);.
 
 		// Do the rebase.
 		$i_a = 0;
@@ -239,7 +239,7 @@ class DiffMatchPatchMergeDriver {
 		// 'diff_a' => $this->diff_as_delta($base_diff),
 		// 'diff_b' => $this->diff_as_delta($diff_to_rebase),
 		// 'diff_r' => $this->diff_as_delta($dmp_diff),
-		// ]);
+		// ]);.
 		return $dmp_diff;
 	}
 

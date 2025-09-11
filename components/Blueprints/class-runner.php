@@ -691,7 +691,7 @@ class Runner {
 			if ( $step instanceof ImportContentStep ) {
 				// if($this->configuration->is_running_as_phar()) {
 				// throw new InvalidArgumentException( '@TODO: Importing content is not supported when running as phar.' );
-				// } else {
+				// } else {.
 					$libraries_phar_path = __DIR__ . '/../../dist/php-toolkit.phar';
 				if ( ! file_exists( $libraries_phar_path ) ) {
 					throw new InvalidArgumentException(

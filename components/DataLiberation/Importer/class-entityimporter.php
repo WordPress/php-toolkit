@@ -729,7 +729,7 @@ class EntityImporter {
 	// $tt_ids = wp_set_post_terms( $post_id, $ids, $tax );
 	// do_action( 'wp_import_set_post_terms', $tt_ids, $ids, $tax, $post_id, $data );
 	// }
-	// }
+	// }.
 
 	/**
 	 * Attempt to create a new menu item from import data
