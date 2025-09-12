@@ -65,14 +65,14 @@ function wp_rewrite_urls( $options ) {
 	return $p->get_updated_html();
 }
 
-	/**
-	 * Check if a given URL matches the current site URL.
-	 *
-	 * @param  URL    $child  The URL to check.
-	 * @param  string $parent_url  The current site URL to compare against.
-	 *
-	 * @return bool Whether the URL matches the current site URL.
-	 */
+/**
+ * Check if a given URL matches the current site URL.
+ *
+ * @param  URL    $child  The URL to check.
+ * @param  string $parent_url  The current site URL to compare against.
+ *
+ * @return bool Whether the URL matches the current site URL.
+ */
 function is_child_url_of( $child, $parent_url ) {
 	$parent_url                       = is_string( $parent_url ) ? WPURL::parse( $parent_url ) : $parent_url;
 	$child                            = is_string( $child ) ? WPURL::parse( $child ) : $child;
