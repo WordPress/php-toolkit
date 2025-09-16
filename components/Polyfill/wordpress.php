@@ -12,6 +12,23 @@ if (
 	require_once __DIR__ . '/../HTML/html5-named-character-references.php';
 }
 
+if ( ! class_exists( 'WP_Error' ) ) {
+	class WP_Error {
+		public $code;
+		public $message;
+		public $data;
+
+		public function __construct( $code = '', $message = '', $data = '' ) {
+			if ( empty( $code ) ) {
+				return;
+			}
+			$this->code = $code;
+			$this->message = $message;
+			$this->data = $data;
+		}
+	}
+}
+
 if ( ! class_exists( 'WP_Block_Parser' ) ) {
 	require_once __DIR__ . '/../BlockParser/class-wp-block-parser-block.php';
 	require_once __DIR__ . '/../BlockParser/class-wp-block-parser-frame.php';
