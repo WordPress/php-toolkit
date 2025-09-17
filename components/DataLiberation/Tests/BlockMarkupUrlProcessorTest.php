@@ -16,68 +16,92 @@ class BlockMarkupUrlProcessorTest extends TestCase {
 	 *
 	 * @dataProvider provider_test_finds_next_url
 	 */
-	public function test_next_url_finds_the_url( $expected_result, $markup, $base_url = 'https://wordpress.org' ) {
+	public function test_next_url_finds_the_url( $expected_raw_url, $expected_absolute_url, $markup, $base_url = 'https://wordpress.org' ) {
 		$p = new BlockMarkupUrlProcessor( $markup, $base_url );
 		$this->assertTrue( $p->next_url(), 'Failed to find the URL in the markup.' );
-		$this->assertEquals( $expected_result, $p->get_raw_url(), 'Found a URL in the markup, but it wasn\'t the expected one.' );
+		$this->assertEquals( $expected_raw_url, $p->get_raw_url(), 'Found a URL in the markup, but it wasn\'t the expected one.' );
+		$this->assertEquals( $expected_absolute_url, $p->get_parsed_url()->toString(), 'Found a URL in the markup, but it wasn\'t the expected one.' );
 	}
 
 	public static function provider_test_finds_next_url() {
 		return array(
 			'In the <a> tag'                                                                       => array(
 				'https://wordpress.org',
+				'https://wordpress.org/',
 				'<a href="https://wordpress.org">',
 			),
-			'In the second block attribute, when it contains just the URL'                         => array(
-				'https://mysite.com/wp-content/image.png',
-				'<!-- wp:image {"class": "wp-bold", "src": "https://mysite.com/wp-content/image.png"} -->',
+			'In the wp:image url attribute when it is the first block attribute and contains a relative URL'                          => array(
+				'/wp-content/image.png',
+				'https://wordpress.org/wp-content/image.png',
+				'<!-- wp:image {"url": "/wp-content/image.png"} -->',
 			),
-			'In the first block attribute, when it contains just the URL'                          => array(
+			'In the wp:image url attribute when it is the second block attribute and contains just the URL'                         => array(
 				'https://mysite.com/wp-content/image.png',
-				'<!-- wp:image {"src": "https://mysite.com/wp-content/image.png"} -->',
-			),
-			'In a block attribute, in a nested object, when it contains just the URL'              => array(
 				'https://mysite.com/wp-content/image.png',
-				'<!-- wp:image {"class": "wp-bold", "meta": { "src": "https://mysite.com/wp-content/image.png" } } -->',
-			),
-			'In a block attribute, in an array, when it contains just the URL'                     => array(
-				'https://mysite.com/wp-content/image.png',
-				'<!-- wp:image {"class": "wp-bold", "srcs": [ "https://mysite.com/wp-content/image.png" ] } -->',
+				'<!-- wp:image {"class": "wp-bold", "url": "https://mysite.com/wp-content/image.png"} -->',
 			),
 			'In a text node, when it contains a well-formed absolute URL'                          => array(
 				'https://wordpress.org',
+				'https://wordpress.org/',
 				'Have you seen https://wordpress.org? ',
 			),
 			'In a text node after a tag'                                                           => array(
 				'wordpress.org',
+				'https://wordpress.org/',
 				'<p>Have you seen wordpress.org',
 			),
 			'In a text node, when it contains a protocol-relative absolute URL'                    => array(
 				'//wordpress.org',
+				'https://wordpress.org/',
 				'Have you seen //wordpress.org? ',
 			),
 			'In a text node, when it contains a domain-only absolute URL'                          => array(
 				'wordpress.org',
+				'https://wordpress.org/',
 				'Have you seen wordpress.org? ',
 			),
 			'In a text node, when it contains a domain-only absolute URL with path'                => array(
 				'wordpress.org/plugins',
+				'https://wordpress.org/plugins',
 				'Have you seen wordpress.org/plugins? ',
 			),
 			'Matches an empty string in <a href=""> as a valid relative URL when given a base URL' => array(
 				'',
+				'https://wordpress.org/',
 				'<a href=""></a>',
-				'https://wordpress.org',
+				'https://wordpress.org/',
 			),
 			'Skips over an empty string in <a href=""> when not given a base URL'                  => array(
 				'https://developer.w.org',
+				'https://developer.w.org/',
 				'<a href=""></a><a href="https://developer.w.org"></a>',
 				null,
 			),
 			'Skips over a class name in the <a> tag' => array(
 				'https://developer.w.org',
+				'https://developer.w.org/',
 				'<a class="http://example.com" href="https://developer.w.org"></a>',
 				null,
+			),
+		);
+	}
+
+	/**
+	 *
+	 * @dataProvider provider_test_finds_next_negative_url
+	 */
+	public function test_next_url_finds_the_negative_url( $markup, $base_url = 'https://wordpress.org' ) {
+		$p = new BlockMarkupUrlProcessor( $markup, $base_url );
+		$this->assertFalse( $p->next_url(), 'Found a URL in the markup, but it wasn\'t the expected one.' );
+	}
+
+	public static function provider_test_finds_next_negative_url() {
+		return array(
+			'In a block attribute, in a nested object, when it contains just the URL'              => array(
+				'<!-- wp:image {"class": "wp-bold", "meta": { "src": "https://mysite.com/wp-content/image.png" } } -->',
+			),
+			'In a block attribute, in an array, when it contains just the URL'                     => array(
+				'<!-- wp:image {"class": "wp-bold", "srcs": [ "https://mysite.com/wp-content/image.png" ] } -->',
 			),
 		);
 	}
@@ -180,7 +204,7 @@ class BlockMarkupUrlProcessorTest extends TestCase {
 	public function test_set_url_complex_test_case() {
 		$p = new BlockMarkupUrlProcessor(
 			<<<HTML
-<!-- wp:image {"src": "https://mysite.com/wp-content/image.png", "meta": {"src": "https://mysite.com/wp-content/image.png"}} -->
+<!-- wp:image {"url": "https://mysite.com/wp-content/image.png", "meta": {"src": "https://mysite.com/wp-content/image.png"}} -->
 	<img src="https://mysite.com/wp-content/image.png">
 <!-- /wp:image -->
 
@@ -204,9 +228,10 @@ HTML
 			$p->set_url( 'https://site-export.internal', WPURL::parse( 'https://site-export.internal' ) );
 		}
 
+		// meta.src is a nested property and not supported yet
 		$this->assertEquals(
 			<<<HTML
-<!-- wp:image {"src":"https:\/\/site-export.internal","meta":{"src":"https:\/\/site-export.internal"}} -->
+<!-- wp:image {"url":"https:\/\/site-export.internal","meta":{"src":"https:\/\/mysite.com\/wp-content\/image.png"}} -->
 	<img src="https://site-export.internal">
 <!-- /wp:image -->
 

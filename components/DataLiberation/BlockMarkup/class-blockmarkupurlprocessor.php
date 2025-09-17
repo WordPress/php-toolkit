@@ -189,6 +189,11 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 				continue;
 			}
 
+			if ( count( $this->get_block_attribute_path() ) > 1 ) {
+				// @TODO: support nested block attributes, even if only for core extenders.
+				continue;
+			}
+
 			/**
 			 * Decide whether the current block attribute holds a URL.
 			 *
@@ -205,7 +210,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			 */
 			$is_known_url_block_attribute = (
 				isset( self::URL_BLOCK_ATTRIBUTES[ $this->get_block_name() ] ) &&
-				in_array( $this->get_block_attribute_key(), self::URL_BLOCK_ATTRIBUTES[ $this->get_block_name() ] )
+				in_array( $this->get_block_attribute_key(), self::URL_BLOCK_ATTRIBUTES[ $this->get_block_name() ], true )
 			);
 
 			$is_known_url_block_attribute = apply_filters(
