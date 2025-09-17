@@ -232,6 +232,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 
 			$this->raw_url    = $url_maybe;
 			$this->parsed_url = $parsed_url;
+			return true;
 		}
 
 		return false;
