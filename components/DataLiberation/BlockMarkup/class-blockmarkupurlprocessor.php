@@ -184,22 +184,54 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	private function next_url_block_attribute() {
 		while ( $this->next_block_attribute() ) {
 			$url_maybe = $this->get_block_attribute_value();
-			/*
-			 * Do not use base URL for block attributes. to avoid false positives.
-			 * When a base URL is present, any word is a valid URL relative to the
-			 * base URL.
-			 * When a base URL is missing, the string must start with a protocol to
-			 * be considered a URL.
-			 */
-			if ( is_string( $url_maybe ) ) {
-				$parsed_url = WPURL::parse( $url_maybe );
-				if ( false !== $parsed_url ) {
-					$this->raw_url    = $url_maybe;
-					$this->parsed_url = $parsed_url;
-
-					return true;
-				}
+			if ( ! is_string( $url_maybe ) ) {
+				// @TODO: support arrays, objects, and other non-string data structures.
+				continue;
 			}
+
+			/**
+			 * Decide whether the current block attribute holds a URL.
+			 *
+			 * Known URL attributes can be assumed to hold a URL and be
+			 * parsed with the base URL. For example, a "/about-us" value
+			 * in a wp:navigation-link block's `url` attribute is a
+			 * relative URL to the `/about-us` page.
+			 *
+			 * Other attributes may or may not contain URLs, but we cannot assume
+			 * they do. A value `/about-us` could be a relative URL or a class name.
+			 * In those cases, we'll let go of relative URLs and only detect
+			 * absolute URLs to avoid treating every string as a URL. This requires
+			 * parsing without a base URL.
+			 */
+			$is_known_url_block_attribute = (
+				isset( self::URL_BLOCK_ATTRIBUTES[ $this->get_block_name() ] ) &&
+				in_array( $this->get_block_attribute_key(), self::URL_BLOCK_ATTRIBUTES[ $this->get_block_name() ] )
+			);
+
+			$is_known_url_block_attribute = apply_filters(
+				'wp_data_liberation_is_known_url_block_attribute',
+				$is_known_url_block_attribute,
+				array(
+					'block_name' => $this->get_block_name(),
+					'attribute_key' => $this->get_block_attribute_key(),
+				)
+			);
+
+			$parsed_url = false;
+			if ( $is_known_url_block_attribute ) {
+				// Known URL attribute – let's parse with the base URL.
+				$parsed_url = WPURL::parse( $url_maybe, $this->base_url_string );
+			} else {
+				// Other attribute – let's parse without a base URL.
+				$parsed_url = WPURL::parse( $url_maybe );
+			}
+
+			if ( false === $parsed_url ) {
+				continue;
+			}
+
+			$this->raw_url    = $url_maybe;
+			$this->parsed_url = $parsed_url;
 		}
 
 		return false;
@@ -362,6 +394,16 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		return $this->inspecting_html_attributes[ count( $this->inspecting_html_attributes ) - 1 ];
 	}
 
+	public const URL_BLOCK_ATTRIBUTES = array(
+		'wp:image'           => array( 'url' ),
+		'wp:file'            => array( 'href' ),
+		'wp:video'           => array( 'url', 'src' ),
+		'wp:audio'           => array( 'url', 'src' ),
+		'wp:cover'           => array( 'url' ),
+		'wp:media-text'      => array( 'url' ),
+		'wp:button'          => array( 'url', 'linkTarget' ),
+		'wp:navigation-link' => array( 'url' ),
+	);
 
 	/**
 	 * A list of HTML attributes meant to contain URLs, as defined in the HTML specification.
