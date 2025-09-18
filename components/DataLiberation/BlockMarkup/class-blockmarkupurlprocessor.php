@@ -419,7 +419,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	 * A list of block attributes that are known to contain URLs.
 	 *
 	 * It covers WordPress core blocks as of WordPress version 6.9. It can be
-	 * extended by plugins and themes via the "wp_data_liberation_is_known_url_block_attribute"
+	 * extended by plugins and themes via the "url_processor_is_relative_url_block_attribute"
 	 * filter.
 	 *
 	 * @var array
