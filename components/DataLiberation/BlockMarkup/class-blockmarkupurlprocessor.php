@@ -229,7 +229,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			 * }
 			 */
 			$is_relative_url_block_attribute = apply_filters(
-				'wp_data_liberation_is_relative_url_block_attribute',
+				'url_processor_is_relative_url_block_attribute',
 				$is_relative_url_block_attribute,
 				array(
 					'block_name' => $this->get_block_name(),
