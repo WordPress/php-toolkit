@@ -478,7 +478,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	 * @TODO: Either explicitly support these attributes, or explicitly drop support for
 	 *        handling their subsyntax. A generic URL matcher might be good enough.
 	 */
-	public const HTML_ATTRIBUTES_TO_ACCEPT_RELATIVE_URLS_FROM_WITH_SUBSYNTAX = array(
+	public const HTML_ATTRIBUTES_WITH_SUBSYNTAX_TO_ACCEPT_RELATIVE_URLS_FROM = array(
 		'*'      => array( 'style' ), // background(), background-image().
 		'APPLET' => array( 'archive' ),
 		'IMG'    => array( 'srcset' ),
@@ -498,7 +498,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	 * @TODO: Either explicitly support these tags, or explicitly drop support for
 	 *         handling their subsyntax. A generic URL matcher might be good enough.
 	 */
-	public const URL_CONTAINING_TAGS_WITH_SUBSYNTAX = array(
+	public const HTML_TAGS_WITH_SUBSYNTAX_TO_ACCEPT_RELATIVE_URLS_FROM = array(
 		'STYLE',
 		'SCRIPT',
 	);
