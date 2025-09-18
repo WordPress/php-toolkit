@@ -120,7 +120,7 @@ add_action(
  * Git repositories.
  */
 add_filter(
-	'wp_http_client_request',
+	'wp_http_client_request_before_enqueue',
 	function ( Request $request ) {
 		if ( isset( $request->headers['x-cors-proxy-allowed-request-headers'] ) ) {
 			$prefix = $request->headers['x-cors-proxy-allowed-request-headers'] . ',';
