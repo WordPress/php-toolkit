@@ -153,6 +153,7 @@ class WPURL {
 			$new_raw_url = rtrim( $new_raw_url, '/' );
 		}
 		if ( ! $new_raw_url ) {
+			// This may technically happen, but does it happen in practice?
 			return false;
 		}
 
@@ -160,12 +161,17 @@ class WPURL {
 		$converted_url->new_url     = $updated_url;
 		$converted_url->new_raw_url = $new_raw_url;
 
+		// Preserve the relative nature of the original URL.
 		if ( array_key_exists( 'raw_url', $options ) && is_string( $options['raw_url'] ) ) {
 			if ( ! array_key_exists( 'is_relative', $options ) ) {
 				$options['is_relative'] = self::can_parse( $options['raw_url'] );
 			}
 			if ( $options['is_relative'] ) {
 				$relative_url = $updated_url->pathname;
+				// Remove the trailing slash if it's not the root path.
+				if ( strlen( $relative_url ) > 1 && $should_trim_trailing_slash ) {
+					$relative_url = rtrim( $relative_url, '/' );
+				}
 				if ( '' !== $updated_url->search ) {
 					$relative_url .= $updated_url->search;
 				}
