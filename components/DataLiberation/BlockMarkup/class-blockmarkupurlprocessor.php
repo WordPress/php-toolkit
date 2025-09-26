@@ -262,20 +262,22 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			return false;
 		}
 
-		if (
-			'#text' === $this->get_token_type() &&
-			! WPURL::can_parse( $this->get_raw_url() )
-		) {
-			// In text nodes, only convert absolute URLs.
-			return false;
-		}
-
 		$result = WPURL::replace_base_url(
 			$this->get_parsed_url(),
 			array(
 				'old_base_url' => $base_url,
 				'new_base_url' => $to_url,
 				'raw_url'      => $this->get_raw_url(),
+				'is_relative'  => (
+					/**
+					 * In text nodes, the only detected URLs are absolute. The tricky part
+					 * is they may start without a protocol, e.g. `wordpress.org`. Therefore,
+					 * we need to tell WPURL::replace_base_url what's our intention regarding
+					 * the URL's relativity. It cannot just infer it from the URL itself.
+					 */
+					'#text' !== $this->get_token_type() &&
+					! WPURL::can_parse( $this->get_raw_url() )
+				),
 			)
 		);
 
@@ -283,7 +285,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			return false;
 		}
 
-		$this->set_url( (string) $result, $result->getConvertedUrl() );
+		$this->set_url( $result . '', $result->new_url );
 
 		return true;
 	}

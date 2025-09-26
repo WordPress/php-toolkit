@@ -14,71 +14,24 @@ use Rowbot\URL\URL;
 class ConvertedUrl {
 
 	/** @var URL */
-	private $url;
+	public $new_url;
 
 	/** @var string */
-	private $string;
+	public $new_raw_url;
 
 	/** @var string|null */
-	private $relative_string;
+	public $new_raw_relative_url;
 
 	/** @var bool */
-	private $was_relative;
-
-	public function __construct( URL $url, string $string, ?string $relative_string, bool $was_relative ) {
-		$this->url             = $url;
-		$this->string          = $string;
-		$this->relative_string = $relative_string;
-		$this->was_relative    = $was_relative;
-	}
+	public $was_relative = false;
 
 	/**
 	 * Returns the updated URL string. If the original was relative, returns a relative string.
 	 */
 	public function __toString(): string {
 		if ( $this->was_relative ) {
-			return $this->getRelativeString();
+			return $this->new_raw_relative_url;
 		}
-		return $this->getString();
-	}
-
-	/**
-	 * The parsed updated URL object.
-	 */
-	public function getConvertedUrl(): URL {
-		return $this->url;
-	}
-
-	/**
-	 * Whether the input URL was originally relative.
-	 */
-	public function wasRelative(): bool {
-		return $this->was_relative;
-	}
-
-	/**
-	 * Returns the absolute updated URL string.
-	 */
-	public function getString(): string {
-		return $this->string;
-	}
-
-	/**
-	 * Returns the relative string if available, otherwise constructs it from the URL.
-	 */
-	public function getRelativeString(): ?string {
-		if ( null !== $this->relative_string ) {
-			return $this->relative_string;
-		}
-
-		$relative = $this->url->pathname;
-		if ( '' !== $this->url->search ) {
-			$relative .= $this->url->search;
-		}
-		if ( '' !== $this->url->hash ) {
-			$relative .= $this->url->hash;
-		}
-
-		return $relative;
+		return $this->new_raw_url;
 	}
 }

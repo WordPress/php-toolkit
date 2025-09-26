@@ -156,26 +156,29 @@ class WPURL {
 			return false;
 		}
 
-		$was_relative = null;
+		$converted_url              = new ConvertedUrl();
+		$converted_url->new_url     = $updated_url;
+		$converted_url->new_raw_url = $new_raw_url;
+
 		if ( array_key_exists( 'raw_url', $options ) && is_string( $options['raw_url'] ) ) {
-			$was_relative = ! self::can_parse( $options['raw_url'] );
-		}
-		if ( null === $was_relative ) {
-			$was_relative = false;
+			if ( ! array_key_exists( 'is_relative', $options ) ) {
+				$options['is_relative'] = self::can_parse( $options['raw_url'] );
+			}
+			if ( $options['is_relative'] ) {
+				$relative_url = $updated_url->pathname;
+				if ( '' !== $updated_url->search ) {
+					$relative_url .= $updated_url->search;
+				}
+				if ( '' !== $updated_url->hash ) {
+					$relative_url .= $updated_url->hash;
+				}
+
+				$converted_url->was_relative         = true;
+				$converted_url->new_raw_relative_url = $relative_url;
+			}
 		}
 
-		$relative_url = null;
-		if ( $was_relative ) {
-			$relative_url = $updated_url->pathname;
-			if ( '' !== $updated_url->search ) {
-				$relative_url .= $updated_url->search;
-			}
-			if ( '' !== $updated_url->hash ) {
-				$relative_url .= $updated_url->hash;
-			}
-		}
-
-		return new ConvertedUrl( $updated_url, $new_raw_url, $relative_url, (bool) $was_relative );
+		return $converted_url;
 	}
 
 	/**
