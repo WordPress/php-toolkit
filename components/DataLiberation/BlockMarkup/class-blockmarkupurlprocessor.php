@@ -5,6 +5,7 @@ namespace WordPress\DataLiberation\BlockMarkup;
 use Rowbot\URL\URL;
 use WordPress\DataLiberation\URL\URLInTextProcessor;
 use WordPress\DataLiberation\URL\WPURL;
+use WordPress\DataLiberation\URL\ConvertedUrl;
 
 use function WordPress\DataLiberation\URL\urldecode_n;
 
@@ -256,85 +257,35 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	 *        by this WPURL_In_Text_Processor class so maybe the two do go hand in hand?
 	 */
 	public function replace_base_url( URL $to_url, ?URL $base_url = null ) {
-		$updated_url = clone $this->get_parsed_url();
-
-		$updated_url->hostname = $to_url->hostname;
-		$updated_url->protocol = $to_url->protocol;
-		$updated_url->port     = $to_url->port;
-
-		// Update the pathname if needed.
-		$from_url      = $this->get_parsed_url();
-		$from_pathname = $from_url->pathname;
-		$to_pathname   = $to_url->pathname;
-
 		$base_url = $base_url ?? $this->base_url_object;
-		if ( $base_url->pathname !== $to_pathname ) {
-			$base_pathname_with_trailing_slash = rtrim( $base_url->pathname, '/' ) . '/';
-			$decoded_matched_pathname          = urldecode_n(
-				$from_pathname,
-				strlen( $base_pathname_with_trailing_slash )
-			);
-			$to_pathname_with_trailing_slash   = rtrim( $to_pathname, '/' ) . '/';
-			$remaining_pathname                =
-				substr(
-					$decoded_matched_pathname,
-					strlen( $base_pathname_with_trailing_slash )
-				);
-
-			$updated_url->pathname = $to_pathname_with_trailing_slash . $remaining_pathname;
-		}
-
-		/*
-		 * Stylistic choice – if the updated URL has no trailing slash,
-		 * do not add it to the new URL. The WHATWG URL parser will
-		 * add one automatically if the path is empty, so we have to
-		 * explicitly remove it.
-		 */
-		$new_raw_url = $updated_url->toString();
-		if (
-			'/' !== $from_url->pathname[ strlen( $from_url->pathname ) - 1 ] &&
-			'/' !== $from_url->pathname &&
-			'' === $from_url->search &&
-			'' === $from_url->hash
-		) {
-			$new_raw_url = rtrim( $new_raw_url, '/' );
-		}
-		if ( ! $new_raw_url ) {
-			// @TODO: When does this happen? Let's add the test coverage and
-			// doubly verify the logic.
+		if ( ! $base_url ) {
 			return false;
 		}
 
-		if ( ! $this->is_url_relative() ) {
-			$this->set_url( $new_raw_url, $updated_url );
-
-			return true;
+		if (
+			'#text' === $this->get_token_type() &&
+			! WPURL::can_parse( $this->get_raw_url() )
+		) {
+			// In text nodes, only convert absolute URLs.
+			return false;
 		}
 
-		$new_relative_url = $updated_url->pathname;
-		if ( '' !== $updated_url->search ) {
-			$new_relative_url .= $updated_url->search;
-		}
-		if ( '' !== $updated_url->hash ) {
-			$new_relative_url .= $updated_url->hash;
+        $result = WPURL::replace_base_url(
+			$this->get_parsed_url(),
+            array(
+                'old_base_url' => $base_url,
+                'new_base_url' => $to_url,
+                'raw_url'      => $this->get_raw_url(),
+            )
+        );
+
+        if ( false === $result ) {
+			return false;
 		}
 
-		$this->set_url( $new_relative_url, $updated_url );
+        $this->set_url( (string) $result, $result->getConvertedUrl() );
 
 		return true;
-	}
-
-	/**
-	 * Returns true if the currently matched URL is relative.
-	 *
-	 * @return bool Whether the currently matched URL is relative.
-	 */
-	public function is_url_relative() {
-		return (
-			! WPURL::can_parse( $this->get_raw_url() ) &&
-			// only absolute URLs are detected in text nodes.
-			'#text' !== $this->get_token_type()
-		);
 	}
 
 	/**
