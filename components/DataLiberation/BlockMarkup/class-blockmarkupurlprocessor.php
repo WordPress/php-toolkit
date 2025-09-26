@@ -270,20 +270,20 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			return false;
 		}
 
-        $result = WPURL::replace_base_url(
+		$result = WPURL::replace_base_url(
 			$this->get_parsed_url(),
-            array(
-                'old_base_url' => $base_url,
-                'new_base_url' => $to_url,
-                'raw_url'      => $this->get_raw_url(),
-            )
-        );
+			array(
+				'old_base_url' => $base_url,
+				'new_base_url' => $to_url,
+				'raw_url'      => $this->get_raw_url(),
+			)
+		);
 
-        if ( false === $result ) {
+		if ( false === $result ) {
 			return false;
 		}
 
-        $this->set_url( (string) $result, $result->getConvertedUrl() );
+		$this->set_url( (string) $result, $result->getConvertedUrl() );
 
 		return true;
 	}
