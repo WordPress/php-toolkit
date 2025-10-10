@@ -246,54 +246,59 @@ class BlockMarkupProcessorTest extends TestCase {
 		$this->assertEquals( 'New York City', $p->get_block_attribute_value(), 'Failed to find the block attribute value' );
 	}
 
-	public function test_next_block_attribute_finds_nested_attributes() {
+	public function test_next_block_attribute_field_finds_nested_fields() {
 		$p = new BlockMarkupProcessor(
 			'<!-- wp:image {"class": "wp-bold", "sources": { "lowres": "small.png", "hires": "large.png" } } -->'
 		);
 		$this->assertTrue( $p->next_token(), 'Failed to find the block opener' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the first block attribute' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the second block attribute' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the third block attribute' );
+		$this->assertTrue( $p->next_block_attribute_field(), 'Failed to find the first block attribute field' );
 
-		$this->assertEquals( 'lowres', $p->get_block_attribute_key(), 'Failed to find the block attribute name' );
-		$this->assertEquals( 'small.png', $p->get_block_attribute_value(), 'Failed to find the block attribute value' );
+		$this->assertEquals( array( 'sources', 'lowres' ), $p->get_block_attribute_field_path(), 'Failed to find the block attribute field path' );
+		$this->assertEquals( 'small.png', $p->get_block_attribute_field_value(), 'Failed to find the block attribute field value' );
 
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the second block attribute' );
+		$this->assertTrue( $p->next_block_attribute_field(), 'Failed to find the second block attribute field' );
 
-		$this->assertEquals( 'hires', $p->get_block_attribute_key(), 'Failed to find the block attribute name' );
-		$this->assertEquals( 'large.png', $p->get_block_attribute_value(), 'Failed to find the block attribute value' );
+		$this->assertEquals( array( 'sources', 'hires' ), $p->get_block_attribute_field_path(), 'Failed to find the block attribute field path' );
+		$this->assertEquals( 'large.png', $p->get_block_attribute_field_value(), 'Failed to find the block attribute field value' );
+		$this->assertFalse( $p->next_block_attribute_field(), 'Returned true even though there was no next block attribute field' );
 	}
 
-	public function test_next_block_attribute_loops_over_lists() {
+	public function test_next_block_attribute_field_loops_over_lists() {
 		$p = new BlockMarkupProcessor(
 			'<!-- wp:image {"class": "wp-bold", "sources": ["small.png", "large.png"] } -->'
 		);
 		$this->assertTrue( $p->next_token(), 'Failed to find the block opener' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the first block attribute' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the second block attribute' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the third block attribute' );
+		$this->assertTrue( $p->next_block_attribute_field(), 'Failed to find the first block attribute field' );
 
-		$this->assertEquals( 0, $p->get_block_attribute_key(), 'Failed to find the block attribute name' );
-		$this->assertEquals( 'small.png', $p->get_block_attribute_value(), 'Failed to find the block attribute value' );
+		$this->assertEquals( array( 'sources', 0 ), $p->get_block_attribute_field_path(), 'Failed to find the block attribute field path' );
+		$this->assertEquals( 'small.png', $p->get_block_attribute_field_value(), 'Failed to find the block attribute field value' );
 
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the second block attribute' );
+		$this->assertTrue( $p->next_block_attribute_field(), 'Failed to find the second block attribute field' );
 
-		$this->assertEquals( 1, $p->get_block_attribute_key(), 'Failed to find the block attribute name' );
-		$this->assertEquals( 'large.png', $p->get_block_attribute_value(), 'Failed to find the block attribute value' );
+		$this->assertEquals( array( 'sources', 1 ), $p->get_block_attribute_field_path(), 'Failed to find the block attribute field path' );
+		$this->assertEquals( 'large.png', $p->get_block_attribute_field_value(), 'Failed to find the block attribute field value' );
+		$this->assertFalse( $p->next_block_attribute_field(), 'Returned true even though there was no next block attribute field' );
 	}
 
-	public function test_next_block_attribute_finds_top_level_attributes_after_nesting() {
+	public function test_next_block_attribute_finds_top_level_attributes_after_nested_fields() {
 		$p = new BlockMarkupProcessor(
 			'<!-- wp:image {"sources": { "lowres": "small.png", "hires": "large.png" }, "class": "wp-bold" } -->'
 		);
 		$this->assertTrue( $p->next_token(), 'Failed to find the block opener' );
 		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the first block attribute' );
+		$this->assertEquals( 'sources', $p->get_block_attribute_key(), 'Failed to find the first block attribute name' );
 		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the second block attribute' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the third block attribute' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the fourth block attribute' );
-
 		$this->assertEquals( 'class', $p->get_block_attribute_key(), 'Failed to find the block attribute name' );
 		$this->assertEquals( 'wp-bold', $p->get_block_attribute_value(), 'Failed to find the block attribute value' );
+		$this->assertFalse( $p->next_block_attribute(), 'Should not find more top level block attributes' );
+	}
+
+	public function test_next_block_attribute_field_returns_false_when_no_fields_exist() {
+		$p = new BlockMarkupProcessor(
+			'<!-- wp:image {"class": "wp-bold"} -->'
+		);
+		$this->assertTrue( $p->next_token(), 'Failed to find the block opener' );
+		$this->assertFalse( $p->next_block_attribute_field(), 'Returned true even though no block attribute fields exist' );
 	}
 
 	public function test_set_block_attribute_value_updates_a_simple_attribute() {
@@ -322,17 +327,16 @@ class BlockMarkupProcessorTest extends TestCase {
 		$this->assertEquals( 'wp-italics', $p->get_block_attribute_value(), 'Failed to find the block attribute value' );
 	}
 
-	public function test_set_block_attribute_value_updates_a_nested_attribute() {
+	public function test_set_block_attribute_field_value_updates_a_nested_field() {
 		$p = new BlockMarkupProcessor(
 			'<!-- wp:image {"sources": { "lowres": "small.png", "hires": "large.png" } } -->'
 		);
 		$this->assertTrue( $p->next_token(), 'Failed to find the block opener' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the first block attribute' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the second block attribute' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the third block attribute' );
+		$this->assertTrue( $p->next_block_attribute_field(), 'Failed to find the first block attribute field' );
+		$this->assertTrue( $p->next_block_attribute_field(), 'Failed to find the second block attribute field' );
 
-		$p->set_block_attribute_value( 'medium.png' );
-		$this->assertEquals( 'medium.png', $p->get_block_attribute_value(), 'Failed to find the block attribute value' );
+		$p->set_block_attribute_field_value( 'medium.png' );
+		$this->assertEquals( 'medium.png', $p->get_block_attribute_field_value(), 'Failed to find the block attribute field value' );
 		$this->assertEquals(
 			'<!-- wp:image {"sources":{"lowres":"small.png","hires":"medium.png"}} -->',
 			$p->get_updated_html(),
@@ -340,17 +344,16 @@ class BlockMarkupProcessorTest extends TestCase {
 		);
 	}
 
-	public function test_set_block_attribute_value_updates_a_list_value() {
+	public function test_set_block_attribute_field_value_updates_a_list_value() {
 		$p = new BlockMarkupProcessor(
 			'<!-- wp:image {"sources": ["small.png", "large.png"] } -->'
 		);
 		$this->assertTrue( $p->next_token(), 'Failed to find the block opener' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the first block attribute' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the second block attribute' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the third block attribute' );
+		$this->assertTrue( $p->next_block_attribute_field(), 'Failed to find the first block attribute field' );
+		$this->assertTrue( $p->next_block_attribute_field(), 'Failed to find the second block attribute field' );
 
-		$p->set_block_attribute_value( 'medium.png' );
-		$this->assertEquals( 'medium.png', $p->get_block_attribute_value(), 'Failed to find the block attribute value' );
+		$p->set_block_attribute_field_value( 'medium.png' );
+		$this->assertEquals( 'medium.png', $p->get_block_attribute_field_value(), 'Failed to find the block attribute field value' );
 		$this->assertEquals(
 			'<!-- wp:image {"sources":["small.png","medium.png"]} -->',
 			$p->get_updated_html(),
@@ -358,21 +361,20 @@ class BlockMarkupProcessorTest extends TestCase {
 		);
 	}
 
-	public function test_set_block_attribute_can_be_called_multiple_times() {
+	public function test_set_block_attribute_field_can_be_called_multiple_times() {
 		$p = new BlockMarkupProcessor(
 			'<!-- wp:image {"sources": { "lowres": "small.png", "hires": "large.png" } } -->'
 		);
 		$this->assertTrue( $p->next_token(), 'Failed to find the block opener' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the first block attribute' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the second block attribute' );
-		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the third block attribute' );
+		$this->assertTrue( $p->next_block_attribute_field(), 'Failed to find the first block attribute field' );
+		$this->assertTrue( $p->next_block_attribute_field(), 'Failed to find the second block attribute field' );
 
-		$p->set_block_attribute_value( 'medium.png' );
-		$p->set_block_attribute_value( 'oh-completely-different-image.png' );
+		$p->set_block_attribute_field_value( 'medium.png' );
+		$p->set_block_attribute_field_value( 'oh-completely-different-image.png' );
 		$this->assertEquals(
 			'oh-completely-different-image.png',
-			$p->get_block_attribute_value(),
-			'Failed to find the block attribute value'
+			$p->get_block_attribute_field_value(),
+			'Failed to find the block attribute field value'
 		);
 		$this->assertEquals(
 			'<!-- wp:image {"sources":{"lowres":"small.png","hires":"oh-completely-different-image.png"}} -->',

@@ -73,22 +73,40 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	private $last_block_error;
 
 	/**
-	 * A flattened list of paths (arrays of keys) to every attribute found in
-	 * $block_attributes.  This is used by next_block_attribute() to traverse
-	 * attributes without relying on PHP iterator classes.
+	 * A list of names for every top-level attribute found in $block_attributes.
+	 * This is used by next_block_attribute() to traverse attributes without relying
+	 * on PHP iterator classes.
+	 *
+	 * @var array<int, int|string>|null
+	 */
+	private $block_attribute_names = null;
+
+	/**
+	 * A flattened list of paths (arrays of keys) to every attribute field found in
+	 * $block_attributes. Attribute fields are the nested values of attributes that hold
+	 * arrays.
 	 *
 	 * @var array<int, array<int|string>>|null
 	 */
-	private $block_attribute_paths = null;
+	private $block_attribute_field_paths = null;
 
 	/**
-	 * The index of the current attribute inside $block_attribute_paths.
+	 * The index of the current attribute inside $block_attribute_names.
 	 * Starts at -1 so that the first call to next_block_attribute() positions
 	 * the cursor at index 0.
 	 *
 	 * @var int
 	 */
 	private $block_attribute_index = -1;
+
+	/**
+	 * The index of the current attribute field inside $block_attribute_field_paths.
+	 * Starts at -1 so that the first call to next_block_attribute_field() positions
+	 * the cursor at index 0.
+	 *
+	 * @var int
+	 */
+	private $block_attribute_field_index = -1;
 
 	/**
 	 * Gets the type of the current token, adding a special '#block-comment' type
@@ -254,6 +272,7 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 			return false;
 		}
 		$this->block_attributes         = $attributes;
+		$this->reset_block_attribute_iterators();
 		$this->block_attributes_updated = true;
 
 		return true;
@@ -294,10 +313,9 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 		}
 		$this->get_updated_html();
 
-		$this->block_name               = null;
-		$this->block_attributes         = null;
-		$this->block_attribute_paths    = null;
-		$this->block_attribute_index    = -1;
+		$this->block_name        = null;
+		$this->block_attributes  = null;
+		$this->reset_block_attribute_iterators();
 		$this->block_closer             = false;
 		$this->self_closing_flag        = false;
 		$this->block_attributes_updated = false;
@@ -503,6 +521,51 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	}
 
 	/**
+	 * Clears cached attribute traversal state so it can be rebuilt on demand.
+	 *
+	 * @return void
+	 */
+	private function reset_block_attribute_iterators() {
+		$this->block_attribute_names        = null;
+		$this->block_attribute_field_paths  = null;
+		$this->block_attribute_index        = -1;
+		$this->block_attribute_field_index  = -1;
+	}
+
+	/**
+	 * Builds the cached attribute traversal state when required.
+	 *
+	 * @return void
+	 */
+	private function ensure_block_attribute_iterators_built() {
+		if ( null !== $this->block_attribute_names ) {
+			return;
+		}
+
+		$this->block_attribute_index       = -1;
+		$this->block_attribute_field_index = -1;
+
+		$block_attributes = $this->get_block_attributes();
+		if ( ! is_array( $block_attributes ) ) {
+			$this->block_attribute_names       = array();
+			$this->block_attribute_field_paths = array();
+
+			return;
+		}
+
+		$all_paths = $this->build_block_attribute_paths( $block_attributes );
+
+		$this->block_attribute_names       = array_keys( $block_attributes );
+		$this->block_attribute_field_paths = array();
+
+		foreach ( $all_paths as $path ) {
+			if ( count( $path ) > 1 ) {
+				$this->block_attribute_field_paths[] = $path;
+			}
+		}
+	}
+
+	/**
 	 * Advances to the next block attribute when a block is matched.
 	 *
 	 * @return bool Whether we successfully advanced to the next attribute.
@@ -512,27 +575,21 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 			return false;
 		}
 
-		if ( null === $this->block_attribute_paths ) {
-			$block_attributes = $this->get_block_attributes();
-			if ( ! is_array( $block_attributes ) ) {
-				return false;
-			}
-
-			$this->block_attribute_paths = $this->build_block_attribute_paths( $block_attributes );
-			$this->block_attribute_index = -1;
-		}
+		$this->ensure_block_attribute_iterators_built();
 
 		++$this->block_attribute_index;
 
-		return isset( $this->block_attribute_paths[ $this->block_attribute_index ] );
+		return isset( $this->block_attribute_names[ $this->block_attribute_index ] );
 	}
 
-	protected function get_block_attribute_path() {
-		if ( null === $this->block_attribute_paths || ! isset( $this->block_attribute_paths[ $this->block_attribute_index ] ) ) {
+	private function get_block_attribute_path() {
+		$this->ensure_block_attribute_iterators_built();
+
+		if ( ! isset( $this->block_attribute_names[ $this->block_attribute_index ] ) ) {
 			return false;
 		}
 
-		return $this->block_attribute_paths[ $this->block_attribute_index ];
+		return array( $this->block_attribute_names[ $this->block_attribute_index ] );
 	}
 
 	/**
@@ -541,11 +598,11 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	 * @return string|false The attribute key or false if no attribute was matched
 	 */
 	public function get_block_attribute_key() {
-		if ( null === $this->block_attribute_paths || ! isset( $this->block_attribute_paths[ $this->block_attribute_index ] ) ) {
+		$path = $this->get_block_attribute_path();
+
+		if ( false === $path ) {
 			return false;
 		}
-
-		$path = $this->block_attribute_paths[ $this->block_attribute_index ];
 
 		return $path[ count( $path ) - 1 ];
 	}
@@ -556,11 +613,110 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	 * @return mixed|false The attribute value or false if no attribute was matched
 	 */
 	public function get_block_attribute_value() {
-		if ( null === $this->block_attribute_paths || ! isset( $this->block_attribute_paths[ $this->block_attribute_index ] ) ) {
+		$path = $this->get_block_attribute_path();
+
+		if ( false === $path ) {
 			return false;
 		}
 
-		$path  = $this->block_attribute_paths[ $this->block_attribute_index ];
+		return $this->get_value_for_block_attribute_path( $path );
+	}
+
+	/**
+	 * Sets the value of the currently matched block attribute.
+	 *
+	 * @param  mixed $new_value  The new value to set
+	 *
+	 * @return bool Whether the value was successfully set
+	 */
+	public function set_block_attribute_value( $new_value ) {
+		$path = $this->get_block_attribute_path();
+
+		if ( false === $path ) {
+			return false;
+		}
+
+		if ( 1 !== count( $path ) ) {
+			return false;
+		}
+
+		return $this->set_value_for_block_attribute_path( $path, $new_value );
+	}
+
+	/**
+	 * Advances to the next block attribute field when a block is matched.
+	 *
+	 * @return bool Whether we successfully advanced to the next attribute field.
+	 */
+	public function next_block_attribute_field() {
+		if ( '#block-comment' !== $this->get_token_type() ) {
+			return false;
+		}
+
+		$this->ensure_block_attribute_iterators_built();
+
+		++$this->block_attribute_field_index;
+
+		return isset( $this->block_attribute_field_paths[ $this->block_attribute_field_index ] );
+	}
+
+	public function get_block_attribute_field_path() {
+		$this->ensure_block_attribute_iterators_built();
+
+		if ( ! isset( $this->block_attribute_field_paths[ $this->block_attribute_field_index ] ) ) {
+			return false;
+		}
+
+		return $this->block_attribute_field_paths[ $this->block_attribute_field_index ];
+	}
+
+	/**
+	 * Gets the value of the currently matched block attribute field.
+	 *
+	 * @return mixed|false The field value or false if no field was matched
+	 */
+	public function get_block_attribute_field_value() {
+		$path = $this->get_block_attribute_field_path();
+
+		if ( false === $path ) {
+			return false;
+		}
+
+		return $this->get_value_for_block_attribute_path( $path );
+	}
+
+	/**
+	 * Sets the value of the currently matched block attribute field.
+	 *
+	 * @param mixed $new_value The new value to set.
+	 *
+	 * @return bool Whether the value was successfully set.
+	 */
+	public function set_block_attribute_field_value( $new_value ) {
+		$path = $this->get_block_attribute_field_path();
+
+		if ( false === $path ) {
+			return false;
+		}
+
+		if ( count( $path ) < 2 ) {
+			return false;
+		}
+
+		return $this->set_value_for_block_attribute_path( $path, $new_value );
+	}
+
+	/**
+	 * Retrieves a value from the current block attributes using the provided path.
+	 *
+	 * @param array<int|string> $path The path to resolve.
+	 * @return mixed|false The resolved value or false when the path is invalid.
+	 */
+	private function get_value_for_block_attribute_path( $path ) {
+		if ( empty( $path ) || ! is_array( $this->block_attributes ) ) {
+			return false;
+		}
+
 		$value = $this->block_attributes;
 
 		foreach ( $path as $segment ) {
@@ -574,30 +730,33 @@ class BlockMarkupProcessor extends WP_HTML_Tag_Processor {
 	}
 
 	/**
-	 * Sets the value of the currently matched block attribute.
+	 * Updates a value within the current block attributes using the provided path.
 	 *
-	 * @param  mixed $new_value  The new value to set
-	 *
-	 * @return bool Whether the value was successfully set
+	 * @param array<int|string> $path      The path to update.
+	 * @param mixed             $new_value The new value to assign.
+	 * @return bool True if the value was updated, false otherwise.
 	 */
-	public function set_block_attribute_value( $new_value ) {
-		if ( null === $this->block_attribute_paths || ! isset( $this->block_attribute_paths[ $this->block_attribute_index ] ) ) {
+	private function set_value_for_block_attribute_path( $path, $new_value ) {
+		if ( empty( $path ) || ! is_array( $this->block_attributes ) ) {
 			return false;
 		}
 
-		$path = $this->block_attribute_paths[ $this->block_attribute_index ];
-
 		$ref   =& $this->block_attributes;
 		$depth = count( $path );
+
 		for ( $i = 0; $i < $depth - 1; $i++ ) {
 			$segment = $path[ $i ];
 			if ( ! is_array( $ref ) || ! array_key_exists( $segment, $ref ) ) {
-				return false; // Path is invalid.
+				return false;
 			}
 			$ref =& $ref[ $segment ];
 		}
 
-		$last_key                       = $path[ $depth - 1 ];
+		$last_key = $path[ $depth - 1 ];
+		if ( ! is_array( $ref ) ) {
+			return false;
+		}
+
 		$ref[ $last_key ]               = $new_value;
 		$this->block_attributes_updated = true;
 

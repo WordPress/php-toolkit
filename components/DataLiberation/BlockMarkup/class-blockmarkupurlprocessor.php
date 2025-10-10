@@ -185,9 +185,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	private function next_url_block_attribute() {
 		while ( $this->next_block_attribute() ) {
 			$url_maybe = $this->get_block_attribute_value();
-			if ( ! is_string( $url_maybe ) ||
-				count( $this->get_block_attribute_path() ) > 1
-			) {
+			if ( ! is_string( $url_maybe ) ) {
 				// @TODO: support arrays, objects, and other non-string data structures.
 				continue;
 			}
