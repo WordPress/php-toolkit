@@ -358,6 +358,24 @@ class BlockMarkupProcessorTest extends TestCase {
 		);
 	}
 
+	public function test_set_block_attribute_value_updates_a_list_value_with_a_self_closing_block() {
+		$p = new BlockMarkupProcessor(
+			'<!-- wp:image {"sources": ["small.png", "large.png"] } /-->'
+		);
+		$this->assertTrue( $p->next_token(), 'Failed to find the block opener' );
+		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the first block attribute' );
+		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the second block attribute' );
+		$this->assertTrue( $p->next_block_attribute(), 'Failed to find the third block attribute' );
+
+		$p->set_block_attribute_value( 'medium.png' );
+		$this->assertEquals( 'medium.png', $p->get_block_attribute_value(), 'Failed to find the block attribute value' );
+		$this->assertEquals(
+			'<!-- wp:image {"sources":["small.png","medium.png"]} /-->',
+			$p->get_updated_html(),
+			'Failed to update the block attribute value'
+		);
+	}
+
 	public function test_set_block_attribute_can_be_called_multiple_times() {
 		$p = new BlockMarkupProcessor(
 			'<!-- wp:image {"sources": { "lowres": "small.png", "hires": "large.png" } } -->'

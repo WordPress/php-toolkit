@@ -193,6 +193,11 @@ class BlockMarkupUrlProcessorTest extends TestCase {
 				'https://w.org',
 				'<!-- wp:image {"src":"https:\/\/w.org"} -->',
 			),
+			'In the "url" block attribute of a navigation-link block' => array(
+				'<!-- wp:navigation-link {"url": "https://w.org"} /-->',
+				'https://w.org',
+				'<!-- wp:navigation-link {"url":"https:\/\/w.org"} /-->',
+			),
 			'In a text node'                      => array(
 				'Have you seen https://wordpress.org yet?',
 				'https://w.org',
