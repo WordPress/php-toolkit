@@ -26,7 +26,6 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	private $url_in_text_node_updated;
 	private $css_url_processor;
 	private $css_url_processor_updated;
-	private $preserve_style_attribute_quotes = false;
 	private $css_attribute_name;
 	private $css_attribute_updated_value;
 
@@ -80,24 +79,8 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 
 					return parent::get_updated_html();
 				}
-				$should_preserve_quotes = (
-					'style' === strtolower( $attr ) &&
-					function_exists( 'add_filter' ) &&
-					function_exists( 'remove_filter' )
-				);
-
-				if ( $should_preserve_quotes ) {
-					$this->preserve_style_attribute_quotes = true;
-					add_filter( 'attribute_escape', array( $this, 'filter_preserve_style_attribute_quotes' ), 10, 2 );
-				}
 
 				$this->set_attribute( $attr, $updated_css );
-
-				if ( $should_preserve_quotes && $this->preserve_style_attribute_quotes ) {
-					remove_filter( 'attribute_escape', array( $this, 'filter_preserve_style_attribute_quotes' ), 10 );
-					$this->preserve_style_attribute_quotes = false;
-				}
-
 				$this->css_attribute_name = null;
 				$this->css_attribute_updated_value = null;
 			}
@@ -203,7 +186,6 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			}
 
 			$this->css_attribute_name      = $attr;
-			$css_value               = htmlspecialchars_decode( $css_value, ENT_QUOTES );
 			$this->css_url_processor = new CSSUrlProcessor( $css_value, $this->base_url_string );
 		}
 
@@ -265,8 +247,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			// Handle style attribute with CSS url() values
 			if ( 'style' === $attr ) {
 				$this->css_attribute_name = $attr;
-				$decoded_css             = htmlspecialchars_decode( $url_maybe, ENT_QUOTES );
-				$this->css_url_processor = new CSSUrlProcessor( $decoded_css, $this->base_url_string );
+				$this->css_url_processor = new CSSUrlProcessor( $url_maybe, $this->base_url_string );
 				if ( $this->next_url_in_css() ) {
 					return true;
 				}
@@ -493,14 +474,6 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		}
 
 		return $this->inspecting_html_attributes[ count( $this->inspecting_html_attributes ) - 1 ];
-	}
-
-	public function filter_preserve_style_attribute_quotes( $safe_text, $text ) {
-		if ( ! $this->preserve_style_attribute_quotes ) {
-			return $safe_text;
-		}
-
-		return str_replace( '&#039;', "'", $safe_text );
 	}
 
 	/**

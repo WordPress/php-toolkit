@@ -64,24 +64,28 @@ class CSSUrlProcessor {
 
 	/**
 	 * The full match including url(...) wrapper
+	 *
 	 * @var string
 	 */
 	private $full_match;
 
 	/**
 	 * The byte position where the full match starts
+	 *
 	 * @var int
 	 */
 	private $full_match_start;
 
 	/**
 	 * The length of the full match
+	 *
 	 * @var int
 	 */
 	private $full_match_length;
 
 	/**
 	 * The quote character used (if any)
+	 *
 	 * @var string
 	 */
 	private $quote_char;
@@ -90,7 +94,7 @@ class CSSUrlProcessor {
 		$this->css      = $css;
 		$this->base_url = $base_url;
 
-		// CSS url() regex pattern that properly skips comments and strings
+		// CSS url()-finding regex pattern that skips comments and strings.
 		$this->regex = '/
 			# 1) Skip things we must not search inside:
 			(?:
@@ -121,15 +125,15 @@ class CSSUrlProcessor {
 	 * @return bool True if a URL was found, false otherwise.
 	 */
 	public function next_url() {
-		$this->matched_url        = null;
-		$this->decoded_url        = null;
-		$this->parsed_url         = null;
-		$this->url_starts_at      = null;
-		$this->url_length         = null;
-		$this->full_match         = null;
-		$this->full_match_start   = null;
-		$this->full_match_length  = null;
-		$this->quote_char         = null;
+		$this->matched_url       = null;
+		$this->decoded_url       = null;
+		$this->parsed_url        = null;
+		$this->url_starts_at     = null;
+		$this->url_length        = null;
+		$this->full_match        = null;
+		$this->full_match_start  = null;
+		$this->full_match_length = null;
+		$this->quote_char        = null;
 
 		$matches = array();
 		$found   = preg_match( $this->regex, $this->css, $matches, PREG_OFFSET_CAPTURE, $this->bytes_already_parsed );
@@ -137,7 +141,7 @@ class CSSUrlProcessor {
 			return false;
 		}
 
-		// Determine which capture group matched
+		// Determine which capture group matched.
 		if ( isset( $matches['url_quoted'] ) && '' !== $matches['url_quoted'][0] ) {
 			$this->matched_url   = $matches['url_quoted'][0];
 			$this->url_starts_at = $matches['url_quoted'][1];
@@ -152,18 +156,18 @@ class CSSUrlProcessor {
 			return false;
 		}
 
-		// Store the full match for context
+		// Store the full match for context.
 		$this->full_match        = $matches[0][0];
 		$this->full_match_start  = $matches[0][1];
 		$this->full_match_length = strlen( $this->full_match );
 
-		// Update the parsing position
+		// Update the parsing position.
 		$this->bytes_already_parsed = $this->full_match_start + $this->full_match_length;
 
-		// Parse the URL
+		// Parse the URL.
 		$this->decoded_url = $this->decode_css_escapes( $this->matched_url );
 		$parsed_url        = WPURL::parse( $this->decoded_url, $this->base_url );
-		$this->parsed_url = ( false === $parsed_url ) ? false : $parsed_url;
+		$this->parsed_url  = ( false === $parsed_url ) ? false : $parsed_url;
 
 		return true;
 	}
@@ -291,7 +295,7 @@ class CSSUrlProcessor {
 				continue;
 			}
 
-			$i++;
+			++$i;
 
 			if ( $i >= $length ) {
 				break;
@@ -302,18 +306,18 @@ class CSSUrlProcessor {
 
 			while ( $j < $length && strlen( $hex ) < 6 && $this->is_hex_digit( $value[ $j ] ) ) {
 				$hex .= $value[ $j ];
-				$j++;
+				++$j;
 			}
 
 			if ( '' !== $hex ) {
 				$result .= codepoint_to_utf8_bytes( hexdec( $hex ) );
-				$i = $j - 1;
+				$i       = $j - 1;
 
 				while ( $j < $length && $this->is_css_whitespace( $value[ $j ] ) ) {
 					if ( "\r" === $value[ $j ] && $j + 1 < $length && "\n" === $value[ $j + 1 ] ) {
-						$j++;
+						++$j;
 					}
-					$j++;
+					++$j;
 				}
 
 				$i = $j - 1;
@@ -324,7 +328,7 @@ class CSSUrlProcessor {
 
 			if ( $this->is_line_break( $next ) ) {
 				if ( "\r" === $next && $i + 1 < $length && "\n" === $value[ $i + 1 ] ) {
-					$i++;
+					++$i;
 				}
 				continue;
 			}
@@ -346,5 +350,4 @@ class CSSUrlProcessor {
 	private function is_line_break( string $char ): bool {
 		return "\n" === $char || "\r" === $char || "\f" === $char;
 	}
-
 }
