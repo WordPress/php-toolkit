@@ -365,7 +365,7 @@ HTML
 				'<div style="background: url(&quot;data:image/png;base64,iVBORw0KGgo=&quot;);"></div>',
 			),
 			'URL with escaped quotes in quoted form'             => array(
-				'https://example.com/path\\"with\\"quotes',
+				'https://example.com/path"with"quotes',
 				'<div style="background: url(&quot;https://example.com/path\\&quot;with\\&quot;quotes&quot;);"></div>',
 			),
 			'Multiple URLs in single style attribute'            => array(
@@ -383,6 +383,14 @@ HTML
 			'Mixed case Url() function'                          => array(
 				'https://example.com/image.png',
 				'<div style="background: Url(&quot;https://example.com/image.png&quot;);"></div>',
+			),
+			'Unicode escape in quoted URL'                       => array(
+				'https://example.com/image.png',
+				'<div style="background: url(&quot;https://example.com/im\\61ge.png&quot;);"></div>',
+			),
+			'Unicode escape in unquoted URL'                     => array(
+				'https://example.com/image.png',
+				'<div style="background: url(https://example.com/im\\61ge.png);"></div>',
 			),
 		);
 	}
@@ -418,6 +426,11 @@ HTML
 				'<div style="background: url(&quot;/old/path.png&quot;);"></div>',
 				'/new/path.png',
 				'<div style="background: url(&quot;/new/path.png&quot;);"></div>',
+			),
+			'Replace Unicode escaped URL'        => array(
+				'<div style="background: url(&quot;https://example.com/im\\61ge.png&quot;);"></div>',
+				'https://new.com/image.png',
+				'<div style="background: url(&quot;https://new.com/image.png&quot;);"></div>',
 			),
 		);
 	}

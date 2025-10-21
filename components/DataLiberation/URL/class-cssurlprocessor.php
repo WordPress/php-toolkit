@@ -5,6 +5,8 @@ namespace WordPress\DataLiberation\URL;
 use Rowbot\URL\URL;
 use WP_HTML_Text_Replacement;
 
+use function WordPress\Encoding\codepoint_to_utf8_bytes;
+
 /**
  * Finds and replaces URLs within CSS content (e.g., style attribute values).
  *
@@ -27,6 +29,10 @@ class CSSUrlProcessor {
 	 * @var string
 	 */
 	private $matched_url;
+	/**
+	 * @var string
+	 */
+	private $decoded_url;
 	/**
 	 * @var URL
 	 */
@@ -116,6 +122,7 @@ class CSSUrlProcessor {
 	 */
 	public function next_url() {
 		$this->matched_url        = null;
+		$this->decoded_url        = null;
 		$this->parsed_url         = null;
 		$this->url_starts_at      = null;
 		$this->url_length         = null;
@@ -154,7 +161,8 @@ class CSSUrlProcessor {
 		$this->bytes_already_parsed = $this->full_match_start + $this->full_match_length;
 
 		// Parse the URL
-		$parsed_url = WPURL::parse( $this->matched_url, $this->base_url );
+		$this->decoded_url = $this->decode_css_escapes( $this->matched_url );
+		$parsed_url        = WPURL::parse( $this->decoded_url, $this->base_url );
 		$this->parsed_url = ( false === $parsed_url ) ? false : $parsed_url;
 
 		return true;
@@ -166,7 +174,15 @@ class CSSUrlProcessor {
 	 * @return string|false The raw URL or false if no URL is currently matched.
 	 */
 	public function get_raw_url() {
-		return $this->matched_url ?? false;
+		if ( null === $this->matched_url ) {
+			return false;
+		}
+
+		if ( null !== $this->decoded_url ) {
+			return $this->decoded_url;
+		}
+
+		return $this->matched_url;
 	}
 
 	/**
@@ -194,6 +210,7 @@ class CSSUrlProcessor {
 		}
 
 		$this->matched_url                             = $new_url;
+		$this->decoded_url                             = $new_url;
 		$this->lexical_updates[ $this->url_starts_at ] = new WP_HTML_Text_Replacement(
 			$this->url_starts_at,
 			$this->url_length,
@@ -255,4 +272,79 @@ class CSSUrlProcessor {
 
 		return $this->css;
 	}
+
+	/**
+	 * Decodes CSS escape sequences within a URL value.
+	 *
+	 * @param  string $value The CSS value to decode.
+	 * @return string The decoded value.
+	 */
+	private function decode_css_escapes( string $value ): string {
+		$length = strlen( $value );
+		$result = '';
+
+		for ( $i = 0; $i < $length; $i++ ) {
+			$char = $value[ $i ];
+
+			if ( '\\' !== $char ) {
+				$result .= $char;
+				continue;
+			}
+
+			$i++;
+
+			if ( $i >= $length ) {
+				break;
+			}
+
+			$hex = '';
+			$j   = $i;
+
+			while ( $j < $length && strlen( $hex ) < 6 && $this->is_hex_digit( $value[ $j ] ) ) {
+				$hex .= $value[ $j ];
+				$j++;
+			}
+
+			if ( '' !== $hex ) {
+				$result .= codepoint_to_utf8_bytes( hexdec( $hex ) );
+				$i = $j - 1;
+
+				while ( $j < $length && $this->is_css_whitespace( $value[ $j ] ) ) {
+					if ( "\r" === $value[ $j ] && $j + 1 < $length && "\n" === $value[ $j + 1 ] ) {
+						$j++;
+					}
+					$j++;
+				}
+
+				$i = $j - 1;
+				continue;
+			}
+
+			$next = $value[ $i ];
+
+			if ( $this->is_line_break( $next ) ) {
+				if ( "\r" === $next && $i + 1 < $length && "\n" === $value[ $i + 1 ] ) {
+					$i++;
+				}
+				continue;
+			}
+
+			$result .= $next;
+		}
+
+		return $result;
+	}
+
+	private function is_hex_digit( string $char ): bool {
+		return (bool) preg_match( '/^[0-9a-fA-F]$/', $char );
+	}
+
+	private function is_css_whitespace( string $char ): bool {
+		return ' ' === $char || "\n" === $char || "\r" === $char || "\t" === $char || "\f" === $char;
+	}
+
+	private function is_line_break( string $char ): bool {
+		return "\n" === $char || "\r" === $char || "\f" === $char;
+	}
+
 }
