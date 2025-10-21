@@ -75,7 +75,9 @@ if ( ! function_exists( '__' ) ) {
 
 if ( ! function_exists( 'esc_attr' ) ) {
 	function esc_attr( $input ) {
-		return htmlspecialchars( $input );
+		$safe_text = htmlspecialchars( $input, ENT_QUOTES, 'UTF-8' );
+
+		return apply_filters( 'attribute_escape', $safe_text, $input );
 	}
 }
 
@@ -109,6 +111,32 @@ if ( ! function_exists( 'add_filter' ) ) {
 		);
 
 		return true;
+	}
+}
+
+if ( ! function_exists( 'remove_filter' ) ) {
+	function remove_filter( $hook_name, $callback, $priority = 10 ) {
+		global $wp_filter;
+		if (
+			! isset( $wp_filter[ $hook_name ] ) ||
+			! isset( $wp_filter[ $hook_name ][ $priority ] )
+		) {
+			return false;
+		}
+
+		foreach ( $wp_filter[ $hook_name ][ $priority ] as $index => $function ) {
+			if ( $function['function'] === $callback ) {
+				unset( $wp_filter[ $hook_name ][ $priority ][ $index ] );
+
+				if ( empty( $wp_filter[ $hook_name ][ $priority ] ) ) {
+					unset( $wp_filter[ $hook_name ][ $priority ] );
+				}
+
+				return true;
+			}
+		}
+
+		return false;
 	}
 }
 

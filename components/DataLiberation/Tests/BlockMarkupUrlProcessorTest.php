@@ -304,4 +304,160 @@ HTML
 			),
 		);
 	}
+
+	/**
+	 * @dataProvider provider_test_css_url_detection
+	 */
+	public function test_detects_css_urls_in_style_attribute( $expected_url, $markup, $base_url = 'https://example.com' ) {
+		$p = new BlockMarkupUrlProcessor( $markup, $base_url );
+		$this->assertTrue( $p->next_url(), 'Failed to find CSS URL in style attribute' );
+		$this->assertEquals( $expected_url, $p->get_raw_url(), 'Found CSS URL does not match expected URL' );
+	}
+
+	public static function provider_test_css_url_detection() {
+		return array(
+			'Basic quoted URL in background'                     => array(
+				'https://adamziel.com)',
+				'<div style="background: url(&quot;https://adamziel.com)&quot;);"></div>',
+			),
+			'URL in CSS comment (should be skipped)'             => array(
+				'https://fallback.com',
+				'<div style="/* background: url(&quot;https://adamziel.com)&quot;); */ background: url(&quot;https://fallback.com&quot;);"></div>',
+			),
+			'URL inside content string (should be skipped)'      => array(
+				'https://realurl.com',
+				'<div style="content: &quot;Have you ever heard about the url(https://mysite.com) syntax?&quot;; background: url(&quot;https://realurl.com&quot;);"></div>',
+			),
+			'Unquoted URL with encoded space'                    => array(
+				'https://adamziel.com/%20/d',
+				'<div style="background: url(https://adamziel.com/%20/d);"></div>',
+			),
+			'URL with other properties before'                   => array(
+				'https://adamziel.com/%20/d',
+				'<div style="background: &quot;red&quot; url(https://adamziel.com/%20/d);"></div>',
+			),
+			'URL with CSS comments around'                       => array(
+				'https://adamziel.com/%20/d',
+				'<div style="background: /* This is cool */ &quot;red&quot; url(https://adamziel.com/%20/d) /* This is cool */;"></div>',
+			),
+			'URL with multiple properties'                       => array(
+				'https://adamziel.com/%20/d',
+				'<div style="background: #fff url(https://adamziel.com/%20/d) dark;"></div>',
+			),
+			'Single-quoted URL'                                  => array(
+				'https://example.com/image.png',
+				'<div style="background-image: url(\'https://example.com/image.png\');"></div>',
+			),
+			'URL with whitespace inside url()'                   => array(
+				'https://example.com/image.png',
+				'<div style="background: url(  &quot;https://example.com/image.png&quot;  );"></div>',
+			),
+			'URL with CSS comment inside url()'                  => array(
+				'https://example.com/image.png',
+				'<div style="background: url( /* comment */ &quot;https://example.com/image.png&quot; );"></div>',
+			),
+			'Relative URL'                                       => array(
+				'/images/bg.png',
+				'<div style="background: url(&quot;/images/bg.png&quot;);"></div>',
+			),
+			'Data URI (should still be detected)'                => array(
+				'data:image/png;base64,iVBORw0KGgo=',
+				'<div style="background: url(&quot;data:image/png;base64,iVBORw0KGgo=&quot;);"></div>',
+			),
+			'URL with escaped quotes in quoted form'             => array(
+				'https://example.com/path\\"with\\"quotes',
+				'<div style="background: url(&quot;https://example.com/path\\&quot;with\\&quot;quotes&quot;);"></div>',
+			),
+			'Multiple URLs in single style attribute'            => array(
+				'https://example.com/bg1.png',
+				'<div style="background: url(&quot;https://example.com/bg1.png&quot;), url(&quot;https://example.com/bg2.png&quot;);"></div>',
+			),
+			'URL in different CSS properties'                    => array(
+				'https://example.com/cursor.png',
+				'<div style="cursor: url(&quot;https://example.com/cursor.png&quot;), auto;"></div>',
+			),
+			'Case-insensitive url() function'                    => array(
+				'https://example.com/image.png',
+				'<div style="background: URL(&quot;https://example.com/image.png&quot;);"></div>',
+			),
+			'Mixed case Url() function'                          => array(
+				'https://example.com/image.png',
+				'<div style="background: Url(&quot;https://example.com/image.png&quot;);"></div>',
+			),
+		);
+	}
+
+	/**
+	 * @dataProvider provider_test_css_url_replacement
+	 */
+	public function test_replaces_css_urls_in_style_attribute( $markup, $new_url, $expected_output ) {
+		$p = new BlockMarkupUrlProcessor( $markup );
+		$this->assertTrue( $p->next_url(), 'Failed to find CSS URL' );
+		$this->assertTrue( $p->set_url( $new_url, WPURL::parse( $new_url ) ), 'Failed to set CSS URL' );
+		$this->assertEquals( $expected_output, $p->get_updated_html(), 'CSS URL replacement produced incorrect output' );
+	}
+
+	public static function provider_test_css_url_replacement() {
+		return array(
+			'Replace quoted URL'                 => array(
+				'<div style="background: url(&quot;https://old.com/image.png&quot;);"></div>',
+				'https://new.com/image.png',
+				'<div style="background: url(&quot;https://new.com/image.png&quot;);"></div>',
+			),
+			'Replace unquoted URL'               => array(
+				'<div style="background: url(https://old.com/image.png);"></div>',
+				'https://new.com/image.png',
+				'<div style="background: url(https://new.com/image.png);"></div>',
+			),
+			'Replace single-quoted URL'          => array(
+				'<div style="background: url(\'https://old.com/image.png\');"></div>',
+				'https://new.com/image.png',
+				'<div style="background: url(\'https://new.com/image.png\');"></div>',
+			),
+			'Replace relative URL'               => array(
+				'<div style="background: url(&quot;/old/path.png&quot;);"></div>',
+				'/new/path.png',
+				'<div style="background: url(&quot;/new/path.png&quot;);"></div>',
+			),
+		);
+	}
+
+	public function test_replaces_multiple_css_urls_in_style_attribute() {
+		$markup = '<div style="background: url(&quot;https://example.com/bg1.png&quot;), url(&quot;https://example.com/bg2.png&quot;);"></div>';
+		$p      = new BlockMarkupUrlProcessor( $markup );
+
+		// First URL
+		$this->assertTrue( $p->next_url(), 'Failed to find first CSS URL' );
+		$this->assertEquals( 'https://example.com/bg1.png', $p->get_raw_url() );
+		$p->set_url( 'https://new.com/bg1.png', WPURL::parse( 'https://new.com/bg1.png' ) );
+
+		// Second URL
+		$this->assertTrue( $p->next_url(), 'Failed to find second CSS URL' );
+		$this->assertEquals( 'https://example.com/bg2.png', $p->get_raw_url() );
+		$p->set_url( 'https://new.com/bg2.png', WPURL::parse( 'https://new.com/bg2.png' ) );
+
+		// No more URLs
+		$this->assertFalse( $p->next_url(), 'Found more URLs than expected' );
+
+		$expected = '<div style="background: url(&quot;https://new.com/bg1.png&quot;), url(&quot;https://new.com/bg2.png&quot;);"></div>';
+		$this->assertEquals( $expected, $p->get_updated_html() );
+	}
+
+	public function test_css_urls_with_regular_attributes() {
+		$markup = '<img src="https://example.com/image.png" style="border-image: url(&quot;https://example.com/border.png&quot;);">';
+		$p      = new BlockMarkupUrlProcessor( $markup );
+
+		$found_urls = array();
+		while ( $p->next_url() ) {
+			$found_urls[] = $p->get_raw_url();
+			$p->set_url( 'https://new.com/replaced.png', WPURL::parse( 'https://new.com/replaced.png' ) );
+		}
+
+		$this->assertCount( 2, $found_urls, 'Should find both src attribute and CSS URL' );
+		$this->assertContains( 'https://example.com/image.png', $found_urls );
+		$this->assertContains( 'https://example.com/border.png', $found_urls );
+
+		$expected = '<img src="https://new.com/replaced.png" style="border-image: url(&quot;https://new.com/replaced.png&quot;);">';
+		$this->assertEquals( $expected, $p->get_updated_html() );
+	}
 }

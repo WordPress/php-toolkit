@@ -4,6 +4,7 @@ namespace WordPress\DataLiberation\BlockMarkup;
 
 use Rowbot\URL\URL;
 use WordPress\DataLiberation\URL\URLInTextProcessor;
+use WordPress\DataLiberation\URL\CSSUrlProcessor;
 use WordPress\DataLiberation\URL\WPURL;
 use WordPress\DataLiberation\URL\ConvertedUrl;
 
@@ -23,6 +24,11 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	private $base_url_object;
 	private $url_in_text_processor;
 	private $url_in_text_node_updated;
+	private $css_url_processor;
+	private $css_url_processor_updated;
+	private $preserve_style_attribute_quotes = false;
+	private $css_attribute_name;
+	private $css_attribute_updated_value;
 
 	/**
 	 * The list of names of URL-related HTML attributes that may be available on
@@ -44,12 +50,58 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		parent::__construct( $html );
 		$this->base_url_string = $base_url_string;
 		$this->base_url_object = $base_url_string ? WPURL::parse( $base_url_string ) : null;
+		$this->css_attribute_name = null;
+		$this->css_attribute_updated_value = null;
 	}
 
 	public function get_updated_html(): string {
 		if ( $this->url_in_text_node_updated ) {
 			$this->set_modifiable_text( $this->url_in_text_processor->get_updated_text() );
 			$this->url_in_text_node_updated = false;
+		}
+
+		if ( $this->css_url_processor_updated ) {
+			$attr = $this->get_inspected_attribute_name();
+			if ( false === $attr ) {
+				$attr = $this->css_attribute_name;
+			}
+
+			if ( null !== $attr && false !== $attr ) {
+				$updated_css = null;
+
+				if ( null !== $this->css_url_processor ) {
+					$updated_css = $this->css_url_processor->get_updated_css();
+				} elseif ( null !== $this->css_attribute_updated_value ) {
+					$updated_css = $this->css_attribute_updated_value;
+				}
+
+				if ( null === $updated_css ) {
+					$this->css_url_processor_updated = false;
+
+					return parent::get_updated_html();
+				}
+				$should_preserve_quotes = (
+					'style' === strtolower( $attr ) &&
+					function_exists( 'add_filter' ) &&
+					function_exists( 'remove_filter' )
+				);
+
+				if ( $should_preserve_quotes ) {
+					$this->preserve_style_attribute_quotes = true;
+					add_filter( 'attribute_escape', array( $this, 'filter_preserve_style_attribute_quotes' ), 10, 2 );
+				}
+
+				$this->set_attribute( $attr, $updated_css );
+
+				if ( $should_preserve_quotes && $this->preserve_style_attribute_quotes ) {
+					remove_filter( 'attribute_escape', array( $this, 'filter_preserve_style_attribute_quotes' ), 10 );
+					$this->preserve_style_attribute_quotes = false;
+				}
+
+				$this->css_attribute_name = null;
+				$this->css_attribute_updated_value = null;
+			}
+			$this->css_url_processor_updated = false;
 		}
 
 		return parent::get_updated_html();
@@ -70,8 +122,11 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		$this->parsed_url                 = null;
 		$this->inspecting_html_attributes = null;
 		$this->url_in_text_processor      = null;
-		// Do not reset url_in_text_node_updated – it's reset in get_updated_html() which
-		// is called in parent::next_token().
+		$this->css_url_processor          = null;
+		$this->css_attribute_name         = null;
+		$this->css_attribute_updated_value = null;
+		// Do not reset url_in_text_node_updated or css_url_processor_updated – they're reset
+		// in get_updated_html() which is called in parent::next_token().
 
 		return parent::next_token();
 	}
@@ -130,20 +185,67 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		return false;
 	}
 
-	private function next_url_attribute() {
-		$tag = $this->get_tag();
-
-		if ( ! array_key_exists( $tag, self::HTML_ATTRIBUTES_TO_ACCEPT_RELATIVE_URLS_FROM ) ) {
+	private function next_url_in_css() {
+		if ( '#tag' !== $this->get_token_type() ) {
 			return false;
 		}
 
+		if ( null === $this->css_url_processor ) {
+			// Get the current attribute being inspected
+			$attr = $this->get_inspected_attribute_name();
+			if ( false === $attr ) {
+				return false;
+			}
+
+			$css_value = $this->get_attribute( $attr );
+			if ( ! is_string( $css_value ) ) {
+				return false;
+			}
+
+			$this->css_attribute_name      = $attr;
+			$css_value               = htmlspecialchars_decode( $css_value, ENT_QUOTES );
+			$this->css_url_processor = new CSSUrlProcessor( $css_value, $this->base_url_string );
+		}
+
+		while ( $this->css_url_processor->next_url() ) {
+			$this->raw_url    = $this->css_url_processor->get_raw_url();
+			$this->parsed_url = $this->css_url_processor->get_parsed_url();
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private function next_url_attribute() {
+		$tag = $this->get_tag();
+
+		// Check if we have a style attribute with CSS URLs to process
+		if ( null !== $this->css_url_processor ) {
+			if ( $this->next_url_in_css() ) {
+				return true;
+			}
+			// Done with CSS URLs in this attribute, move on
+			$this->css_url_processor = null;
+		}
+
 		if ( null === $this->inspecting_html_attributes ) {
-			/**
-			 * Initialize the list on the first call to next_url_attribute()
-			 * for the current token. The last element is the attribute we'll
-			 * inspect in the while() loop below.
-			 */
-			$this->inspecting_html_attributes = self::HTML_ATTRIBUTES_TO_ACCEPT_RELATIVE_URLS_FROM[ $tag ];
+			if ( array_key_exists( $tag, self::HTML_ATTRIBUTES_TO_ACCEPT_RELATIVE_URLS_FROM ) ) {
+				/**
+				 * Initialize the list on the first call to next_url_attribute()
+				 * for the current token. The last element is the attribute we'll
+				 * inspect in the while() loop below.
+				 */
+				$this->inspecting_html_attributes = self::HTML_ATTRIBUTES_TO_ACCEPT_RELATIVE_URLS_FROM[ $tag ];
+				// Add style attribute to the list if it exists
+				if ( $this->get_attribute( 'style' ) !== null ) {
+					$this->inspecting_html_attributes[] = 'style';
+				}
+			} elseif ( $this->get_attribute( 'style' ) !== null ) {
+				$this->inspecting_html_attributes = array( 'style' );
+			} else {
+				return false;
+			}
 		} else {
 			/**
 			 * Forget the attribute we've inspected on the previous call to
@@ -156,6 +258,20 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			$attr      = $this->inspecting_html_attributes[ count( $this->inspecting_html_attributes ) - 1 ];
 			$url_maybe = $this->get_attribute( $attr );
 			if ( ! is_string( $url_maybe ) ) {
+				array_pop( $this->inspecting_html_attributes );
+				continue;
+			}
+
+			// Handle style attribute with CSS url() values
+			if ( 'style' === $attr ) {
+				$this->css_attribute_name = $attr;
+				$decoded_css             = htmlspecialchars_decode( $url_maybe, ENT_QUOTES );
+				$this->css_url_processor = new CSSUrlProcessor( $decoded_css, $this->base_url_string );
+				if ( $this->next_url_in_css() ) {
+					return true;
+				}
+				// No CSS URLs found, move to next attribute
+				$this->css_url_processor = null;
 				array_pop( $this->inspecting_html_attributes );
 				continue;
 			}
@@ -277,6 +393,17 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		$this->parsed_url = $parsed_url;
 		switch ( parent::get_token_type() ) {
 			case '#tag':
+				// Check if we're processing a CSS URL
+				if ( null !== $this->css_url_processor ) {
+					$this->css_url_processor_updated = true;
+					$result = $this->css_url_processor->set_raw_url( $raw_url );
+					if ( $result ) {
+						$this->css_attribute_updated_value = $this->css_url_processor->get_updated_css();
+					}
+
+					return $result;
+				}
+
 				$attr = $this->get_inspected_attribute_name();
 				if ( false === $attr ) {
 					return false;
@@ -366,6 +493,14 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		}
 
 		return $this->inspecting_html_attributes[ count( $this->inspecting_html_attributes ) - 1 ];
+	}
+
+	public function filter_preserve_style_attribute_quotes( $safe_text, $text ) {
+		if ( ! $this->preserve_style_attribute_quotes ) {
+			return $safe_text;
+		}
+
+		return str_replace( '&#039;', "'", $safe_text );
 	}
 
 	/**
