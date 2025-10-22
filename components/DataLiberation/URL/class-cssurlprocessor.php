@@ -8,19 +8,45 @@ use WP_HTML_Text_Replacement;
 use function WordPress\Encoding\codepoint_to_utf8_bytes;
 
 /**
- * Finds and replaces URLs within CSS content (e.g., style attribute values).
+ * Finds and replaces URLs declared using a url() notation 
+ * in a CSS block body (without the trailing braces). An
+ * example of such a block body is the content of a style=""
+ * HTML attribute.
+ * 
+ * This class was initially created to migrate background-image
+ * URLs in CSS blocks during a WXR import.
+ * 
+ * Usage:
+ * 
+ * ```php
+ * $css_block_body = <<<CSS
+ * /* John picked this photo: *\/
+ * background: url("/pictures/johns-pic.jpg");
+ * content: "Ever heard about url() notation? Like this: url(/jane/picture.jpg)";
+ * CSS;
  *
- * This processor specifically handles url() functions in CSS, detecting them
- * while properly skipping over comments and strings to avoid false matches.
+ * $processor = new CSSUrlProcessor( $css_block_body );
+ * while ( $processor->next_url() ) {
+ *     $processor->set_raw_url( '/new-image.jpg' );
+ * }
+ * echo $processor->get_updated_css();
+ * ```
  *
- * The regex pattern used is designed to:
- * 1. Skip CSS comments (/* ... *\/)
- * 2. Skip quoted strings ("..." and '...')
- * 3. Match url(...) with quoted or unquoted URL values
- * 4. Handle whitespace and comments within url() properly
+ * Output:
+ *
+ * ```php
+ * /* John picked this photo: *\/
+ * background: url("/new-image.jpg");
+ * content: "Ever heard about url() notation? Like this: url(/jane/picture.jpg)";
+ * ```
  */
 class CSSUrlProcessor {
 
+	/**
+	 * The CSS block to process (without the trailing braces).
+	 *
+	 * @var string
+	 */
 	private $css;
 	private $url_starts_at;
 	private $url_length;
@@ -49,66 +75,10 @@ class CSSUrlProcessor {
 	private $base_url;
 
 	/**
-	 * The regular expression pattern used for matching URL candidates
-	 * from the CSS.
-	 *
-	 * This regex:
-	 * 1. Skips things we must not search inside (comments, strings)
-	 * 2. Matches url(...) outside of those
-	 *
-	 * @var string
-	 */
-	private $regex = <<<REGEX
-/(*NO_JIT)
-		# 1) Skip strings and comments – we must not search inside those:
-		(?:
-			\/\*[^*]*\*+(?:[^\/\*][^*]*\*+)*\/        # comment
-			| "(?:[^"\\\\\r\n]|\\\\.)*"               # "string"
-			| '(?:[^'\\\\\r\n]|\\\\.)*'               # 'string'
-		)(*SKIP)(*F)
-		|
-		# 2) Match url(...) outside of those:
-		(?i)\burl                                           # case-insensitive url
-		\(
-			(?:(?>\s)*)  # skip whitespaces (comments are not allowed inside url())
-			(?:
-				"(?P<url_quoted_double>(?:[^"\\\\\r\n]|\\\\.)*)"   # double-quoted URL
-			|
-				'(?P<url_quoted_single>(?:[^'\\\\\r\n]|\\\\.)*)'   # single-quoted URL
-			|
-				(?P<url_unquoted>(?:\\\\[^\r\n]|[^"'\(\)\\\\\s])+) # unquoted URL
-			)
-			(?:(?>\s)*)  # skip whitespaces (comments are not allowed inside url())
-		\)
-/x
-REGEX;
-
-	/**
 	 * @see \WP_HTML_Tag_Processor
 	 * @var WP_HTML_Text_Replacement[]
 	 */
 	private $lexical_updates = array();
-
-	/**
-	 * The full match including url(...) wrapper
-	 *
-	 * @var string
-	 */
-	private $full_match;
-
-	/**
-	 * The byte position where the full match starts
-	 *
-	 * @var int
-	 */
-	private $full_match_start;
-
-	/**
-	 * The length of the full match
-	 *
-	 * @var int
-	 */
-	private $full_match_length;
 
 	public function __construct( $css, $base_url = null ) {
 		$this->css      = $css;
@@ -129,36 +99,9 @@ REGEX;
 		$this->parsed_url        = null;
 		$this->url_starts_at     = null;
 		$this->url_length        = null;
-		$this->full_match        = null;
-		$this->full_match_start  = null;
-		$this->full_match_length = null;
 
 		// Use state machine parser instead of regex to handle large data URIs.
-		$result = $this->parse_next_url_state_machine();
-
-		if ( false === $result ) {
-			return false;
-		}
-
-		// Ensure matched_url is extracted (lazy evaluation).
-		if ( null === $this->matched_url ) {
-			$this->matched_url = substr( $this->css, $this->url_starts_at, $this->url_length );
-		}
-
-		// Parse the URL.
-		$this->decoded_url = $this->decode_css_escapes( $this->matched_url );
-
-		// Optimization: Skip full URL parsing for data: URIs as they don't need base URL resolution.
-		// They can be very large (1MB+), making URL validation expensive.
-		if ( 0 === stripos( $this->decoded_url, 'data:' ) ) {
-			// data: URIs are absolute and don't need parsing.
-			$this->parsed_url = null;
-		} else {
-			$parsed_url       = WPURL::parse( $this->decoded_url, $this->base_url );
-			$this->parsed_url = ( false === $parsed_url ) ? false : $parsed_url;
-		}
-
-		return true;
+		return $this->parse_next_url_state_machine();
 	}
 
 	/**
@@ -274,9 +217,6 @@ REGEX;
 					// Expect closing ).
 					if ( $i < $length && ')' === $this->css[ $i ] ) {
 						++$i;
-						$this->full_match_start     = $url_start;
-						$this->full_match_length    = $i - $url_start;
-						$this->full_match           = null; // Will be extracted lazily.
 						$this->bytes_already_parsed = $i;
 						return true;
 					}
@@ -303,7 +243,7 @@ REGEX;
 				}
 
 				if ( $i > $url_value_start ) {
-					$this->matched_url   = substr( $this->css, $url_value_start, $i - $url_value_start );
+					$this->matched_url   = null; // Will be extracted lazily.
 					$this->url_starts_at = $url_value_start;
 					$this->url_length    = $i - $url_value_start;
 
@@ -313,9 +253,6 @@ REGEX;
 					// Expect closing ).
 					if ( $i < $length && ')' === $this->css[ $i ] ) {
 						++$i;
-						$this->full_match_start     = $url_start - 4; // Include 'url('.
-						$this->full_match_length    = $i - $this->full_match_start;
-						$this->full_match           = substr( $this->css, $this->full_match_start, $this->full_match_length );
 						$this->bytes_already_parsed = $i;
 						return true;
 					}
@@ -343,12 +280,14 @@ REGEX;
 			return $this->decoded_url;
 		}
 
-		// Lazy extraction: only extract the substring when actually needed.
+		// Lazy extraction and decoding: only extract/decode when actually needed.
 		if ( null === $this->matched_url ) {
 			$this->matched_url = substr( $this->css, $this->url_starts_at, $this->url_length );
 		}
 
-		return $this->matched_url;
+		$this->decoded_url = $this->decode_css_escapes( $this->matched_url );
+
+		return $this->decoded_url;
 	}
 
 	/**
@@ -357,9 +296,32 @@ REGEX;
 	 * @return URL|false The parsed URL or false if no URL is currently matched.
 	 */
 	public function get_parsed_url() {
-		if ( null === $this->parsed_url ) {
+		if ( null === $this->url_starts_at ) {
 			return false;
 		}
+
+		// Return cached parsed URL if available.
+		if ( null !== $this->parsed_url ) {
+			return $this->parsed_url;
+		}
+
+		// Lazy decoding: get the decoded URL (which will extract and decode if needed).
+		$decoded_url = $this->get_raw_url();
+
+		if ( false === $decoded_url ) {
+			return false;
+		}
+
+		// Optimization: Skip full URL parsing for data: URIs as they don't need base URL resolution.
+		// They can be very large (1MB+), making URL validation expensive.
+		if ( 0 === stripos( $decoded_url, 'data:' ) ) {
+			// data: URIs are absolute and don't need parsing.
+			$this->parsed_url = null;
+			return false;
+		}
+
+		$parsed_url       = WPURL::parse( $decoded_url, $this->base_url );
+		$this->parsed_url = ( false === $parsed_url ) ? false : $parsed_url;
 
 		return $this->parsed_url;
 	}
@@ -371,7 +333,7 @@ REGEX;
 	 * @return bool True if the URL was set, false otherwise.
 	 */
 	public function set_raw_url( $new_url ) {
-		if ( null === $this->matched_url ) {
+		if ( null === $this->url_starts_at ) {
 			return false;
 		}
 
