@@ -8,16 +8,16 @@ use WP_HTML_Text_Replacement;
 use function WordPress\Encoding\codepoint_to_utf8_bytes;
 
 /**
- * Finds and replaces URLs declared using a url() notation 
+ * Finds and replaces URLs declared using a url() notation
  * in a CSS block body (without the trailing braces). An
  * example of such a block body is the content of a style=""
  * HTML attribute.
- * 
+ *
  * This class was initially created to migrate background-image
  * URLs in CSS blocks during a WXR import.
- * 
+ *
  * Usage:
- * 
+ *
  * ```php
  * $css_block_body = <<<CSS
  * /* John picked this photo: *\/
@@ -94,11 +94,11 @@ class CSSUrlProcessor {
 	 * @return bool True if a URL was found, false otherwise.
 	 */
 	public function next_url() {
-		$this->matched_url       = null;
-		$this->decoded_url       = null;
-		$this->parsed_url        = null;
-		$this->url_starts_at     = null;
-		$this->url_length        = null;
+		$this->matched_url   = null;
+		$this->decoded_url   = null;
+		$this->parsed_url    = null;
+		$this->url_starts_at = null;
+		$this->url_length    = null;
 
 		// Use state machine parser instead of regex to handle large data URIs.
 		return $this->parse_next_url_state_machine();
@@ -296,26 +296,17 @@ class CSSUrlProcessor {
 	 * @return URL|false The parsed URL or false if no URL is currently matched.
 	 */
 	public function get_parsed_url() {
-		if ( null === $this->url_starts_at ) {
-			return false;
-		}
-
-		// Return cached parsed URL if available.
 		if ( null !== $this->parsed_url ) {
 			return $this->parsed_url;
 		}
 
-		// Lazy decoding: get the decoded URL (which will extract and decode if needed).
 		$decoded_url = $this->get_raw_url();
-
 		if ( false === $decoded_url ) {
 			return false;
 		}
 
-		// Optimization: Skip full URL parsing for data: URIs as they don't need base URL resolution.
-		// They can be very large (1MB+), making URL validation expensive.
+		// Don't parse data URIs as that could be slow.
 		if ( 0 === stripos( $decoded_url, 'data:' ) ) {
-			// data: URIs are absolute and don't need parsing.
 			$this->parsed_url = null;
 			return false;
 		}
@@ -324,6 +315,36 @@ class CSSUrlProcessor {
 		$this->parsed_url = ( false === $parsed_url ) ? false : $parsed_url;
 
 		return $this->parsed_url;
+	}
+
+	/**
+	 * Checks if the currently matched URL is a data URI.
+	 *
+	 * This is an optimized check that avoids extracting or decoding the URL
+	 * by checking the first few bytes directly from the CSS string.
+	 *
+	 * @return bool True if the current URL is a data URI, false otherwise.
+	 */
+	public function is_data_uri() {
+		if ( null === $this->url_starts_at || null === $this->url_length ) {
+			return false;
+		}
+
+		// Check if the URL starts with 'data:' (case-insensitive).
+		// We need at least 5 characters: 'd', 'a', 't', 'a', ':'.
+		if ( $this->url_length < 5 ) {
+			return false;
+		}
+
+		// Perform case-insensitive comparison of the first 5 bytes.
+		$offset = $this->url_starts_at;
+		return (
+			( 'd' === $this->css[ $offset ] || 'D' === $this->css[ $offset ] ) &&
+			( 'a' === $this->css[ $offset + 1 ] || 'A' === $this->css[ $offset + 1 ] ) &&
+			( 't' === $this->css[ $offset + 2 ] || 'T' === $this->css[ $offset + 2 ] ) &&
+			( 'a' === $this->css[ $offset + 3 ] || 'A' === $this->css[ $offset + 3 ] ) &&
+			':' === $this->css[ $offset + 4 ]
+		);
 	}
 
 	/**

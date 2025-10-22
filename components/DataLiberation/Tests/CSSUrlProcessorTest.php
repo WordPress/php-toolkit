@@ -338,4 +338,116 @@ class CSSUrlProcessorTest extends TestCase {
 		$this->assertEquals( $data_uri, $processor->get_raw_url() );
 	}
 
+	/**
+	 * @dataProvider provider_test_is_data_uri
+	 */
+	public function test_is_data_uri( $css_value, $expected ) {
+		$processor = new CSSUrlProcessor( $css_value );
+
+		$this->assertTrue( $processor->next_url(), 'Failed to find URL in CSS' );
+		$this->assertEquals( $expected, $processor->is_data_uri(), 'is_data_uri() returned unexpected value' );
+	}
+
+	public static function provider_test_is_data_uri() {
+		return array(
+			// Data URIs - quoted
+			'Quoted data URI'                  => array(
+				'background: url("data:image/png;base64,iVBORw0KGgo=")',
+				true,
+			),
+			'Single-quoted data URI'           => array(
+				"background: url('data:image/png;base64,iVBORw0KGgo=')",
+				true,
+			),
+			'Quoted data URI uppercase'        => array(
+				'background: url("DATA:image/png;base64,iVBORw0KGgo=")',
+				true,
+			),
+			'Quoted data URI mixed case'       => array(
+				'background: url("DaTa:image/png;base64,iVBORw0KGgo=")',
+				true,
+			),
+
+			// Data URIs - unquoted
+			'Unquoted data URI'                => array(
+				'background: url(data:image/png;base64,iVBORw0KGgo=)',
+				true,
+			),
+			'Unquoted data URI uppercase'      => array(
+				'background: url(DATA:image/png;base64,iVBORw0KGgo=)',
+				true,
+			),
+			'Unquoted data URI mixed case'     => array(
+				'background: url(DaTa:image/png;base64,iVBORw0KGgo=)',
+				true,
+			),
+
+			// Large data URIs
+			'Large quoted data URI'            => array(
+				'background: url("data:image/png;base64,' . str_repeat( 'A', 10000 ) . '")',
+				true,
+			),
+			'Large unquoted data URI'          => array(
+				'background: url(data:image/png;base64,' . str_repeat( 'A', 10000 ) . ')',
+				true,
+			),
+
+			// Non-data URIs - quoted
+			'Quoted HTTP URL'                  => array(
+				'background: url("https://example.com/image.png")',
+				false,
+			),
+			'Quoted relative URL'              => array(
+				'background: url("/images/bg.png")',
+				false,
+			),
+			'Quoted file URL'                  => array(
+				'background: url("file:///path/to/image.png")',
+				false,
+			),
+
+			// Non-data URIs - unquoted
+			'Unquoted HTTP URL'                => array(
+				'background: url(https://example.com/image.png)',
+				false,
+			),
+			'Unquoted relative URL'            => array(
+				'background: url(/images/bg.png)',
+				false,
+			),
+
+			// Edge cases
+			'URL containing "data:" substring' => array(
+				'background: url("https://example.com/data:test.png")',
+				false,
+			),
+			'Short URL starting with "dat"'    => array(
+				'background: url(data)',
+				false,
+			),
+		);
+	}
+
+	public function test_is_data_uri_without_url_match() {
+		$processor = new CSSUrlProcessor( 'background: #fff;' );
+
+		$this->assertFalse( $processor->is_data_uri(), 'is_data_uri() should return false when no URL is matched' );
+	}
+
+	public function test_is_data_uri_optimized_no_extraction() {
+		// Test that is_data_uri() doesn't trigger URL extraction
+		$css       = 'background: url("data:image/png;base64,iVBORw0KGgo=")';
+		$processor = new CSSUrlProcessor( $css );
+
+		$this->assertTrue( $processor->next_url() );
+
+		// Use reflection to verify matched_url is still null
+		$reflection       = new ReflectionClass( $processor );
+		$matched_url_prop = $reflection->getProperty( 'matched_url' );
+		$matched_url_prop->setAccessible( true );
+
+		$this->assertTrue( $processor->is_data_uri(), 'is_data_uri() should return true' );
+		$this->assertNull( $matched_url_prop->getValue( $processor ), 'is_data_uri() should not extract the URL' );
+	}
+
 }
