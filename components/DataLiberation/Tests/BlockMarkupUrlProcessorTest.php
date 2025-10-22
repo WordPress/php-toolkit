@@ -352,10 +352,6 @@ HTML
 				'https://example.com/image.png',
 				'<div style="background: url(  &quot;https://example.com/image.png&quot;  );"></div>',
 			),
-			'URL with CSS comment inside url()'                  => array(
-				'https://example.com/image.png',
-				'<div style="background: url( /* comment */ &quot;https://example.com/image.png&quot; );"></div>',
-			),
 			'Relative URL'                                       => array(
 				'/images/bg.png',
 				'<div style="background: url(&quot;/images/bg.png&quot;);"></div>',

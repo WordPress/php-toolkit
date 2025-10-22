@@ -54,7 +54,30 @@ class CSSUrlProcessor {
 	 *
 	 * @var string
 	 */
-	private $regex;
+	private $regex = <<<REGEX
+/
+		# 1) Skip strings and comments – we must not search inside those:
+		(?:
+			\/\*[^*]*\*+(?:[^\/\*][^*]*\*+)*\/        # comment
+			| "(?:[^"\\\\\r\n]|\\\\.)*"               # "string"
+			| '(?:[^'\\\\\r\n]|\\\\.)*'               # 'string'
+		)(*SKIP)(*F)
+		|
+		# 2) Match url(...) outside of those:
+		(?i)\burl                                           # case-insensitive url
+		\(
+			(?:(?>\s)*)  # skip whitespaces (comments are not allowed inside url())
+			(?:
+				(?P<q>["'])                                 # quoted URL
+					(?P<url_quoted>(?:\\\\.|(?!\k<q>).)*?)
+				\k<q>
+			|
+				(?P<url_unquoted>(?:\\\\[^\r\n]|[^"'\(\)\\\\\s])+)
+			)
+			(?:(?>\s)*)  # skip whitespaces (comments are not allowed inside url())
+		\)
+/x
+REGEX;
 
 	/**
 	 * @see \WP_HTML_Tag_Processor
@@ -83,40 +106,9 @@ class CSSUrlProcessor {
 	 */
 	private $full_match_length;
 
-	/**
-	 * The quote character used (if any)
-	 *
-	 * @var string
-	 */
-	private $quote_char;
-
 	public function __construct( $css, $base_url = null ) {
 		$this->css      = $css;
 		$this->base_url = $base_url;
-
-		// CSS url()-finding regex pattern that skips comments and strings.
-		$this->regex = '/
-			# 1) Skip things we must not search inside:
-			(?:
-				\/\*[^*]*\*+(?:[^\/\*][^*]*\*+)*\/        # comment
-				| "(?:[^"\\\\\r\n]|\\\\.)*"               # "string"
-				| \'(?:[^\'\\\\\r\n]|\\\\.)*\'            # \'string\'
-			)(*SKIP)(*F)
-			|
-			# 2) Match url(...) outside of those:
-			(?i)\burl                                      # case-insensitive url
-			\(
-				(?:(?>\s|\/\*[^*]*\*+(?:[^\/\*][^*]*\*+)*\/)*)  # ws or comments
-				(?:
-					(?P<q>["\'])                            # quoted form
-						(?P<url_quoted>(?:\\\\.|(?!\k<q>).)*?)
-					\k<q>
-				|
-					(?P<url_unquoted>(?:\\\\[^\r\n]|[^"\'\(\)\\\\\s])+)
-				)
-				(?:(?>\s|\/\*[^*]*\*+(?:[^\/\*][^*]*\*+)*\/)*)   # ws or comments
-			\)
-		/x';
 	}
 
 	/**
@@ -133,7 +125,6 @@ class CSSUrlProcessor {
 		$this->full_match        = null;
 		$this->full_match_start  = null;
 		$this->full_match_length = null;
-		$this->quote_char        = null;
 
 		$matches = array();
 		$found   = preg_match( $this->regex, $this->css, $matches, PREG_OFFSET_CAPTURE, $this->bytes_already_parsed );
@@ -146,12 +137,10 @@ class CSSUrlProcessor {
 			$this->matched_url   = $matches['url_quoted'][0];
 			$this->url_starts_at = $matches['url_quoted'][1];
 			$this->url_length    = strlen( $this->matched_url );
-			$this->quote_char    = $matches['q'][0];
 		} elseif ( isset( $matches['url_unquoted'] ) && '' !== $matches['url_unquoted'][0] ) {
 			$this->matched_url   = $matches['url_unquoted'][0];
 			$this->url_starts_at = $matches['url_unquoted'][1];
 			$this->url_length    = strlen( $this->matched_url );
-			$this->quote_char    = '';
 		} else {
 			return false;
 		}
