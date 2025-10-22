@@ -356,10 +356,6 @@ HTML
 				'/images/bg.png',
 				'<div style="background: url(&quot;/images/bg.png&quot;);"></div>',
 			),
-			'Data URI (should still be detected)'                => array(
-				'data:image/png;base64,iVBORw0KGgo=',
-				'<div style="background: url(&quot;data:image/png;base64,iVBORw0KGgo=&quot;);"></div>',
-			),
 			'URL with escaped quotes in quoted form'             => array(
 				'https://example.com/path"with"quotes',
 				'<div style="background: url(&quot;https://example.com/path\\&quot;with\\&quot;quotes&quot;);"></div>',

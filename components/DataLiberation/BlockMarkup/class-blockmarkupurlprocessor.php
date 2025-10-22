@@ -190,6 +190,9 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		}
 
 		while ( $this->css_url_processor->next_url() ) {
+			if ( $this->css_url_processor->is_data_uri() ) {
+				continue;
+			}
 			$this->raw_url    = $this->css_url_processor->get_raw_url();
 			$this->parsed_url = $this->css_url_processor->get_parsed_url();
 
