@@ -310,15 +310,6 @@ class CSSUrlProcessorTest extends TestCase {
 		$this->assertFalse( $processor->next_url() );
 	}
 
-	public function test_handles_relative_urls() {
-		$css       = 'background: url("/images/bg.png")';
-		$processor = new CSSUrlProcessor( $css, 'https://example.com' );
-
-		$this->assertTrue( $processor->next_url() );
-		$this->assertEquals( '/images/bg.png', $processor->get_raw_url() );
-		$this->assertEquals( 'https://example.com/images/bg.png', $processor->get_parsed_url()->toString() );
-	}
-
 	public function test_handles_data_uris() {
 		$css       = 'background: url("data:image/png;base64,iVBORw0KGgo=")';
 		$processor = new CSSUrlProcessor( $css );

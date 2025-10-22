@@ -2,7 +2,6 @@
 
 namespace WordPress\DataLiberation\URL;
 
-use Rowbot\URL\URL;
 use WP_HTML_Text_Replacement;
 
 use function WordPress\Encoding\codepoint_to_utf8_bytes;
@@ -63,26 +62,13 @@ class CSSUrlProcessor {
 	private $decoded_url;
 
 	/**
-	 * @var URL
-	 */
-	private $parsed_url;
-
-	/**
-	 * The base URL for the parsing algorithm.
-	 *
-	 * @var string|null
-	 */
-	private $base_url;
-
-	/**
 	 * @see \WP_HTML_Tag_Processor
 	 * @var WP_HTML_Text_Replacement[]
 	 */
 	private $lexical_updates = array();
 
-	public function __construct( $css, $base_url = null ) {
-		$this->css      = $css;
-		$this->base_url = $base_url;
+	public function __construct( $css ) {
+		$this->css = $css;
 	}
 
 	/**
@@ -96,18 +82,17 @@ class CSSUrlProcessor {
 	public function next_url() {
 		$this->matched_url   = null;
 		$this->decoded_url   = null;
-		$this->parsed_url    = null;
 		$this->url_starts_at = null;
 		$this->url_length    = null;
 
 		$length = strlen( $this->css );
-		$at      = $this->bytes_already_parsed;
+		$at     = $this->bytes_already_parsed;
 
 		while ( $at < $length ) {
 			// Optimization: Use strcspn to skip to next interesting character in one pass.
 			// Look for: u (start of url), / (comment), " (string), ' (string).
 			$span = strcspn( $this->css, 'uU/"\'', $at );
-			$at   += $span;
+			$at  += $span;
 
 			if ( $at >= $length ) {
 				return false; // Nothing found.
@@ -119,7 +104,7 @@ class CSSUrlProcessor {
 			if ( '/' === $char && $at + 1 < $length && '*' === $this->css[ $at + 1 ] ) {
 				// Skip comment using strpos (fast).
 				$end_pos = strpos( $this->css, '*/', $at + 2 );
-				$at       = ( false !== $end_pos ) ? $end_pos + 2 : $length;
+				$at      = ( false !== $end_pos ) ? $end_pos + 2 : $length;
 				continue;
 			}
 
@@ -131,7 +116,7 @@ class CSSUrlProcessor {
 				while ( $at < $length ) {
 					// Use strcspn to skip to next quote or backslash (fast).
 					$span = strcspn( $this->css, $quote . '\\', $at );
-					$at   += $span;
+					$at  += $span;
 
 					if ( $at >= $length ) {
 						break;
@@ -156,7 +141,7 @@ class CSSUrlProcessor {
 				( '(' === $this->css[ $at + 3 ] ) ) {
 				// Found url(.
 				$url_start = $at;
-				$at        += 4;
+				$at       += 4;
 			} else {
 				// False positive - not 'url(', just 'u' in some other context.
 				++$at;
@@ -180,7 +165,7 @@ class CSSUrlProcessor {
 				// This is much faster than separate strpos() calls.
 				while ( $at < $length ) {
 					$span = strcspn( $this->css, $quote_char . '\\', $at );
-					$at   += $span;
+					$at  += $span;
 
 					if ( $at >= $length ) {
 						return false; // No closing quote found.
@@ -215,7 +200,7 @@ class CSSUrlProcessor {
 
 				while ( $at < $length ) {
 					$span = strcspn( $this->css, " \t\n\r\"'()\\", $at );
-					$at   += $span;
+					$at  += $span;
 
 					if ( $at >= $length ) {
 						break;
@@ -275,32 +260,6 @@ class CSSUrlProcessor {
 		$this->decoded_url = $this->decode_css_escapes( $this->matched_url );
 
 		return $this->decoded_url;
-	}
-
-	/**
-	 * Gets the parsed URL object.
-	 *
-	 * @return URL|false The parsed URL or false if no URL is currently matched.
-	 */
-	public function get_parsed_url() {
-		if ( null !== $this->parsed_url ) {
-			return $this->parsed_url;
-		}
-
-		if ( $this->is_data_uri() ) {
-			$this->parsed_url = null;
-			return false;
-		}
-
-		$decoded_url = $this->get_raw_url();
-		if ( false === $decoded_url ) {
-			return false;
-		}
-
-		$parsed_url       = WPURL::parse( $decoded_url, $this->base_url );
-		$this->parsed_url = ( false === $parsed_url ) ? false : $parsed_url;
-
-		return $this->parsed_url;
 	}
 
 	/**
@@ -429,14 +388,14 @@ class CSSUrlProcessor {
 	protected function decode_css_escapes( string $value ): string {
 		$length = strlen( $value );
 		$result = '';
-		$at      = 0;
+		$at     = 0;
 
 		while ( $at < $length ) {
 			// Find the next backslash.
 			$span = strcspn( $value, '\\', $at );
 			if ( $span > 0 ) {
 				$result .= substr( $value, $at, $span );
-				$at      += $span;
+				$at     += $span;
 			}
 
 			if ( $at >= $length ) {
@@ -459,7 +418,7 @@ class CSSUrlProcessor {
 			if ( $hex_len > 0 ) {
 				$hex     = substr( $value, $at, $hex_len );
 				$result .= codepoint_to_utf8_bytes( hexdec( $hex ) );
-				$at      += $hex_len;
+				$at     += $hex_len;
 
 				/**
 				 * Skip trailing whitespace after hex escape.

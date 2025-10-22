@@ -390,10 +390,10 @@ HTML
 	/**
 	 * @dataProvider provider_test_css_url_replacement
 	 */
-	public function test_replaces_css_urls_in_style_attribute( $markup, $new_url, $expected_output ) {
-		$p = new BlockMarkupUrlProcessor( $markup );
+	public function test_replaces_css_urls_in_style_attribute( $markup, $new_url, $expected_output, $base_url = null ) {
+		$p = new BlockMarkupUrlProcessor( $markup, $base_url );
 		$this->assertTrue( $p->next_url(), 'Failed to find CSS URL' );
-		$this->assertTrue( $p->set_url( $new_url, WPURL::parse( $new_url ) ), 'Failed to set CSS URL' );
+		$this->assertTrue( $p->set_url( $new_url, WPURL::parse( $new_url, $base_url ) ), 'Failed to set CSS URL' );
 		$this->assertEquals( $expected_output, $p->get_updated_html(), 'CSS URL replacement produced incorrect output' );
 	}
 
@@ -418,6 +418,7 @@ HTML
 				'<div style="background: url(&quot;/old/path.png&quot;);"></div>',
 				'/new/path.png',
 				'<div style="background: url(&quot;/new/path.png&quot;);"></div>',
+				'https://example.com', // base URL needed to parse relative URLs
 			),
 			'Replace Unicode escaped URL'        => array(
 				'<div style="background: url(&quot;https://example.com/im\\61ge.png&quot;);"></div>',
