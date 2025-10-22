@@ -2,7 +2,6 @@
 
 use PHPUnit\Framework\TestCase;
 use WordPress\DataLiberation\URL\CSSUrlProcessor;
-use WordPress\DataLiberation\URL\WPURL;
 
 class CSSUrlProcessorTest extends TestCase {
 
@@ -143,6 +142,10 @@ class CSSUrlProcessorTest extends TestCase {
 			'Chinese character via hex escape'        => array(
 				'background: url(https://example.com/\\4E2D\\6587.png)',
 				'https://example.com/中文.png',
+			),
+			'Multiple trailing whitespaces after the hex escape are preserved' => array(
+				'background: url("https://example.com/test\\26   more.png")',
+				'https://example.com/test&  more.png',
 			),
 
 			// Case insensitivity of hex digits
@@ -323,4 +326,16 @@ class CSSUrlProcessorTest extends TestCase {
 		$this->assertTrue( $processor->next_url() );
 		$this->assertEquals( 'data:image/png;base64,iVBORw0KGgo=', $processor->get_raw_url() );
 	}
+
+	public function test_handles_1mb_data_uri() {
+		// Test with 1MB data URI using state machine parser
+		// The parser can handle arbitrarily large URLs without PCRE limits
+		$data_uri  = 'data:image/png;base64,' . str_repeat( 'A', 2 * 1024 * 1024 );
+		$css_value = 'background: url("' . $data_uri . '")';
+		$processor = new CSSUrlProcessor( $css_value );
+
+		$this->assertTrue( $processor->next_url(), 'Failed to find URL in CSS' );
+		$this->assertEquals( $data_uri, $processor->get_raw_url() );
+	}
+
 }
