@@ -300,14 +300,13 @@ class CSSUrlProcessor {
 			return $this->parsed_url;
 		}
 
-		$decoded_url = $this->get_raw_url();
-		if ( false === $decoded_url ) {
+		if ( $this->is_data_uri() ) {
+			$this->parsed_url = null;
 			return false;
 		}
 
-		// Don't parse data URIs as that could be slow.
-		if ( 0 === stripos( $decoded_url, 'data:' ) ) {
-			$this->parsed_url = null;
+		$decoded_url = $this->get_raw_url();
+		if ( false === $decoded_url ) {
 			return false;
 		}
 
