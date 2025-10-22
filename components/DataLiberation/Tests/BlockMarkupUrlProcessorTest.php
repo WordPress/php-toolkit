@@ -317,32 +317,32 @@ HTML
 	public static function provider_test_css_url_detection() {
 		return array(
 			'Basic quoted URL in background'                     => array(
-				'https://adamziel.com)',
-				'<div style="background: url(&quot;https://adamziel.com)&quot;);"></div>',
+				'https://wordpress.org)',
+				'<div style="background: url(&quot;https://wordpress.org)&quot;);"></div>',
 			),
 			'URL in CSS comment (should be skipped)'             => array(
 				'https://fallback.com',
-				'<div style="/* background: url(&quot;https://adamziel.com)&quot;); */ background: url(&quot;https://fallback.com&quot;);"></div>',
+				'<div style="/* background: url(&quot;https://wordpress.org)&quot;); */ background: url(&quot;https://fallback.com&quot;);"></div>',
 			),
 			'URL inside content string (should be skipped)'      => array(
 				'https://realurl.com',
 				'<div style="content: &quot;Have you ever heard about the url(https://mysite.com) syntax?&quot;; background: url(&quot;https://realurl.com&quot;);"></div>',
 			),
 			'Unquoted URL with encoded space'                    => array(
-				'https://adamziel.com/%20/d',
-				'<div style="background: url(https://adamziel.com/%20/d);"></div>',
+				'https://wordpress.org/%20/d',
+				'<div style="background: url(https://wordpress.org/%20/d);"></div>',
 			),
 			'URL with other properties before'                   => array(
-				'https://adamziel.com/%20/d',
-				'<div style="background: &quot;red&quot; url(https://adamziel.com/%20/d);"></div>',
+				'https://wordpress.org/%20/d',
+				'<div style="background: &quot;red&quot; url(https://wordpress.org/%20/d);"></div>',
 			),
 			'URL with CSS comments around'                       => array(
-				'https://adamziel.com/%20/d',
-				'<div style="background: /* This is cool */ &quot;red&quot; url(https://adamziel.com/%20/d) /* This is cool */;"></div>',
+				'https://wordpress.org/%20/d',
+				'<div style="background: /* This is cool */ &quot;red&quot; url(https://wordpress.org/%20/d) /* This is cool */;"></div>',
 			),
 			'URL with multiple properties'                       => array(
-				'https://adamziel.com/%20/d',
-				'<div style="background: #fff url(https://adamziel.com/%20/d) dark;"></div>',
+				'https://wordpress.org/%20/d',
+				'<div style="background: #fff url(https://wordpress.org/%20/d) dark;"></div>',
 			),
 			'Single-quoted URL'                                  => array(
 				'https://example.com/image.png',
