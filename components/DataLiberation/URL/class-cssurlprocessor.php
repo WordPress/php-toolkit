@@ -133,14 +133,14 @@ REGEX;
 		$this->full_match_start  = null;
 		$this->full_match_length = null;
 
-		// Use state machine parser instead of regex to handle large data URIs
+		// Use state machine parser instead of regex to handle large data URIs.
 		$result = $this->parse_next_url_state_machine();
 
 		if ( false === $result ) {
 			return false;
 		}
 
-		// Ensure matched_url is extracted (lazy evaluation)
+		// Ensure matched_url is extracted (lazy evaluation).
 		if ( null === $this->matched_url ) {
 			$this->matched_url = substr( $this->css, $this->url_starts_at, $this->url_length );
 		}
@@ -148,10 +148,10 @@ REGEX;
 		// Parse the URL.
 		$this->decoded_url = $this->decode_css_escapes( $this->matched_url );
 
-		// Optimization: Skip full URL parsing for data: URIs as they don't need base URL resolution
-		// and can be very large (1MB+), making URL validation expensive.
+		// Optimization: Skip full URL parsing for data: URIs as they don't need base URL resolution.
+		// They can be very large (1MB+), making URL validation expensive.
 		if ( 0 === stripos( $this->decoded_url, 'data:' ) ) {
-			// data: URIs are absolute and don't need parsing
+			// data: URIs are absolute and don't need parsing.
 			$this->parsed_url = null;
 		} else {
 			$parsed_url       = WPURL::parse( $this->decoded_url, $this->base_url );
@@ -174,32 +174,32 @@ REGEX;
 		$i      = $this->bytes_already_parsed;
 
 		while ( $i < $length ) {
-			// Optimization: Use strcspn to skip to next interesting character in one pass
-			// Look for: u (start of url), / (comment), " (string), ' (string)
+			// Optimization: Use strcspn to skip to next interesting character in one pass.
+			// Look for: u (start of url), / (comment), " (string), ' (string).
 			$span = strcspn( $this->css, 'uU/"\'', $i );
 			$i   += $span;
 
 			if ( $i >= $length ) {
-				return false; // Nothing found
+				return false; // Nothing found.
 			}
 
 			$char = $this->css[ $i ];
 
-			// Check for comment
+			// Check for comment.
 			if ( '/' === $char && $i + 1 < $length && '*' === $this->css[ $i + 1 ] ) {
-				// Skip comment using strpos (fast!)
+				// Skip comment using strpos (fast).
 				$end_pos = strpos( $this->css, '*/', $i + 2 );
 				$i       = ( false !== $end_pos ) ? $end_pos + 2 : $length;
 				continue;
 			}
 
-			// Check for string
+			// Check for string.
 			if ( '"' === $char || "'" === $char ) {
 				$quote = $char;
 				++$i;
 
 				while ( $i < $length ) {
-					// Use strcspn to skip to next quote or backslash (fast!)
+					// Use strcspn to skip to next quote or backslash (fast).
 					$span = strcspn( $this->css, $quote . '\\', $i );
 					$i   += $span;
 
@@ -208,82 +208,82 @@ REGEX;
 					}
 
 					if ( '\\' === $this->css[ $i ] ) {
-						$i += 2; // Skip escaped character
+						$i += 2; // Skip escaped character.
 						continue;
 					}
 
-					++$i; // Found unescaped quote
+					++$i; // Found unescaped quote.
 					break;
 				}
 				continue;
 			}
 
-			// Check for url(
+			// Check for url(.
 			if ( $i + 4 <= $length &&
 				( 'u' === $this->css[ $i ] || 'U' === $this->css[ $i ] ) &&
 				( 'r' === $this->css[ $i + 1 ] || 'R' === $this->css[ $i + 1 ] ) &&
 				( 'l' === $this->css[ $i + 2 ] || 'L' === $this->css[ $i + 2 ] ) &&
 				( '(' === $this->css[ $i + 3 ] ) ) {
-				// Found url(
+				// Found url(.
 				$url_start = $i;
 				$i        += 4;
 			} else {
-				// False positive - not 'url(', just 'u' in some other context
+				// False positive - not 'url(', just 'u' in some other context.
 				++$i;
 				continue;
 			}
 
-			// Skip whitespace using strspn (fast!)
+			// Skip whitespace using strspn (fast).
 			$i += strspn( $this->css, " \t\n\r", $i );
 
 			if ( $i >= $length ) {
 				return false;
 			}
 
-			// Check if quoted
+			// Check if quoted.
 			$quote_char = $this->css[ $i ];
 			if ( '"' === $quote_char || "'" === $quote_char ) {
 				++$i;
 				$url_value_start = $i;
 
-				// Use strcspn to scan for closing quote OR backslash in ONE pass
-				// This is much faster than separate strpos() calls
+				// Use strcspn to scan for closing quote OR backslash in ONE pass.
+				// This is much faster than separate strpos() calls.
 				while ( $i < $length ) {
 					$span = strcspn( $this->css, $quote_char . '\\', $i );
 					$i   += $span;
 
 					if ( $i >= $length ) {
-						return false; // No closing quote found
+						return false; // No closing quote found.
 					}
 
 					if ( '\\' === $this->css[ $i ] ) {
-						$i += 2; // Skip escaped character
+						$i += 2; // Skip escaped character.
 						continue;
 					}
 
-					// Found unescaped closing quote
-					$this->matched_url   = null; // Will be extracted lazily
+					// Found unescaped closing quote.
+					$this->matched_url   = null; // Will be extracted lazily.
 					$this->url_starts_at = $url_value_start;
 					$this->url_length    = $i - $url_value_start;
 
-					++$i; // Move past quote
+					++$i; // Move past quote.
 
-					// Skip whitespace
+					// Skip whitespace..
 					$i += strspn( $this->css, " \t\n\r", $i );
 
-					// Expect closing )
+					// Expect closing ).
 					if ( $i < $length && ')' === $this->css[ $i ] ) {
 						++$i;
 						$this->full_match_start     = $url_start;
 						$this->full_match_length    = $i - $url_start;
-						$this->full_match           = null; // Will be extracted lazily
+						$this->full_match           = null; // Will be extracted lazily.
 						$this->bytes_already_parsed = $i;
 						return true;
 					}
 					return false;
 				}
 			} else {
-				// Unquoted URL - use strcspn to find terminating characters (fast!)
+				// Unquoted URL - use strcspn to find terminating characters (fast!).
 				$url_value_start = $i;
 
 				while ( $i < $length ) {
@@ -295,11 +295,11 @@ REGEX;
 					}
 
 					if ( '\\' === $this->css[ $i ] && $i + 1 < $length ) {
-						$i += 2; // Skip escaped character
+						$i += 2; // Skip escaped character.
 						continue;
 					}
 
-					break; // Hit terminating character
+					break; // Hit terminating character.
 				}
 
 				if ( $i > $url_value_start ) {
@@ -307,13 +307,13 @@ REGEX;
 					$this->url_starts_at = $url_value_start;
 					$this->url_length    = $i - $url_value_start;
 
-					// Skip whitespace
+					// Skip whitespace.
 					$i += strspn( $this->css, " \t\n\r", $i );
 
-					// Expect closing )
+					// Expect closing ).
 					if ( $i < $length && ')' === $this->css[ $i ] ) {
 						++$i;
-						$this->full_match_start     = $url_start - 4; // Include 'url('
+						$this->full_match_start     = $url_start - 4; // Include 'url('.
 						$this->full_match_length    = $i - $this->full_match_start;
 						$this->full_match           = substr( $this->css, $this->full_match_start, $this->full_match_length );
 						$this->bytes_already_parsed = $i;
@@ -322,7 +322,7 @@ REGEX;
 				}
 			}
 
-			// url( was malformed, continue from next position
+			// url( was malformed, continue from next position.
 			$i = $url_start;
 		}
 
@@ -343,7 +343,7 @@ REGEX;
 			return $this->decoded_url;
 		}
 
-		// Lazy extraction: only extract the substring when actually needed
+		// Lazy extraction: only extract the substring when actually needed.
 		if ( null === $this->matched_url ) {
 			$this->matched_url = substr( $this->css, $this->url_starts_at, $this->url_length );
 		}
