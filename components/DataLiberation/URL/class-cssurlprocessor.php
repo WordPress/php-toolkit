@@ -269,10 +269,23 @@ REGEX;
 	/**
 	 * Decodes CSS escape sequences within a URL value.
 	 *
+	 * CSS allows escaping characters using backslash notation. This method handles:
+	 * - Hexadecimal escapes: \20 (space), \0000A0 (non-breaking space)
+	 * - Single character escapes: \( \) \" \' \\
+	 *
+	 * Escape sequences can be:
+	 * – Exactly 6 hexadecimal digits: "\000026B" ("&B")
+	 * - 1-6 hex digits optionally followed by whitespace: "\20 B" or "\000020 B" ("&B")
+	 * - A backslash followed by any non-hex character: \( becomes (
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-escaped-code-point
+	 * @see https://www.w3.org/TR/CSS22/syndata.html#tokenization
+	 * @see https://www.w3.org/TR/CSS21/syndata.html#escaped-characters
+	 *
 	 * @param  string $value The CSS value to decode.
 	 * @return string The decoded value.
 	 */
-	private function decode_css_escapes( string $value ): string {
+	protected function decode_css_escapes( string $value ): string {
 		$length = strlen( $value );
 		$result = '';
 
