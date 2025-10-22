@@ -100,167 +100,154 @@ class CSSUrlProcessor {
 		$this->url_starts_at = null;
 		$this->url_length    = null;
 
-		// Use state machine parser instead of regex to handle large data URIs.
-		return $this->parse_next_url_state_machine();
-	}
-
-	/**
-	 * Fast string-based parser for CSS url() functions.
-	 *
-	 * Uses native string functions (strpos, strcspn, strspn) instead of
-	 * character-by-character iteration for 10-100x faster performance with large URLs.
-	 *
-	 * @return bool True if a URL was found, false otherwise.
-	 */
-	private function parse_next_url_state_machine() {
 		$length = strlen( $this->css );
-		$i      = $this->bytes_already_parsed;
+		$at      = $this->bytes_already_parsed;
 
-		while ( $i < $length ) {
+		while ( $at < $length ) {
 			// Optimization: Use strcspn to skip to next interesting character in one pass.
 			// Look for: u (start of url), / (comment), " (string), ' (string).
-			$span = strcspn( $this->css, 'uU/"\'', $i );
-			$i   += $span;
+			$span = strcspn( $this->css, 'uU/"\'', $at );
+			$at   += $span;
 
-			if ( $i >= $length ) {
+			if ( $at >= $length ) {
 				return false; // Nothing found.
 			}
 
-			$char = $this->css[ $i ];
+			$char = $this->css[ $at ];
 
 			// Check for comment.
-			if ( '/' === $char && $i + 1 < $length && '*' === $this->css[ $i + 1 ] ) {
+			if ( '/' === $char && $at + 1 < $length && '*' === $this->css[ $at + 1 ] ) {
 				// Skip comment using strpos (fast).
-				$end_pos = strpos( $this->css, '*/', $i + 2 );
-				$i       = ( false !== $end_pos ) ? $end_pos + 2 : $length;
+				$end_pos = strpos( $this->css, '*/', $at + 2 );
+				$at       = ( false !== $end_pos ) ? $end_pos + 2 : $length;
 				continue;
 			}
 
 			// Check for string.
 			if ( '"' === $char || "'" === $char ) {
 				$quote = $char;
-				++$i;
+				++$at;
 
-				while ( $i < $length ) {
+				while ( $at < $length ) {
 					// Use strcspn to skip to next quote or backslash (fast).
-					$span = strcspn( $this->css, $quote . '\\', $i );
-					$i   += $span;
+					$span = strcspn( $this->css, $quote . '\\', $at );
+					$at   += $span;
 
-					if ( $i >= $length ) {
+					if ( $at >= $length ) {
 						break;
 					}
 
-					if ( '\\' === $this->css[ $i ] ) {
-						$i += 2; // Skip escaped character.
+					if ( '\\' === $this->css[ $at ] ) {
+						$at += 2; // Skip escaped character.
 						continue;
 					}
 
-					++$i; // Found unescaped quote.
+					++$at; // Found unescaped quote.
 					break;
 				}
 				continue;
 			}
 
 			// Check for url(.
-			if ( $i + 4 <= $length &&
-				( 'u' === $this->css[ $i ] || 'U' === $this->css[ $i ] ) &&
-				( 'r' === $this->css[ $i + 1 ] || 'R' === $this->css[ $i + 1 ] ) &&
-				( 'l' === $this->css[ $i + 2 ] || 'L' === $this->css[ $i + 2 ] ) &&
-				( '(' === $this->css[ $i + 3 ] ) ) {
+			if ( $at + 4 <= $length &&
+				( 'u' === $this->css[ $at ] || 'U' === $this->css[ $at ] ) &&
+				( 'r' === $this->css[ $at + 1 ] || 'R' === $this->css[ $at + 1 ] ) &&
+				( 'l' === $this->css[ $at + 2 ] || 'L' === $this->css[ $at + 2 ] ) &&
+				( '(' === $this->css[ $at + 3 ] ) ) {
 				// Found url(.
-				$url_start = $i;
-				$i        += 4;
+				$url_start = $at;
+				$at        += 4;
 			} else {
 				// False positive - not 'url(', just 'u' in some other context.
-				++$i;
+				++$at;
 				continue;
 			}
 
 			// Skip whitespace using strspn (fast).
-			$i += strspn( $this->css, " \t\n\r", $i );
+			$at += strspn( $this->css, " \t\n\r", $at );
 
-			if ( $i >= $length ) {
+			if ( $at >= $length ) {
 				return false;
 			}
 
 			// Check if quoted.
-			$quote_char = $this->css[ $i ];
+			$quote_char = $this->css[ $at ];
 			if ( '"' === $quote_char || "'" === $quote_char ) {
-				++$i;
-				$url_value_start = $i;
+				++$at;
+				$url_value_start = $at;
 
 				// Use strcspn to scan for closing quote OR backslash in ONE pass.
 				// This is much faster than separate strpos() calls.
-				while ( $i < $length ) {
-					$span = strcspn( $this->css, $quote_char . '\\', $i );
-					$i   += $span;
+				while ( $at < $length ) {
+					$span = strcspn( $this->css, $quote_char . '\\', $at );
+					$at   += $span;
 
-					if ( $i >= $length ) {
+					if ( $at >= $length ) {
 						return false; // No closing quote found.
 					}
 
-					if ( '\\' === $this->css[ $i ] ) {
-						$i += 2; // Skip escaped character.
+					if ( '\\' === $this->css[ $at ] ) {
+						$at += 2; // Skip escaped character.
 						continue;
 					}
 
 					// Found unescaped closing quote.
 					$this->matched_url   = null; // Will be extracted lazily.
 					$this->url_starts_at = $url_value_start;
-					$this->url_length    = $i - $url_value_start;
+					$this->url_length    = $at - $url_value_start;
 
-					++$i; // Move past quote.
+					++$at; // Move past quote.
 
 					// Skip whitespace..
-					$i += strspn( $this->css, " \t\n\r", $i );
+					$at += strspn( $this->css, " \t\n\r", $at );
 
 					// Expect closing ).
-					if ( $i < $length && ')' === $this->css[ $i ] ) {
-						++$i;
-						$this->bytes_already_parsed = $i;
+					if ( $at < $length && ')' === $this->css[ $at ] ) {
+						++$at;
+						$this->bytes_already_parsed = $at;
 						return true;
 					}
 					return false;
 				}
 			} else {
 				// Unquoted URL - use strcspn to find terminating characters (fast!).
-				$url_value_start = $i;
+				$url_value_start = $at;
 
-				while ( $i < $length ) {
-					$span = strcspn( $this->css, " \t\n\r\"'()\\", $i );
-					$i   += $span;
+				while ( $at < $length ) {
+					$span = strcspn( $this->css, " \t\n\r\"'()\\", $at );
+					$at   += $span;
 
-					if ( $i >= $length ) {
+					if ( $at >= $length ) {
 						break;
 					}
 
-					if ( '\\' === $this->css[ $i ] && $i + 1 < $length ) {
-						$i += 2; // Skip escaped character.
+					if ( '\\' === $this->css[ $at ] && $at + 1 < $length ) {
+						$at += 2; // Skip escaped character.
 						continue;
 					}
 
 					break; // Hit terminating character.
 				}
 
-				if ( $i > $url_value_start ) {
+				if ( $at > $url_value_start ) {
 					$this->matched_url   = null; // Will be extracted lazily.
 					$this->url_starts_at = $url_value_start;
-					$this->url_length    = $i - $url_value_start;
+					$this->url_length    = $at - $url_value_start;
 
 					// Skip whitespace.
-					$i += strspn( $this->css, " \t\n\r", $i );
+					$at += strspn( $this->css, " \t\n\r", $at );
 
 					// Expect closing ).
-					if ( $i < $length && ')' === $this->css[ $i ] ) {
-						++$i;
-						$this->bytes_already_parsed = $i;
+					if ( $at < $length && ')' === $this->css[ $at ] ) {
+						++$at;
+						$this->bytes_already_parsed = $at;
 						return true;
 					}
 				}
 			}
 
 			// url( was malformed, continue from next position.
-			$i = $url_start;
+			$at = $url_start;
 		}
 
 		return false;
@@ -442,75 +429,75 @@ class CSSUrlProcessor {
 	protected function decode_css_escapes( string $value ): string {
 		$length = strlen( $value );
 		$result = '';
-		$i      = 0;
+		$at      = 0;
 
-		while ( $i < $length ) {
+		while ( $at < $length ) {
 			// Find the next backslash.
-			$span = strcspn( $value, '\\', $i );
+			$span = strcspn( $value, '\\', $at );
 			if ( $span > 0 ) {
-				$result .= substr( $value, $i, $span );
-				$i      += $span;
+				$result .= substr( $value, $at, $span );
+				$at      += $span;
 			}
 
-			if ( $i >= $length ) {
+			if ( $at >= $length ) {
 				break;
 			}
 
 			// We're at a backslash, skip it.
-			++$i;
+			++$at;
 
-			if ( $i >= $length ) {
+			if ( $at >= $length ) {
 				break;
 			}
 
 			// Collect up to 6 hex digits.
-			$hex_len = strspn( $value, '0123456789abcdefABCDEF', $i );
+			$hex_len = strspn( $value, '0123456789abcdefABCDEF', $at );
 			if ( $hex_len > 6 ) {
 				$hex_len = 6;
 			}
 
 			if ( $hex_len > 0 ) {
-				$hex     = substr( $value, $i, $hex_len );
+				$hex     = substr( $value, $at, $hex_len );
 				$result .= codepoint_to_utf8_bytes( hexdec( $hex ) );
-				$i      += $hex_len;
+				$at      += $hex_len;
 
 				/**
 				 * Skip trailing whitespace after hex escape.
 				 */
-				$ws_len = strspn( $value, " \n\r\t\f", $i );
+				$ws_len = strspn( $value, " \n\r\t\f", $at );
 				if ( $ws_len > 0 ) {
 					// Special handling for CRLF: treat as single whitespace.
-					if ( $i + 1 < $length && "\r" === $value[ $i ] && "\n" === $value[ $i + 1 ] ) {
-						$i += 2;
+					if ( $at + 1 < $length && "\r" === $value[ $at ] && "\n" === $value[ $at + 1 ] ) {
+						$at += 2;
 					} else {
 						// Skip a single whitespace character.
-						$i += 1;
+						$at += 1;
 					}
 				}
 				continue;
 			}
 
 			// Not a hex escape, check if it's an escaped line break.
-			$next = $value[ $i ];
+			$next = $value[ $at ];
 
 			if ( "\n" === $next || "\f" === $next ) {
 				// Escaped line break - consume it without adding to result.
-				++$i;
+				++$at;
 				continue;
 			}
 
 			if ( "\r" === $next ) {
 				// Escaped CR or CRLF - consume without adding to result.
-				++$i;
-				if ( $i < $length && "\n" === $value[ $i ] ) {
-					++$i; // Consume LF in CRLF.
+				++$at;
+				if ( $at < $length && "\n" === $value[ $at ] ) {
+					++$at; // Consume LF in CRLF.
 				}
 				continue;
 			}
 
 			// Regular character escape - add the escaped character literally.
 			$result .= $next;
-			++$i;
+			++$at;
 		}
 
 		return $result;
