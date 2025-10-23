@@ -6,9 +6,6 @@ use Rowbot\URL\URL;
 use WordPress\DataLiberation\URL\URLInTextProcessor;
 use WordPress\DataLiberation\URL\CSSUrlProcessor;
 use WordPress\DataLiberation\URL\WPURL;
-use WordPress\DataLiberation\URL\ConvertedUrl;
-
-use function WordPress\DataLiberation\URL\urldecode_n;
 
 /**
  * Reports all the URLs in the imported post and enables rewriting them.
@@ -26,8 +23,6 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	private $url_in_text_node_updated;
 	private $css_url_processor;
 	private $css_url_processor_updated;
-	private $css_attribute_name;
-	private $css_attribute_updated_value;
 
 	/**
 	 * The list of names of URL-related HTML attributes that may be available on
@@ -47,10 +42,8 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 
 	public function __construct( $html, ?string $base_url_string = null ) {
 		parent::__construct( $html );
-		$this->base_url_string             = $base_url_string;
-		$this->base_url_object             = $base_url_string ? WPURL::parse( $base_url_string ) : null;
-		$this->css_attribute_name          = null;
-		$this->css_attribute_updated_value = null;
+		$this->base_url_string = $base_url_string;
+		$this->base_url_object = $base_url_string ? WPURL::parse( $base_url_string ) : null;
 	}
 
 	public function get_updated_html(): string {
@@ -60,29 +53,9 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		}
 
 		if ( $this->css_url_processor_updated ) {
-			$attr = $this->get_inspected_attribute_name();
-			if ( false === $attr ) {
-				$attr = $this->css_attribute_name;
-			}
-
-			if ( null !== $attr && false !== $attr ) {
-				$updated_css = null;
-
-				if ( null !== $this->css_url_processor ) {
-					$updated_css = $this->css_url_processor->get_updated_css();
-				} elseif ( null !== $this->css_attribute_updated_value ) {
-					$updated_css = $this->css_attribute_updated_value;
-				}
-
-				if ( null === $updated_css ) {
-					$this->css_url_processor_updated = false;
-
-					return parent::get_updated_html();
-				}
-
-				$this->set_attribute( $attr, $updated_css );
-				$this->css_attribute_name          = null;
-				$this->css_attribute_updated_value = null;
+			if ( null !== $this->css_url_processor ) {
+				$updated_css = $this->css_url_processor->get_updated_css();
+				$this->set_attribute( 'style', $updated_css );
 			}
 			$this->css_url_processor_updated = false;
 		}
@@ -101,13 +74,11 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	public function next_token(): bool {
 		$this->get_updated_html();
 
-		$this->raw_url                     = null;
-		$this->parsed_url                  = null;
-		$this->inspecting_html_attributes  = null;
-		$this->url_in_text_processor       = null;
-		$this->css_url_processor           = null;
-		$this->css_attribute_name          = null;
-		$this->css_attribute_updated_value = null;
+		$this->raw_url                    = null;
+		$this->parsed_url                 = null;
+		$this->inspecting_html_attributes = null;
+		$this->url_in_text_processor      = null;
+		$this->css_url_processor          = null;
 		// Do not reset url_in_text_node_updated or css_url_processor_updated – they're reset
 		// in get_updated_html() which is called in parent::next_token().
 
@@ -174,19 +145,12 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		}
 
 		if ( null === $this->css_url_processor ) {
-			// Get the current attribute being inspected.
-			$attr = $this->get_inspected_attribute_name();
-			if ( false === $attr ) {
-				return false;
-			}
-
-			$css_value = $this->get_attribute( $attr );
+			$css_value = $this->get_attribute( 'style' );
 			if ( ! is_string( $css_value ) ) {
 				return false;
 			}
 
-			$this->css_attribute_name = $attr;
-			$this->css_url_processor  = new CSSUrlProcessor( $css_value );
+			$this->css_url_processor = new CSSUrlProcessor( $css_value );
 		}
 
 		while ( $this->css_url_processor->next_url() ) {
@@ -217,7 +181,8 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			if ( $this->next_url_in_css() ) {
 				return true;
 			}
-			// Done with CSS URLs in this attribute, move on.
+			// Done with CSS URLs in this attribute, apply any pending updates and move on.
+			$this->get_updated_html();
 			$this->css_url_processor = null;
 		}
 
@@ -256,8 +221,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 
 			// Handle style attribute with CSS url() values.
 			if ( 'style' === $attr ) {
-				$this->css_attribute_name = $attr;
-				$this->css_url_processor  = new CSSUrlProcessor( $url_maybe );
+				$this->css_url_processor = new CSSUrlProcessor( $url_maybe );
 				if ( $this->next_url_in_css() ) {
 					return true;
 				}
@@ -387,12 +351,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 				// Check if we're processing a CSS URL.
 				if ( null !== $this->css_url_processor ) {
 					$this->css_url_processor_updated = true;
-					$result                          = $this->css_url_processor->set_raw_url( $raw_url );
-					if ( $result ) {
-						$this->css_attribute_updated_value = $this->css_url_processor->get_updated_css();
-					}
-
-					return $result;
+					return $this->css_url_processor->set_raw_url( $raw_url );
 				}
 
 				$attr = $this->get_inspected_attribute_name();
