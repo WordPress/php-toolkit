@@ -9,7 +9,7 @@ use function WordPress\Encoding\utf8_codepoint_at;
  */
 class CSSProcessor {
 	public const TOKEN_WHITESPACE      = 'whitespace-token';
-	public const TOKEN_COMMENT         = 'comment-token';
+	public const TOKEN_COMMENT         = 'comment';
 	public const TOKEN_STRING          = 'string-token';
 	public const TOKEN_BAD_STRING      = 'bad-string-token';
 	public const TOKEN_HASH            = 'hash-token';
@@ -108,15 +108,15 @@ class CSSProcessor {
 			return true;
 		}
 
-		$this->token_starts_at = $this->at;
-		$char = $this->css[ $this->at ];
-
 		// String
 		if ( '"' === $this->css[ $this->at ] || "'" === $this->css[ $this->at ] ) {
 			return $this->consume_string();
 		}
 
-		// Hash
+		$char = $this->css[ $this->at ];
+		$this->token_starts_at = $this->at;
+
+		// Hex colors
 		if ( '#' === $char ) {
 			if ( $this->at + 1 < $this->length ) {
 				$next      = $this->css[ $this->at + 1 ];
@@ -140,7 +140,11 @@ class CSSProcessor {
 			return true;
 		}
 
-		// Simple single-byte tokens
+		/**
+		 * Simple single-byte tokens. This will not detect functions or urls – we have
+		 * a dedicated code path for that later on. If we spot a parenthesis here, it means
+		 * it did **not** come directly after an identifier.
+		 */
 		$simple = array(
 			'(' => self::TOKEN_LEFT_PAREN,
 			')' => self::TOKEN_RIGHT_PAREN,
@@ -161,17 +165,17 @@ class CSSProcessor {
 
 		// At-keyword
 		if ( '@' === $char ) {
-			if ( $this->would_start_ident( $this->at + 1 ) ) {
-				$this->at++;
+			++$this->at;
+			if ( $this->would_start_ident( $this->at ) ) {
 				$this->token_name   = $this->consume_ident();
 				$this->token_type   = self::TOKEN_AT_KEYWORD;
 				$this->token_length = $this->at - $this->token_starts_at;
 				return true;
+			} else {
+				$this->token_type   = self::TOKEN_DELIM;
+				$this->token_length = 1;
+				return true;
 			}
-			$this->at++;
-			$this->token_type   = self::TOKEN_DELIM;
-			$this->token_length = 1;
-			return true;
 		}
 
 		// Number-like tokens
@@ -182,8 +186,11 @@ class CSSProcessor {
 		}
 
 		// CDC (-->)
-		if ( '-' === $char && $this->at + 2 < $this->length &&
-		     '-' === $this->css[ $this->at + 1 ] && '>' === $this->css[ $this->at + 2 ] ) {
+		if ( 
+			'-' === $char && $this->at + 2 < $this->length &&
+			'-' === $this->css[ $this->at + 1 ] &&
+			'>' === $this->css[ $this->at + 2 ]
+		) {
 			$this->at    += 3;
 			$this->token_type   = self::TOKEN_CDC;
 			$this->token_length = 3;
@@ -215,6 +222,12 @@ class CSSProcessor {
 		if ( ord( $char ) >= 0x80 ) {
 			$matched_bytes     = 0;
 			utf8_codepoint_at( $this->css, $this->at, $matched_bytes );
+
+			// Safeguard: if utf8_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
+			if ( 0 === $matched_bytes ) {
+				$matched_bytes = 1;
+			}
+
 			$this->at    += $matched_bytes;
 			$this->token_type   = self::TOKEN_DELIM;
 			$this->token_length = $matched_bytes;
@@ -333,6 +346,7 @@ class CSSProcessor {
 	 * @return bool
 	 */
 	private function consume_string(): bool {
+		$this->token_starts_at = $this->at;
 		$ending_char = $this->css[ $this->at ];
 		
 		$this->at++;
@@ -605,6 +619,12 @@ class CSSProcessor {
 				// Multi-byte UTF-8
 				$matched_bytes = 0;
 				utf8_codepoint_at( $this->css, $this->at, $matched_bytes );
+
+				// Safeguard: if utf8_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
+				if ( 0 === $matched_bytes ) {
+					$matched_bytes = 1;
+				}
+
 				$value         .= substr( $this->css, $this->at, $matched_bytes );
 				$this->at += $matched_bytes;
 			}
@@ -679,6 +699,12 @@ class CSSProcessor {
 			if ( $byte >= 0x80 ) {
 				$matched_bytes = 0;
 				utf8_codepoint_at( $this->css, $this->at, $matched_bytes );
+
+				// Safeguard: if utf8_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
+				if ( 0 === $matched_bytes ) {
+					$matched_bytes = 1;
+				}
+
 				$result        .= substr( $this->css, $this->at, $matched_bytes );
 				$this->at += $matched_bytes;
 				continue;
@@ -747,6 +773,12 @@ class CSSProcessor {
 		if ( $byte >= 0x80 ) {
 			$matched_bytes = 0;
 			utf8_codepoint_at( $this->css, $this->at, $matched_bytes );
+
+			// Safeguard: if utf8_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
+			if ( 0 === $matched_bytes ) {
+				$matched_bytes = 1;
+			}
+
 			$result         = substr( $this->css, $this->at, $matched_bytes );
 			$this->at += $matched_bytes;
 			return $result;
@@ -854,6 +886,6 @@ class CSSProcessor {
 	private function is_ident_start( int $byte ): bool {
 		return ( $byte >= 0x41 && $byte <= 0x5A ) || // A-Z
 		       ( $byte >= 0x61 && $byte <= 0x7A ) || // a-z
-		       0x5F === $byte;                        // _
+		       0x5F === $byte;                       // _
 	}
 }
