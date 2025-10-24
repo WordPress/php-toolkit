@@ -546,6 +546,7 @@ class CSSProcessor {
 
 		// Ident
 		$this->token_type   = self::TOKEN_IDENT;
+		$this->token_name   = $string;
 		$this->token_length = $this->at - $this->token_starts_at;
 		return true;
 	}
@@ -630,9 +631,11 @@ class CSSProcessor {
 			}
 		}
 
-		// EOF in URL
-		$this->token_type   = self::TOKEN_BAD_URL;
-		$this->token_length = $this->at - $this->token_starts_at;
+		// EOF in URL - valid URL token per CSS spec
+		$this->token_type              = self::TOKEN_URL;
+		$this->token_length            = $this->at - $this->token_starts_at;
+		$this->token_value_starts_at   = $value_starts_at;
+		$this->token_value_length      = $this->at - $value_starts_at;
 		return true;
 	}
 
@@ -689,10 +692,17 @@ class CSSProcessor {
 			}
 
 			// Escape
-			if ( '\\' === $char && $this->is_valid_escape( $this->at ) ) {
-				$this->at++;
-				$result .= $this->consume_escape();
-				continue;
+			if ( '\\' === $char ) {
+				if ( $this->is_valid_escape( $this->at ) ) {
+					$this->at++;
+					$result .= $this->consume_escape();
+					continue;
+				} else {
+					// Invalid escape (EOF or newline) - produce replacement character
+					$this->at++;
+					$result .= "\xEF\xBF\xBD"; // U+FFFD in UTF-8
+					continue;
+				}
 			}
 
 			// Non-ASCII (>= 0x80)
@@ -871,7 +881,9 @@ class CSSProcessor {
 		}
 
 		if ( '\\' === $char1 ) {
-			return $this->is_valid_escape( $offset );
+			// A backslash always starts an ident, even if it's an invalid escape
+			// (Invalid escapes produce the replacement character U+FFFD)
+			return true;
 		}
 
 		return false;

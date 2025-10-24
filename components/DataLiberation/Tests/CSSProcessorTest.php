@@ -39,7 +39,7 @@ class CSSProcessorTest extends TestCase {
 	 */
 	public function test_tokenizer_matches_spec( string $css, array $expected_tokens ): void {
 		$processor = new CSSProcessor( $css );
-		$actual_tokens = $this->collect_tokens( $processor );
+		$actual_tokens = $this->collect_tokens( $processor, $css );
 
 		// Convert byte indices to UTF-16 code unit indices for comparison
 		foreach ( $actual_tokens as &$token ) {
@@ -67,13 +67,8 @@ class CSSProcessorTest extends TestCase {
 	 * @param CSSProcessor $processor The CSS processor.
 	 * @return array Array of tokens with type, raw, startIndex, endIndex, structured.
 	 */
-	private function collect_tokens( CSSProcessor $processor ): array {
+	private function collect_tokens( CSSProcessor $processor, string $css ): array {
 		$tokens = array();
-		$css = $processor->get_token_raw(); // Get access to CSS string for index conversion
-
-		// We need the full CSS to convert byte indices to UTF-16 indices
-		// Unfortunately we don't have direct access, so we'll track it as we go
-		$css_accumulator = '';
 
 		while ( $processor->next_token() ) {
 			$type = $processor->get_token_type();
@@ -91,7 +86,7 @@ class CSSProcessorTest extends TestCase {
 				'raw'        => $processor->get_token_raw(),
 				'startIndex' => $byte_start,
 				'endIndex'   => $byte_end,
-				'structured' => $this->extract_structured_data( $processor, $type ),
+				'structured' => $this->extract_structured_data( $processor, $type, $css ),
 			);
 
 			$tokens[] = $token;
@@ -142,9 +137,10 @@ class CSSProcessorTest extends TestCase {
 	 *
 	 * @param CSSProcessor $processor The CSS processor.
 	 * @param string       $type      The token type.
+	 * @param string       $css       The full CSS string.
 	 * @return array|null Structured data or null.
 	 */
-	private function extract_structured_data( CSSProcessor $processor, string $type ): ?array {
+	private function extract_structured_data( CSSProcessor $processor, string $type, string $css ): ?array {
 		switch ( $type ) {
 			case CSSProcessor::TOKEN_AT_KEYWORD:
 			case CSSProcessor::TOKEN_IDENT:
@@ -167,10 +163,11 @@ class CSSProcessorTest extends TestCase {
 				$start = $processor->get_token_value_start();
 				$length = $processor->get_token_value_length();
 				if ( null !== $start && null !== $length ) {
-					$raw = $processor->get_token_raw();
-					// Extract the string value without quotes
-					$value = substr( $raw, 1, strlen( $raw ) - 2 );
-					return array( 'value' => $value );
+					// Extract the string value from the CSS (inside the quotes)
+					$string_value = substr( $css, $start, $length );
+					// Decode CSS escapes
+					$decoded = $this->decode_css_escapes( $string_value );
+					return array( 'value' => $decoded );
 				}
 				return null;
 
@@ -181,8 +178,10 @@ class CSSProcessorTest extends TestCase {
 				if ( null !== $start && null !== $length ) {
 					// The value is between url( and )
 					// We need to extract and decode it
-					// For now, return null as URL value extraction needs more work
-					return null;
+					// Extract the URL value from the full CSS using absolute positions
+					$url_value = substr( $css, $start, $length );
+					$decoded = $this->decode_css_escapes( $url_value );
+					return array( 'value' => $decoded );
 				}
 				return null;
 
@@ -292,7 +291,7 @@ class CSSProcessorTest extends TestCase {
 	public function test_tokenize_labels_core_tokens(): void {
 		$css       = '@media screen and (min-width: 10px) { background: url("/images/a.png") }';
 		$processor = new CSSProcessor( $css );
-		$tokens    = $this->collect_tokens( $processor );
+		$tokens    = $this->collect_tokens( $processor, $css );
 
 		$types = array_column( $tokens, 'type' );
 
@@ -305,5 +304,91 @@ class CSSProcessorTest extends TestCase {
 		self::assertContains( CSSProcessor::TOKEN_STRING, $types );
 		self::assertContains( CSSProcessor::TOKEN_RIGHT_PAREN, $types );
 		self::assertContains( CSSProcessor::TOKEN_RIGHT_BRACE, $types );
+	}
+
+	/**
+	 * Decodes CSS escape sequences in a string.
+	 *
+	 * @param string $value The value with potential CSS escapes.
+	 * @return string The decoded value.
+	 */
+	private function decode_css_escapes( string $value ): string {
+		$length = strlen( $value );
+		$result = '';
+		$at     = 0;
+
+		while ( $at < $length ) {
+			$span = strcspn( $value, '\\', $at );
+			if ( $span > 0 ) {
+				$result .= substr( $value, $at, $span );
+				$at     += $span;
+			}
+
+			if ( $at >= $length ) {
+				break;
+			}
+
+			++$at;
+			if ( $at >= $length ) {
+				break;
+			}
+
+			$hex_len = strspn( $value, '0123456789abcdefABCDEF', $at );
+			if ( $hex_len > 6 ) {
+				$hex_len = 6;
+			}
+
+			if ( $hex_len > 0 ) {
+				$hex     = substr( $value, $at, $hex_len );
+				$codepoint = hexdec( $hex );
+				// Convert codepoint to UTF-8 bytes
+				if ( $codepoint <= 0x7F ) {
+					$result .= chr( $codepoint );
+				} elseif ( $codepoint <= 0x7FF ) {
+					$result .= chr( 0xC0 | ( $codepoint >> 6 ) );
+					$result .= chr( 0x80 | ( $codepoint & 0x3F ) );
+				} elseif ( $codepoint <= 0xFFFF ) {
+					$result .= chr( 0xE0 | ( $codepoint >> 12 ) );
+					$result .= chr( 0x80 | ( ( $codepoint >> 6 ) & 0x3F ) );
+					$result .= chr( 0x80 | ( $codepoint & 0x3F ) );
+				} else {
+					$result .= chr( 0xF0 | ( $codepoint >> 18 ) );
+					$result .= chr( 0x80 | ( ( $codepoint >> 12 ) & 0x3F ) );
+					$result .= chr( 0x80 | ( ( $codepoint >> 6 ) & 0x3F ) );
+					$result .= chr( 0x80 | ( $codepoint & 0x3F ) );
+				}
+				$at += $hex_len;
+
+				$ws_len = strspn( $value, " \n\r\t\f", $at );
+				if ( $ws_len > 0 ) {
+					if ( $at + 1 < $length && "\r" === $value[ $at ] && "\n" === $value[ $at + 1 ] ) {
+						$at += 2;
+					} else {
+						$at += 1;
+					}
+				}
+				continue;
+			}
+
+			$next = $value[ $at ];
+
+			if ( "\n" === $next || "\f" === $next ) {
+				++$at;
+				continue;
+			}
+
+			if ( "\r" === $next ) {
+				++$at;
+				if ( $at < $length && "\n" === $value[ $at ] ) {
+					++$at;
+				}
+				continue;
+			}
+
+			$result .= $next;
+			++$at;
+		}
+
+		return $result;
 	}
 }
