@@ -4,7 +4,7 @@ namespace WordPress\DataLiberation\BlockMarkup;
 
 use Rowbot\URL\URL;
 use WordPress\DataLiberation\URL\URLInTextProcessor;
-use WordPress\DataLiberation\URL\CSSUrlProcessor;
+use WordPress\DataLiberation\URL\CSSURLProcessor;
 use WordPress\DataLiberation\URL\WPURL;
 
 /**
@@ -79,8 +79,8 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		$this->inspecting_html_attributes = null;
 		$this->url_in_text_processor      = null;
 		$this->css_url_processor          = null;
-		// Do not reset url_in_text_node_updated or css_url_processor_updated – they're reset
-		// in get_updated_html() which is called in parent::next_token().
+		// Do not reset url_in_text_node_updated or css_url_processor_updated – they're reset.
+		// In get_updated_html() which is called in parent::next_token().
 
 		return parent::next_token();
 	}
@@ -150,7 +150,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 				return false;
 			}
 
-			$this->css_url_processor = new CSSUrlProcessor( $css_value );
+			$this->css_url_processor = new CSSURLProcessor( $css_value );
 		}
 
 		while ( $this->css_url_processor->next_url() ) {
@@ -221,7 +221,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 
 			// Handle style attribute with CSS url() values.
 			if ( 'style' === $attr ) {
-				$this->css_url_processor = new CSSUrlProcessor( $url_maybe );
+				$this->css_url_processor = new CSSURLProcessor( $url_maybe );
 				if ( $this->next_url_in_css() ) {
 					return true;
 				}

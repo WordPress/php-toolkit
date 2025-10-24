@@ -5,6 +5,16 @@ namespace WordPress\DataLiberation\URL;
 use Rowbot\URL\URL;
 use WordPress\DataLiberation\BlockMarkup\BlockMarkupUrlProcessor;
 
+require_once __DIR__ . '/class-cssprocessor.php';
+
+spl_autoload_register(
+	static function ( string $class ): void {
+		if ( 'WordPress\\DataLiberation\\URL\\CSSURLProcessor' === $class && ! class_exists( $class, false ) ) {
+			require_once __DIR__ . '/class-cssurlprocessor.php';
+		}
+	}
+);
+
 
 /**
  * Migrate URLs in post content. See WPRewriteUrlsTests for

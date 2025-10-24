@@ -1,15 +1,15 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use WordPress\DataLiberation\URL\CSSUrlProcessor;
+use WordPress\DataLiberation\URL\CSSURLProcessor;
 
-class CSSUrlProcessorTest extends TestCase {
+class CSSURLProcessorTest extends TestCase {
 
 	/**
 	 * @dataProvider provider_test_css_escape_decoding
 	 */
 	public function test_css_escape_decoding( $css_value, $expected_url ) {
-		$processor = new CSSUrlProcessor( $css_value );
+		$processor = new CSSURLProcessor( $css_value );
 
 		$this->assertTrue( $processor->next_url(), 'Failed to find URL in CSS' );
 		$this->assertEquals( $expected_url, $processor->get_raw_url(), 'Decoded URL does not match expected value' );
@@ -203,7 +203,7 @@ class CSSUrlProcessorTest extends TestCase {
 	 * @dataProvider provider_test_basic_css_url_detection
 	 */
 	public function test_basic_css_url_detection( $css_value, $expected_url ) {
-		$processor = new CSSUrlProcessor( $css_value );
+		$processor = new CSSURLProcessor( $css_value );
 
 		$this->assertTrue( $processor->next_url(), 'Failed to find URL in CSS' );
 		$this->assertEquals( $expected_url, $processor->get_raw_url() );
@@ -240,7 +240,7 @@ class CSSUrlProcessorTest extends TestCase {
 
 	public function test_skips_urls_in_comments() {
 		$css       = '/* background: url("https://commented.com/image.png"); */ background: url("https://real.com/image.png")';
-		$processor = new CSSUrlProcessor( $css );
+		$processor = new CSSURLProcessor( $css );
 
 		$this->assertTrue( $processor->next_url() );
 		$this->assertEquals( 'https://real.com/image.png', $processor->get_raw_url() );
@@ -249,7 +249,7 @@ class CSSUrlProcessorTest extends TestCase {
 
 	public function test_skips_urls_in_strings() {
 		$css       = 'content: "Visit url(https://example.com)"; background: url("https://real.com/image.png")';
-		$processor = new CSSUrlProcessor( $css );
+		$processor = new CSSURLProcessor( $css );
 
 		$this->assertTrue( $processor->next_url() );
 		$this->assertEquals( 'https://real.com/image.png', $processor->get_raw_url() );
@@ -258,7 +258,7 @@ class CSSUrlProcessorTest extends TestCase {
 
 	public function test_handles_multiple_urls() {
 		$css       = 'background: url("https://example.com/bg1.png"), url("https://example.com/bg2.png")';
-		$processor = new CSSUrlProcessor( $css );
+		$processor = new CSSURLProcessor( $css );
 
 		$this->assertTrue( $processor->next_url() );
 		$this->assertEquals( 'https://example.com/bg1.png', $processor->get_raw_url() );
@@ -271,7 +271,7 @@ class CSSUrlProcessorTest extends TestCase {
 
 	public function test_url_replacement() {
 		$css       = 'background: url("https://old.com/image.png")';
-		$processor = new CSSUrlProcessor( $css );
+		$processor = new CSSURLProcessor( $css );
 
 		$this->assertTrue( $processor->next_url() );
 		$this->assertTrue( $processor->set_raw_url( 'https://new.com/image.png' ) );
@@ -282,7 +282,7 @@ class CSSUrlProcessorTest extends TestCase {
 
 	public function test_replaces_multiple_urls() {
 		$css       = 'background: url("https://example.com/bg1.png"), url("https://example.com/bg2.png")';
-		$processor = new CSSUrlProcessor( $css );
+		$processor = new CSSURLProcessor( $css );
 
 		$processor->next_url();
 		$processor->set_raw_url( 'https://new.com/bg1.png' );
@@ -297,7 +297,7 @@ class CSSUrlProcessorTest extends TestCase {
 	public function test_handles_whitespace_inside_url() {
 		// CSS spec allows whitespace but not comments inside url()
 		$css       = 'background: url(  "https://example.com/image.png"  )';
-		$processor = new CSSUrlProcessor( $css );
+		$processor = new CSSURLProcessor( $css );
 
 		$this->assertTrue( $processor->next_url() );
 		$this->assertEquals( 'https://example.com/image.png', $processor->get_raw_url() );
@@ -305,14 +305,14 @@ class CSSUrlProcessorTest extends TestCase {
 
 	public function test_returns_false_when_no_urls() {
 		$css       = 'background: #fff; color: red;';
-		$processor = new CSSUrlProcessor( $css );
+		$processor = new CSSURLProcessor( $css );
 
 		$this->assertFalse( $processor->next_url() );
 	}
 
 	public function test_handles_data_uris() {
 		$css       = 'background: url("data:image/png;base64,iVBORw0KGgo=")';
-		$processor = new CSSUrlProcessor( $css );
+		$processor = new CSSURLProcessor( $css );
 
 		$this->assertTrue( $processor->next_url() );
 		$this->assertEquals( 'data:image/png;base64,iVBORw0KGgo=', $processor->get_raw_url() );
@@ -323,7 +323,7 @@ class CSSUrlProcessorTest extends TestCase {
 		// The parser can handle arbitrarily large URLs without PCRE limits
 		$data_uri  = 'data:image/png;base64,' . str_repeat( 'A', 2 * 1024 * 1024 );
 		$css_value = 'background: url("' . $data_uri . '")';
-		$processor = new CSSUrlProcessor( $css_value );
+		$processor = new CSSURLProcessor( $css_value );
 
 		$this->assertTrue( $processor->next_url(), 'Failed to find URL in CSS' );
 		$this->assertEquals( $data_uri, $processor->get_raw_url() );
@@ -333,7 +333,7 @@ class CSSUrlProcessorTest extends TestCase {
 	 * @dataProvider provider_test_is_data_uri
 	 */
 	public function test_is_data_uri( $css_value, $expected ) {
-		$processor = new CSSUrlProcessor( $css_value );
+		$processor = new CSSURLProcessor( $css_value );
 
 		$this->assertTrue( $processor->next_url(), 'Failed to find URL in CSS' );
 		$this->assertEquals( $expected, $processor->is_data_uri(), 'is_data_uri() returned unexpected value' );
@@ -420,7 +420,7 @@ class CSSUrlProcessorTest extends TestCase {
 	}
 
 	public function test_is_data_uri_without_url_match() {
-		$processor = new CSSUrlProcessor( 'background: #fff;' );
+		$processor = new CSSURLProcessor( 'background: #fff;' );
 
 		$this->assertFalse( $processor->is_data_uri(), 'is_data_uri() should return false when no URL is matched' );
 	}
@@ -428,7 +428,7 @@ class CSSUrlProcessorTest extends TestCase {
 	public function test_is_data_uri_optimized_no_extraction() {
 		// Test that is_data_uri() doesn't trigger URL extraction
 		$css       = 'background: url("data:image/png;base64,iVBORw0KGgo=")';
-		$processor = new CSSUrlProcessor( $css );
+		$processor = new CSSURLProcessor( $css );
 
 		$this->assertTrue( $processor->next_url() );
 
