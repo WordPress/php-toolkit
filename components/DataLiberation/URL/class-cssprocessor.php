@@ -124,7 +124,7 @@ class CSSProcessor {
 				$is_ident  = $this->is_ident_start( $next_byte ) ||
 				             ( $next >= '0' && $next <= '9' ) ||
 				             '-' === $next ||
-				             $next_byte >= 0x80 ||
+				             $this->is_unicode_letter_at( $this->at + 1 ) ||
 				             $this->is_valid_escape( $this->at + 1 );
 				if ( $is_ident ) {
 					$this->at++;
@@ -396,8 +396,14 @@ class CSSProcessor {
 				$this->at++;
 				if ( $this->at < $this->length ) {
 					$next = $this->css[ $this->at ];
-					if ( "\n" === $next || "\f" === $next || "\r" === $next ) {
+					if ( "\n" === $next || "\f" === $next ) {
 						$this->at++;
+					} elseif ( "\r" === $next ) {
+						$this->at++;
+						// Handle \r\n as a single newline
+						if ( $this->at < $this->length && "\n" === $this->css[ $this->at ] ) {
+							$this->at++;
+						}
 					}
 				}
 				continue;
@@ -517,13 +523,12 @@ class CSSProcessor {
 		if ( 0 === strcasecmp( $string, 'url' ) && $this->at < $this->length && '(' === $this->css[ $this->at ] ) {
 			$this->at++;
 
-			// Skip whitespace
+			// Skip whitespace to peek ahead
 			$ws_len = strspn( $this->css, "\t\n\f\r ", $this->at );
-			$this->at += $ws_len;
 
-			if ( $this->at < $this->length ) {
-				$next = $this->css[ $this->at ];
-				// url() with string argument - treat as function
+			if ( $this->at + $ws_len < $this->length ) {
+				$next = $this->css[ $this->at + $ws_len ];
+				// url() with string argument - treat as function (don't consume the whitespace)
 				if ( '"' === $next || "'" === $next ) {
 					$this->token_type   = self::TOKEN_FUNCTION;
 					$this->token_name   = $string;
@@ -532,6 +537,8 @@ class CSSProcessor {
 				}
 			}
 
+			// It's a URL token - consume the whitespace and continue
+			$this->at += $ws_len;
 			return $this->consume_url();
 		}
 
@@ -577,12 +584,21 @@ class CSSProcessor {
 				return true;
 			}
 
-			// Whitespace before )
+			// Whitespace before ) or EOF
 			if ( "\t" === $char || "\n" === $char || "\f" === $char || "\r" === $char || ' ' === $char ) {
 				$value_ends_at = $this->at;
 				$ws_len = strspn( $this->css, "\t\n\f\r ", $this->at );
 				$this->at += $ws_len;
-				if ( $this->at < $this->length && ')' === $this->css[ $this->at ] ) {
+				// Accept either ) or EOF after whitespace
+				if ( $this->at >= $this->length ) {
+					// EOF after whitespace - valid URL
+					$this->token_type              = self::TOKEN_URL;
+					$this->token_length            = $this->at - $this->token_starts_at;
+					$this->token_value_starts_at   = $value_starts_at;
+					$this->token_value_length      = $value_ends_at - $value_starts_at;
+					return true;
+				}
+				if ( ')' === $this->css[ $this->at ] ) {
 					$this->at++;
 					$this->token_type              = self::TOKEN_URL;
 					$this->token_length            = $this->at - $this->token_starts_at;
@@ -706,17 +722,44 @@ class CSSProcessor {
 			}
 
 			// Non-ASCII (>= 0x80)
+			// - For identifiers starting with --, any >= 0x80 is valid (CSS custom properties)
+			// - For other identifiers, only Unicode letters >= 0x80 are valid
 			if ( $byte >= 0x80 ) {
-				$matched_bytes = 0;
-				utf8_codepoint_at( $this->css, $this->at, $matched_bytes );
+				$starts_with_double_hyphen = ( strlen( $result ) >= 2 && substr( $result, 0, 2 ) === '--' );
 
-				// Safeguard: if utf8_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
-				if ( 0 === $matched_bytes ) {
+				// Check if it's a Unicode letter (only needed for non-custom-property identifiers)
+				if ( ! $starts_with_double_hyphen && ! $this->is_unicode_letter_at( $this->at ) ) {
+					// Non-letter >= 0x80 in a regular identifier stops the identifier
+					break;
+				}
+
+				// Determine byte length of this UTF-8 character
+				if ( $byte < 0xC0 ) {
+					// Invalid start byte - consume 1 byte
 					$matched_bytes = 1;
+				} elseif ( $byte < 0xE0 ) {
+					$matched_bytes = 2;
+				} elseif ( $byte < 0xF0 ) {
+					$matched_bytes = 3;
+				} else {
+					$matched_bytes = 4;
+				}
+
+				// Make sure we don't read past end of string
+				if ( $this->at + $matched_bytes > $this->length ) {
+					$matched_bytes = $this->length - $this->at;
 				}
 
 				$result        .= substr( $this->css, $this->at, $matched_bytes );
 				$this->at += $matched_bytes;
+				continue;
+			}
+
+			// Null byte (0x00) is consumed but replaced with U+FFFD per CSS spec
+			// Other control characters stop identifier consumption
+			if ( $byte === 0x00 ) {
+				$this->at++;
+				$result .= "\xEF\xBF\xBD"; // U+FFFD
 				continue;
 			}
 
@@ -747,11 +790,17 @@ class CSSProcessor {
 			$hex     = substr( $this->css, $this->at, $hex_len );
 			$this->at += $hex_len;
 
-			// Skip whitespace after hex escape
+			// Skip whitespace after hex escape (treat \r\n as a single unit)
 			if ( $this->at < $this->length ) {
 				$next = $this->css[ $this->at ];
-				if ( "\t" === $next || "\n" === $next || "\f" === $next || "\r" === $next || ' ' === $next ) {
+				if ( "\t" === $next || "\n" === $next || "\f" === $next || ' ' === $next ) {
 					$this->at++;
+				} elseif ( "\r" === $next ) {
+					$this->at++;
+					// Handle \r\n as a single whitespace
+					if ( $this->at < $this->length && "\n" === $this->css[ $this->at ] ) {
+						$this->at++;
+					}
 				}
 			}
 
@@ -816,6 +865,52 @@ class CSSProcessor {
 	}
 
 	/**
+	 * Checks if the character at the given offset is a Unicode letter (category L*).
+	 * Only characters >= U+0080 that are Unicode letters are valid in CSS identifiers.
+	 *
+	 * @param int $offset Byte offset.
+	 * @return bool True if the character is a Unicode letter, false otherwise.
+	 */
+	private function is_unicode_letter_at( int $offset ): bool {
+		if ( $offset >= $this->length ) {
+			return false;
+		}
+
+		$byte = ord( $this->css[ $offset ] );
+
+		// ASCII characters are not Unicode letters (they're checked separately)
+		if ( $byte < 0x80 ) {
+			return false;
+		}
+
+		// Extract the UTF-8 character sequence
+		$matched_bytes = 0;
+
+		// Determine how many bytes this UTF-8 character should have
+		if ( $byte < 0xC0 ) {
+			// Invalid start byte or continuation byte
+			return false;
+		} elseif ( $byte < 0xE0 ) {
+			$matched_bytes = 2;
+		} elseif ( $byte < 0xF0 ) {
+			$matched_bytes = 3;
+		} else {
+			$matched_bytes = 4;
+		}
+
+		// Make sure we have enough bytes
+		if ( $offset + $matched_bytes > $this->length ) {
+			return false;
+		}
+
+		// Extract the character bytes
+		$char = substr( $this->css, $offset, $matched_bytes );
+
+		// Check if it's a valid Unicode letter using PHP's character class
+		return preg_match( '/\p{L}/u', $char ) === 1;
+	}
+
+	/**
 	 * Checks if current at would start a number.
 	 *
 	 * @return bool
@@ -873,16 +968,49 @@ class CSSProcessor {
 			}
 			$char2 = $this->css[ $offset + 1 ];
 			$byte2 = ord( $char2 );
-			return $this->is_ident_start( $byte2 ) || '-' === $char2 || $byte2 >= 0x80 || $this->is_valid_escape( $offset + 1 );
+
+			// After single hyphen, we need:
+			// - ASCII letter/underscore
+			// - Another hyphen (for -- custom properties)
+			// - Unicode letter (category L*)
+			// - Valid escape sequence
+			// Note: For --, any >= 0x80 will be allowed, checked separately below
+			if ( $this->is_ident_start( $byte2 ) || $this->is_valid_escape( $offset + 1 ) ) {
+				return true;
+			}
+
+			// Double hyphen -- always starts an identifier
+			// (CSS custom properties like --primary-color or just --)
+			if ( '-' === $char2 ) {
+				return true;
+			}
+
+			// Single hyphen followed by non-ASCII: only allow Unicode letters
+			if ( $byte2 >= 0x80 ) {
+				return $this->is_unicode_letter_at( $offset + 1 );
+			}
+
+			return false;
 		}
 
-		if ( $this->is_ident_start( $byte1 ) || $byte1 >= 0x80 ) {
+		if ( $this->is_ident_start( $byte1 ) || $this->is_unicode_letter_at( $offset ) ) {
 			return true;
 		}
 
 		if ( '\\' === $char1 ) {
-			// A backslash always starts an ident, even if it's an invalid escape
-			// (Invalid escapes produce the replacement character U+FFFD)
+			// Check if it's a valid escape OR backslash at EOF
+			if ( $this->is_valid_escape( $offset ) ) {
+				return true;
+			}
+			// Backslash at EOF starts an ident (produces U+FFFD)
+			if ( $offset + 1 >= $this->length ) {
+				return true;
+			}
+			return false;
+		}
+
+		// Null byte starts an ident (will be replaced with U+FFFD)
+		if ( 0x00 === $byte1 ) {
 			return true;
 		}
 

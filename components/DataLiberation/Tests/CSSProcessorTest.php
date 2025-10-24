@@ -318,7 +318,7 @@ class CSSProcessorTest extends TestCase {
 		$at     = 0;
 
 		while ( $at < $length ) {
-			$span = strcspn( $value, '\\', $at );
+			$span = strcspn( $value, "\\\x00", $at );
 			if ( $span > 0 ) {
 				$result .= substr( $value, $at, $span );
 				$at     += $span;
@@ -328,6 +328,16 @@ class CSSProcessorTest extends TestCase {
 				break;
 			}
 
+			$char = $value[ $at ];
+
+			// Null byte - replace with U+FFFD
+			if ( "\x00" === $char ) {
+				$result .= "\xEF\xBF\xBD";
+				++$at;
+				continue;
+			}
+
+			// Must be backslash
 			++$at;
 			if ( $at >= $length ) {
 				break;
