@@ -54,6 +54,7 @@ class CSSProcessor {
 	private $token_type              = null;
 	private $token_starts_at         = null;
 	private $token_length            = null;
+	private $token_value             = null;
 	private $token_name              = null;
 	private $token_unit              = null;
 	private $token_value_starts_at   = null;
@@ -107,11 +108,12 @@ class CSSProcessor {
 			return true;
 		}
 
+		$this->token_starts_at = $this->at;
 		$char = $this->css[ $this->at ];
 
 		// String
 		if ( '"' === $this->css[ $this->at ] || "'" === $this->css[ $this->at ] ) {
-			return $this->consume_string( ord( $this->css[ $this->at ] ) );
+			return $this->consume_string();
 		}
 
 		// Hash
@@ -126,6 +128,7 @@ class CSSProcessor {
 				             $this->is_valid_escape( $this->at + 1 );
 				if ( $is_ident ) {
 					$this->at++;
+					$this->token_name   = $this->consume_ident();
 					$this->token_type   = self::TOKEN_HASH;
 					$this->token_length = $this->at - $this->token_starts_at;
 					return true;
@@ -160,6 +163,7 @@ class CSSProcessor {
 		if ( '@' === $char ) {
 			if ( $this->would_start_ident( $this->at + 1 ) ) {
 				$this->at++;
+				$this->token_name   = $this->consume_ident();
 				$this->token_type   = self::TOKEN_AT_KEYWORD;
 				$this->token_length = $this->at - $this->token_starts_at;
 				return true;
@@ -231,6 +235,15 @@ class CSSProcessor {
 	 */
 	public function get_token_type(): ?string {
 		return $this->token_type;
+	}
+
+	/**
+	 * Gets the current token value (for numbers).
+	 *
+	 * @return float|null
+	 */
+	public function get_token_value() {
+		return $this->token_value;
 	}
 
 	/**
@@ -306,6 +319,7 @@ class CSSProcessor {
 		$this->token_type              = null;
 		$this->token_starts_at         = null;
 		$this->token_length            = null;
+		$this->token_value             = null;
 		$this->token_name              = null;
 		$this->token_unit              = null;
 		$this->token_value_starts_at   = null;
@@ -318,16 +332,28 @@ class CSSProcessor {
 	 * @param int $ending_code_point Ending delimiter code point.
 	 * @return bool
 	 */
-	private function consume_string( int $ending_code_point ): bool {
+	private function consume_string(): bool {
+		$ending_char = $this->css[ $this->at ];
+		
 		$this->at++;
 		$value_starts_at = $this->at;
-		$value = '';
+
+		// Characters that need special handling: backslash, newlines, and the ending quote
+		$special_chars = "\\\n\r\f" . $ending_char;
 
 		while ( $this->at < $this->length ) {
+			// Skip normal characters all at once
+			$normal_len = strcspn( $this->css, $special_chars, $this->at );
+			$this->at += $normal_len;
+
+			if ( $this->at >= $this->length ) {
+				break; // EOF
+			}
+
 			$char = $this->css[ $this->at ];
 
 			// End of string
-			if ( ord( $char ) === $ending_code_point ) {
+			if ( $char === $ending_char ) {
 				$this->at++;
 				$this->token_type              = self::TOKEN_STRING;
 				$this->token_length            = $this->at - $this->token_starts_at;
@@ -337,6 +363,7 @@ class CSSProcessor {
 			}
 
 			// Newline in string
+			// TODO: Double check this
 			if ( "\n" === $char || "\f" === $char || "\r" === $char ) {
 				$this->token_type              = self::TOKEN_BAD_STRING;
 				$this->token_length            = $this->at - $this->token_starts_at;
@@ -345,11 +372,11 @@ class CSSProcessor {
 				return true;
 			}
 
-			// Escape sequence
+			// Must be a backslash (escape sequence)
 			if ( '\\' === $char ) {
 				if ( $this->is_valid_escape( $this->at ) ) {
 					$this->at++;
-					$value .= $this->consume_escape();
+					$this->consume_escape();
 					continue;
 				}
 				$this->at++;
@@ -360,18 +387,6 @@ class CSSProcessor {
 					}
 				}
 				continue;
-			}
-
-			// Fast path for ASCII
-			if ( ord( $char ) < 0x80 ) {
-				$value .= $char;
-				$this->at++;
-			} else {
-				// Multi-byte UTF-8
-				$matched_bytes = 0;
-				utf8_codepoint_at( $this->css, $this->at, $matched_bytes );
-				$value         .= substr( $this->css, $this->at, $matched_bytes );
-				$this->at += $matched_bytes;
 			}
 		}
 
