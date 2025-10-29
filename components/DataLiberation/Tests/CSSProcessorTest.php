@@ -10,32 +10,9 @@ use WordPress\DataLiberation\URL\CSSProcessor;
 class CSSProcessorTest extends TestCase {
 
 	/**
-	 * Provides all test cases from the test corpus.
-	 *
-	 * @return array
-	 */
-	public function test_corpus_provider(): array {
-		static $test_cases = null;
-
-		if ( null === $test_cases ) {
-			$test_cases = require __DIR__ . '/css-test-cases.php';
-		}
-
-		$data = array();
-		foreach ( $test_cases as $test_name => $test_case ) {
-			$data[ $test_name ] = array(
-				$test_case['css'],
-				$test_case['tokens'],
-			);
-		}
-
-		return $data;
-	}
-
-	/**
 	 * Tests that the tokenizer produces the expected tokens for all test cases.
 	 *
-	 * @dataProvider test_corpus_provider
+	 * @dataProvider corpus_provider
 	 */
 	public function test_tokenizer_matches_spec( string $css, array $expected_tokens ): void {
 		$processor = new CSSProcessor( $css );
@@ -56,6 +33,29 @@ class CSSProcessorTest extends TestCase {
 			$actual_token = $actual_tokens[ $index ];
 			$this->assert_token_matches( $expected_token, $actual_token, $index, $css );
 		}
+	}
+
+	/**
+	 * Provides all test cases from the test corpus.
+	 *
+	 * @return array
+	 */
+	static public function corpus_provider(): array {
+		static $test_cases = null;
+
+		if ( null === $test_cases ) {
+			$test_cases = require __DIR__ . '/css-test-cases.php';
+		}
+
+		$data = array();
+		foreach ( $test_cases as $test_name => $test_case ) {
+			$data[ $test_name ] = array(
+				$test_case['css'],
+				$test_case['tokens'],
+			);
+		}
+
+		return $data;
 	}
 
 	/**
@@ -83,85 +83,13 @@ class CSSProcessorTest extends TestCase {
 				'raw'        => $processor->get_token_raw(),
 				'startIndex' => $byte_start,
 				'endIndex'   => $byte_end,
-				'structured' => $this->extract_structured_data( $processor, $type, $css ),
+				'value'      => $processor->get_token_value(),
 			);
 
 			$tokens[] = $token;
 		}
 
 		return $tokens;
-	}
-
-	/**
-	 * Extracts structured data from a token based on its type.
-	 *
-	 * @param CSSProcessor $processor The CSS processor.
-	 * @param string       $type      The token type.
-	 * @param string       $css       The full CSS string.
-	 * @return array|null Structured data or null.
-	 */
-	private function extract_structured_data( CSSProcessor $processor, string $type, string $css ): ?array {
-		switch ( $type ) {
-			case CSSProcessor::TOKEN_AT_KEYWORD:
-			case CSSProcessor::TOKEN_IDENT:
-				$name = $processor->get_token_name();
-				return $name !== null ? array( 'value' => $name ) : null;
-
-			case CSSProcessor::TOKEN_FUNCTION:
-				$name = $processor->get_token_name();
-				return $name !== null ? array( 'value' => $name ) : null;
-
-			case CSSProcessor::TOKEN_HASH:
-				$name = $processor->get_token_name();
-				// The test corpus includes a 'type' field for hash tokens (id, unrestricted)
-				// For now, we'll assume all hash tokens are 'id' type
-				// This may need refinement based on actual implementation
-				return $name !== null ? array( 'value' => $name, 'type' => 'id' ) : null;
-
-			case CSSProcessor::TOKEN_STRING:
-				// Strings have decoded value in token_name
-				$decoded_value = $processor->get_token_name();
-				return $decoded_value !== null ? array( 'value' => $decoded_value ) : null;
-
-			case CSSProcessor::TOKEN_URL:
-				// URLs have decoded value in token_name
-				$decoded_value = $processor->get_token_name();
-				return $decoded_value !== null ? array( 'value' => $decoded_value ) : null;
-
-			case CSSProcessor::TOKEN_NUMBER:
-			case CSSProcessor::TOKEN_PERCENTAGE:
-				$value = $processor->get_token_value();
-				if ( null !== $value ) {
-					// Determine if it's an integer or number
-					$is_integer = floor( $value ) == $value;
-					return array(
-						'value' => $value,
-						'type'  => $is_integer ? 'integer' : 'number',
-					);
-				}
-				return null;
-
-			case CSSProcessor::TOKEN_DIMENSION:
-				$value = $processor->get_token_value();
-				$unit = $processor->get_token_unit();
-				if ( null !== $value && null !== $unit ) {
-					$is_integer = floor( $value ) == $value;
-					return array(
-						'value' => $value,
-						'type'  => $is_integer ? 'integer' : 'number',
-						'unit'  => $unit,
-					);
-				}
-				return null;
-
-			case CSSProcessor::TOKEN_DELIM:
-				// Delim tokens have their character value in structured data
-				$raw = $processor->get_token_raw();
-				return array( 'value' => $raw );
-
-			default:
-				return null;
-		}
 	}
 
 	/**
@@ -208,23 +136,15 @@ class CSSProcessorTest extends TestCase {
 
 		// Check structured data (if present in expected)
 		// We'll do a loose comparison here since our implementation might differ slightly
-		if ( isset( $expected['structured'] ) && null !== $expected['structured'] ) {
-			$this->assertNotNull(
-				$actual['structured'],
-				$message . ' (expected structured data but got null)'
+		if ( isset( $expected['value'] ) && null !== $expected['value'] ) {
+			$this->assertArrayHasKey( 'value', $actual, $message . ' (value missing)' );
+			// Loose comparison because floats may differ slightly
+			$this->assertEquals(
+				$expected['value'],
+				$actual['value'],
+				$message . ' (value)',
+				0.0001  // delta for float comparison
 			);
-
-			// For now, just check that the value matches if present
-			if ( isset( $expected['structured']['value'] ) ) {
-				$this->assertArrayHasKey( 'value', $actual['structured'], $message . ' (structured.value missing)' );
-				// Loose comparison because floats may differ slightly
-				$this->assertEquals(
-					$expected['structured']['value'],
-					$actual['structured']['value'],
-					$message . ' (structured.value)',
-					0.0001  // delta for float comparison
-				);
-			}
 		}
 	}
 

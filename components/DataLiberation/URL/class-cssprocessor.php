@@ -196,10 +196,13 @@ class CSSProcessor {
 	/**
 	 * The string value of the current token.
 	 *
-	 * @var string|null
+	 * For numbers, this is a float.
+	 * For identifiers/functions/strings/URLs with escapes, this is a decoded string.
+	 * Otherwise, it's null and the value is computed from token indices.
+	 *
+	 * @var string|float|null
 	 */
 	private $token_value = null;
-	private $token_name  = null;
 	private $token_unit  = null;
 
 	/**
@@ -314,25 +317,29 @@ class CSSProcessor {
 		 * @see https://www.w3.org/TR/css-syntax-3/#consume-token
 		 */
 		if ( '#' === $char ) {
-			if ( $this->at + 1 < $this->length &&
-				(
+			if ( $this->at + 1 < $this->length ) {
+				if (
 					$this->consume_ident_codepoint( $this->at + 1 ) > 0 ||
 					// The next two input code points are a valid escape.
 					$this->is_valid_escape( $this->at + 1 )
-				)
-			) {
-				// Create a <hash-token>.
-				++$this->at;
+				) {
+					// Create a <hash-token>.
+					++$this->at;
 
-				// We skip this check as we don't track the type flag:
-				// > If the next 3 input code points would start an ident sequence,
-				// > set the <hash-token>'s type flag to "id".
+					// We skip this check as we don't track the type flag:
+					// > If the next 3 input code points would start an ident sequence,
+					// > set the <hash-token>'s type flag to "id".
 
-				// Consume an ident sequence, and set the <hash-token>'s value to the returned string.
-				$this->token_name   = $this->consume_ident_sequence();
-				$this->token_type   = self::TOKEN_HASH;
-				$this->token_length = $this->at - $this->token_starts_at;
-				return true;
+					// Consume an ident sequence, and set the <hash-token>'s value to the returned string.
+					$decoded = $this->consume_ident_sequence();
+					if ( null !== $decoded ) {
+						// Only store decoded value if escapes were present
+						$this->token_value = $decoded;
+					}
+					$this->token_type   = self::TOKEN_HASH;
+					$this->token_length = $this->at - $this->token_starts_at;
+					return true;
+				}
 			}
 			// Otherwise, return a <delim-token> with its value set to the current input code point.
 			++$this->at;
@@ -382,7 +389,11 @@ class CSSProcessor {
 			// consume an ident sequence, create an <at-keyword-token> with its value set to the returned value,
 			// and return it.
 			if ( $this->check_if_3_code_points_start_an_ident_sequence( $this->at ) ) {
-				$this->token_name   = $this->consume_ident_sequence();
+				$decoded = $this->consume_ident_sequence();
+				if ( null !== $decoded ) {
+					// Only store decoded value if escapes were present
+					$this->token_value = $decoded;
+				}
 				$this->token_type   = self::TOKEN_AT_KEYWORD;
 				$this->token_length = $this->at - $this->token_starts_at;
 				return true;
@@ -519,21 +530,48 @@ class CSSProcessor {
 	}
 
 	/**
-	 * Gets the current token value (for numbers).
+	 * Gets the current token value.
 	 *
-	 * @return float|null
+	 * Returns the semantic value of the token:
+	 * - For numbers/percentages: the numeric value (float)
+	 * - For dimensions: the numeric value (float), use get_token_unit() for the unit
+	 * - For identifiers/functions/hash/at-keywords: the decoded identifier string
+	 * - For strings/URLs: the decoded string value
+	 * - For other tokens: null
+	 *
+	 * @return string|float|null
 	 */
 	public function get_token_value() {
-		return $this->token_value;
-	}
+		// If token_value is already set (number or decoded string), return it
+		if ( null !== $this->token_value ) {
+			return $this->token_value;
+		}
 
-	/**
-	 * Gets the current token name (for functions).
-	 *
-	 * @return string|null
-	 */
-	public function get_token_name(): ?string {
-		return $this->token_name;
+		// Otherwise, compute from token indices based on token type
+		if ( null === $this->token_starts_at || null === $this->token_length ) {
+			return null;
+		}
+
+		switch ( $this->token_type ) {
+			case self::TOKEN_HASH:
+				// Hash value starts after the # character
+				return substr( $this->css, $this->token_starts_at + 1, $this->token_length - 1 );
+
+			case self::TOKEN_AT_KEYWORD:
+				// At-keyword value starts after the @ character
+				return substr( $this->css, $this->token_starts_at + 1, $this->token_length - 1 );
+
+			case self::TOKEN_FUNCTION:
+				// Function name is everything except the final (
+				return substr( $this->css, $this->token_starts_at, $this->token_length - 1 );
+
+			case self::TOKEN_IDENT:
+				// Identifier is the entire token
+				return substr( $this->css, $this->token_starts_at, $this->token_length );
+
+			default:
+				return null;
+		}
 	}
 
 	/**
@@ -601,7 +639,6 @@ class CSSProcessor {
 		$this->token_starts_at       = null;
 		$this->token_length          = null;
 		$this->token_value           = null;
-		$this->token_name            = null;
 		$this->token_unit            = null;
 		$this->token_value_starts_at = null;
 		$this->token_value_length    = null;
@@ -649,7 +686,7 @@ class CSSProcessor {
 					// Return the <string-token>.
 					++$this->at;
 					$this->token_type            = self::TOKEN_STRING;
-					$this->token_name            = $decoded_value;
+					$this->token_value           = $decoded_value;
 					$this->token_length          = $this->at - $this->token_starts_at;
 					$this->token_value_starts_at = $value_starts_at;
 					$this->token_value_length    = $this->at - $value_starts_at - 1;
@@ -670,7 +707,7 @@ class CSSProcessor {
 					 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
 					 */
 					$this->token_type            = self::TOKEN_BAD_STRING;
-					$this->token_name            = $decoded_value;
+					$this->token_value           = $decoded_value;
 					$this->token_length          = $this->at - $this->token_starts_at;
 					$this->token_value_starts_at = $value_starts_at;
 					$this->token_value_length    = $this->at - $value_starts_at;
@@ -713,7 +750,7 @@ class CSSProcessor {
 		// EOF
 		// This is a parse error. Return the <string-token>.
 		$this->token_type            = self::TOKEN_STRING;
-		$this->token_name            = $decoded_value;
+		$this->token_value           = $decoded_value;
 		$this->token_length          = $this->at - $this->token_starts_at;
 		$this->token_value_starts_at = $value_starts_at;
 		$this->token_value_length    = $this->at - $value_starts_at;
@@ -750,7 +787,8 @@ class CSSProcessor {
 		}
 
 		// If the next 2 input code points are U+002E FULL STOP (.) followed by a digit, then.
-		if ( $this->at + 1 < $this->length &&
+		if (
+			$this->at + 1 < $this->length &&
 			'.' === $this->css[ $this->at ] &&
 			$this->css[ $this->at + 1 ] >= '0' &&
 			$this->css[ $this->at + 1 ] <= '9'
@@ -815,7 +853,15 @@ class CSSProcessor {
 			// Create a <dimension-token> with the same value and type flag as number,
 			// and a unit set initially to the empty string.
 			// Consume an ident sequence. Set the <dimension-token>'s unit to the returned value.
-			$this->token_unit   = $this->consume_ident_sequence();
+			$unit_start = $this->at;
+			$decoded    = $this->consume_ident_sequence();
+			if ( null !== $decoded ) {
+				// Escapes were present, use decoded value
+				$this->token_unit = $decoded;
+			} else {
+				// No escapes, compute from substring
+				$this->token_unit = substr( $this->css, $unit_start, $this->at - $unit_start );
+			}
 			$this->token_type   = self::TOKEN_DIMENSION;
 			$this->token_length = $this->at - $this->token_starts_at;
 			return true;
@@ -848,7 +894,9 @@ class CSSProcessor {
 	 */
 	private function consume_ident_like(): bool {
 		// Consume an ident sequence, and let string be the result.
-		$string = $this->consume_ident_sequence();
+		$ident_start = $this->at;
+		$decoded     = $this->consume_ident_sequence();
+		$string      = ( null !== $decoded ) ? $decoded : substr( $this->css, $ident_start, $this->at - $ident_start );
 
 		// If string's value is an ASCII case-insensitive match for "url",
 		// and the next input code point is U+0028 LEFT PARENTHESIS (().
@@ -866,8 +914,10 @@ class CSSProcessor {
 				$next = $this->css[ $this->at + $ws_len ];
 				if ( '"' === $next || "'" === $next ) {
 					// then create a <function-token> with its value set to string and return it.
+					if ( null !== $decoded ) {
+						$this->token_value = $decoded;
+					}
 					$this->token_type   = self::TOKEN_FUNCTION;
-					$this->token_name   = $string;
 					$this->token_length = $this->at - $this->token_starts_at;
 					return true;
 				}
@@ -883,15 +933,19 @@ class CSSProcessor {
 			// Consume it.
 			++$this->at;
 			// Create a <function-token> with its value set to string and return it.
+			if ( null !== $decoded ) {
+				$this->token_value = $decoded;
+			}
 			$this->token_type   = self::TOKEN_FUNCTION;
-			$this->token_name   = $string;
 			$this->token_length = $this->at - $this->token_starts_at;
 			return true;
 		}
 
 		// Otherwise, create an <ident-token> with its value set to string and return it.
+		if ( null !== $decoded ) {
+			$this->token_value = $decoded;
+		}
 		$this->token_type   = self::TOKEN_IDENT;
-		$this->token_name   = $string;
 		$this->token_length = $this->at - $this->token_starts_at;
 		return true;
 	}
@@ -922,7 +976,7 @@ class CSSProcessor {
 			if ( ')' === $this->css[ $this->at ] ) {
 				++$this->at;
 				$this->token_type            = self::TOKEN_URL;
-				$this->token_name            = $value;
+				$this->token_value           = $value;
 				$this->token_length          = $this->at - $this->token_starts_at;
 				$this->token_value_starts_at = $value_starts_at;
 				$this->token_value_length    = $this->at - $value_starts_at - 1;
@@ -942,7 +996,7 @@ class CSSProcessor {
 				if ( $this->at >= $this->length ) {
 					// EOF is a parse error, but we return the <url-token> anyway.
 					$this->token_type            = self::TOKEN_URL;
-					$this->token_name            = $value;
+					$this->token_value           = $value;
 					$this->token_length          = $this->at - $this->token_starts_at;
 					$this->token_value_starts_at = $value_starts_at;
 					$this->token_value_length    = $value_ends_at - $value_starts_at;
@@ -953,7 +1007,7 @@ class CSSProcessor {
 					// Skip the closing parenthesis and return the <url-token>.
 					++$this->at;
 					$this->token_type            = self::TOKEN_URL;
-					$this->token_name            = $value;
+					$this->token_value           = $value;
 					$this->token_length          = $this->at - $this->token_starts_at;
 					$this->token_value_starts_at = $value_starts_at;
 					$this->token_value_length    = $value_ends_at - $value_starts_at;
@@ -1021,7 +1075,7 @@ class CSSProcessor {
 		// EOF
 		// This is a parse error. Return the <url-token>.
 		$this->token_type            = self::TOKEN_URL;
-		$this->token_name            = $value;
+		$this->token_value           = $value;
 		$this->token_length          = $this->at - $this->token_starts_at;
 		$this->token_value_starts_at = $value_starts_at;
 		$this->token_value_length    = $this->at - $value_starts_at;
@@ -1069,31 +1123,43 @@ class CSSProcessor {
 	 * Identifiers can contain letters, digits, hyphens, underscores, non-ASCII
 	 * characters, and escape sequences. Null bytes are replaced with U+FFFD.
 	 *
+	 * Returns the decoded identifier string if escapes were encountered,
+	 * or null if no decoding was needed (can use raw substring).
+	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#consume-name
 	 *
-	 * @return string
+	 * @return string|null Decoded string if escapes present, null otherwise.
 	 */
-	private function consume_ident_sequence(): string {
-		$result = '';
+	private function consume_ident_sequence(): ?string {
+		$start       = $this->at;
+		$has_escapes = false;
+		$decoded     = '';
 
 		while ( $this->at < $this->length ) {
 			$codepoint_bytes = $this->consume_ident_codepoint( $this->at );
 			if ( $codepoint_bytes > 0 ) {
-				$result   .= substr( $this->css, $this->at, $codepoint_bytes );
+				if ( $has_escapes ) {
+					$decoded .= substr( $this->css, $this->at, $codepoint_bytes );
+				}
 				$this->at += $codepoint_bytes;
 				continue;
 			}
 
 			if ( $this->is_valid_escape( $this->at ) ) {
+				// First escape encountered - copy everything so far
+				if ( ! $has_escapes ) {
+					$has_escapes = true;
+					$decoded     = substr( $this->css, $start, $this->at - $start );
+				}
 				++$this->at;
-				$result .= $this->consume_escape();
+				$decoded .= $this->consume_escape();
 				continue;
 			}
 
 			break;
 		}
 
-		return $result;
+		return $has_escapes ? $decoded : null;
 	}
 
 	/**
