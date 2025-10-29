@@ -316,7 +316,7 @@ class CSSProcessor {
 		if ( '#' === $char ) {
 			if ( $this->at + 1 < $this->length &&
 				(
-					$this->is_ident_code_point_at( $this->at + 1 ) ||
+					$this->consume_ident_codepoint( $this->at + 1 ) > 0 ||
 					// The next two input code points are a valid escape.
 					$this->is_valid_escape( $this->at + 1 )
 				)
@@ -887,8 +887,7 @@ class CSSProcessor {
 	private function consume_url(): bool {
 		// Initially create a <url-token> with its value set to the empty string.
 		// Consume as much whitespace as possible.
-		$ws_len    = strspn( $this->css, "\t\n\f\r ", $this->at );
-		$this->at += $ws_len;
+		$this->at += strspn( $this->css, "\t\n\f\r ", $this->at );
 
 		$value_starts_at = $this->at;
 		$value           = '';
@@ -1077,9 +1076,16 @@ class CSSProcessor {
 	 * @return int The number of bytes consumed.
 	 */
 	private function consume_ident_codepoint( $at ): int {
-		// Supported ASCII codepoints.
-		$ascii_len = strspn( $this->css, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-', $this->at, 1 );
-		if ( $ascii_len > 0 ) {
+		if ( $at > $this->length ) {
+			return 0;
+		}
+
+		// ASCII codepoints.
+		if ( ( $this->css[ $at ] >= 'A' && $this->css[ $at ] <= 'Z' ) ||
+			( $this->css[ $at ] >= 'a' && $this->css[ $at ] <= 'z' ) ||
+			( $this->css[ $at ] >= '0' && $this->css[ $at ] <= '9' ) ||
+			'_' === $this->css[ $at ] ||
+			'-' === $this->css[ $at ] ) {
 			return 1;
 		}
 
@@ -1089,22 +1095,20 @@ class CSSProcessor {
 		}
 
 		// Non-ASCII codepoints (>= 0x80).
-		if ( ord( $this->css[ $at ] ) >= 0x80 ) {
-			$codepoint = $this->get_codepoint_at( $this->at, $matched_bytes );
+		$codepoint = $this->get_codepoint_at( $this->at, $matched_bytes );
 
-			// We're in trouble!
-			// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
-			// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
-			// an error would be useful for sure.
-			// For now, we'll just consume that byte to prevent infinite loop and keep processing.
-			if ( 0 === $matched_bytes ) {
-				$matched_bytes = 1;
-			}
+		// We're in trouble!
+		// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
+		// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
+		// an error would be useful for sure.
+		// For now, we'll just consume that byte to prevent infinite loop and keep processing.
+		if ( 0 === $matched_bytes ) {
+			$matched_bytes = 1;
+		}
 
-			// Check if the codepoint is actually >= 0x80 (non-ASCII).
-			if ( null !== $codepoint && $codepoint >= 0x80 ) {
-				return $matched_bytes;
-			}
+		// Check if the codepoint is actually >= 0x80 (non-ASCII).
+		if ( null !== $codepoint && $codepoint >= 0x80 ) {
+			return $matched_bytes;
 		}
 
 		return 0;
@@ -1301,34 +1305,7 @@ class CSSProcessor {
 			++$offset;
 		}
 
-		return $this->is_ident_code_point_at( $offset ) || $this->is_valid_escape( $offset );
-	}
-
-	/**
-	 * Checks if the code point at the given offset is an ident code point.
-	 *
-	 * An ident code point is: an ident-start code point, a digit, or U+002D HYPHEN-MINUS (-).
-	 * This includes: A-Z, a-z, 0-9, _, -, and any non-ASCII code point (>= U+0080).
-	 *
-	 * @see https://www.w3.org/TR/css-syntax-3/#ident-code-point
-	 *
-	 * @param int $offset Byte offset.
-	 * @return bool
-	 */
-	private function is_ident_code_point_at( int $offset ): bool {
-		if ( $offset >= $this->length ) {
-			return false;
-		}
-
-		// Check for ASCII ident-start code points first: A-Z, a-z, 0-9, _, or -.
-		$ascii_len = strspn( $this->css, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-', $offset, 1 );
-		if ( $ascii_len > 0 ) {
-			return true;
-		}
-
-		// No dice, check for non-ASCII ident-start code points.
-		$codepoint = $this->get_codepoint_at( $offset, $matched_bytes );
-		return null !== $codepoint && $codepoint >= 0x80;
+		return $this->consume_ident_codepoint( $offset ) > 0 || $this->is_valid_escape( $offset );
 	}
 
 	/**
