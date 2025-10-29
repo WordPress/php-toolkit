@@ -465,7 +465,6 @@ class CSSProcessor {
 		 * @see https://www.w3.org/TR/css-syntax-3/#delim-token-diagram
 		 */
 		if ( ord( $char ) >= 0x80 ) {
-			$matched_bytes = 0;
 			$this->get_codepoint_at( $this->at, $matched_bytes );
 
 			// We're in trouble!
@@ -1118,7 +1117,6 @@ class CSSProcessor {
 
 		// Non-ASCII codepoints (>= 0x80)
 		if ( ord( $this->css[ $at ] ) >= 0x80 ) {
-			$matched_bytes = 0;
 			$codepoint     = $this->get_codepoint_at( $this->at, $matched_bytes );
 
 			// We're in trouble!
@@ -1198,7 +1196,6 @@ class CSSProcessor {
 			return "\xEF\xBF\xBD"; // U+FFFD
 		}
 
-		$matched_bytes = 0;
 		$this->get_codepoint_at( $this->at, $matched_bytes );
 
 		// We're in trouble!
