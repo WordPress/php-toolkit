@@ -3,43 +3,7 @@
 namespace WordPress\DataLiberation\URL;
 
 use function WordPress\Encoding\utf8_codepoint_at;
-
-/**
- * Converts a Unicode codepoint to its UTF-8 byte sequence.
- *
- * @param int $codepoint Unicode codepoint value.
- * @return string UTF-8 encoded byte sequence.
- */
-function codepoint_to_utf8( int $codepoint ): string {
-	// Invalid codepoints: zero, surrogates, or beyond Unicode range
-	if ( 0 === $codepoint || $codepoint > 0x10FFFF || ( $codepoint >= 0xD800 && $codepoint <= 0xDFFF ) ) {
-		return "\xEF\xBF\xBD"; // U+FFFD REPLACEMENT CHARACTER
-	}
-
-	// 1-byte sequence (ASCII): 0x00-0x7F
-	if ( $codepoint < 0x80 ) {
-		return chr( $codepoint );
-	}
-
-	// 2-byte sequence: 0x80-0x7FF
-	if ( $codepoint < 0x800 ) {
-		return chr( 0xC0 | ( $codepoint >> 6 ) ) .
-		       chr( 0x80 | ( $codepoint & 0x3F ) );
-	}
-
-	// 3-byte sequence: 0x800-0xFFFF
-	if ( $codepoint < 0x10000 ) {
-		return chr( 0xE0 | ( $codepoint >> 12 ) ) .
-		       chr( 0x80 | ( ( $codepoint >> 6 ) & 0x3F ) ) .
-		       chr( 0x80 | ( $codepoint & 0x3F ) );
-	}
-
-	// 4-byte sequence: 0x10000-0x10FFFF
-	return chr( 0xF0 | ( $codepoint >> 18 ) ) .
-	       chr( 0x80 | ( ( $codepoint >> 12 ) & 0x3F ) ) .
-	       chr( 0x80 | ( ( $codepoint >> 6 ) & 0x3F ) ) .
-	       chr( 0x80 | ( $codepoint & 0x3F ) );
-}
+use function WordPress\Encoding\codepoint_to_utf8_bytes;
 
 /**
  * Tokenizes CSS according to the CSS Syntax Level 3 specification.
@@ -52,11 +16,13 @@ function codepoint_to_utf8( int $codepoint ): string {
 class CSSProcessor {
 	/**
 	 * Token type constants matching the CSS Syntax Level 3 specification.
+	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#tokenization
 	 */
-	public const TOKEN_WHITESPACE      = 'whitespace-token';
-	public const TOKEN_COMMENT         = 'comment';
-	public const TOKEN_STRING          = 'string-token';
+	public const TOKEN_WHITESPACE = 'whitespace-token';
+	public const TOKEN_COMMENT    = 'comment';
+	public const TOKEN_STRING     = 'string-token';
+
 	/**
 	 * BAD-STRING tokens occur when a string contains an unescaped newline.
 	 *
@@ -68,23 +34,24 @@ class CSSProcessor {
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-bad-string-token
 	 */
-	public const TOKEN_BAD_STRING      = 'bad-string-token';
-	public const TOKEN_HASH            = 'hash-token';
-	public const TOKEN_DELIM           = 'delim-token';
-	public const TOKEN_NUMBER          = 'number-token';
-	public const TOKEN_PERCENTAGE      = 'percentage-token';
-	public const TOKEN_DIMENSION       = 'dimension-token';
-	public const TOKEN_AT_KEYWORD      = 'at-keyword-token';
-	public const TOKEN_COLON           = 'colon-token';
-	public const TOKEN_SEMICOLON       = 'semicolon-token';
-	public const TOKEN_COMMA           = 'comma-token';
-	public const TOKEN_LEFT_PAREN      = '(-token';
-	public const TOKEN_RIGHT_PAREN     = ')-token';
-	public const TOKEN_LEFT_BRACKET    = '[-token';
-	public const TOKEN_RIGHT_BRACKET   = ']-token';
-	public const TOKEN_LEFT_BRACE      = '{-token';
-	public const TOKEN_RIGHT_BRACE     = '}-token';
-	public const TOKEN_FUNCTION        = 'function-token';
+	public const TOKEN_BAD_STRING    = 'bad-string-token';
+	public const TOKEN_HASH          = 'hash-token';
+	public const TOKEN_DELIM         = 'delim-token';
+	public const TOKEN_NUMBER        = 'number-token';
+	public const TOKEN_PERCENTAGE    = 'percentage-token';
+	public const TOKEN_DIMENSION     = 'dimension-token';
+	public const TOKEN_AT_KEYWORD    = 'at-keyword-token';
+	public const TOKEN_COLON         = 'colon-token';
+	public const TOKEN_SEMICOLON     = 'semicolon-token';
+	public const TOKEN_COMMA         = 'comma-token';
+	public const TOKEN_LEFT_PAREN    = '(-token';
+	public const TOKEN_RIGHT_PAREN   = ')-token';
+	public const TOKEN_LEFT_BRACKET  = '[-token';
+	public const TOKEN_RIGHT_BRACKET = ']-token';
+	public const TOKEN_LEFT_BRACE    = '{-token';
+	public const TOKEN_RIGHT_BRACE   = '}-token';
+	public const TOKEN_FUNCTION      = 'function-token';
+
 	/**
 	 * URL tokens represent unquoted URLs in url() notation.
 	 *
@@ -93,7 +60,8 @@ class CSSProcessor {
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-url-token
 	 */
-	public const TOKEN_URL             = 'url-token';
+	public const TOKEN_URL = 'url-token';
+
 	/**
 	 * BAD-URL tokens occur when a URL contains invalid characters.
 	 *
@@ -105,18 +73,18 @@ class CSSProcessor {
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-bad-url-token
 	 */
-	public const TOKEN_BAD_URL         = 'bad-url-token';
+	public const TOKEN_BAD_URL = 'bad-url-token';
 
 	/**
 	 * Identifier tokens, such as `color`, `margin-top`, `red`,
 	 * `inherit`, `--my-var`, `\escaped`, `über` (Unicode), etc.
-	 * 
+	 *
 	 * They can contain: letters, digits, hyphens, underscores, non-ASCII, escapes
 	 * and cannot start with a digit (unless preceded by a hyphen).
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-ident-token
 	 */
-	public const TOKEN_IDENT           = 'ident-token';
+	public const TOKEN_IDENT = 'ident-token';
 
 	/**
 	 * CDC (Comment Delimiter Close) token: -->
@@ -135,7 +103,7 @@ class CSSProcessor {
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-CDC-token
 	 */
-	public const TOKEN_CDC             = 'CDC-token';
+	public const TOKEN_CDC = 'CDC-token';
 
 	/**
 	 * CDO (Comment Delimiter Open) token: <!--
@@ -145,7 +113,7 @@ class CSSProcessor {
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-CDO-token
 	 */
-	public const TOKEN_CDO             = 'CDO-token';
+	public const TOKEN_CDO = 'CDO-token';
 	/**
 	 * EOF (End Of File) token marks the end of the input stream.
 	 *
@@ -154,7 +122,7 @@ class CSSProcessor {
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-eof-token
 	 */
-	public const TOKEN_EOF             = 'EOF-token';
+	public const TOKEN_EOF = 'EOF-token';
 
 	/**
 	 * @var string
@@ -193,65 +161,69 @@ class CSSProcessor {
 	 */
 	private $current_codepoint_offset = -1;
 
-	// Current token properties
 	/**
 	 * The type of the current token. One of the self::TOKEN_* constants.
 	 *
 	 * @var string|null
 	 */
-	private $token_type              = null;
+	private $token_type = null;
+
 	/**
 	 * The byte offset at which the current token starts.
-	 * 
+	 *
 	 * Example:
-	 * 
+	 *
 	 * background-image: url(https://example.com/image.jpg);
 	 *                   ^ token_starts_at
 	 *
 	 * @var int|null
 	 */
-	private $token_starts_at         = null;
+	private $token_starts_at = null;
+
 	/**
 	 * The byte length of the current token.
 	 *
 	 * Example:
-	 * 
+	 *
 	 * background-image: url(https://example.com/image.jpg);
 	 *                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 	 *                             token_length
 	 *
 	 * @var int|null
 	 */
-	private $token_length            = null;
+	private $token_length = null;
+
 	/**
 	 * The string value of the current token.
 	 *
 	 * @var string|null
 	 */
-	private $token_value             = null;
-	private $token_name              = null;
-	private $token_unit              = null;
+	private $token_value = null;
+	private $token_name  = null;
+	private $token_unit  = null;
+
 	/**
 	 * The byte offset at which the value of the current token starts.
 	 * It's used for STRING and URL tokens. For example:
-	 * 
+	 *
 	 * background-image: url(https://example.com/image.jpg);
 	 *                       ^ token_value_starts_at
 	 *
 	 * @var int|null
 	 */
-	private $token_value_starts_at   = null;
+	private $token_value_starts_at = null;
+
 	/**
 	 * The byte offset at which the value of the current token starts.
 	 * It's relevant for STRING and URL tokens. For example:
-	 * 
+	 *
 	 * background-image: url(https://example.com/image.jpg);
 	 *                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 	 *                             token_value_length
 	 *
 	 * @var int|null
 	 */
-	private $token_value_length      = null;
+	private $token_value_length = null;
 
 	/**
 	 * @param string $css CSS source to tokenize.
@@ -289,20 +261,20 @@ class CSSProcessor {
 			'/' === $this->css[ $this->at ] &&
 			'*' === $this->css[ $this->at + 1 ]
 		) {
-			$this->token_type   = self::TOKEN_COMMENT;
-			$this->token_starts_at = $this->at;
+			$this->token_type            = self::TOKEN_COMMENT;
+			$this->token_starts_at       = $this->at;
 			$this->token_value_starts_at = $this->at;
 
-			$end = strpos( $this->css, '*/', $this->at + 2 );
-			$this->at = false !== $end ? $end + 2 : $this->length;
-			$this->token_length = $this->at - $this->token_starts_at;
+			$end                      = strpos( $this->css, '*/', $this->at + 2 );
+			$this->at                 = false !== $end ? $end + 2 : $this->length;
+			$this->token_length       = $this->at - $this->token_starts_at;
 			$this->token_value_length = $this->token_length - 4;
 			return true;
 		}
 
 		/*
 		 * Whitespace tokens.
-		 * 
+		 *
 		 * We consider U+000A LINE FEED, U+0009 CHARACTER TABULATION, and U+0020 SPACE bytes covered by the spec.
 		 * In addition, we also capture U+000D CARRIAGE RETURN and U+000C FORM FEED that are normally converted to
 		 * U+000A LINE FEED during the preprocessing phase.
@@ -312,10 +284,10 @@ class CSSProcessor {
 		 */
 		$whitespace_length = strspn( $this->css, "\t\n\f\r ", $this->at );
 		if ( $whitespace_length > 0 ) {
-			$this->token_type   = self::TOKEN_WHITESPACE;
-			$this->token_length = $whitespace_length;
+			$this->token_type      = self::TOKEN_WHITESPACE;
+			$this->token_length    = $whitespace_length;
 			$this->token_starts_at = $this->at;
-			$this->at    += $whitespace_length;
+			$this->at             += $whitespace_length;
 			return true;
 		}
 
@@ -328,7 +300,7 @@ class CSSProcessor {
 			return $this->consume_string();
 		}
 
-		$char = $this->css[ $this->at ];
+		$char                  = $this->css[ $this->at ];
 		$this->token_starts_at = $this->at;
 
 		/*
@@ -340,8 +312,7 @@ class CSSProcessor {
 		 * @see https://www.w3.org/TR/css-syntax-3/#consume-token
 		 */
 		if ( '#' === $char ) {
-			if ( 
-				$this->at + 1 < $this->length &&
+			if ( $this->at + 1 < $this->length &&
 				(
 					$this->is_ident_code_point_at( $this->at + 1 ) ||
 					// the next two input code points are a valid escape:
@@ -349,7 +320,7 @@ class CSSProcessor {
 				)
 			) {
 				// Create a <hash-token>.
-				$this->at++;
+				++$this->at;
 
 				// We skip this check as we don't track the type flag:
 				// > If the next 3 input code points would start an ident sequence,
@@ -362,7 +333,7 @@ class CSSProcessor {
 				return true;
 			}
 			// Otherwise, return a <delim-token> with its value set to the current input code point.
-			$this->at++;
+			++$this->at;
 			$this->token_type   = self::TOKEN_DELIM;
 			$this->token_length = 1;
 			return true;
@@ -389,7 +360,7 @@ class CSSProcessor {
 			'}' => self::TOKEN_RIGHT_BRACE,
 		);
 		if ( isset( $simple[ $char ] ) ) {
-			$this->at++;
+			++$this->at;
 			$this->token_type   = $simple[ $char ];
 			$this->token_length = 1;
 			return true;
@@ -444,7 +415,7 @@ class CSSProcessor {
 			'>' === $this->css[ $this->at + 2 ]
 		) {
 			// Consume them and return a <CDC-token>.
-			$this->at    += 3;
+			$this->at          += 3;
 			$this->token_type   = self::TOKEN_CDC;
 			$this->token_length = 3;
 			return true;
@@ -459,11 +430,11 @@ class CSSProcessor {
 		 * @see https://www.w3.org/TR/css-syntax-3/#CDO-token-diagram
 		 */
 		if ( '<' === $char && $this->at + 3 < $this->length &&
-		     '!' === $this->css[ $this->at + 1 ] &&
-		     '-' === $this->css[ $this->at + 2 ] &&
-		     '-' === $this->css[ $this->at + 3 ] ) {
+			'!' === $this->css[ $this->at + 1 ] &&
+			'-' === $this->css[ $this->at + 2 ] &&
+			'-' === $this->css[ $this->at + 3 ] ) {
 			// Consume them and return a <CDO-token>.
-			$this->at    += 4;
+			$this->at          += 4;
 			$this->token_type   = self::TOKEN_CDO;
 			$this->token_length = 4;
 			return true;
@@ -494,22 +465,26 @@ class CSSProcessor {
 		 * @see https://www.w3.org/TR/css-syntax-3/#delim-token-diagram
 		 */
 		if ( ord( $char ) >= 0x80 ) {
-			$matched_bytes     = 0;
+			$matched_bytes = 0;
 			$this->get_codepoint_at( $this->at, $matched_bytes );
 
-			// Safeguard: if get_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
+			// We're in trouble!
+			// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
+			// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
+			// an error would be useful for sure.
+			// For now, we'll just skip 1 byte to prevent infinite loop and keep processing.
 			if ( 0 === $matched_bytes ) {
 				$matched_bytes = 1;
 			}
 
-			$this->at    += $matched_bytes;
+			$this->at          += $matched_bytes;
 			$this->token_type   = self::TOKEN_DELIM;
 			$this->token_length = $matched_bytes;
 			return true;
 		}
 
 		// Single ASCII delim
-		$this->at++;
+		++$this->at;
 		$this->token_type   = self::TOKEN_DELIM;
 		$this->token_length = 1;
 		return true;
@@ -603,14 +578,14 @@ class CSSProcessor {
 	 * Clears token state between tokens.
 	 */
 	private function after_token(): void {
-		$this->token_type              = null;
-		$this->token_starts_at         = null;
-		$this->token_length            = null;
-		$this->token_value             = null;
-		$this->token_name              = null;
-		$this->token_unit              = null;
-		$this->token_value_starts_at   = null;
-		$this->token_value_length      = null;
+		$this->token_type            = null;
+		$this->token_starts_at       = null;
+		$this->token_length          = null;
+		$this->token_value           = null;
+		$this->token_name            = null;
+		$this->token_unit            = null;
+		$this->token_value_starts_at = null;
+		$this->token_value_length    = null;
 	}
 
 	/**
@@ -634,8 +609,8 @@ class CSSProcessor {
 		$codepoint = utf8_codepoint_at( $this->css, $offset, $matched_bytes );
 
 		// Cache the result
-		$this->current_codepoint = $codepoint;
-		$this->current_codepoint_bytes = $matched_bytes;
+		$this->current_codepoint        = $codepoint;
+		$this->current_codepoint_bytes  = $matched_bytes;
 		$this->current_codepoint_offset = $offset;
 
 		return $codepoint;
@@ -655,19 +630,19 @@ class CSSProcessor {
 	private function consume_string(): bool {
 		// Initially create a <string-token> with its value set to the empty string.
 		$this->token_starts_at = $this->at;
-		$ending_char = $this->css[ $this->at ];
+		$ending_char           = $this->css[ $this->at ];
 
 		// Skip past the opening quote.
-		$this->at++;
+		++$this->at;
 		$value_starts_at = $this->at;
 
 		// Characters that need special handling: the ending quote, newlines, backslashes.
-		$special_chars = $ending_char === "'" ? "'\n\f\r\\" : "\"\n\f\r\\";
+		$special_chars = "'" === $ending_char ? "'\n\f\r\\" : "\"\n\f\r\\";
 
 		while ( $this->at < $this->length ) {
 			// Consume normal characters until we hit a special character.
 			$normal_len = strcspn( $this->css, $special_chars, $this->at );
-			$this->at += $normal_len;
+			$this->at  += $normal_len;
 
 			if ( $this->at >= $this->length ) {
 				break; // EOF
@@ -678,11 +653,11 @@ class CSSProcessor {
 				case $ending_char:
 					// Ending quote.
 					// Return the <string-token>.
-					$this->at++;
-					$this->token_type              = self::TOKEN_STRING;
-					$this->token_length            = $this->at - $this->token_starts_at;
-					$this->token_value_starts_at   = $value_starts_at;
-					$this->token_value_length      = $this->at - $value_starts_at - 1;
+					++$this->at;
+					$this->token_type            = self::TOKEN_STRING;
+					$this->token_length          = $this->at - $this->token_starts_at;
+					$this->token_value_starts_at = $value_starts_at;
+					$this->token_value_length    = $this->at - $value_starts_at - 1;
 					return true;
 
 				case "\n":
@@ -699,10 +674,10 @@ class CSSProcessor {
 					 *
 					 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
 					 */
-					$this->token_type              = self::TOKEN_BAD_STRING;
-					$this->token_length            = $this->at - $this->token_starts_at;
-					$this->token_value_starts_at   = $value_starts_at;
-					$this->token_value_length      = $this->at - $value_starts_at;
+					$this->token_type            = self::TOKEN_BAD_STRING;
+					$this->token_length          = $this->at - $this->token_starts_at;
+					$this->token_value_starts_at = $value_starts_at;
+					$this->token_value_length    = $this->at - $value_starts_at;
 					return true;
 
 				case '\\':
@@ -712,24 +687,24 @@ class CSSProcessor {
 					// Otherwise, (the stream starts with a valid escape) consume an escaped
 					// code point and append the returned code point to the <string-token>'s value.
 					if ( $this->is_valid_escape( $this->at ) ) {
-						$this->at++;
+						++$this->at;
 						$this->consume_escape();
 						continue 2;
 					}
 					// Handle escaped newline (not counted as valid escape by is_valid_escape)
-					$this->at++;
+					++$this->at;
 					if ( $this->at < $this->length ) {
 						$next = $this->css[ $this->at ];
 						if ( "\n" === $next || "\f" === $next ) {
-							$this->at++;
+							++$this->at;
 						} elseif ( "\r" === $next ) {
-							$this->at++;
+							++$this->at;
 							// Handle \r\n as a single newline.
 							// In a fully spec-compliant parser, \r\n pairs would be replaced with a single
 							// newline, but we're not doing input pre-processing here to save memory.
 							// https://www.w3.org/TR/css-syntax-3/#input-preprocessing
 							if ( $this->at < $this->length && "\n" === $this->css[ $this->at ] ) {
-								$this->at++;
+								++$this->at;
 							}
 						}
 					}
@@ -743,10 +718,10 @@ class CSSProcessor {
 
 		// EOF
 		// This is a parse error. Return the <string-token>.
-		$this->token_type              = self::TOKEN_STRING;
-		$this->token_length            = $this->at - $this->token_starts_at;
-		$this->token_value_starts_at   = $value_starts_at;
-		$this->token_value_length      = $this->at - $value_starts_at;
+		$this->token_type            = self::TOKEN_STRING;
+		$this->token_length          = $this->at - $this->token_starts_at;
+		$this->token_value_starts_at = $value_starts_at;
+		$this->token_value_length    = $this->at - $value_starts_at;
 		return true;
 	}
 
@@ -770,7 +745,7 @@ class CSSProcessor {
 		// If the next input code point is U+002B PLUS SIGN (+) or U+002D HYPHEN-MINUS (-),
 		// consume it and append it to repr.
 		if ( '+' === $this->css[ $this->at ] || '-' === $this->css[ $this->at ] ) {
-			$this->at++;
+			++$this->at;
 		}
 
 		// While the next input code point is a digit, consume it and append it to repr.
@@ -781,12 +756,12 @@ class CSSProcessor {
 
 		// If the next 2 input code points are U+002E FULL STOP (.) followed by a digit, then:
 		if ( $this->at + 1 < $this->length &&
-		     '.' === $this->css[ $this->at ] &&
-		     $this->css[ $this->at + 1 ] >= '0' &&
-		     $this->css[ $this->at + 1 ] <= '9'
+			'.' === $this->css[ $this->at ] &&
+			$this->css[ $this->at + 1 ] >= '0' &&
+			$this->css[ $this->at + 1 ] <= '9'
 		) {
 			// Consume them.
-			$this->at++;
+			++$this->at;
 			// While the next input code point is a digit, consume it and append it to repr.
 			$digits = strspn( $this->css, '0123456789', $this->at );
 			if ( $digits > 0 ) {
@@ -801,15 +776,15 @@ class CSSProcessor {
 			$e = $this->css[ $this->at ];
 			if ( 'e' === $e || 'E' === $e ) {
 				$save_pos = $this->at;
-				$this->at++;
+				++$this->at;
 				$has_exp = false;
 
 				if ( $this->at < $this->length ) {
 					$next = $this->css[ $this->at ];
 					if ( ( '+' === $next || '-' === $next ) && $this->at + 1 < $this->length &&
-					     $this->css[ $this->at + 1 ] >= '0' && $this->css[ $this->at + 1 ] <= '9' ) {
+						$this->css[ $this->at + 1 ] >= '0' && $this->css[ $this->at + 1 ] <= '9' ) {
 						// Consume them.
-						$this->at++;
+						++$this->at;
 						$has_exp = true;
 					} elseif ( $next >= '0' && $next <= '9' ) {
 						$has_exp = true;
@@ -854,7 +829,7 @@ class CSSProcessor {
 		// Otherwise, if the next input code point is U+0025 PERCENTAGE SIGN (%), consume it.
 		// Create a <percentage-token> with the same value as number, and return it.
 		if ( $this->at < $this->length && '%' === $this->css[ $this->at ] ) {
-			$this->at++;
+			++$this->at;
 			$this->token_type   = self::TOKEN_PERCENTAGE;
 			$this->token_length = $this->at - $this->token_starts_at;
 			return true;
@@ -884,7 +859,7 @@ class CSSProcessor {
 		// and the next input code point is U+0028 LEFT PARENTHESIS (()
 		if ( 0 === strcasecmp( $string, 'url' ) && $this->at < $this->length && '(' === $this->css[ $this->at ] ) {
 			// consume it
-			$this->at++;
+			++$this->at;
 
 			// While the next two input code points are whitespace, consume the next input code point.
 			$ws_len = strspn( $this->css, "\t\n\f\r ", $this->at );
@@ -911,7 +886,7 @@ class CSSProcessor {
 		// Otherwise, if the next input code point is U+0028 LEFT PARENTHESIS (()
 		if ( $this->at < $this->length && '(' === $this->css[ $this->at ] ) {
 			// consume it
-			$this->at++;
+			++$this->at;
 			// Create a <function-token> with its value set to string and return it.
 			$this->token_type   = self::TOKEN_FUNCTION;
 			$this->token_name   = $string;
@@ -940,22 +915,22 @@ class CSSProcessor {
 	private function consume_url(): bool {
 		// Initially create a <url-token> with its value set to the empty string.
 		// Consume as much whitespace as possible.
-		$ws_len = strspn( $this->css, "\t\n\f\r ", $this->at );
+		$ws_len    = strspn( $this->css, "\t\n\f\r ", $this->at );
 		$this->at += $ws_len;
 
 		$value_starts_at = $this->at;
-		$value = '';
+		$value           = '';
 
 		// Repeatedly consume the next input code point from the stream:
 		while ( $this->at < $this->length ) {
 			// U+0029 RIGHT PARENTHESIS ())
 			// Return the <url-token>.
 			if ( ')' === $this->css[ $this->at ] ) {
-				$this->at++;
-				$this->token_type              = self::TOKEN_URL;
-				$this->token_length            = $this->at - $this->token_starts_at;
-				$this->token_value_starts_at   = $value_starts_at;
-				$this->token_value_length      = $this->at - $value_starts_at - 1;
+				++$this->at;
+				$this->token_type            = self::TOKEN_URL;
+				$this->token_length          = $this->at - $this->token_starts_at;
+				$this->token_value_starts_at = $value_starts_at;
+				$this->token_value_length    = $this->at - $value_starts_at - 1;
 				return true;
 			}
 
@@ -967,24 +942,27 @@ class CSSProcessor {
 			$ws_len = strspn( $this->css, "\t\n\f\r ", $this->at );
 			if ( $ws_len > 0 ) {
 				$value_ends_at = $this->at;
-				$this->at += $ws_len;
+				$this->at     += $ws_len;
 				// Accept either ) or EOF after whitespace
 				if ( $this->at >= $this->length ) {
-					// EOF after whitespace - valid URL
-					$this->token_type              = self::TOKEN_URL;
-					$this->token_length            = $this->at - $this->token_starts_at;
-					$this->token_value_starts_at   = $value_starts_at;
-					$this->token_value_length      = $value_ends_at - $value_starts_at;
+					// EOF is a parse error, but we return the <url-token> anyway.
+					$this->token_type            = self::TOKEN_URL;
+					$this->token_length          = $this->at - $this->token_starts_at;
+					$this->token_value_starts_at = $value_starts_at;
+					$this->token_value_length    = $value_ends_at - $value_starts_at;
 					return true;
 				}
+
 				if ( ')' === $this->css[ $this->at ] ) {
-					$this->at++;
-					$this->token_type              = self::TOKEN_URL;
-					$this->token_length            = $this->at - $this->token_starts_at;
-					$this->token_value_starts_at   = $value_starts_at;
-					$this->token_value_length      = $value_ends_at - $value_starts_at;
+					// Skip the closing parenthesis and return the <url-token>.
+					++$this->at;
+					$this->token_type            = self::TOKEN_URL;
+					$this->token_length          = $this->at - $this->token_starts_at;
+					$this->token_value_starts_at = $value_starts_at;
+					$this->token_value_length    = $value_ends_at - $value_starts_at;
 					return true;
 				}
+
 				return $this->consume_remnants_of_bad_url();
 			}
 
@@ -994,10 +972,18 @@ class CSSProcessor {
 				'"' === $this->css[ $this->at ] ||
 				"'" === $this->css[ $this->at ] ||
 				'(' === $this->css[ $this->at ] ||
-				$byte <= 0x0008 || // non-printable code point
-				$byte === 0x0B || // Line Tabulation
-			    ( $byte >= 0x000E && $byte <= 0x001F ) ||
-				$byte === 0x7F // Delete
+
+				// non-printable code point
+				$byte <= 0x08 ||
+
+				// Line Tabulation
+				0x0B === $byte ||
+
+				// Control characters
+				( $byte >= 0x000E && $byte <= 0x001F ) ||
+
+				// Delete
+				0x7F === $byte
 			) {
 				// Consume the remnants of a bad url,
 				// create a <bad-url-token>, and return it.
@@ -1009,7 +995,7 @@ class CSSProcessor {
 			// append the returned code point to the <url-token>'s value.
 			if ( '\\' === $this->css[ $this->at ] ) {
 				if ( $this->is_valid_escape( $this->at ) ) {
-					$this->at++;
+					++$this->at;
 					$value .= $this->consume_escape();
 					continue;
 				}
@@ -1020,24 +1006,27 @@ class CSSProcessor {
 
 			// anything else
 			// Append the current input code point to the <url-token>'s value.
-			$matched_bytes = 0;
 			$this->get_codepoint_at( $this->at, $matched_bytes );
 
-			// Safeguard: if get_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
+			// We're in trouble!
+			// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
+			// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
+			// an error would be useful for sure.
+			// For now, we'll just skip 1 byte to prevent infinite loop and keep processing.
 			if ( 0 === $matched_bytes ) {
 				$matched_bytes = 1;
 			}
 
-			$value         .= substr( $this->css, $this->at, $matched_bytes );
+			$value    .= substr( $this->css, $this->at, $matched_bytes );
 			$this->at += $matched_bytes;
 		}
 
 		// EOF
 		// This is a parse error. Return the <url-token>.
-		$this->token_type              = self::TOKEN_URL;
-		$this->token_length            = $this->at - $this->token_starts_at;
-		$this->token_value_starts_at   = $value_starts_at;
-		$this->token_value_length      = $this->at - $value_starts_at;
+		$this->token_type            = self::TOKEN_URL;
+		$this->token_length          = $this->at - $this->token_starts_at;
+		$this->token_value_starts_at = $value_starts_at;
+		$this->token_value_length    = $this->at - $value_starts_at;
 		return true;
 	}
 
@@ -1053,16 +1042,16 @@ class CSSProcessor {
 	 */
 	private function consume_remnants_of_bad_url(): bool {
 		while ( $this->at < $this->length ) {
-			$this->at += strcspn( $this->css, ")\\", $this->at );
+			$this->at += strcspn( $this->css, ')\\', $this->at );
 
 			if ( '\\' === $this->css[ $this->at ] ) {
-				$this->at++;
-				if($this->is_valid_escape( $this->at - 1 )) {
+				++$this->at;
+				if ( $this->is_valid_escape( $this->at - 1 ) ) {
 					$this->consume_escape();
 					continue;
 				}
-			} else if ( ')' === $this->css[ $this->at ] ) {
-				$this->at++;
+			} elseif ( ')' === $this->css[ $this->at ] ) {
+				++$this->at;
 				break;
 			}
 		}
@@ -1088,13 +1077,13 @@ class CSSProcessor {
 		while ( $this->at < $this->length ) {
 			$codepoint_bytes = $this->consume_ident_codepoint( $this->at );
 			if ( $codepoint_bytes > 0 ) {
-				$result .= substr( $this->css, $this->at, $codepoint_bytes );
+				$result   .= substr( $this->css, $this->at, $codepoint_bytes );
 				$this->at += $codepoint_bytes;
 				continue;
 			}
 
 			if ( $this->is_valid_escape( $this->at ) ) {
-				$this->at++;
+				++$this->at;
 				$result .= $this->consume_escape();
 				continue;
 			}
@@ -1111,29 +1100,29 @@ class CSSProcessor {
 	 *
 	 * ident code point
 	 *     An ident-start code point, a digit, or U+002D HYPHEN-MINUS (-).
-	 * 
+	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#ident-start-code-point
 	 * @return int The number of bytes consumed.
 	 */
-	private function consume_ident_codepoint($at): int {
+	private function consume_ident_codepoint( $at ): int {
 		// Supported ASCII codepoints
 		$ascii_len = strspn( $this->css, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-', $this->at, 1 );
-		if ($ascii_len > 0) {
+		if ( $ascii_len > 0 ) {
 			return 1;
 		}
 
 		// Special case for null bytes – they are replaced with U+FFFD during preprocessing.
-		if ( ord($this->css[$at]) === 0x00 ) {
+		if ( 0x00 === ord( $this->css[ $at ] ) ) {
 			return 1;
 		}
 
 		// Non-ASCII codepoints (>= 0x80)
-		if ( ord($this->css[$at]) >= 0x80 ) {
+		if ( ord( $this->css[ $at ] ) >= 0x80 ) {
 			$matched_bytes = 0;
-			$codepoint = $this->get_codepoint_at( $this->at, $matched_bytes );
+			$codepoint     = $this->get_codepoint_at( $this->at, $matched_bytes );
 
-			// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
 			// We're in trouble!
+			// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
 			// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
 			// an error would be useful for sure.
 			// For now, we'll just skip 1 byte to prevent infinite loop and keep processing.
@@ -1179,41 +1168,41 @@ class CSSProcessor {
 		$hex_len = strspn( $this->css, '0123456789ABCDEFabcdef', $this->at );
 		if ( $hex_len > 0 ) {
 			// Consume up to 6 hex digits.
-			$hex_len = min( $hex_len, 6 ); // Max 6 hex digits
-			$hex     = substr( $this->css, $this->at, $hex_len );
+			$hex_len   = min( $hex_len, 6 ); // Max 6 hex digits
+			$hex       = substr( $this->css, $this->at, $hex_len );
 			$this->at += $hex_len;
 
 			// If the next input code point is whitespace, consume it as well.
 			if ( $this->at < $this->length ) {
 				$next = $this->css[ $this->at ];
 				if ( "\t" === $next || "\n" === $next || "\f" === $next || ' ' === $next ) {
-					$this->at++;
+					++$this->at;
 				} elseif ( "\r" === $next ) {
-					$this->at++;
+					++$this->at;
 					// Handle \r\n as a single whitespace – the preprocessing phase would replace \r\n with \n.
 					if ( $this->at < $this->length && "\n" === $this->css[ $this->at ] ) {
-						$this->at++;
+						++$this->at;
 					}
 				}
 			}
 
 			// Convert the hex digits to a UTF-8 string
-			return codepoint_to_utf8( hexdec( $hex ) );
+			return codepoint_to_utf8_bytes( hexdec( $hex ) );
 		}
 
 		// anything else
 		// Return the current input code point.
 		// Null bytes are replaced with U+FFFD during preprocessing.
 		if ( "\x00" === $this->css[ $this->at ] ) {
-			$this->at++;
+			++$this->at;
 			return "\xEF\xBF\xBD"; // U+FFFD
 		}
-		
+
 		$matched_bytes = 0;
 		$this->get_codepoint_at( $this->at, $matched_bytes );
 
-		// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
 		// We're in trouble!
+		// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
 		// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
 		// an error would be useful for sure.
 		// For now, we'll just skip 1 byte to prevent infinite loop and keep processing.
@@ -1221,7 +1210,7 @@ class CSSProcessor {
 			$matched_bytes = 1;
 		}
 
-		$result         = substr( $this->css, $this->at, $matched_bytes );
+		$result    = substr( $this->css, $this->at, $matched_bytes );
 		$this->at += $matched_bytes;
 		return $result;
 	}
@@ -1253,7 +1242,7 @@ class CSSProcessor {
 			"\n" !== $this->css[ $offset + 1 ] &&
 
 			// Form feed is normalized to newline during preprocessing
-			"\f" !== $this->css[ $offset + 1 ] && 
+			"\f" !== $this->css[ $offset + 1 ] &&
 
 			// Carriage return is normalized to newline during preprocessing.
 			"\r" !== $this->css[ $offset + 1 ]
@@ -1294,7 +1283,7 @@ class CSSProcessor {
 			// Otherwise, return false.
 			return false;
 		}
-		
+
 		// U+002E FULL STOP (.)
 		if ( '.' === $this->css[ $this->at ] ) {
 			if ( $this->at + 1 >= $this->length ) {
@@ -1304,7 +1293,7 @@ class CSSProcessor {
 		}
 
 		// Digit
-		if( $this->css[ $this->at ] >= '0' && $this->css[ $this->at ] <= '9' ) {
+		if ( $this->css[ $this->at ] >= '0' && $this->css[ $this->at ] <= '9' ) {
 			return true;
 		}
 
@@ -1331,10 +1320,10 @@ class CSSProcessor {
 			return false;
 		}
 
-		if( '-' === $this->css[ $offset ] ) {
+		if ( '-' === $this->css[ $offset ] ) {
 			// If the second code point is a U+002D HYPHEN-MINUS (-), return true.
 			// e.g. --custom-property
-			if( $offset + 1 < $this->length && '-' === $this->css[ $offset + 1 ] ) {
+			if ( $offset + 1 < $this->length && '-' === $this->css[ $offset + 1 ] ) {
 				return true;
 			}
 			// Otherwise, move to the second codepoint and fall through to the next checks.
@@ -1363,13 +1352,12 @@ class CSSProcessor {
 
 		// Check for ASCII ident-start code points first: A-Z, a-z, 0-9, _, or -
 		$ascii_len = strspn( $this->css, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-', $offset, 1 );
-		if ($ascii_len > 0) {
+		if ( $ascii_len > 0 ) {
 			return true;
 		}
-		
+
 		// No dice, check for non-ASCII ident-start code points
 		$codepoint = $this->get_codepoint_at( $offset, $matched_bytes );
 		return null !== $codepoint && $codepoint >= 0x80;
 	}
-
 }
