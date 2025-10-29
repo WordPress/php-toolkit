@@ -1341,7 +1341,7 @@ class CSSProcessor {
 			// This codepoint is 1-byte ASCII so we can just increase the offset by 1.
 			++$offset;
 		}
-		
+
 		return $this->is_ident_code_point_at( $offset ) || $this->is_valid_escape( $offset );
 	}
 
@@ -1361,33 +1361,15 @@ class CSSProcessor {
 			return false;
 		}
 
-		// Get the code point at this offset
-		$matched_bytes = 0;
+		// Check for ASCII ident-start code points first: A-Z, a-z, 0-9, _, or -
+		$ascii_len = strspn( $this->css, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-', $offset, 1 );
+		if ($ascii_len > 0) {
+			return true;
+		}
+		
+		// No dice, check for non-ASCII ident-start code points
 		$codepoint = $this->get_codepoint_at( $offset, $matched_bytes );
-
-		if ( null === $codepoint ) {
-			return false;
-		}
-
-		// Check for ident-start code point: A-Z, a-z, _, or non-ASCII (>= U+0080)
-		if ( ( $codepoint >= 0x41 && $codepoint <= 0x5A ) ||  // A-Z
-		     ( $codepoint >= 0x61 && $codepoint <= 0x7A ) ||  // a-z
-		     0x5F === $codepoint ||                           // _
-		     $codepoint >= 0x80 ) {                           // non-ASCII
-			return true;
-		}
-
-		// Check for digit: 0-9
-		if ( $codepoint >= 0x30 && $codepoint <= 0x39 ) {
-			return true;
-		}
-
-		// Check for hyphen: -
-		if ( 0x002D === $codepoint ) {
-			return true;
-		}
-
-		return false;
+		return null !== $codepoint && $codepoint >= 0x80;
 	}
 
 }
