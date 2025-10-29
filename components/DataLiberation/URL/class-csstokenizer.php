@@ -215,24 +215,6 @@ class CSSTokenizer {
 	private $token_length = null;
 
 	/**
-	 * The string value of the current token.
-	 *
-	 * For numbers, this is a float.
-	 * For identifiers/functions/strings/URLs with escapes, this is a decoded string.
-	 * Otherwise, it's null and the value is computed from token indices.
-	 *
-	 * @var string|float|null
-	 */
-	private $token_value = null;
-
-	/**
-	 * The unit of the current token, e.g. "px", "em", "deg", etc.
-	 *
-	 * @var string|null
-	 */
-	private $token_unit = null;
-
-	/**
 	 * The byte offset at which the value of the current token starts.
 	 *
 	 * It is used for STRING and URL tokens. For example:
@@ -256,6 +238,24 @@ class CSSTokenizer {
 	 * @var int|null
 	 */
 	private $token_value_length = null;
+
+	/**
+	 * The string value of the current token.
+	 *
+	 * For numbers, this is a float.
+	 * For identifiers/functions/strings/URLs with escapes, this is a decoded string.
+	 * Otherwise, it's null and the value is computed from token indices.
+	 *
+	 * @var string|float|null
+	 */
+	private $token_value = null;
+
+	/**
+	 * The unit of the current token, e.g. "px", "em", "deg", etc.
+	 *
+	 * @var string|null
+	 */
+	private $token_unit = null;
 
 	/**
 	 * @param string $css CSS source to tokenize.
