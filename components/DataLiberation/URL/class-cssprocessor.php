@@ -1237,17 +1237,30 @@ class CSSProcessor {
 	 * @return bool
 	 */
 	private function is_valid_escape( int $offset ): bool {
+		// If the first code point is not U+005C REVERSE SOLIDUS (\), return false.
 		if ( $offset >= $this->length || '\\' !== $this->css[ $offset ] ) {
 			return false;
 		}
-		// Per CSS spec: if the second code point is a newline, return false.
-		// Otherwise (including EOF), return true.
+		// Otherwise, if the second code point is a newline, return false.
 		if ( $offset + 1 >= $this->length ) {
-			// Second code point is EOF - this is a valid escape per spec
+			// Second code point is EOF - this is a valid escape per spec (weird!)
+			// Are we sure we're interpreting the spec correctly?
 			return true;
 		}
-		$next = $this->css[ $offset + 1 ];
-		return "\n" !== $next && "\f" !== $next && "\r" !== $next;
+
+		// Otherwise, if the second code point is not a newline, return true.
+		return (
+			"\n" !== $this->css[ $offset + 1 ] &&
+
+			// Form feed is normalized to newline during preprocessing
+			"\f" !== $this->css[ $offset + 1 ] && 
+
+			// Carriage return is normalized to newline during preprocessing.
+			"\r" !== $this->css[ $offset + 1 ]
+
+			// We don't need to check for \r\n separately here. The \r check alone covers
+			// that scenario.
+		);
 	}
 
 	/**
