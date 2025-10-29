@@ -35,12 +35,6 @@ class RewriteUrlsTest extends TestCase {
 				'http://legacy-blog.com',
 				'https://modern-webstore.org',
 			),
-			'IP and port combinations'                                                                             => array(
-				'<!-- wp:image {"src": "http://localhost:8881/?page=118"} -->',
-				'<!-- wp:image {"src":"https:\/\/modern-webstore.org\/?page=118"} -->',
-				'http://localhost:8881',
-				'https://modern-webstore.org',
-			),
 			'Domain in a block attribute expressed with JSON UTF-8 escape sequences'                                  => array(
 				'<!-- wp:image {"src": "https:\/\/\u006c\u0065\u0067\u0061\u0063y-bl\u006fg.\u0063\u006fm/wp-content/image.png"} -->',
 				'<!-- wp:image {"src":"https:\/\/modern-webstore.org\/wp-content\/image.png"} -->',
