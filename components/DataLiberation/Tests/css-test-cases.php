@@ -1,9 +1,6 @@
 <?php
-
 /**
- * CSS Tokenizer Test Cases
- * Generated from @csstools/css-tokenizer-tests
- * DO NOT EDIT MANUALLY - regenerate using generate-css-tests.mjs
+ * CSS Tokenizer Test Cases generated from @rmenke/css-tokenizer-tests.
  */
 
 return array(
@@ -2410,56 +2407,16 @@ return array(
 		)
 	) 
 ,
-	"tests/ident/0007" => array(
-		'css' => "-§\n",
-		'tokens' => array(
-			array(
-				"type" => "delim-token",
-				"raw" => "-",
-				"startIndex" => 0,
-				"endIndex" => 1,
-				"structured" => array(
-					"value" => "-"
-				)
-			),
-			array(
-				"type" => "delim-token",
-				"raw" => "§",
-				"startIndex" => 1,
-				"endIndex" => 2,
-				"structured" => array(
-					"value" => "§"
-				)
-			),
-			array(
-				"type" => "whitespace-token",
-				"raw" => "\n",
-				"startIndex" => 2,
-				"endIndex" => 3,
-				"structured" => null
-			)
-		)
-	) 
-,
 	"tests/ident/0008" => array(
 		'css' => "-×\n",
 		'tokens' => array(
 			array(
-				"type" => "delim-token",
-				"raw" => "-",
+				"type" => "ident-token",
+				"raw" => "-×",
 				"startIndex" => 0,
-				"endIndex" => 1,
-				"structured" => array(
-					"value" => "-"
-				)
-			),
-			array(
-				"type" => "delim-token",
-				"raw" => "×",
-				"startIndex" => 1,
 				"endIndex" => 2,
 				"structured" => array(
-					"value" => "×"
+					"value" => "-×"
 				)
 			),
 			array(

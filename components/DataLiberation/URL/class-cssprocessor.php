@@ -381,7 +381,7 @@ class CSSProcessor {
 			// If the next 3 input code points after the @ would start an ident sequence,
 			// consume an ident sequence, create an <at-keyword-token> with its value set to the returned value,
 			// and return it.
-			if ( $this->would_next_3_code_points_start_an_ident( $this->at ) ) {
+			if ( $this->check_if_3_code_points_start_an_ident_sequence( $this->at ) ) {
 				$this->token_name   = $this->consume_ident_sequence();
 				$this->token_type   = self::TOKEN_AT_KEYWORD;
 				$this->token_length = $this->at - $this->token_starts_at;
@@ -405,21 +405,41 @@ class CSSProcessor {
 
 		/*
 		 * U+002D HYPHEN-MINUS (-)
-		 * If followed by another hyphen and >, this is a CDC token (-->)
-		 *
-		 * Comment Delimiter Close - legacy HTML comment syntax in CSS.
-		 *
-		 * @see https://www.w3.org/TR/css-syntax-3/#CDC-token-diagram
 		 */
-		if (
-			'-' === $char && $this->at + 2 < $this->length &&
-			'-' === $this->css[ $this->at + 1 ] &&
-			'>' === $this->css[ $this->at + 2 ]
-		) {
-			// Consume them and return a <CDC-token>.
-			$this->at          += 3;
-			$this->token_type   = self::TOKEN_CDC;
-			$this->token_length = 3;
+		if ( '-' === $char ) {
+			// This case is covered above:
+			// > If the input stream starts with a number.
+
+			/*
+			 * If followed by another hyphen and >, this is a CDC token (-->)
+			 *
+			 * Comment Delimiter Close - legacy HTML comment syntax in CSS.
+			 *
+			 * @see https://www.w3.org/TR/css-syntax-3/#CDC-token-diagram
+			 */
+			if (
+				$this->at + 2 < $this->length &&
+				'-' === $this->css[ $this->at + 1 ] &&
+				'>' === $this->css[ $this->at + 2 ]
+			) {
+				// Consume them and return a <CDC-token>.
+				$this->at          += 3;
+				$this->token_type   = self::TOKEN_CDC;
+				$this->token_length = 3;
+				return true;
+			}
+
+			// Otherwise, if the input stream starts with an ident sequence,
+			// reconsume the current input code point, consume an ident-like
+			// token, and return it.
+			if ( $this->check_if_3_code_points_start_an_ident_sequence( $this->at ) ) {
+				return $this->consume_ident_like();
+			}
+
+			// Otherwise, return a <delim-token> with its value set to the current input code point.
+			++$this->at;
+			$this->token_type   = self::TOKEN_DELIM;
+			$this->token_length = 1;
 			return true;
 		}
 
@@ -442,8 +462,6 @@ class CSSProcessor {
 			return true;
 		}
 
-		// @ADAM reviewed up to here.
-
 		/*
 		 * Ident-start code point
 		 *
@@ -454,7 +472,7 @@ class CSSProcessor {
 		 *
 		 * @see https://www.w3.org/TR/css-syntax-3/#consume-ident-like-token
 		 */
-		if ( $this->would_next_3_code_points_start_an_ident( $this->at ) ) {
+		if ( $this->check_if_3_code_points_start_an_ident_sequence( $this->at ) ) {
 			return $this->consume_ident_like();
 		}
 
@@ -788,7 +806,7 @@ class CSSProcessor {
 		 */
 
 		// If the next 3 input code points would start an ident sequence, then.
-		if ( $this->would_next_3_code_points_start_an_ident( $this->at ) ) {
+		if ( $this->check_if_3_code_points_start_an_ident_sequence( $this->at ) ) {
 			// Create a <dimension-token> with the same value and type flag as number,
 			// and a unit set initially to the empty string.
 			// Consume an ident sequence. Set the <dimension-token>'s unit to the returned value.
@@ -1015,6 +1033,10 @@ class CSSProcessor {
 		while ( $this->at < $this->length ) {
 			$this->at += strcspn( $this->css, ')\\', $this->at );
 
+			if ( $this->at >= $this->length ) {
+				break;
+			}
+
 			if ( '\\' === $this->css[ $this->at ] ) {
 				++$this->at;
 				if ( $this->is_valid_escape( $this->at - 1 ) ) {
@@ -1076,6 +1098,27 @@ class CSSProcessor {
 	 * @return int The number of bytes consumed.
 	 */
 	private function consume_ident_codepoint( $at ): int {
+		// ident code points.
+		if ( ( $this->css[ $at ] >= '0' && $this->css[ $at ] <= '9' ) ||
+			'-' === $this->css[ $at ] ) {
+			return 1;
+		}
+
+		return $this->consume_ident_start_codepoint( $at );
+	}
+
+
+	/**
+	 * Ident-start code point
+	 *     A letter, a non-ASCII code point, or U+005F LOW LINE (_).
+	 *
+	 * Ident code point
+	 *     An ident-start code point, a digit, or U+002D HYPHEN-MINUS (-).
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#ident-start-code-point
+	 * @return int The number of bytes consumed.
+	 */
+	private function consume_ident_start_codepoint( $at ): int {
 		if ( $at > $this->length ) {
 			return 0;
 		}
@@ -1083,19 +1126,17 @@ class CSSProcessor {
 		// ASCII codepoints.
 		if ( ( $this->css[ $at ] >= 'A' && $this->css[ $at ] <= 'Z' ) ||
 			( $this->css[ $at ] >= 'a' && $this->css[ $at ] <= 'z' ) ||
-			( $this->css[ $at ] >= '0' && $this->css[ $at ] <= '9' ) ||
-			'_' === $this->css[ $at ] ||
-			'-' === $this->css[ $at ] ) {
+			'_' === $this->css[ $at ] ) {
 			return 1;
 		}
 
 		// Special case for null bytes – they are replaced with U+FFFD during preprocessing.
-		if ( 0x00 === ord( $this->css[ $at ] ) ) {
+		if ( "\x00" === $this->css[ $at ] ) {
 			return 1;
 		}
 
 		// Non-ASCII codepoints (>= 0x80).
-		$codepoint = $this->get_codepoint_at( $this->at, $matched_bytes );
+		$codepoint = $this->get_codepoint_at( $at, $matched_bytes );
 
 		// We're in trouble!
 		// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
@@ -1289,7 +1330,7 @@ class CSSProcessor {
 	 * @param int $offset Byte offset of the first code point to check.
 	 * @return bool
 	 */
-	private function would_next_3_code_points_start_an_ident( int $offset ): bool {
+	private function check_if_3_code_points_start_an_ident_sequence( int $offset ): bool {
 		if ( $offset >= $this->length ) {
 			return false;
 		}
@@ -1300,12 +1341,12 @@ class CSSProcessor {
 			if ( $offset + 1 < $this->length && '-' === $this->css[ $offset + 1 ] ) {
 				return true;
 			}
-			// Otherwise, move to the second codepoint and fall through to the next checks.
-			// This codepoint is 1-byte ASCII so we can just increase the offset by 1.
+			// Otherwise, check if the second code point is an ident-START code point or valid escape.
+			// Note: After a hyphen, only ident-START code points are valid, NOT digits or hyphens.
 			++$offset;
 		}
 
-		return $this->consume_ident_codepoint( $offset ) > 0 || $this->is_valid_escape( $offset );
+		return $this->consume_ident_start_codepoint( $offset ) > 0 || $this->is_valid_escape( $offset );
 	}
 
 	/**

@@ -47,18 +47,18 @@ class CSSProcessorTest extends TestCase {
 			$token['endIndex'] = $this->byte_to_utf16_index( $css, $token['endIndex'] );
 		}
 
+		// Compare each token
+		foreach ( $expected_tokens as $index => $expected_token ) {
+			$actual_token = $actual_tokens[ $index ];
+			$this->assert_token_matches( $expected_token, $actual_token, $index, $css );
+		}
+
 		// Compare token count
 		$this->assertCount(
 			count( $expected_tokens ),
 			$actual_tokens,
 			'Token count mismatch for CSS: ' . var_export( $css, true )
 		);
-
-		// Compare each token
-		foreach ( $expected_tokens as $index => $expected_token ) {
-			$actual_token = $actual_tokens[ $index ];
-			$this->assert_token_matches( $expected_token, $actual_token, $index, $css );
-		}
 	}
 
 	/**

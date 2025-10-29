@@ -21,8 +21,5 @@
   "bugs": {
     "url": "https://github.com/WordPress/php-toolkit/issues"
   },
-  "homepage": "https://github.com/WordPress/php-toolkit#readme",
-  "devDependencies": {
-    "@rmenke/css-tokenizer-tests": "^1.2.0"
-  }
+  "homepage": "https://github.com/WordPress/php-toolkit#readme"
 }
