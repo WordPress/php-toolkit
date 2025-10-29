@@ -224,7 +224,13 @@ class CSSTokenizer {
 	 * @var string|float|null
 	 */
 	private $token_value = null;
-	private $token_unit  = null;
+
+	/**
+	 * The unit of the current token, e.g. "px", "em", "deg", etc.
+	 *
+	 * @var string|null
+	 */
+	private $token_unit = null;
 
 	/**
 	 * The byte offset at which the value of the current token starts.
