@@ -10,7 +10,32 @@ use function WordPress\Encoding\codepoint_to_utf8_bytes;
  *
  * This class implements the CSS tokenization algorithm as defined in:
  * https://www.w3.org/TR/css-syntax-3/
+ * 
+ * ## Design choices:
+ * 
+ * ### No explicit normalization step
+ * 
+ * The CSS Spec requires the following normalization step:
+ * 
+ * > Replace any U+000D CARRIAGE RETURN (CR) code points, U+000C FORM FEED (FF)
+ * > code points, or pairs of U+000D CARRIAGE RETURN (CR) followed by U+000A LINE
+ * > FEED (LF) in input by a single U+000A LINE FEED (LF) code point.
+ * > Replace any U+0000 NULL or surrogate code points in input with U+FFFD REPLACEMENT
+ * > CHARACTER (�).
+ * 
+ * This processor does not perform it upfront to minimize the amount of "just in case"
+ * work. Instead, it normalizes the input on the fly as it consumes the tokens.
+ * 
+ * The price to pay is:
  *
+ * * More complex parsing logic
+ * * Token values are accumulated during the parsing and concatenated together. This
+ *   means more work and memory allocations than if we only stored the indices and
+ *   concatenated them when needed.
+ * 
+ * One possible optimization is moving the normalization step to the get_token_value()
+ * method.
+ * 
  * @see https://www.w3.org/TR/css-syntax-3/#tokenization
  */
 class CSSProcessor {
