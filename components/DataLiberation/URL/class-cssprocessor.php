@@ -426,7 +426,7 @@ class CSSProcessor {
 		 *
 		 * @see https://www.w3.org/TR/css-syntax-3/#starts-with-a-number
 		 */
-		if ( strspn( $char, '+-.0123456789' ) > 0 && $this->would_start_number() ) {
+		if ( $this->would_next_3_code_points_start_a_number() ) {
 			return $this->consume_numeric();
 		}
 
@@ -1264,45 +1264,52 @@ class CSSProcessor {
 	}
 
 	/**
-	 * Checks if current position would start a number.
-	 *
-	 * A number can start with +, -, or a digit, or with . followed by a digit.
+	 * Checks if the next 3 code points would start a number.
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#starts-with-a-number
 	 *
 	 * @return bool
 	 */
-	private function would_start_number(): bool {
+	private function would_next_3_code_points_start_a_number(): bool {
 		if ( $this->at >= $this->length ) {
 			return false;
 		}
 
-		$char1 = $this->css[ $this->at ];
+		// Look at the first code point:
 
-		if ( '+' === $char1 || '-' === $char1 ) {
+		// U+002B PLUS SIGN (+) or U+002D HYPHEN-MINUS (-)
+		if ( '+' === $this->css[ $this->at ] || '-' === $this->css[ $this->at ] ) {
 			if ( $this->at + 1 >= $this->length ) {
 				return false;
 			}
-			$char2 = $this->css[ $this->at + 1 ];
-			if ( $char2 >= '0' && $char2 <= '9' ) {
+			// If the second code point is a digit, return true.
+			if ( $this->css[ $this->at + 1 ] >= '0' && $this->css[ $this->at + 1 ] <= '9' ) {
 				return true;
 			}
-			if ( '.' === $char2 && $this->at + 2 < $this->length ) {
-				$char3 = $this->css[ $this->at + 2 ];
-				return $char3 >= '0' && $char3 <= '9';
+			// Otherwise, the second code point must be a full stop (.) and the third code point must be a digit.
+			if ( '.' === $this->css[ $this->at + 1 ] && $this->at + 2 < $this->length ) {
+				return $this->css[ $this->at + 2 ] >= '0' && $this->css[ $this->at + 2 ] <= '9';
 			}
+
+			// Otherwise, return false.
 			return false;
 		}
-
-		if ( '.' === $char1 ) {
+		
+		// U+002E FULL STOP (.)
+		if ( '.' === $this->css[ $this->at ] ) {
 			if ( $this->at + 1 >= $this->length ) {
 				return false;
 			}
-			$char2 = $this->css[ $this->at + 1 ];
-			return $char2 >= '0' && $char2 <= '9';
+			return $this->css[ $this->at + 1 ] >= '0' && $this->css[ $this->at + 1 ] <= '9';
 		}
 
-		return $char1 >= '0' && $char1 <= '9';
+		// Digit
+		if( $this->css[ $this->at ] >= '0' && $this->css[ $this->at ] <= '9' ) {
+			return true;
+		}
+
+		// Anything else – return false.
+		return false;
 	}
 
 	/**
@@ -1324,120 +1331,18 @@ class CSSProcessor {
 			return false;
 		}
 
-		// Get the first code point and its byte length
-		$matched_bytes1 = 0;
-		$codepoint1 = $this->get_codepoint_at( $offset, $matched_bytes1 );
-
-		// If we couldn't decode a valid codepoint, fail
-		if ( null === $codepoint1 || 0 === $matched_bytes1 ) {
-			return false;
-		}
-
-		// Look at the first code point:
-		// U+002D HYPHEN-MINUS (-)
-		if ( 0x002D === $codepoint1 ) {
-			// If the second code point is an ident-start code point or a U+002D HYPHEN-MINUS,
-			// or the second and third code points are a valid escape, return true.
-
-			// Calculate offset of second code point (after the first code point's bytes)
-			$offset2 = $offset + $matched_bytes1;
-			if ( $offset2 >= $this->length ) {
-				return false;
-			}
-
-			// Get the second code point
-			$matched_bytes2 = 0;
-			$codepoint2 = $this->get_codepoint_at( $offset2, $matched_bytes2 );
-
-			if ( null === $codepoint2 ) {
-				return false;
-			}
-
-			// After single hyphen, we need:
-			// - ident-start code point: letter (A-Z, a-z), underscore (_), or non-ASCII (>= U+0080)
-			// - Another hyphen (for -- custom properties)
-			// - Valid escape sequence (\)
-
-			// Check for ASCII letter (A-Z, a-z)
-			if ( ( $codepoint2 >= 0x41 && $codepoint2 <= 0x5A ) ||  // A-Z
-			     ( $codepoint2 >= 0x61 && $codepoint2 <= 0x7A ) ) { // a-z
+		if( '-' === $this->css[ $offset ] ) {
+			// If the second code point is a U+002D HYPHEN-MINUS (-), return true.
+			// e.g. --custom-property
+			if( $offset + 1 < $this->length && '-' === $this->css[ $offset + 1 ] ) {
 				return true;
 			}
-
-			// Check for underscore (_)
-			if ( 0x5F === $codepoint2 ) {
-				return true;
-			}
-
-			// Check for another hyphen (--custom-property)
-			if ( 0x002D === $codepoint2 ) {
-				return true;
-			}
-
-			// Check for non-ASCII code point (>= U+0080)
-			if ( $codepoint2 >= 0x80 ) {
-				return true;
-			}
-
-			// Check for valid escape sequence
-			if ( $this->is_valid_escape( $offset2 ) ) {
-				return true;
-			}
-
-			// Otherwise, return false.
-			return false;
+			// Otherwise, move to the second codepoint and fall through to the next checks.
+			// This codepoint is 1-byte ASCII so we can just increase the offset by 1.
+			++$offset;
 		}
-
-		// ident-start code point: letter (A-Z, a-z), underscore (_), or non-ASCII (>= U+0080)
-
-		// Check for ASCII letter (A-Z, a-z)
-		if ( ( $codepoint1 >= 0x41 && $codepoint1 <= 0x5A ) ||  // A-Z
-		     ( $codepoint1 >= 0x61 && $codepoint1 <= 0x7A ) ) { // a-z
-			return true;
-		}
-
-		// Check for underscore (_)
-		if ( 0x5F === $codepoint1 ) {
-			return true;
-		}
-
-		// Check for non-ASCII code point (>= U+0080)
-		if ( $codepoint1 >= 0x80 ) {
-			return true;
-		}
-
-		// U+005C REVERSE SOLIDUS (\)
-		// If the first and second code points are a valid escape, return true.
-		if ( 0x005C === $codepoint1 ) {
-			// Check if it's a valid escape
-			return $this->is_valid_escape( $offset );
-		}
-
-		// U+0000 NULL starts an ident (will be replaced with U+FFFD)
-		if ( 0x00 === $codepoint1 ) {
-			return true;
-		}
-
-		// anything else
-		// Return false.
-		return false;
-	}
-
-	/**
-	 * Checks if byte can start an identifier (ASCII only).
-	 *
-	 * Only checks ASCII identifier start characters: A-Z, a-z, and underscore.
-	 * Non-ASCII and escape sequences are checked separately.
-	 *
-	 * @see https://www.w3.org/TR/css-syntax-3/#ident-start-code-point
-	 *
-	 * @param int $byte Byte value.
-	 * @return bool
-	 */
-	private function is_ident_start( int $byte ): bool {
-		return ( $byte >= 0x41 && $byte <= 0x5A ) || // A-Z
-		       ( $byte >= 0x61 && $byte <= 0x7A ) || // a-z
-		       0x5F === $byte;                       // _
+		
+		return $this->is_ident_code_point_at( $offset ) || $this->is_valid_escape( $offset );
 	}
 
 	/**
@@ -1483,33 +1388,6 @@ class CSSProcessor {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Checks if the character at the given offset is a non-ASCII code point (>= U+0080).
-	 * According to CSS spec, any non-ASCII code point is valid in identifiers.
-	 *
-	 * @param int $offset Byte offset.
-	 * @return bool True if the character is a non-ASCII code point, false otherwise.
-	 */
-	private function is_non_ascii_at( int $offset ): bool {
-		if ( $offset >= $this->length ) {
-			return false;
-		}
-
-		$byte = ord( $this->css[ $offset ] );
-
-		// ASCII characters (< 0x80) are not non-ASCII
-		if ( $byte < 0x80 ) {
-			return false;
-		}
-
-		// Use get_codepoint_at to get the actual codepoint value
-		$matched_bytes = 0;
-		$codepoint = $this->get_codepoint_at( $offset, $matched_bytes );
-
-		// Check if we got a valid non-ASCII codepoint
-		return null !== $codepoint && $codepoint >= 0x80;
 	}
 
 }
