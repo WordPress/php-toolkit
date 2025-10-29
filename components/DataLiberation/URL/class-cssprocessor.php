@@ -5,6 +5,43 @@ namespace WordPress\DataLiberation\URL;
 use function WordPress\Encoding\utf8_codepoint_at;
 
 /**
+ * Converts a Unicode codepoint to its UTF-8 byte sequence.
+ *
+ * @param int $codepoint Unicode codepoint value.
+ * @return string UTF-8 encoded byte sequence.
+ */
+function codepoint_to_utf8( int $codepoint ): string {
+	// Invalid codepoints: zero, surrogates, or beyond Unicode range
+	if ( 0 === $codepoint || $codepoint > 0x10FFFF || ( $codepoint >= 0xD800 && $codepoint <= 0xDFFF ) ) {
+		return "\xEF\xBF\xBD"; // U+FFFD REPLACEMENT CHARACTER
+	}
+
+	// 1-byte sequence (ASCII): 0x00-0x7F
+	if ( $codepoint < 0x80 ) {
+		return chr( $codepoint );
+	}
+
+	// 2-byte sequence: 0x80-0x7FF
+	if ( $codepoint < 0x800 ) {
+		return chr( 0xC0 | ( $codepoint >> 6 ) ) .
+		       chr( 0x80 | ( $codepoint & 0x3F ) );
+	}
+
+	// 3-byte sequence: 0x800-0xFFFF
+	if ( $codepoint < 0x10000 ) {
+		return chr( 0xE0 | ( $codepoint >> 12 ) ) .
+		       chr( 0x80 | ( ( $codepoint >> 6 ) & 0x3F ) ) .
+		       chr( 0x80 | ( $codepoint & 0x3F ) );
+	}
+
+	// 4-byte sequence: 0x10000-0x10FFFF
+	return chr( 0xF0 | ( $codepoint >> 18 ) ) .
+	       chr( 0x80 | ( ( $codepoint >> 12 ) & 0x3F ) ) .
+	       chr( 0x80 | ( ( $codepoint >> 6 ) & 0x3F ) ) .
+	       chr( 0x80 | ( $codepoint & 0x3F ) );
+}
+
+/**
  * Tokenizes CSS according to the CSS Syntax Level 3 specification.
  *
  * This class implements the CSS tokenization algorithm as defined in:
@@ -133,6 +170,28 @@ class CSSProcessor {
 	 * @var int
 	 */
 	private $at = 0;
+
+	/**
+	 * Cached codepoint at the current position ($this->at).
+	 * Used to avoid repeatedly decoding the same UTF-8 sequence.
+	 *
+	 * @var int|null
+	 */
+	private $current_codepoint = null;
+
+	/**
+	 * Cached byte length of the current codepoint.
+	 *
+	 * @var int
+	 */
+	private $current_codepoint_bytes = 0;
+
+	/**
+	 * The byte offset for which the codepoint is cached.
+	 *
+	 * @var int
+	 */
+	private $current_codepoint_offset = -1;
 
 	// Current token properties
 	/**
@@ -336,8 +395,6 @@ class CSSProcessor {
 			return true;
 		}
 
-		// @ADAM reviewed up to here
-
 		/*
 		 * U+0040 COMMERCIAL AT (@)
 		 *
@@ -413,7 +470,7 @@ class CSSProcessor {
 		}
 
 		// @ADAM reviewed up to here
-		
+
 		/*
 		 * Ident-start code point
 		 *
@@ -438,9 +495,9 @@ class CSSProcessor {
 		 */
 		if ( ord( $char ) >= 0x80 ) {
 			$matched_bytes     = 0;
-			utf8_codepoint_at( $this->css, $this->at, $matched_bytes );
+			$this->get_codepoint_at( $this->at, $matched_bytes );
 
-			// Safeguard: if utf8_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
+			// Safeguard: if get_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
 			if ( 0 === $matched_bytes ) {
 				$matched_bytes = 1;
 			}
@@ -554,6 +611,34 @@ class CSSProcessor {
 		$this->token_unit              = null;
 		$this->token_value_starts_at   = null;
 		$this->token_value_length      = null;
+	}
+
+	/**
+	 * Gets the Unicode codepoint at the given byte offset, with caching.
+	 *
+	 * This method caches the result to avoid repeatedly decoding the same UTF-8
+	 * sequence when multiple helpers need to check the same position.
+	 *
+	 * @param int $offset Byte offset in the CSS string.
+	 * @param int &$matched_bytes Output parameter: number of bytes consumed.
+	 * @return int|null The Unicode codepoint value, or null if invalid UTF-8.
+	 */
+	private function get_codepoint_at( int $offset, &$matched_bytes ): ?int {
+		// Check if we have a cached value for this offset
+		if ( $offset === $this->current_codepoint_offset ) {
+			$matched_bytes = $this->current_codepoint_bytes;
+			return $this->current_codepoint;
+		}
+
+		// Decode the UTF-8 sequence
+		$codepoint = utf8_codepoint_at( $this->css, $offset, $matched_bytes );
+
+		// Cache the result
+		$this->current_codepoint = $codepoint;
+		$this->current_codepoint_bytes = $matched_bytes;
+		$this->current_codepoint_offset = $offset;
+
+		return $codepoint;
 	}
 
 	/**
@@ -944,9 +1029,9 @@ class CSSProcessor {
 			} else {
 				// Multi-byte UTF-8
 				$matched_bytes = 0;
-				utf8_codepoint_at( $this->css, $this->at, $matched_bytes );
+				$this->get_codepoint_at( $this->at, $matched_bytes );
 
-				// Safeguard: if utf8_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
+				// Safeguard: if get_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
 				if ( 0 === $matched_bytes ) {
 					$matched_bytes = 1;
 				}
@@ -1044,11 +1129,11 @@ class CSSProcessor {
 			// Non-ASCII (>= 0x80)
 			// According to CSS spec, any non-ASCII code point (>= U+0080) is valid in identifiers
 			if ( $byte >= 0x80 ) {
-				// Use utf8_codepoint_at to get the actual codepoint value and byte length
+				// Use get_codepoint_at to get the actual codepoint value and byte length
 				$matched_bytes = 0;
-				$codepoint = utf8_codepoint_at( $this->css, $this->at, $matched_bytes );
+				$codepoint = $this->get_codepoint_at( $this->at, $matched_bytes );
 
-				// Safeguard: if utf8_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
+				// Safeguard: if get_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
 				if ( 0 === $matched_bytes ) {
 					$matched_bytes = 1;
 				}
@@ -1130,23 +1215,8 @@ class CSSProcessor {
 			// Interpret the hex digits as a hexadecimal number.
 			$codepoint = hexdec( $hex );
 
-			// If this number is zero, or is for a surrogate, or is greater than
-			// the maximum allowed code point, return U+FFFD REPLACEMENT CHARACTER (�).
-			if ( 0 === $codepoint || $codepoint > 0x10FFFF || ( $codepoint >= 0xD800 && $codepoint <= 0xDFFF ) ) {
-				return "\xEF\xBF\xBD"; // U+FFFD
-			}
-
-			// Otherwise, return the code point with that value.
-			// Convert codepoint to UTF-8
-			if ( $codepoint < 0x80 ) {
-				return chr( $codepoint );
-			} elseif ( $codepoint < 0x800 ) {
-				return chr( 0xC0 | ( $codepoint >> 6 ) ) . chr( 0x80 | ( $codepoint & 0x3F ) );
-			} elseif ( $codepoint < 0x10000 ) {
-				return chr( 0xE0 | ( $codepoint >> 12 ) ) . chr( 0x80 | ( ( $codepoint >> 6 ) & 0x3F ) ) . chr( 0x80 | ( $codepoint & 0x3F ) );
-			} else {
-				return chr( 0xF0 | ( $codepoint >> 18 ) ) . chr( 0x80 | ( ( $codepoint >> 12 ) & 0x3F ) ) . chr( 0x80 | ( ( $codepoint >> 6 ) & 0x3F ) ) . chr( 0x80 | ( $codepoint & 0x3F ) );
-			}
+			// Convert the codepoint to UTF-8 (handles validation and encoding)
+			return codepoint_to_utf8( $codepoint );
 		}
 
 		// U+0000 NULL
@@ -1163,9 +1233,9 @@ class CSSProcessor {
 		// Single character escape - use UTF-8 decoder for multi-byte
 		if ( $byte >= 0x80 ) {
 			$matched_bytes = 0;
-			utf8_codepoint_at( $this->css, $this->at, $matched_bytes );
+			$this->get_codepoint_at( $this->at, $matched_bytes );
 
-			// Safeguard: if utf8_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
+			// Safeguard: if get_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
 			if ( 0 === $matched_bytes ) {
 				$matched_bytes = 1;
 			}
@@ -1263,7 +1333,7 @@ class CSSProcessor {
 
 		// Get the first code point and its byte length
 		$matched_bytes1 = 0;
-		$codepoint1 = utf8_codepoint_at( $this->css, $offset, $matched_bytes1 );
+		$codepoint1 = $this->get_codepoint_at( $offset, $matched_bytes1 );
 
 		// If we couldn't decode a valid codepoint, fail
 		if ( null === $codepoint1 || 0 === $matched_bytes1 ) {
@@ -1284,7 +1354,7 @@ class CSSProcessor {
 
 			// Get the second code point
 			$matched_bytes2 = 0;
-			$codepoint2 = utf8_codepoint_at( $this->css, $offset2, $matched_bytes2 );
+			$codepoint2 = $this->get_codepoint_at( $offset2, $matched_bytes2 );
 
 			if ( null === $codepoint2 ) {
 				return false;
@@ -1403,7 +1473,7 @@ class CSSProcessor {
 
 		// Get the code point at this offset
 		$matched_bytes = 0;
-		$codepoint = utf8_codepoint_at( $this->css, $offset, $matched_bytes );
+		$codepoint = $this->get_codepoint_at( $offset, $matched_bytes );
 
 		if ( null === $codepoint ) {
 			return false;
@@ -1449,9 +1519,9 @@ class CSSProcessor {
 			return false;
 		}
 
-		// Use utf8_codepoint_at to get the actual codepoint value
+		// Use get_codepoint_at to get the actual codepoint value
 		$matched_bytes = 0;
-		$codepoint = utf8_codepoint_at( $this->css, $offset, $matched_bytes );
+		$codepoint = $this->get_codepoint_at( $offset, $matched_bytes );
 
 		// Check if we got a valid non-ASCII codepoint
 		return null !== $codepoint && $codepoint >= 0x80;
