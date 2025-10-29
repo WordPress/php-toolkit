@@ -763,20 +763,17 @@ class CSSProcessor {
 	 */
 	private function consume_numeric(): bool {
 		// Consume a number and let number be the result.
-		$repr = '';
-		$char = $this->css[ $this->at ];
+		$start = $this->at;
 
 		// If the next input code point is U+002B PLUS SIGN (+) or U+002D HYPHEN-MINUS (-),
 		// consume it and append it to repr.
-		if ( '+' === $char || '-' === $char ) {
-			$repr .= $char;
+		if ( '+' === $this->css[ $this->at ] || '-' === $this->css[ $this->at ] ) {
 			$this->at++;
 		}
 
 		// While the next input code point is a digit, consume it and append it to repr.
 		$digits = strspn( $this->css, '0123456789', $this->at );
 		if ( $digits > 0 ) {
-			$repr          .= substr( $this->css, $this->at, $digits );
 			$this->at += $digits;
 		}
 
@@ -784,14 +781,13 @@ class CSSProcessor {
 		if ( $this->at + 1 < $this->length &&
 		     '.' === $this->css[ $this->at ] &&
 		     $this->css[ $this->at + 1 ] >= '0' &&
-		     $this->css[ $this->at + 1 ] <= '9' ) {
-			// Consume them and append them to repr.
-			$repr .= '.';
+		     $this->css[ $this->at + 1 ] <= '9'
+		) {
+			// Consume them.
 			$this->at++;
 			// While the next input code point is a digit, consume it and append it to repr.
 			$digits = strspn( $this->css, '0123456789', $this->at );
 			if ( $digits > 0 ) {
-				$repr          .= substr( $this->css, $this->at, $digits );
 				$this->at += $digits;
 			}
 		}
@@ -810,12 +806,10 @@ class CSSProcessor {
 					$next = $this->css[ $this->at ];
 					if ( ( '+' === $next || '-' === $next ) && $this->at + 1 < $this->length &&
 					     $this->css[ $this->at + 1 ] >= '0' && $this->css[ $this->at + 1 ] <= '9' ) {
-						// Consume them and append them to repr.
-						$repr .= $e . $next;
+						// Consume them.
 						$this->at++;
 						$has_exp = true;
 					} elseif ( $next >= '0' && $next <= '9' ) {
-						$repr .= $e;
 						$has_exp = true;
 					}
 				}
@@ -824,7 +818,6 @@ class CSSProcessor {
 					// While the next input code point is a digit, consume it and append it to repr.
 					$digits = strspn( $this->css, '0123456789', $this->at );
 					if ( $digits > 0 ) {
-						$repr          .= substr( $this->css, $this->at, $digits );
 						$this->at += $digits;
 					}
 				} else {
@@ -833,8 +826,8 @@ class CSSProcessor {
 			}
 		}
 
-		// Convert string repr to a number, and set the value to the returned value.
-		$this->token_value = (float) $repr;
+		// Convert string to a number, and set the value to the returned value.
+		$this->token_value = (float) substr( $this->css, $start, $this->at - $start );
 
 		// If the next 3 input code points would start an ident sequence, then:
 		if ( $this->would_start_ident( $this->at ) ) {
