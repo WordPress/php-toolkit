@@ -408,7 +408,7 @@ class CSSProcessor {
 			// If the next 3 input code points after the @ would start an ident sequence,
 			// consume an ident sequence, create an <at-keyword-token> with its value set to the returned value,
 			// and return it
-			if ( $this->would_start_ident( $this->at ) ) {
+			if ( $this->would_next_3_code_points_start_an_ident( $this->at ) ) {
 				$this->token_name   = $this->consume_ident();
 				$this->token_type   = self::TOKEN_AT_KEYWORD;
 				$this->token_length = $this->at - $this->token_starts_at;
@@ -481,7 +481,7 @@ class CSSProcessor {
 		 *
 		 * @see https://www.w3.org/TR/css-syntax-3/#consume-ident-like-token
 		 */
-		if ( $this->would_start_ident( $this->at ) ) {
+		if ( $this->would_next_3_code_points_start_an_ident( $this->at ) ) {
 			return $this->consume_ident_like();
 		}
 
@@ -756,6 +756,8 @@ class CSSProcessor {
 	 * Numbers can be integers or decimals, with optional sign and exponent.
 	 * They can be followed by % (percentage) or an identifier (dimension).
 	 *
+	 * @TODO: Keep track of the "type" flag ("integer" or "number").
+	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#consume-numeric-token
 	 * @see https://www.w3.org/TR/css-syntax-3/#consume-number
 	 *
@@ -827,10 +829,19 @@ class CSSProcessor {
 		}
 
 		// Convert string to a number, and set the value to the returned value.
+		// We use a PHP typecast as it's mostly compatible with the spec's behavior.
+		// @TODO: Investigate any differences
+		// @see https://www.w3.org/TR/css-syntax-3/#convert-a-string-to-a-number
 		$this->token_value = (float) substr( $this->css, $start, $this->at - $start );
 
+		/**
+		 * This is the end of spec section 4.3.12. Consume a number.
+		 * We still have some work to do as specified in section 4.3.3. Consume a numeric token:
+		 * https://www.w3.org/TR/css-syntax-3/#consume-numeric-token
+		 */
+
 		// If the next 3 input code points would start an ident sequence, then:
-		if ( $this->would_start_ident( $this->at ) ) {
+		if ( $this->would_next_3_code_points_start_an_ident( $this->at ) ) {
 			// Create a <dimension-token> with the same value and type flag as number,
 			// and a unit set initially to the empty string.
 			// Consume an ident sequence. Set the <dimension-token>'s unit to the returned value.
@@ -1319,7 +1330,7 @@ class CSSProcessor {
 	 * @param int $offset Byte offset of the first code point to check.
 	 * @return bool
 	 */
-	private function would_start_ident( int $offset ): bool {
+	private function would_next_3_code_points_start_an_ident( int $offset ): bool {
 		if ( $offset >= $this->length ) {
 			return false;
 		}
