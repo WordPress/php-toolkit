@@ -152,21 +152,46 @@ class CSSProcessorTest extends TestCase {
 	 * Legacy test to ensure basic tokenization still works.
 	 */
 	public function test_tokenize_labels_core_tokens(): void {
-		$css       = '@media screen and (min-width: 10px) { background: url("/images/a.png") }';
+		$css       = <<<CSS
+		@media screen and (min-width: 10px) {
+			background: url("/images/a.png");
+		}
+		CSS;
 		$processor = new CSSProcessor( $css );
 		$tokens    = $this->collect_tokens( $processor, $css );
 
-		$types = array_column( $tokens, 'type' );
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_AT_KEYWORD, 'raw' => '@media' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT, 'raw' => 'screen' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT, 'raw' => 'and' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_PAREN, 'raw' => '(' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT, 'raw' => 'min-width' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON, 'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION, 'raw' => '10px' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN, 'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACE, 'raw' => '{' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => "\n\t" ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT, 'raw' => 'background' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON, 'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION, 'raw' => 'url(' ),
+			array( 'type' => CSSProcessor::TOKEN_STRING, 'raw' => '"/images/a.png"' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN, 'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON, 'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => "\n" ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACE, 'raw' => '}' ),
+		);
 
-		self::assertContains( CSSProcessor::TOKEN_AT_KEYWORD, $types );
-		self::assertContains( CSSProcessor::TOKEN_IDENT, $types );
-		self::assertContains( CSSProcessor::TOKEN_LEFT_PAREN, $types );
-		self::assertContains( CSSProcessor::TOKEN_DIMENSION, $types );
-		self::assertContains( CSSProcessor::TOKEN_LEFT_BRACE, $types );
-		self::assertContains( CSSProcessor::TOKEN_FUNCTION, $types );
-		self::assertContains( CSSProcessor::TOKEN_STRING, $types );
-		self::assertContains( CSSProcessor::TOKEN_RIGHT_PAREN, $types );
-		self::assertContains( CSSProcessor::TOKEN_RIGHT_BRACE, $types );
+		$this->assertCount( count( $expected ), $tokens, 'Token count mismatch' );
+		foreach ( $expected as $index => $exp ) {
+			$this->assertSame( $exp['type'], $tokens[ $index ]['type'], "Token $index type mismatch" );
+			$this->assertSame( $exp['raw'], $tokens[ $index ]['raw'], "Token $index raw mismatch" );
+		}
 	}
 
 	/**
@@ -177,7 +202,6 @@ class CSSProcessorTest extends TestCase {
 		$processor = new CSSProcessor( $css );
 		$tokens    = $this->collect_tokens( $processor, $css );
 
-		// Expected: a :hover ::before , whitespace div .class #id :not (.disabled )
 		$expected = array(
 			array( 'type' => CSSProcessor::TOKEN_IDENT,      'raw' => 'a' ),
 			array( 'type' => CSSProcessor::TOKEN_COLON,      'raw' => ':' ),
