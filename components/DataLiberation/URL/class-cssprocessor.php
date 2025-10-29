@@ -621,6 +621,7 @@ class CSSProcessor {
 		// Initially create a <string-token> with its value set to the empty string.
 		$this->token_starts_at = $this->at;
 		$ending_char           = $this->css[ $this->at ];
+		$decoded_value         = '';
 
 		// Skip past the opening quote.
 		++$this->at;
@@ -632,7 +633,10 @@ class CSSProcessor {
 		while ( $this->at < $this->length ) {
 			// Consume normal characters until we hit a special character.
 			$normal_len = strcspn( $this->css, $special_chars, $this->at );
-			$this->at  += $normal_len;
+			if ( $normal_len > 0 ) {
+				$decoded_value .= substr( $this->css, $this->at, $normal_len );
+				$this->at      += $normal_len;
+			}
 
 			if ( $this->at >= $this->length ) {
 				break; // EOF.
@@ -645,6 +649,7 @@ class CSSProcessor {
 					// Return the <string-token>.
 					++$this->at;
 					$this->token_type            = self::TOKEN_STRING;
+					$this->token_name            = $decoded_value;
 					$this->token_length          = $this->at - $this->token_starts_at;
 					$this->token_value_starts_at = $value_starts_at;
 					$this->token_value_length    = $this->at - $value_starts_at - 1;
@@ -665,6 +670,7 @@ class CSSProcessor {
 					 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
 					 */
 					$this->token_type            = self::TOKEN_BAD_STRING;
+					$this->token_name            = $decoded_value;
 					$this->token_length          = $this->at - $this->token_starts_at;
 					$this->token_value_starts_at = $value_starts_at;
 					$this->token_value_length    = $this->at - $value_starts_at;
@@ -673,31 +679,29 @@ class CSSProcessor {
 				case '\\':
 					// U+005C REVERSE SOLIDUS (\)
 					// If the next input code point is EOF, do nothing.
-					// Otherwise, if the next input code point is a newline, consume it.
-					// Otherwise, (the stream starts with a valid escape) consume an escaped
-					// code point and append the returned code point to the <string-token>'s value.
-					if ( $this->is_valid_escape( $this->at ) ) {
-						++$this->at;
-						$this->consume_escape();
+					++$this->at;
+					if ( $this->at >= $this->length ) {
+						// Backslash-EOF: do nothing, just consume the backslash
 						continue 2;
 					}
-					// Handle escaped newline (not counted as valid escape by is_valid_escape).
-					++$this->at;
-					if ( $this->at < $this->length ) {
-						$next = $this->css[ $this->at ];
-						if ( "\n" === $next || "\f" === $next ) {
+
+					// Otherwise, if the next input code point is a newline, consume it.
+					$next = $this->css[ $this->at ];
+					if ( "\n" === $next || "\f" === $next ) {
+						++$this->at;
+						continue 2;
+					} elseif ( "\r" === $next ) {
+						++$this->at;
+						// Handle \r\n as a single newline.
+						if ( $this->at < $this->length && "\n" === $this->css[ $this->at ] ) {
 							++$this->at;
-						} elseif ( "\r" === $next ) {
-							++$this->at;
-							// Handle \r\n as a single newline.
-							// In a fully spec-compliant parser, \r\n pairs would be replaced with a single
-							// newline, but we're not doing input pre-processing here to save memory.
-							// See https://www.w3.org/TR/css-syntax-3/#input-preprocessing.
-							if ( $this->at < $this->length && "\n" === $this->css[ $this->at ] ) {
-								++$this->at;
-							}
 						}
+						continue 2;
 					}
+
+					// Otherwise, (the stream starts with a valid escape) consume an escaped
+					// code point and append the returned code point to the <string-token>'s value.
+					$decoded_value .= $this->consume_escape();
 					continue 2;
 
 				default:
@@ -709,6 +713,7 @@ class CSSProcessor {
 		// EOF
 		// This is a parse error. Return the <string-token>.
 		$this->token_type            = self::TOKEN_STRING;
+		$this->token_name            = $decoded_value;
 		$this->token_length          = $this->at - $this->token_starts_at;
 		$this->token_value_starts_at = $value_starts_at;
 		$this->token_value_length    = $this->at - $value_starts_at;
@@ -917,6 +922,7 @@ class CSSProcessor {
 			if ( ')' === $this->css[ $this->at ] ) {
 				++$this->at;
 				$this->token_type            = self::TOKEN_URL;
+				$this->token_name            = $value;
 				$this->token_length          = $this->at - $this->token_starts_at;
 				$this->token_value_starts_at = $value_starts_at;
 				$this->token_value_length    = $this->at - $value_starts_at - 1;
@@ -936,6 +942,7 @@ class CSSProcessor {
 				if ( $this->at >= $this->length ) {
 					// EOF is a parse error, but we return the <url-token> anyway.
 					$this->token_type            = self::TOKEN_URL;
+					$this->token_name            = $value;
 					$this->token_length          = $this->at - $this->token_starts_at;
 					$this->token_value_starts_at = $value_starts_at;
 					$this->token_value_length    = $value_ends_at - $value_starts_at;
@@ -946,6 +953,7 @@ class CSSProcessor {
 					// Skip the closing parenthesis and return the <url-token>.
 					++$this->at;
 					$this->token_type            = self::TOKEN_URL;
+					$this->token_name            = $value;
 					$this->token_length          = $this->at - $this->token_starts_at;
 					$this->token_value_starts_at = $value_starts_at;
 					$this->token_value_length    = $value_ends_at - $value_starts_at;
@@ -1013,6 +1021,7 @@ class CSSProcessor {
 		// EOF
 		// This is a parse error. Return the <url-token>.
 		$this->token_type            = self::TOKEN_URL;
+		$this->token_name            = $value;
 		$this->token_length          = $this->at - $this->token_starts_at;
 		$this->token_value_starts_at = $value_starts_at;
 		$this->token_value_length    = $this->at - $value_starts_at;

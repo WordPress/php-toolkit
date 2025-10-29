@@ -41,24 +41,21 @@ class CSSProcessorTest extends TestCase {
 		$processor = new CSSProcessor( $css );
 		$actual_tokens = $this->collect_tokens( $processor, $css );
 
-		// Convert byte indices to UTF-16 code unit indices for comparison
-		foreach ( $actual_tokens as &$token ) {
-			$token['startIndex'] = $this->byte_to_utf16_index( $css, $token['startIndex'] );
-			$token['endIndex'] = $this->byte_to_utf16_index( $css, $token['endIndex'] );
-		}
-
-		// Compare each token
-		foreach ( $expected_tokens as $index => $expected_token ) {
-			$actual_token = $actual_tokens[ $index ];
-			$this->assert_token_matches( $expected_token, $actual_token, $index, $css );
-		}
-
-		// Compare token count
+		// Compare token count first
 		$this->assertCount(
 			count( $expected_tokens ),
 			$actual_tokens,
 			'Token count mismatch for CSS: ' . var_export( $css, true )
 		);
+
+		// Compare each token
+		foreach ( $expected_tokens as $index => $expected_token ) {
+			if ( ! isset( $actual_tokens[ $index ] ) ) {
+				$this->fail( "Missing token at index $index for CSS: " . var_export( $css, true ) );
+			}
+			$actual_token = $actual_tokens[ $index ];
+			$this->assert_token_matches( $expected_token, $actual_token, $index, $css );
+		}
 	}
 
 	/**
@@ -96,43 +93,6 @@ class CSSProcessorTest extends TestCase {
 	}
 
 	/**
-	 * Converts UTF-8 byte index to UTF-16 code unit index.
-	 *
-	 * @param string $text The UTF-8 text.
-	 * @param int    $byte_index The byte index to convert.
-	 * @return int The UTF-16 code unit index.
-	 */
-	private function byte_to_utf16_index( string $text, int $byte_index ): int {
-		$utf16_index = 0;
-		$byte_pos = 0;
-
-		while ( $byte_pos < $byte_index && $byte_pos < strlen( $text ) ) {
-			$char = $text[ $byte_pos ];
-			$byte = ord( $char );
-
-			if ( $byte < 0x80 ) {
-				// ASCII: 1 byte, 1 UTF-16 code unit
-				$byte_pos++;
-				$utf16_index++;
-			} elseif ( $byte < 0xE0 ) {
-				// 2-byte UTF-8: 1 UTF-16 code unit
-				$byte_pos += 2;
-				$utf16_index++;
-			} elseif ( $byte < 0xF0 ) {
-				// 3-byte UTF-8: 1 UTF-16 code unit
-				$byte_pos += 3;
-				$utf16_index++;
-			} else {
-				// 4-byte UTF-8: 2 UTF-16 code units (surrogate pair)
-				$byte_pos += 4;
-				$utf16_index += 2;
-			}
-		}
-
-		return $utf16_index;
-	}
-
-	/**
 	 * Extracts structured data from a token based on its type.
 	 *
 	 * @param CSSProcessor $processor The CSS processor.
@@ -159,31 +119,14 @@ class CSSProcessorTest extends TestCase {
 				return $name !== null ? array( 'value' => $name, 'type' => 'id' ) : null;
 
 			case CSSProcessor::TOKEN_STRING:
-				// Strings have value in structured data
-				$start = $processor->get_token_value_start();
-				$length = $processor->get_token_value_length();
-				if ( null !== $start && null !== $length ) {
-					// Extract the string value from the CSS (inside the quotes)
-					$string_value = substr( $css, $start, $length );
-					// Decode CSS escapes
-					$decoded = $this->decode_css_escapes( $string_value );
-					return array( 'value' => $decoded );
-				}
-				return null;
+				// Strings have decoded value in token_name
+				$decoded_value = $processor->get_token_name();
+				return $decoded_value !== null ? array( 'value' => $decoded_value ) : null;
 
 			case CSSProcessor::TOKEN_URL:
-				// URLs have value in structured data
-				$start = $processor->get_token_value_start();
-				$length = $processor->get_token_value_length();
-				if ( null !== $start && null !== $length ) {
-					// The value is between url( and )
-					// We need to extract and decode it
-					// Extract the URL value from the full CSS using absolute positions
-					$url_value = substr( $css, $start, $length );
-					$decoded = $this->decode_css_escapes( $url_value );
-					return array( 'value' => $decoded );
-				}
-				return null;
+				// URLs have decoded value in token_name
+				$decoded_value = $processor->get_token_name();
+				return $decoded_value !== null ? array( 'value' => $decoded_value ) : null;
 
 			case CSSProcessor::TOKEN_NUMBER:
 			case CSSProcessor::TOKEN_PERCENTAGE:
@@ -307,98 +250,584 @@ class CSSProcessorTest extends TestCase {
 	}
 
 	/**
-	 * Decodes CSS escape sequences in a string.
-	 *
-	 * @param string $value The value with potential CSS escapes.
-	 * @return string The decoded value.
+	 * Tests tokenization of complex selectors with pseudo-classes.
 	 */
-	private function decode_css_escapes( string $value ): string {
-		$length = strlen( $value );
-		$result = '';
-		$at     = 0;
+	public function test_complex_selector_with_pseudo_classes(): void {
+		$css       = 'a:hover::before, div.class#id:not(.disabled)';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
 
-		while ( $at < $length ) {
-			$span = strcspn( $value, "\\\x00", $at );
-			if ( $span > 0 ) {
-				$result .= substr( $value, $at, $span );
-				$at     += $span;
-			}
+		// Expected: a :hover ::before , whitespace div .class #id :not (.disabled )
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,      'raw' => 'a' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,      'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,      'raw' => 'hover' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,      'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,      'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,      'raw' => 'before' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,      'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,      'raw' => 'div' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,      'raw' => '.' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,      'raw' => 'class' ),
+			array( 'type' => CSSProcessor::TOKEN_HASH,       'raw' => '#id' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,      'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION,   'raw' => 'not(' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,      'raw' => '.' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,      'raw' => 'disabled' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN, 'raw' => ')' ),
+		);
 
-			if ( $at >= $length ) {
-				break;
-			}
-
-			$char = $value[ $at ];
-
-			// Null byte - replace with U+FFFD
-			if ( "\x00" === $char ) {
-				$result .= "\xEF\xBF\xBD";
-				++$at;
-				continue;
-			}
-
-			// Must be backslash
-			++$at;
-			if ( $at >= $length ) {
-				break;
-			}
-
-			$hex_len = strspn( $value, '0123456789abcdefABCDEF', $at );
-			if ( $hex_len > 6 ) {
-				$hex_len = 6;
-			}
-
-			if ( $hex_len > 0 ) {
-				$hex     = substr( $value, $at, $hex_len );
-				$codepoint = hexdec( $hex );
-				// Convert codepoint to UTF-8 bytes
-				if ( $codepoint <= 0x7F ) {
-					$result .= chr( $codepoint );
-				} elseif ( $codepoint <= 0x7FF ) {
-					$result .= chr( 0xC0 | ( $codepoint >> 6 ) );
-					$result .= chr( 0x80 | ( $codepoint & 0x3F ) );
-				} elseif ( $codepoint <= 0xFFFF ) {
-					$result .= chr( 0xE0 | ( $codepoint >> 12 ) );
-					$result .= chr( 0x80 | ( ( $codepoint >> 6 ) & 0x3F ) );
-					$result .= chr( 0x80 | ( $codepoint & 0x3F ) );
-				} else {
-					$result .= chr( 0xF0 | ( $codepoint >> 18 ) );
-					$result .= chr( 0x80 | ( ( $codepoint >> 12 ) & 0x3F ) );
-					$result .= chr( 0x80 | ( ( $codepoint >> 6 ) & 0x3F ) );
-					$result .= chr( 0x80 | ( $codepoint & 0x3F ) );
-				}
-				$at += $hex_len;
-
-				$ws_len = strspn( $value, " \n\r\t\f", $at );
-				if ( $ws_len > 0 ) {
-					if ( $at + 1 < $length && "\r" === $value[ $at ] && "\n" === $value[ $at + 1 ] ) {
-						$at += 2;
-					} else {
-						$at += 1;
-					}
-				}
-				continue;
-			}
-
-			$next = $value[ $at ];
-
-			if ( "\n" === $next || "\f" === $next ) {
-				++$at;
-				continue;
-			}
-
-			if ( "\r" === $next ) {
-				++$at;
-				if ( $at < $length && "\n" === $value[ $at ] ) {
-					++$at;
-				}
-				continue;
-			}
-
-			$result .= $next;
-			++$at;
+		$this->assertCount( count( $expected ), $tokens, 'Token count mismatch' );
+		foreach ( $expected as $index => $exp ) {
+			$this->assertSame( $exp['type'], $tokens[ $index ]['type'], "Token $index type mismatch" );
+			$this->assertSame( $exp['raw'], $tokens[ $index ]['raw'], "Token $index raw mismatch" );
 		}
+	}
 
-		return $result;
+	/**
+	 * Tests tokenization of CSS comments.
+	 */
+	public function test_css_comments(): void {
+		$css       = '/* This is a comment */ .class { color: red; /* Another comment */ }';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_COMMENT,    'raw' => '/* This is a comment */' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,      'raw' => '.' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,      'raw' => 'class' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACE, 'raw' => '{' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,      'raw' => 'color' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,      'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,      'raw' => 'red' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,  'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMENT,    'raw' => '/* Another comment */' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACE, 'raw' => '}' ),
+		);
+
+		$this->assertCount( count( $expected ), $tokens, 'Token count mismatch' );
+		foreach ( $expected as $index => $exp ) {
+			$this->assertSame( $exp['type'], $tokens[ $index ]['type'], "Token $index type mismatch" );
+			$this->assertSame( $exp['raw'], $tokens[ $index ]['raw'], "Token $index raw mismatch" );
+		}
+	}
+
+	/**
+	 * Tests tokenization of media queries.
+	 */
+	public function test_media_query(): void {
+		$css       = '@media screen and (min-width: 768px) and (max-width: 1024px)';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_AT_KEYWORD,  'raw' => '@media' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,       'raw' => 'screen' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,       'raw' => 'and' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_PAREN,  'raw' => '(' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,       'raw' => 'min-width' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,       'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,   'raw' => '768px' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN, 'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,       'raw' => 'and' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_PAREN,  'raw' => '(' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,       'raw' => 'max-width' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,       'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,   'raw' => '1024px' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN, 'raw' => ')' ),
+		);
+
+		$this->assertCount( count( $expected ), $tokens, 'Token count mismatch' );
+		foreach ( $expected as $index => $exp ) {
+			$this->assertSame( $exp['type'], $tokens[ $index ]['type'], "Token $index type mismatch" );
+			$this->assertSame( $exp['raw'], $tokens[ $index ]['raw'], "Token $index raw mismatch" );
+		}
+	}
+
+	/**
+	 * Tests tokenization of keyframes animation.
+	 */
+	public function test_keyframes_animation(): void {
+		$css       = '@keyframes slide-in { 0% { opacity: 0; } 100% { opacity: 1; } }';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
+
+		// @keyframes slide-in { 0% { opacity : 0 ; } 100% { opacity : 1 ; } }
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_AT_KEYWORD,  'raw' => '@keyframes' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,       'raw' => 'slide-in' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACE,  'raw' => '{' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_PERCENTAGE,  'raw' => '0%' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACE,  'raw' => '{' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,       'raw' => 'opacity' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,       'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_NUMBER,      'raw' => '0' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,   'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACE, 'raw' => '}' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_PERCENTAGE,  'raw' => '100%' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACE,  'raw' => '{' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,       'raw' => 'opacity' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,       'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_NUMBER,      'raw' => '1' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,   'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACE, 'raw' => '}' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACE, 'raw' => '}' ),
+		);
+
+		$this->assertCount( count( $expected ), $tokens, 'Token count mismatch' );
+		foreach ( $expected as $index => $exp ) {
+			$this->assertSame( $exp['type'], $tokens[ $index ]['type'], "Token $index type mismatch" );
+			$this->assertSame( $exp['raw'], $tokens[ $index ]['raw'], "Token $index raw mismatch" );
+		}
+	}
+
+	/**
+	 * Tests tokenization of vendor-prefixed properties.
+	 */
+	public function test_vendor_prefixed_properties(): void {
+		$css       = '-webkit-transform: rotate(45deg); -moz-border-radius: 5px;';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
+
+		// -webkit-transform : rotate ( 45deg ) ; -moz-border-radius : 5px ;
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,       'raw' => '-webkit-transform' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,       'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION,    'raw' => 'rotate(' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,   'raw' => '45deg' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN, 'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,   'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,       'raw' => '-moz-border-radius' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,       'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,   'raw' => '5px' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,   'raw' => ';' ),
+		);
+
+		$this->assertCount( count( $expected ), $tokens, 'Token count mismatch' );
+		foreach ( $expected as $index => $exp ) {
+			$this->assertSame( $exp['type'], $tokens[ $index ]['type'], "Token $index type mismatch" );
+			$this->assertSame( $exp['raw'], $tokens[ $index ]['raw'], "Token $index raw mismatch" );
+		}
+	}
+
+	/**
+	 * Tests tokenization of attribute selectors.
+	 */
+	public function test_attribute_selectors(): void {
+		$css       = 'input[type="text"][required], a[href^="https://"]';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
+
+		// input [ type = "text" ] [ required ] , a [ href ^ = "https://" ]
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,         'raw' => 'input' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACKET,  'raw' => '[' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,         'raw' => 'type' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,         'raw' => '=' ),
+			array( 'type' => CSSProcessor::TOKEN_STRING,        'raw' => '"text"' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACKET, 'raw' => ']' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACKET,  'raw' => '[' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,         'raw' => 'required' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACKET, 'raw' => ']' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,         'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,    'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,         'raw' => 'a' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACKET,  'raw' => '[' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,         'raw' => 'href' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,         'raw' => '^' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,         'raw' => '=' ),
+			array( 'type' => CSSProcessor::TOKEN_STRING,        'raw' => '"https://"' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACKET, 'raw' => ']' ),
+		);
+
+		$this->assertCount( count( $expected ), $tokens, 'Token count mismatch' );
+		foreach ( $expected as $index => $exp ) {
+			$this->assertSame( $exp['type'], $tokens[ $index ]['type'], "Token $index type mismatch" );
+			$this->assertSame( $exp['raw'], $tokens[ $index ]['raw'], "Token $index raw mismatch" );
+		}
+	}
+
+	/**
+	 * Tests tokenization of calc() function with complex expressions.
+	 */
+	public function test_calc_function(): void {
+		$css       = 'width: calc(100% - 20px * 2 + 5em);';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
+
+		// width : calc ( 100% - 20px * 2 + 5em ) ;
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,       'raw' => 'width' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,       'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION,    'raw' => 'calc(' ),
+			array( 'type' => CSSProcessor::TOKEN_PERCENTAGE,  'raw' => '100%' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,       'raw' => '-' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,   'raw' => '20px' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,       'raw' => '*' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_NUMBER,      'raw' => '2' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,       'raw' => '+' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,  'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,   'raw' => '5em' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN, 'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,   'raw' => ';' ),
+		);
+
+		$this->assertCount( count( $expected ), $tokens, 'Token count mismatch' );
+		foreach ( $expected as $index => $exp ) {
+			$this->assertSame( $exp['type'], $tokens[ $index ]['type'], "Token $index type mismatch" );
+			$this->assertSame( $exp['raw'], $tokens[ $index ]['raw'], "Token $index raw mismatch" );
+		}
+	}
+
+	/**
+	 * Tests tokenization of RGB/RGBA color functions.
+	 */
+	public function test_color_functions(): void {
+		$css       = 'color: rgb(255, 128, 0); background: rgba(0, 0, 0, 0.5);';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
+
+		// Verify full token sequence
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[0]['type'] );       // color
+		$this->assertSame( 'color', $tokens[0]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COLON, $tokens[1]['type'] );       // :
+		$this->assertSame( ':', $tokens[1]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[2]['type'] );  // space
+		$this->assertSame( ' ', $tokens[2]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_FUNCTION, $tokens[3]['type'] );    // rgb(
+		$this->assertSame( 'rgb(', $tokens[3]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_NUMBER, $tokens[4]['type'] );      // 255
+		$this->assertSame( '255', $tokens[4]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COMMA, $tokens[5]['type'] );       // ,
+		$this->assertSame( ',', $tokens[5]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[6]['type'] );  // space
+		$this->assertSame( ' ', $tokens[6]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_NUMBER, $tokens[7]['type'] );      // 128
+		$this->assertSame( '128', $tokens[7]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COMMA, $tokens[8]['type'] );       // ,
+		$this->assertSame( ',', $tokens[8]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[9]['type'] );  // space
+		$this->assertSame( ' ', $tokens[9]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_NUMBER, $tokens[10]['type'] );     // 0
+		$this->assertSame( '0', $tokens[10]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_RIGHT_PAREN, $tokens[11]['type'] );// )
+		$this->assertSame( ')', $tokens[11]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_SEMICOLON, $tokens[12]['type'] );  // ;
+		$this->assertSame( ';', $tokens[12]['raw'] );
+		$this->assertCount( 30, $tokens );
+	}
+
+	/**
+	 * Tests tokenization of CSS custom properties (variables).
+	 */
+	public function test_css_variables(): void {
+		$css       = '--main-color: #ff0000; color: var(--main-color);';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
+
+		// --main-color : #ff0000 ; color : var ( --main-color ) ;
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[0]['type'] );      // --main-color
+		$this->assertSame( '--main-color', $tokens[0]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COLON, $tokens[1]['type'] );      // :
+		$this->assertSame( ':', $tokens[1]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[2]['type'] ); // space
+		$this->assertSame( ' ', $tokens[2]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_HASH, $tokens[3]['type'] );       // #ff0000
+		$this->assertSame( '#ff0000', $tokens[3]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_SEMICOLON, $tokens[4]['type'] );  // ;
+		$this->assertSame( ';', $tokens[4]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[5]['type'] ); // space
+		$this->assertSame( ' ', $tokens[5]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[6]['type'] );      // color
+		$this->assertSame( 'color', $tokens[6]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COLON, $tokens[7]['type'] );      // :
+		$this->assertSame( ':', $tokens[7]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[8]['type'] ); // space
+		$this->assertSame( ' ', $tokens[8]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_FUNCTION, $tokens[9]['type'] );   // var(
+		$this->assertSame( 'var(', $tokens[9]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[10]['type'] );     // --main-color
+		$this->assertSame( '--main-color', $tokens[10]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_RIGHT_PAREN, $tokens[11]['type'] );// )
+		$this->assertSame( ')', $tokens[11]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_SEMICOLON, $tokens[12]['type'] ); // ;
+		$this->assertSame( ';', $tokens[12]['raw'] );
+		$this->assertCount( 13, $tokens );
+	}
+
+	/**
+	 * Tests tokenization of gradient functions.
+	 */
+	public function test_gradient_functions(): void {
+		$css       = 'background: linear-gradient(to right, red 0%, blue 100%);';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
+
+		// background : linear-gradient ( to right , red 0% , blue 100% ) ;
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[0]['type'] );       // background
+		$this->assertSame( 'background', $tokens[0]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COLON, $tokens[1]['type'] );       // :
+		$this->assertSame( ':', $tokens[1]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[2]['type'] );  // space
+		$this->assertSame( ' ', $tokens[2]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_FUNCTION, $tokens[3]['type'] );    // linear-gradient(
+		$this->assertSame( 'linear-gradient(', $tokens[3]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[4]['type'] );       // to
+		$this->assertSame( 'to', $tokens[4]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[5]['type'] );  // space
+		$this->assertSame( ' ', $tokens[5]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[6]['type'] );       // right
+		$this->assertSame( 'right', $tokens[6]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COMMA, $tokens[7]['type'] );       // ,
+		$this->assertSame( ',', $tokens[7]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[8]['type'] );  // space
+		$this->assertSame( ' ', $tokens[8]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[9]['type'] );       // red
+		$this->assertSame( 'red', $tokens[9]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[10]['type'] ); // space
+		$this->assertSame( ' ', $tokens[10]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_PERCENTAGE, $tokens[11]['type'] ); // 0%
+		$this->assertSame( '0%', $tokens[11]['raw'] );
+		$this->assertCount( 19, $tokens );
+	}
+
+	/**
+	 * Tests tokenization of grid layout properties.
+	 */
+	public function test_grid_layout(): void {
+		$css       = 'grid-template-columns: repeat(3, 1fr); gap: 10px 20px;';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
+
+		// grid-template-columns : repeat ( 3 , 1fr ) ; gap : 10px 20px ;
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[0]['type'] );       // grid-template-columns
+		$this->assertSame( 'grid-template-columns', $tokens[0]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COLON, $tokens[1]['type'] );       // :
+		$this->assertSame( ':', $tokens[1]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[2]['type'] );  // space
+		$this->assertSame( ' ', $tokens[2]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_FUNCTION, $tokens[3]['type'] );    // repeat(
+		$this->assertSame( 'repeat(', $tokens[3]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_NUMBER, $tokens[4]['type'] );      // 3
+		$this->assertSame( '3', $tokens[4]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COMMA, $tokens[5]['type'] );       // ,
+		$this->assertSame( ',', $tokens[5]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[6]['type'] );  // space
+		$this->assertSame( ' ', $tokens[6]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_DIMENSION, $tokens[7]['type'] );   // 1fr
+		$this->assertSame( '1fr', $tokens[7]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_RIGHT_PAREN, $tokens[8]['type'] ); // )
+		$this->assertSame( ')', $tokens[8]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_SEMICOLON, $tokens[9]['type'] );   // ;
+		$this->assertSame( ';', $tokens[9]['raw'] );
+		$this->assertCount( 18, $tokens );
+	}
+
+	/**
+	 * Tests tokenization of URL functions with various formats.
+	 */
+	public function test_url_formats(): void {
+		$css       = 'background: url("image.png"), url(\'font.woff\'), url(https://example.com/bg.jpg);';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
+
+		// background : url ( "image.png" ) , url ( 'font.woff' ) , url ( https://... ) ;
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[0]['type'] );       // background
+		$this->assertSame( 'background', $tokens[0]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COLON, $tokens[1]['type'] );       // :
+		$this->assertSame( ':', $tokens[1]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[2]['type'] );  // space
+		$this->assertSame( ' ', $tokens[2]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_FUNCTION, $tokens[3]['type'] );    // url(
+		$this->assertSame( 'url(', $tokens[3]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $tokens[4]['type'] );      // "image.png"
+		$this->assertSame( '"image.png"', $tokens[4]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_RIGHT_PAREN, $tokens[5]['type'] ); // )
+		$this->assertSame( ')', $tokens[5]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COMMA, $tokens[6]['type'] );       // ,
+		$this->assertSame( ',', $tokens[6]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[7]['type'] );  // space
+		$this->assertSame( ' ', $tokens[7]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_FUNCTION, $tokens[8]['type'] );    // url(
+		$this->assertSame( 'url(', $tokens[8]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $tokens[9]['type'] );      // 'font.woff'
+		$this->assertSame( "'font.woff'", $tokens[9]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_RIGHT_PAREN, $tokens[10]['type'] );// )
+		$this->assertSame( ')', $tokens[10]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COMMA, $tokens[11]['type'] );      // ,
+		$this->assertSame( ',', $tokens[11]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[12]['type'] ); // space
+		$this->assertSame( ' ', $tokens[12]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_URL, $tokens[13]['type'] );        // url(https://...)
+		$this->assertSame( 'url(https://example.com/bg.jpg)', $tokens[13]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_SEMICOLON, $tokens[14]['type'] );  // ;
+		$this->assertSame( ';', $tokens[14]['raw'] );
+		$this->assertCount( 15, $tokens );
+	}
+
+	/**
+	 * Tests tokenization of !important declarations.
+	 */
+	public function test_important_declarations(): void {
+		$css       = 'color: red !important; margin: 0 !important;';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
+
+		// color : red ! important ; margin : 0 ! important ;
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[0]['type'] );      // color
+		$this->assertSame( 'color', $tokens[0]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COLON, $tokens[1]['type'] );      // :
+		$this->assertSame( ':', $tokens[1]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[2]['type'] ); // space
+		$this->assertSame( ' ', $tokens[2]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[3]['type'] );      // red
+		$this->assertSame( 'red', $tokens[3]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[4]['type'] ); // space
+		$this->assertSame( ' ', $tokens[4]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_DELIM, $tokens[5]['type'] );      // !
+		$this->assertSame( '!', $tokens[5]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[6]['type'] );      // important
+		$this->assertSame( 'important', $tokens[6]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_SEMICOLON, $tokens[7]['type'] );  // ;
+		$this->assertSame( ';', $tokens[7]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[8]['type'] ); // space
+		$this->assertSame( ' ', $tokens[8]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[9]['type'] );      // margin
+		$this->assertSame( 'margin', $tokens[9]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COLON, $tokens[10]['type'] );     // :
+		$this->assertSame( ':', $tokens[10]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[11]['type'] );// space
+		$this->assertSame( ' ', $tokens[11]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_NUMBER, $tokens[12]['type'] );    // 0
+		$this->assertSame( '0', $tokens[12]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[13]['type'] );// space
+		$this->assertSame( ' ', $tokens[13]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_DELIM, $tokens[14]['type'] );     // !
+		$this->assertSame( '!', $tokens[14]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[15]['type'] );     // important
+		$this->assertSame( 'important', $tokens[15]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_SEMICOLON, $tokens[16]['type'] ); // ;
+		$this->assertSame( ';', $tokens[16]['raw'] );
+		$this->assertCount( 17, $tokens );
+	}
+
+	/**
+	 * Tests tokenization of multiple selectors with combinators.
+	 */
+	public function test_complex_combinators(): void {
+		$css       = 'div > p + span ~ a.link';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
+
+		// div > p + span ~ a . link
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[0]['type'] );       // div
+		$this->assertSame( 'div', $tokens[0]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[1]['type'] );  // space
+		$this->assertSame( ' ', $tokens[1]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_DELIM, $tokens[2]['type'] );       // >
+		$this->assertSame( '>', $tokens[2]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[3]['type'] );  // space
+		$this->assertSame( ' ', $tokens[3]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[4]['type'] );       // p
+		$this->assertSame( 'p', $tokens[4]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[5]['type'] );  // space
+		$this->assertSame( ' ', $tokens[5]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_DELIM, $tokens[6]['type'] );       // +
+		$this->assertSame( '+', $tokens[6]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[7]['type'] );  // space
+		$this->assertSame( ' ', $tokens[7]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[8]['type'] );       // span
+		$this->assertSame( 'span', $tokens[8]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[9]['type'] );  // space
+		$this->assertSame( ' ', $tokens[9]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_DELIM, $tokens[10]['type'] );      // ~
+		$this->assertSame( '~', $tokens[10]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[11]['type'] ); // space
+		$this->assertSame( ' ', $tokens[11]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[12]['type'] );      // a
+		$this->assertSame( 'a', $tokens[12]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_DELIM, $tokens[13]['type'] );      // .
+		$this->assertSame( '.', $tokens[13]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[14]['type'] );      // link
+		$this->assertSame( 'link', $tokens[14]['raw'] );
+		$this->assertCount( 15, $tokens );
+	}
+
+	/**
+	 * Tests tokenization of escaped characters in identifiers.
+	 */
+	public function test_escaped_identifiers(): void {
+		$css       = '.class\\:name, #id\\@special { color: blue; }';
+		$processor = new CSSProcessor( $css );
+		$tokens    = $this->collect_tokens( $processor, $css );
+
+		// . class\:name , # id\@special { color : blue ; }
+		$this->assertSame( CSSProcessor::TOKEN_DELIM, $tokens[0]['type'] );       // .
+		$this->assertSame( '.', $tokens[0]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[1]['type'] );       // class\:name
+		$this->assertSame( 'class\\:name', $tokens[1]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COMMA, $tokens[2]['type'] );       // ,
+		$this->assertSame( ',', $tokens[2]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[3]['type'] );  // space
+		$this->assertSame( ' ', $tokens[3]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_HASH, $tokens[4]['type'] );        // #id\@special
+		$this->assertSame( '#id\\@special', $tokens[4]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[5]['type'] );  // space
+		$this->assertSame( ' ', $tokens[5]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_LEFT_BRACE, $tokens[6]['type'] );  // {
+		$this->assertSame( '{', $tokens[6]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[7]['type'] );  // space
+		$this->assertSame( ' ', $tokens[7]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[8]['type'] );       // color
+		$this->assertSame( 'color', $tokens[8]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_COLON, $tokens[9]['type'] );       // :
+		$this->assertSame( ':', $tokens[9]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[10]['type'] ); // space
+		$this->assertSame( ' ', $tokens[10]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $tokens[11]['type'] );      // blue
+		$this->assertSame( 'blue', $tokens[11]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_SEMICOLON, $tokens[12]['type'] );  // ;
+		$this->assertSame( ';', $tokens[12]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $tokens[13]['type'] ); // space
+		$this->assertSame( ' ', $tokens[13]['raw'] );
+		$this->assertSame( CSSProcessor::TOKEN_RIGHT_BRACE, $tokens[14]['type'] );// }
+		$this->assertSame( '}', $tokens[14]['raw'] );
+		$this->assertCount( 15, $tokens );
 	}
 }
