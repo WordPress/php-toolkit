@@ -356,7 +356,7 @@ class CSSProcessor {
 				// > set the <hash-token>'s type flag to "id".
 
 				// Consume an ident sequence, and set the <hash-token>'s value to the returned string.
-				$this->token_name   = $this->consume_ident();
+				$this->token_name   = $this->consume_ident_sequence();
 				$this->token_type   = self::TOKEN_HASH;
 				$this->token_length = $this->at - $this->token_starts_at;
 				return true;
@@ -409,7 +409,7 @@ class CSSProcessor {
 			// consume an ident sequence, create an <at-keyword-token> with its value set to the returned value,
 			// and return it
 			if ( $this->would_next_3_code_points_start_an_ident( $this->at ) ) {
-				$this->token_name   = $this->consume_ident();
+				$this->token_name   = $this->consume_ident_sequence();
 				$this->token_type   = self::TOKEN_AT_KEYWORD;
 				$this->token_length = $this->at - $this->token_starts_at;
 				return true;
@@ -845,7 +845,7 @@ class CSSProcessor {
 			// Create a <dimension-token> with the same value and type flag as number,
 			// and a unit set initially to the empty string.
 			// Consume an ident sequence. Set the <dimension-token>'s unit to the returned value.
-			$this->token_unit   = $this->consume_ident();
+			$this->token_unit   = $this->consume_ident_sequence();
 			$this->token_type   = self::TOKEN_DIMENSION;
 			$this->token_length = $this->at - $this->token_starts_at;
 			return true;
@@ -878,7 +878,7 @@ class CSSProcessor {
 	 */
 	private function consume_ident_like(): bool {
 		// Consume an ident sequence, and let string be the result.
-		$string = $this->consume_ident();
+		$string = $this->consume_ident_sequence();
 
 		/*
 		 * If string's value is an ASCII case-insensitive match for "url",
@@ -1097,67 +1097,20 @@ class CSSProcessor {
 	 *
 	 * @return string
 	 */
-	private function consume_ident(): string {
+	private function consume_ident_sequence(): string {
 		$result = '';
 
 		while ( $this->at < $this->length ) {
-			$char = $this->css[ $this->at ];
-			$byte = ord( $char );
-
-			// Fast path for common ASCII ident chars
-			if ( ( $char >= 'A' && $char <= 'Z' ) ||
-			     ( $char >= 'a' && $char <= 'z' ) ||
-			     ( $char >= '0' && $char <= '9' ) ||
-			     '_' === $char || '-' === $char ) {
-				// Use strspn to consume multiple chars at once
-				$len = strspn( $this->css, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-', $this->at );
-				$result        .= substr( $this->css, $this->at, $len );
-				$this->at += $len;
+			$codepoint_bytes = $this->consume_ident_codepoint( $this->at );
+			if ( $codepoint_bytes > 0 ) {
+				$result .= substr( $this->css, $this->at, $codepoint_bytes );
+				$this->at += $codepoint_bytes;
 				continue;
 			}
 
-			// Escape
-			if ( '\\' === $char ) {
-				if ( $this->is_valid_escape( $this->at ) ) {
-					$this->at++;
-					$result .= $this->consume_escape();
-					continue;
-				} else {
-					// Invalid escape (EOF or newline) - produce replacement character
-					$this->at++;
-					$result .= "\xEF\xBF\xBD"; // U+FFFD in UTF-8
-					continue;
-				}
-			}
-
-			// Non-ASCII (>= 0x80)
-			// According to CSS spec, any non-ASCII code point (>= U+0080) is valid in identifiers
-			if ( $byte >= 0x80 ) {
-				// Use get_codepoint_at to get the actual codepoint value and byte length
-				$matched_bytes = 0;
-				$codepoint = $this->get_codepoint_at( $this->at, $matched_bytes );
-
-				// Safeguard: if get_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
-				if ( 0 === $matched_bytes ) {
-					$matched_bytes = 1;
-				}
-
-				// Check if the codepoint is actually >= 0x80 (non-ASCII)
-				if ( null !== $codepoint && $codepoint >= 0x80 ) {
-					$result        .= substr( $this->css, $this->at, $matched_bytes );
-					$this->at += $matched_bytes;
-					continue;
-				}
-
-				// Invalid UTF-8 or codepoint < 0x80 - stop identifier
-				break;
-			}
-
-			// Null byte (0x00) is consumed but replaced with U+FFFD per CSS spec
-			// Other control characters stop identifier consumption
-			if ( $byte === 0x00 ) {
+			if ( $this->is_valid_escape( $this->at ) ) {
 				$this->at++;
-				$result .= "\xEF\xBF\xBD"; // U+FFFD
+				$result .= $this->consume_escape();
 				continue;
 			}
 
@@ -1165,6 +1118,42 @@ class CSSProcessor {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @return int The number of bytes consumed.
+	 */
+	private function consume_ident_codepoint($at): int {
+		$ascii_len = strspn( $this->css, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-', $this->at, 1 );
+		if ($ascii_len > 0) {
+			return 1;
+		}
+
+		// Null byte (0x00) is consumed but replaced with U+FFFD per CSS spec
+		// Other control characters stop identifier consumption
+		if ( ord($this->css[$at]) === 0x00 ) {
+			return 1;
+		}
+
+		// Non-ASCII (>= 0x80)
+		// According to CSS spec, any non-ASCII code point (>= U+0080) is valid in identifiers
+		if ( ord($this->css[$at]) >= 0x80 ) {
+			// Use get_codepoint_at to get the actual codepoint value and byte length
+			$matched_bytes = 0;
+			$codepoint = $this->get_codepoint_at( $this->at, $matched_bytes );
+
+			// Safeguard: if get_codepoint_at fails to advance, skip 1 byte to prevent infinite loop
+			if ( 0 === $matched_bytes ) {
+				$matched_bytes = 1;
+			}
+
+			// Check if the codepoint is actually >= 0x80 (non-ASCII)
+			if ( null !== $codepoint && $codepoint >= 0x80 ) {
+				return $matched_bytes;
+			}
+		}
+
+		return 0;
 	}
 
 	/**
@@ -1267,8 +1256,11 @@ class CSSProcessor {
 		if ( $offset >= $this->length || '\\' !== $this->css[ $offset ] ) {
 			return false;
 		}
+		// Per CSS spec: if the second code point is a newline, return false.
+		// Otherwise (including EOF), return true.
 		if ( $offset + 1 >= $this->length ) {
-			return false;
+			// Second code point is EOF - this is a valid escape per spec
+			return true;
 		}
 		$next = $this->css[ $offset + 1 ];
 		return "\n" !== $next && "\f" !== $next && "\r" !== $next;
@@ -1421,15 +1413,7 @@ class CSSProcessor {
 		// If the first and second code points are a valid escape, return true.
 		if ( 0x005C === $codepoint1 ) {
 			// Check if it's a valid escape
-			if ( $this->is_valid_escape( $offset ) ) {
-				return true;
-			}
-			// Backslash at EOF starts an ident (produces U+FFFD)
-			if ( $offset + $matched_bytes1 >= $this->length ) {
-				return true;
-			}
-			// Otherwise, return false.
-			return false;
+			return $this->is_valid_escape( $offset );
 		}
 
 		// U+0000 NULL starts an ident (will be replaced with U+FFFD)
