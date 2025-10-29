@@ -144,15 +144,6 @@ class CSSTokenizer {
 	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-CDO-token
 	 */
 	public const TOKEN_CDO = 'CDO-token';
-	/**
-	 * EOF (End Of File) token marks the end of the input stream.
-	 *
-	 * This implementation returns false from next_token() instead of producing
-	 * an explicit EOF token, but the concept is the same.
-	 *
-	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-eof-token
-	 */
-	public const TOKEN_EOF = 'EOF-token';
 
 	/**
 	 * @var string
