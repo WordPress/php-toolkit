@@ -13,7 +13,7 @@ use function WordPress\Encoding\codepoint_to_utf8_bytes;
  *
  * ## Design choices:
  *
- * ### No explicit normalization step
+ * ### On-the-fly normalization
  *
  * The CSS Spec requires the following normalization step:
  *
@@ -23,18 +23,9 @@ use function WordPress\Encoding\codepoint_to_utf8_bytes;
  * > Replace any U+0000 NULL or surrogate code points in input with U+FFFD REPLACEMENT
  * > CHARACTER (�).
  *
- * This tokenizer does not perform it upfront to minimize the amount of "just in case"
- * work. Instead, it normalizes the input on the fly as it consumes the tokens.
- *
- * The price to pay is:
- *
- * * More complex parsing logic
- * * Token values are accumulated during the parsing and concatenated together. This
- *   means more work and memory allocations than if we only stored the indices and
- *   concatenated them when needed.
- *
- * One possible optimization is moving the normalization step to the get_token_value()
- * method.
+ * This tokenizer normalizes on-the-fly during tokenization rather than preprocessing
+ * the entire input upfront. This avoids the upfront allocation cost for clean CSS
+ * and preserves original byte positions for accurate raw token extraction.
  *
  * ### No EOF token
  *
@@ -256,6 +247,15 @@ class CSSTokenizer {
 	 * @var string|null
 	 */
 	private $token_unit = null;
+
+	/**
+	 * Flag indicating whether the current token needs decoding (has escapes or normalization).
+	 *
+	 * When true, get_token_value() will decode the token on first access and cache the result.
+	 *
+	 * @var bool
+	 */
+	private $token_needs_decoding = false;
 
 	/**
 	 * @param string $css CSS source to tokenize.
@@ -596,6 +596,19 @@ class CSSTokenizer {
 				// Identifier is the entire token
 				return substr( $this->css, $this->token_starts_at, $this->token_length );
 
+			case self::TOKEN_STRING:
+			case self::TOKEN_BAD_STRING:
+			case self::TOKEN_URL:
+				// Decode and cache the string/URL value
+				if ( null !== $this->token_value_starts_at && null !== $this->token_value_length ) {
+					$this->token_value = $this->decode_string_or_url(
+						$this->token_value_starts_at,
+						$this->token_value_starts_at + $this->token_value_length
+					);
+					return $this->token_value;
+				}
+				return null;
+
 			default:
 				return null;
 		}
@@ -669,6 +682,7 @@ class CSSTokenizer {
 		$this->token_unit            = null;
 		$this->token_value_starts_at = null;
 		$this->token_value_length    = null;
+		$this->token_needs_decoding  = false;
 	}
 
 	/**
@@ -685,7 +699,6 @@ class CSSTokenizer {
 		// Initially create a <string-token> with its value set to the empty string.
 		$this->token_starts_at = $this->at;
 		$ending_char           = $this->css[ $this->at ];
-		$decoded_value         = '';
 
 		// Skip past the opening quote.
 		++$this->at;
@@ -698,8 +711,7 @@ class CSSTokenizer {
 			// Consume normal characters until we hit a special character.
 			$normal_len = strcspn( $this->css, $special_chars, $this->at );
 			if ( $normal_len > 0 ) {
-				$decoded_value .= substr( $this->css, $this->at, $normal_len );
-				$this->at      += $normal_len;
+				$this->at += $normal_len;
 			}
 
 			if ( $this->at >= $this->length ) {
@@ -712,11 +724,11 @@ class CSSTokenizer {
 					// Ending quote.
 					// Return the <string-token>.
 					++$this->at;
-					$this->token_type            = self::TOKEN_STRING;
-					$this->token_value           = $decoded_value;
-					$this->token_length          = $this->at - $this->token_starts_at;
-					$this->token_value_starts_at = $value_starts_at;
-					$this->token_value_length    = $this->at - $value_starts_at - 1;
+					$this->token_type             = self::TOKEN_STRING;
+					$this->token_needs_decoding   = true;
+					$this->token_length           = $this->at - $this->token_starts_at;
+					$this->token_value_starts_at  = $value_starts_at;
+					$this->token_value_length     = $this->at - $value_starts_at - 1;
 					return true;
 
 				case "\n":
@@ -733,11 +745,11 @@ class CSSTokenizer {
 					 *
 					 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
 					 */
-					$this->token_type            = self::TOKEN_BAD_STRING;
-					$this->token_value           = $decoded_value;
-					$this->token_length          = $this->at - $this->token_starts_at;
-					$this->token_value_starts_at = $value_starts_at;
-					$this->token_value_length    = $this->at - $value_starts_at;
+					$this->token_type             = self::TOKEN_BAD_STRING;
+					$this->token_needs_decoding   = true;
+					$this->token_length           = $this->at - $this->token_starts_at;
+					$this->token_value_starts_at  = $value_starts_at;
+					$this->token_value_length     = $this->at - $value_starts_at;
 					return true;
 
 				case '\\':
@@ -764,8 +776,9 @@ class CSSTokenizer {
 					}
 
 					// Otherwise, (the stream starts with a valid escape) consume an escaped
-					// code point and append the returned code point to the <string-token>'s value.
-					$decoded_value .= $this->consume_escape();
+					// code point (just to advance position, don't store the result).
+					$this->decode_escape_at( $this->at, $matched_bytes );
+					$this->at += $matched_bytes;
 					continue 2;
 
 				default:
@@ -776,11 +789,11 @@ class CSSTokenizer {
 
 		// EOF
 		// This is a parse error. Return the <string-token>.
-		$this->token_type            = self::TOKEN_STRING;
-		$this->token_value           = $decoded_value;
-		$this->token_length          = $this->at - $this->token_starts_at;
-		$this->token_value_starts_at = $value_starts_at;
-		$this->token_value_length    = $this->at - $value_starts_at;
+		$this->token_type             = self::TOKEN_STRING;
+		$this->token_needs_decoding   = true;
+		$this->token_length           = $this->at - $this->token_starts_at;
+		$this->token_value_starts_at  = $value_starts_at;
+		$this->token_value_length     = $this->at - $value_starts_at;
 		return true;
 	}
 
@@ -994,7 +1007,6 @@ class CSSTokenizer {
 		$this->at += strspn( $this->css, "\t\n\f\r ", $this->at );
 
 		$value_starts_at = $this->at;
-		$value           = '';
 
 		// Repeatedly consume the next input code point from the stream.
 		while ( $this->at < $this->length ) {
@@ -1003,7 +1015,7 @@ class CSSTokenizer {
 			if ( ')' === $this->css[ $this->at ] ) {
 				++$this->at;
 				$this->token_type            = self::TOKEN_URL;
-				$this->token_value           = $value;
+				$this->token_needs_decoding  = true;
 				$this->token_length          = $this->at - $this->token_starts_at;
 				$this->token_value_starts_at = $value_starts_at;
 				$this->token_value_length    = $this->at - $value_starts_at - 1;
@@ -1023,7 +1035,7 @@ class CSSTokenizer {
 				if ( $this->at >= $this->length ) {
 					// EOF is a parse error, but we return the <url-token> anyway.
 					$this->token_type            = self::TOKEN_URL;
-					$this->token_value           = $value;
+					$this->token_needs_decoding  = true;
 					$this->token_length          = $this->at - $this->token_starts_at;
 					$this->token_value_starts_at = $value_starts_at;
 					$this->token_value_length    = $value_ends_at - $value_starts_at;
@@ -1034,7 +1046,7 @@ class CSSTokenizer {
 					// Skip the closing parenthesis and return the <url-token>.
 					++$this->at;
 					$this->token_type            = self::TOKEN_URL;
-					$this->token_value           = $value;
+					$this->token_needs_decoding  = true;
 					$this->token_length          = $this->at - $this->token_starts_at;
 					$this->token_value_starts_at = $value_starts_at;
 					$this->token_value_length    = $value_ends_at - $value_starts_at;
@@ -1069,12 +1081,12 @@ class CSSTokenizer {
 			}
 
 			// U+005C REVERSE SOLIDUS (\)
-			// If the stream starts with a valid escape, consume an escaped code point and
-			// append the returned code point to the <url-token>'s value.
+			// If the stream starts with a valid escape, consume an escaped code point.
 			if ( '\\' === $this->css[ $this->at ] ) {
 				if ( $this->is_valid_escape( $this->at ) ) {
 					++$this->at;
-					$value .= $this->consume_escape();
+					$this->decode_escape_at( $this->at, $matched_bytes );
+					$this->at += $matched_bytes;
 					continue;
 				}
 				// Otherwise, this is a parse error. Consume the remnants of a bad url,
@@ -1083,7 +1095,7 @@ class CSSTokenizer {
 			}
 
 			// anything else
-			// Append the current input code point to the <url-token>'s value.
+			// Consume the current input code point.
 			$this->get_codepoint_at( $this->at, $matched_bytes );
 
 			// We're in trouble!
@@ -1095,14 +1107,13 @@ class CSSTokenizer {
 				$matched_bytes = 1;
 			}
 
-			$value    .= substr( $this->css, $this->at, $matched_bytes );
 			$this->at += $matched_bytes;
 		}
 
 		// EOF
 		// This is a parse error. Return the <url-token>.
 		$this->token_type            = self::TOKEN_URL;
-		$this->token_value           = $value;
+		$this->token_needs_decoding  = true;
 		$this->token_length          = $this->at - $this->token_starts_at;
 		$this->token_value_starts_at = $value_starts_at;
 		$this->token_value_length    = $this->at - $value_starts_at;
@@ -1130,7 +1141,8 @@ class CSSTokenizer {
 			if ( '\\' === $this->css[ $this->at ] ) {
 				++$this->at;
 				if ( $this->is_valid_escape( $this->at - 1 ) ) {
-					$this->consume_escape();
+					$this->decode_escape_at( $this->at, $matched_bytes );
+					$this->at += $matched_bytes;
 					continue;
 				}
 			} elseif ( ')' === $this->css[ $this->at ] ) {
@@ -1179,7 +1191,8 @@ class CSSTokenizer {
 					$decoded     = substr( $this->css, $start, $this->at - $start );
 				}
 				++$this->at;
-				$decoded .= $this->consume_escape();
+				$decoded .= $this->decode_escape_at( $this->at, $matched_bytes );
+				$this->at += $matched_bytes;
 				continue;
 			}
 
@@ -1258,17 +1271,101 @@ class CSSTokenizer {
 	}
 
 	/**
-	 * Consumes an escaped code point.
+	 * Decodes a string or URL value with escape sequences and normalization.
+	 *
+	 * Fast path: If the slice contains no special characters (escapes, CR, FF, null),
+	 * returns the raw substring with zero allocations.
+	 *
+	 * Slow path: Builds the decoded string by processing escapes and normalizing
+	 * line endings and null bytes.
+	 *
+	 * @param int $start Start byte offset.
+	 * @param int $end End byte offset.
+	 * @return string Decoded string.
+	 */
+	private function decode_string_or_url( int $start, int $end ): string {
+		// Fast path: check if decoding is needed.
+		$slice = substr( $this->css, $start, $end - $start );
+		if ( false === strpbrk( $slice, "\\\r\f\x00" ) ) {
+			// No escapes or special chars - return raw substring (zero allocations!)
+			return $slice;
+		}
+
+		// Slow path: build decoded string (one allocation).
+		$decoded = '';
+		$at      = $start;
+
+		while ( $at < $end ) {
+			// Find next special character.
+			$normal_len = strcspn( $this->css, "\\\r\f\x00", $at );
+			if ( $normal_len > 0 ) {
+				$decoded .= substr( $this->css, $at, $normal_len );
+				$at      += $normal_len;
+			}
+
+			if ( $at >= $end ) {
+				break;
+			}
+
+			$char = $this->css[ $at ];
+
+			// Handle escapes.
+			if ( '\\' === $char ) {
+				if ( $this->is_valid_escape( $at ) ) {
+					++$at;
+					$decoded .= $this->decode_escape_at( $at, $bytes_consumed );
+					$at      += $bytes_consumed;
+					continue;
+				}
+				// Invalid escape - just include the backslash.
+				$decoded .= '\\';
+				++$at;
+				continue;
+			}
+
+			// CSS normalization: \r\n, \r, and \f all become \n.
+			if ( "\r" === $char ) {
+				$decoded .= "\n";
+				++$at;
+				// Handle \r\n as single newline.
+				if ( $at < $end && "\n" === $this->css[ $at ] ) {
+					++$at;
+				}
+				continue;
+			}
+
+			if ( "\f" === $char ) {
+				$decoded .= "\n";
+				++$at;
+				continue;
+			}
+
+			// Null bytes become U+FFFD.
+			if ( "\x00" === $char ) {
+				$decoded .= "\xEF\xBF\xBD"; // U+FFFD.
+				++$at;
+				continue;
+			}
+		}
+
+		return $decoded;
+	}
+
+	/**
+	 * Decodes an escape sequence starting at the given offset without
+	 * modifying $this->at.
 	 *
 	 * Escape sequences are backslash followed by 1-6 hex digits (with optional
 	 * trailing whitespace) or any other character. Invalid code points are
 	 * replaced with U+FFFD.
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#consume-escaped-code-point
-	 *
-	 * @return string
+	 * 
+	 * @param int $offset Byte offset (should point to the character after the backslash).
+	 * @param int &$bytes_consumed Output parameter: number of bytes consumed.
+	 * @return string The decoded character(s).
 	 */
-	private function consume_escape(): string {
+	private function decode_escape_at( int $offset, &$bytes_consumed ): string {
 		// It assumes that the U+005C REVERSE SOLIDUS (\) has already been consumed
 		// and that the next input code point has already been verified to be part
 		// of a valid escape.
@@ -1276,34 +1373,38 @@ class CSSTokenizer {
 		// The first step is to consume the next input code point. This method handles
 		// that part implicitly in every code branch below.
 
+		$at = $offset;
+
 		// EOF.
-		if ( $this->at >= $this->length ) {
+		if ( $at >= $this->length ) {
 			// This is a parse error. Return U+FFFD REPLACEMENT CHARACTER (�).
+			$bytes_consumed = 0;
 			return "\xEF\xBF\xBD"; // U+FFFD.
 		}
 
 		// Hex digits.
-		$hex_len = strspn( $this->css, '0123456789ABCDEFabcdef', $this->at );
+		$hex_len = strspn( $this->css, '0123456789ABCDEFabcdef', $at );
 		if ( $hex_len > 0 ) {
 			// Consume up to 6 hex digits.
-			$hex_len   = min( $hex_len, 6 ); // Max 6 hex digits.
-			$hex       = substr( $this->css, $this->at, $hex_len );
-			$this->at += $hex_len;
+			$hex_len = min( $hex_len, 6 );
+			$hex     = substr( $this->css, $at, $hex_len );
+			$at     += $hex_len;
 
 			// If the next input code point is whitespace, consume it as well.
-			if ( $this->at < $this->length ) {
-				$next = $this->css[ $this->at ];
+			if ( $at < $this->length ) {
+				$next = $this->css[ $at ];
 				if ( "\t" === $next || "\n" === $next || "\f" === $next || ' ' === $next ) {
-					++$this->at;
+					++$at;
 				} elseif ( "\r" === $next ) {
-					++$this->at;
+					++$at;
 					// Handle \r\n as a single whitespace – the preprocessing phase would replace \r\n with \n.
-					if ( $this->at < $this->length && "\n" === $this->css[ $this->at ] ) {
-						++$this->at;
+					if ( $at < $this->length && "\n" === $this->css[ $at ] ) {
+						++$at;
 					}
 				}
 			}
 
+			$bytes_consumed = $at - $offset;
 			// Convert the hex digits to a UTF-8 string.
 			return codepoint_to_utf8_bytes( hexdec( $hex ) );
 		}
@@ -1311,25 +1412,23 @@ class CSSTokenizer {
 		// Anything else.
 		// Return the current input code point.
 		// Null bytes are replaced with U+FFFD during preprocessing.
-		if ( "\x00" === $this->css[ $this->at ] ) {
-			++$this->at;
+		if ( "\x00" === $this->css[ $at ] ) {
+			$bytes_consumed = 1;
 			return "\xEF\xBF\xBD"; // U+FFFD.
 		}
-
-		$this->get_codepoint_at( $this->at, $matched_bytes );
 
 		// We're in trouble!
 		// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
 		// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
 		// an error would be useful for sure.
 		// For now, we'll just consume that byte to prevent infinite loop and keep processing.
+		$this->get_codepoint_at( $at, $matched_bytes );
 		if ( 0 === $matched_bytes ) {
 			$matched_bytes = 1;
 		}
 
-		$result    = substr( $this->css, $this->at, $matched_bytes );
-		$this->at += $matched_bytes;
-		return $result;
+		$bytes_consumed = $matched_bytes;
+		return substr( $this->css, $at, $matched_bytes );
 	}
 
 	/**

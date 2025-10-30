@@ -70,13 +70,8 @@ class CSSTokenizerTest extends TestCase {
 		while ( $processor->next_token() ) {
 			$type = $processor->get_token_type();
 
-			// Skip EOF tokens (they're not in the test corpus)
-			if ( CSSTokenizer::TOKEN_EOF === $type ) {
-				break;
-			}
-
 			$byte_start = $processor->get_token_start();
-			$byte_end = $byte_start + $processor->get_token_length();
+			$byte_end   = $byte_start + $processor->get_token_length();
 
 			$token = array(
 				'type'       => $type,
