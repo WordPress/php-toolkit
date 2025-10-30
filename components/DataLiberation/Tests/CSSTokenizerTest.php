@@ -171,7 +171,7 @@ class CSSTokenizerTest extends TestCase {
 		@media screen and (min-width: 10px) {
 			background: url("/images/a.png");
 		}
-		CSS;
+CSS;
 
 		$expected = array(
 			array( 'type' => CSSTokenizer::TOKEN_AT_KEYWORD, 'raw' => '@media' ),
