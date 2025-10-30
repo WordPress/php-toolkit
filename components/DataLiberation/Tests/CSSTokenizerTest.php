@@ -41,21 +41,7 @@ class CSSTokenizerTest extends TestCase {
 	 * @return array
 	 */
 	static public function corpus_provider(): array {
-		static $test_cases = null;
-
-		if ( null === $test_cases ) {
-			$test_cases = require __DIR__ . '/css-test-cases.php';
-		}
-
-		$data = array();
-		foreach ( $test_cases as $test_name => $test_case ) {
-			$data[ $test_name ] = array(
-				$test_case['css'],
-				$test_case['tokens'],
-			);
-		}
-
-		return $data;
+		return require __DIR__ . '/css-test-cases.php';
 	}
 
 	/**
@@ -643,7 +629,7 @@ class CSSTokenizerTest extends TestCase {
 	 * Tests tokenization of !important declarations.
 	 */
 	public function test_important_declarations(): void {
-		$css = 'color: red !important; margin: 0 !important;';
+		$css = 'color: red !important; margin: 0px !important;';
 
 		$expected = array(
 			array( 'type' => CSSTokenizer::TOKEN_IDENT,        'raw' => 'color' ),
@@ -658,7 +644,7 @@ class CSSTokenizerTest extends TestCase {
 			array( 'type' => CSSTokenizer::TOKEN_IDENT,        'raw' => 'margin' ),
 			array( 'type' => CSSTokenizer::TOKEN_COLON,        'raw' => ':' ),
 			array( 'type' => CSSTokenizer::TOKEN_WHITESPACE,   'raw' => ' ' ),
-			array( 'type' => CSSTokenizer::TOKEN_NUMBER,       'raw' => '0' ),
+			array( 'type' => CSSTokenizer::TOKEN_DIMENSION,    'raw' => '0px' ),
 			array( 'type' => CSSTokenizer::TOKEN_WHITESPACE,   'raw' => ' ' ),
 			array( 'type' => CSSTokenizer::TOKEN_DELIM,        'raw' => '!' ),
 			array( 'type' => CSSTokenizer::TOKEN_IDENT,        'raw' => 'important' ),
@@ -914,5 +900,293 @@ class CSSTokenizerTest extends TestCase {
 
 		$tokenizer = CSSTokenizer::create( '.class { color: red; }', 'Windows-1252' );
 		$this->assertNull( $tokenizer );
+	}
+
+	/**
+	 * Tests escape sequences in unusual and edge-case positions.
+	 *
+	 * Covers:
+	 * - Multiple consecutive escapes
+	 * - Escapes in function names
+	 * - Escapes in at-keywords
+	 * - Escapes in dimension units
+	 * - Null byte escapes (\0)
+	 * - Escaped special characters (@, #, !, etc.)
+	 * - Escaped whitespace that gets consumed by the escape
+	 * - Unicode escapes for various characters
+	 */
+	public function test_escape_sequences_in_unusual_places(): void {
+		// Complex CSS with escapes in many unusual but valid positions
+		$css = '@\\6D edia ' .                           // @media with \6D (m) and space consumed
+		       '\\73 creen ' .                           // screen with \73 (s) and space consumed
+		       '{' .
+		       ' .\\63 l\\61 ss\\5F name ' .             // .class_name with escapes and spaces consumed
+		       "#\\69 d\\5C 0test\x00 " .                // #id\0test with null byte escape (should be preserved)
+			                                             // AND an actual null byte (should be replaced with a U+FFFD REPLACEMENT CHARACTER)
+		       '{' .
+		       ' c\\6F lor: ' .                          // color: with \6F (o) and space consumed
+		       'r\\65 d ' .                              // red with escape
+		       '\\21 important;' .                       // !important with escaped !
+		       ' w\\69 dth: ' .                          // width:
+		       '10\\70 x;' .                             // 10px (dimension with escaped unit)
+		       ' background: ' .
+		       '\\75 rl(' .                              // url( with escaped u
+		       '"p\\61 th\\2F img\\2E png"' .            // "path/img.png" with escapes
+		       ');' .
+		       ' content: "\\5C \\5C ";' .               // "\\ \\" - escaped backslashes
+		       ' font-family: \\22 Arial\\22 ;' .       // "Arial" with escaped quotes
+		       ' }' .
+		       '}';
+
+		$expected = array(
+			// @\6D edia -> @media
+			array(
+				'type' => CSSTokenizer::TOKEN_AT_KEYWORD,
+				'raw'  => '@\\6D edia',
+				'normalized' => '@media',
+				'value' => 'media',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'normalized' => ' ',
+				'raw'  => ' ',
+			),
+			// \73 creen -> screen
+			array(
+				'type' => CSSTokenizer::TOKEN_IDENT,
+				'raw'  => '\\73 creen',
+				'normalized' => 'screen',
+				'value' => 'screen',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_LEFT_BRACE,
+				'raw'  => '{',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'normalized' => ' ',
+				'raw'  => ' ',
+			),
+			// Delimiter .
+			array(
+				'type' => CSSTokenizer::TOKEN_DELIM,
+				'raw'  => '.',
+				'normalized' => '.',
+			),
+			// \63 l\61 ss\5F name -> class_name
+			array(
+				'type' => CSSTokenizer::TOKEN_IDENT,
+				'raw'  => '\\63 l\\61 ss\\5F name',
+				'normalized' => 'class_name',
+				'value' => 'class_name',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			// #\69 d\5C 0test -> #id\0test (with encoded null byte)
+			array(
+				'type' => CSSTokenizer::TOKEN_HASH,
+				'raw'  => "#\\69 d\\5C 0test\x00",
+				'normalized' => "#id\\0test�",
+				// Ensure the value is normalized.
+				'value' => "id\\0test�",
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_LEFT_BRACE,
+				'raw'  => '{',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			// c\6F lor -> color
+			array(
+				'type' => CSSTokenizer::TOKEN_IDENT,
+				'raw'  => 'c\\6F lor',
+				'normalized' => 'color',
+				'value' => 'color',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_COLON,
+				'raw'  => ':',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			// r\65 d -> red
+			array(
+				'type' => CSSTokenizer::TOKEN_IDENT,
+				'raw'  => 'r\\65 d',
+				'normalized' => 'red',
+				'value' => 'red',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			// \21 important -> !important (single identifier with escaped !)
+			array(
+				'type' => CSSTokenizer::TOKEN_IDENT,
+				'raw'  => '\\21 important',
+				'normalized' => '!important',
+				'value' => '!important',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_SEMICOLON,
+				'raw'  => ';',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			// w\69 dth -> width
+			array(
+				'type' => CSSTokenizer::TOKEN_IDENT,
+				'raw'  => 'w\\69 dth',
+				'normalized' => 'width',
+				'value' => 'width',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_COLON,
+				'raw'  => ':',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			// 10\70 x -> 10px (dimension with escaped unit)
+			array(
+				'type' => CSSTokenizer::TOKEN_DIMENSION,
+				'raw'  => '10\\70 x',
+				'normalized' => '10px',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_SEMICOLON,
+				'raw'  => ';',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_IDENT,
+				'raw'  => 'background',
+				'normalized' => 'background',
+				'value' => 'background',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_COLON,
+				'raw'  => ':',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			// \75 rl( -> url( (escaped function name)
+			array(
+				'type' => CSSTokenizer::TOKEN_FUNCTION,
+				'raw'  => '\\75 rl(',
+				'normalized' => 'url(',
+				'value' => 'url',
+			),
+			// String with escapes: "p\61 th\2F img\2E png"
+			array(
+				'type' => CSSTokenizer::TOKEN_STRING,
+				'raw'  => '"p\\61 th\\2F img\\2E png"',
+				'normalized' => '"path/img.png"',
+				'value' => 'path/img.png',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_RIGHT_PAREN,
+				'raw'  => ')',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_SEMICOLON,
+				'raw'  => ';',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_IDENT,
+				'raw'  => 'content',
+				'normalized' => 'content',
+				'value' => 'content',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_COLON,
+				'raw'  => ':',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			// String with escaped backslashes: "\5C \5C " -> "\\"
+			// Each \5C sequence (with trailing space consumed) becomes one backslash
+			array(
+				'type' => CSSTokenizer::TOKEN_STRING,
+				'raw'  => '"\\5C \\5C "',
+				'normalized' => '"\\\\"',
+				'value' => '\\\\',  // Two backslashes total
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_SEMICOLON,
+				'raw'  => ';',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_IDENT,
+				'raw'  => 'font-family',
+				'normalized' => 'font-family',
+				'value' => 'font-family',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_COLON,
+				'raw'  => ':',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			// \22 Arial\22 -> "Arial" (escaped quotes make it an ident)
+			array(
+				'type' => CSSTokenizer::TOKEN_IDENT,
+				'raw'  => '\\22 Arial\\22 ',
+				'normalized' => '"Arial"',
+				'value' => '"Arial"',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_SEMICOLON,
+				'raw'  => ';',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_RIGHT_BRACE,
+				'raw'  => '}',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_RIGHT_BRACE,
+				'raw'  => '}',
+			),
+		);
+
+		$this->assert_css_parses_to_tokens( $css, $expected );
 	}
 }
