@@ -168,9 +168,9 @@ class CSSTokenizerTest extends TestCase {
 	 */
 	public function test_tokenize_labels_core_tokens(): void {
 		$css = <<<CSS
-		@media screen and (min-width: 10px) {
-			background: url("/images/a.png");
-		}
+@media screen and (min-width: 10px) {
+	background: url("/images/a.png");
+}
 CSS;
 
 		$expected = array(

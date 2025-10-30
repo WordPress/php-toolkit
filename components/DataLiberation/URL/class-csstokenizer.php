@@ -2,6 +2,7 @@
 
 namespace WordPress\DataLiberation\URL;
 
+use function WordPress\Encoding\_wp_scan_utf8;
 use function WordPress\Encoding\utf8_codepoint_at;
 use function WordPress\Encoding\codepoint_to_utf8_bytes;
 
@@ -152,28 +153,6 @@ class CSSTokenizer {
 	 * @var int
 	 */
 	private $at = 0;
-
-	/**
-	 * Cached codepoint at the current position ($this->at).
-	 * Used to avoid repeatedly decoding the same UTF-8 sequence.
-	 *
-	 * @var int|null
-	 */
-	private $current_codepoint = null;
-
-	/**
-	 * Cached byte length of the current codepoint.
-	 *
-	 * @var int
-	 */
-	private $current_codepoint_bytes = 0;
-
-	/**
-	 * The byte offset for which the codepoint is cached.
-	 *
-	 * @var int
-	 */
-	private $current_codepoint_offset = -1;
 
 	/**
 	 * The type of the current token. One of the self::TOKEN_* constants.
@@ -533,15 +512,20 @@ class CSSTokenizer {
 		 * @see https://www.w3.org/TR/css-syntax-3/#delim-token-diagram
 		 */
 		if ( ord( $char ) >= 0x80 ) {
-			$this->get_codepoint_at( $this->at, $matched_bytes );
-
-			// We're in trouble!
-			// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
-			// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
-			// an error would be useful for sure.
-			// For now, we'll just consume that byte to prevent infinite loop and keep processing.
-			if ( 0 === $matched_bytes ) {
-				$matched_bytes = 1;
+			$new_at         = $this->at;
+			$invalid_length = 0;
+			if ( 1 !== _wp_scan_utf8( $this->css, $new_at, $invalid_length, null, 1 ) ) {
+				/**
+				 * Trouble ahead!
+				 * Bytes at $at are not a valid UTF-8 sequence.
+				 *
+				 * We'll move forward by $invalid_length bytes and continue processing.
+				 * Later on, during the string decoding, we'll replace the invalid bytes with U+FFFD
+				 * via maximal subpart”replacement.
+				 */
+				$matched_bytes = $invalid_length;
+			} else {
+				$matched_bytes = $new_at - $this->at;
 			}
 
 			$this->at          += $matched_bytes;
@@ -1117,20 +1101,21 @@ class CSSTokenizer {
 				return $this->consume_remnants_of_bad_url();
 			}
 
-			// anything else
-			// Consume the current input code point.
-			$this->get_codepoint_at( $this->at, $matched_bytes );
-
-			// We're in trouble!
-			// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
-			// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
-			// an error would be useful for sure.
-			// For now, we'll just consume that byte to prevent infinite loop and keep processing.
-			if ( 0 === $matched_bytes ) {
-				$matched_bytes = 1;
+			$at             = $this->at;
+			$invalid_length = 0;
+			if ( 1 !== _wp_scan_utf8( $this->css, $at, $invalid_length, null, 1 ) ) {
+				/**
+				 * Trouble ahead!
+				 * Bytes at $at are not a valid UTF-8 sequence.
+				 *
+				 * We'll move forward by $invalid_length bytes and continue processing.
+				 * Later on, during the string decoding, we'll replace the invalid bytes with U+FFFD
+				 * via maximal subpart”replacement.
+				 */
+				$this->at += $invalid_length;
+			} else {
+				$this->at = $at;
 			}
-
-			$this->at += $matched_bytes;
 		}
 
 		// EOF
@@ -1257,23 +1242,25 @@ class CSSTokenizer {
 			return 1;
 		}
 
-		// Non-ASCII codepoints (>= 0x80).
-		$codepoint = $this->get_codepoint_at( $at, $matched_bytes );
-
-		// We're in trouble!
-		// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
-		// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
-		// an error would be useful for sure.
-		// For now, we'll just consume that byte to prevent infinite loop and keep processing.
-		if ( 0 === $matched_bytes ) {
-			$matched_bytes = 1;
+		$new_at         = $at;
+		$invalid_length = 0;
+		if ( 1 !== _wp_scan_utf8( $this->css, $new_at, $invalid_length, null, 1 ) ) {
+			/**
+			 * Trouble ahead!
+			 * Bytes at $at are not a valid UTF-8 sequence.
+			 *
+			 * We'll move forward by $invalid_length bytes and continue processing.
+			 * Later on, during the string decoding, we'll replace the invalid bytes with U+FFFD
+			 * via maximal subpart”replacement.
+			 */
+			return $invalid_length;
 		}
 
-		// Check if the codepoint is actually >= 0x80 (non-ASCII).
+		$codepoint_byte_length = $new_at - $at;
+		$codepoint             = utf8_codepoint_at( $this->css, $at );
 		if ( null !== $codepoint && $codepoint >= 0x80 ) {
-			return $matched_bytes;
+			return $codepoint_byte_length;
 		}
-
 		return 0;
 	}
 
@@ -1424,14 +1411,20 @@ class CSSTokenizer {
 			return "\u{FFFD}";
 		}
 
-		// We're in trouble!
-		// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
-		// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
-		// an error would be useful for sure.
-		// For now, we'll just consume that byte to prevent infinite loop and keep processing.
-		$this->get_codepoint_at( $at, $matched_bytes );
-		if ( 0 === $matched_bytes ) {
-			$matched_bytes = 1;
+		$new_at         = $at;
+		$invalid_length = 0;
+		if ( 1 !== _wp_scan_utf8( $this->css, $new_at, $invalid_length, null, 1 ) ) {
+			/**
+			 * Trouble ahead!
+			 * Bytes at $at are not a valid UTF-8 sequence.
+			 *
+			 * We'll move forward by $invalid_length bytes and continue processing.
+			 * Later on, during the string decoding, we'll replace the invalid bytes with U+FFFD
+			 * via maximal subpart”replacement.
+			 */
+			$matched_bytes = $invalid_length;
+		} else {
+			$matched_bytes = $new_at - $at;
 		}
 
 		$bytes_consumed = $matched_bytes;
@@ -1555,33 +1548,5 @@ class CSSTokenizer {
 		}
 
 		return $this->consume_ident_start_codepoint( $offset ) > 0 || $this->is_valid_escape( $offset );
-	}
-
-	/**
-	 * Gets the Unicode codepoint at the given byte offset, with caching.
-	 *
-	 * This method caches the result to avoid repeatedly decoding the same UTF-8
-	 * sequence when multiple helpers need to check the same position.
-	 *
-	 * @param int $offset Byte offset in the CSS string.
-	 * @param int &$matched_bytes Output parameter: number of bytes consumed.
-	 * @return int|null The Unicode codepoint value, or null if invalid UTF-8.
-	 */
-	private function get_codepoint_at( int $offset, &$matched_bytes ): ?int {
-		// Check if we have a cached value for this offset.
-		if ( $offset === $this->current_codepoint_offset ) {
-			$matched_bytes = $this->current_codepoint_bytes;
-			return $this->current_codepoint;
-		}
-
-		// Decode the UTF-8 sequence.
-		$codepoint = utf8_codepoint_at( $this->css, $offset, $matched_bytes );
-
-		// Cache the result.
-		$this->current_codepoint        = $codepoint;
-		$this->current_codepoint_bytes  = $matched_bytes;
-		$this->current_codepoint_offset = $offset;
-
-		return $codepoint;
 	}
 }
