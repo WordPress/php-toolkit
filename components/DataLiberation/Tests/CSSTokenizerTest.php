@@ -31,7 +31,7 @@ class CSSTokenizerTest extends TestCase {
 				$this->fail( "Missing token at index $index for CSS: " . var_export( $css, true ) );
 			}
 			$actual_token = $actual_tokens[ $index ];
-			$this->assert_token_matches( $expected_token, $actual_token, $index, $css );
+			$this->assertSame( $expected_token, $actual_token, $index, $css );
 		}
 	}
 
@@ -41,7 +41,7 @@ class CSSTokenizerTest extends TestCase {
 	 * @return array
 	 */
 	static public function corpus_provider(): array {
-		return require __DIR__ . '/css-test-cases.php';
+		return json_decode(file_get_contents(__DIR__ . '/css-test-cases.json'), true);
 	}
 
 	/**
@@ -50,7 +50,7 @@ class CSSTokenizerTest extends TestCase {
 	 * @param CSSTokenizer $processor The CSS processor.
 	 * @return array Array of tokens with type, raw, startIndex, endIndex, structured.
 	 */
-	private function collect_tokens( CSSTokenizer $processor, string $css ): array {
+	static public function collect_tokens( CSSTokenizer $processor ): array {
 		$tokens = array();
 
 		while ( $processor->next_token() ) {
@@ -64,69 +64,17 @@ class CSSTokenizerTest extends TestCase {
 				'raw'        => $processor->get_unnormalized_token(),
 				'startIndex' => $byte_start,
 				'endIndex'   => $byte_end,
+				'normalized' => $processor->get_normalized_token(),
 				'value'      => $processor->get_token_value(),
 			);
+			if ( null !== $processor->get_token_unit() ) {
+				$token['unit'] = $processor->get_token_unit();
+			}
 
 			$tokens[] = $token;
 		}
 
 		return $tokens;
-	}
-
-	/**
-	 * Asserts that an actual token matches the expected token.
-	 *
-	 * @param array  $expected The expected token.
-	 * @param array  $actual   The actual token.
-	 * @param int    $index    The token index.
-	 * @param string $css      The CSS source.
-	 */
-	private function assert_token_matches( array $expected, array $actual, int $index, string $css ): void {
-		$message = sprintf(
-			'Token %d mismatch in CSS: %s',
-			$index,
-			var_export( $css, true )
-		);
-
-		// Check type
-		$this->assertSame(
-			$expected['type'],
-			$actual['type'],
-			$message . ' (type)'
-		);
-
-		// Check raw
-		$this->assertSame(
-			$expected['raw'],
-			$actual['raw'],
-			$message . ' (raw)'
-		);
-
-		// Check positions
-		$this->assertSame(
-			$expected['startIndex'],
-			$actual['startIndex'],
-			$message . ' (startIndex)'
-		);
-
-		$this->assertSame(
-			$expected['endIndex'],
-			$actual['endIndex'],
-			$message . ' (endIndex)'
-		);
-
-		// Check structured data (if present in expected)
-		// We'll do a loose comparison here since our implementation might differ slightly
-		if ( isset( $expected['value'] ) && null !== $expected['value'] ) {
-			$this->assertArrayHasKey( 'value', $actual, $message . ' (value missing)' );
-			// Loose comparison because floats may differ slightly
-			$this->assertEquals(
-				$expected['value'],
-				$actual['value'],
-				$message . ' (value)',
-				0.0001  // delta for float comparison
-			);
-		}
 	}
 
 	/**
