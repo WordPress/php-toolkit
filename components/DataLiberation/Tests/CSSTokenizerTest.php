@@ -5,7 +5,6 @@ use WordPress\DataLiberation\URL\CSSTokenizer;
 
 /**
  * Comprehensive CSS tokenizer tests based on the CSS Syntax Level 3 specification.
- * Test corpus from @rmenke/css-tokenizer-tests
  */
 class CSSTokenizerTest extends TestCase {
 
@@ -40,8 +39,9 @@ class CSSTokenizerTest extends TestCase {
 	}
 
 	/**
-	 * Provides all test cases from the test corpus.
+	 * Provides the test cases from the @rmenke/css-tokenizer-test test corpus.
 	 *
+	 * @see https://github.com/romainmenke/css-tokenizer-tests/
 	 * @return array
 	 */
 	static public function corpus_provider(): array {
