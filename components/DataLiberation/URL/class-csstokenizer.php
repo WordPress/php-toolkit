@@ -673,16 +673,16 @@ class CSSTokenizer {
 	 * Gets the current token value.
 	 *
 	 * Returns the semantic value of the token:
-	 * - For numbers/percentages: the numeric value (float)
-	 * - For dimensions: the numeric value (float), use get_token_unit() for the unit
+	 * - For numbers/percentages: the numeric value (a string excerpt from the CSS source)
+	 * - For dimensions: the numeric value (a string excerpt from the CSS source), use get_token_unit() for the unit
 	 * - For identifiers/functions/hash/at-keywords: the decoded identifier string
 	 * - For strings/URLs: the decoded string value
 	 * - For other tokens: null
 	 *
-	 * @return string|float|null
+	 * @return string|null
 	 */
 	public function get_token_value() {
-		// If token_value is already set (number or decoded string), return it.
+		// If token_value is already set, return it.
 		if ( null !== $this->token_value ) {
 			return $this->token_value;
 		}
@@ -976,12 +976,6 @@ class CSSTokenizer {
 				}
 			}
 		}
-
-		// Convert string to a number, and set the value to the returned value.
-		// We use a PHP typecast as it's mostly compatible with the spec's behavior.
-		// @TODO: Investigate any differences.
-		// See https://www.w3.org/TR/css-syntax-3/#convert-a-string-to-a-number.
-		$this->token_value = (float) substr( $this->css, $start, $this->at - $start );
 
 		/**
 		 * This is the end of spec section 4.3.12. Consume a number.
