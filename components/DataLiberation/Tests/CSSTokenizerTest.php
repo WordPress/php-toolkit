@@ -67,6 +67,37 @@ class CSSTokenizerTest extends TestCase {
 	}
 
 	/**
+	 * Tests handling of non-UTF-8 byte sequences in identifiers.
+	 * 
+	 * Invalid UTF-8 sequences should be replaced with U+FFFD replacement characters
+	 * during tokenization, allowing the CSS to continue processing.
+	 */
+	public function test_non_utf8_sequences_in_identifiers(): void {
+		// Invalid UTF-8 sequence 0xC0 0x80 (overlong encoding).
+		$css = ".class\xF1name";
+
+		$expected = array(
+			// .class�name (0xF1 replaced with U+FFFD).
+			array(
+				'type' => CSSTokenizer::TOKEN_DELIM,
+				'raw'  => '.',
+				'normalized' => '.',
+				'value' => null,
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_IDENT,
+				'raw'  => "class\xF1name",
+				'normalized' => 'class�name',
+				'value' => 'class�name',
+			),
+		);
+
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value', 'unit'] );
+		$this->assertSame( $expected, $actual_tokens );
+	}
+
+	/**
 	 * Legacy test to ensure basic tokenization still works.
 	 */
 	public function test_tokenize_labels_core_tokens(): void {
