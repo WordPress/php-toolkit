@@ -10,10 +10,13 @@ use function WordPress\Encoding\codepoint_to_utf8_bytes;
 /**
  * Tokenizes CSS according to the CSS Syntax Level 3 specification.
  *
- * This class implements the CSS tokenization algorithm as defined in:
- * https://www.w3.org/TR/css-syntax-3/
+ * This class follows the algorithm in https://www.w3.org/TR/css-syntax-3/ and
+ * exposes a pull-based API so callers can stream over large stylesheets without
+ * allocating every token up front. Each call to next_token() advances the cursor
+ * and fills in metadata (type, value, raw slice, byte offsets) that you can read
+ * through the getter methods.
  *
- * ## Design choices:
+ * ## Design choices
  *
  * ### On-the-fly normalization
  *
@@ -25,22 +28,25 @@ use function WordPress\Encoding\codepoint_to_utf8_bytes;
  * > Replace any U+0000 NULL or surrogate code points in input with U+FFFD REPLACEMENT
  * > CHARACTER (�).
  *
- * This processor delays normalization as much as possible, rather than preprocessing
- * the entire input upfront. This avoids the upfront allocation cost for clean CSS
- * and preserves original byte positions for accurate raw token extraction. A part
- * of the normalization is performed on-the-fly as the tokens are consumed. The rest
- * of it is done once the token value is requested.
+ * This processor delays normalization as much as possible. That keeps the raw byte
+ * positions intact for accurate rewrites while still letting consumers ask for a
+ * normalized token when they need one.
  *
  * ### No EOF token
  *
  * The EOF token is a CSS parsing concept, not CSS tokenization concept. Therefore,
  * this processor does not produce it.
  *
+ * ### UTF-8 handling
+ *
+ * Only UTF-8 strings are supported. Invalid sequences are replaced with U+FFFD (�)
+ * using the maximal subpart approach described in
+ * https://www.unicode.org/versions/Unicode9.0.0/ch03.pdf, section 3.9 Best Practices
+ * for Using U+FFFD.
+ *
  * ## Usage
  *
- * The next_token() method is the main entry point for tokenizing a CSS string.
- * It will consume the next token from the input stream and return true if a token
- * was found. Otherwise, it will return false:
+ * Basic iteration:
  *
  * ```php
  * $css = 'width: 10px;';
@@ -52,7 +58,37 @@ use function WordPress\Encoding\codepoint_to_utf8_bytes;
  * // width: 10px;
  * ```
  *
- * @TODO: More usage examples.
+ * Rewriting a URL while keeping the rest of the stylesheet intact:
+ *
+ * ```php
+ * $css = 'background: url(old.jpg) center / cover;';
+ * $processor = CSSProcessor::create( $css );
+ * while ( $processor->next_token() ) {
+ *     if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+ *         $processor->set_value( 'uploads/new.jpg' );
+ *     }
+ * }
+ * $result = $processor->get_updated_css();
+ * // background: url(uploads/new.jpg) center / cover;
+ * ```
+ *
+ * Gathering diagnostics with byte offsets:
+ *
+ * ```php
+ * $css = "color: red;\ncolor: re\nd;";
+ * $processor = CSSProcessor::create( $css );
+ * $bad_strings = array();
+ * while ( $processor->next_token() ) {
+ *     if ( CSSProcessor::TOKEN_BAD_STRING === $processor->get_token_type() ) {
+ *         $bad_strings[] = array(
+ *             'start'  => $processor->get_token_start(),
+ *             'length' => $processor->get_token_length(),
+ *             'value'  => $processor->get_unnormalized_token(),
+ *         );
+ *     }
+ * }
+ * ```
+ *
  * @see https://www.w3.org/TR/css-syntax-3/#tokenization
  */
 class CSSProcessor {
