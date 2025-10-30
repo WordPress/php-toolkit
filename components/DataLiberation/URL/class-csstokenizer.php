@@ -1450,7 +1450,7 @@ class CSSTokenizer {
 
 			// Null bytes become U+FFFD.
 			if ( "\x00" === $char ) {
-				$decoded .= "\xEF\xBF\xBD"; // U+FFFD.
+				$decoded .= "\u{FFFD}";
 				++$at;
 				continue;
 			}
@@ -1483,7 +1483,7 @@ class CSSTokenizer {
 		if ( $at >= $this->length ) {
 			// This is a parse error. Return U+FFFD REPLACEMENT CHARACTER (�).
 			$bytes_consumed = 0;
-			return "\xEF\xBF\xBD"; // U+FFFD.
+			return "\u{FFFD}";
 		}
 
 		// Hex digits.
@@ -1518,7 +1518,7 @@ class CSSTokenizer {
 		// Null bytes are replaced with U+FFFD during preprocessing.
 		if ( "\x00" === $this->css[ $at ] ) {
 			$bytes_consumed = 1;
-			return "\xEF\xBF\xBD"; // U+FFFD.
+			return "\u{FFFD}";
 		}
 
 		// We're in trouble!
