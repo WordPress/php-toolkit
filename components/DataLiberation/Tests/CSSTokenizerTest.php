@@ -700,18 +700,21 @@ CSS;
 				'type'       => CSSTokenizer::TOKEN_COMMENT,
 				'raw'        => "/* Comment\r\nwith\flines */",
 				'normalized' => "/* Comment\nwith\nlines */",
+				'value'      => null,
 			),
 			// Whitespace with \r\n.
 			array(
 				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'        => "\r\n",
 				'normalized' => "\n",
+				'value'      => null,
 			),
 			// Class selector delimiter.
 			array(
 				'type'       => CSSTokenizer::TOKEN_DELIM,
 				'raw'        => '.',
 				'normalized' => '.',
+				'value'      => null,
 			),
 			// Class name with escape (\6c = 'l'), space gets consumed by escape.
 			array(
@@ -725,6 +728,7 @@ CSS;
 				'type'       => CSSTokenizer::TOKEN_DELIM,
 				'raw'        => '.',
 				'normalized' => '.',
+				'value'      => null,
 			),
 			// Identifier with escape (\61 = 'a'), space gets consumed.
 			array(
@@ -738,6 +742,7 @@ CSS;
 				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'        => "\r",
 				'normalized' => "\n",
+				'value'      => null,
 			),
 			// ID selector with escape.
 			array(
@@ -751,18 +756,21 @@ CSS;
 				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'        => "\r\n",
 				'normalized' => "\n",
+				'value'      => null,
 			),
 			// Opening brace.
 			array(
 				'type'       => CSSTokenizer::TOKEN_LEFT_BRACE,
 				'raw'        => '{',
 				'normalized' => '{',
+				'value'      => null,
 			),
 			// Whitespace with \r\n and tab (consumed together).
 			array(
 				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'        => "\r\n\t",
 				'normalized' => "\n\t",
+				'value'      => null,
 			),
 			array(
 				'type'       => CSSTokenizer::TOKEN_IDENT,
@@ -775,12 +783,14 @@ CSS;
 				'type'       => CSSTokenizer::TOKEN_COLON,
 				'raw'        => ':',
 				'normalized' => ':',
+				'value'      => null,
 			),
 			// Whitespace with \f.
 			array(
 				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'        => "\f",
 				'normalized' => "\n",
+				'value'      => null,
 			),
 			// URL token with escapes (entire url(...) is one token).
 			array(
@@ -794,12 +804,14 @@ CSS;
 				'type'       => CSSTokenizer::TOKEN_SEMICOLON,
 				'raw'        => ';',
 				'normalized' => ';',
+				'value'      => null,
 			),
 			// Whitespace with \r\n and tab (consumed together).
 			array(
 				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'        => "\r\n\t",
 				'normalized' => "\n\t",
+				'value'      => null,
 			),
 			array(
 				'type'       => CSSTokenizer::TOKEN_IDENT,
@@ -812,12 +824,14 @@ CSS;
 				'type'       => CSSTokenizer::TOKEN_COLON,
 				'raw'        => ':',
 				'normalized' => ':',
+				'value'      => null,
 			),
 			// Whitespace with \r.
 			array(
 				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'        => "\r",
 				'normalized' => "\n",
+				'value'      => null,
 			),
 			// String with escape (\A = newline, space consumed).
 			array(
@@ -831,24 +845,27 @@ CSS;
 				'type'       => CSSTokenizer::TOKEN_SEMICOLON,
 				'raw'        => ';',
 				'normalized' => ';',
+				'value'      => null,
 			),
 			// Whitespace with \r\n.
 			array(
 				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'        => "\r\n",
 				'normalized' => "\n",
+				'value'      => null,
 			),
 			// Closing brace.
 			array(
 				'type'       => CSSTokenizer::TOKEN_RIGHT_BRACE,
 				'raw'        => '}',
 				'normalized' => '}',
+				'value'      => null,
 			),
 		);
 
 		$processor = CSSTokenizer::create( $css );
-		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
-		$this->assertSame( $actual_tokens, $expected );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value'] );
+		$this->assertSame( $expected, $actual_tokens );
 	}
 
 	/**
@@ -917,8 +934,9 @@ CSS;
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
-				'normalized' => ' ',
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			// \73 creen -> screen
 			array(
@@ -930,21 +948,27 @@ CSS;
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_LEFT_BRACE,
 				'raw'  => '{',
+				'normalized' => '{',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
-				'normalized' => ' ',
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			// Delimiter .
 			array(
 				'type' => CSSTokenizer::TOKEN_DELIM,
 				'raw'  => '.',
 				'normalized' => '.',
+				'value' => null,
 			),
 			// \63 l\61 ss\5F name -> class_name
 			array(
@@ -956,6 +980,8 @@ CSS;
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			// #\69 d\5C 0test -> #id\0test (with encoded null byte)
 			array(
@@ -968,14 +994,20 @@ CSS;
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_LEFT_BRACE,
 				'raw'  => '{',
+				'normalized' => '{',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			// c\6F lor -> color
 			array(
@@ -987,10 +1019,14 @@ CSS;
 			array(
 				'type' => CSSTokenizer::TOKEN_COLON,
 				'raw'  => ':',
+				'normalized' => ':',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			// r\65 d -> red
 			array(
@@ -1002,6 +1038,8 @@ CSS;
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			// \21 important -> !important (single identifier with escaped !)
 			array(
@@ -1013,10 +1051,14 @@ CSS;
 			array(
 				'type' => CSSTokenizer::TOKEN_SEMICOLON,
 				'raw'  => ';',
+				'normalized' => ';',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			// w\69 dth -> width
 			array(
@@ -1028,24 +1070,33 @@ CSS;
 			array(
 				'type' => CSSTokenizer::TOKEN_COLON,
 				'raw'  => ':',
+				'normalized' => ':',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			// 10\70 x -> 10px (dimension with escaped unit)
 			array(
 				'type' => CSSTokenizer::TOKEN_DIMENSION,
 				'raw'  => '10\\70 x',
 				'normalized' => '10px',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_SEMICOLON,
 				'raw'  => ';',
+				'normalized' => ';',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_IDENT,
@@ -1056,10 +1107,14 @@ CSS;
 			array(
 				'type' => CSSTokenizer::TOKEN_COLON,
 				'raw'  => ':',
+				'normalized' => ':',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			// \75 rl( -> url( (escaped function name)
 			array(
@@ -1078,14 +1133,20 @@ CSS;
 			array(
 				'type' => CSSTokenizer::TOKEN_RIGHT_PAREN,
 				'raw'  => ')',
+				'normalized' => ')',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_SEMICOLON,
 				'raw'  => ';',
+				'normalized' => ';',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_IDENT,
@@ -1096,10 +1157,14 @@ CSS;
 			array(
 				'type' => CSSTokenizer::TOKEN_COLON,
 				'raw'  => ':',
+				'normalized' => ':',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			// String with escaped backslashes: "\5C \5C " -> "\\"
 			// Each \5C sequence (with trailing space consumed) becomes one backslash
@@ -1112,10 +1177,14 @@ CSS;
 			array(
 				'type' => CSSTokenizer::TOKEN_SEMICOLON,
 				'raw'  => ';',
+				'normalized' => ';',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_IDENT,
@@ -1126,10 +1195,14 @@ CSS;
 			array(
 				'type' => CSSTokenizer::TOKEN_COLON,
 				'raw'  => ':',
+				'normalized' => ':',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			// \22 Arial\22 -> "Arial" (escaped quotes make it an ident)
 			array(
@@ -1166,6 +1239,6 @@ CSS;
 
 		$processor = CSSTokenizer::create( $css );
 		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value'] );
-		$this->assertSame( $actual_tokens, $expected );
+		$this->assertSame( $expected, $actual_tokens );
 	}
 }
