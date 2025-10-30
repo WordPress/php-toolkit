@@ -360,7 +360,7 @@ class CSSTokenizer {
 					// Consume an ident sequence, and set the <hash-token>'s value to the returned string.
 					$decoded = $this->consume_ident_sequence();
 					if ( null !== $decoded ) {
-						// Only store decoded value if escapes were present
+						// Only store decoded value if escapes were present.
 						$this->token_value = $decoded;
 					}
 					$this->token_type   = self::TOKEN_HASH;
@@ -418,7 +418,7 @@ class CSSTokenizer {
 			if ( $this->check_if_3_code_points_start_an_ident_sequence( $this->at ) ) {
 				$decoded = $this->consume_ident_sequence();
 				if ( null !== $decoded ) {
-					// Only store decoded value if escapes were present
+					// Only store decoded value if escapes were present.
 					$this->token_value = $decoded;
 				}
 				$this->token_type   = self::TOKEN_AT_KEYWORD;
@@ -569,37 +569,37 @@ class CSSTokenizer {
 	 * @return string|float|null
 	 */
 	public function get_token_value() {
-		// If token_value is already set (number or decoded string), return it
+		// If token_value is already set (number or decoded string), return it.
 		if ( null !== $this->token_value ) {
 			return $this->token_value;
 		}
 
-		// Otherwise, compute from token indices based on token type
+		// Otherwise, compute from token indices based on token type.
 		if ( null === $this->token_starts_at || null === $this->token_length ) {
 			return null;
 		}
 
 		switch ( $this->token_type ) {
 			case self::TOKEN_HASH:
-				// Hash value starts after the # character
+				// Hash value starts after the # character.
 				return substr( $this->css, $this->token_starts_at + 1, $this->token_length - 1 );
 
 			case self::TOKEN_AT_KEYWORD:
-				// At-keyword value starts after the @ character
+				// At-keyword value starts after the @ character.
 				return substr( $this->css, $this->token_starts_at + 1, $this->token_length - 1 );
 
 			case self::TOKEN_FUNCTION:
-				// Function name is everything except the final (
+				// Function name is everything except the final (.
 				return substr( $this->css, $this->token_starts_at, $this->token_length - 1 );
 
 			case self::TOKEN_IDENT:
-				// Identifier is the entire token
+				// Identifier is the entire token.
 				return substr( $this->css, $this->token_starts_at, $this->token_length );
 
 			case self::TOKEN_STRING:
 			case self::TOKEN_BAD_STRING:
 			case self::TOKEN_URL:
-				// Decode and cache the string/URL value
+				// Decode and cache the string/URL value.
 				if ( null !== $this->token_value_starts_at && null !== $this->token_value_length ) {
 					$this->token_value = $this->decode_string_or_url(
 						$this->token_value_starts_at,
@@ -757,7 +757,7 @@ class CSSTokenizer {
 					// If the next input code point is EOF, do nothing.
 					++$this->at;
 					if ( $this->at >= $this->length ) {
-						// Backslash-EOF: do nothing, just consume the backslash
+						// Backslash-EOF: do nothing, just consume the backslash.
 						continue 2;
 					}
 
@@ -896,10 +896,10 @@ class CSSTokenizer {
 			$unit_start = $this->at;
 			$decoded    = $this->consume_ident_sequence();
 			if ( null !== $decoded ) {
-				// Escapes were present, use decoded value
+				// Escapes were present, use decoded value.
 				$this->token_unit = $decoded;
 			} else {
-				// No escapes, compute from substring
+				// No escapes, compute from substring.
 				$this->token_unit = substr( $this->css, $unit_start, $this->at - $unit_start );
 			}
 			$this->token_type   = self::TOKEN_DIMENSION;
@@ -1185,7 +1185,7 @@ class CSSTokenizer {
 			}
 
 			if ( $this->is_valid_escape( $this->at ) ) {
-				// First escape encountered - copy everything so far
+				// First escape encountered - copy everything so far.
 				if ( ! $has_escapes ) {
 					$has_escapes = true;
 					$decoded     = substr( $this->css, $start, $this->at - $start );
@@ -1287,7 +1287,7 @@ class CSSTokenizer {
 		// Fast path: check if decoding is needed.
 		$slice = substr( $this->css, $start, $end - $start );
 		if ( false === strpbrk( $slice, "\\\r\f\x00" ) ) {
-			// No escapes or special chars - return raw substring (zero allocations!)
+			// No escapes or special chars - return raw substring (zero allocations)!
 			return $slice;
 		}
 
