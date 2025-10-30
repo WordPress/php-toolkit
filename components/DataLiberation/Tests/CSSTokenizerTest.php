@@ -15,27 +15,8 @@ class CSSTokenizerTest extends TestCase {
 	 */
 	public function test_tokenizer_matches_spec( string $css, array $expected_tokens ): void {
 		$processor = CSSTokenizer::create( $css );
-		$actual_tokens = $this->collect_tokens( $processor, $css );
-
-		// Compare token count first
-		$this->assertCount(
-			count( $expected_tokens ),
-			$actual_tokens,
-			'Token count mismatch for CSS: ' . var_export( $css, true )
-		);
-
-		// Compare each token
-		foreach ( $expected_tokens as $index => $expected_token ) {
-			if ( ! isset( $actual_tokens[ $index ] ) ) {
-				$this->fail( "Missing token at index $index for CSS: " . var_export( $css, true ) );
-			}
-			$this->assertSame(
-				$expected_token,
-				$actual_tokens[ $index ],
-				$index,
-				$css
-			);
-		}
+		$actual_tokens = $this->collect_tokens( $processor );
+		$this->assertSame( $actual_tokens, $expected_tokens );
 	}
 
 	/**
@@ -54,7 +35,7 @@ class CSSTokenizerTest extends TestCase {
 	 * @param CSSTokenizer $processor The CSS processor.
 	 * @return array Array of tokens with type, raw, startIndex, endIndex, structured.
 	 */
-	static public function collect_tokens( CSSTokenizer $processor ): array {
+	static public function collect_tokens( CSSTokenizer $processor, $keys = null ): array {
 		$tokens = array();
 
 		while ( $processor->next_token() ) {
@@ -75,92 +56,14 @@ class CSSTokenizerTest extends TestCase {
 				$token['unit'] = $processor->get_token_unit();
 			}
 
+			if ( null !== $keys ) {
+				$token = array_intersect_key( $token, array_flip( $keys ) );
+			}
+
 			$tokens[] = $token;
 		}
 
 		return $tokens;
-	}
-
-	/**
-	 * Asserts that CSS parses to expected tokens.
-	 *
-	 * @param string $css      The CSS to parse.
-	 * @param array  $expected Array of expected tokens. Each token can have:
-	 *                         - 'type' (required): Token type constant
-	 *                         - 'raw' (optional): Unnormalized token text
-	 *                         - 'normalized' (optional): Normalized token text
-	 *                         - 'value' (optional): Semantic token value
-	 */
-	private function assert_css_parses_to_tokens( string $css, array $expected ): void {
-		$processor = CSSTokenizer::create( $css );
-
-		$this->assertCount( count( $expected ), $expected, 'Expected tokens array should not be empty' );
-
-		$index = 0;
-		while ( $processor->next_token() ) {
-			$this->assertArrayHasKey(
-				$index,
-				$expected,
-				sprintf( 'Unexpected token at index %d: got %s', $index, $processor->get_token_type() )
-			);
-
-			$exp     = $expected[ $index ];
-			$message = sprintf( 'Token %d mismatch in CSS: %s', $index, var_export( $css, true ) );
-
-			// Check type (required).
-			$this->assertArrayHasKey( 'type', $exp, 'Expected token must have a type' );
-			$this->assertSame(
-				$exp['type'],
-				$processor->get_token_type(),
-				$message . ' (type)'
-			);
-
-			// Check raw/unnormalized (optional).
-			if ( isset( $exp['raw'] ) ) {
-				$this->assertSame(
-					$exp['raw'],
-					$processor->get_unnormalized_token(),
-					$message . ' (raw/unnormalized)'
-				);
-			}
-
-			// Check normalized (optional).
-			if ( isset( $exp['normalized'] ) ) {
-				$this->assertSame(
-					$exp['normalized'],
-					$processor->get_normalized_token(),
-					$message . ' (normalized)'
-				);
-			}
-
-			// Check value (optional).
-			if ( array_key_exists( 'value', $exp ) ) {
-				if ( is_float( $exp['value'] ) ) {
-					// Loose comparison for floats.
-					$this->assertEquals(
-						$exp['value'],
-						$processor->get_token_value(),
-						$message . ' (value)',
-						0.0001
-					);
-				} else {
-					$this->assertSame(
-						$exp['value'],
-						$processor->get_token_value(),
-						$message . ' (value)'
-					);
-				}
-			}
-
-			++$index;
-		}
-
-		// Ensure we consumed all expected tokens.
-		$this->assertCount(
-			$index,
-			$expected,
-			sprintf( 'Expected %d tokens but only found %d', count( $expected ), $index )
-		);
 	}
 
 	/**
@@ -200,7 +103,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_RIGHT_BRACE, 'raw' => '}' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -229,7 +134,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_RIGHT_PAREN,  'raw' => ')' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -257,7 +164,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_RIGHT_BRACE,  'raw' => '}' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -290,7 +199,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_RIGHT_PAREN,  'raw' => ')' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -333,7 +244,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_RIGHT_BRACE,  'raw' => '}' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -358,7 +271,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_SEMICOLON,    'raw' => ';' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -388,7 +303,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_RIGHT_BRACKET, 'raw' => ']' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -419,7 +336,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_SEMICOLON,    'raw' => ';' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -461,7 +380,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_SEMICOLON,    'raw' => ';' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -486,7 +407,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_SEMICOLON,    'raw' => ';' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -517,7 +440,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_SEMICOLON,    'raw' => ';' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -547,7 +472,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_SEMICOLON,    'raw' => ';' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -574,7 +501,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_SEMICOLON,    'raw' => ';' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -603,7 +532,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_SEMICOLON,    'raw' => ';' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -630,7 +561,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_IDENT,        'raw' => 'link' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -657,7 +590,9 @@ CSS;
 			array( 'type' => CSSTokenizer::TOKEN_RIGHT_BRACE,  'raw' => '}' ),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -831,7 +766,9 @@ CSS;
 			),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
@@ -1124,21 +1061,31 @@ CSS;
 			array(
 				'type' => CSSTokenizer::TOKEN_SEMICOLON,
 				'raw'  => ';',
+				'normalized' => ';',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_WHITESPACE,
 				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_RIGHT_BRACE,
 				'raw'  => '}',
+				'normalized' => '}',
+				'value' => null,
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_RIGHT_BRACE,
 				'raw'  => '}',
+				'normalized' => '}',
+				'value' => null,
 			),
 		);
 
-		$this->assert_css_parses_to_tokens( $css, $expected );
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 }

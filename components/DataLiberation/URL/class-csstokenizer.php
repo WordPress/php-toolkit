@@ -3,6 +3,7 @@
 namespace WordPress\DataLiberation\URL;
 
 use function WordPress\Encoding\_wp_scan_utf8;
+use function WordPress\Encoding\_wp_scrub_utf8_fallback;
 use function WordPress\Encoding\utf8_codepoint_at;
 use function WordPress\Encoding\codepoint_to_utf8_bytes;
 
@@ -1279,7 +1280,7 @@ class CSSTokenizer {
 	 */
 	private function decode_string_or_url( int $start, int $length ): string {
 		// Fast path: check if any processing is needed.
-		$slice         = substr( $this->css, $start, $length );
+		$slice         = _wp_scrub_utf8_fallback( substr( $this->css, $start, $length ) );
 		$special_chars = "\\\r\f\x00";
 		if ( false === strpbrk( $slice, $special_chars ) ) {
 			// No special chars - return raw substring (almost zero allocations).
