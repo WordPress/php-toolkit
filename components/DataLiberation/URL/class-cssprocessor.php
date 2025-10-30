@@ -936,8 +936,8 @@ class CSSProcessor {
 		$output               = '';
 
 		foreach ( $this->lexical_updates as $update ) {
-			$output .= substr( $this->css, $bytes_already_copied, $update['start'] - $bytes_already_copied );
-			$output .= $update['text'];
+			$output              .= substr( $this->css, $bytes_already_copied, $update['start'] - $bytes_already_copied );
+			$output              .= $update['text'];
 			$bytes_already_copied = $update['start'] + $update['length'];
 		}
 
