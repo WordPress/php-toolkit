@@ -260,11 +260,36 @@ class CSSTokenizer {
 	private $token_needs_decoding = false;
 
 	/**
-	 * @param string $css CSS source to tokenize.
+	 * Constructor for the CSS tokenizer.
+	 *
+	 * Do not instantiate directly. Use CSSTokenizer::create() instead.
+	 *
+	 * @param string $css         CSS source to tokenize.
 	 */
-	public function __construct( string $css ) {
+	private function __construct( string $css ) {
 		$this->css    = $css;
 		$this->length = strlen( $css );
+	}
+
+	/**
+	 * Creates a CSS tokenizer for the given CSS string.
+	 *
+	 * Use this method to create a CSS tokenizer instance.
+	 *
+	 * ## Current Support
+	 *
+	 * - The only supported document encoding is `UTF-8`, which is the default value.
+	 *
+	 * @param string $css      CSS source to tokenize.
+	 * @param string $encoding Text encoding of the document; must be default of 'UTF-8'.
+	 * @return static|null The created tokenizer if successful, otherwise null.
+	 */
+	public static function create( string $css, string $encoding = 'UTF-8' ) {
+		if ( 'UTF-8' !== $encoding ) {
+			return null;
+		}
+
+		return new static( $css );
 	}
 
 	/**

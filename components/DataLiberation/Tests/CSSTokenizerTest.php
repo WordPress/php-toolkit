@@ -15,7 +15,7 @@ class CSSTokenizerTest extends TestCase {
 	 * @dataProvider corpus_provider
 	 */
 	public function test_tokenizer_matches_spec( string $css, array $expected_tokens ): void {
-		$processor = new CSSTokenizer( $css );
+		$processor = CSSTokenizer::create( $css );
 		$actual_tokens = $this->collect_tokens( $processor, $css );
 
 		// Compare token count first
@@ -154,7 +154,7 @@ class CSSTokenizerTest extends TestCase {
 	 *                         - 'value' (optional): Semantic token value
 	 */
 	private function assert_css_parses_to_tokens( string $css, array $expected ): void {
-		$processor = new CSSTokenizer( $css );
+		$processor = CSSTokenizer::create( $css );
 
 		$this->assertCount( count( $expected ), $expected, 'Expected tokens array should not be empty' );
 
@@ -894,5 +894,25 @@ class CSSTokenizerTest extends TestCase {
 		);
 
 		$this->assert_css_parses_to_tokens( $css, $expected );
+	}
+
+	/**
+	 * Tests that create() validates encoding and only accepts UTF-8.
+	 */
+	public function test_create_validates_encoding(): void {
+		// UTF-8 encoding should work (default).
+		$tokenizer = CSSTokenizer::create( '.class { color: red; }' );
+		$this->assertInstanceOf( CSSTokenizer::class, $tokenizer );
+
+		// UTF-8 encoding should work (explicit).
+		$tokenizer = CSSTokenizer::create( '.class { color: red; }', 'UTF-8' );
+		$this->assertInstanceOf( CSSTokenizer::class, $tokenizer );
+
+		// Other encodings should return null.
+		$tokenizer = CSSTokenizer::create( '.class { color: red; }', 'ISO-8859-1' );
+		$this->assertNull( $tokenizer );
+
+		$tokenizer = CSSTokenizer::create( '.class { color: red; }', 'Windows-1252' );
+		$this->assertNull( $tokenizer );
 	}
 }
