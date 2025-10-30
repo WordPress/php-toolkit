@@ -923,27 +923,28 @@ class CSSProcessor {
 			return $this->css;
 		}
 
-		// Sort updates by start position in reverse order.
-		// This allows us to apply them from end to start, avoiding offset issues.
+		// Sort updates by start position in ascending order.
 		usort(
 			$this->lexical_updates,
 			function ( $a, $b ) {
-				return $b['start'] - $a['start'];
+				return $a['start'] - $b['start'];
 			}
 		);
 
-		$css = $this->css;
+		// Build the output by concatenating original CSS fragments with replacements.
+		$bytes_already_copied = 0;
+		$output               = '';
 
 		foreach ( $this->lexical_updates as $update ) {
-			$css = substr_replace(
-				$css,
-				$update['text'],
-				$update['start'],
-				$update['length']
-			);
+			$output .= substr( $this->css, $bytes_already_copied, $update['start'] - $bytes_already_copied );
+			$output .= $update['text'];
+			$bytes_already_copied = $update['start'] + $update['length'];
 		}
 
-		return $css;
+		// Copy remaining CSS after last update.
+		$output .= substr( $this->css, $bytes_already_copied );
+
+		return $output;
 	}
 
 	/**
