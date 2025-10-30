@@ -1368,7 +1368,7 @@ CSS;
 
 		$updated = $processor->get_updated_css();
 
-		$this->assertSame( 'background: url("path with spaces(\\"special\\").jpg");', $updated );
+		$this->assertSame( 'background: url("path with spaces(\\22 special\\22 ).jpg");', $updated );
 	}
 
 	/**
@@ -1469,7 +1469,7 @@ CSS;
 		$updated = $processor->get_updated_css();
 
 		// Verify backslashes are escaped as \\.
-		$this->assertSame( 'background: url("path\\\\with\\\\backslashes.jpg");', $updated );
+		$this->assertSame( 'background: url("path\\5C with\\5C backslashes.jpg");', $updated );
 	}
 
 	/**

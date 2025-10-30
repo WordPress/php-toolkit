@@ -844,16 +844,15 @@ class CSSProcessor {
 				case "\f":
 				case "\n":
 					++$at;
-					// See the note above for why we add a trailing space.
 					$escaped .= '\\a ';
 					break;
 				case '\\':
 					++$at;
-					$escaped .= '\\\\';
+					$escaped .= '\\5C ';
 					break;
 				case '"':
 					++$at;
-					$escaped .= '\\"';
+					$escaped .= '\\22 ';
 					break;
 				default:
 					_doing_it_wrong( __METHOD__, 'Unexpected character in URL value: ' . $unsafe_char, '1.0.0' );
