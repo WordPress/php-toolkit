@@ -915,7 +915,7 @@ class CSSTokenizerTest extends TestCase {
 	 * - Escaped whitespace that gets consumed by the escape
 	 * - Unicode escapes for various characters
 	 */
-	public function test_escape_sequences_in_unusual_places(): void {
+	public function test_escape_sequences_in_unusual_places() {
 		// Complex CSS with escapes in many unusual but valid positions
 		$css = '@\\6D edia ' .                           // @media with \6D (m) and space consumed
 		       '\\73 creen ' .                           // screen with \73 (s) and space consumed
