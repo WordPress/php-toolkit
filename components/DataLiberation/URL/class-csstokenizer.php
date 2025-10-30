@@ -724,11 +724,11 @@ class CSSTokenizer {
 					// Ending quote.
 					// Return the <string-token>.
 					++$this->at;
-					$this->token_type             = self::TOKEN_STRING;
-					$this->token_needs_decoding   = true;
-					$this->token_length           = $this->at - $this->token_starts_at;
-					$this->token_value_starts_at  = $value_starts_at;
-					$this->token_value_length     = $this->at - $value_starts_at - 1;
+					$this->token_type            = self::TOKEN_STRING;
+					$this->token_needs_decoding  = true;
+					$this->token_length          = $this->at - $this->token_starts_at;
+					$this->token_value_starts_at = $value_starts_at;
+					$this->token_value_length    = $this->at - $value_starts_at - 1;
 					return true;
 
 				case "\n":
@@ -745,11 +745,11 @@ class CSSTokenizer {
 					 *
 					 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
 					 */
-					$this->token_type             = self::TOKEN_BAD_STRING;
-					$this->token_needs_decoding   = true;
-					$this->token_length           = $this->at - $this->token_starts_at;
-					$this->token_value_starts_at  = $value_starts_at;
-					$this->token_value_length     = $this->at - $value_starts_at;
+					$this->token_type            = self::TOKEN_BAD_STRING;
+					$this->token_needs_decoding  = true;
+					$this->token_length          = $this->at - $this->token_starts_at;
+					$this->token_value_starts_at = $value_starts_at;
+					$this->token_value_length    = $this->at - $value_starts_at;
 					return true;
 
 				case '\\':
@@ -789,11 +789,11 @@ class CSSTokenizer {
 
 		// EOF
 		// This is a parse error. Return the <string-token>.
-		$this->token_type             = self::TOKEN_STRING;
-		$this->token_needs_decoding   = true;
-		$this->token_length           = $this->at - $this->token_starts_at;
-		$this->token_value_starts_at  = $value_starts_at;
-		$this->token_value_length     = $this->at - $value_starts_at;
+		$this->token_type            = self::TOKEN_STRING;
+		$this->token_needs_decoding  = true;
+		$this->token_length          = $this->at - $this->token_starts_at;
+		$this->token_value_starts_at = $value_starts_at;
+		$this->token_value_length    = $this->at - $value_starts_at;
 		return true;
 	}
 
@@ -1191,7 +1191,7 @@ class CSSTokenizer {
 					$decoded     = substr( $this->css, $start, $this->at - $start );
 				}
 				++$this->at;
-				$decoded .= $this->decode_escape_at( $this->at, $matched_bytes );
+				$decoded  .= $this->decode_escape_at( $this->at, $matched_bytes );
 				$this->at += $matched_bytes;
 				continue;
 			}
@@ -1307,24 +1307,22 @@ class CSSTokenizer {
 				break;
 			}
 
-			$char = $this->css[ $at ];
-
 			// Handle escapes.
-			if ( '\\' === $char ) {
+			if ( '\\' === $this->css[ $at ] ) {
 				if ( $this->is_valid_escape( $at ) ) {
 					++$at;
 					$decoded .= $this->decode_escape_at( $at, $bytes_consumed );
 					$at      += $bytes_consumed;
 					continue;
 				}
-				// Invalid escape - just include the backslash.
+				// Invalid escape - consume the backslash and keep going.
 				$decoded .= '\\';
 				++$at;
 				continue;
 			}
 
 			// CSS normalization: \r\n, \r, and \f all become \n.
-			if ( "\r" === $char ) {
+			if ( "\r" === $this->css[ $at ] ) {
 				$decoded .= "\n";
 				++$at;
 				// Handle \r\n as single newline.
@@ -1334,14 +1332,14 @@ class CSSTokenizer {
 				continue;
 			}
 
-			if ( "\f" === $char ) {
+			if ( "\f" === $this->css[ $at ] ) {
 				$decoded .= "\n";
 				++$at;
 				continue;
 			}
 
 			// Null bytes become U+FFFD.
-			if ( "\x00" === $char ) {
+			if ( "\x00" === $this->css[ $at ] ) {
 				$decoded .= "\xEF\xBF\xBD"; // U+FFFD.
 				++$at;
 				continue;
@@ -1360,7 +1358,7 @@ class CSSTokenizer {
 	 * replaced with U+FFFD.
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#consume-escaped-code-point
-	 * 
+	 *
 	 * @param int $offset Byte offset (should point to the character after the backslash).
 	 * @param int &$bytes_consumed Output parameter: number of bytes consumed.
 	 * @return string The decoded character(s).
