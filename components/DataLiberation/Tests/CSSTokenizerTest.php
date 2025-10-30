@@ -16,7 +16,7 @@ class CSSTokenizerTest extends TestCase {
 	public function test_tokenizer_matches_spec( string $css, array $expected_tokens ): void {
 		$processor = CSSTokenizer::create( $css );
 		$actual_tokens = $this->collect_tokens( $processor );
-		$this->assertSame( $actual_tokens, $expected_tokens );
+		$this->assertSame( $expected_tokens, $actual_tokens );
 	}
 
 	/**
@@ -82,7 +82,7 @@ class CSSTokenizerTest extends TestCase {
 				'type' => CSSTokenizer::TOKEN_DELIM,
 				'raw'  => '.',
 				'normalized' => '.',
-				'value' => null,
+				'value' => '.',
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_IDENT,
@@ -106,7 +106,7 @@ class CSSTokenizerTest extends TestCase {
 				'type' => CSSTokenizer::TOKEN_DELIM,
 				'raw'  => '.',
 				'normalized' => '.',
-				'value' => null,
+				'value' => '.',
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_IDENT,
@@ -131,7 +131,7 @@ class CSSTokenizerTest extends TestCase {
 				'type' => CSSTokenizer::TOKEN_DELIM,
 				'raw'  => '.',
 				'normalized' => '.',
-				'value' => null,
+				'value' => '.',
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_IDENT,
@@ -714,7 +714,7 @@ CSS;
 				'type'       => CSSTokenizer::TOKEN_DELIM,
 				'raw'        => '.',
 				'normalized' => '.',
-				'value'      => null,
+				'value'      => '.',
 			),
 			// Class name with escape (\6c = 'l'), space gets consumed by escape.
 			array(
@@ -728,7 +728,7 @@ CSS;
 				'type'       => CSSTokenizer::TOKEN_DELIM,
 				'raw'        => '.',
 				'normalized' => '.',
-				'value'      => null,
+				'value'      => '.',
 			),
 			// Identifier with escape (\61 = 'a'), space gets consumed.
 			array(
@@ -868,6 +868,92 @@ CSS;
 		$this->assertSame( $expected, $actual_tokens );
 	}
 
+	public function test_dimension_token_value(): void {
+		$css = '10px;15em;20%;30pt;40pc;50vw;';
+		$expected = array(
+			array(
+				'type' => CSSTokenizer::TOKEN_DIMENSION,
+				'raw' => '10px',
+				'normalized' => '10px',
+				'value' => '10',
+				'unit' => 'px',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_SEMICOLON,
+				'raw' => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_DIMENSION,
+				'raw' => '15em',
+				'normalized' => '15em',
+				'value' => '15',
+				'unit' => 'em',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_SEMICOLON,
+				'raw' => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_PERCENTAGE,
+				'raw' => '20%',
+				'normalized' => '20%',
+				'value' => '20',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_SEMICOLON,
+				'raw' => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_DIMENSION,
+				'raw' => '30pt',
+				'normalized' => '30pt',
+				'value' => '30',
+				'unit' => 'pt',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_SEMICOLON,
+				'raw' => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_DIMENSION,
+				'raw' => '40pc',
+				'normalized' => '40pc',
+				'value' => '40',
+				'unit' => 'pc',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_SEMICOLON,
+				'raw' => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_DIMENSION,
+				'raw' => '50vw',
+				'normalized' => '50vw',
+				'value' => '50',
+				'unit' => 'vw',
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_SEMICOLON,
+				'raw' => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+		);
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value', 'unit'] );
+		$this->assertSame( $expected, $actual_tokens );
+	}
+
 	/**
 	 * Tests that create() validates encoding and only accepts UTF-8.
 	 */
@@ -968,7 +1054,7 @@ CSS;
 				'type' => CSSTokenizer::TOKEN_DELIM,
 				'raw'  => '.',
 				'normalized' => '.',
-				'value' => null,
+				'value' => '.',
 			),
 			// \63 l\61 ss\5F name -> class_name
 			array(
@@ -1084,7 +1170,7 @@ CSS;
 				'type' => CSSTokenizer::TOKEN_DIMENSION,
 				'raw'  => '10\\70 x',
 				'normalized' => '10px',
-				'value' => null,
+				'value' => '10',
 			),
 			array(
 				'type' => CSSTokenizer::TOKEN_SEMICOLON,

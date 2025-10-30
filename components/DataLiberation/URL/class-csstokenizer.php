@@ -36,6 +36,23 @@ use function WordPress\Encoding\codepoint_to_utf8_bytes;
  * The EOF token is a CSS parsing concept, not CSS tokenization concept. Therefore,
  * this tokenizer does not produce it.
  *
+ * ## Usage
+ *
+ * The next_token() method is the main entry point for tokenizing a CSS string.
+ * It will consume the next token from the input stream and return true if a token
+ * was found. Otherwise, it will return false:
+ *
+ * ```php
+ * $css = 'width: 10px;';
+ * $processor = CSSTokenizer::create( $css );
+ * while ( $processor->next_token() ) {
+ *     echo $processor->get_normalized_token();
+ * }
+ * // Outputs:
+ * // width: 10px;
+ * ```
+ *
+ * @TODO: More usage examples.
  * @see https://www.w3.org/TR/css-syntax-3/#tokenization
  */
 class CSSTokenizer {
@@ -591,15 +608,21 @@ class CSSTokenizer {
 	}
 
 	/**
-	 * Gets the current token value as a normalized and decoded string.
+	 * Gets the current token value as a normalized and decoded string. This is
+	 * a slight divergence from the CSS Syntax Level 3 spec, where all the numberic
+	 * values are parsed as numbers. This tokenizer is only concerned with their
+	 * textual representation.
 	 *
-	 * Returns the semantic value of the token:
-	 * - For numbers/percentages: the numeric value (a string excerpt from the CSS source)
-	 * - For dimensions: the numeric value (a string excerpt from the CSS source), use get_token_unit() for the unit
+	 * Returns the semantic value of the token per CSS Syntax Level 3 spec:
+	 *
+	 * - For delimiters: the single code point
+	 * - For numbers/percentages: the string representation of the number
+	 * - For dimensions: the string representation of the number (use get_token_unit() for the unit)
 	 * - For identifiers/functions/hash/at-keywords: the decoded identifier string
 	 * - For strings/URLs: the decoded string value
 	 * - For other tokens: null
 	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#token-value
 	 * @return string|null
 	 */
 	public function get_token_value() {
@@ -642,6 +665,26 @@ class CSSTokenizer {
 					} else {
 						$this->token_value = null;
 					}
+					break;
+
+				case self::TOKEN_DELIM:
+					// Delim value is the single code point.
+					$this->token_value = $this->decode_string_or_url( $this->token_starts_at, $this->token_length );
+					break;
+
+				case self::TOKEN_NUMBER:
+					// Return the string representation of the number (not parsed to float).
+					$this->token_value = substr( $this->css, $this->token_starts_at, $this->token_length );
+					break;
+
+				case self::TOKEN_PERCENTAGE:
+					// Return the string representation of the number (without the %).
+					$this->token_value = substr( $this->css, $this->token_starts_at, $this->token_length - 1 );
+					break;
+
+				case self::TOKEN_DIMENSION:
+					// Return the string representation of the number (without the unit).
+					$this->token_value = substr( $this->get_normalized_token(), 0, -strlen( $this->token_unit ) );
 					break;
 
 				default:
@@ -835,7 +878,6 @@ class CSSTokenizer {
 	 */
 	private function consume_numeric(): bool {
 		// Consume a number and let number be the result.
-		$start = $this->at;
 
 		// If the next input code point is U+002B PLUS SIGN (+) or U+002D HYPHEN-MINUS (-),
 		// consume it and append it to repr.
