@@ -97,6 +97,55 @@ class CSSTokenizerTest extends TestCase {
 		$this->assertSame( $expected, $actual_tokens );
 	}
 
+	public function test_invalid_utf8_with_valid_prefix_in_identifiers(): void {
+		// Invalid 2-byte prefix is replaced with a single U+FFFD.
+		$css = ".test\xE2\x80name";
+
+		$expected = array(
+			array(
+				'type' => CSSTokenizer::TOKEN_DELIM,
+				'raw'  => '.',
+				'normalized' => '.',
+				'value' => null,
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_IDENT,
+				'raw'  => "test\xE2\x80name",
+				'normalized' => 'test�name',
+				'value' => 'test�name',
+			),
+		);
+
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value'] );
+		$this->assertSame( $expected, $actual_tokens );
+	}
+
+	public function test_invalid_utf8_with_two_single_byte_invalid_sequences(): void {
+		// Two distinct single byte invalid sequences are replaced with
+		// two separate U+FFFD replacement characters.
+		$css = ".test\xE2\xE2name";
+
+		$expected = array(
+			array(
+				'type' => CSSTokenizer::TOKEN_DELIM,
+				'raw'  => '.',
+				'normalized' => '.',
+				'value' => null,
+			),
+			array(
+				'type' => CSSTokenizer::TOKEN_IDENT,
+				'raw'  => "test\xE2\xE2name",
+				'normalized' => 'test��name',
+				'value' => 'test��name',
+			),
+		);
+
+		$processor = CSSTokenizer::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value'] );
+		$this->assertSame( $expected, $actual_tokens );
+	}
+
 	/**
 	 * Legacy test to ensure basic tokenization still works.
 	 */
