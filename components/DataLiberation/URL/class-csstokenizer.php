@@ -251,15 +251,6 @@ class CSSTokenizer {
 	private $token_unit = null;
 
 	/**
-	 * Flag indicating whether the current token needs decoding (has escapes or normalization).
-	 *
-	 * When true, get_token_value() will decode the token on first access and cache the result.
-	 *
-	 * @var bool
-	 */
-	private $token_needs_decoding = false;
-
-	/**
 	 * Constructor for the CSS tokenizer.
 	 *
 	 * Do not instantiate directly. Use CSSTokenizer::create() instead.
@@ -388,8 +379,7 @@ class CSSTokenizer {
 					$decoded = $this->consume_ident_sequence();
 					if ( null !== $decoded ) {
 						// Only store decoded value if escapes were present.
-						$this->token_value          = $decoded;
-						$this->token_needs_decoding = true;
+						$this->token_value = $decoded;
 					}
 					$this->token_type   = self::TOKEN_HASH;
 					$this->token_length = $this->at - $this->token_starts_at;
@@ -446,9 +436,7 @@ class CSSTokenizer {
 			if ( $this->check_if_3_code_points_start_an_ident_sequence( $this->at ) ) {
 				$decoded = $this->consume_ident_sequence();
 				if ( null !== $decoded ) {
-					// Only store decoded value if escapes were present.
-					$this->token_value          = $decoded;
-					$this->token_needs_decoding = true;
+					$this->token_value = $decoded;
 				}
 				$this->token_type   = self::TOKEN_AT_KEYWORD;
 				$this->token_length = $this->at - $this->token_starts_at;
@@ -599,58 +587,13 @@ class CSSTokenizer {
 	 * @return string|null
 	 */
 	public function get_normalized_token(): ?string {
-		$unnormalized = $this->get_unnormalized_token();
-		if ( null === $unnormalized ) {
+		if ( null === $this->token_starts_at || null === $this->token_length ) {
 			return null;
 		}
 
-		// For tokens with escapes, decode them while preserving structure.
-		if ( $this->token_needs_decoding ) {
-			switch ( $this->token_type ) {
-				case self::TOKEN_URL:
-					// Reconstruct as url(decoded_value).
-					$decoded_value = $this->get_token_value();
-					return 'url(' . $decoded_value . ')';
-
-				case self::TOKEN_STRING:
-				case self::TOKEN_BAD_STRING:
-					// Reconstruct as "decoded_value" or 'decoded_value'.
-					$decoded_value = $this->get_token_value();
-					$quote         = $unnormalized[0];
-					return $quote . $decoded_value . $quote;
-
-				case self::TOKEN_HASH:
-					// Reconstruct as #decoded_value.
-					return '#' . $this->get_token_value();
-
-				case self::TOKEN_AT_KEYWORD:
-					// Reconstruct as @decoded_value.
-					return '@' . $this->get_token_value();
-
-				case self::TOKEN_FUNCTION:
-					// Reconstruct as decoded_value(.
-					return $this->get_token_value() . '(';
-
-				case self::TOKEN_IDENT:
-				case self::TOKEN_DIMENSION:
-					// Return decoded identifier/dimension.
-					$decoded = $this->get_token_value();
-					if ( self::TOKEN_DIMENSION === $this->token_type ) {
-						// For dimensions, append the unit.
-						$unit = $this->get_token_unit();
-						if ( null !== $unit ) {
-							$decoded .= $unit;
-						}
-					}
-					return $decoded;
-			}
-		}
-
-		// Apply CSS normalization (line endings and null bytes only, no escape processing).
 		return $this->decode_string_or_url(
 			$this->token_starts_at,
-			$this->token_starts_at + $this->token_length,
-			false // Don't process escapes - only normalize line endings and null bytes.
+			$this->token_starts_at + $this->token_length
 		);
 	}
 
@@ -682,49 +625,54 @@ class CSSTokenizer {
 	 * @return string|null
 	 */
 	public function get_token_value() {
-		// If token_value is already set, return it.
-		if ( null !== $this->token_value ) {
-			return $this->token_value;
-		}
-
-		// Otherwise, compute from token indices based on token type.
-		if ( null === $this->token_starts_at || null === $this->token_length ) {
-			return null;
-		}
-
-		switch ( $this->token_type ) {
-			case self::TOKEN_HASH:
-				// Hash value starts after the # character.
-				return substr( $this->css, $this->token_starts_at + 1, $this->token_length - 1 );
-
-			case self::TOKEN_AT_KEYWORD:
-				// At-keyword value starts after the @ character.
-				return substr( $this->css, $this->token_starts_at + 1, $this->token_length - 1 );
-
-			case self::TOKEN_FUNCTION:
-				// Function name is everything except the final (.
-				return substr( $this->css, $this->token_starts_at, $this->token_length - 1 );
-
-			case self::TOKEN_IDENT:
-				// Identifier is the entire token.
-				return substr( $this->css, $this->token_starts_at, $this->token_length );
-
-			case self::TOKEN_STRING:
-			case self::TOKEN_BAD_STRING:
-			case self::TOKEN_URL:
-				// Decode and cache the string/URL value.
-				if ( null !== $this->token_value_starts_at && null !== $this->token_value_length ) {
-					$this->token_value = $this->decode_string_or_url(
-						$this->token_value_starts_at,
-						$this->token_value_starts_at + $this->token_value_length
-					);
-					return $this->token_value;
-				}
+		if ( null === $this->token_value ) {
+			if ( null === $this->token_starts_at || null === $this->token_length ) {
 				return null;
+			}
 
-			default:
-				return null;
+			switch ( $this->token_type ) {
+				case self::TOKEN_HASH:
+					// Hash value starts after the # character.
+					$this->token_value = substr( $this->css, $this->token_starts_at + 1, $this->token_length - 1 );
+					break;
+
+				case self::TOKEN_AT_KEYWORD:
+					// At-keyword value starts after the @ character.
+					$this->token_value = substr( $this->css, $this->token_starts_at + 1, $this->token_length - 1 );
+					break;
+
+				case self::TOKEN_FUNCTION:
+					// Function name is everything except the final (.
+					$this->token_value = substr( $this->css, $this->token_starts_at, $this->token_length - 1 );
+					break;
+
+				case self::TOKEN_IDENT:
+					// Identifier is the entire token.
+					$this->token_value = substr( $this->css, $this->token_starts_at, $this->token_length );
+					break;
+
+				case self::TOKEN_STRING:
+				case self::TOKEN_BAD_STRING:
+				case self::TOKEN_URL:
+					// Decode and cache the string/URL value.
+					if ( null !== $this->token_value_starts_at && null !== $this->token_value_length ) {
+						$this->token_value = $this->decode_string_or_url(
+							$this->token_value_starts_at,
+							$this->token_value_starts_at + $this->token_value_length
+						);
+						$this->token_value = $this->token_value;
+					} else {
+						$this->token_value = null;
+					}
+					break;
+
+				default:
+					$this->token_value = null;
+					break;
+			}
 		}
+
+		return $this->token_value;
 	}
 
 	/**
@@ -783,7 +731,6 @@ class CSSTokenizer {
 		$this->token_unit            = null;
 		$this->token_value_starts_at = null;
 		$this->token_value_length    = null;
-		$this->token_needs_decoding  = false;
 	}
 
 	/**
@@ -826,7 +773,6 @@ class CSSTokenizer {
 					// Return the <string-token>.
 					++$this->at;
 					$this->token_type            = self::TOKEN_STRING;
-					$this->token_needs_decoding  = true;
 					$this->token_length          = $this->at - $this->token_starts_at;
 					$this->token_value_starts_at = $value_starts_at;
 					$this->token_value_length    = $this->at - $value_starts_at - 1;
@@ -847,7 +793,6 @@ class CSSTokenizer {
 					 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
 					 */
 					$this->token_type            = self::TOKEN_BAD_STRING;
-					$this->token_needs_decoding  = true;
 					$this->token_length          = $this->at - $this->token_starts_at;
 					$this->token_value_starts_at = $value_starts_at;
 					$this->token_value_length    = $this->at - $value_starts_at;
@@ -891,7 +836,6 @@ class CSSTokenizer {
 		// EOF
 		// This is a parse error. Return the <string-token>.
 		$this->token_type            = self::TOKEN_STRING;
-		$this->token_needs_decoding  = true;
 		$this->token_length          = $this->at - $this->token_starts_at;
 		$this->token_value_starts_at = $value_starts_at;
 		$this->token_value_length    = $this->at - $value_starts_at;
@@ -992,8 +936,7 @@ class CSSTokenizer {
 			$decoded    = $this->consume_ident_sequence();
 			if ( null !== $decoded ) {
 				// Escapes were present, use decoded value.
-				$this->token_unit           = $decoded;
-				$this->token_needs_decoding = true;
+				$this->token_unit = $decoded;
 			} else {
 				// No escapes, compute from substring.
 				$this->token_unit = substr( $this->css, $unit_start, $this->at - $unit_start );
@@ -1070,8 +1013,7 @@ class CSSTokenizer {
 			++$this->at;
 			// Create a <function-token> with its value set to string and return it.
 			if ( null !== $decoded ) {
-				$this->token_value          = $decoded;
-				$this->token_needs_decoding = true;
+				$this->token_value = $decoded;
 			}
 			$this->token_type   = self::TOKEN_FUNCTION;
 			$this->token_length = $this->at - $this->token_starts_at;
@@ -1080,8 +1022,7 @@ class CSSTokenizer {
 
 		// Otherwise, create an <ident-token> with its value set to string and return it.
 		if ( null !== $decoded ) {
-			$this->token_value          = $decoded;
-			$this->token_needs_decoding = true;
+			$this->token_value = $decoded;
 		}
 		$this->token_type   = self::TOKEN_IDENT;
 		$this->token_length = $this->at - $this->token_starts_at;
@@ -1113,7 +1054,6 @@ class CSSTokenizer {
 			if ( ')' === $this->css[ $this->at ] ) {
 				++$this->at;
 				$this->token_type            = self::TOKEN_URL;
-				$this->token_needs_decoding  = true;
 				$this->token_length          = $this->at - $this->token_starts_at;
 				$this->token_value_starts_at = $value_starts_at;
 				$this->token_value_length    = $this->at - $value_starts_at - 1;
@@ -1133,7 +1073,6 @@ class CSSTokenizer {
 				if ( $this->at >= $this->length ) {
 					// EOF is a parse error, but we return the <url-token> anyway.
 					$this->token_type            = self::TOKEN_URL;
-					$this->token_needs_decoding  = true;
 					$this->token_length          = $this->at - $this->token_starts_at;
 					$this->token_value_starts_at = $value_starts_at;
 					$this->token_value_length    = $value_ends_at - $value_starts_at;
@@ -1144,7 +1083,6 @@ class CSSTokenizer {
 					// Skip the closing parenthesis and return the <url-token>.
 					++$this->at;
 					$this->token_type            = self::TOKEN_URL;
-					$this->token_needs_decoding  = true;
 					$this->token_length          = $this->at - $this->token_starts_at;
 					$this->token_value_starts_at = $value_starts_at;
 					$this->token_value_length    = $value_ends_at - $value_starts_at;
@@ -1211,7 +1149,6 @@ class CSSTokenizer {
 		// EOF
 		// This is a parse error. Return the <url-token>.
 		$this->token_type            = self::TOKEN_URL;
-		$this->token_needs_decoding  = true;
 		$this->token_length          = $this->at - $this->token_starts_at;
 		$this->token_value_starts_at = $value_starts_at;
 		$this->token_value_length    = $this->at - $value_starts_at;
@@ -1387,7 +1324,7 @@ class CSSTokenizer {
 		$slice         = substr( $this->css, $start, $end - $start );
 		$special_chars = $process_escapes ? "\\\r\f\x00" : "\r\f\x00";
 		if ( false === strpbrk( $slice, $special_chars ) ) {
-			// No special chars - return raw substring (zero allocations)!
+			// No special chars - return raw substring (almost zero allocations).
 			return $slice;
 		}
 
