@@ -30,8 +30,12 @@ class CSSTokenizerTest extends TestCase {
 			if ( ! isset( $actual_tokens[ $index ] ) ) {
 				$this->fail( "Missing token at index $index for CSS: " . var_export( $css, true ) );
 			}
-			$actual_token = $actual_tokens[ $index ];
-			$this->assertSame( $expected_token, $actual_token, $index, $css );
+			$this->assertSame(
+				$expected_token,
+				$actual_tokens[ $index ],
+				$index,
+				$css
+			);
 		}
 	}
 
