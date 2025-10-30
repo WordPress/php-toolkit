@@ -75,7 +75,7 @@ class CSSTokenizerTest extends TestCase {
 
 			$token = array(
 				'type'       => $type,
-				'raw'        => $processor->get_token_raw(),
+				'raw'        => $processor->get_unnormalized_token(),
 				'startIndex' => $byte_start,
 				'endIndex'   => $byte_end,
 				'value'      => $processor->get_token_value(),
@@ -147,17 +147,82 @@ class CSSTokenizerTest extends TestCase {
 	 * Asserts that CSS parses to expected tokens.
 	 *
 	 * @param string $css      The CSS to parse.
-	 * @param array  $expected Array of expected tokens with 'type' and 'raw' keys.
+	 * @param array  $expected Array of expected tokens. Each token can have:
+	 *                         - 'type' (required): Token type constant
+	 *                         - 'raw' (optional): Unnormalized token text
+	 *                         - 'normalized' (optional): Normalized token text
+	 *                         - 'value' (optional): Semantic token value
 	 */
 	private function assert_css_parses_to_tokens( string $css, array $expected ): void {
 		$processor = new CSSTokenizer( $css );
-		$tokens    = $this->collect_tokens( $processor, $css );
 
-		$this->assertCount( count( $expected ), $tokens, 'Token count mismatch' );
-		foreach ( $expected as $index => $exp ) {
-			$this->assertSame( $exp['type'], $tokens[ $index ]['type'], "Token $index type mismatch" );
-			$this->assertSame( $exp['raw'], $tokens[ $index ]['raw'], "Token $index raw mismatch" );
+		$this->assertCount( count( $expected ), $expected, 'Expected tokens array should not be empty' );
+
+		$index = 0;
+		while ( $processor->next_token() ) {
+			$this->assertArrayHasKey(
+				$index,
+				$expected,
+				sprintf( 'Unexpected token at index %d: got %s', $index, $processor->get_token_type() )
+			);
+
+			$exp     = $expected[ $index ];
+			$message = sprintf( 'Token %d mismatch in CSS: %s', $index, var_export( $css, true ) );
+
+			// Check type (required).
+			$this->assertArrayHasKey( 'type', $exp, 'Expected token must have a type' );
+			$this->assertSame(
+				$exp['type'],
+				$processor->get_token_type(),
+				$message . ' (type)'
+			);
+
+			// Check raw/unnormalized (optional).
+			if ( isset( $exp['raw'] ) ) {
+				$this->assertSame(
+					$exp['raw'],
+					$processor->get_unnormalized_token(),
+					$message . ' (raw/unnormalized)'
+				);
+			}
+
+			// Check normalized (optional).
+			if ( isset( $exp['normalized'] ) ) {
+				$this->assertSame(
+					$exp['normalized'],
+					$processor->get_normalized_token(),
+					$message . ' (normalized)'
+				);
+			}
+
+			// Check value (optional).
+			if ( array_key_exists( 'value', $exp ) ) {
+				if ( is_float( $exp['value'] ) ) {
+					// Loose comparison for floats.
+					$this->assertEquals(
+						$exp['value'],
+						$processor->get_token_value(),
+						$message . ' (value)',
+						0.0001
+					);
+				} else {
+					$this->assertSame(
+						$exp['value'],
+						$processor->get_token_value(),
+						$message . ' (value)'
+					);
+				}
+			}
+
+			++$index;
 		}
+
+		// Ensure we consumed all expected tokens.
+		$this->assertCount(
+			$index,
+			$expected,
+			sprintf( 'Expected %d tokens but only found %d', count( $expected ), $index )
+		);
 	}
 
 	/**
@@ -652,6 +717,180 @@ class CSSTokenizerTest extends TestCase {
 			array( 'type' => CSSTokenizer::TOKEN_SEMICOLON,    'raw' => ';' ),
 			array( 'type' => CSSTokenizer::TOKEN_WHITESPACE,   'raw' => ' ' ),
 			array( 'type' => CSSTokenizer::TOKEN_RIGHT_BRACE,  'raw' => '}' ),
+		);
+
+		$this->assert_css_parses_to_tokens( $css, $expected );
+	}
+
+	/**
+	 * Tests that get_normalized_token() applies CSS normalization.
+	 *
+	 * Uses a comprehensive CSS selector with rules that includes:
+	 * - CSS escapes in class names and IDs
+	 * - URLs with escape sequences
+	 * - String values with escapes and line endings
+	 * - Comments with various line ending characters
+	 * - Null bytes in identifiers
+	 * - Mixed line endings (\r\n, \r, \f) that need normalization
+	 */
+	public function test_get_normalized_token_applies_normalization(): void {
+		// Comprehensive CSS with normalization requirements.
+		$css = "/* Comment\r\nwith\flines */\r\n" .
+		       ".c\\6c ass.n\\61 me\r#id\\@value\r\n{\r\n" .
+		       "\tbackground:\furl(path\\2f to\\2f image.png);\r\n" .
+		       "\tcontent:\r\"text\\A string\";\r\n" .
+		       "}";
+
+		$expected = array(
+			// Comment with \r\n and \f.
+			array(
+				'type'       => CSSTokenizer::TOKEN_COMMENT,
+				'raw'        => "/* Comment\r\nwith\flines */",
+				'normalized' => "/* Comment\nwith\nlines */",
+			),
+			// Whitespace with \r\n.
+			array(
+				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'        => "\r\n",
+				'normalized' => "\n",
+			),
+			// Class selector delimiter.
+			array(
+				'type'       => CSSTokenizer::TOKEN_DELIM,
+				'raw'        => '.',
+				'normalized' => '.',
+			),
+			// Class name with escape (\6c = 'l'), space gets consumed by escape.
+			array(
+				'type'       => CSSTokenizer::TOKEN_IDENT,
+				'raw'        => 'c\\6c ass',
+				'normalized' => 'class', // Escapes decoded.
+				'value'      => 'class', // Decoded: \6c → l, space consumed.
+			),
+			// Delimiter.
+			array(
+				'type'       => CSSTokenizer::TOKEN_DELIM,
+				'raw'        => '.',
+				'normalized' => '.',
+			),
+			// Identifier with escape (\61 = 'a'), space gets consumed.
+			array(
+				'type'       => CSSTokenizer::TOKEN_IDENT,
+				'raw'        => 'n\\61 me',
+				'normalized' => 'name', // Escapes decoded.
+				'value'      => 'name', // Decoded: \61 → a, space consumed.
+			),
+			// Whitespace with \r.
+			array(
+				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'        => "\r",
+				'normalized' => "\n",
+			),
+			// ID selector with escape.
+			array(
+				'type'       => CSSTokenizer::TOKEN_HASH,
+				'raw'        => '#id\\@value',
+				'normalized' => '#id@value', // Escapes decoded.
+				'value'      => 'id@value', // Decoded value.
+			),
+			// Whitespace with \r\n.
+			array(
+				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'        => "\r\n",
+				'normalized' => "\n",
+			),
+			// Opening brace.
+			array(
+				'type'       => CSSTokenizer::TOKEN_LEFT_BRACE,
+				'raw'        => '{',
+				'normalized' => '{',
+			),
+			// Whitespace with \r\n and tab (consumed together).
+			array(
+				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'        => "\r\n\t",
+				'normalized' => "\n\t",
+			),
+			array(
+				'type'       => CSSTokenizer::TOKEN_IDENT,
+				'raw'        => 'background',
+				'normalized' => 'background',
+				'value'      => 'background',
+			),
+			// Colon.
+			array(
+				'type'       => CSSTokenizer::TOKEN_COLON,
+				'raw'        => ':',
+				'normalized' => ':',
+			),
+			// Whitespace with \f.
+			array(
+				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'        => "\f",
+				'normalized' => "\n",
+			),
+			// URL token with escapes (entire url(...) is one token).
+			array(
+				'type'       => CSSTokenizer::TOKEN_URL,
+				'raw'        => 'url(path\\2f to\\2f image.png)',
+				'normalized' => 'url(path/to/image.png)', // Escapes decoded.
+				'value'      => 'path/to/image.png', // Decoded: \2f → /, spaces consumed.
+			),
+			// Semicolon.
+			array(
+				'type'       => CSSTokenizer::TOKEN_SEMICOLON,
+				'raw'        => ';',
+				'normalized' => ';',
+			),
+			// Whitespace with \r\n and tab (consumed together).
+			array(
+				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'        => "\r\n\t",
+				'normalized' => "\n\t",
+			),
+			array(
+				'type'       => CSSTokenizer::TOKEN_IDENT,
+				'raw'        => 'content',
+				'normalized' => 'content',
+				'value'      => 'content',
+			),
+			// Colon.
+			array(
+				'type'       => CSSTokenizer::TOKEN_COLON,
+				'raw'        => ':',
+				'normalized' => ':',
+			),
+			// Whitespace with \r.
+			array(
+				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'        => "\r",
+				'normalized' => "\n",
+			),
+			// String with escape (\A = newline, space consumed).
+			array(
+				'type'       => CSSTokenizer::TOKEN_STRING,
+				'raw'        => '"text\\A string"',
+				'normalized' => "\"text\nstring\"", // Escapes decoded, quotes preserved.
+				'value'      => "text\nstring", // \A → \n, space consumed.
+			),
+			// Semicolon.
+			array(
+				'type'       => CSSTokenizer::TOKEN_SEMICOLON,
+				'raw'        => ';',
+				'normalized' => ';',
+			),
+			// Whitespace with \r\n.
+			array(
+				'type'       => CSSTokenizer::TOKEN_WHITESPACE,
+				'raw'        => "\r\n",
+				'normalized' => "\n",
+			),
+			// Closing brace.
+			array(
+				'type'       => CSSTokenizer::TOKEN_RIGHT_BRACE,
+				'raw'        => '}',
+				'normalized' => '}',
+			),
 		);
 
 		$this->assert_css_parses_to_tokens( $css, $expected );
