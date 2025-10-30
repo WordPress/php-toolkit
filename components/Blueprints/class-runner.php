@@ -383,7 +383,7 @@ class Runner {
 		if ( function_exists( 'mb_check_encoding' ) ) {
 			$is_valid_utf8 = mb_check_encoding( $blueprint_string, 'UTF-8' );
 		} else {
-			$is_valid_utf8 = !_wp_has_noncharacters_fallback( $blueprint_string );
+			$is_valid_utf8 = ! _wp_has_noncharacters_fallback( $blueprint_string );
 		}
 
 		if ( ! $is_valid_utf8 ) {
