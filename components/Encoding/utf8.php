@@ -136,6 +136,21 @@ else :
 	}
 endif;
 
+function _wp_can_use_pcre_u( $set = null ) {
+	static $utf8_pcre = 'reset';
+
+	if ( null !== $set ) {
+		$utf8_pcre = $set;
+	}
+
+	if ( 'reset' === $utf8_pcre ) {
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- intentional error generated to detect PCRE/u support.
+		$utf8_pcre = @preg_match( '/^./u', 'a' );
+	}
+
+	return $utf8_pcre;
+}
+
 if ( _wp_can_use_pcre_u() ) :
 	/**
 	 * Returns whether the given string contains Unicode noncharacters.
