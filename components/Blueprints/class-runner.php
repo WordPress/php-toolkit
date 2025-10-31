@@ -55,7 +55,7 @@ use WordPress\HttpClient\ByteStream\RequestReadStream;
 use WordPress\HttpClient\Client;
 use WordPress\Zip\ZipFilesystem;
 
-use function WordPress\Encoding\utf8_is_valid_byte_stream;
+use function WordPress\Encoding\_wp_has_noncharacters_fallback;
 use function WordPress\Filesystem\wp_unix_sys_get_temp_dir;
 use function WordPress\Zip\is_zip_file_stream;
 
@@ -383,7 +383,7 @@ class Runner {
 		if ( function_exists( 'mb_check_encoding' ) ) {
 			$is_valid_utf8 = mb_check_encoding( $blueprint_string, 'UTF-8' );
 		} else {
-			$is_valid_utf8 = utf8_is_valid_byte_stream( $blueprint_string );
+			$is_valid_utf8 = ! _wp_has_noncharacters_fallback( $blueprint_string );
 		}
 
 		if ( ! $is_valid_utf8 ) {
