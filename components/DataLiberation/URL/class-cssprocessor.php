@@ -2,14 +2,92 @@
 
 namespace WordPress\DataLiberation\URL;
 
+use function WordPress\Encoding\_wp_scan_utf8;
+use function WordPress\Encoding\_wp_scrub_utf8_fallback;
 use function WordPress\Encoding\utf8_codepoint_at;
 use function WordPress\Encoding\codepoint_to_utf8_bytes;
 
 /**
  * Tokenizes CSS according to the CSS Syntax Level 3 specification.
  *
- * This class implements the CSS tokenization algorithm as defined in:
- * https://www.w3.org/TR/css-syntax-3/
+ * This class follows the algorithm in https://www.w3.org/TR/css-syntax-3/ and
+ * exposes a pull-based API so callers can stream over large stylesheets without
+ * allocating every token up front. Each call to next_token() advances the cursor
+ * and fills in metadata (type, value, raw slice, byte offsets) that you can read
+ * through the getter methods.
+ *
+ * ## Design choices
+ *
+ * ### On-the-fly normalization
+ *
+ * The CSS Spec requires the following normalization step:
+ *
+ * > Replace any U+000D CARRIAGE RETURN (CR) code points, U+000C FORM FEED (FF)
+ * > code points, or pairs of U+000D CARRIAGE RETURN (CR) followed by U+000A LINE
+ * > FEED (LF) in input by a single U+000A LINE FEED (LF) code point.
+ * > Replace any U+0000 NULL or surrogate code points in input with U+FFFD REPLACEMENT
+ * > CHARACTER (�).
+ *
+ * This processor delays normalization as much as possible. That keeps the raw byte
+ * positions intact for accurate rewrites while still letting consumers ask for a
+ * normalized token when they need one.
+ *
+ * ### No EOF token
+ *
+ * The EOF token is a CSS parsing concept, not CSS tokenization concept. Therefore,
+ * this processor does not produce it.
+ *
+ * ### UTF-8 handling
+ *
+ * Only UTF-8 strings are supported. Invalid sequences are replaced with U+FFFD (�)
+ * using the maximal subpart approach described in
+ * https://www.unicode.org/versions/Unicode9.0.0/ch03.pdf, section 3.9 Best Practices
+ * for Using U+FFFD.
+ *
+ * ## Usage
+ *
+ * Basic iteration:
+ *
+ * ```php
+ * $css = 'width: 10px;';
+ * $processor = CSSProcessor::create( $css );
+ * while ( $processor->next_token() ) {
+ *     echo $processor->get_normalized_token();
+ * }
+ * // Outputs:
+ * // width: 10px;
+ * ```
+ *
+ * Rewriting a URL while keeping the rest of the stylesheet intact:
+ *
+ * ```php
+ * $css = 'background: url(old.jpg) center / cover;';
+ * $processor = CSSProcessor::create( $css );
+ * while ( $processor->next_token() ) {
+ *     if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+ *         $processor->set_value( 'uploads/new.jpg' );
+ *     }
+ * }
+ * $result = $processor->get_updated_css();
+ * // background: url(uploads/new.jpg) center / cover;
+ * ```
+ *
+ * Gathering diagnostics with byte offsets:
+ *
+ * ```php
+ * $css = "color: red;\ncolor: re\nd;";
+ * $processor = CSSProcessor::create( $css );
+ * $bad_strings = array();
+ * while ( $processor->next_token() ) {
+ *     if ( CSSProcessor::TOKEN_BAD_STRING === $processor->get_token_type() ) {
+ *         $bad_strings[] = array(
+ *             'start'  => $processor->get_token_start(),
+ *             'length' => $processor->get_token_length(),
+ *             'value'  => $processor->get_unnormalized_token(),
+ *         );
+ *     }
+ * }
+ * ```
  *
  * @see https://www.w3.org/TR/css-syntax-3/#tokenization
  */
@@ -30,7 +108,7 @@ class CSSProcessor {
 	 * Invalid (produces bad-string): "hello
 	 *                                 world"  (literal newline breaks the string)
 	 *
-	 * The tokenizer stops at the newline and produces a bad-string token for error recovery.
+	 * The processor stops at the newline and produces a bad-string token for error recovery.
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-bad-string-token
 	 */
@@ -68,7 +146,7 @@ class CSSProcessor {
 	 * Invalid characters: quotes ("), apostrophes ('), parentheses (()
 	 * Example invalid: url(image(.jpg) or url(image".jpg)
 	 *
-	 * When detected, the tokenizer consumes everything up to ) or EOF.
+	 * When detected, the processor consumes everything up to ) or EOF.
 	 * This prevents the bad URL from breaking subsequent tokens.
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-bad-url-token
@@ -114,15 +192,6 @@ class CSSProcessor {
 	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-CDO-token
 	 */
 	public const TOKEN_CDO = 'CDO-token';
-	/**
-	 * EOF (End Of File) token marks the end of the input stream.
-	 *
-	 * This implementation returns false from next_token() instead of producing
-	 * an explicit EOF token, but the concept is the same.
-	 *
-	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-eof-token
-	 */
-	public const TOKEN_EOF = 'EOF-token';
 
 	/**
 	 * @var string
@@ -138,28 +207,6 @@ class CSSProcessor {
 	 * @var int
 	 */
 	private $at = 0;
-
-	/**
-	 * Cached codepoint at the current position ($this->at).
-	 * Used to avoid repeatedly decoding the same UTF-8 sequence.
-	 *
-	 * @var int|null
-	 */
-	private $current_codepoint = null;
-
-	/**
-	 * Cached byte length of the current codepoint.
-	 *
-	 * @var int
-	 */
-	private $current_codepoint_bytes = 0;
-
-	/**
-	 * The byte offset for which the codepoint is cached.
-	 *
-	 * @var int
-	 */
-	private $current_codepoint_offset = -1;
 
 	/**
 	 * The type of the current token. One of the self::TOKEN_* constants.
@@ -194,15 +241,6 @@ class CSSProcessor {
 	private $token_length = null;
 
 	/**
-	 * The string value of the current token.
-	 *
-	 * @var string|null
-	 */
-	private $token_value = null;
-	private $token_name  = null;
-	private $token_unit  = null;
-
-	/**
 	 * The byte offset at which the value of the current token starts.
 	 *
 	 * It is used for STRING and URL tokens. For example:
@@ -228,11 +266,64 @@ class CSSProcessor {
 	private $token_value_length = null;
 
 	/**
-	 * @param string $css CSS source to tokenize.
+	 * The string value of the current token.
+	 *
+	 * For numbers, this is a float.
+	 * For identifiers/functions/strings/URLs with escapes, this is a decoded string.
+	 * Otherwise, it's null and the value is computed from token indices.
+	 *
+	 * @var string|float|null
 	 */
-	public function __construct( string $css ) {
+	private $token_value = null;
+
+	/**
+	 * The unit of the current token, e.g. "px", "em", "deg", etc.
+	 *
+	 * @var string|null
+	 */
+	private $token_unit = null;
+
+	/**
+	 * Lexical replacements to apply to input CSS document.
+	 *
+	 * Tracks modifications to be applied to the CSS, such as changing URL values.
+	 * Each entry is an associative array with 'start', 'length', and 'text' keys.
+	 *
+	 * @var array[]
+	 */
+	private $lexical_updates = array();
+
+	/**
+	 * Constructor for the CSS processor.
+	 *
+	 * Do not instantiate directly. Use CSSProcessor::create() instead.
+	 *
+	 * @param string $css         CSS source to tokenize.
+	 */
+	private function __construct( string $css ) {
 		$this->css    = $css;
 		$this->length = strlen( $css );
+	}
+
+	/**
+	 * Creates a CSS processor for the given CSS string.
+	 *
+	 * Use this method to create a CSS processor instance.
+	 *
+	 * ## Current Support
+	 *
+	 * - The only supported document encoding is `UTF-8`, which is the default value.
+	 *
+	 * @param string $css      CSS source to tokenize.
+	 * @param string $encoding Text encoding of the document; must be default of 'UTF-8'.
+	 * @return static|null The created processor if successful, otherwise null.
+	 */
+	public static function create( string $css, string $encoding = 'UTF-8' ) {
+		if ( 'UTF-8' !== $encoding ) {
+			return null;
+		}
+
+		return new static( $css );
 	}
 
 	/**
@@ -314,25 +405,25 @@ class CSSProcessor {
 		 * @see https://www.w3.org/TR/css-syntax-3/#consume-token
 		 */
 		if ( '#' === $char ) {
-			if ( $this->at + 1 < $this->length &&
-				(
-					$this->is_ident_code_point_at( $this->at + 1 ) ||
+			if ( $this->at + 1 < $this->length ) {
+				if (
+					$this->consume_ident_codepoint( $this->at + 1 ) > 0 ||
 					// The next two input code points are a valid escape.
 					$this->is_valid_escape( $this->at + 1 )
-				)
-			) {
-				// Create a <hash-token>.
-				++$this->at;
+				) {
+					// Create a <hash-token>.
+					++$this->at;
 
-				// We skip this check as we don't track the type flag:
-				// > If the next 3 input code points would start an ident sequence,
-				// > set the <hash-token>'s type flag to "id".
+					// We skip this check as we don't track the type flag:
+					// > If the next 3 input code points would start an ident sequence,
+					// > set the <hash-token>'s type flag to "id".
 
-				// Consume an ident sequence, and set the <hash-token>'s value to the returned string.
-				$this->token_name   = $this->consume_ident_sequence();
-				$this->token_type   = self::TOKEN_HASH;
-				$this->token_length = $this->at - $this->token_starts_at;
-				return true;
+					// Consume an ident sequence, and set the <hash-token>'s value to the returned string.
+					$this->consume_ident_sequence();
+					$this->token_type   = self::TOKEN_HASH;
+					$this->token_length = $this->at - $this->token_starts_at;
+					return true;
+				}
 			}
 			// Otherwise, return a <delim-token> with its value set to the current input code point.
 			++$this->at;
@@ -381,8 +472,8 @@ class CSSProcessor {
 			// If the next 3 input code points after the @ would start an ident sequence,
 			// consume an ident sequence, create an <at-keyword-token> with its value set to the returned value,
 			// and return it.
-			if ( $this->would_next_3_code_points_start_an_ident( $this->at ) ) {
-				$this->token_name   = $this->consume_ident_sequence();
+			if ( $this->check_if_3_code_points_start_an_ident_sequence( $this->at ) ) {
+				$this->consume_ident_sequence();
 				$this->token_type   = self::TOKEN_AT_KEYWORD;
 				$this->token_length = $this->at - $this->token_starts_at;
 				return true;
@@ -405,21 +496,41 @@ class CSSProcessor {
 
 		/*
 		 * U+002D HYPHEN-MINUS (-)
-		 * If followed by another hyphen and >, this is a CDC token (-->)
-		 *
-		 * Comment Delimiter Close - legacy HTML comment syntax in CSS.
-		 *
-		 * @see https://www.w3.org/TR/css-syntax-3/#CDC-token-diagram
 		 */
-		if (
-			'-' === $char && $this->at + 2 < $this->length &&
-			'-' === $this->css[ $this->at + 1 ] &&
-			'>' === $this->css[ $this->at + 2 ]
-		) {
-			// Consume them and return a <CDC-token>.
-			$this->at          += 3;
-			$this->token_type   = self::TOKEN_CDC;
-			$this->token_length = 3;
+		if ( '-' === $char ) {
+			// This case is covered above:
+			// > If the input stream starts with a number.
+
+			/*
+			 * If followed by another hyphen and >, this is a CDC token (-->)
+			 *
+			 * Comment Delimiter Close - legacy HTML comment syntax in CSS.
+			 *
+			 * @see https://www.w3.org/TR/css-syntax-3/#CDC-token-diagram
+			 */
+			if (
+				$this->at + 2 < $this->length &&
+				'-' === $this->css[ $this->at + 1 ] &&
+				'>' === $this->css[ $this->at + 2 ]
+			) {
+				// Consume them and return a <CDC-token>.
+				$this->at          += 3;
+				$this->token_type   = self::TOKEN_CDC;
+				$this->token_length = 3;
+				return true;
+			}
+
+			// Otherwise, if the input stream starts with an ident sequence,
+			// reconsume the current input code point, consume an ident-like
+			// token, and return it.
+			if ( $this->check_if_3_code_points_start_an_ident_sequence( $this->at ) ) {
+				return $this->consume_ident_like();
+			}
+
+			// Otherwise, return a <delim-token> with its value set to the current input code point.
+			++$this->at;
+			$this->token_type   = self::TOKEN_DELIM;
+			$this->token_length = 1;
 			return true;
 		}
 
@@ -442,8 +553,6 @@ class CSSProcessor {
 			return true;
 		}
 
-		// @ADAM reviewed up to here.
-
 		/*
 		 * Ident-start code point
 		 *
@@ -454,7 +563,7 @@ class CSSProcessor {
 		 *
 		 * @see https://www.w3.org/TR/css-syntax-3/#consume-ident-like-token
 		 */
-		if ( $this->would_next_3_code_points_start_an_ident( $this->at ) ) {
+		if ( $this->check_if_3_code_points_start_an_ident_sequence( $this->at ) ) {
 			return $this->consume_ident_like();
 		}
 
@@ -467,15 +576,20 @@ class CSSProcessor {
 		 * @see https://www.w3.org/TR/css-syntax-3/#delim-token-diagram
 		 */
 		if ( ord( $char ) >= 0x80 ) {
-			$this->get_codepoint_at( $this->at, $matched_bytes );
-
-			// We're in trouble!
-			// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
-			// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
-			// an error would be useful for sure.
-			// For now, we'll just consume that byte to prevent infinite loop and keep processing.
-			if ( 0 === $matched_bytes ) {
-				$matched_bytes = 1;
+			$new_at         = $this->at;
+			$invalid_length = 0;
+			if ( 1 !== _wp_scan_utf8( $this->css, $new_at, $invalid_length, null, 1 ) ) {
+				/**
+				 * Trouble ahead!
+				 * Bytes at $at are not a valid UTF-8 sequence.
+				 *
+				 * We'll move forward by $invalid_length bytes and continue processing.
+				 * Later on, during the string decoding, we'll replace the invalid bytes with U+FFFD
+				 * via maximal subpart”replacement.
+				 */
+				$matched_bytes = $invalid_length;
+			} else {
+				$matched_bytes = $new_at - $this->at;
 			}
 
 			$this->at          += $matched_bytes;
@@ -501,33 +615,131 @@ class CSSProcessor {
 	}
 
 	/**
-	 * Gets the current token value (for numbers).
+	 * Gets the normalized token text from the CSS source.
 	 *
-	 * @return float|null
-	 */
-	public function get_token_value() {
-		return $this->token_value;
-	}
-
-	/**
-	 * Gets the current token name (for functions).
+	 * Returns the token with CSS normalization and escape decoding applied:
+	 * - CSS escapes decoded (e.g., \6c → l, \2f → /, \A → newline)
+	 * - \r\n, \r, \f → \n
+	 * - \x00 → U+FFFD (�)
 	 *
-	 * @return string|null
-	 */
-	public function get_token_name(): ?string {
-		return $this->token_name;
-	}
-
-	/**
-	 * Gets the raw token text from the CSS source.
+	 * This is different from get_token_value() which returns the semantic value
+	 * (e.g., for strings: content without quotes; for numbers: numeric value).
 	 *
 	 * @return string|null
 	 */
-	public function get_token_raw(): ?string {
+	public function get_normalized_token(): ?string {
+		if ( null === $this->token_starts_at || null === $this->token_length ) {
+			return null;
+		}
+
+		return $this->decode_string_or_url(
+			$this->token_starts_at,
+			$this->token_length
+		);
+	}
+
+	/**
+	 * Gets the raw, unnormalized token text from the CSS source.
+	 *
+	 * Returns the exact bytes from the source without any normalization.
+	 * This preserves original line endings (\r\n, \r, \f) and null bytes.
+	 *
+	 * @return string|null
+	 */
+	public function get_unnormalized_token(): ?string {
 		if ( null === $this->token_starts_at || null === $this->token_length ) {
 			return null;
 		}
 		return substr( $this->css, $this->token_starts_at, $this->token_length );
+	}
+
+	/**
+	 * Gets the current token value as a normalized and decoded string. This is
+	 * a slight divergence from the CSS Syntax Level 3 spec, where all the numberic
+	 * values are parsed as numbers. This processor is only concerned with their
+	 * textual representation.
+	 *
+	 * Returns the semantic value of the token per CSS Syntax Level 3 spec:
+	 *
+	 * - For delimiters: the single code point
+	 * - For numbers/percentages: the string representation of the number
+	 * - For dimensions: the string representation of the number (use get_token_unit() for the unit)
+	 * - For identifiers/functions/hash/at-keywords: the decoded identifier string
+	 * - For strings/URLs: the decoded string value
+	 * - For other tokens: null
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#token-value
+	 * @return string|null
+	 */
+	public function get_token_value() {
+		if ( null === $this->token_value ) {
+			if ( null === $this->token_starts_at || null === $this->token_length ) {
+				return null;
+			}
+
+			switch ( $this->token_type ) {
+				case self::TOKEN_HASH:
+					// Hash value starts after the # character.
+					$this->token_value = $this->decode_string_or_url( $this->token_starts_at + 1, $this->token_length - 1 );
+					break;
+
+				case self::TOKEN_AT_KEYWORD:
+					// At-keyword value starts after the @ character.
+					$this->token_value = $this->decode_string_or_url( $this->token_starts_at + 1, $this->token_length - 1 );
+					break;
+
+				case self::TOKEN_FUNCTION:
+					// Function name is everything except the final (.
+					$this->token_value = $this->decode_string_or_url( $this->token_starts_at, $this->token_length - 1 );
+					break;
+
+				case self::TOKEN_IDENT:
+					// Identifier is the entire token.
+					$this->token_value = $this->decode_string_or_url( $this->token_starts_at, $this->token_length );
+					break;
+
+				case self::TOKEN_STRING:
+				case self::TOKEN_BAD_STRING:
+				case self::TOKEN_URL:
+					// Decode and cache the string/URL value.
+					if ( null !== $this->token_value_starts_at && null !== $this->token_value_length ) {
+						$this->token_value = $this->decode_string_or_url(
+							$this->token_value_starts_at,
+							$this->token_value_length
+						);
+						$this->token_value = $this->token_value;
+					} else {
+						$this->token_value = null;
+					}
+					break;
+
+				case self::TOKEN_DELIM:
+					// Delim value is the single code point.
+					$this->token_value = $this->decode_string_or_url( $this->token_starts_at, $this->token_length );
+					break;
+
+				case self::TOKEN_NUMBER:
+					// Return the string representation of the number (not parsed to float).
+					$this->token_value = substr( $this->css, $this->token_starts_at, $this->token_length );
+					break;
+
+				case self::TOKEN_PERCENTAGE:
+					// Return the string representation of the number (without the %).
+					$this->token_value = substr( $this->css, $this->token_starts_at, $this->token_length - 1 );
+					break;
+
+				case self::TOKEN_DIMENSION:
+					// Return the string representation of the number (without the unit).
+					$this->token_value = substr( $this->get_normalized_token(), 0, -strlen( $this->token_unit ) );
+					break;
+
+				default:
+					$this->token_value = null;
+					break;
+			}
+		}
+
+		return $this->token_value;
 	}
 
 	/**
@@ -576,6 +788,166 @@ class CSSProcessor {
 	}
 
 	/**
+	 * Sets the value of the current URL token.
+	 *
+	 * This method allows modifying the URL value in url() tokens. The new value
+	 * will be properly escaped according to CSS URL syntax rules.
+	 *
+	 * Currently only URL tokens are supported. Attempting to set the value on
+	 * other token types will return false.
+	 *
+	 * Example:
+	 *
+	 *     $css = 'background: url(old.jpg);';
+	 *     $processor = CSSProcessor::create( $css );
+	 *     while ( $processor->next_token() ) {
+	 *         if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+	 *             $processor->set_token_value( 'new.jpg' );
+	 *         }
+	 *     }
+	 *     echo $processor->get_updated_css();
+	 *     // Outputs: background: url(new.jpg);
+	 *
+	 * @param string $new_value The new URL value (should not include url() wrapper).
+	 * @return bool Whether the value was successfully updated.
+	 */
+	public function set_token_value( string $new_value ): bool {
+		// Only URL tokens are currently supported.
+		if ( self::TOKEN_URL !== $this->token_type ) {
+			return false;
+		}
+
+		// Ensure we have valid token value boundaries.
+		if ( null === $this->token_value_starts_at || null === $this->token_value_length ) {
+			return false;
+		}
+
+		// Escape the URL value for unquoted URL syntax.
+		$escaped_value = $this->escape_url_value( $new_value );
+
+		// Queue the lexical update.
+		$this->lexical_updates[] = array(
+			'start'  => $this->token_value_starts_at,
+			'length' => $this->token_value_length,
+			'text'   => $escaped_value,
+		);
+
+		return true;
+	}
+
+	/**
+	 * Escapes a URL value for use in quoted url() syntax.
+	 *
+	 * Always returns a quoted URL string since they're easier
+	 * to escape. Quoted URLs are consumed using the string token
+	 * rules, and the only values we need to escape in strings, are:
+	 *
+	 * * Trailing quote.
+	 * * Newlines. That amounts to \n, \r, \f, \r\n when preprocessing is considered.
+	 * * U+005C REVERSE SOLIDUS (\)
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-url-token
+	 */
+	private function escape_url_value( string $unescaped ): string {
+		$escaped = '';
+		$at      = 0;
+		while ( $at < strlen( $unescaped ) ) {
+			$safe_len = strcspn( $unescaped, "\n\r\f\\\"", $at );
+			if ( $safe_len > 0 ) {
+				$escaped .= substr( $unescaped, $at, $safe_len );
+				$at      += $safe_len;
+				continue;
+			}
+
+			$unsafe_char = $unescaped[ $at ];
+			switch ( $unsafe_char ) {
+				case "\r":
+					++$at;
+					/**
+					 * Add a trailing space to prevent accidentally creating a
+					 * wrong escape sequence. This is a valid CSS syntax and
+					 * CSS parsers will ignore that whitespace.
+					 *
+					 * Without the space, "carriage\return" would be encoded as "carriage\aeturn",
+					 * making `e` a part of the escape sequence `\ae` which is not
+					 * what the caller intended.
+					 */
+					$escaped .= '\\a ';
+					if ( strlen( $unescaped ) > $at + 1 && "\n" === $unescaped[ $at + 1 ] ) {
+						++$at;
+					}
+					break;
+				case "\f":
+				case "\n":
+					++$at;
+					$escaped .= '\\a ';
+					break;
+				case '\\':
+					++$at;
+					$escaped .= '\\5C ';
+					break;
+				case '"':
+					++$at;
+					$escaped .= '\\22 ';
+					break;
+				default:
+					_doing_it_wrong( __METHOD__, 'Unexpected character in URL value: ' . $unsafe_char, '1.0.0' );
+					break;
+			}
+		}
+		return '"' . $escaped . '"';
+	}
+
+	/**
+	 * Returns the CSS with all modifications applied.
+	 *
+	 * This method applies all queued lexical updates and returns the modified CSS.
+	 * If no modifications were made, returns the original CSS.
+	 *
+	 * Example:
+	 *
+	 *     $css = 'background: url(old.jpg);';
+	 *     $processor = CSSProcessor::create( $css );
+	 *     while ( $processor->next_token() ) {
+	 *         if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+	 *             $processor->set_token_value( 'new.jpg' );
+	 *         }
+	 *     }
+	 *     echo $processor->get_updated_css();
+	 *     // Outputs: background: url(new.jpg);
+	 *
+	 * @return string The modified CSS.
+	 */
+	public function get_updated_css(): string {
+		if ( empty( $this->lexical_updates ) ) {
+			return $this->css;
+		}
+
+		// Sort updates by start position in ascending order.
+		usort(
+			$this->lexical_updates,
+			function ( $a, $b ) {
+				return $a['start'] - $b['start'];
+			}
+		);
+
+		// Build the output by concatenating original CSS fragments with replacements.
+		$bytes_already_copied = 0;
+		$output               = '';
+
+		foreach ( $this->lexical_updates as $update ) {
+			$output              .= substr( $this->css, $bytes_already_copied, $update['start'] - $bytes_already_copied );
+			$output              .= $update['text'];
+			$bytes_already_copied = $update['start'] + $update['length'];
+		}
+
+		// Copy remaining CSS after last update.
+		$output .= substr( $this->css, $bytes_already_copied );
+
+		return $output;
+	}
+
+	/**
 	 * Clears token state between tokens.
 	 */
 	private function after_token(): void {
@@ -583,7 +955,6 @@ class CSSProcessor {
 		$this->token_starts_at       = null;
 		$this->token_length          = null;
 		$this->token_value           = null;
-		$this->token_name            = null;
 		$this->token_unit            = null;
 		$this->token_value_starts_at = null;
 		$this->token_value_length    = null;
@@ -614,7 +985,9 @@ class CSSProcessor {
 		while ( $this->at < $this->length ) {
 			// Consume normal characters until we hit a special character.
 			$normal_len = strcspn( $this->css, $special_chars, $this->at );
-			$this->at  += $normal_len;
+			if ( $normal_len > 0 ) {
+				$this->at += $normal_len;
+			}
 
 			if ( $this->at >= $this->length ) {
 				break; // EOF.
@@ -655,31 +1028,30 @@ class CSSProcessor {
 				case '\\':
 					// U+005C REVERSE SOLIDUS (\)
 					// If the next input code point is EOF, do nothing.
-					// Otherwise, if the next input code point is a newline, consume it.
-					// Otherwise, (the stream starts with a valid escape) consume an escaped
-					// code point and append the returned code point to the <string-token>'s value.
-					if ( $this->is_valid_escape( $this->at ) ) {
-						++$this->at;
-						$this->consume_escape();
+					++$this->at;
+					if ( $this->at >= $this->length ) {
+						// Backslash-EOF: do nothing, just consume the backslash.
 						continue 2;
 					}
-					// Handle escaped newline (not counted as valid escape by is_valid_escape).
-					++$this->at;
-					if ( $this->at < $this->length ) {
-						$next = $this->css[ $this->at ];
-						if ( "\n" === $next || "\f" === $next ) {
+
+					// Otherwise, if the next input code point is a newline, consume it.
+					$next = $this->css[ $this->at ];
+					if ( "\n" === $next || "\f" === $next ) {
+						++$this->at;
+						continue 2;
+					} elseif ( "\r" === $next ) {
+						++$this->at;
+						// Handle \r\n as a single newline.
+						if ( $this->at < $this->length && "\n" === $this->css[ $this->at ] ) {
 							++$this->at;
-						} elseif ( "\r" === $next ) {
-							++$this->at;
-							// Handle \r\n as a single newline.
-							// In a fully spec-compliant parser, \r\n pairs would be replaced with a single
-							// newline, but we're not doing input pre-processing here to save memory.
-							// See https://www.w3.org/TR/css-syntax-3/#input-preprocessing.
-							if ( $this->at < $this->length && "\n" === $this->css[ $this->at ] ) {
-								++$this->at;
-							}
 						}
+						continue 2;
 					}
+
+					// Otherwise, (the stream starts with a valid escape) consume an escaped
+					// code point (just to advance position, don't store the result).
+					$this->decode_escape_at( $this->at, $matched_bytes );
+					$this->at += $matched_bytes;
 					continue 2;
 
 				default:
@@ -712,7 +1084,6 @@ class CSSProcessor {
 	 */
 	private function consume_numeric(): bool {
 		// Consume a number and let number be the result.
-		$start = $this->at;
 
 		// If the next input code point is U+002B PLUS SIGN (+) or U+002D HYPHEN-MINUS (-),
 		// consume it and append it to repr.
@@ -727,7 +1098,8 @@ class CSSProcessor {
 		}
 
 		// If the next 2 input code points are U+002E FULL STOP (.) followed by a digit, then.
-		if ( $this->at + 1 < $this->length &&
+		if (
+			$this->at + 1 < $this->length &&
 			'.' === $this->css[ $this->at ] &&
 			$this->css[ $this->at + 1 ] >= '0' &&
 			$this->css[ $this->at + 1 ] <= '9'
@@ -775,12 +1147,6 @@ class CSSProcessor {
 			}
 		}
 
-		// Convert string to a number, and set the value to the returned value.
-		// We use a PHP typecast as it's mostly compatible with the spec's behavior.
-		// @TODO: Investigate any differences.
-		// See https://www.w3.org/TR/css-syntax-3/#convert-a-string-to-a-number.
-		$this->token_value = (float) substr( $this->css, $start, $this->at - $start );
-
 		/**
 		 * This is the end of spec section 4.3.12. Consume a number.
 		 * We still have some work to do as specified in section 4.3.3. Consume a numeric token:
@@ -788,11 +1154,13 @@ class CSSProcessor {
 		 */
 
 		// If the next 3 input code points would start an ident sequence, then.
-		if ( $this->would_next_3_code_points_start_an_ident( $this->at ) ) {
+		if ( $this->check_if_3_code_points_start_an_ident_sequence( $this->at ) ) {
 			// Create a <dimension-token> with the same value and type flag as number,
 			// and a unit set initially to the empty string.
 			// Consume an ident sequence. Set the <dimension-token>'s unit to the returned value.
-			$this->token_unit   = $this->consume_ident_sequence();
+			$unit_starts_at = $this->at;
+			$this->consume_ident_sequence();
+			$this->token_unit   = $this->decode_string_or_url( $unit_starts_at, $this->at - $unit_starts_at );
 			$this->token_type   = self::TOKEN_DIMENSION;
 			$this->token_length = $this->at - $this->token_starts_at;
 			return true;
@@ -825,7 +1193,9 @@ class CSSProcessor {
 	 */
 	private function consume_ident_like(): bool {
 		// Consume an ident sequence, and let string be the result.
-		$string = $this->consume_ident_sequence();
+		$ident_start = $this->at;
+		$decoded     = $this->consume_ident_sequence();
+		$string      = $decoded ?? $this->decode_string_or_url( $ident_start, $this->at - $ident_start );
 
 		// If string's value is an ASCII case-insensitive match for "url",
 		// and the next input code point is U+0028 LEFT PARENTHESIS (().
@@ -843,8 +1213,10 @@ class CSSProcessor {
 				$next = $this->css[ $this->at + $ws_len ];
 				if ( '"' === $next || "'" === $next ) {
 					// then create a <function-token> with its value set to string and return it.
+					if ( null !== $decoded ) {
+						$this->token_value = $decoded;
+					}
 					$this->token_type   = self::TOKEN_FUNCTION;
-					$this->token_name   = $string;
 					$this->token_length = $this->at - $this->token_starts_at;
 					return true;
 				}
@@ -860,15 +1232,19 @@ class CSSProcessor {
 			// Consume it.
 			++$this->at;
 			// Create a <function-token> with its value set to string and return it.
+			if ( null !== $decoded ) {
+				$this->token_value = $decoded;
+			}
 			$this->token_type   = self::TOKEN_FUNCTION;
-			$this->token_name   = $string;
 			$this->token_length = $this->at - $this->token_starts_at;
 			return true;
 		}
 
 		// Otherwise, create an <ident-token> with its value set to string and return it.
+		if ( null !== $decoded ) {
+			$this->token_value = $decoded;
+		}
 		$this->token_type   = self::TOKEN_IDENT;
-		$this->token_name   = $string;
 		$this->token_length = $this->at - $this->token_starts_at;
 		return true;
 	}
@@ -887,11 +1263,9 @@ class CSSProcessor {
 	private function consume_url(): bool {
 		// Initially create a <url-token> with its value set to the empty string.
 		// Consume as much whitespace as possible.
-		$ws_len    = strspn( $this->css, "\t\n\f\r ", $this->at );
-		$this->at += $ws_len;
+		$this->at += strspn( $this->css, "\t\n\f\r ", $this->at );
 
 		$value_starts_at = $this->at;
-		$value           = '';
 
 		// Repeatedly consume the next input code point from the stream.
 		while ( $this->at < $this->length ) {
@@ -963,12 +1337,12 @@ class CSSProcessor {
 			}
 
 			// U+005C REVERSE SOLIDUS (\)
-			// If the stream starts with a valid escape, consume an escaped code point and
-			// append the returned code point to the <url-token>'s value.
+			// If the stream starts with a valid escape, consume an escaped code point.
 			if ( '\\' === $this->css[ $this->at ] ) {
 				if ( $this->is_valid_escape( $this->at ) ) {
 					++$this->at;
-					$value .= $this->consume_escape();
+					$this->decode_escape_at( $this->at, $matched_bytes );
+					$this->at += $matched_bytes;
 					continue;
 				}
 				// Otherwise, this is a parse error. Consume the remnants of a bad url,
@@ -976,21 +1350,21 @@ class CSSProcessor {
 				return $this->consume_remnants_of_bad_url();
 			}
 
-			// anything else
-			// Append the current input code point to the <url-token>'s value.
-			$this->get_codepoint_at( $this->at, $matched_bytes );
-
-			// We're in trouble!
-			// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
-			// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
-			// an error would be useful for sure.
-			// For now, we'll just consume that byte to prevent infinite loop and keep processing.
-			if ( 0 === $matched_bytes ) {
-				$matched_bytes = 1;
+			$at             = $this->at;
+			$invalid_length = 0;
+			if ( 1 !== _wp_scan_utf8( $this->css, $at, $invalid_length, null, 1 ) ) {
+				/**
+				 * Trouble ahead!
+				 * Bytes at $at are not a valid UTF-8 sequence.
+				 *
+				 * We'll move forward by $invalid_length bytes and continue processing.
+				 * Later on, during the string decoding, we'll replace the invalid bytes with U+FFFD
+				 * via maximal subpart”replacement.
+				 */
+				$this->at += $invalid_length;
+			} else {
+				$this->at = $at;
 			}
-
-			$value    .= substr( $this->css, $this->at, $matched_bytes );
-			$this->at += $matched_bytes;
 		}
 
 		// EOF
@@ -1016,10 +1390,15 @@ class CSSProcessor {
 		while ( $this->at < $this->length ) {
 			$this->at += strcspn( $this->css, ')\\', $this->at );
 
+			if ( $this->at >= $this->length ) {
+				break;
+			}
+
 			if ( '\\' === $this->css[ $this->at ] ) {
 				++$this->at;
 				if ( $this->is_valid_escape( $this->at - 1 ) ) {
-					$this->consume_escape();
+					$this->decode_escape_at( $this->at, $matched_bytes );
+					$this->at += $matched_bytes;
 					continue;
 				}
 			} elseif ( ')' === $this->css[ $this->at ] ) {
@@ -1039,31 +1418,29 @@ class CSSProcessor {
 	 * Identifiers can contain letters, digits, hyphens, underscores, non-ASCII
 	 * characters, and escape sequences. Null bytes are replaced with U+FFFD.
 	 *
-	 * @see https://www.w3.org/TR/css-syntax-3/#consume-name
+	 * Returns the decoded identifier string if escapes were encountered,
+	 * or null if no decoding was needed (can use raw substring).
 	 *
-	 * @return string
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-name
 	 */
-	private function consume_ident_sequence(): string {
-		$result = '';
-
+	private function consume_ident_sequence() {
 		while ( $this->at < $this->length ) {
 			$codepoint_bytes = $this->consume_ident_codepoint( $this->at );
 			if ( $codepoint_bytes > 0 ) {
-				$result   .= substr( $this->css, $this->at, $codepoint_bytes );
 				$this->at += $codepoint_bytes;
 				continue;
 			}
 
 			if ( $this->is_valid_escape( $this->at ) ) {
 				++$this->at;
-				$result .= $this->consume_escape();
+
+				$this->decode_escape_at( $this->at, $matched_bytes );
+				$this->at += $matched_bytes;
 				continue;
 			}
 
 			break;
 		}
-
-		return $result;
 	}
 
 	/**
@@ -1077,41 +1454,153 @@ class CSSProcessor {
 	 * @return int The number of bytes consumed.
 	 */
 	private function consume_ident_codepoint( $at ): int {
-		// Supported ASCII codepoints.
-		$ascii_len = strspn( $this->css, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-', $this->at, 1 );
-		if ( $ascii_len > 0 ) {
+		// ident code points.
+		if ( ( $this->css[ $at ] >= '0' && $this->css[ $at ] <= '9' ) ||
+			'-' === $this->css[ $at ] ) {
+			return 1;
+		}
+
+		return $this->consume_ident_start_codepoint( $at );
+	}
+
+
+	/**
+	 * Ident-start code point
+	 *     A letter, a non-ASCII code point, or U+005F LOW LINE (_).
+	 *
+	 * Ident code point
+	 *     An ident-start code point, a digit, or U+002D HYPHEN-MINUS (-).
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#ident-start-code-point
+	 * @return int The number of bytes consumed.
+	 */
+	private function consume_ident_start_codepoint( $at ): int {
+		if ( $at > $this->length ) {
+			return 0;
+		}
+
+		// ASCII codepoints.
+		if ( ( $this->css[ $at ] >= 'A' && $this->css[ $at ] <= 'Z' ) ||
+			( $this->css[ $at ] >= 'a' && $this->css[ $at ] <= 'z' ) ||
+			'_' === $this->css[ $at ] ) {
 			return 1;
 		}
 
 		// Special case for null bytes – they are replaced with U+FFFD during preprocessing.
-		if ( 0x00 === ord( $this->css[ $at ] ) ) {
+		if ( "\x00" === $this->css[ $at ] ) {
 			return 1;
 		}
 
-		// Non-ASCII codepoints (>= 0x80).
-		if ( ord( $this->css[ $at ] ) >= 0x80 ) {
-			$codepoint = $this->get_codepoint_at( $this->at, $matched_bytes );
-
-			// We're in trouble!
-			// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
-			// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
-			// an error would be useful for sure.
-			// For now, we'll just consume that byte to prevent infinite loop and keep processing.
-			if ( 0 === $matched_bytes ) {
-				$matched_bytes = 1;
-			}
-
-			// Check if the codepoint is actually >= 0x80 (non-ASCII).
-			if ( null !== $codepoint && $codepoint >= 0x80 ) {
-				return $matched_bytes;
-			}
+		$new_at         = $at;
+		$invalid_length = 0;
+		if ( 1 !== _wp_scan_utf8( $this->css, $new_at, $invalid_length, null, 1 ) ) {
+			/**
+			 * Trouble ahead!
+			 * Bytes at $at are not a valid UTF-8 sequence.
+			 *
+			 * We'll move forward by $invalid_length bytes and continue processing.
+			 * Later on, during the string decoding, we'll replace the invalid bytes with U+FFFD
+			 * via maximal subpart”replacement.
+			 */
+			return $invalid_length;
 		}
 
+		$codepoint_byte_length = $new_at - $at;
+		$codepoint             = utf8_codepoint_at( $this->css, $at );
+		if ( null !== $codepoint && $codepoint >= 0x80 ) {
+			return $codepoint_byte_length;
+		}
 		return 0;
 	}
 
 	/**
-	 * Consumes an escaped code point.
+	 * Decodes a string or URL value with escape sequences and normalization.
+	 *
+	 * Fast path: If the slice contains no special characters, returns the raw
+	 * substring with almost zero allocations.
+	 *
+	 * Slow path: Builds the decoded string by optionally processing escapes and
+	 * normalizing line endings and null bytes.
+	 *
+	 * @param int $start           Start byte offset.
+	 * @param int $length          Length of the substring to decode.
+	 * @return string Decoded/normalized string.
+	 */
+	private function decode_string_or_url( int $start, int $length ): string {
+		// Fast path: check if any processing is needed.
+		$slice         = _wp_scrub_utf8_fallback( substr( $this->css, $start, $length ) );
+		$special_chars = "\\\r\f\x00";
+		if ( false === strpbrk( $slice, $special_chars ) ) {
+			// No special chars - return raw substring (almost zero allocations).
+			return $slice;
+		}
+
+		// Slow path: build decoded string (one allocation).
+		$decoded = '';
+		$at      = $start;
+		$end     = $start + $length;
+
+		while ( $at < $end ) {
+			// Find next special character.
+			$normal_len = strcspn( $this->css, $special_chars, $at );
+			if ( $normal_len > 0 ) {
+				// Clamp to not exceed the end boundary.
+				$normal_len = min( $normal_len, $end - $at );
+				$decoded   .= substr( $this->css, $at, $normal_len );
+				$at        += $normal_len;
+			}
+
+			if ( $at >= $end ) {
+				break;
+			}
+
+			$char = $this->css[ $at ];
+
+			// Handle escapes (if enabled).
+			if ( '\\' === $char ) {
+				if ( $this->is_valid_escape( $at ) ) {
+					++$at;
+					$decoded .= $this->decode_escape_at( $at, $bytes_consumed );
+					$at      += $bytes_consumed;
+					continue;
+				}
+				// Invalid escape - consume the backslash and keep going.
+				$decoded .= '\\';
+				++$at;
+				continue;
+			}
+
+			// CSS normalization: \r\n, \r, and \f all become \n.
+			if ( "\r" === $char ) {
+				$decoded .= "\n";
+				++$at;
+				// Handle \r\n as single newline.
+				if ( $at < $end && "\n" === $this->css[ $at ] ) {
+					++$at;
+				}
+				continue;
+			}
+
+			if ( "\f" === $char ) {
+				$decoded .= "\n";
+				++$at;
+				continue;
+			}
+
+			// Null bytes become U+FFFD.
+			if ( "\x00" === $char ) {
+				$decoded .= "\u{FFFD}";
+				++$at;
+				continue;
+			}
+		}
+
+		return $decoded;
+	}
+
+	/**
+	 * Decodes an escape sequence starting at the given offset without
+	 * modifying $this->at.
 	 *
 	 * Escape sequences are backslash followed by 1-6 hex digits (with optional
 	 * trailing whitespace) or any other character. Invalid code points are
@@ -1119,44 +1608,46 @@ class CSSProcessor {
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#consume-escaped-code-point
 	 *
-	 * @return string
+	 * @param int $offset Byte offset (should point to the character after the backslash).
+	 * @param int &$bytes_consumed Output parameter: number of bytes consumed.
+	 * @return string The decoded character(s).
 	 */
-	private function consume_escape(): string {
-		// It assumes that the U+005C REVERSE SOLIDUS (\) has already been consumed
-		// and that the next input code point has already been verified to be part
-		// of a valid escape.
-
-		// The first step is to consume the next input code point. This method handles
-		// that part implicitly in every code branch below.
+	private function decode_escape_at( int $offset, &$bytes_consumed ): string {
+		// This method assumes the U+005C REVERSE SOLIDUS (\) has already been consumed
+		// and the next input code point has already been verified to be part of a valid
+		// escape sequence.
+		$at = $offset;
 
 		// EOF.
-		if ( $this->at >= $this->length ) {
+		if ( $at >= $this->length ) {
 			// This is a parse error. Return U+FFFD REPLACEMENT CHARACTER (�).
-			return "\xEF\xBF\xBD"; // U+FFFD.
+			$bytes_consumed = 0;
+			return "\u{FFFD}";
 		}
 
 		// Hex digits.
-		$hex_len = strspn( $this->css, '0123456789ABCDEFabcdef', $this->at );
+		$hex_len = strspn( $this->css, '0123456789ABCDEFabcdef', $at );
 		if ( $hex_len > 0 ) {
 			// Consume up to 6 hex digits.
-			$hex_len   = min( $hex_len, 6 ); // Max 6 hex digits.
-			$hex       = substr( $this->css, $this->at, $hex_len );
-			$this->at += $hex_len;
+			$hex_len = min( $hex_len, 6 );
+			$hex     = substr( $this->css, $at, $hex_len );
+			$at     += $hex_len;
 
 			// If the next input code point is whitespace, consume it as well.
-			if ( $this->at < $this->length ) {
-				$next = $this->css[ $this->at ];
+			if ( $at < $this->length ) {
+				$next = $this->css[ $at ];
 				if ( "\t" === $next || "\n" === $next || "\f" === $next || ' ' === $next ) {
-					++$this->at;
+					++$at;
 				} elseif ( "\r" === $next ) {
-					++$this->at;
+					++$at;
 					// Handle \r\n as a single whitespace – the preprocessing phase would replace \r\n with \n.
-					if ( $this->at < $this->length && "\n" === $this->css[ $this->at ] ) {
-						++$this->at;
+					if ( $at < $this->length && "\n" === $this->css[ $at ] ) {
+						++$at;
 					}
 				}
 			}
 
+			$bytes_consumed = $at - $offset;
 			// Convert the hex digits to a UTF-8 string.
 			return codepoint_to_utf8_bytes( hexdec( $hex ) );
 		}
@@ -1164,25 +1655,29 @@ class CSSProcessor {
 		// Anything else.
 		// Return the current input code point.
 		// Null bytes are replaced with U+FFFD during preprocessing.
-		if ( "\x00" === $this->css[ $this->at ] ) {
-			++$this->at;
-			return "\xEF\xBF\xBD"; // U+FFFD.
+		if ( "\x00" === $this->css[ $at ] ) {
+			$bytes_consumed = 1;
+			return "\u{FFFD}";
 		}
 
-		$this->get_codepoint_at( $this->at, $matched_bytes );
-
-		// We're in trouble!
-		// If get_codepoint_at fails to advance, we're dealing with a non-UTF-8 sequence.
-		// @TODO: Decide what's the most useful strategy for handling this. Some form of emitting
-		// an error would be useful for sure.
-		// For now, we'll just consume that byte to prevent infinite loop and keep processing.
-		if ( 0 === $matched_bytes ) {
-			$matched_bytes = 1;
+		$new_at         = $at;
+		$invalid_length = 0;
+		if ( 1 !== _wp_scan_utf8( $this->css, $new_at, $invalid_length, null, 1 ) ) {
+			/**
+			 * Trouble ahead!
+			 * Bytes at $at are not a valid UTF-8 sequence.
+			 *
+			 * We'll move forward by $invalid_length bytes and continue processing.
+			 * Later on, during the string decoding, we'll replace the invalid bytes with U+FFFD
+			 * via maximal subpart”replacement.
+			 */
+			$matched_bytes = $invalid_length;
+		} else {
+			$matched_bytes = $new_at - $at;
 		}
 
-		$result    = substr( $this->css, $this->at, $matched_bytes );
-		$this->at += $matched_bytes;
-		return $result;
+		$bytes_consumed = $matched_bytes;
+		return substr( $this->css, $at, $matched_bytes );
 	}
 
 	/**
@@ -1285,7 +1780,7 @@ class CSSProcessor {
 	 * @param int $offset Byte offset of the first code point to check.
 	 * @return bool
 	 */
-	private function would_next_3_code_points_start_an_ident( int $offset ): bool {
+	private function check_if_3_code_points_start_an_ident_sequence( int $offset ): bool {
 		if ( $offset >= $this->length ) {
 			return false;
 		}
@@ -1296,148 +1791,11 @@ class CSSProcessor {
 			if ( $offset + 1 < $this->length && '-' === $this->css[ $offset + 1 ] ) {
 				return true;
 			}
-			// Otherwise, move to the second codepoint and fall through to the next checks.
-			// This codepoint is 1-byte ASCII so we can just increase the offset by 1.
+			// Otherwise, check if the second code point is an ident-START code point or valid escape.
+			// Note: After a hyphen, only ident-START code points are valid, NOT digits or hyphens.
 			++$offset;
 		}
 
-		return $this->is_ident_code_point_at( $offset ) || $this->is_valid_escape( $offset );
-	}
-
-	/**
-	 * Checks if the code point at the given offset is an ident code point.
-	 *
-	 * An ident code point is: an ident-start code point, a digit, or U+002D HYPHEN-MINUS (-).
-	 * This includes: A-Z, a-z, 0-9, _, -, and any non-ASCII code point (>= U+0080).
-	 *
-	 * @see https://www.w3.org/TR/css-syntax-3/#ident-code-point
-	 *
-	 * @param int $offset Byte offset.
-	 * @return bool
-	 */
-	private function is_ident_code_point_at( int $offset ): bool {
-		if ( $offset >= $this->length ) {
-			return false;
-		}
-
-		// Check for ASCII ident-start code points first: A-Z, a-z, 0-9, _, or -.
-		$ascii_len = strspn( $this->css, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-', $offset, 1 );
-		if ( $ascii_len > 0 ) {
-			return true;
-		}
-
-		// No dice, check for non-ASCII ident-start code points.
-		$codepoint = $this->get_codepoint_at( $offset, $matched_bytes );
-		return null !== $codepoint && $codepoint >= 0x80;
-	}
-
-	/**
-	 * Gets the Unicode codepoint at the given byte offset, with caching.
-	 *
-	 * This method caches the result to avoid repeatedly decoding the same UTF-8
-	 * sequence when multiple helpers need to check the same position.
-	 *
-	 * @param int $offset Byte offset in the CSS string.
-	 * @param int &$matched_bytes Output parameter: number of bytes consumed.
-	 * @return int|null The Unicode codepoint value, or null if invalid UTF-8.
-	 */
-	private function get_codepoint_at( int $offset, &$matched_bytes ): ?int {
-		// Check if we have a cached value for this offset.
-		if ( $offset === $this->current_codepoint_offset ) {
-			$matched_bytes = $this->current_codepoint_bytes;
-			return $this->current_codepoint;
-		}
-
-		// Decode the UTF-8 sequence.
-		$codepoint = utf8_codepoint_at( $this->css, $offset, $matched_bytes );
-
-		// Cache the result.
-		$this->current_codepoint        = $codepoint;
-		$this->current_codepoint_bytes  = $matched_bytes;
-		$this->current_codepoint_offset = $offset;
-
-		return $codepoint;
-	}
-
-	/**
-	 * Decodes CSS escape sequences in a string.
-	 *
-	 * This is a utility method that can be used by other classes to decode
-	 * CSS escapes in extracted values. It implements the same logic as the
-	 * incremental escape parsing done during tokenization.
-	 *
-	 * Handles:
-	 * - Hex escapes: \20 (space), \1F600 (emoji), up to 6 hex digits
-	 * - Character escapes: \(, \), \", \', \\
-	 * - Whitespace after hex escapes (single whitespace consumed)
-	 * - Escaped newlines (consumed, not included in output)
-	 *
-	 * @see https://www.w3.org/TR/css-syntax-3/#consume-escaped-code-point
-	 *
-	 * @param string $value Encoded string with CSS escapes.
-	 * @return string Decoded string with escapes resolved to their actual characters.
-	 */
-	public static function decode_css_escapes( string $value ): string {
-		$length = strlen( $value );
-		$result = '';
-		$at     = 0;
-
-		while ( $at < $length ) {
-			$span = strcspn( $value, '\\', $at );
-			if ( $span > 0 ) {
-				$result .= substr( $value, $at, $span );
-				$at     += $span;
-			}
-
-			if ( $at >= $length ) {
-				break;
-			}
-
-			++$at;
-			if ( $at >= $length ) {
-				break;
-			}
-
-			$hex_len = strspn( $value, '0123456789abcdefABCDEF', $at );
-			if ( $hex_len > 6 ) {
-				$hex_len = 6;
-			}
-
-			if ( $hex_len > 0 ) {
-				$hex     = substr( $value, $at, $hex_len );
-				$result .= codepoint_to_utf8_bytes( hexdec( $hex ) );
-				$at     += $hex_len;
-
-				$ws_len = strspn( $value, " \n\r\t\f", $at );
-				if ( $ws_len > 0 ) {
-					if ( $at + 1 < $length && "\r" === $value[ $at ] && "\n" === $value[ $at + 1 ] ) {
-						$at += 2;
-					} else {
-						$at += 1;
-					}
-				}
-				continue;
-			}
-
-			$next = $value[ $at ];
-
-			if ( "\n" === $next || "\f" === $next ) {
-				++$at;
-				continue;
-			}
-
-			if ( "\r" === $next ) {
-				++$at;
-				if ( $at < $length && "\n" === $value[ $at ] ) {
-					++$at;
-				}
-				continue;
-			}
-
-			$result .= $next;
-			++$at;
-		}
-
-		return $result;
+		return $this->consume_ident_start_codepoint( $offset ) > 0 || $this->is_valid_escape( $offset );
 	}
 }

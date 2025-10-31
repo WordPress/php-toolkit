@@ -4,69 +4,29 @@ use PHPUnit\Framework\TestCase;
 use WordPress\DataLiberation\URL\CSSProcessor;
 
 /**
- * Comprehensive CSS tokenizer tests based on the CSS Syntax Level 3 specification.
- * Test corpus from @rmenke/css-tokenizer-tests
+ * Comprehensive CSS processor tests based on the CSS Syntax Level 3 specification.
  */
 class CSSProcessorTest extends TestCase {
 
 	/**
-	 * Provides all test cases from the test corpus.
+	 * Tests that the processor produces the expected tokens for all test cases.
 	 *
-	 * @return array
+	 * @dataProvider corpus_provider
 	 */
-	public function test_corpus_provider(): array {
-		static $test_cases = null;
-
-		if ( null === $test_cases ) {
-			$test_cases = require __DIR__ . '/css-test-cases.php';
-		}
-
-		$data = array();
-		foreach ( $test_cases as $test_name => $test_case ) {
-			if(in_array($test_name, array(
-				'tests/fuzz/b69ece36-057f-4450-9423-a1661787bce6',
-				'tests/ident/0007',
-				'tests/ident/0008'
-			))) {
-				// @TODO: Fix these tests.
-				continue;
-			}
-			$data[ $test_name ] = array(
-				$test_case['css'],
-				$test_case['tokens'],
-			);
-		}
-
-		return $data;
+	public function test_processor_matches_spec( string $css, array $expected_tokens ): void {
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor );
+		$this->assertSame( $expected_tokens, $actual_tokens );
 	}
 
 	/**
-	 * Tests that the tokenizer produces the expected tokens for all test cases.
+	 * Provides the test cases from the @rmenke/css-processor-test test corpus.
 	 *
-	 * @dataProvider test_corpus_provider
+	 * @see https://github.com/romainmenke/css-processor-tests/
+	 * @return array
 	 */
-	public function test_tokenizer_matches_spec( string $css, array $expected_tokens ): void {
-		$processor = new CSSProcessor( $css );
-		$actual_tokens = $this->collect_tokens( $processor, $css );
-
-		// Convert byte indices to UTF-16 code unit indices for comparison
-		foreach ( $actual_tokens as &$token ) {
-			$token['startIndex'] = $this->byte_to_utf16_index( $css, $token['startIndex'] );
-			$token['endIndex'] = $this->byte_to_utf16_index( $css, $token['endIndex'] );
-		}
-
-		// Compare token count
-		$this->assertCount(
-			count( $expected_tokens ),
-			$actual_tokens,
-			'Token count mismatch for CSS: ' . var_export( $css, true )
-		);
-
-		// Compare each token
-		foreach ( $expected_tokens as $index => $expected_token ) {
-			$actual_token = $actual_tokens[ $index ];
-			$this->assert_token_matches( $expected_token, $actual_token, $index, $css );
-		}
+	static public function corpus_provider(): array {
+		return json_decode(file_get_contents(__DIR__ . '/css-test-cases.json'), true);
 	}
 
 	/**
@@ -75,27 +35,30 @@ class CSSProcessorTest extends TestCase {
 	 * @param CSSProcessor $processor The CSS processor.
 	 * @return array Array of tokens with type, raw, startIndex, endIndex, structured.
 	 */
-	private function collect_tokens( CSSProcessor $processor, string $css ): array {
+	static public function collect_tokens( CSSProcessor $processor, $keys = null ): array {
 		$tokens = array();
 
 		while ( $processor->next_token() ) {
 			$type = $processor->get_token_type();
 
-			// Skip EOF tokens (they're not in the test corpus)
-			if ( CSSProcessor::TOKEN_EOF === $type ) {
-				break;
-			}
-
 			$byte_start = $processor->get_token_start();
-			$byte_end = $byte_start + $processor->get_token_length();
+			$byte_end   = $byte_start + $processor->get_token_length();
 
 			$token = array(
 				'type'       => $type,
-				'raw'        => $processor->get_token_raw(),
+				'raw'        => $processor->get_unnormalized_token(),
 				'startIndex' => $byte_start,
 				'endIndex'   => $byte_end,
-				'structured' => $this->extract_structured_data( $processor, $type, $css ),
+				'normalized' => $processor->get_normalized_token(),
+				'value'      => $processor->get_token_value(),
 			);
+			if ( null !== $processor->get_token_unit() ) {
+				$token['unit'] = $processor->get_token_unit();
+			}
+
+			if ( null !== $keys ) {
+				$token = array_intersect_key( $token, array_flip( $keys ) );
+			}
 
 			$tokens[] = $token;
 		}
@@ -104,309 +67,1468 @@ class CSSProcessorTest extends TestCase {
 	}
 
 	/**
-	 * Converts UTF-8 byte index to UTF-16 code unit index.
-	 *
-	 * @param string $text The UTF-8 text.
-	 * @param int    $byte_index The byte index to convert.
-	 * @return int The UTF-16 code unit index.
+	 * Tests handling of non-UTF-8 byte sequences in identifiers.
+	 * 
+	 * Invalid UTF-8 sequences should be replaced with U+FFFD replacement characters
+	 * during tokenization, allowing the CSS to continue processing.
 	 */
-	private function byte_to_utf16_index( string $text, int $byte_index ): int {
-		$utf16_index = 0;
-		$byte_pos = 0;
+	public function test_non_utf8_sequences_in_identifiers(): void {
+		// Invalid UTF-8 sequence 0xC0 0x80 (overlong encoding).
+		$css = ".class\xF1name";
 
-		while ( $byte_pos < $byte_index && $byte_pos < strlen( $text ) ) {
-			$char = $text[ $byte_pos ];
-			$byte = ord( $char );
+		$expected = array(
+			// .class�name (0xF1 replaced with U+FFFD).
+			array(
+				'type' => CSSProcessor::TOKEN_DELIM,
+				'raw'  => '.',
+				'normalized' => '.',
+				'value' => '.',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_IDENT,
+				'raw'  => "class\xF1name",
+				'normalized' => 'class�name',
+				'value' => 'class�name',
+			),
+		);
 
-			if ( $byte < 0x80 ) {
-				// ASCII: 1 byte, 1 UTF-16 code unit
-				$byte_pos++;
-				$utf16_index++;
-			} elseif ( $byte < 0xE0 ) {
-				// 2-byte UTF-8: 1 UTF-16 code unit
-				$byte_pos += 2;
-				$utf16_index++;
-			} elseif ( $byte < 0xF0 ) {
-				// 3-byte UTF-8: 1 UTF-16 code unit
-				$byte_pos += 3;
-				$utf16_index++;
-			} else {
-				// 4-byte UTF-8: 2 UTF-16 code units (surrogate pair)
-				$byte_pos += 4;
-				$utf16_index += 2;
-			}
-		}
-
-		return $utf16_index;
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value', 'unit'] );
+		$this->assertSame( $expected, $actual_tokens );
 	}
 
-	/**
-	 * Extracts structured data from a token based on its type.
-	 *
-	 * @param CSSProcessor $processor The CSS processor.
-	 * @param string       $type      The token type.
-	 * @param string       $css       The full CSS string.
-	 * @return array|null Structured data or null.
-	 */
-	private function extract_structured_data( CSSProcessor $processor, string $type, string $css ): ?array {
-		switch ( $type ) {
-			case CSSProcessor::TOKEN_AT_KEYWORD:
-			case CSSProcessor::TOKEN_IDENT:
-				$name = $processor->get_token_name();
-				return $name !== null ? array( 'value' => $name ) : null;
+	public function test_invalid_utf8_with_valid_prefix_in_identifiers(): void {
+		// Invalid 2-byte prefix is replaced with a single U+FFFD.
+		$css = ".test\xE2\x80name";
 
-			case CSSProcessor::TOKEN_FUNCTION:
-				$name = $processor->get_token_name();
-				return $name !== null ? array( 'value' => $name ) : null;
+		$expected = array(
+			array(
+				'type' => CSSProcessor::TOKEN_DELIM,
+				'raw'  => '.',
+				'normalized' => '.',
+				'value' => '.',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_IDENT,
+				'raw'  => "test\xE2\x80name",
+				'normalized' => 'test�name',
+				'value' => 'test�name',
+			),
+		);
 
-			case CSSProcessor::TOKEN_HASH:
-				$name = $processor->get_token_name();
-				// The test corpus includes a 'type' field for hash tokens (id, unrestricted)
-				// For now, we'll assume all hash tokens are 'id' type
-				// This may need refinement based on actual implementation
-				return $name !== null ? array( 'value' => $name, 'type' => 'id' ) : null;
-
-			case CSSProcessor::TOKEN_STRING:
-				// Strings have value in structured data
-				$start = $processor->get_token_value_start();
-				$length = $processor->get_token_value_length();
-				if ( null !== $start && null !== $length ) {
-					// Extract the string value from the CSS (inside the quotes)
-					$string_value = substr( $css, $start, $length );
-					// Decode CSS escapes
-					$decoded = $this->decode_css_escapes( $string_value );
-					return array( 'value' => $decoded );
-				}
-				return null;
-
-			case CSSProcessor::TOKEN_URL:
-				// URLs have value in structured data
-				$start = $processor->get_token_value_start();
-				$length = $processor->get_token_value_length();
-				if ( null !== $start && null !== $length ) {
-					// The value is between url( and )
-					// We need to extract and decode it
-					// Extract the URL value from the full CSS using absolute positions
-					$url_value = substr( $css, $start, $length );
-					$decoded = $this->decode_css_escapes( $url_value );
-					return array( 'value' => $decoded );
-				}
-				return null;
-
-			case CSSProcessor::TOKEN_NUMBER:
-			case CSSProcessor::TOKEN_PERCENTAGE:
-				$value = $processor->get_token_value();
-				if ( null !== $value ) {
-					// Determine if it's an integer or number
-					$is_integer = floor( $value ) == $value;
-					return array(
-						'value' => $value,
-						'type'  => $is_integer ? 'integer' : 'number',
-					);
-				}
-				return null;
-
-			case CSSProcessor::TOKEN_DIMENSION:
-				$value = $processor->get_token_value();
-				$unit = $processor->get_token_unit();
-				if ( null !== $value && null !== $unit ) {
-					$is_integer = floor( $value ) == $value;
-					return array(
-						'value' => $value,
-						'type'  => $is_integer ? 'integer' : 'number',
-						'unit'  => $unit,
-					);
-				}
-				return null;
-
-			case CSSProcessor::TOKEN_DELIM:
-				// Delim tokens have their character value in structured data
-				$raw = $processor->get_token_raw();
-				return array( 'value' => $raw );
-
-			default:
-				return null;
-		}
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value'] );
+		$this->assertSame( $expected, $actual_tokens );
 	}
 
-	/**
-	 * Asserts that an actual token matches the expected token.
-	 *
-	 * @param array  $expected The expected token.
-	 * @param array  $actual   The actual token.
-	 * @param int    $index    The token index.
-	 * @param string $css      The CSS source.
-	 */
-	private function assert_token_matches( array $expected, array $actual, int $index, string $css ): void {
-		$message = sprintf(
-			'Token %d mismatch in CSS: %s',
-			$index,
-			var_export( $css, true )
+	public function test_invalid_utf8_with_two_single_byte_invalid_sequences(): void {
+		// Two distinct single byte invalid sequences are replaced with
+		// two separate U+FFFD replacement characters.
+		$css = ".test\xE2\xE2name";
+
+		$expected = array(
+			array(
+				'type' => CSSProcessor::TOKEN_DELIM,
+				'raw'  => '.',
+				'normalized' => '.',
+				'value' => '.',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_IDENT,
+				'raw'  => "test\xE2\xE2name",
+				'normalized' => 'test��name',
+				'value' => 'test��name',
+			),
 		);
 
-		// Check type
-		$this->assertSame(
-			$expected['type'],
-			$actual['type'],
-			$message . ' (type)'
-		);
-
-		// Check raw
-		$this->assertSame(
-			$expected['raw'],
-			$actual['raw'],
-			$message . ' (raw)'
-		);
-
-		// Check positions
-		$this->assertSame(
-			$expected['startIndex'],
-			$actual['startIndex'],
-			$message . ' (startIndex)'
-		);
-
-		$this->assertSame(
-			$expected['endIndex'],
-			$actual['endIndex'],
-			$message . ' (endIndex)'
-		);
-
-		// Check structured data (if present in expected)
-		// We'll do a loose comparison here since our implementation might differ slightly
-		if ( isset( $expected['structured'] ) && null !== $expected['structured'] ) {
-			$this->assertNotNull(
-				$actual['structured'],
-				$message . ' (expected structured data but got null)'
-			);
-
-			// For now, just check that the value matches if present
-			if ( isset( $expected['structured']['value'] ) ) {
-				$this->assertArrayHasKey( 'value', $actual['structured'], $message . ' (structured.value missing)' );
-				// Loose comparison because floats may differ slightly
-				$this->assertEquals(
-					$expected['structured']['value'],
-					$actual['structured']['value'],
-					$message . ' (structured.value)',
-					0.0001  // delta for float comparison
-				);
-			}
-		}
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value'] );
+		$this->assertSame( $expected, $actual_tokens );
 	}
 
 	/**
 	 * Legacy test to ensure basic tokenization still works.
 	 */
 	public function test_tokenize_labels_core_tokens(): void {
-		$css       = '@media screen and (min-width: 10px) { background: url("/images/a.png") }';
-		$processor = new CSSProcessor( $css );
-		$tokens    = $this->collect_tokens( $processor, $css );
+		$css = <<<CSS
+@media screen and (min-width: 10px) {
+	background: url("/images/a.png");
+}
+CSS;
 
-		$types = array_column( $tokens, 'type' );
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_AT_KEYWORD, 'raw' => '@media' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT, 'raw' => 'screen' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT, 'raw' => 'and' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_PAREN, 'raw' => '(' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT, 'raw' => 'min-width' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON, 'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION, 'raw' => '10px' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN, 'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACE, 'raw' => '{' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => "\n\t" ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT, 'raw' => 'background' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON, 'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION, 'raw' => 'url(' ),
+			array( 'type' => CSSProcessor::TOKEN_STRING, 'raw' => '"/images/a.png"' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN, 'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON, 'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE, 'raw' => "\n" ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACE, 'raw' => '}' ),
+		);
 
-		self::assertContains( CSSProcessor::TOKEN_AT_KEYWORD, $types );
-		self::assertContains( CSSProcessor::TOKEN_IDENT, $types );
-		self::assertContains( CSSProcessor::TOKEN_LEFT_PAREN, $types );
-		self::assertContains( CSSProcessor::TOKEN_DIMENSION, $types );
-		self::assertContains( CSSProcessor::TOKEN_LEFT_BRACE, $types );
-		self::assertContains( CSSProcessor::TOKEN_FUNCTION, $types );
-		self::assertContains( CSSProcessor::TOKEN_STRING, $types );
-		self::assertContains( CSSProcessor::TOKEN_RIGHT_PAREN, $types );
-		self::assertContains( CSSProcessor::TOKEN_RIGHT_BRACE, $types );
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
 	}
 
 	/**
-	 * Decodes CSS escape sequences in a string.
-	 *
-	 * @param string $value The value with potential CSS escapes.
-	 * @return string The decoded value.
+	 * Tests tokenization of complex selectors with pseudo-classes.
 	 */
-	private function decode_css_escapes( string $value ): string {
-		$length = strlen( $value );
-		$result = '';
-		$at     = 0;
+	public function test_complex_selector_with_pseudo_classes(): void {
+		$css = 'a:hover::before, div.class#id:not(.disabled)';
 
-		while ( $at < $length ) {
-			$span = strcspn( $value, "\\\x00", $at );
-			if ( $span > 0 ) {
-				$result .= substr( $value, $at, $span );
-				$at     += $span;
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'a' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'hover' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'before' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,        'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'div' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,        'raw' => '.' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'class' ),
+			array( 'type' => CSSProcessor::TOKEN_HASH,         'raw' => '#id' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION,     'raw' => 'not(' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,        'raw' => '.' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'disabled' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN,  'raw' => ')' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests tokenization of CSS comments.
+	 */
+	public function test_css_comments(): void {
+		$css = '/* This is a comment */ .class { color: red; /* Another comment */ }';
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_COMMENT,      'raw' => '/* This is a comment */' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,        'raw' => '.' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'class' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACE,   'raw' => '{' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'color' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'red' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMENT,      'raw' => '/* Another comment */' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACE,  'raw' => '}' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests tokenization of media queries.
+	 */
+	public function test_media_query(): void {
+		$css = '@media screen and (min-width: 768px) and (max-width: 1024px)';
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_AT_KEYWORD,   'raw' => '@media' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'screen' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'and' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_PAREN,   'raw' => '(' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'min-width' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,    'raw' => '768px' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN,  'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'and' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_PAREN,   'raw' => '(' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'max-width' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,    'raw' => '1024px' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN,  'raw' => ')' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests tokenization of keyframes animation.
+	 */
+	public function test_keyframes_animation(): void {
+		$css = '@keyframes slide-in { 0% { opacity: 0; } 100% { opacity: 1; } }';
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_AT_KEYWORD,   'raw' => '@keyframes' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'slide-in' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACE,   'raw' => '{' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_PERCENTAGE,   'raw' => '0%' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACE,   'raw' => '{' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'opacity' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_NUMBER,       'raw' => '0' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACE,  'raw' => '}' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_PERCENTAGE,   'raw' => '100%' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACE,   'raw' => '{' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'opacity' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_NUMBER,       'raw' => '1' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACE,  'raw' => '}' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACE,  'raw' => '}' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests tokenization of vendor-prefixed properties.
+	 */
+	public function test_vendor_prefixed_properties(): void {
+		$css = '-webkit-transform: rotate(45deg); -moz-border-radius: 5px;';
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => '-webkit-transform' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION,     'raw' => 'rotate(' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,    'raw' => '45deg' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN,  'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => '-moz-border-radius' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,    'raw' => '5px' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests tokenization of attribute selectors.
+	 */
+	public function test_attribute_selectors(): void {
+		$css = 'input[type="text"][required], a[href^="https://"]';
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,         'raw' => 'input' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACKET,  'raw' => '[' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,         'raw' => 'type' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,         'raw' => '=' ),
+			array( 'type' => CSSProcessor::TOKEN_STRING,        'raw' => '"text"' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACKET, 'raw' => ']' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACKET,  'raw' => '[' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,         'raw' => 'required' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACKET, 'raw' => ']' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,         'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,    'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,         'raw' => 'a' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACKET,  'raw' => '[' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,         'raw' => 'href' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,         'raw' => '^' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,         'raw' => '=' ),
+			array( 'type' => CSSProcessor::TOKEN_STRING,        'raw' => '"https://"' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACKET, 'raw' => ']' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests tokenization of calc() function with complex expressions.
+	 */
+	public function test_calc_function(): void {
+		$css = 'width: calc(100% - 20px * 2 + 5em);';
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'width' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION,     'raw' => 'calc(' ),
+			array( 'type' => CSSProcessor::TOKEN_PERCENTAGE,   'raw' => '100%' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,        'raw' => '-' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,    'raw' => '20px' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,        'raw' => '*' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_NUMBER,       'raw' => '2' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,        'raw' => '+' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,    'raw' => '5em' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN,  'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests tokenization of RGB/RGBA color functions.
+	 */
+	public function test_color_functions(): void {
+		$css = 'color: rgb(255, 128, 0); background: rgba(0, 0, 0, 0.5);';
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'color' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION,     'raw' => 'rgb(' ),
+			array( 'type' => CSSProcessor::TOKEN_NUMBER,       'raw' => '255' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,        'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_NUMBER,       'raw' => '128' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,        'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_NUMBER,       'raw' => '0' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN,  'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'background' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION,     'raw' => 'rgba(' ),
+			array( 'type' => CSSProcessor::TOKEN_NUMBER,       'raw' => '0' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,        'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_NUMBER,       'raw' => '0' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,        'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_NUMBER,       'raw' => '0' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,        'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_NUMBER,       'raw' => '0.5' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN,  'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests tokenization of CSS custom properties (variables).
+	 */
+	public function test_css_variables(): void {
+		$css = '--main-color: #ff0000; color: var(--main-color);';
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => '--main-color' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_HASH,         'raw' => '#ff0000' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'color' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION,     'raw' => 'var(' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => '--main-color' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN,  'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests tokenization of gradient functions.
+	 */
+	public function test_gradient_functions(): void {
+		$css = 'background: linear-gradient(to right, red 0%, blue 100%);';
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'background' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION,     'raw' => 'linear-gradient(' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'to' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'right' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,        'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'red' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_PERCENTAGE,   'raw' => '0%' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,        'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'blue' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_PERCENTAGE,   'raw' => '100%' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN,  'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests tokenization of grid layout properties.
+	 */
+	public function test_grid_layout(): void {
+		$css = 'grid-template-columns: repeat(3, 1fr); gap: 10px 20px;';
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'grid-template-columns' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION,     'raw' => 'repeat(' ),
+			array( 'type' => CSSProcessor::TOKEN_NUMBER,       'raw' => '3' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,        'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,    'raw' => '1fr' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN,  'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'gap' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,    'raw' => '10px' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,    'raw' => '20px' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests tokenization of URL functions with various formats.
+	 */
+	public function test_url_formats(): void {
+		$css = 'background: url("image.png"), url(\'font.woff\'), url(https://example.com/bg.jpg);';
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'background' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION,     'raw' => 'url(' ),
+			array( 'type' => CSSProcessor::TOKEN_STRING,       'raw' => '"image.png"' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN,  'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,        'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_FUNCTION,     'raw' => 'url(' ),
+			array( 'type' => CSSProcessor::TOKEN_STRING,       'raw' => "'font.woff'" ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_PAREN,  'raw' => ')' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,        'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_URL,          'raw' => 'url(https://example.com/bg.jpg)' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests tokenization of !important declarations.
+	 */
+	public function test_important_declarations(): void {
+		$css = 'color: red !important; margin: 0px !important;';
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'color' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'red' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,        'raw' => '!' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'important' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'margin' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DIMENSION,    'raw' => '0px' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,        'raw' => '!' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'important' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests tokenization of multiple selectors with combinators.
+	 */
+	public function test_complex_combinators(): void {
+		$css = 'div > p + span ~ a.link';
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'div' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,        'raw' => '>' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'p' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,        'raw' => '+' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'span' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,        'raw' => '~' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'a' ),
+			array( 'type' => CSSProcessor::TOKEN_DELIM,        'raw' => '.' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'link' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests tokenization of escaped characters in identifiers.
+	 */
+	public function test_escaped_identifiers(): void {
+		$css = '.class\\:name, #id\\@special { color: blue; }';
+
+		$expected = array(
+			array( 'type' => CSSProcessor::TOKEN_DELIM,        'raw' => '.' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'class\\:name' ),
+			array( 'type' => CSSProcessor::TOKEN_COMMA,        'raw' => ',' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_HASH,         'raw' => '#id\\@special' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_LEFT_BRACE,   'raw' => '{' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'color' ),
+			array( 'type' => CSSProcessor::TOKEN_COLON,        'raw' => ':' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_IDENT,        'raw' => 'blue' ),
+			array( 'type' => CSSProcessor::TOKEN_SEMICOLON,    'raw' => ';' ),
+			array( 'type' => CSSProcessor::TOKEN_WHITESPACE,   'raw' => ' ' ),
+			array( 'type' => CSSProcessor::TOKEN_RIGHT_BRACE,  'raw' => '}' ),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw'] );
+		$this->assertSame( $actual_tokens, $expected );
+	}
+
+	/**
+	 * Tests that get_normalized_token() applies CSS normalization.
+	 *
+	 * Uses a comprehensive CSS selector with rules that includes:
+	 * - CSS escapes in class names and IDs
+	 * - URLs with escape sequences
+	 * - String values with escapes and line endings
+	 * - Comments with various line ending characters
+	 * - Null bytes in identifiers
+	 * - Mixed line endings (\r\n, \r, \f) that need normalization
+	 */
+	public function test_get_normalized_token_applies_normalization(): void {
+		// Comprehensive CSS with normalization requirements.
+		$css = "/* Comment\r\nwith\flines */\r\n" .
+		       ".c\\6c ass.n\\61 me\r#id\\@value\r\n{\r\n" .
+		       "\tbackground:\furl(path\\2f to\\2f image.png);\r\n" .
+		       "\tcontent:\r\"text\\A string\";\r\n" .
+		       "}";
+
+		$expected = array(
+			// Comment with \r\n and \f.
+			array(
+				'type'       => CSSProcessor::TOKEN_COMMENT,
+				'raw'        => "/* Comment\r\nwith\flines */",
+				'normalized' => "/* Comment\nwith\nlines */",
+				'value'      => null,
+			),
+			// Whitespace with \r\n.
+			array(
+				'type'       => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'        => "\r\n",
+				'normalized' => "\n",
+				'value'      => null,
+			),
+			// Class selector delimiter.
+			array(
+				'type'       => CSSProcessor::TOKEN_DELIM,
+				'raw'        => '.',
+				'normalized' => '.',
+				'value'      => '.',
+			),
+			// Class name with escape (\6c = 'l'), space gets consumed by escape.
+			array(
+				'type'       => CSSProcessor::TOKEN_IDENT,
+				'raw'        => 'c\\6c ass',
+				'normalized' => 'class', // Escapes decoded.
+				'value'      => 'class', // Decoded: \6c → l, space consumed.
+			),
+			// Delimiter.
+			array(
+				'type'       => CSSProcessor::TOKEN_DELIM,
+				'raw'        => '.',
+				'normalized' => '.',
+				'value'      => '.',
+			),
+			// Identifier with escape (\61 = 'a'), space gets consumed.
+			array(
+				'type'       => CSSProcessor::TOKEN_IDENT,
+				'raw'        => 'n\\61 me',
+				'normalized' => 'name', // Escapes decoded.
+				'value'      => 'name', // Decoded: \61 → a, space consumed.
+			),
+			// Whitespace with \r.
+			array(
+				'type'       => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'        => "\r",
+				'normalized' => "\n",
+				'value'      => null,
+			),
+			// ID selector with escape.
+			array(
+				'type'       => CSSProcessor::TOKEN_HASH,
+				'raw'        => '#id\\@value',
+				'normalized' => '#id@value', // Escapes decoded.
+				'value'      => 'id@value', // Decoded value.
+			),
+			// Whitespace with \r\n.
+			array(
+				'type'       => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'        => "\r\n",
+				'normalized' => "\n",
+				'value'      => null,
+			),
+			// Opening brace.
+			array(
+				'type'       => CSSProcessor::TOKEN_LEFT_BRACE,
+				'raw'        => '{',
+				'normalized' => '{',
+				'value'      => null,
+			),
+			// Whitespace with \r\n and tab (consumed together).
+			array(
+				'type'       => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'        => "\r\n\t",
+				'normalized' => "\n\t",
+				'value'      => null,
+			),
+			array(
+				'type'       => CSSProcessor::TOKEN_IDENT,
+				'raw'        => 'background',
+				'normalized' => 'background',
+				'value'      => 'background',
+			),
+			// Colon.
+			array(
+				'type'       => CSSProcessor::TOKEN_COLON,
+				'raw'        => ':',
+				'normalized' => ':',
+				'value'      => null,
+			),
+			// Whitespace with \f.
+			array(
+				'type'       => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'        => "\f",
+				'normalized' => "\n",
+				'value'      => null,
+			),
+			// URL token with escapes (entire url(...) is one token).
+			array(
+				'type'       => CSSProcessor::TOKEN_URL,
+				'raw'        => 'url(path\\2f to\\2f image.png)',
+				'normalized' => 'url(path/to/image.png)', // Escapes decoded.
+				'value'      => 'path/to/image.png', // Decoded: \2f → /, spaces consumed.
+			),
+			// Semicolon.
+			array(
+				'type'       => CSSProcessor::TOKEN_SEMICOLON,
+				'raw'        => ';',
+				'normalized' => ';',
+				'value'      => null,
+			),
+			// Whitespace with \r\n and tab (consumed together).
+			array(
+				'type'       => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'        => "\r\n\t",
+				'normalized' => "\n\t",
+				'value'      => null,
+			),
+			array(
+				'type'       => CSSProcessor::TOKEN_IDENT,
+				'raw'        => 'content',
+				'normalized' => 'content',
+				'value'      => 'content',
+			),
+			// Colon.
+			array(
+				'type'       => CSSProcessor::TOKEN_COLON,
+				'raw'        => ':',
+				'normalized' => ':',
+				'value'      => null,
+			),
+			// Whitespace with \r.
+			array(
+				'type'       => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'        => "\r",
+				'normalized' => "\n",
+				'value'      => null,
+			),
+			// String with escape (\A = newline, space consumed).
+			array(
+				'type'       => CSSProcessor::TOKEN_STRING,
+				'raw'        => '"text\\A string"',
+				'normalized' => "\"text\nstring\"", // Escapes decoded, quotes preserved.
+				'value'      => "text\nstring", // \A → \n, space consumed.
+			),
+			// Semicolon.
+			array(
+				'type'       => CSSProcessor::TOKEN_SEMICOLON,
+				'raw'        => ';',
+				'normalized' => ';',
+				'value'      => null,
+			),
+			// Whitespace with \r\n.
+			array(
+				'type'       => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'        => "\r\n",
+				'normalized' => "\n",
+				'value'      => null,
+			),
+			// Closing brace.
+			array(
+				'type'       => CSSProcessor::TOKEN_RIGHT_BRACE,
+				'raw'        => '}',
+				'normalized' => '}',
+				'value'      => null,
+			),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value'] );
+		$this->assertSame( $expected, $actual_tokens );
+	}
+
+	public function test_dimension_token_value(): void {
+		$css = '10px;15em;20%;30pt;40pc;50vw;';
+		$expected = array(
+			array(
+				'type' => CSSProcessor::TOKEN_DIMENSION,
+				'raw' => '10px',
+				'normalized' => '10px',
+				'value' => '10',
+				'unit' => 'px',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_SEMICOLON,
+				'raw' => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_DIMENSION,
+				'raw' => '15em',
+				'normalized' => '15em',
+				'value' => '15',
+				'unit' => 'em',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_SEMICOLON,
+				'raw' => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_PERCENTAGE,
+				'raw' => '20%',
+				'normalized' => '20%',
+				'value' => '20',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_SEMICOLON,
+				'raw' => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_DIMENSION,
+				'raw' => '30pt',
+				'normalized' => '30pt',
+				'value' => '30',
+				'unit' => 'pt',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_SEMICOLON,
+				'raw' => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_DIMENSION,
+				'raw' => '40pc',
+				'normalized' => '40pc',
+				'value' => '40',
+				'unit' => 'pc',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_SEMICOLON,
+				'raw' => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_DIMENSION,
+				'raw' => '50vw',
+				'normalized' => '50vw',
+				'value' => '50',
+				'unit' => 'vw',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_SEMICOLON,
+				'raw' => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+		);
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value', 'unit'] );
+		$this->assertSame( $expected, $actual_tokens );
+	}
+
+	/**
+	 * Tests that create() validates encoding and only accepts UTF-8.
+	 */
+	public function test_create_validates_encoding(): void {
+		// UTF-8 encoding should work (default).
+		$processor = CSSProcessor::create( '.class { color: red; }' );
+		$this->assertInstanceOf( CSSProcessor::class, $processor );
+
+		// UTF-8 encoding should work (explicit).
+		$processor = CSSProcessor::create( '.class { color: red; }', 'UTF-8' );
+		$this->assertInstanceOf( CSSProcessor::class, $processor );
+
+		// Other encodings should return null.
+		$processor = CSSProcessor::create( '.class { color: red; }', 'ISO-8859-1' );
+		$this->assertNull( $processor );
+
+		$processor = CSSProcessor::create( '.class { color: red; }', 'Windows-1252' );
+		$this->assertNull( $processor );
+	}
+
+	/**
+	 * Tests escape sequences in unusual and edge-case positions.
+	 *
+	 * Covers:
+	 * - Multiple consecutive escapes
+	 * - Escapes in function names
+	 * - Escapes in at-keywords
+	 * - Escapes in dimension units
+	 * - Null byte escapes (\0)
+	 * - Escaped special characters (@, #, !, etc.)
+	 * - Escaped whitespace that gets consumed by the escape
+	 * - Unicode escapes for various characters
+	 */
+	public function test_escape_sequences_in_unusual_places() {
+		// Complex CSS with escapes in many unusual but valid positions
+		$css = '@\\6D edia ' .                           // @media with \6D (m) and space consumed
+		       '\\73 creen ' .                           // screen with \73 (s) and space consumed
+		       '{' .
+		       ' .\\63 l\\61 ss\\5F name ' .             // .class_name with escapes and spaces consumed
+		       "#\\69 d\\5C 0test\x00 " .                // #id\0test with null byte escape (should be preserved)
+			                                             // AND an actual null byte (should be replaced with a U+FFFD REPLACEMENT CHARACTER)
+		       '{' .
+		       ' c\\6F lor: ' .                          // color: with \6F (o) and space consumed
+		       'r\\65 d ' .                              // red with escape
+		       '\\21 important;' .                       // !important with escaped !
+		       ' w\\69 dth: ' .                          // width:
+		       '10\\70 x;' .                             // 10px (dimension with escaped unit)
+		       ' background: ' .
+		       '\\75 rl(' .                              // url( with escaped u
+		       '"p\\61 th\\2F img\\2E png"' .            // "path/img.png" with escapes
+		       ');' .
+		       ' content: "\\5C \\5C ";' .               // "\\ \\" - escaped backslashes
+		       ' font-family: \\22 Arial\\22 ;' .       // "Arial" with escaped quotes
+		       ' }' .
+		       '}';
+
+		$expected = array(
+			// @\6D edia -> @media
+			array(
+				'type' => CSSProcessor::TOKEN_AT_KEYWORD,
+				'raw'  => '@\\6D edia',
+				'normalized' => '@media',
+				'value' => 'media',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			// \73 creen -> screen
+			array(
+				'type' => CSSProcessor::TOKEN_IDENT,
+				'raw'  => '\\73 creen',
+				'normalized' => 'screen',
+				'value' => 'screen',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_LEFT_BRACE,
+				'raw'  => '{',
+				'normalized' => '{',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			// Delimiter .
+			array(
+				'type' => CSSProcessor::TOKEN_DELIM,
+				'raw'  => '.',
+				'normalized' => '.',
+				'value' => '.',
+			),
+			// \63 l\61 ss\5F name -> class_name
+			array(
+				'type' => CSSProcessor::TOKEN_IDENT,
+				'raw'  => '\\63 l\\61 ss\\5F name',
+				'normalized' => 'class_name',
+				'value' => 'class_name',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			// #\69 d\5C 0test -> #id\0test (with encoded null byte)
+			array(
+				'type' => CSSProcessor::TOKEN_HASH,
+				'raw'  => "#\\69 d\\5C 0test\x00",
+				'normalized' => "#id\\0test�",
+				// Ensure the value is normalized.
+				'value' => "id\\0test�",
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_LEFT_BRACE,
+				'raw'  => '{',
+				'normalized' => '{',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			// c\6F lor -> color
+			array(
+				'type' => CSSProcessor::TOKEN_IDENT,
+				'raw'  => 'c\\6F lor',
+				'normalized' => 'color',
+				'value' => 'color',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_COLON,
+				'raw'  => ':',
+				'normalized' => ':',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			// r\65 d -> red
+			array(
+				'type' => CSSProcessor::TOKEN_IDENT,
+				'raw'  => 'r\\65 d',
+				'normalized' => 'red',
+				'value' => 'red',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			// \21 important -> !important (single identifier with escaped !)
+			array(
+				'type' => CSSProcessor::TOKEN_IDENT,
+				'raw'  => '\\21 important',
+				'normalized' => '!important',
+				'value' => '!important',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_SEMICOLON,
+				'raw'  => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			// w\69 dth -> width
+			array(
+				'type' => CSSProcessor::TOKEN_IDENT,
+				'raw'  => 'w\\69 dth',
+				'normalized' => 'width',
+				'value' => 'width',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_COLON,
+				'raw'  => ':',
+				'normalized' => ':',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			// 10\70 x -> 10px (dimension with escaped unit)
+			array(
+				'type' => CSSProcessor::TOKEN_DIMENSION,
+				'raw'  => '10\\70 x',
+				'normalized' => '10px',
+				'value' => '10',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_SEMICOLON,
+				'raw'  => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_IDENT,
+				'raw'  => 'background',
+				'normalized' => 'background',
+				'value' => 'background',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_COLON,
+				'raw'  => ':',
+				'normalized' => ':',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			// \75 rl( -> url( (escaped function name)
+			array(
+				'type' => CSSProcessor::TOKEN_FUNCTION,
+				'raw'  => '\\75 rl(',
+				'normalized' => 'url(',
+				'value' => 'url',
+			),
+			// String with escapes: "p\61 th\2F img\2E png"
+			array(
+				'type' => CSSProcessor::TOKEN_STRING,
+				'raw'  => '"p\\61 th\\2F img\\2E png"',
+				'normalized' => '"path/img.png"',
+				'value' => 'path/img.png',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_RIGHT_PAREN,
+				'raw'  => ')',
+				'normalized' => ')',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_SEMICOLON,
+				'raw'  => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_IDENT,
+				'raw'  => 'content',
+				'normalized' => 'content',
+				'value' => 'content',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_COLON,
+				'raw'  => ':',
+				'normalized' => ':',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			// String with escaped backslashes: "\5C \5C " -> "\\"
+			// Each \5C sequence (with trailing space consumed) becomes one backslash
+			array(
+				'type' => CSSProcessor::TOKEN_STRING,
+				'raw'  => '"\\5C \\5C "',
+				'normalized' => '"\\\\"',
+				'value' => '\\\\',  // Two backslashes total
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_SEMICOLON,
+				'raw'  => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_IDENT,
+				'raw'  => 'font-family',
+				'normalized' => 'font-family',
+				'value' => 'font-family',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_COLON,
+				'raw'  => ':',
+				'normalized' => ':',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			// \22 Arial\22 -> "Arial" (escaped quotes make it an ident)
+			array(
+				'type' => CSSProcessor::TOKEN_IDENT,
+				'raw'  => '\\22 Arial\\22 ',
+				'normalized' => '"Arial"',
+				'value' => '"Arial"',
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_SEMICOLON,
+				'raw'  => ';',
+				'normalized' => ';',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_WHITESPACE,
+				'raw'  => ' ',
+				'normalized' => ' ',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_RIGHT_BRACE,
+				'raw'  => '}',
+				'normalized' => '}',
+				'value' => null,
+			),
+			array(
+				'type' => CSSProcessor::TOKEN_RIGHT_BRACE,
+				'raw'  => '}',
+				'normalized' => '}',
+				'value' => null,
+			),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value'] );
+		$this->assertSame( $expected, $actual_tokens );
+	}
+
+	/**
+	 * Tests that set_token_value() only works on URL tokens.
+	 */
+	public function test_set_token_value_only_works_on_url_tokens(): void {
+		$css = 'color: red; background: url(old.jpg);';
+		$processor = CSSProcessor::create( $css );
+
+		while ( $processor->next_token() ) {
+			$token_type = $processor->get_token_type();
+
+			if ( CSSProcessor::TOKEN_URL === $token_type ) {
+				// Should succeed on URL tokens.
+				$this->assertTrue( $processor->set_token_value( 'new.jpg' ) );
+			} else {
+				// Should fail on non-URL tokens.
+				$this->assertFalse( $processor->set_token_value( 'test' ) );
 			}
-
-			if ( $at >= $length ) {
-				break;
-			}
-
-			$char = $value[ $at ];
-
-			// Null byte - replace with U+FFFD
-			if ( "\x00" === $char ) {
-				$result .= "\xEF\xBF\xBD";
-				++$at;
-				continue;
-			}
-
-			// Must be backslash
-			++$at;
-			if ( $at >= $length ) {
-				break;
-			}
-
-			$hex_len = strspn( $value, '0123456789abcdefABCDEF', $at );
-			if ( $hex_len > 6 ) {
-				$hex_len = 6;
-			}
-
-			if ( $hex_len > 0 ) {
-				$hex     = substr( $value, $at, $hex_len );
-				$codepoint = hexdec( $hex );
-				// Convert codepoint to UTF-8 bytes
-				if ( $codepoint <= 0x7F ) {
-					$result .= chr( $codepoint );
-				} elseif ( $codepoint <= 0x7FF ) {
-					$result .= chr( 0xC0 | ( $codepoint >> 6 ) );
-					$result .= chr( 0x80 | ( $codepoint & 0x3F ) );
-				} elseif ( $codepoint <= 0xFFFF ) {
-					$result .= chr( 0xE0 | ( $codepoint >> 12 ) );
-					$result .= chr( 0x80 | ( ( $codepoint >> 6 ) & 0x3F ) );
-					$result .= chr( 0x80 | ( $codepoint & 0x3F ) );
-				} else {
-					$result .= chr( 0xF0 | ( $codepoint >> 18 ) );
-					$result .= chr( 0x80 | ( ( $codepoint >> 12 ) & 0x3F ) );
-					$result .= chr( 0x80 | ( ( $codepoint >> 6 ) & 0x3F ) );
-					$result .= chr( 0x80 | ( $codepoint & 0x3F ) );
-				}
-				$at += $hex_len;
-
-				$ws_len = strspn( $value, " \n\r\t\f", $at );
-				if ( $ws_len > 0 ) {
-					if ( $at + 1 < $length && "\r" === $value[ $at ] && "\n" === $value[ $at + 1 ] ) {
-						$at += 2;
-					} else {
-						$at += 1;
-					}
-				}
-				continue;
-			}
-
-			$next = $value[ $at ];
-
-			if ( "\n" === $next || "\f" === $next ) {
-				++$at;
-				continue;
-			}
-
-			if ( "\r" === $next ) {
-				++$at;
-				if ( $at < $length && "\n" === $value[ $at ] ) {
-					++$at;
-				}
-				continue;
-			}
-
-			$result .= $next;
-			++$at;
 		}
 
-		return $result;
+		// Verify the update was applied.
+		$updated = $processor->get_updated_css();
+		$this->assertSame( 'color: red; background: url("new.jpg");', $updated );
 	}
+
+	/**
+	 * Tests that set_token_value() properly escapes special characters in quoted URLs.
+	 */
+	public function test_set_token_value_escapes_special_characters(): void {
+		$css = 'background: url(old.jpg);';
+		$processor = CSSProcessor::create( $css );
+
+		while ( $processor->next_token() ) {
+			if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+				// URL with spaces, quotes, and parentheses.
+				$processor->set_token_value( 'path with spaces("special").jpg' );
+			}
+		}
+
+		$updated = $processor->get_updated_css();
+
+		$this->assertSame( 'background: url("path with spaces(\\22 special\\22 ).jpg");', $updated );
+	}
+
+	/**
+	 * Tests that set_token_value() preserves Unicode characters in quoted URLs.
+	 */
+	public function test_set_token_value_encodes_unicode(): void {
+		$css = 'background: url(old.jpg);';
+		$processor = CSSProcessor::create( $css );
+
+		while ( $processor->next_token() ) {
+			if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+				// URL with Unicode characters: "测试.jpg" (Chinese characters).
+				$processor->set_token_value( '测试.jpg' );
+			}
+		}
+
+		$updated = $processor->get_updated_css();
+
+		$this->assertSame( 'background: url("测试.jpg");', $updated );
+	}
+
+	/**
+	 * Tests that set_token_value() preserves emoji in quoted URLs.
+	 */
+	public function test_set_token_value_handles_emoji(): void {
+		$css = 'background: url(old.jpg);';
+		$processor = CSSProcessor::create( $css );
+
+		while ( $processor->next_token() ) {
+			if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+				// URL with emoji: "image😀.jpg".
+				$processor->set_token_value( 'image😀.jpg' );
+			}
+		}
+
+		$updated = $processor->get_updated_css();
+
+		$this->assertSame( 'background: url("image😀.jpg");', $updated );
+	}
+
+	/**
+	 * Tests that multiple URL values can be updated in the same CSS.
+	 */
+	public function test_set_token_value_multiple_urls(): void {
+		$css = 'background: url(old1.jpg); border-image: url(old2.png);';
+		$processor = CSSProcessor::create( $css );
+
+		$url_count = 0;
+		while ( $processor->next_token() ) {
+			if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+				$url_count++;
+				if ( 1 === $url_count ) {
+					$processor->set_token_value( 'new1.jpg' );
+				} elseif ( 2 === $url_count ) {
+					$processor->set_token_value( 'new2.png' );
+				}
+			}
+		}
+
+		$updated = $processor->get_updated_css();
+
+		// Verify both URLs were updated.
+		$this->assertSame( 'background: url("new1.jpg"); border-image: url("new2.png");', $updated );
+	}
+
+	/**
+	 * Tests that newlines are properly escaped in quoted URLs.
+	 */
+	public function test_set_token_value_escapes_control_characters(): void {
+		$css = 'background: url(old.jpg);';
+		$processor = CSSProcessor::create( $css );
+
+		while ( $processor->next_token() ) {
+			if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+				// URL with newlines and carriage returns.
+				$processor->set_token_value( "path\nwith\rnewlines\ftest.jpg" );
+			}
+		}
+
+		$updated = $processor->get_updated_css();
+
+		$this->assertSame( 'background: url("path\\a with\\a newlines\\a test.jpg");', $updated );
+	}
+
+	/**
+	 * Tests that backslashes are properly escaped in quoted URLs.
+	 */
+	public function test_set_token_value_escapes_backslashes(): void {
+		$css = 'background: url(old.jpg);';
+		$processor = CSSProcessor::create( $css );
+
+		while ( $processor->next_token() ) {
+			if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+				$processor->set_token_value( 'path\\with\\backslashes.jpg' );
+			}
+		}
+
+		$updated = $processor->get_updated_css();
+
+		// Verify backslashes are escaped as \\.
+		$this->assertSame( 'background: url("path\\5C with\\5C backslashes.jpg");', $updated );
+	}
+
+	/**
+	 * Tests that get_updated_css() returns original CSS when no changes are made.
+	 */
+	public function test_get_updated_css_returns_original_when_unchanged(): void {
+		$css = 'background: url(image.jpg); color: red;';
+		$processor = CSSProcessor::create( $css );
+
+		// Iterate through tokens without making changes.
+		while ( $processor->next_token() ) {
+			// Do nothing.
+		}
+
+		$updated = $processor->get_updated_css();
+
+		// Should return original CSS.
+		$this->assertSame( $css, $updated );
+	}
+
+	/**
+	 * Tests that safe ASCII characters are preserved in quoted URLs.
+	 */
+	public function test_set_token_value_preserves_safe_characters(): void {
+		$css = 'background: url(old.jpg);';
+		$processor = CSSProcessor::create( $css );
+
+		while ( $processor->next_token() ) {
+			if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+				// URL with safe characters: letters, digits, hyphens, underscores, dots, slashes.
+				$processor->set_token_value( 'path/to/my-image_2024.jpg' );
+			}
+		}
+
+		$updated = $processor->get_updated_css();
+
+		// Verify safe characters are preserved as-is in quoted URL.
+		$this->assertSame( 'background: url("path/to/my-image_2024.jpg");', $updated );
+	}
+
+	/**
+	 * Tests that safe ASCII characters are preserved in quoted URLs.
+	 */
+	public function test_set_token_with_invalid_utf8_sequence(): void {
+		$css = 'background: url(old.jpg);';
+		$processor = CSSProcessor::create( $css );
+
+		while ( $processor->next_token() ) {
+			if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+				// URL with safe characters: letters, digits, hyphens, underscores, dots, slashes.
+				$processor->set_token_value( "\xC0.jpg" );
+			}
+		}
+
+		$updated = $processor->get_updated_css();
+
+		// Invalid UTF-8 sequence is preserved as-is – garbage in, garbage out.
+		$this->assertSame( "background: url(\"\xC0.jpg\");", $updated );
+	}
+
+	
 }
