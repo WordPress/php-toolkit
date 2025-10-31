@@ -1,107 +1,109 @@
 {
-    "name": "wp-php-toolkit/php-toolkit",
-    "type": "library",
-    "description": "WordPress Components",
-    "keywords": [
-        "wordpress",
-        "components"
-    ],
-    "homepage": "https://wordpress.org",
-    "license": "GPL-2.0-or-later",
-    "authors": [
-        {
-            "name": "Adam Zielinski",
-            "email": "adam@adamziel.com"
-        },
-        {
-            "name": "WordPress Contributors"
-        }
-    ],
-    "require": {
-        "php": ">=7.2",
-        "ext-json": "*",
-        "ext-mbstring": "*"
-    },
-    "require-dev": {
-        "yoast/phpunit-polyfills": "2.0.0",
-        "squizlabs/php_codesniffer": "^3.13.4",
-        "phpcompatibility/php-compatibility": "^9.3.5",
-        "slevomat/coding-standard": "^8.21.1",
-        "wp-coding-standards/wpcs": "^3.2.0",
-        "phpunit/phpunit": "^9.5",
-        "phpstan/phpstan": "^1.0"
-    },
-    "autoload": {
-        "exclude-from-classmap": [
-            "**/Tests/",
-            "**/bin/",
-            "/Tests/"
-        ],
-        "classmap": [
-            "components/BlockParser/",
-            "components/Blueprints/",
-            "components/Blueprints/vendor-patched/",
-            "components/CLI/",
-            "components/DataLiberation/",
-            "components/DataLiberation/vendor-patched/",
-            "components/Filesystem/",
-            "components/Git/",
-            "components/HTML/./",
-            "components/HttpClient/",
-            "components/HttpServer/",
-            "components/Markdown/",
-            "components/Markdown/vendor-patched",
-            "components/Merge/",
-            "components/Merge/vendor-patched",
-            "components/ByteStream/",
-            "components/ToolkitCodingStandards/",
-            "components/XML/",
-            "components/Zip/"
-        ],
-        "files": [
-            "components/DataLiberation/URL/functions.php",
-            "components/Encoding/utf8-decoder.php",
-            "components/Encoding/utf8-encoder.php",
-            "components/Filesystem/functions.php",
-            "components/Zip/functions.php",
-            "components/Polyfill/wordpress.php",
-            "components/Polyfill/mbstring.php",
-            "components/Polyfill/php-functions.php",
-            "components/Git/functions.php"
-        ],
-        "psr-4": {
-            "Rowbot\\": "components/DataLiberation/vendor-patched/",
-            "Brick\\": "components/DataLiberation/vendor-patched/",
-            "WordPress\\CORSProxy\\": "components/CORSProxy/"
-        }
-    },
-    "scripts": {
-        "build-php-toolkit-phar": "bash bin/build-libraries-phar.sh",
-        "build-blueprints-phar": "box compile -c phar-blueprints.json",
-        "regenerate-json-schema": "node components/Blueprints/Versions/Version2/json-schema/regenerate-schema.ts",
-        "test": "phpunit -c phpunit.xml",
-        "lint": "phpcs -d memory_limit=1G .",
-        "lint-fix": "phpcbf -d memory_limit=1G ."
-    },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "components/*",
-            "options": {
-                "symlink": true
-            }
-        }
-    ],
-    "minimum-stability": "dev",
-    "config": {
-        "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
-        }
-    },
-    "archive": {
-        "exclude": [
-            "/plugins",
-            "/examples"
-        ]
-    }
+	"name": "wp-php-toolkit/php-toolkit",
+	"type": "library",
+	"description": "WordPress Components",
+	"keywords": [
+		"wordpress",
+		"components"
+	],
+	"homepage": "https://wordpress.org",
+	"license": "GPL-2.0-or-later",
+	"authors": [
+		{
+			"name": "Adam Zielinski",
+			"email": "adam@adamziel.com"
+		},
+		{
+			"name": "WordPress Contributors"
+		}
+	],
+	"require": {
+		"php": ">=7.2",
+		"ext-json": "*",
+		"ext-mbstring": "*"
+	},
+	"require-dev": {
+		"yoast/phpunit-polyfills": "2.0.0",
+		"squizlabs/php_codesniffer": "^3.13.4",
+		"phpcompatibility/php-compatibility": "^9.3.5",
+		"slevomat/coding-standard": "^8.21.1",
+		"wp-coding-standards/wpcs": "^3.2.0",
+		"phpunit/phpunit": "^9.5",
+		"phpstan/phpstan": "^1.0"
+	},
+	"autoload": {
+		"exclude-from-classmap": [
+			"**/Tests/",
+			"**/bin/",
+			"/Tests/"
+		],
+		"classmap": [
+			"components/BlockParser/",
+			"components/Blueprints/",
+			"components/Blueprints/vendor-patched/",
+			"components/CLI/",
+			"components/DataLiberation/",
+			"components/DataLiberation/vendor-patched/",
+			"components/Filesystem/",
+			"components/Git/",
+			"components/HTML/./",
+			"components/HttpClient/",
+			"components/HttpServer/",
+			"components/Markdown/",
+			"components/Markdown/vendor-patched",
+			"components/Merge/",
+			"components/Merge/vendor-patched",
+			"components/ByteStream/",
+			"components/ToolkitCodingStandards/",
+			"components/XML/",
+			"components/Zip/"
+		],
+		"files": [
+			"components/DataLiberation/URL/functions.php",
+			"components/Encoding/utf8.php",
+			"components/Encoding/compat-utf8.php",
+			"components/Encoding/utf8-decoder.php",
+			"components/Encoding/utf8-encoder.php",
+			"components/Filesystem/functions.php",
+			"components/Zip/functions.php",
+			"components/Polyfill/wordpress.php",
+			"components/Polyfill/mbstring.php",
+			"components/Polyfill/php-functions.php",
+			"components/Git/functions.php"
+		],
+		"psr-4": {
+			"Rowbot\\": "components/DataLiberation/vendor-patched/",
+			"Brick\\": "components/DataLiberation/vendor-patched/",
+			"WordPress\\CORSProxy\\": "components/CORSProxy/"
+		}
+	},
+	"scripts": {
+		"build-php-toolkit-phar": "bash bin/build-libraries-phar.sh",
+		"build-blueprints-phar": "box compile -c phar-blueprints.json",
+		"regenerate-json-schema": "node components/Blueprints/Versions/Version2/json-schema/regenerate-schema.ts",
+		"test": "phpunit -c phpunit.xml",
+		"lint": "phpcs -d memory_limit=1G .",
+		"lint-fix": "phpcbf -d memory_limit=1G ."
+	},
+	"repositories": [
+		{
+			"type": "path",
+			"url": "components/*",
+			"options": {
+				"symlink": true
+			}
+		}
+	],
+	"minimum-stability": "dev",
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	},
+	"archive": {
+		"exclude": [
+			"/plugins",
+			"/examples"
+		]
+	}
 }
