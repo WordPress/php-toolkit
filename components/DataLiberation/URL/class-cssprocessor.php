@@ -788,13 +788,40 @@ class CSSProcessor {
 	}
 
 	/**
-	 * Sets the value of the current URL token.
+	 * Determines whether the current token is a data URI.
 	 *
-	 * This method allows modifying the URL value in url() tokens. The new value
-	 * will be properly escaped according to CSS URL syntax rules.
+	 * Only meaningful for URL and STRING tokens. Returns false for all other token types.
 	 *
-	 * Currently only URL tokens are supported. Attempting to set the value on
-	 * other token types will return false.
+	 * @return bool Whether the current token value starts with "data:" (case-insensitive).
+	 */
+	public function is_data_uri(): bool {
+		if ( null === $this->token_value_starts_at || null === $this->token_value_length ) {
+			return false;
+		}
+
+		if ( $this->token_value_length < 5 ) {
+			return false;
+		}
+
+		$offset = $this->token_value_starts_at;
+		return (
+			( 'd' === $this->css[ $offset ] || 'D' === $this->css[ $offset ] ) &&
+			( 'a' === $this->css[ $offset + 1 ] || 'A' === $this->css[ $offset + 1 ] ) &&
+			( 't' === $this->css[ $offset + 2 ] || 'T' === $this->css[ $offset + 2 ] ) &&
+			( 'a' === $this->css[ $offset + 3 ] || 'A' === $this->css[ $offset + 3 ] ) &&
+			':' === $this->css[ $offset + 4 ]
+		);
+	}
+
+	/**
+	 * Sets the value of the current token.
+	 *
+	 * This method allows modifying URL or STRING token values. The new value
+	 * will be properly escaped according to CSS syntax rules.
+	 *
+	 * Supported token types:
+	 * - TOKEN_URL: URL value in url() tokens
+	 * - TOKEN_STRING: String value (properly quoted and escaped)
 	 *
 	 * Example:
 	 *
@@ -808,22 +835,32 @@ class CSSProcessor {
 	 *     echo $processor->get_updated_css();
 	 *     // Outputs: background: url(new.jpg);
 	 *
-	 * @param string $new_value The new URL value (should not include url() wrapper).
+	 * @param string $new_value The new value (should not include url() wrapper or quotes).
 	 * @return bool Whether the value was successfully updated.
 	 */
 	public function set_token_value( string $new_value ): bool {
-		// Only URL tokens are currently supported.
-		if ( self::TOKEN_URL !== $this->token_type ) {
-			return false;
-		}
-
 		// Ensure we have valid token value boundaries.
 		if ( null === $this->token_value_starts_at || null === $this->token_value_length ) {
 			return false;
 		}
 
-		// Escape the URL value for unquoted URL syntax.
-		$escaped_value = $this->escape_url_value( $new_value );
+		$escaped_value = null;
+
+		switch ( $this->token_type ) {
+			case self::TOKEN_URL:
+				// Escape the URL value for quoted URL syntax.
+				$escaped_value = $this->escape_url_value( $new_value );
+				break;
+
+			case self::TOKEN_STRING:
+				// Escape the string value for quoted string syntax.
+				$escaped_value = $this->escape_string_value( $new_value );
+				break;
+
+			default:
+				// Unsupported token type.
+				return false;
+		}
 
 		// Queue the lexical update.
 		$this->lexical_updates[] = array(
@@ -896,6 +933,56 @@ class CSSProcessor {
 			}
 		}
 		return '"' . $escaped . '"';
+	}
+
+	/**
+	 * Escapes a string value for use in string token replacement.
+	 *
+	 * For STRING tokens, the value boundaries point to the content between quotes,
+	 * so we must NOT add quotes ourselves - they're already in the source.
+	 *
+	 * @param string $unescaped Unescaped string value.
+	 * @return string Escaped string value without surrounding quotes.
+	 */
+	private function escape_string_value( string $unescaped ): string {
+		$escaped = '';
+		$at      = 0;
+		while ( $at < strlen( $unescaped ) ) {
+			$safe_len = strcspn( $unescaped, "\n\r\f\\\"", $at );
+			if ( $safe_len > 0 ) {
+				$escaped .= substr( $unescaped, $at, $safe_len );
+				$at      += $safe_len;
+				continue;
+			}
+
+			$unsafe_char = $unescaped[ $at ];
+			switch ( $unsafe_char ) {
+				case "\r":
+					++$at;
+					$escaped .= '\\a ';
+					if ( strlen( $unescaped ) > $at + 1 && "\n" === $unescaped[ $at + 1 ] ) {
+						++$at;
+					}
+					break;
+				case "\f":
+				case "\n":
+					++$at;
+					$escaped .= '\\a ';
+					break;
+				case '\\':
+					++$at;
+					$escaped .= '\\5C ';
+					break;
+				case '"':
+					++$at;
+					$escaped .= '\\22 ';
+					break;
+				default:
+					_doing_it_wrong( __METHOD__, 'Unexpected character in string value: ' . $unsafe_char, '1.0.0' );
+					break;
+			}
+		}
+		return $escaped;
 	}
 
 	/**
@@ -1797,5 +1884,87 @@ class CSSProcessor {
 		}
 
 		return $this->consume_ident_start_codepoint( $offset ) > 0 || $this->is_valid_escape( $offset );
+	}
+
+	/**
+	 * Decodes CSS escape sequences in a string.
+	 *
+	 * This is a utility method that can be used by other classes to decode
+	 * CSS escapes in extracted values. It implements the same logic as the
+	 * incremental escape parsing done during tokenization.
+	 *
+	 * Handles:
+	 * - Hex escapes: \20 (space), \1F600 (emoji), up to 6 hex digits
+	 * - Character escapes: \(, \), \", \', \\
+	 * - Whitespace after hex escapes (single whitespace consumed)
+	 * - Escaped newlines (consumed, not included in output)
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-escaped-code-point
+	 *
+	 * @param string $value Encoded string with CSS escapes.
+	 * @return string Decoded string with escapes resolved to their actual characters.
+	 */
+	public static function decode_css_escapes( string $value ): string {
+		$length = strlen( $value );
+		$result = '';
+		$at     = 0;
+
+		while ( $at < $length ) {
+			$span = strcspn( $value, '\\', $at );
+			if ( $span > 0 ) {
+				$result .= substr( $value, $at, $span );
+				$at     += $span;
+			}
+
+			if ( $at >= $length ) {
+				break;
+			}
+
+			++$at;
+			if ( $at >= $length ) {
+				break;
+			}
+
+			$hex_len = strspn( $value, '0123456789abcdefABCDEF', $at );
+			if ( $hex_len > 6 ) {
+				$hex_len = 6;
+			}
+
+			if ( $hex_len > 0 ) {
+				$hex     = substr( $value, $at, $hex_len );
+				$result .= codepoint_to_utf8_bytes( hexdec( $hex ) );
+				$at     += $hex_len;
+
+				$ws_len = strspn( $value, " \n\r\t\f", $at );
+				if ( $ws_len > 0 ) {
+					if ( $at + 1 < $length && "\r" === $value[ $at ] && "\n" === $value[ $at + 1 ] ) {
+						$at += 2;
+					} else {
+						$at += 1;
+					}
+				}
+				continue;
+			}
+
+			$next = $value[ $at ];
+
+			if ( "\n" === $next || "\f" === $next ) {
+				++$at;
+				continue;
+			}
+
+			if ( "\r" === $next ) {
+				++$at;
+				if ( $at < $length && "\n" === $value[ $at ] ) {
+					++$at;
+				}
+				continue;
+			}
+
+			$result .= $next;
+			++$at;
+		}
+
+		return $result;
 	}
 }

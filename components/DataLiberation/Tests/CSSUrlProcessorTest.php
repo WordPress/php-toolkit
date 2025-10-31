@@ -426,19 +426,14 @@ class CSSURLProcessorTest extends TestCase {
 	}
 
 	public function test_is_data_uri_optimized_no_extraction() {
-		// Test that is_data_uri() doesn't trigger URL extraction
+		// Test that is_data_uri() works correctly for data URIs.
+		// Note: The optimization (checking first 5 bytes without extraction)
+		// is now internal to CSSProcessor.
 		$css       = 'background: url("data:image/png;base64,iVBORw0KGgo=")';
 		$processor = new CSSURLProcessor( $css );
 
 		$this->assertTrue( $processor->next_url() );
-
-		// Use reflection to verify matched_url is still null
-		$reflection       = new ReflectionClass( $processor );
-		$matched_url_prop = $reflection->getProperty( 'matched_url' );
-		$matched_url_prop->setAccessible( true );
-
-		$this->assertTrue( $processor->is_data_uri(), 'is_data_uri() should return true' );
-		$this->assertNull( $matched_url_prop->getValue( $processor ), 'is_data_uri() should not extract the URL' );
+		$this->assertTrue( $processor->is_data_uri(), 'is_data_uri() should return true for data URIs' );
 	}
 
 }
