@@ -4,8 +4,6 @@ namespace WordPress\DataLiberation\URL;
 
 use WP_HTML_Text_Replacement;
 
-use function WordPress\Encoding\codepoint_to_utf8_bytes;
-
 require_once __DIR__ . '/class-cssprocessor.php';
 
 /**
@@ -76,8 +74,8 @@ class CSSUrlProcessor {
 				continue;
 			}
 
-			$this->url_starts_at       = $token['value_start'];
-			$this->url_length          = $token['value_length'];
+			$this->url_starts_at        = $token['value_start'];
+			$this->url_length           = $token['value_length'];
 			$this->bytes_already_parsed = $token['token_end'];
 
 			return true;
@@ -105,7 +103,7 @@ class CSSUrlProcessor {
 			$this->matched_url = substr( $this->css, $this->url_starts_at, $this->url_length );
 		}
 
-		$this->decoded_url = $this->decode_css_escapes( $this->matched_url );
+		$this->decoded_url = CSSProcessor::decode_css_escapes( $this->matched_url );
 		return $this->decoded_url;
 	}
 
@@ -201,7 +199,7 @@ class CSSUrlProcessor {
 	 * Collects URL-bearing tokens from the token stream.
 	 */
 	private function collect_url_tokens( string $css ): void {
-		$processor = new CSSProcessor( $css );
+		$processor  = new CSSProcessor( $css );
 		$all_tokens = array();
 
 		while ( $processor->next_token() ) {
@@ -257,7 +255,7 @@ class CSSUrlProcessor {
 		$pos   = $index + 1;
 
 		while ( $pos < $count && CSSProcessor::TOKEN_WHITESPACE === $tokens[ $pos ]['type'] ) {
-			$pos++;
+			++$pos;
 		}
 
 		if ( $pos >= $count ) {
@@ -271,7 +269,7 @@ class CSSUrlProcessor {
 
 		$closing_pos = $pos + 1;
 		while ( $closing_pos < $count && CSSProcessor::TOKEN_WHITESPACE === $tokens[ $closing_pos ]['type'] ) {
-			$closing_pos++;
+			++$closing_pos;
 		}
 
 		if ( $closing_pos >= $count ) {
@@ -289,76 +287,6 @@ class CSSUrlProcessor {
 			'value_length' => $value_token['value_length'],
 			'token_end'    => $closing['end'],
 		);
-	}
-
-	/**
-	 * Decodes CSS escape sequences.
-	 *
-	 * @param string $value Encoded string.
-	 * @return string
-	 */
-	protected function decode_css_escapes( string $value ): string {
-		$length = strlen( $value );
-		$result = '';
-		$at     = 0;
-
-		while ( $at < $length ) {
-			$span = strcspn( $value, '\\', $at );
-			if ( $span > 0 ) {
-				$result .= substr( $value, $at, $span );
-				$at     += $span;
-			}
-
-			if ( $at >= $length ) {
-				break;
-			}
-
-			++$at;
-			if ( $at >= $length ) {
-				break;
-			}
-
-			$hex_len = strspn( $value, '0123456789abcdefABCDEF', $at );
-			if ( $hex_len > 6 ) {
-				$hex_len = 6;
-			}
-
-			if ( $hex_len > 0 ) {
-				$hex     = substr( $value, $at, $hex_len );
-				$result .= codepoint_to_utf8_bytes( hexdec( $hex ) );
-				$at     += $hex_len;
-
-				$ws_len = strspn( $value, " \n\r\t\f", $at );
-				if ( $ws_len > 0 ) {
-					if ( $at + 1 < $length && "\r" === $value[ $at ] && "\n" === $value[ $at + 1 ] ) {
-						$at += 2;
-					} else {
-						$at += 1;
-					}
-				}
-				continue;
-			}
-
-			$next = $value[ $at ];
-
-			if ( "\n" === $next || "\f" === $next ) {
-				++$at;
-				continue;
-			}
-
-			if ( "\r" === $next ) {
-				++$at;
-				if ( $at < $length && "\n" === $value[ $at ] ) {
-					++$at;
-				}
-				continue;
-			}
-
-			$result .= $next;
-			++$at;
-		}
-
-		return $result;
 	}
 }
 

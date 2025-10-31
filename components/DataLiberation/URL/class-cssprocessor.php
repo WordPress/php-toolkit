@@ -1358,4 +1358,86 @@ class CSSProcessor {
 
 		return $codepoint;
 	}
+
+	/**
+	 * Decodes CSS escape sequences in a string.
+	 *
+	 * This is a utility method that can be used by other classes to decode
+	 * CSS escapes in extracted values. It implements the same logic as the
+	 * incremental escape parsing done during tokenization.
+	 *
+	 * Handles:
+	 * - Hex escapes: \20 (space), \1F600 (emoji), up to 6 hex digits
+	 * - Character escapes: \(, \), \", \', \\
+	 * - Whitespace after hex escapes (single whitespace consumed)
+	 * - Escaped newlines (consumed, not included in output)
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-escaped-code-point
+	 *
+	 * @param string $value Encoded string with CSS escapes.
+	 * @return string Decoded string with escapes resolved to their actual characters.
+	 */
+	public static function decode_css_escapes( string $value ): string {
+		$length = strlen( $value );
+		$result = '';
+		$at     = 0;
+
+		while ( $at < $length ) {
+			$span = strcspn( $value, '\\', $at );
+			if ( $span > 0 ) {
+				$result .= substr( $value, $at, $span );
+				$at     += $span;
+			}
+
+			if ( $at >= $length ) {
+				break;
+			}
+
+			++$at;
+			if ( $at >= $length ) {
+				break;
+			}
+
+			$hex_len = strspn( $value, '0123456789abcdefABCDEF', $at );
+			if ( $hex_len > 6 ) {
+				$hex_len = 6;
+			}
+
+			if ( $hex_len > 0 ) {
+				$hex     = substr( $value, $at, $hex_len );
+				$result .= codepoint_to_utf8_bytes( hexdec( $hex ) );
+				$at     += $hex_len;
+
+				$ws_len = strspn( $value, " \n\r\t\f", $at );
+				if ( $ws_len > 0 ) {
+					if ( $at + 1 < $length && "\r" === $value[ $at ] && "\n" === $value[ $at + 1 ] ) {
+						$at += 2;
+					} else {
+						$at += 1;
+					}
+				}
+				continue;
+			}
+
+			$next = $value[ $at ];
+
+			if ( "\n" === $next || "\f" === $next ) {
+				++$at;
+				continue;
+			}
+
+			if ( "\r" === $next ) {
+				++$at;
+				if ( $at < $length && "\n" === $value[ $at ] ) {
+					++$at;
+				}
+				continue;
+			}
+
+			$result .= $next;
+			++$at;
+		}
+
+		return $result;
+	}
 }
