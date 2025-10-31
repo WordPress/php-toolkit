@@ -10,10 +10,13 @@ use function WordPress\Encoding\codepoint_to_utf8_bytes;
 /**
  * Tokenizes CSS according to the CSS Syntax Level 3 specification.
  *
- * This class implements the CSS tokenization algorithm as defined in:
- * https://www.w3.org/TR/css-syntax-3/
+ * This class follows the algorithm in https://www.w3.org/TR/css-syntax-3/ and
+ * exposes a pull-based API so callers can stream over large stylesheets without
+ * allocating every token up front. Each call to next_token() advances the cursor
+ * and fills in metadata (type, value, raw slice, byte offsets) that you can read
+ * through the getter methods.
  *
- * ## Design choices:
+ * ## Design choices
  *
  * ### On-the-fly normalization
  *
@@ -25,26 +28,29 @@ use function WordPress\Encoding\codepoint_to_utf8_bytes;
  * > Replace any U+0000 NULL or surrogate code points in input with U+FFFD REPLACEMENT
  * > CHARACTER (�).
  *
- * This tokenizer delays normalization as much as possible, rather than preprocessing
- * the entire input upfront. This avoids the upfront allocation cost for clean CSS
- * and preserves original byte positions for accurate raw token extraction. A part
- * of the normalization is performed on-the-fly as the tokens are consumed. The rest
- * of it is done once the token value is requested.
+ * This processor delays normalization as much as possible. That keeps the raw byte
+ * positions intact for accurate rewrites while still letting consumers ask for a
+ * normalized token when they need one.
  *
  * ### No EOF token
  *
  * The EOF token is a CSS parsing concept, not CSS tokenization concept. Therefore,
- * this tokenizer does not produce it.
+ * this processor does not produce it.
+ *
+ * ### UTF-8 handling
+ *
+ * Only UTF-8 strings are supported. Invalid sequences are replaced with U+FFFD (�)
+ * using the maximal subpart approach described in
+ * https://www.unicode.org/versions/Unicode9.0.0/ch03.pdf, section 3.9 Best Practices
+ * for Using U+FFFD.
  *
  * ## Usage
  *
- * The next_token() method is the main entry point for tokenizing a CSS string.
- * It will consume the next token from the input stream and return true if a token
- * was found. Otherwise, it will return false:
+ * Basic iteration:
  *
  * ```php
  * $css = 'width: 10px;';
- * $processor = CSSTokenizer::create( $css );
+ * $processor = CSSProcessor::create( $css );
  * while ( $processor->next_token() ) {
  *     echo $processor->get_normalized_token();
  * }
@@ -52,10 +58,40 @@ use function WordPress\Encoding\codepoint_to_utf8_bytes;
  * // width: 10px;
  * ```
  *
- * @TODO: More usage examples.
+ * Rewriting a URL while keeping the rest of the stylesheet intact:
+ *
+ * ```php
+ * $css = 'background: url(old.jpg) center / cover;';
+ * $processor = CSSProcessor::create( $css );
+ * while ( $processor->next_token() ) {
+ *     if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+ *         $processor->set_value( 'uploads/new.jpg' );
+ *     }
+ * }
+ * $result = $processor->get_updated_css();
+ * // background: url(uploads/new.jpg) center / cover;
+ * ```
+ *
+ * Gathering diagnostics with byte offsets:
+ *
+ * ```php
+ * $css = "color: red;\ncolor: re\nd;";
+ * $processor = CSSProcessor::create( $css );
+ * $bad_strings = array();
+ * while ( $processor->next_token() ) {
+ *     if ( CSSProcessor::TOKEN_BAD_STRING === $processor->get_token_type() ) {
+ *         $bad_strings[] = array(
+ *             'start'  => $processor->get_token_start(),
+ *             'length' => $processor->get_token_length(),
+ *             'value'  => $processor->get_unnormalized_token(),
+ *         );
+ *     }
+ * }
+ * ```
+ *
  * @see https://www.w3.org/TR/css-syntax-3/#tokenization
  */
-class CSSTokenizer {
+class CSSProcessor {
 	/**
 	 * Token type constants matching the CSS Syntax Level 3 specification.
 	 *
@@ -72,7 +108,7 @@ class CSSTokenizer {
 	 * Invalid (produces bad-string): "hello
 	 *                                 world"  (literal newline breaks the string)
 	 *
-	 * The tokenizer stops at the newline and produces a bad-string token for error recovery.
+	 * The processor stops at the newline and produces a bad-string token for error recovery.
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-bad-string-token
 	 */
@@ -110,7 +146,7 @@ class CSSTokenizer {
 	 * Invalid characters: quotes ("), apostrophes ('), parentheses (()
 	 * Example invalid: url(image(.jpg) or url(image".jpg)
 	 *
-	 * When detected, the tokenizer consumes everything up to ) or EOF.
+	 * When detected, the processor consumes everything up to ) or EOF.
 	 * This prevents the bad URL from breaking subsequent tokens.
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-bad-url-token
@@ -248,9 +284,19 @@ class CSSTokenizer {
 	private $token_unit = null;
 
 	/**
-	 * Constructor for the CSS tokenizer.
+	 * Lexical replacements to apply to input CSS document.
 	 *
-	 * Do not instantiate directly. Use CSSTokenizer::create() instead.
+	 * Tracks modifications to be applied to the CSS, such as changing URL values.
+	 * Each entry is an associative array with 'start', 'length', and 'text' keys.
+	 *
+	 * @var array[]
+	 */
+	private $lexical_updates = array();
+
+	/**
+	 * Constructor for the CSS processor.
+	 *
+	 * Do not instantiate directly. Use CSSProcessor::create() instead.
 	 *
 	 * @param string $css         CSS source to tokenize.
 	 */
@@ -260,9 +306,9 @@ class CSSTokenizer {
 	}
 
 	/**
-	 * Creates a CSS tokenizer for the given CSS string.
+	 * Creates a CSS processor for the given CSS string.
 	 *
-	 * Use this method to create a CSS tokenizer instance.
+	 * Use this method to create a CSS processor instance.
 	 *
 	 * ## Current Support
 	 *
@@ -270,7 +316,7 @@ class CSSTokenizer {
 	 *
 	 * @param string $css      CSS source to tokenize.
 	 * @param string $encoding Text encoding of the document; must be default of 'UTF-8'.
-	 * @return static|null The created tokenizer if successful, otherwise null.
+	 * @return static|null The created processor if successful, otherwise null.
 	 */
 	public static function create( string $css, string $encoding = 'UTF-8' ) {
 		if ( 'UTF-8' !== $encoding ) {
@@ -610,7 +656,7 @@ class CSSTokenizer {
 	/**
 	 * Gets the current token value as a normalized and decoded string. This is
 	 * a slight divergence from the CSS Syntax Level 3 spec, where all the numberic
-	 * values are parsed as numbers. This tokenizer is only concerned with their
+	 * values are parsed as numbers. This processor is only concerned with their
 	 * textual representation.
 	 *
 	 * Returns the semantic value of the token per CSS Syntax Level 3 spec:
@@ -739,6 +785,166 @@ class CSSTokenizer {
 	 */
 	public function get_token_value_length(): ?int {
 		return $this->token_value_length;
+	}
+
+	/**
+	 * Sets the value of the current URL token.
+	 *
+	 * This method allows modifying the URL value in url() tokens. The new value
+	 * will be properly escaped according to CSS URL syntax rules.
+	 *
+	 * Currently only URL tokens are supported. Attempting to set the value on
+	 * other token types will return false.
+	 *
+	 * Example:
+	 *
+	 *     $css = 'background: url(old.jpg);';
+	 *     $processor = CSSProcessor::create( $css );
+	 *     while ( $processor->next_token() ) {
+	 *         if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+	 *             $processor->set_token_value( 'new.jpg' );
+	 *         }
+	 *     }
+	 *     echo $processor->get_updated_css();
+	 *     // Outputs: background: url(new.jpg);
+	 *
+	 * @param string $new_value The new URL value (should not include url() wrapper).
+	 * @return bool Whether the value was successfully updated.
+	 */
+	public function set_token_value( string $new_value ): bool {
+		// Only URL tokens are currently supported.
+		if ( self::TOKEN_URL !== $this->token_type ) {
+			return false;
+		}
+
+		// Ensure we have valid token value boundaries.
+		if ( null === $this->token_value_starts_at || null === $this->token_value_length ) {
+			return false;
+		}
+
+		// Escape the URL value for unquoted URL syntax.
+		$escaped_value = $this->escape_url_value( $new_value );
+
+		// Queue the lexical update.
+		$this->lexical_updates[] = array(
+			'start'  => $this->token_value_starts_at,
+			'length' => $this->token_value_length,
+			'text'   => $escaped_value,
+		);
+
+		return true;
+	}
+
+	/**
+	 * Escapes a URL value for use in quoted url() syntax.
+	 *
+	 * Always returns a quoted URL string since they're easier
+	 * to escape. Quoted URLs are consumed using the string token
+	 * rules, and the only values we need to escape in strings, are:
+	 *
+	 * * Trailing quote.
+	 * * Newlines. That amounts to \n, \r, \f, \r\n when preprocessing is considered.
+	 * * U+005C REVERSE SOLIDUS (\)
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-url-token
+	 */
+	private function escape_url_value( string $unescaped ): string {
+		$escaped = '';
+		$at      = 0;
+		while ( $at < strlen( $unescaped ) ) {
+			$safe_len = strcspn( $unescaped, "\n\r\f\\\"", $at );
+			if ( $safe_len > 0 ) {
+				$escaped .= substr( $unescaped, $at, $safe_len );
+				$at      += $safe_len;
+				continue;
+			}
+
+			$unsafe_char = $unescaped[ $at ];
+			switch ( $unsafe_char ) {
+				case "\r":
+					++$at;
+					/**
+					 * Add a trailing space to prevent accidentally creating a
+					 * wrong escape sequence. This is a valid CSS syntax and
+					 * CSS parsers will ignore that whitespace.
+					 *
+					 * Without the space, "carriage\return" would be encoded as "carriage\aeturn",
+					 * making `e` a part of the escape sequence `\ae` which is not
+					 * what the caller intended.
+					 */
+					$escaped .= '\\a ';
+					if ( strlen( $unescaped ) > $at + 1 && "\n" === $unescaped[ $at + 1 ] ) {
+						++$at;
+					}
+					break;
+				case "\f":
+				case "\n":
+					++$at;
+					$escaped .= '\\a ';
+					break;
+				case '\\':
+					++$at;
+					$escaped .= '\\5C ';
+					break;
+				case '"':
+					++$at;
+					$escaped .= '\\22 ';
+					break;
+				default:
+					_doing_it_wrong( __METHOD__, 'Unexpected character in URL value: ' . $unsafe_char, '1.0.0' );
+					break;
+			}
+		}
+		return '"' . $escaped . '"';
+	}
+
+	/**
+	 * Returns the CSS with all modifications applied.
+	 *
+	 * This method applies all queued lexical updates and returns the modified CSS.
+	 * If no modifications were made, returns the original CSS.
+	 *
+	 * Example:
+	 *
+	 *     $css = 'background: url(old.jpg);';
+	 *     $processor = CSSProcessor::create( $css );
+	 *     while ( $processor->next_token() ) {
+	 *         if ( CSSProcessor::TOKEN_URL === $processor->get_token_type() ) {
+	 *             $processor->set_token_value( 'new.jpg' );
+	 *         }
+	 *     }
+	 *     echo $processor->get_updated_css();
+	 *     // Outputs: background: url(new.jpg);
+	 *
+	 * @return string The modified CSS.
+	 */
+	public function get_updated_css(): string {
+		if ( empty( $this->lexical_updates ) ) {
+			return $this->css;
+		}
+
+		// Sort updates by start position in ascending order.
+		usort(
+			$this->lexical_updates,
+			function ( $a, $b ) {
+				return $a['start'] - $b['start'];
+			}
+		);
+
+		// Build the output by concatenating original CSS fragments with replacements.
+		$bytes_already_copied = 0;
+		$output               = '';
+
+		foreach ( $this->lexical_updates as $update ) {
+			$output              .= substr( $this->css, $bytes_already_copied, $update['start'] - $bytes_already_copied );
+			$output              .= $update['text'];
+			$bytes_already_copied = $update['start'] + $update['length'];
+		}
+
+		// Copy remaining CSS after last update.
+		$output .= substr( $this->css, $bytes_already_copied );
+
+		return $output;
 	}
 
 	/**
