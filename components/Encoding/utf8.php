@@ -55,6 +55,7 @@ else :
 	 *
 	 * @since 6.9.0
 	 */
+	// phpcs:ignore Universal.NamingConventions.NoReservedKeywordParameterNames.stringFound
 	function wp_is_valid_utf8( string $string ): bool {
 		return _wp_is_valid_utf8_fallback( $string );
 	}
@@ -293,7 +294,7 @@ function utf8_codepoint_at( string $text, int $byte_offset = 0, &$matched_bytes 
 	}
 
 	$new_byte_offset = $byte_offset;
-	if( 1 !== _wp_scan_utf8( $text, $new_byte_offset, $invalid_length, null, 1 ) ) {
+	if ( 1 !== _wp_scan_utf8( $text, $new_byte_offset, $invalid_length, null, 1 ) ) {
 		return utf8_ord( "\u{FFFD}" );
 	}
 
