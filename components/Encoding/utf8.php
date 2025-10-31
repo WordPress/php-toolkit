@@ -2,6 +2,11 @@
 
 namespace WordPress\Encoding;
 
+use function WordPress\Encoding\compat\_wp_is_valid_utf8_fallback;
+use function WordPress\Encoding\compat\_wp_scrub_utf8_fallback;
+use function WordPress\Encoding\compat\_wp_has_noncharacters_fallback;
+use function WordPress\Encoding\compat\_wp_scan_utf8;
+
 if ( extension_loaded( 'mbstring' ) ) :
 	/**
 	 * Determines if a given byte string represents a valid UTF-8 encoding.
@@ -192,3 +197,134 @@ else :
 		return _wp_has_noncharacters_fallback( $text );
 	}
 endif;
+
+/**
+ * UTF-8 encoding pipeline by Dennis Snell (@dmsnell).
+ *
+ * It enables parsing XML documents with incomplete UTF-8 byte sequences
+ * without crashing or depending on the mbstring extension.
+ */
+
+/**
+ * Encode a code point number into the UTF-8 encoding.
+ *
+ * This encoder implements the UTF-8 encoding algorithm for converting
+ * a code point into a byte sequence. If it receives an invalid code
+ * point it will return the Unicode Replacement Character U+FFFD `�`.
+ *
+ * Example:
+ *
+ *     '🅰' === WP_HTML_Decoder::codepoint_to_utf8_bytes( 0x1f170 );
+ *
+ *     // Half of a surrogate pair is an invalid code point.
+ *     '�' === WP_HTML_Decoder::codepoint_to_utf8_bytes( 0xd83c );
+ *
+ * @since 6.6.0
+ *
+ * @see https://www.rfc-editor.org/rfc/rfc3629 For the UTF-8 standard.
+ *
+ * @param int $codepoint Which code point to convert.
+ * @return string Converted code point, or `�` if invalid.
+ */
+function codepoint_to_utf8_bytes( $codepoint ) {
+	// Pre-check to ensure a valid code point.
+	if (
+		$codepoint <= 0 ||
+		( $codepoint >= 0xD800 && $codepoint <= 0xDFFF ) ||
+		$codepoint > 0x10FFFF
+	) {
+		return '�';
+	}
+
+	if ( $codepoint <= 0x7F ) {
+		return chr( $codepoint );
+	}
+
+	if ( $codepoint <= 0x7FF ) {
+		$byte1 = chr( ( 0xC0 | ( ( $codepoint >> 6 ) & 0x1F ) ) );
+		$byte2 = chr( $codepoint & 0x3F | 0x80 );
+
+		return "{$byte1}{$byte2}";
+	}
+
+	if ( $codepoint <= 0xFFFF ) {
+		$byte1 = chr( ( $codepoint >> 12 ) | 0xE0 );
+		$byte2 = chr( ( $codepoint >> 6 ) & 0x3F | 0x80 );
+		$byte3 = chr( $codepoint & 0x3F | 0x80 );
+
+		return "{$byte1}{$byte2}{$byte3}";
+	}
+
+	// Any values above U+10FFFF are eliminated above in the pre-check.
+	$byte1 = chr( ( $codepoint >> 18 ) | 0xF0 );
+	$byte2 = chr( ( $codepoint >> 12 ) & 0x3F | 0x80 );
+	$byte3 = chr( ( $codepoint >> 6 ) & 0x3F | 0x80 );
+	$byte4 = chr( $codepoint & 0x3F | 0x80 );
+
+	return "{$byte1}{$byte2}{$byte3}{$byte4}";
+}
+
+
+/*
+ * UTF-8 decoding pipeline by Dennis Snell (@dmsnell), originally
+ * proposed in https://github.com/WordPress/wordpress-develop/pull/6883.
+ *
+ * It enables parsing XML documents with incomplete UTF-8 byte sequences
+ * without crashing or depending on the mbstring extension.
+ */
+
+/**
+ * Extract a unicode codepoint from a specific offset in text.
+ * Invalid byte sequences count as a single code point, U+FFFD
+ * (the Unicode replacement character ``).
+ *
+ * This function does not permit passing negative indices and will return
+ * null if such are provided.
+ *
+ * @param  string $text  Input text from which to extract.
+ * @param  int    $byte_offset  Start at this byte offset in the input text.
+ * @param  int    $matched_bytes  How many bytes were matched to produce the codepoint.
+ *
+ * @return int Unicode codepoint.
+ */
+function utf8_codepoint_at( string $text, int $byte_offset = 0, &$matched_bytes = 0 ) {
+	if ( $byte_offset < 0 ) {
+		return null;
+	}
+
+	$new_byte_offset = $byte_offset;
+	if( 1 !== _wp_scan_utf8( $text, $new_byte_offset, $invalid_length, null, 1 ) ) {
+		return utf8_ord( "\u{FFFD}" );
+	}
+
+	$matched_bytes = $new_byte_offset - $byte_offset;
+	return utf8_ord( substr( $text, $byte_offset, $matched_bytes ) );
+}
+
+/**
+ * Convert a UTF-8 byte sequence to its Unicode codepoint.
+ *
+ * @param  string $character  UTF-8 encoded byte sequence representing a single Unicode character.
+ *
+ * @return int Unicode codepoint.
+ */
+function utf8_ord( string $character ): int {
+	// Convert the byte sequence to its binary representation.
+	$bytes = unpack( 'C*', $character );
+
+	// Initialize the codepoint.
+	$codepoint = 0;
+
+	// Calculate the codepoint based on the number of bytes.
+	if ( 1 === count( $bytes ) ) {
+		$codepoint = $bytes[1];
+	} elseif ( 2 === count( $bytes ) ) {
+		$codepoint = ( ( $bytes[1] & 0x1F ) << 6 ) | ( $bytes[2] & 0x3F );
+	} elseif ( 3 === count( $bytes ) ) {
+		$codepoint = ( ( $bytes[1] & 0x0F ) << 12 ) | ( ( $bytes[2] & 0x3F ) << 6 ) | ( $bytes[3] & 0x3F );
+	} elseif ( 4 === count( $bytes ) ) {
+		$codepoint = ( ( $bytes[1] & 0x07 ) << 18 ) | ( ( $bytes[2] & 0x3F ) << 12 ) | ( ( $bytes[3] & 0x3F ) << 6 ) | ( $bytes[4] & 0x3F );
+	}
+
+	return $codepoint;
+}

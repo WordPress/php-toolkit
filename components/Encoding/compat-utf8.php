@@ -1,6 +1,6 @@
 <?php
 
-namespace WordPress\Encoding;
+namespace WordPress\Encoding\compat;
 
 /**
  * Finds spans of valid and invalid UTF-8 bytes in a given string.
