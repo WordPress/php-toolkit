@@ -180,24 +180,29 @@ class CSSURLProcessorTest extends TestCase {
 				'https://example.com/path/to/file.png',
 			),
 			'Escaped question mark'                   => array(
+							  // https://example.com/file.png\?query
 				"background: url(https://example.com/file.png\u{5c}\u{003f}query)",
 				'https://example.com/file.png?query',
 			),
 			'Escaped hash'                            => array(
+							  // https://example.com/file.png\#anchor
 				"background: url(https://example.com/file.png\u{5c}\u{0023}anchor)",
 				'https://example.com/file.png#anchor',
 			),
 
 			// Consecutive backslashes
 			'Two backslashes'                         => array(
+							  // https://example.com/test\\.png
 				"background: url(https://example.com/test\u{5c}\u{5c}.png)",
 				"https://example.com/test\u{5c}.png",
 			),
 			'Three backslashes'                       => array(
+							  // https://example.com/test\\\.png
 				"background: url(https://example.com/test\u{5c}\u{5c}\u{5c}.png)",
 				"https://example.com/test\u{5c}.png",
 			),
 			'Four backslashes'                        => array(
+							  // https://example.com/test\\\\.png
 				"background: url(https://example.com/test\u{5c}\u{5c}\u{5c}\u{5c}.png)",
 				"https://example.com/test\u{5c}\u{5c}.png",
 			),
@@ -207,58 +212,99 @@ class CSSURLProcessorTest extends TestCase {
 	/**
 	 * @dataProvider provider_test_basic_css_url_detection
 	 */
-	public function test_basic_css_url_detection( $css_value, $expected_url ) {
+	public function test_basic_css_url_detection( $css_value, $should_find_url, $expected_url = null ) {
 		$processor = new CSSURLProcessor( $css_value );
 
-		$this->assertTrue( $processor->next_url(), 'Failed to find URL in CSS' );
-		$this->assertEquals( $expected_url, $processor->get_raw_url() );
+		if ( $should_find_url ) {
+			$this->assertTrue( $processor->next_url(), 'Failed to find URL in CSS' );
+			$this->assertEquals( $expected_url, $processor->get_raw_url() );
+		} else {
+			$this->assertFalse( $processor->next_url(), 'Should not find URL in CSS' );
+		}
 	}
 
 	public static function provider_test_basic_css_url_detection() {
 		return array(
 			'Quoted URL'                              => array(
-				'background: url("https://example.com/image.png")',
-				'https://example.com/image.png',
+				'css'           => 'background: url("https://example.com/image.png")',
+				'should-detect' => true,
+				'url'           => 'https://example.com/image.png',
 			),
 			'Single-quoted URL'                       => array(
-				"background: url('https://example.com/image.png')",
-				'https://example.com/image.png',
+				'css'           => "background: url('https://example.com/image.png')",
+				'should-detect' => true,
+				'url'           => 'https://example.com/image.png',
 			),
 			'Unquoted URL'                            => array(
-				'background: url(https://example.com/image.png)',
-				'https://example.com/image.png',
+				'css'           => 'background: url(https://example.com/image.png)',
+				'should-detect' => true,
+				'url'           => 'https://example.com/image.png',
 			),
-			'URL with whitespace before'              => array(
-				'background: url(  "https://example.com/image.png")',
-				'https://example.com/image.png',
+			'Quoted URL with a whitespace before the opening quote'              => array(
+				'css'           => 'background: url(  "https://example.com/image.png")',
+				'should-detect' => true,
+				'url'           => 'https://example.com/image.png',
 			),
-			'URL with whitespace after'               => array(
-				'background: url("https://example.com/image.png"  )',
-				'https://example.com/image.png',
+			'Unquoted URL with whitespace inside the parentheses'              => array(
+				'css'           => 'background: url(  https://example.com/image.png  )',
+				'should-detect' => true,
+				'url'           => 'https://example.com/image.png',
 			),
-			'Case-insensitive URL function'           => array(
-				'background: URL("https://example.com/image.png")',
-				'https://example.com/image.png',
+			'Unquoted URL with whitespace in the middle of the URL'              => array(
+				'css'           => 'background: url(  https://example.com/  image.png  )',
+				'should-detect' => false
+			),
+			'Quoted URL with whitespace in the middle of the URL'              => array(
+				'css'           => 'background: url(  "https://example.com/  image.png"  )',
+				'should-detect' => true,
+				'url'           => 'https://example.com/  image.png',
+			),
+			'Quoted URL with a comment before the opening quote'              => array(
+				'css'           => 'background: url(/**/"https://example.com/image.png")',
+				'should-detect' => false,
+			),
+			'Quoted URL with a whitespace after the closing quote'               => array(
+				'css'           => 'background: url("https://example.com/image.png"  )',
+				'should-detect' => true,
+				'url'           => 'https://example.com/image.png',
+			),
+			'Uppercase URL function'           => array(
+				'css'           => 'background: URL("https://example.com/image.png")',
+				'should-detect' => true,
+				'url'           => 'https://example.com/image.png',
+			),
+
+			'CSS comment containing a URL'    => array(
+				'css'           => '/* background: url("https://commented.com/image.png"); */',
+				'should-detect' => false,
+			),
+			'String content discussing a url() function' => array(
+				'css'           => 'content: "Visit url(https://example.com)";',
+				'should-detect' => false,
+			),
+			'CSS containing no URL'                           => array(
+				'css'           => 'background: #fff; color: red;',
+				'should-detect' => false,
+			),
+
+			// Verify real URLs are found after skipped content
+			'Background URL placed after a CSS comment containing a URL'      => array(
+				'css'           => '/* background: url("https://commented.com/image.png"); */ background: url("https://real.com/image.png")',
+				'should-detect' => true,
+				'url'           => 'https://real.com/image.png',
+			),
+			'Background URL placed after a string discussing a url() function' => array(
+				'css'           => 'content: "Visit url(https://example.com)"; background: url("https://real.com/image.png")',
+				'should-detect' => true,
+				'url'           => 'https://real.com/image.png',
+			),
+
+			'Data URI' => array(
+				'css'           => 'background: url("data:image/png;base64,iVBORw0KGgo=")',
+				'should-detect' => true,
+				'url'           => 'data:image/png;base64,iVBORw0KGgo=',
 			),
 		);
-	}
-
-	public function test_skips_urls_in_comments() {
-		$css       = '/* background: url("https://commented.com/image.png"); */ background: url("https://real.com/image.png")';
-		$processor = new CSSURLProcessor( $css );
-
-		$this->assertTrue( $processor->next_url() );
-		$this->assertEquals( 'https://real.com/image.png', $processor->get_raw_url() );
-		$this->assertFalse( $processor->next_url(), 'Should not find commented URL' );
-	}
-
-	public function test_skips_urls_in_strings() {
-		$css       = 'content: "Visit url(https://example.com)"; background: url("https://real.com/image.png")';
-		$processor = new CSSURLProcessor( $css );
-
-		$this->assertTrue( $processor->next_url() );
-		$this->assertEquals( 'https://real.com/image.png', $processor->get_raw_url() );
-		$this->assertFalse( $processor->next_url(), 'Should not find URL in content string' );
 	}
 
 	public function test_handles_multiple_urls() {
@@ -274,15 +320,128 @@ class CSSURLProcessorTest extends TestCase {
 		$this->assertFalse( $processor->next_url() );
 	}
 
-	public function test_url_replacement() {
-		$css       = 'background: url("https://old.com/image.png")';
-		$processor = new CSSURLProcessor( $css );
+	/**
+	 * Tests set_raw_url() with various edge cases.
+	 * Note: The output always produces a quoted URL, preserving the original quote style.
+	 *
+	 * @dataProvider provider_test_url_replacement
+	 */
+	public function test_url_replacement( $input_css, $new_url, $expected_css ) {
+		$processor = new CSSURLProcessor( $input_css );
 
-		$this->assertTrue( $processor->next_url() );
-		$this->assertTrue( $processor->set_raw_url( 'https://new.com/image.png' ) );
+		$this->assertTrue( $processor->next_url(), 'Failed to find URL in input CSS' );
+		$this->assertTrue( $processor->set_raw_url( $new_url ), 'Failed to set new URL' );
+		$this->assertEquals( $expected_css, $processor->get_updated_css(), 'Output CSS does not match expected' );
+	}
 
-		$expected = 'background: url("https://new.com/image.png")';
-		$this->assertEquals( $expected, $processor->get_updated_css() );
+	public static function provider_test_url_replacement() {
+		return array(
+			'Replace double-quoted URL'                => array(
+				'input'    => 'background: url("https://old.com/image.png")',
+				'new_url'  => 'https://new.com/image.png',
+				'expected' => 'background: url("https://new.com/image.png")',
+			),
+			'Replace single-quoted URL'                => array(
+				'input'    => "background: url('https://old.com/image.png')",
+				'new_url'  => 'https://new.com/image.png',
+				'expected' => "background: url('https://new.com/image.png')",
+			),
+			'Replace unquoted URL (outputs quoted)'    => array(
+				'input'    => 'background: url(https://old.com/image.png)',
+				'new_url'  => 'https://new.com/image.png',
+				'expected' => 'background: url("https://new.com/image.png")',
+			),
+
+			'URL with double quotes in path'          => array(
+				'input'    => 'background: url("https://old.com/old.png")',
+				'new_url'  => 'https://example.com/path"with"quotes.png',
+				'expected' => "background: url(\u{22}https://example.com/path\u{5c}22 with\u{5c}22 quotes.png\u{22})",  // \22 = "
+			),
+			'URL with single quotes in single-quoted string' => array(
+				'input'    => "background: url('https://old.com/old.png')",
+				'new_url'  => "https://example.com/path'with'quotes.png",
+				'expected' => "background: url('https://example.com/path'with'quotes.png')",  // Single quotes not escaped in single-quoted context
+			),
+			'URL with backslashes in path'            => array(
+				'input'    => 'background: url("https://old.com/old.png")',
+				'new_url'  => 'https://example.com/path\\with\\backslashes.png',
+				'expected' => "background: url(\u{22}https://example.com/path\u{5c}5C with\u{5c}5C backslashes.png\u{22})",  // \5C = \
+			),
+			'URL with parentheses in path'            => array(
+				'input'    => 'background: url("https://old.com/old.png")',
+				'new_url'  => 'https://example.com/file(1).png',
+				'expected' => 'background: url("https://example.com/file(1).png")',
+			),
+			'URL with spaces in path'                 => array(
+				'input'    => 'background: url("https://old.com/old.png")',
+				'new_url'  => 'https://example.com/path with spaces.png',
+				'expected' => 'background: url("https://example.com/path with spaces.png")',
+			),
+			'URL with newline character'              => array(
+				'input'    => 'background: url("https://old.com/old.png")',
+				'new_url'  => "https://example.com/path\nwith\nnewlines.png",
+				'expected' => "background: url(\u{22}https://example.com/path\u{5c}a with\u{5c}a newlines.png\u{22})",  // \a = newline
+			),
+			'URL with tab character'                  => array(
+				'input'    => 'background: url("https://old.com/old.png")',
+				'new_url'  => "https://example.com/path\twith\ttabs.png",
+				'expected' => "background: url(\u{22}https://example.com/path\twith\ttabs.png\u{22})",  // Tab preserved as-is
+			),
+
+			'Replace with data URI'                   => array(
+				'input'    => 'background: url("https://old.com/image.png")',
+				'new_url'  => 'data:image/png;base64,iVBORw0KGgo=',
+				'expected' => 'background: url("data:image/png;base64,iVBORw0KGgo=")',
+			),
+			'Replace data URI with regular URL'       => array(
+				'input'    => 'background: url("data:image/png;base64,iVBORw0KGgo=")',
+				'new_url'  => 'https://new.com/image.png',
+				'expected' => 'background: url("https://new.com/image.png")',
+			),
+
+			'Replace with relative URL'               => array(
+				'input'    => 'background: url("https://old.com/image.png")',
+				'new_url'  => '/images/new.png',
+				'expected' => 'background: url("/images/new.png")',
+			),
+			'Replace with path-only URL'              => array(
+				'input'    => 'background: url("https://old.com/image.png")',
+				'new_url'  => '../images/new.png',
+				'expected' => 'background: url("../images/new.png")',
+			),
+
+			'URL with emoji'                          => array(
+				'input'    => 'background: url("https://old.com/old.png")',
+				'new_url'  => 'https://example.com/😀.png',
+				'expected' => 'background: url("https://example.com/😀.png")',
+			),
+			'URL with Chinese characters'             => array(
+				'input'    => 'background: url("https://old.com/old.png")',
+				'new_url'  => 'https://example.com/中文.png',
+				'expected' => 'background: url("https://example.com/中文.png")',
+			),
+
+			'Empty URL'                               => array(
+				'input'    => 'background: url("https://old.com/image.png")',
+				'new_url'  => '',
+				'expected' => 'background: url("")',
+			),
+			'URL with query parameters'               => array(
+				'input'    => 'background: url("https://old.com/old.png")',
+				'new_url'  => 'https://example.com/image.png?v=123&t=456',
+				'expected' => 'background: url("https://example.com/image.png?v=123&t=456")',
+			),
+			'URL with fragment'                       => array(
+				'input'    => 'background: url("https://old.com/old.png")',
+				'new_url'  => 'https://example.com/image.png#section',
+				'expected' => 'background: url("https://example.com/image.png#section")',
+			),
+			'Non-URL content' => array(
+				'input'    => 'background: url("https://old.com/old.png")',
+				'new_url'  => 'WordPress is great!',
+				'expected' => 'background: url("WordPress is great!")',
+			),
+		);
 	}
 
 	public function test_replaces_multiple_urls() {
@@ -299,28 +458,147 @@ class CSSURLProcessorTest extends TestCase {
 		$this->assertEquals( $expected, $processor->get_updated_css() );
 	}
 
-	public function test_handles_whitespace_inside_url() {
-		// CSS spec allows whitespace but not comments inside url()
-		$css       = 'background: url(  "https://example.com/image.png"  )';
-		$processor = new CSSURLProcessor( $css );
+	/**
+	 * @TODO: !!! AI generated test. Needs careful reviewing before merging. !!!
+	 * 
+	 * Comprehensive integration test with various CSS syntaxes and corner cases.
+	 * Tests replacing multiple URLs in a realistic CSS snippet with different:
+	 * - Quote styles (double, single, unquoted)
+	 * - URL contexts (background, border-image, cursor, list-style)
+	 * - Special cases (data URIs, escaped characters, multiple URLs per property)
+	 * - Edge cases (URLs in comments and strings should be skipped)
+	 */
+	public function test_comprehensive_url_replacement_in_complex_css() {
+		// Complex CSS with various syntaxes and corner cases
+		// Using \u{5c} to represent backslashes in CSS escapes for clarity
+		$input_css = <<<CSS
+/* This comment contains url("https://commented.com/should-not-match.png") which should be ignored */
+.hero {
+	background: url("https://example.com/hero-bg.jpg") no-repeat center;
+	background-size: cover;
+}
 
-		$this->assertTrue( $processor->next_url() );
-		$this->assertEquals( 'https://example.com/image.png', $processor->get_raw_url() );
-	}
+.card {
+	/* Multiple URLs in a single property */
+	background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+	            url('https://example.com/card-bg.png'),
+	            url("https://example.com/fallback-bg.jpg");
+}
 
-	public function test_returns_false_when_no_urls() {
-		$css       = 'background: #fff; color: red;';
-		$processor = new CSSURLProcessor( $css );
+.icon {
+	/* Unquoted URL */
+	list-style-image: url(https://example.com/bullet.svg);
+}
 
-		$this->assertFalse( $processor->next_url() );
-	}
+.border {
+	/* Data URI should be detected */
+	border-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==") 30 round;
+}
 
-	public function test_handles_data_uris() {
-		$css       = 'background: url("data:image/png;base64,iVBORw0KGgo=")';
-		$processor = new CSSURLProcessor( $css );
+.cursor {
+	cursor: url('https://example.com/cursor.cur'), auto;
+}
 
-		$this->assertTrue( $processor->next_url() );
-		$this->assertEquals( 'data:image/png;base64,iVBORw0KGgo=', $processor->get_raw_url() );
+.content::before {
+	/* URL in content string should be ignored */
+	content: "Please visit url(https://fake.com/info.html) for more info";
+	background: url("https://example.com/icon.png");
+}
+
+.mask {
+	/* URL with escaped characters */
+	mask-image: url("https://example.com/path\u{5c}20with\u{5c}20spaces.svg");
+}
+
+.special {
+	/* URL with special characters in the path */
+	background: url("https://example.com/file(2024).png?v=123&t=456#section");
+}
+CSS;
+
+		// Expected output with all URLs replaced with unique identifiers
+		$expected_css = <<<'CSS'
+/* This comment contains url("https://commented.com/should-not-match.png") which should be ignored */
+.hero {
+	background: url("https://replaced.test/url-1") no-repeat center;
+	background-size: cover;
+}
+
+.card {
+	/* Multiple URLs in a single property */
+	background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+	            url('https://replaced.test/url-2'),
+	            url("https://replaced.test/url-3");
+}
+
+.icon {
+	/* Unquoted URL */
+	list-style-image: url("https://replaced.test/url-4");
+}
+
+.border {
+	/* Data URI should be detected */
+	border-image: url("https://replaced.test/url-5") 30 round;
+}
+
+.cursor {
+	cursor: url('https://replaced.test/url-6'), auto;
+}
+
+.content::before {
+	/* URL in content string should be ignored */
+	content: "Please visit url(https://fake.com/info.html) for more info";
+	background: url("https://replaced.test/url-7");
+}
+
+.mask {
+	/* URL with escaped characters */
+	mask-image: url("https://replaced.test/url-8");
+}
+
+.special {
+	/* URL with special characters in the path */
+	background: url("https://replaced.test/url-9");
+}
+CSS;
+
+		$processor = new CSSURLProcessor( $input_css );
+
+		// Track which URLs we found for verification
+		$found_urls = array();
+		$url_counter = 1;
+
+		// Replace all URLs with unique identifiers
+		while ( $processor->next_url() ) {
+			$original_url = $processor->get_raw_url();
+			$found_urls[] = $original_url;
+
+			$new_url = "https://replaced.test/url-{$url_counter}";
+			$processor->set_raw_url( $new_url );
+
+			$url_counter++;
+		}
+
+		// Verify we found exactly 9 URLs (comments and strings excluded)
+		$this->assertCount( 9, $found_urls, 'Should find exactly 9 URLs (excluding those in comments and strings)' );
+
+		// Verify the expected URLs were found in order
+		$expected_urls = array(
+			'https://example.com/hero-bg.jpg',
+			'https://example.com/card-bg.png',
+			'https://example.com/fallback-bg.jpg',
+			'https://example.com/bullet.svg',
+			'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+			'https://example.com/cursor.cur',
+			'https://example.com/icon.png',
+			'https://example.com/path with spaces.svg',  // Note: \20 is decoded to space
+			'https://example.com/file(2024).png?v=123&t=456#section',
+		);
+
+		$this->assertEquals( $expected_urls, $found_urls, 'Found URLs should match expected URLs in order' );
+
+		// Verify the final CSS matches expected output
+		$this->assertEquals( $expected_css, $processor->get_updated_css(), 'Updated CSS should match expected output' );
 	}
 
 	public function test_handles_1mb_data_uri() {
@@ -428,17 +706,6 @@ class CSSURLProcessorTest extends TestCase {
 		$processor = new CSSURLProcessor( 'background: #fff;' );
 
 		$this->assertFalse( $processor->is_data_uri(), 'is_data_uri() should return false when no URL is matched' );
-	}
-
-	public function test_is_data_uri_optimized_no_extraction() {
-		// Test that is_data_uri() works correctly for data URIs.
-		// Note: The optimization (checking first 5 bytes without extraction)
-		// is now internal to CSSProcessor.
-		$css       = 'background: url("data:image/png;base64,iVBORw0KGgo=")';
-		$processor = new CSSURLProcessor( $css );
-
-		$this->assertTrue( $processor->next_url() );
-		$this->assertTrue( $processor->is_data_uri(), 'is_data_uri() should return true for data URIs' );
 	}
 
 	public function test_large_data_uri_does_not_allocate_additional_memory() {
