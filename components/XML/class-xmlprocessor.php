@@ -2354,25 +2354,21 @@ class XMLProcessor {
 			 * is likely faster. It would be interesting to evaluate the performance
 			 * and prefer mbstring whenever it's available.
 			 */
-			$bytes_parsed = _wp_scan_utf8(
-				$this->xml,
-				$offset + $name_byte_length,
-				$invalid_length,
-				null,
-				1
-			);
-			// EOF or invalid byte sequence.
-			if ( 1 !== $bytes_parsed ) {
+			$at = $offset + $name_byte_length;
+			$new_at = $at;
+			if ( 1 !== _wp_scan_utf8( $this->xml, $new_at, $invalid_length, null, 1 ) ) {
+				// EOF or invalid utf-8 byte sequence.
 				break;
 			}
 
-			$codepoint = utf8_ord( substr( $this->xml, $offset + $name_byte_length, $bytes_parsed ) );
+			$codepoint_byte_length = $new_at - $at;
+			$codepoint = utf8_ord( substr( $this->xml, $at, $codepoint_byte_length ) );
 
 			// The codepoint is not a valid part of an XML NameChar or NameStartChar.
 			if ( ! $this->is_valid_name_codepoint( $codepoint, 0 === $name_byte_length ) ) {
 				break;
 			}
-			$name_byte_length += $bytes_parsed;
+			$name_byte_length += $codepoint_byte_length;
 		}
 
 		return $name_byte_length;
