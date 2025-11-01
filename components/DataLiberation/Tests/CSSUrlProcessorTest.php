@@ -160,21 +160,23 @@ class CSSURLProcessorTest extends TestCase {
 				"background: url(https://example.com/\u{5c}00002F\u{5c}000041.png)",
 				'https://example.com//A.png',
 			),
-			'Mixed case hex digits with whitespace'   => array(
+			'Mixed case hex digits (2f 2F) with trailing whitespace'   => array(
 				// Note: The whitespace after hex escapes is consumed as part of the escape sequence
-				"background: url(\u{22}https://example.com/\u{5c}2F \u{5c}61 \u{5c}41 \u{5c}42 .png\u{22})",
-				'https://example.com//aAB.png',
+				"background: url(\u{22}https://example.com\u{5c}2F \u{5c}2f file.png\u{22})",
+				'https://example.com//file.png',
 			),
 
 			// Very low codepoint
 			'Control character `\u{5c}1` (SOH)'             => array(
+				                    // https://example.com/test\1 .png
 				"background: url(\u{22}https://example.com/test\u{5c}1 .png\u{22})",
 				"https://example.com/test\u{01}.png",
 			),
 
 			// Special URL characters escaped
 			'Escaped forward slash'                   => array(
-				"background: url(https://example.com/path\u{5c}\u{002f}to\u{5c}\u{002f}file.png)",
+				              // https://example.com/path\/to\/file.png
+				"background: url(https://example.com/path\u{5c}\u{2f}to\u{5c}\u{2f}file.png)",
 				'https://example.com/path/to/file.png',
 			),
 			'Escaped question mark'                   => array(
