@@ -5,7 +5,6 @@ namespace WordPress\Encoding;
 use function WordPress\Encoding\compat\_wp_is_valid_utf8_fallback;
 use function WordPress\Encoding\compat\_wp_scrub_utf8_fallback;
 use function WordPress\Encoding\compat\_wp_has_noncharacters_fallback;
-use function WordPress\Encoding\compat\_wp_scan_utf8;
 
 if ( extension_loaded( 'mbstring' ) ) :
 	/**
