@@ -7,7 +7,7 @@ require_once __DIR__ . '/class-cssprocessor.php';
 /**
  * Provides URL specific helpers on top of the CSSProcessor tokenizer.
  */
-class CSSUrlProcessor {
+class CSSURLProcessor {
 	/**
 	 * @var CSSProcessor
 	 */
