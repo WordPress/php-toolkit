@@ -1,6 +1,7 @@
 <?php
 
 namespace WordPress\Encoding;
+
 use function WordPress\Encoding\compat\_wp_scan_utf8;
 
 /*
