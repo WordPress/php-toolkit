@@ -19,127 +19,6 @@ if ( ! defined( 'UTF8_DECODER_REJECT' ) ) {
 }
 
 /**
- * Inner loop for a number of UTF-8 decoding-related functions.
- *
- * You probably don't need this! This is highly-specific and optimized
- * code for UTF-8 operations used in other functions.
- *
- * @see http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
- *
- * @since {WP_VERSION}
- *
- * @access private
- *
- * @param  string   $byte  Next byte to be applied in UTF-8 decoding or validation.
- * @param  int      $state  UTF-8 decoding state, one of the following values:<br><ul>
- *                                 <li>`UTF8_DECODER_ACCEPT`: Decoder is ready for a new code point.<br>
- *                                 <li>`UTF8_DECODER_REJECT`: An error has occurred.<br>
- *                                 Any other positive value: Decoder is waiting for additional bytes.
- * @param  int|null $codepoint  Optional. If provided, will accumulate the decoded code point as
- *                            each byte is processed. If not provided or unable to decode, will
- *                            not be set, or will be set to invalid and unusable data.
- *
- * @return int Next decoder state after processing the current byte.
- */
-function utf8_decoder_apply_byte( string $byte, int $state, int &$codepoint = 0 ): int {
-	/**
-	 * State classification and transition table for UTF-8 validation.
-	 *
-	 * > The first part of the table maps bytes to character classes that
-	 * > to reduce the size of the transition table and create bitmasks.
-	 * >
-	 * > The second part is a transition table that maps a combination
-	 * > of a state of the automaton and a character class to a state.
-	 *
-	 * @see http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
-	 */
-	static $state_table = (
-		"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" .
-		"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" .
-		"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" .
-		"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" .
-		"\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09" .
-		"\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07" .
-		"\x08\x08\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02" .
-		"\x10\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x04\x03\x03" .
-		"\x11\x06\x06\x06\x05\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08" .
-		"\x00\x01\x02\x03\x05\x08\x07\x01\x01\x01\x04\x06\x01\x01\x01\x01" .
-		"\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x00\x01\x01\x01\x01\x01\x00\x01\x00\x01\x01\x01\x01\x01\x01" .
-		"\x01\x02\x01\x01\x01\x01\x01\x02\x01\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x02\x01\x01\x01\x01\x01\x01\x01\x01" .
-		"\x01\x02\x01\x01\x01\x01\x01\x01\x01\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x03\x01\x03\x01\x01\x01\x01\x01\x01" .
-		"\x01\x03\x01\x01\x01\x01\x01\x03\x01\x03\x01\x01\x01\x01\x01\x01\x01\x03\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
-	);
-
-	$byte      = ord( $byte );
-	$type      = ord( $state_table[ $byte ] );
-	$codepoint = ( UTF8_DECODER_ACCEPT === $state )
-		? ( ( 0xFF >> $type ) & $byte )
-		: ( ( $byte & 0x3F ) | ( $codepoint << 6 ) );
-
-	return ord( $state_table[ 256 + ( $state * 16 ) + $type ] );
-}
-
-/**
- * Extract a slice of a text by code point, where invalid byte sequences count
- * as a single code point, U+FFFD (the Unicode replacement character `�`).
- *
- * This function does not permit passing negative indices and will return
- * the original string if such are provide.
- *
- * @param  string $text  Input text from which to extract.
- * @param  int    $from  Start extracting after this many code-points.
- * @param  int    $length  Extract this many code points.
- *
- * @return string Extracted slice of input string.
- */
-function utf8_substr( string $text, int $from = 0, ?int $length = null ): string {
-	if ( $from < 0 || ( isset( $length ) && $length < 0 ) ) {
-		return $text;
-	}
-
-	$position_in_input = 0;
-	$codepoint_at      = 0;
-	$end_byte          = strlen( $text );
-	$buffer            = '';
-	$seen_codepoints   = 0;
-	$sliced_codepoints = 0;
-	$decoder_state     = UTF8_DECODER_ACCEPT;
-
-	// Get to the start of the string.
-	while ( $position_in_input < $end_byte && $seen_codepoints < $length ) {
-		$decoder_state = utf8_decoder_apply_byte( $text[ $position_in_input ], $decoder_state );
-
-		if ( UTF8_DECODER_ACCEPT === $decoder_state ) {
-			++$position_in_input;
-
-			if ( $seen_codepoints >= $from ) {
-				++$sliced_codepoints;
-				$buffer .= substr( $text, $codepoint_at, $position_in_input - $codepoint_at );
-			}
-
-			++$seen_codepoints;
-			$codepoint_at = $position_in_input;
-		} elseif ( UTF8_DECODER_REJECT === $decoder_state ) {
-			// "\u{FFFD}" is not supported in PHP 5.6.
-			$buffer .= "\xEF\xBF\xBD";
-
-			// Skip to the start of the next code point.
-			while ( UTF8_DECODER_REJECT === $decoder_state && $position_in_input < $end_byte ) {
-				$decoder_state = utf8_decoder_apply_byte( $text[ ++$position_in_input ], UTF8_DECODER_ACCEPT );
-			}
-
-			++$seen_codepoints;
-			$codepoint_at  = $position_in_input;
-			$decoder_state = UTF8_DECODER_ACCEPT;
-		} else {
-			++$position_in_input;
-		}
-	}
-
-	return $buffer;
-}
-
-/**
  * Extract a unicode codepoint from a specific offset in text.
  * Invalid byte sequences count as a single code point, U+FFFD
  * (the Unicode replacement character ``).
@@ -212,4 +91,66 @@ function utf8_ord( string $character ): int {
 	}
 
 	return $codepoint;
+}
+
+
+/**
+ * Inner loop for a number of UTF-8 decoding-related functions.
+ *
+ * You probably don't need this! This is highly-specific and optimized
+ * code for UTF-8 operations used in other functions.
+ *
+ * @see http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+ *
+ * @since {WP_VERSION}
+ *
+ * @access private
+ *
+ * @param  string   $byte  Next byte to be applied in UTF-8 decoding or validation.
+ * @param  int      $state  UTF-8 decoding state, one of the following values:<br><ul>
+ *                                 <li>`UTF8_DECODER_ACCEPT`: Decoder is ready for a new code point.<br>
+ *                                 <li>`UTF8_DECODER_REJECT`: An error has occurred.<br>
+ *                                 Any other positive value: Decoder is waiting for additional bytes.
+ * @param  int|null $codepoint  Optional. If provided, will accumulate the decoded code point as
+ *                            each byte is processed. If not provided or unable to decode, will
+ *                            not be set, or will be set to invalid and unusable data.
+ *
+ * @return int Next decoder state after processing the current byte.
+ */
+function utf8_decoder_apply_byte( string $byte, int $state, int &$codepoint = 0 ): int {
+	/**
+	 * State classification and transition table for UTF-8 validation.
+	 *
+	 * > The first part of the table maps bytes to character classes that
+	 * > to reduce the size of the transition table and create bitmasks.
+	 * >
+	 * > The second part is a transition table that maps a combination
+	 * > of a state of the automaton and a character class to a state.
+	 *
+	 * @see http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
+	 */
+	static $state_table = (
+		"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" .
+		"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" .
+		"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" .
+		"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" .
+		"\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09\x09" .
+		"\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07\x07" .
+		"\x08\x08\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02\x02" .
+		"\x10\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x04\x03\x03" .
+		"\x11\x06\x06\x06\x05\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08\x08" .
+		"\x00\x01\x02\x03\x05\x08\x07\x01\x01\x01\x04\x06\x01\x01\x01\x01" .
+		"\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x00\x01\x01\x01\x01\x01\x00\x01\x00\x01\x01\x01\x01\x01\x01" .
+		"\x01\x02\x01\x01\x01\x01\x01\x02\x01\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x02\x01\x01\x01\x01\x01\x01\x01\x01" .
+		"\x01\x02\x01\x01\x01\x01\x01\x01\x01\x02\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x03\x01\x03\x01\x01\x01\x01\x01\x01" .
+		"\x01\x03\x01\x01\x01\x01\x01\x03\x01\x03\x01\x01\x01\x01\x01\x01\x01\x03\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01"
+	);
+
+	$byte      = ord( $byte );
+	$type      = ord( $state_table[ $byte ] );
+	$codepoint = ( UTF8_DECODER_ACCEPT === $state )
+		? ( ( 0xFF >> $type ) & $byte )
+		: ( ( $byte & 0x3F ) | ( $codepoint << 6 ) );
+
+	return ord( $state_table[ 256 + ( $state * 16 ) + $type ] );
 }
