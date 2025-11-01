@@ -34,12 +34,6 @@ if ( ! defined( 'UTF8_DECODER_REJECT' ) ) {
  * @return int Unicode codepoint.
  */
 function utf8_codepoint_at( string $text, int $byte_offset = 0, &$matched_bytes = 0 ) {
-	if ( 1 !== _wp_scan_utf8( $text, $byte_offset, $matched_bytes, null, 1 ) ) {
-
-		// "\u{FFFD}" is not supported in PHP 5.6.
-		$codepoint = utf8_ord( "\u{FFFD}" );
-	}
-
 	$position_in_input = $byte_offset;
 	$codepoint_at      = $byte_offset;
 	$end_byte          = strlen( $text );

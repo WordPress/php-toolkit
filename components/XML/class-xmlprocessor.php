@@ -5,8 +5,7 @@ namespace WordPress\XML;
 use WP_HTML_Span;
 use WP_HTML_Text_Replacement;
 
-use function WordPress\Encoding\compat\_wp_scan_utf8;
-use function WordPress\Encoding\utf8_ord;
+use function WordPress\Encoding\utf8_codepoint_at;
 
 /**
  * XML API: XMLProcessor class
@@ -44,9 +43,9 @@ use function WordPress\Encoding\utf8_ord;
  *
  * @TODO: Support XML 1.1.
  *
- * @TODO: Evaluate the performance of _wp_scan_utf8() against using the mbstring
+ * @TODO: Evaluate the performance of utf8_codepoint_at() against using the mbstring
  *        extension. If mbstring is faster, then use it whenever it's available with
- *        _wp_scan_utf8() as a fallback.
+ *        utf8_codepoint_at() as a fallback.
  *
  * @package WordPress
  * @subpackage HTML-API
@@ -2329,8 +2328,8 @@ class XMLProcessor {
 	 * @return int
 	 */
 	private function parse_name( $offset ) {
+		static $i         = 0;
 		$name_byte_length = 0;
-		$at = $offset;
 		while ( true ) {
 			/**
 			 * Parse the next unicode codepoint.
@@ -2349,27 +2348,28 @@ class XMLProcessor {
 			 *                  how to reliably reproduce this failure mode in a
 			 *                  unit test.
 			 *
-			 * Performance-wise, character-by-character processing via _wp_scan_utf8
+			 * Performance-wise, character-by-character processing via utf8_codepoint_at
 			 * is still much faster than relying on preg_match(). The mbstring extension
 			 * is likely faster. It would be interesting to evaluate the performance
 			 * and prefer mbstring whenever it's available.
 			 */
-			$new_at = $at;
-			$invalid_length = 0;
-			if ( 1 !== _wp_scan_utf8( $this->xml, $new_at, $invalid_length, null, 1 ) ) {
-				// EOF or invalid utf-8 byte sequence.
+			$codepoint = utf8_codepoint_at(
+				$this->xml,
+				$offset + $name_byte_length,
+				$bytes_parsed
+			);
+			if (
+				// Byte sequence is not a valid UTF-8 codepoint.
+				( 0xFFFD === $codepoint && 0 === $bytes_parsed ) ||
+				// No codepoint at the given offset.
+				null === $codepoint ||
+				// The codepoint is not a valid part of an XML NameChar or NameStartChar.
+				! $this->is_valid_name_codepoint( $codepoint, 0 === $name_byte_length )
+			) {
 				break;
 			}
-
-			$codepoint_byte_length = $new_at - $at;
-			$codepoint = utf8_ord( substr( $this->xml, $at, $codepoint_byte_length ) );
-
-			// The codepoint is not a valid part of an XML NameChar or NameStartChar.
-			if ( ! $this->is_valid_name_codepoint( $codepoint, 0 === $name_byte_length ) ) {
-				break;
-			}
-			$name_byte_length += $codepoint_byte_length;
-			$at = $new_at;
+			$codepoint         = null;
+			$name_byte_length += $bytes_parsed;
 		}
 
 		return $name_byte_length;
