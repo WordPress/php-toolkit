@@ -2356,6 +2356,7 @@ class XMLProcessor {
 			 */
 			$at = $offset + $name_byte_length;
 			$new_at = $at;
+			$invalid_length = 0;
 			if ( 1 !== _wp_scan_utf8( $this->xml, $new_at, $invalid_length, null, 1 ) ) {
 				// EOF or invalid utf-8 byte sequence.
 				break;
