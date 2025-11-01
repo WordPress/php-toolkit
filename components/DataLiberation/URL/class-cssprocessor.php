@@ -2,8 +2,8 @@
 
 namespace WordPress\DataLiberation\URL;
 
-use function WordPress\Encoding\_wp_scan_utf8;
-use function WordPress\Encoding\_wp_scrub_utf8_fallback;
+use function WordPress\Encoding\compat\_wp_scan_utf8;
+use function WordPress\Encoding\compat\_wp_scrub_utf8_fallback;
 use function WordPress\Encoding\utf8_codepoint_at;
 use function WordPress\Encoding\codepoint_to_utf8_bytes;
 
