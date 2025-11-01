@@ -1475,7 +1475,7 @@ class CSSProcessor {
 	 * @return int The number of bytes consumed.
 	 */
 	private function consume_ident_start_codepoint( $at ): int {
-		if ( $at > $this->length ) {
+		if ( $at >= $this->length ) {
 			return 0;
 		}
 
@@ -1500,9 +1500,11 @@ class CSSProcessor {
 			 *
 			 * We'll move forward by $invalid_length bytes and continue processing.
 			 * Later on, during the string decoding, we'll replace the invalid bytes with U+FFFD
-			 * via maximal subpart”replacement.
+			 * via maximal subpart"replacement.
+			 *
+			 * Ensure we always return at least 1 byte to avoid infinite loops.
 			 */
-			return $invalid_length;
+			return max( 1, $invalid_length );
 		}
 
 		$codepoint_byte_length = $new_at - $at;
