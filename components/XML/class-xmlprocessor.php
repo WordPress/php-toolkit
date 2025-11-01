@@ -2329,8 +2329,8 @@ class XMLProcessor {
 	 * @return int
 	 */
 	private function parse_name( $offset ) {
-		static $i         = 0;
 		$name_byte_length = 0;
+		$at = $offset;
 		while ( true ) {
 			/**
 			 * Parse the next unicode codepoint.
@@ -2354,7 +2354,6 @@ class XMLProcessor {
 			 * is likely faster. It would be interesting to evaluate the performance
 			 * and prefer mbstring whenever it's available.
 			 */
-			$at = $offset + $name_byte_length;
 			$new_at = $at;
 			$invalid_length = 0;
 			if ( 1 !== _wp_scan_utf8( $this->xml, $new_at, $invalid_length, null, 1 ) ) {
@@ -2370,6 +2369,7 @@ class XMLProcessor {
 				break;
 			}
 			$name_byte_length += $codepoint_byte_length;
+			$at = $new_at;
 		}
 
 		return $name_byte_length;
