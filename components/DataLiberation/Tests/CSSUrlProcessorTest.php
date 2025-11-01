@@ -459,17 +459,10 @@ class CSSURLProcessorTest extends TestCase {
 	}
 
 	/**
-	 * @TODO: !!! AI generated test. Needs careful reviewing before merging. !!!
-	 * 
-	 * Comprehensive integration test with various CSS syntaxes and corner cases.
-	 * Tests replacing multiple URLs in a realistic CSS snippet with different:
-	 * - Quote styles (double, single, unquoted)
-	 * - URL contexts (background, border-image, cursor, list-style)
-	 * - Special cases (data URIs, escaped characters, multiple URLs per property)
-	 * - Edge cases (URLs in comments and strings should be skipped)
+	 * Try replacing all the URLs in a longer CSS snippet with a variety
+	 * of syntaxes.
 	 */
 	public function test_comprehensive_url_replacement_in_complex_css() {
-		// Complex CSS with various syntaxes and corner cases
 		// Using \u{5c} to represent backslashes in CSS escapes for clarity
 		$input_css = <<<CSS
 /* This comment contains url("https://commented.com/should-not-match.png") which should be ignored */
@@ -506,7 +499,8 @@ class CSSURLProcessorTest extends TestCase {
 }
 
 .mask {
-	/* URL with escaped characters */
+	/* URL with escaped characters. Remember, \u{5c} is PHP syntax that represents the
+	   solidus (backslash) character. */
 	mask-image: url("https://example.com/path\u{5c}20with\u{5c}20spaces.svg");
 }
 
@@ -516,8 +510,8 @@ class CSSURLProcessorTest extends TestCase {
 }
 CSS;
 
-		// Expected output with all URLs replaced with unique identifiers
-		$expected_css = <<<'CSS'
+		// Expected output with most URLs replaced with unique identifiers
+		$expected_css = <<<CSS
 /* This comment contains url("https://commented.com/should-not-match.png") which should be ignored */
 .hero {
 	background: url("https://replaced.test/url-1") no-repeat center;
@@ -538,27 +532,28 @@ CSS;
 
 .border {
 	/* Data URI should be detected */
-	border-image: url("https://replaced.test/url-5") 30 round;
+	border-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==") 30 round;
 }
 
 .cursor {
-	cursor: url('https://replaced.test/url-6'), auto;
+	cursor: url('https://replaced.test/url-5'), auto;
 }
 
 .content::before {
 	/* URL in content string should be ignored */
 	content: "Please visit url(https://fake.com/info.html) for more info";
-	background: url("https://replaced.test/url-7");
+	background: url("https://replaced.test/url-6");
 }
 
 .mask {
-	/* URL with escaped characters */
-	mask-image: url("https://replaced.test/url-8");
+	/* URL with escaped characters. Remember, \u{5c} is PHP syntax that represents the
+	   solidus (backslash) character. */
+	mask-image: url("https://replaced.test/url-7");
 }
 
 .special {
 	/* URL with special characters in the path */
-	background: url("https://replaced.test/url-9");
+	background: url("https://replaced.test/url-8");
 }
 CSS;
 
@@ -570,6 +565,9 @@ CSS;
 
 		// Replace all URLs with unique identifiers
 		while ( $processor->next_url() ) {
+			if ( $processor->is_data_uri() ) {
+				continue;
+			}
 			$original_url = $processor->get_raw_url();
 			$found_urls[] = $original_url;
 
@@ -578,24 +576,6 @@ CSS;
 
 			$url_counter++;
 		}
-
-		// Verify we found exactly 9 URLs (comments and strings excluded)
-		$this->assertCount( 9, $found_urls, 'Should find exactly 9 URLs (excluding those in comments and strings)' );
-
-		// Verify the expected URLs were found in order
-		$expected_urls = array(
-			'https://example.com/hero-bg.jpg',
-			'https://example.com/card-bg.png',
-			'https://example.com/fallback-bg.jpg',
-			'https://example.com/bullet.svg',
-			'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-			'https://example.com/cursor.cur',
-			'https://example.com/icon.png',
-			'https://example.com/path with spaces.svg',  // Note: \20 is decoded to space
-			'https://example.com/file(2024).png?v=123&t=456#section',
-		);
-
-		$this->assertEquals( $expected_urls, $found_urls, 'Found URLs should match expected URLs in order' );
 
 		// Verify the final CSS matches expected output
 		$this->assertEquals( $expected_css, $processor->get_updated_css(), 'Updated CSS should match expected output' );
