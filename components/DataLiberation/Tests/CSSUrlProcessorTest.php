@@ -16,45 +16,46 @@ class CSSURLProcessorTest extends TestCase {
 	}
 
 	public static function provider_test_css_escape_decoding() {
+		// U+005C is REVERSE SOLIDUS (\)
+		// These tests all represent a backslash \ as a \u{5c} escape sequence
+		// to avoid confusing the reader with sequences such as \\\" where it's
+		// unclear which escapes belong to the PHP string, which to the CSS string,
+		// and what is the final string value.
 		return array(
 			// Basic hex escapes
-			'Space as \\20'                           => array(
-				'background: url(https://example.com/hello\\20world.png)',
+			"Space as `\u{5c}20`"                           => array(
+				"background: url(https://example.com/hello\u{5c}20world.png)",
 				'https://example.com/hello world.png',
 			),
-			'Space as \\000020 (6 digits)'            => array(
-				'background: url(https://example.com/hello\\000020world.png)',
+			"Space as `\u{5c}000020` (6 digits)"            => array(
+				"background: url(https://example.com/hello\u{5c}000020world.png)",
 				'https://example.com/hello world.png',
 			),
-			'Non-breaking space \\A0'                 => array(
-				'background: url("https://example.com/test\\A0 file.png")',
-				'https://example.com/test' . "\xC2\xA0" . 'file.png',
+			"Space as `\u{5c}000020 ` (6 digits + space)"            => array(
+				"background: url(https://example.com/hello\u{5c}000020 world.png)",
+				'https://example.com/hello world.png',
 			),
-			'Tab character \\9'                       => array(
-				'background: url(https://example.com/file\\9name.png)',
-				"https://example.com/file\tname.png",
-			),
-			'Newline \\A'                             => array(
-				'background: url(https://example.com/file\\Aname.png)',
-				"https://example.com/file\nname.png",
+			"8-digit space is treated as a replacement character followed by a string `\u{5c}20`: `\u{5c}00000020`"            => array(
+				"background: url(https://example.com/hello\u{5c}00000020world.png)",
+				"https://example.com/hello\u{FFFD}20world.png",
 			),
 
-			// Single character escapes
-			'Escaped parenthesis \\('                 => array(
-				'background: url(https://example.com/file\\(1\\).png)',
+			// Single character escapes in unquoted URLs
+			"Escaped parenthesis `\u{5c}(`"                 => array(
+				"background: url(https://example.com/file\u{5c}(1\u{5c}).png)",
 				'https://example.com/file(1).png',
 			),
-			'Escaped quote \\"'                       => array(
-				'background: url(https://example.com/file\\"name.png)',
+			"Escaped quote `\u{5c}\u{0022}`"                       => array(
+				"background: url(https://example.com/file\u{5c}\u{0022}name.png)",
 				'https://example.com/file"name.png',
 			),
-			'Escaped single quote \\\''               => array(
-				'background: url(https://example.com/file\\\'name.png)',
+			"Escaped single quote `\u{5c}'`"               => array(
+				"background: url(https://example.com/file\u{5c}\u{0027}name.png)",
 				"https://example.com/file'name.png",
 			),
-			'Escaped backslash \\\\'                  => array(
-				'background: url(https://example.com/path\\\\file.png)',
-				'https://example.com/path\\file.png',
+			"Escaped backslash `\u{5c}\u{5c}`"                  => array(
+				"background: url(https://example.com/path\u{5c}\u{5c}file.png)",
+				"https://example.com/path\u{5c}file.png",
 			),
 
 			// Hex escapes with trailing whitespace
@@ -62,141 +63,141 @@ class CSSURLProcessorTest extends TestCase {
 			// as the escape sequence terminator and is not included in the decoded output.
 			// The decoded result can contain actual whitespace characters (from the escape itself).
 			'Hex escape followed by more hex'         => array(
-				'background: url(https://example.com/\\20test.png)',
+				"background: url(https://example.com/\u{5c}20test.png)",
 				'https://example.com/ test.png',  // \20 decodes to a space character
 			),
 			'Hex escape at end with space after'      => array(
-				'background: url("https://example.com/test\\20 more.png")',
+				"background: url(\u{22}https://example.com/test\u{5c}20 more.png\u{22})",
 				'https://example.com/test more.png',  // \20 decodes to space; the space after \20 is consumed as terminator
 			),
 
 			// Edge cases with hex digits
 			'1-digit hex escape'                      => array(
-				'background: url(https://example.com/\\9.png)',
-				"https://example.com/\t.png",
+				"background: url(https://example.com/\u{5c}9.png)",
+				"https://example.com/\u{09}.png",
 			),
 			'2-digit hex escape'                      => array(
-				'background: url(https://example.com/\\41.png)',
+				"background: url(https://example.com/\u{5c}41.png)",
 				'https://example.com/A.png',
 			),
 			'3-digit hex escape'                      => array(
-				'background: url(https://example.com/\\263A.png)',
+				"background: url(https://example.com/\u{5c}263A.png)",
 				'https://example.com/☺.png',
 			),
 			'4-digit hex escape'                      => array(
-				'background: url(https://example.com/\\1F600.png)',
+				"background: url(https://example.com/\u{5c}1F600.png)",
 				'https://example.com/😀.png',
 			),
 			'5-digit hex escape'                      => array(
-				'background: url(https://example.com/\\0263A.png)',
+				"background: url(https://example.com/\u{5c}0263A.png)",
 				'https://example.com/☺.png',
 			),
 			'6-digit hex escape (max length)'         => array(
-				'background: url(https://example.com/\\01F600.png)',
+				"background: url(https://example.com/\u{5c}01F600.png)",
 				'https://example.com/😀.png',
 			),
 
 			// Hex escapes followed by hex-like characters
 			'Hex escape followed by non-hex letter'   => array(
-				'background: url(https://example.com/\\41G.png)',
+				"background: url(https://example.com/\u{5c}41G.png)",
 				'https://example.com/AG.png',
 			),
 			'Hex escape at end of value'              => array(
-				'background: url(https://example.com/test\\41)',
+				"background: url(https://example.com/test\u{5c}41)",
 				'https://example.com/testA',
 			),
 
 			// Line breaks in escapes
 			// Note: Hex escapes can encode line break characters (U+000A newline, U+000D carriage return).
 			// The decoded result contains actual line break characters.
-			'Newline as hex \\A'                      => array(
-				'background: url("https://example.com/test\\00000Amore.png")',
-				"https://example.com/test\nmore.png",  // \00000A decodes to newline character
+			'Newline as hex `\u{5c}00000A`'                      => array(
+				"background: url(\u{22}https://example.com/test\u{5c}00000Amore.png\u{22})",
+				"https://example.com/test\u{0A}more.png",  // \00000A decodes to newline character
 			),
-			'Carriage return as hex \\D'              => array(
-				'background: url("https://example.com/test\\00000Dmore.png")',
-				"https://example.com/test\rmore.png",  // \00000D decodes to carriage return character
+			'Carriage return as hex `\u{5c}00000D`'              => array(
+				"background: url(\u{22}https://example.com/test\u{5c}00000Dmore.png\u{22})",
+				"https://example.com/test\u{0D}more.png",  // \00000D decodes to carriage return character
 			),
 
 			// Multiple escapes
 			'Multiple hex escapes'                    => array(
-				'background: url(https://example.com/\\41\\42\\43.png)',
+				"background: url(https://example.com/\u{5c}41\u{5c}42\u{5c}43.png)",
 				'https://example.com/ABC.png',
 			),
 			'Mixed escape types'                      => array(
-				'background: url(https://example.com/\\41\\(test\\).png)',
+				"background: url(https://example.com/\u{5c}41\u{5c}(test\u{5c}).png)",
 				'https://example.com/A(test).png',
 			),
 
 			// Backslash at end of string (edge case)
 			// Note: \\ at end escapes the backslash itself
 			'Trailing escaped backslash'              => array(
-				'background: url("https://example.com/test\\\\")',
-				'https://example.com/test\\',
+				"background: url(\u{22}https://example.com/test\u{5c}\u{5c}\u{22})",
+				"https://example.com/test\u{5c}",
 			),
 
 			// Unicode characters
 			'Unicode emoji via hex escape'            => array(
-				'background: url(https://example.com/\\1F44D.png)',
+				"background: url(https://example.com/\u{5c}1F44D.png)",
 				'https://example.com/👍.png',
 			),
 			'Chinese character via hex escape'        => array(
-				'background: url(https://example.com/\\4E2D\\6587.png)',
+				"background: url(https://example.com/\u{5c}4E2D\u{5c}6587.png)",
 				'https://example.com/中文.png',
 			),
 			// One space after hex escape is consumed as terminator; additional spaces are preserved
 			'Multiple trailing whitespaces after the hex escape are preserved' => array(
-				'background: url("https://example.com/test\\26   more.png")',  // \26 = &, followed by 3 spaces
+				"background: url(\u{22}https://example.com/test\u{5c}26   more.png\u{22})",  // \26 = &, followed by 3 spaces
 				'https://example.com/test&  more.png',  // Result has & followed by 2 spaces (1st space consumed as terminator)
 			),
 
 			// Case insensitivity of hex digits
 			'Lowercase hex digits'                    => array(
-				'background: url(https://example.com/\\00002f\\000061.png)',
+				"background: url(https://example.com/\u{5c}00002f\u{5c}000061.png)",
 				'https://example.com//a.png',
 			),
 			'Uppercase hex digits'                    => array(
-				'background: url(https://example.com/\\00002F\\000041.png)',
+				"background: url(https://example.com/\u{5c}00002F\u{5c}000041.png)",
 				'https://example.com//A.png',
 			),
 			'Mixed case hex digits with whitespace'   => array(
 				// Note: The whitespace after hex escapes is consumed as part of the escape sequence
-				'background: url("https://example.com/\\2F \\61 \\41 \\42 .png")',
+				"background: url(\u{22}https://example.com/\u{5c}2F \u{5c}61 \u{5c}41 \u{5c}42 .png\u{22})",
 				'https://example.com//aAB.png',
 			),
 
 			// Very low codepoint
-			'Control character \\1 (SOH)'             => array(
-				'background: url("https://example.com/test\\1 .png")',
-				"https://example.com/test\x01.png",
+			'Control character `\u{5c}1` (SOH)'             => array(
+				"background: url(\u{22}https://example.com/test\u{5c}1 .png\u{22})",
+				"https://example.com/test\u{01}.png",
 			),
 
 			// Special URL characters escaped
 			'Escaped forward slash'                   => array(
-				'background: url(https://example.com/path\\/to\\/file.png)',
+				"background: url(https://example.com/path\u{5c}\u{002f}to\u{5c}\u{002f}file.png)",
 				'https://example.com/path/to/file.png',
 			),
 			'Escaped question mark'                   => array(
-				'background: url(https://example.com/file.png\\?query)',
+				"background: url(https://example.com/file.png\u{5c}\u{003f}query)",
 				'https://example.com/file.png?query',
 			),
 			'Escaped hash'                            => array(
-				'background: url(https://example.com/file.png\\#anchor)',
+				"background: url(https://example.com/file.png\u{5c}\u{0023}anchor)",
 				'https://example.com/file.png#anchor',
 			),
 
 			// Consecutive backslashes
 			'Two backslashes'                         => array(
-				'background: url(https://example.com/test\\\\.png)',
-				'https://example.com/test\\.png',
+				"background: url(https://example.com/test\u{5c}\u{5c}.png)",
+				"https://example.com/test\u{5c}.png",
 			),
 			'Three backslashes'                       => array(
-				'background: url(https://example.com/test\\\\\\.png)',
-				'https://example.com/test\\.png',
+				"background: url(https://example.com/test\u{5c}\u{5c}\u{5c}.png)",
+				"https://example.com/test\u{5c}.png",
 			),
 			'Four backslashes'                        => array(
-				'background: url(https://example.com/test\\\\\\\\.png)',
-				'https://example.com/test\\\\.png',
+				"background: url(https://example.com/test\u{5c}\u{5c}\u{5c}\u{5c}.png)",
+				"https://example.com/test\u{5c}\u{5c}.png",
 			),
 		);
 	}
