@@ -58,15 +58,16 @@ class CSSURLProcessorTest extends TestCase {
 			),
 
 			// Hex escapes with trailing whitespace
-			// Note: Trailing whitespace after hex escapes is consumed by the decoder
-			// but the URL must still be valid according to the regex (no actual whitespace in unquoted URLs)
+			// Note: A single whitespace character immediately after a hex escape is consumed
+			// as the escape sequence terminator and is not included in the decoded output.
+			// The decoded result can contain actual whitespace characters (from the escape itself).
 			'Hex escape followed by more hex'         => array(
 				'background: url(https://example.com/\\20test.png)',
-				'https://example.com/ test.png',
+				'https://example.com/ test.png',  // \20 decodes to a space character
 			),
 			'Hex escape at end with space after'      => array(
 				'background: url("https://example.com/test\\20 more.png")',
-				'https://example.com/test more.png',
+				'https://example.com/test more.png',  // \20 decodes to space; the space after \20 is consumed as terminator
 			),
 
 			// Edge cases with hex digits
@@ -106,15 +107,15 @@ class CSSURLProcessorTest extends TestCase {
 			),
 
 			// Line breaks in escapes
-			// Note: Escaped line breaks consume the line break character
-			// but actual line breaks in quoted strings need special regex handling
+			// Note: Hex escapes can encode line break characters (U+000A newline, U+000D carriage return).
+			// The decoded result contains actual line break characters.
 			'Newline as hex \\A'                      => array(
 				'background: url("https://example.com/test\\00000Amore.png")',
-				"https://example.com/test\nmore.png",
+				"https://example.com/test\nmore.png",  // \00000A decodes to newline character
 			),
 			'Carriage return as hex \\D'              => array(
 				'background: url("https://example.com/test\\00000Dmore.png")',
-				"https://example.com/test\rmore.png",
+				"https://example.com/test\rmore.png",  // \00000D decodes to carriage return character
 			),
 
 			// Multiple escapes
@@ -143,9 +144,10 @@ class CSSURLProcessorTest extends TestCase {
 				'background: url(https://example.com/\\4E2D\\6587.png)',
 				'https://example.com/中文.png',
 			),
+			// One space after hex escape is consumed as terminator; additional spaces are preserved
 			'Multiple trailing whitespaces after the hex escape are preserved' => array(
-				'background: url("https://example.com/test\\26   more.png")',
-				'https://example.com/test&  more.png',
+				'background: url("https://example.com/test\\26   more.png")',  // \26 = &, followed by 3 spaces
+				'https://example.com/test&  more.png',  // Result has & followed by 2 spaces (1st space consumed as terminator)
 			),
 
 			// Case insensitivity of hex digits
@@ -463,14 +465,17 @@ class CSSURLProcessorTest extends TestCase {
 		// Calculate memory increase
 		$memory_increase = $memory_after - $memory_before;
 
-		// There should be no noticeable memory increase. Let's only allow 1 kilobyte of overhead.
-		$max_allowed_increase = $size_bytes + 1024;
+		// The parser should not duplicate the 200MB data. We measure memory_get_usage(true)
+		// which tracks actual allocated memory from the OS. Some overhead is expected due to
+		// internal data structures, but it should be much less than duplicating the full data.
+		// Allow up to 10MB overhead for parser state and temporary allocations.
+		$max_allowed_increase = 10 * 1024 * 1024;  // 10MB overhead
 
 		$this->assertLessThan(
 			$max_allowed_increase,
 			$memory_increase,
 			sprintf(
-				'Memory increased by %d kilobytes, which suggests the data is being duplicated. Expected less than %d kilobytes increase.',
+				'Memory increased by %.2f MB during parsing. This suggests the data may be duplicated. Expected less than %.2f MB increase.',
 				$memory_increase / 1024 / 1024,
 				$max_allowed_increase / 1024 / 1024
 			)
