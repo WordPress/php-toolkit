@@ -4,8 +4,8 @@ namespace WordPress\DataLiberation\URL;
 
 use function WordPress\Encoding\compat\_wp_scan_utf8;
 use function WordPress\Encoding\wp_scrub_utf8;
-use function WordPress\Encoding\utf8_codepoint_at;
 use function WordPress\Encoding\codepoint_to_utf8_bytes;
+use function WordPress\Encoding\utf8_ord;
 
 /**
  * Tokenizes CSS according to the CSS Syntax Level 3 specification.
@@ -1508,8 +1508,8 @@ class CSSProcessor {
 		}
 
 		$codepoint_byte_length = $new_at - $at;
-		$codepoint             = utf8_codepoint_at( $this->css, $at );
-		if ( null !== $codepoint && $codepoint >= 0x80 ) {
+		$codepoint = utf8_ord( substr( $this->css, $at, $codepoint_byte_length ) );
+		if ( $codepoint >= 0x80 ) {
 			return $codepoint_byte_length;
 		}
 		return 0;
