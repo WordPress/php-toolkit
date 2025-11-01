@@ -35,7 +35,7 @@ class CSSURLProcessorTest extends TestCase {
 				"background: url(https://example.com/hello\u{5c}000020 world.png)",
 				'https://example.com/hello world.png',
 			),
-			"8-digit space is treated as a replacement character followed by a string `\u{5c}20`: `\u{5c}00000020`"            => array(
+			"8-digit space is treated as a replacement character followed by a string `\u{5c}20`: `\u{5c}00000020`" => array(
 				"background: url(https://example.com/hello\u{5c}00000020world.png)",
 				"https://example.com/hello\u{FFFD}20world.png",
 			),
@@ -160,7 +160,7 @@ class CSSURLProcessorTest extends TestCase {
 				"background: url(https://example.com/\u{5c}00002F\u{5c}000041.png)",
 				'https://example.com//A.png',
 			),
-			'Mixed case hex digits (2f 2F) with trailing whitespace'   => array(
+			'Mixed case hex digits (2f 2F) with trailing whitespace' => array(
 				// Note: The whitespace after hex escapes is consumed as part of the escape sequence
 				"background: url(\u{22}https://example.com\u{5c}2F \u{5c}2f file.png\u{22})",
 				'https://example.com//file.png',
@@ -168,41 +168,41 @@ class CSSURLProcessorTest extends TestCase {
 
 			// Very low codepoint
 			'Control character `\u{5c}1` (SOH)'             => array(
-				                    // https://example.com/test\1 .png
+				// https://example.com/test\1 .png
 				"background: url(\u{22}https://example.com/test\u{5c}1 .png\u{22})",
 				"https://example.com/test\u{01}.png",
 			),
 
 			// Special URL characters escaped
 			'Escaped forward slash'                   => array(
-				              // https://example.com/path\/to\/file.png
+				// https://example.com/path\/to\/file.png
 				"background: url(https://example.com/path\u{5c}\u{2f}to\u{5c}\u{2f}file.png)",
 				'https://example.com/path/to/file.png',
 			),
 			'Escaped question mark'                   => array(
-							  // https://example.com/file.png\?query
+				// https://example.com/file.png\?query
 				"background: url(https://example.com/file.png\u{5c}\u{003f}query)",
 				'https://example.com/file.png?query',
 			),
 			'Escaped hash'                            => array(
-							  // https://example.com/file.png\#anchor
+				// https://example.com/file.png\#anchor
 				"background: url(https://example.com/file.png\u{5c}\u{0023}anchor)",
 				'https://example.com/file.png#anchor',
 			),
 
 			// Consecutive backslashes
 			'Two backslashes'                         => array(
-							  // https://example.com/test\\.png
+				// https://example.com/test\\.png
 				"background: url(https://example.com/test\u{5c}\u{5c}.png)",
 				"https://example.com/test\u{5c}.png",
 			),
 			'Three backslashes'                       => array(
-							  // https://example.com/test\\\.png
+				// https://example.com/test\\\.png
 				"background: url(https://example.com/test\u{5c}\u{5c}\u{5c}.png)",
 				"https://example.com/test\u{5c}.png",
 			),
 			'Four backslashes'                        => array(
-							  // https://example.com/test\\\\.png
+				// https://example.com/test\\\\.png
 				"background: url(https://example.com/test\u{5c}\u{5c}\u{5c}\u{5c}.png)",
 				"https://example.com/test\u{5c}\u{5c}.png",
 			),
@@ -240,30 +240,30 @@ class CSSURLProcessorTest extends TestCase {
 				'should-detect' => true,
 				'url'           => 'https://example.com/image.png',
 			),
-			'Quoted URL with a whitespace before the opening quote'              => array(
+			'Quoted URL with a whitespace before the opening quote' => array(
 				'css'           => 'background: url(  "https://example.com/image.png")',
 				'should-detect' => true,
 				'url'           => 'https://example.com/image.png',
 			),
-			'Unquoted URL with whitespace inside the parentheses'              => array(
+			'Unquoted URL with whitespace inside the parentheses' => array(
 				'css'           => 'background: url(  https://example.com/image.png  )',
 				'should-detect' => true,
 				'url'           => 'https://example.com/image.png',
 			),
-			'Unquoted URL with whitespace in the middle of the URL'              => array(
+			'Unquoted URL with whitespace in the middle of the URL' => array(
 				'css'           => 'background: url(  https://example.com/  image.png  )',
-				'should-detect' => false
+				'should-detect' => false,
 			),
-			'Quoted URL with whitespace in the middle of the URL'              => array(
+			'Quoted URL with whitespace in the middle of the URL' => array(
 				'css'           => 'background: url(  "https://example.com/  image.png"  )',
 				'should-detect' => true,
 				'url'           => 'https://example.com/  image.png',
 			),
-			'Quoted URL with a comment before the opening quote'              => array(
+			'Quoted URL with a comment before the opening quote' => array(
 				'css'           => 'background: url(/**/"https://example.com/image.png")',
 				'should-detect' => false,
 			),
-			'Quoted URL with a whitespace after the closing quote'               => array(
+			'Quoted URL with a whitespace after the closing quote' => array(
 				'css'           => 'background: url("https://example.com/image.png"  )',
 				'should-detect' => true,
 				'url'           => 'https://example.com/image.png',
@@ -288,7 +288,7 @@ class CSSURLProcessorTest extends TestCase {
 			),
 
 			// Verify real URLs are found after skipped content
-			'Background URL placed after a CSS comment containing a URL'      => array(
+			'Background URL placed after a CSS comment containing a URL' => array(
 				'css'           => '/* background: url("https://commented.com/image.png"); */ background: url("https://real.com/image.png")',
 				'should-detect' => true,
 				'url'           => 'https://real.com/image.png',
@@ -352,91 +352,91 @@ class CSSURLProcessorTest extends TestCase {
 				'expected' => 'background: url("https://new.com/image.png")',
 			),
 
-			'URL with double quotes in path'          => array(
+			'Sets new URL with double quotes in path'          => array(
 				'input'    => 'background: url("https://old.com/old.png")',
 				'new_url'  => 'https://example.com/path"with"quotes.png',
 				'expected' => "background: url(\u{22}https://example.com/path\u{5c}22 with\u{5c}22 quotes.png\u{22})",  // \22 = "
 			),
-			'URL with single quotes in single-quoted string' => array(
+			'Sets new URL with single quotes in single-quoted string' => array(
 				'input'    => "background: url('https://old.com/old.png')",
 				'new_url'  => "https://example.com/path'with'quotes.png",
 				'expected' => "background: url('https://example.com/path'with'quotes.png')",  // Single quotes not escaped in single-quoted context
 			),
-			'URL with backslashes in path'            => array(
+			'Sets new URL with backslashes in path'            => array(
 				'input'    => 'background: url("https://old.com/old.png")',
 				'new_url'  => 'https://example.com/path\\with\\backslashes.png',
 				'expected' => "background: url(\u{22}https://example.com/path\u{5c}5C with\u{5c}5C backslashes.png\u{22})",  // \5C = \
 			),
-			'URL with parentheses in path'            => array(
+			'Sets new URL with parentheses in path'            => array(
 				'input'    => 'background: url("https://old.com/old.png")',
 				'new_url'  => 'https://example.com/file(1).png',
 				'expected' => 'background: url("https://example.com/file(1).png")',
 			),
-			'URL with spaces in path'                 => array(
+			'Sets new URL with spaces in path'                 => array(
 				'input'    => 'background: url("https://old.com/old.png")',
 				'new_url'  => 'https://example.com/path with spaces.png',
 				'expected' => 'background: url("https://example.com/path with spaces.png")',
 			),
-			'URL with newline character'              => array(
+			'Sets new URL with newline character'              => array(
 				'input'    => 'background: url("https://old.com/old.png")',
 				'new_url'  => "https://example.com/path\nwith\nnewlines.png",
 				'expected' => "background: url(\u{22}https://example.com/path\u{5c}a with\u{5c}a newlines.png\u{22})",  // \a = newline
 			),
-			'URL with tab character'                  => array(
+			'Sets new URL with tab character'                  => array(
 				'input'    => 'background: url("https://old.com/old.png")',
 				'new_url'  => "https://example.com/path\twith\ttabs.png",
 				'expected' => "background: url(\u{22}https://example.com/path\twith\ttabs.png\u{22})",  // Tab preserved as-is
 			),
 
-			'Replace with data URI'                   => array(
+			'Sets new URL with data URI'                   => array(
 				'input'    => 'background: url("https://old.com/image.png")',
 				'new_url'  => 'data:image/png;base64,iVBORw0KGgo=',
 				'expected' => 'background: url("data:image/png;base64,iVBORw0KGgo=")',
 			),
-			'Replace data URI with regular URL'       => array(
+			'Sets new URL with data URI with regular URL'       => array(
 				'input'    => 'background: url("data:image/png;base64,iVBORw0KGgo=")',
 				'new_url'  => 'https://new.com/image.png',
 				'expected' => 'background: url("https://new.com/image.png")',
 			),
 
-			'Replace with relative URL'               => array(
+			'Sets new URL with relative URL'               => array(
 				'input'    => 'background: url("https://old.com/image.png")',
 				'new_url'  => '/images/new.png',
 				'expected' => 'background: url("/images/new.png")',
 			),
-			'Replace with path-only URL'              => array(
+			'Sets new URL with path-only URL'              => array(
 				'input'    => 'background: url("https://old.com/image.png")',
 				'new_url'  => '../images/new.png',
 				'expected' => 'background: url("../images/new.png")',
 			),
 
-			'URL with emoji'                          => array(
+			'Sets new URL with emoji'                          => array(
 				'input'    => 'background: url("https://old.com/old.png")',
 				'new_url'  => 'https://example.com/😀.png',
 				'expected' => 'background: url("https://example.com/😀.png")',
 			),
-			'URL with Chinese characters'             => array(
+			'Sets new URL with Chinese characters'             => array(
 				'input'    => 'background: url("https://old.com/old.png")',
 				'new_url'  => 'https://example.com/中文.png',
 				'expected' => 'background: url("https://example.com/中文.png")',
 			),
 
-			'Empty URL'                               => array(
+			'Sets new URL that is an empty string'                               => array(
 				'input'    => 'background: url("https://old.com/image.png")',
 				'new_url'  => '',
 				'expected' => 'background: url("")',
 			),
-			'URL with query parameters'               => array(
+			'Sets new URL with query parameters'               => array(
 				'input'    => 'background: url("https://old.com/old.png")',
 				'new_url'  => 'https://example.com/image.png?v=123&t=456',
 				'expected' => 'background: url("https://example.com/image.png?v=123&t=456")',
 			),
-			'URL with fragment'                       => array(
+			'Sets new URL with fragment'                       => array(
 				'input'    => 'background: url("https://old.com/old.png")',
 				'new_url'  => 'https://example.com/image.png#section',
 				'expected' => 'background: url("https://example.com/image.png#section")',
 			),
-			'Non-URL content' => array(
+			'Sets new URL that is not actually a valid URL' => array(
 				'input'    => 'background: url("https://old.com/old.png")',
 				'new_url'  => 'WordPress is great!',
 				'expected' => 'background: url("WordPress is great!")',
@@ -560,7 +560,7 @@ CSS;
 		$processor = new CSSURLProcessor( $input_css );
 
 		// Track which URLs we found for verification
-		$found_urls = array();
+		$found_urls  = array();
 		$url_counter = 1;
 
 		// Replace all URLs with unique identifiers
@@ -574,7 +574,7 @@ CSS;
 			$new_url = "https://replaced.test/url-{$url_counter}";
 			$processor->set_raw_url( $new_url );
 
-			$url_counter++;
+			++$url_counter;
 		}
 
 		// Verify the final CSS matches expected output
@@ -746,5 +746,4 @@ CSS;
 		// Note: We can't restore if current usage exceeds the original limit
 		@ini_set( 'memory_limit', $original_limit );
 	}
-
 }
