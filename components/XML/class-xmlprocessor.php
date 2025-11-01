@@ -21,7 +21,7 @@ use function WordPress\Encoding\utf8_codepoint_at;
  * * Well-formed
  * * UTF-8 encoded
  * * Not standalone (so can use external entities)
- * * No DTD, DOCTYPE, ATTLIST, ENTITY, or conditional sections (will fail on them)
+ * * No external DTD subset expansion (external entities may exist but are not fetched).
  *
  * ### Possible future direction for this module
  *
@@ -34,12 +34,6 @@ use function WordPress\Encoding\utf8_codepoint_at;
  * @TODO: Track specific error states, expose informative messages, line
  *        numbers, indexes, and other debugging info.
  *
- * @TODO: Skip over the following syntax elements instead of failing:
- *        * <!DOCTYPE, see https://www.w3.org/TR/xml/#sec-prolog-dtd
- *        * <!ATTLIST, see https://www.w3.org/TR/xml/#attdecls
- *        * <!ENTITY, see https://www.w3.org/TR/xml/#sec-entity-decl
- *        * <!NOTATION, see https://www.w3.org/TR/xml/#sec-entity-decl
- *        * Conditional sections, see https://www.w3.org/TR/xml/#sec-condition-sect
  *
  * @TODO: Support XML 1.1.
  *
@@ -1940,14 +1934,33 @@ class XMLProcessor {
 							$quoted_string_length - 2
 						);
 						$at += $quoted_string_length;
-					} elseif ( '[' === $this->xml[ $at ] ) {
-						$this->bail( 'Inline entity declarations are not yet supported in DOCTYPE declarations.', self::ERROR_SYNTAX );
+				}
+
+				// Skip whitespace.
+				$at += strspn( $this->xml, " \t\f\r\n", $at );
+
+				if ( $doc_length <= $at ) {
+					$this->mark_incomplete_input( 'Unclosed DOCTYPE declaration.' );
+
+					return false;
+				}
+
+				if ( '[' === $this->xml[ $at ] ) {
+					if ( ! $this->skip_doctype_internal_subset( $at ) ) {
+						return false;
 					}
 
-					// Skip whitespace.
+					// Skip whitespace following the internal subset.
 					$at += strspn( $this->xml, " \t\f\r\n", $at );
 
-					if ( '>' !== $this->xml[ $at ] ) {
+					if ( $doc_length <= $at ) {
+						$this->mark_incomplete_input( 'Unclosed DOCTYPE declaration.' );
+
+						return false;
+					}
+				}
+
+				if ( '>' !== $this->xml[ $at ] ) {
 						$this->bail(
 							sprintf(
 								'Syntax error in DOCTYPE declaration. Unexpected character "%s" at position %d.',
@@ -2316,6 +2329,427 @@ class XMLProcessor {
 	 */
 	private function skip_whitespace() {
 		$this->bytes_already_parsed += strspn( $this->xml, " \t\f\r\n", $this->bytes_already_parsed );
+	}
+
+	/**
+	 * Skips over the internal subset of a DOCTYPE declaration.
+	 *
+	 * @param int &$offset Character offset of the '[' that opens the subset. The
+	 *                     offset is updated to point right after the closing ']'.
+	 * @return bool Whether the subset was fully consumed.
+	 */
+	private function skip_doctype_internal_subset( &$offset ) {
+		$doc_length = strlen( $this->xml );
+
+		// Consume the opening '['.
+		++$offset;
+
+		while ( $offset < $doc_length ) {
+			$offset += strspn( $this->xml, " \t\f\r\n", $offset );
+
+			if ( $offset >= $doc_length ) {
+				$this->mark_incomplete_input( 'Unclosed DOCTYPE declaration.' );
+
+				return false;
+			}
+
+			if ( ']' === $this->xml[ $offset ] ) {
+				++$offset;
+
+				return true;
+			}
+
+			if ( '%' === $this->xml[ $offset ] ) {
+				if ( ! $this->skip_parameter_entity_reference( $offset ) ) {
+					return false;
+				}
+
+				continue;
+			}
+
+			if ( '<' === $this->xml[ $offset ] ) {
+				if ( ! $this->skip_dtd_markup( $offset ) ) {
+					return false;
+				}
+
+				continue;
+			}
+
+			$this->bail(
+				sprintf(
+					'Unexpected character "%s" in DOCTYPE internal subset at position %d.',
+					$this->xml[ $offset ],
+					$offset
+				),
+				self::ERROR_SYNTAX
+			);
+		}
+
+		$this->mark_incomplete_input( 'Unclosed DOCTYPE declaration.' );
+
+		return false;
+	}
+
+	/**
+	 * Skips a single markup declaration, comment, processing instruction, or conditional section.
+	 *
+	 * @param int &$offset Character offset pointing to the '<' that begins the markup.
+	 * @return bool Whether the markup was fully consumed.
+	 */
+	private function skip_dtd_markup( &$offset ) {
+		$doc_length = strlen( $this->xml );
+
+		if ( $offset + 1 >= $doc_length ) {
+			$this->mark_incomplete_input( 'Unclosed markup in DOCTYPE declaration.' );
+
+			return false;
+		}
+
+		$next = $this->xml[ $offset + 1 ];
+
+		if ( '?' === $next ) {
+			$closer = strpos( $this->xml, '?>', $offset + 2 );
+			if ( false === $closer ) {
+				$this->mark_incomplete_input( 'Unclosed processing instruction in DOCTYPE declaration.' );
+
+				return false;
+			}
+
+			$offset = $closer + 2;
+
+			return true;
+		}
+
+		if ( '!' !== $next ) {
+			$this->bail( 'Unsupported markup inside DOCTYPE declaration.', self::ERROR_SYNTAX );
+		}
+
+		if ( $offset + 3 < $doc_length && '-' === $this->xml[ $offset + 2 ] && '-' === $this->xml[ $offset + 3 ] ) {
+			$closer = strpos( $this->xml, '-->', $offset + 4 );
+			if ( false === $closer ) {
+				$this->mark_incomplete_input( 'Unclosed comment in DOCTYPE declaration.' );
+
+				return false;
+			}
+
+			$offset = $closer + 3;
+
+			return true;
+		}
+
+		if ( $offset + 2 < $doc_length && '[' === $this->xml[ $offset + 2 ] ) {
+			$offset += 3;
+
+			return $this->skip_conditional_section( $offset );
+		}
+
+		$offset += 2;
+
+		return $this->skip_markup_declaration( $offset );
+	}
+
+	/**
+	 * Skips over a conditional section, including any nested sections it may contain.
+	 *
+	 * @param int &$offset Character offset immediately after the '<![' sequence.
+	 * @return bool Whether the section was fully consumed.
+	 */
+	private function skip_conditional_section( &$offset ) {
+		$doc_length   = strlen( $this->xml );
+		$section_type = 'UNKNOWN';
+
+		$offset += strspn( $this->xml, " \t\f\r\n", $offset );
+
+		if ( $offset >= $doc_length ) {
+			$this->mark_incomplete_input( 'Unclosed conditional section in DOCTYPE declaration.' );
+
+			return false;
+		}
+
+		if ( '%' === $this->xml[ $offset ] ) {
+			if ( ! $this->skip_parameter_entity_reference( $offset ) ) {
+				return false;
+			}
+		} else {
+			$keyword_length = $this->parse_name( $offset );
+			if ( 0 === $keyword_length ) {
+				$this->bail( 'Invalid conditional section declaration.', self::ERROR_SYNTAX );
+			}
+
+			$section_type = strtoupper( substr( $this->xml, $offset, $keyword_length ) );
+			$offset      += $keyword_length;
+
+			if ( 'INCLUDE' !== $section_type && 'IGNORE' !== $section_type ) {
+				$this->bail(
+					sprintf( 'Unsupported conditional section keyword "%s".', $section_type ),
+					self::ERROR_SYNTAX
+				);
+			}
+		}
+
+		$offset += strspn( $this->xml, " \t\f\r\n", $offset );
+
+		if ( $offset >= $doc_length ) {
+			$this->mark_incomplete_input( 'Unclosed conditional section in DOCTYPE declaration.' );
+
+			return false;
+		}
+
+		if ( '[' !== $this->xml[ $offset ] ) {
+			$this->bail( 'Conditional section missing "[" opener.', self::ERROR_SYNTAX );
+		}
+
+		++$offset;
+
+		if ( ! $this->skip_conditional_section_body( $offset, $section_type ) ) {
+			return false;
+		}
+
+		if ( $offset + 2 >= $doc_length ) {
+			$this->mark_incomplete_input( 'Unclosed conditional section in DOCTYPE declaration.' );
+
+			return false;
+		}
+
+		if ( ']' !== $this->xml[ $offset ] || ']' !== $this->xml[ $offset + 1 ] || '>' !== $this->xml[ $offset + 2 ] ) {
+			$this->bail( 'Invalid conditional section closer.', self::ERROR_SYNTAX );
+		}
+
+		$offset += 3;
+
+		return true;
+	}
+
+	/**
+	 * Scans the contents of a conditional section until the matching "]]>" sequence.
+	 *
+	 * @param int    &$offset      Character offset immediately after the content opener '['.
+	 * @param string $section_type Either 'INCLUDE', 'IGNORE', or 'UNKNOWN'.
+	 * @return bool Whether the body was fully consumed.
+	 */
+	private function skip_conditional_section_body( &$offset, $section_type ) {
+		$doc_length = strlen( $this->xml );
+
+		while ( $offset < $doc_length ) {
+			if (
+				$offset + 2 < $doc_length &&
+				']' === $this->xml[ $offset ] &&
+				']' === $this->xml[ $offset + 1 ] &&
+				'>' === $this->xml[ $offset + 2 ]
+			) {
+				return true;
+			}
+
+			$char = $this->xml[ $offset ];
+
+			if ( '"' === $char || "'" === $char ) {
+				$length = $this->parse_quoted_string( $offset );
+				if ( false === $length ) {
+					return false;
+				}
+
+				$offset += $length;
+				continue;
+			}
+
+			if ( '%' === $char ) {
+				if ( ! $this->skip_parameter_entity_reference( $offset ) ) {
+					return false;
+				}
+
+				continue;
+			}
+
+			if ( '<' === $char ) {
+				if ( $offset + 1 >= $doc_length ) {
+					$this->mark_incomplete_input( 'Unclosed conditional section in DOCTYPE declaration.' );
+
+					return false;
+				}
+
+				if (
+					'!' === $this->xml[ $offset + 1 ] &&
+					$offset + 2 < $doc_length &&
+					'[' === $this->xml[ $offset + 2 ]
+				) {
+					$offset += 3;
+
+					if ( ! $this->skip_conditional_section( $offset ) ) {
+						return false;
+					}
+
+					continue;
+				}
+
+				if (
+					'!' === $this->xml[ $offset + 1 ] &&
+					$offset + 3 < $doc_length &&
+					'-' === $this->xml[ $offset + 2 ] &&
+					'-' === $this->xml[ $offset + 3 ]
+				) {
+					$closer = strpos( $this->xml, '-->', $offset + 4 );
+					if ( false === $closer ) {
+						$this->mark_incomplete_input( 'Unclosed comment in DOCTYPE declaration.' );
+
+						return false;
+					}
+
+					$offset = $closer + 3;
+					continue;
+				}
+
+				if ( 'INCLUDE' === $section_type ) {
+					if ( '!' === $this->xml[ $offset + 1 ] ) {
+						$offset += 2;
+
+						if ( ! $this->skip_markup_declaration( $offset ) ) {
+							return false;
+						}
+
+						continue;
+					}
+
+					if ( '?' === $this->xml[ $offset + 1 ] ) {
+						$closer = strpos( $this->xml, '?>', $offset + 2 );
+						if ( false === $closer ) {
+							$this->mark_incomplete_input( 'Unclosed processing instruction in DOCTYPE declaration.' );
+
+							return false;
+						}
+
+						$offset = $closer + 2;
+						continue;
+					}
+				}
+			}
+
+			++$offset;
+		}
+
+		$this->mark_incomplete_input( 'Unclosed conditional section in DOCTYPE declaration.' );
+
+		return false;
+	}
+
+	/**
+	 * Skips over a markup declaration following a '<!' sequence.
+	 *
+	 * @param int &$offset Character offset immediately after '<!'.
+	 * @return bool Whether the declaration was fully consumed.
+	 */
+	private function skip_markup_declaration( &$offset ) {
+		$doc_length = strlen( $this->xml );
+		$keyword_length = $this->parse_name( $offset );
+
+		if ( 0 === $keyword_length ) {
+			$this->bail( 'Malformed markup declaration in DOCTYPE internal subset.', self::ERROR_SYNTAX );
+		}
+
+		$keyword = strtoupper( substr( $this->xml, $offset, $keyword_length ) );
+
+		if ( ! in_array( $keyword, array( 'ELEMENT', 'ATTLIST', 'ENTITY', 'NOTATION' ), true ) ) {
+			$this->bail(
+				sprintf( 'Unsupported markup declaration "<!%s" in DOCTYPE internal subset.', $keyword ),
+				self::ERROR_UNSUPPORTED
+			);
+		}
+
+		$offset += $keyword_length;
+
+		return $this->skip_markup_declaration_body( $offset );
+	}
+
+	/**
+	 * Scans a markup declaration until its closing '>'.
+	 *
+	 * @param int &$offset Character offset immediately after the markup keyword.
+	 * @return bool Whether the declaration was fully consumed.
+	 */
+	private function skip_markup_declaration_body( &$offset ) {
+		$doc_length = strlen( $this->xml );
+
+		while ( $offset < $doc_length ) {
+			$char = $this->xml[ $offset ];
+
+			if ( '"' === $char || "'" === $char ) {
+				$length = $this->parse_quoted_string( $offset );
+				if ( false === $length ) {
+					return false;
+				}
+
+				$offset += $length;
+				continue;
+			}
+
+			if ( '%' === $char ) {
+				if ( ! $this->skip_parameter_entity_reference( $offset ) ) {
+					return false;
+				}
+
+				continue;
+			}
+
+			if ( '>' === $char ) {
+				++$offset;
+
+				return true;
+			}
+
+			if ( '<' === $char ) {
+				$this->bail( 'Unexpected "<" inside DOCTYPE markup declaration.', self::ERROR_SYNTAX );
+			}
+
+			++$offset;
+		}
+
+		$this->mark_incomplete_input( 'Unclosed markup declaration in DOCTYPE declaration.' );
+
+		return false;
+	}
+
+	/**
+	 * Skips over a parameter entity reference beginning at $offset.
+	 *
+	 * @param int &$offset Character offset at the '%'.
+	 * @return bool Whether the reference was fully consumed.
+	 */
+	private function skip_parameter_entity_reference( &$offset ) {
+		$doc_length = strlen( $this->xml );
+
+		if ( '%' !== $this->xml[ $offset ] ) {
+			$this->bail( 'Parameter entity reference must start with "%".', self::ERROR_SYNTAX );
+		}
+
+		++$offset;
+		$offset_before_name = $offset;
+		$offset            += strspn( $this->xml, " \t\f\r\n", $offset );
+		$had_whitespace     = ( $offset !== $offset_before_name );
+
+		$name_length = $this->parse_name( $offset );
+		if ( 0 === $name_length ) {
+			$this->bail( 'Invalid parameter entity reference in DOCTYPE declaration.', self::ERROR_SYNTAX );
+		}
+
+		$offset += $name_length;
+
+		if ( $had_whitespace ) {
+			// Parameter entity declaration (e.g. "<!ENTITY % name ...>").
+			return true;
+		}
+
+		if ( $offset >= $doc_length ) {
+			$this->mark_incomplete_input( 'Unterminated parameter entity reference in DOCTYPE declaration.' );
+
+			return false;
+		}
+
+		if ( ';' !== $this->xml[ $offset ] ) {
+			$this->bail( 'Parameter entity references must end with a semicolon.', self::ERROR_SYNTAX );
+		}
+
+		++$offset;
+
+		return true;
 	}
 
 	/**

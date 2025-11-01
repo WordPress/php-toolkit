@@ -2633,6 +2633,56 @@ XML;
 		$this->assertEquals( '  line2  ', $processor->get_modifiable_text() );
 	}
 
+	public function test_skips_over_doctypes_atts_and_conditional_sections() {
+		$xml = <<<XML
+		<!DOCTYPE html [
+			<!ELEMENT html (head, body)>
+			<!ATTLIST html lang CDATA "en-US">
+			<!ENTITY % draft "INCLUDE" >
+			<!ENTITY % final "IGNORE" >
+			<!ENTITY close "]]>">
+			<!NOTATION icon SYSTEM "image/svg+xml">
+			<![ %draft; [
+				<!ELEMENT head (title)>
+				<!ELEMENT body (p*)>
+			]]>
+			<![ %final; [
+				<!ELEMENT body ANY>
+			]]>
+		]>
+		<html>
+			<head>
+				<title>Test</title>
+			</head>
+			<body>
+				<p>Example</p>
+			</body>
+		</html>
+XML;
+		$processor = XMLProcessor::create_from_string( $xml );
+		$this->assertTrue( $processor->next_token(), 'Did not find DOCTYPE node.' );
+		$this->assertEquals( '#doctype', $processor->get_token_type(), 'Did not find DOCTYPE node.' );
+		$this->assertEquals( 'html', $processor->get_doctype_name(), 'Did not find DOCTYPEName.' );
+
+		$this->assertTrue( $processor->next_token(), 'Did not find root tag.' );
+		$this->assertEquals( 'html', $processor->get_tag_local_name(), 'Did not find root tag.' );
+
+		$this->assertTrue( $processor->next_tag(), 'Did not find head tag.' );
+		$this->assertEquals( 'head', $processor->get_tag_local_name(), 'Did not find head tag.' );
+
+		$this->assertTrue( $processor->next_tag(), 'Did not find title tag.' );
+		$this->assertEquals( 'title', $processor->get_tag_local_name(), 'Did not find title tag.' );
+
+		$this->assertTrue( $processor->next_tag(), 'Did not find body tag.' );
+		$this->assertEquals( 'body', $processor->get_tag_local_name(), 'Did not find body tag.' );
+
+		$this->assertTrue( $processor->next_tag(), 'Did not find p tag.' );
+		$this->assertEquals( 'p', $processor->get_tag_local_name(), 'Did not find p tag.' );
+
+		$this->assertTrue( $processor->next_token(), 'Did not find example text.' );
+		$this->assertEquals( 'Example', $processor->get_modifiable_text(), 'Did not find example text.' );
+	}
+
 	public function test_handles_various_whitespace_between_attributes() {
 		$xml = "<root
 			attr1='val1'  attr2=\"val2\"
