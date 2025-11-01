@@ -293,11 +293,18 @@ function utf8_codepoint_at( string $text, int $byte_offset = 0, &$matched_bytes 
 		return null;
 	}
 
+	// Check if we're at or past the end of the string.
+	if ( $byte_offset >= strlen( $text ) ) {
+		$matched_bytes = 0;
+		return null;
+	}
+
 	$new_byte_offset = $byte_offset;
 	$invalid_length = 0;
 	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	if ( 1 !== _wp_scan_utf8( $text, $new_byte_offset, $invalid_length, null, 1 ) ) {
-		$matched_bytes = $invalid_length;
+		// Ensure we always advance at least 1 byte to avoid infinite loops.
+		$matched_bytes = max( 1, $invalid_length );
 		return utf8_ord( "\u{FFFD}" );
 	}
 

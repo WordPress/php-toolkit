@@ -54,7 +54,7 @@ function _wp_scan_utf8( string $bytes, int &$at, int &$invalid_length, ?int $max
 	$max_count         = $max_code_points ?? PHP_INT_MAX;
 	$has_noncharacters = false;
 
-	for ( $i = $at; $i < $end && $count <= $max_count; $i++ ) {
+	for ( $i = $at; $i < $end && $count < $max_count; $i++ ) {
 		/*
 		 * Quickly skip past US-ASCII bytes, all of which are valid UTF-8.
 		 *
