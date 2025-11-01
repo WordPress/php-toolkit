@@ -2,10 +2,10 @@
 
 namespace WordPress\DataLiberation\URL;
 
+use function WordPress\Encoding\utf8_codepoint_at;
+use function WordPress\Encoding\codepoint_to_utf8_bytes;
 use function WordPress\Encoding\compat\_wp_scan_utf8;
 use function WordPress\Encoding\wp_scrub_utf8;
-use function WordPress\Encoding\codepoint_to_utf8_bytes;
-use function WordPress\Encoding\utf8_ord;
 
 /**
  * Tokenizes CSS according to the CSS Syntax Level 3 specification.
@@ -1475,7 +1475,7 @@ class CSSProcessor {
 	 * @return int The number of bytes consumed.
 	 */
 	private function consume_ident_start_codepoint( $at ): int {
-		if ( $at >= $this->length ) {
+		if ( $at > $this->length ) {
 			return 0;
 		}
 
@@ -1500,16 +1500,14 @@ class CSSProcessor {
 			 *
 			 * We'll move forward by $invalid_length bytes and continue processing.
 			 * Later on, during the string decoding, we'll replace the invalid bytes with U+FFFD
-			 * via maximal subpart"replacement.
-			 *
-			 * Ensure we always return at least 1 byte to avoid infinite loops.
+			 * via maximal subpart”replacement.
 			 */
-			return max( 1, $invalid_length );
+			return $invalid_length;
 		}
 
 		$codepoint_byte_length = $new_at - $at;
-		$codepoint = utf8_ord( substr( $this->css, $at, $codepoint_byte_length ) );
-		if ( $codepoint >= 0x80 ) {
+		$codepoint             = utf8_codepoint_at( $this->css, $at );
+		if ( null !== $codepoint && $codepoint >= 0x80 ) {
 			return $codepoint_byte_length;
 		}
 		return 0;
