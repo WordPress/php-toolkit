@@ -23,7 +23,7 @@ use function WordPress\Encoding\utf8_ord;
  * * UTF-8 encoded
  * * Not standalone (so can use external entities)
  * * No DTD, DOCTYPE, ATTLIST, ENTITY, or conditional sections (will fail on them)
- * 
+ *
  * XML 1.1 is explicitly not a design goal here. Version 1.1 is
  * more complex specification and not so widely supported.
  *
