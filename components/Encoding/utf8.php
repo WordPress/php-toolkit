@@ -294,6 +294,8 @@ function utf8_codepoint_at( string $text, int $byte_offset = 0, &$matched_bytes 
 	}
 
 	$new_byte_offset = $byte_offset;
+	$invalid_length = 0;
+	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	if ( 1 !== _wp_scan_utf8( $text, $new_byte_offset, $invalid_length, null, 1 ) ) {
 		return utf8_ord( "\u{FFFD}" );
 	}
