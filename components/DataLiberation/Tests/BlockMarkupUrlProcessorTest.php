@@ -407,7 +407,8 @@ HTML
 			'Replace unquoted URL'               => array(
 				'<div style="background: url(https://old.com/image.png);"></div>',
 				'https://new.com/image.png',
-				'<div style="background: url(https://new.com/image.png);"></div>',
+				// CSSProcessor always quotes the new URL:
+				'<div style="background: url(&quot;https://new.com/image.png&quot;);"></div>',
 			),
 			'Replace single-quoted URL'          => array(
 				'<div style="background: url(\'https://old.com/image.png\');"></div>',
