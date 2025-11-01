@@ -379,9 +379,7 @@ class Runner {
 		// Validate the Blueprint string we've just loaded.
 
 		// **UTF-8 Encoding:** Assert the Blueprint input is UTF-8 encoded.
-		$is_valid_utf8 = ! wp_is_valid_utf8( $blueprint_string );
-
-		if ( ! $is_valid_utf8 ) {
+		if ( ! wp_is_valid_utf8( $blueprint_string ) ) {
 			throw new BlueprintExecutionException( 'Blueprint must be encoded as UTF-8.' );
 		}
 
