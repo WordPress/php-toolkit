@@ -23,6 +23,9 @@ use function WordPress\Encoding\utf8_ord;
  * * UTF-8 encoded
  * * Not standalone (so can use external entities)
  * * No DTD, DOCTYPE, ATTLIST, ENTITY, or conditional sections (will fail on them)
+ * 
+ * XML 1.1 is explicitly not a design goal here. Version 1.1 is
+ * more complex specification and not so widely supported.
  *
  * ### Possible future direction for this module
  *
@@ -41,12 +44,6 @@ use function WordPress\Encoding\utf8_ord;
  *        * <!ENTITY, see https://www.w3.org/TR/xml/#sec-entity-decl
  *        * <!NOTATION, see https://www.w3.org/TR/xml/#sec-entity-decl
  *        * Conditional sections, see https://www.w3.org/TR/xml/#sec-condition-sect
- *
- * @TODO: Support XML 1.1.
- *
- * @TODO: Evaluate the performance of _wp_scan_utf8() against using the mbstring
- *        extension. If mbstring is faster, then use it whenever it's available with
- *        _wp_scan_utf8() as a fallback.
  *
  * @package WordPress
  * @subpackage HTML-API
