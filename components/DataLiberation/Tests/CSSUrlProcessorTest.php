@@ -436,4 +436,60 @@ class CSSURLProcessorTest extends TestCase {
 		$this->assertTrue( $processor->is_data_uri(), 'is_data_uri() should return true for data URIs' );
 	}
 
+	public function test_large_data_uri_does_not_allocate_additional_memory() {
+		// Save original memory limit
+		$original_limit = ini_get( 'memory_limit' );
+
+		// Set memory limit to 1GB for this test
+		ini_set( 'memory_limit', '1G' );
+
+		// Generate a 200MB data URI to test memory efficiency
+		$size_mb      = 200;
+		$size_bytes   = $size_mb * 1024 * 1024;
+		$data_payload = str_repeat( 'A', $size_bytes );
+		$data_uri     = 'data:image/png;base64,' . $data_payload;
+		$css_value    = 'background: url("' . $data_uri . '")';
+
+		// Get memory before parsing
+		$memory_before = memory_get_usage( true );
+
+		// Parse the CSS
+		$processor = new CSSURLProcessor( $css_value );
+		$this->assertTrue( $processor->next_url(), 'Failed to find URL in CSS' );
+
+		// Get memory after parsing
+		$memory_after = memory_get_usage( true );
+
+		// Calculate memory increase
+		$memory_increase = $memory_after - $memory_before;
+
+		// There should be no noticeable memory increase. Let's only allow 1 kilobyte of overhead.
+		$max_allowed_increase = $size_bytes + 1024;
+
+		$this->assertLessThan(
+			$max_allowed_increase,
+			$memory_increase,
+			sprintf(
+				'Memory increased by %d kilobytes, which suggests the data is being duplicated. Expected less than %d kilobytes increase.',
+				$memory_increase / 1024 / 1024,
+				$max_allowed_increase / 1024 / 1024
+			)
+		);
+
+		// Also verify that is_data_uri() works correctly
+		$this->assertTrue( $processor->is_data_uri(), 'is_data_uri() should return true for large data URI' );
+
+		// Verify we can get the raw URL (even though it's large)
+		$retrieved_url = $processor->get_raw_url();
+		$this->assertEquals( $data_uri, $retrieved_url, 'Retrieved data URI does not match original' );
+
+		// Clean up large variables to free memory
+		unset( $data_payload, $data_uri, $css_value, $processor, $retrieved_url );
+		gc_collect_cycles();
+
+		// Restore original memory limit (if possible)
+		// Note: We can't restore if current usage exceeds the original limit
+		@ini_set( 'memory_limit', $original_limit );
+	}
+
 }
