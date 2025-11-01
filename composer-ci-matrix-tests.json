@@ -51,6 +51,7 @@
 			"components/Encoding/utf8.php",
 			"components/Encoding/compat-utf8.php",
 			"components/Encoding/utf8-encoder.php",
+			"components/Encoding/utf8-decoder.php",
 			"components/Filesystem/functions.php",
 			"components/Zip/functions.php",
 			"components/Polyfill/wordpress.php",
