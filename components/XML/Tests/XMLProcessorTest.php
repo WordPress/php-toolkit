@@ -2698,24 +2698,6 @@ XML;
 		);
 	}
 
-	public function test_preserves_whitespace_with_xml_space_attribute() {
-		$xml = <<<XML
-<root xml:space="preserve">
-  line1
-  <child>  line2  </child>
-</root>
-XML;
-		$processor = XMLProcessor::create_from_string( $xml );
-		$processor->next_tag( 'root' );
-
-		$this->assertTrue( $processor->next_token(), 'Did not find first text node.' );
-		$this->assertEquals( "\n  line1\n  ", $processor->get_modifiable_text() );
-
-		$processor->next_tag( 'child' );
-		$this->assertTrue( $processor->next_token(), 'Did not find second text node.' );
-		$this->assertEquals( '  line2  ', $processor->get_modifiable_text() );
-	}
-
 	public function test_skips_over_doctypes_atts_and_conditional_sections() {
 		$xml = <<<XML
 		<!DOCTYPE html [

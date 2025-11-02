@@ -1902,7 +1902,7 @@ class XMLProcessor {
 						}
 
 						$pubid_char = " \r\nabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-()+,./:=?;!*#@\$_%";
-						if ( "'" === $opening_quote_char ) {
+						if ( '"' === $opening_quote_char ) {
 							$pubid_char .= "'";
 						}
 						$pubid_literal_length = strspn( $this->xml, $pubid_char, $at + 1 );

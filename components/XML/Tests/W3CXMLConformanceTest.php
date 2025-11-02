@@ -58,12 +58,6 @@ class W3CXMLConformanceTest extends TestCase {
 			return;
 		}
 
-		// Skip tests with PUBLIC/SYSTEM identifiers that test quote character edge cases
-		if ($test_type === 'valid' && preg_match('/ibm-valid-P1[23]-/', $test_id)) {
-			$this->markTestSkipped("Skipping test case: {$test_id} – XMLProcessor doesn't support mixed quote styles in PUBLIC/SYSTEM identifiers.");
-			return;
-		}
-
 		if (in_array($test_id, [
 			"not-sa01",
 			"not-sa02",
