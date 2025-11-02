@@ -197,3 +197,31 @@ else :
 		return _wp_has_noncharacters_fallback( $text );
 	}
 endif;
+
+/**
+ * Convert a UTF-8 byte sequence to its Unicode codepoint.
+ *
+ * @param  string $character  UTF-8 encoded byte sequence representing a single Unicode character.
+ *
+ * @return int Unicode codepoint.
+ */
+function utf8_ord( string $character ): int {
+	// Convert the byte sequence to its binary representation.
+	$bytes = unpack( 'C*', $character );
+
+	// Initialize the codepoint.
+	$codepoint = 0;
+
+	// Calculate the codepoint based on the number of bytes.
+	if ( 1 === count( $bytes ) ) {
+		$codepoint = $bytes[1];
+	} elseif ( 2 === count( $bytes ) ) {
+		$codepoint = ( ( $bytes[1] & 0x1F ) << 6 ) | ( $bytes[2] & 0x3F );
+	} elseif ( 3 === count( $bytes ) ) {
+		$codepoint = ( ( $bytes[1] & 0x0F ) << 12 ) | ( ( $bytes[2] & 0x3F ) << 6 ) | ( $bytes[3] & 0x3F );
+	} elseif ( 4 === count( $bytes ) ) {
+		$codepoint = ( ( $bytes[1] & 0x07 ) << 18 ) | ( ( $bytes[2] & 0x3F ) << 12 ) | ( ( $bytes[3] & 0x3F ) << 6 ) | ( $bytes[4] & 0x3F );
+	}
+
+	return $codepoint;
+}

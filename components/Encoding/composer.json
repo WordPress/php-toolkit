@@ -20,8 +20,7 @@
 		"files": [
 			"utf8.php",
 			"compat-utf8.php",
-			"utf8-encoder.php",
-			"utf8-decoder.php"
+			"utf8-encoder.php"
 		],
 		"exclude-from-classmap": [
 			"/Tests/"
