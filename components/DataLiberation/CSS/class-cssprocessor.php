@@ -1,6 +1,6 @@
 <?php
 
-namespace WordPress\DataLiberation\URL;
+namespace WordPress\DataLiberation\CSS;
 
 use function WordPress\Encoding\codepoint_to_utf8_bytes;
 use function WordPress\Encoding\compat\_wp_scan_utf8;
@@ -839,7 +839,7 @@ class CSSProcessor {
 	 */
 	public function set_token_value( string $new_value ): bool {
 		// Only URL and string tokens are currently supported.
-		switch ($this->token_type) {
+		switch ( $this->token_type ) {
 			case self::TOKEN_URL:
 				$this->lexical_updates[] = array(
 					'start'  => $this->token_value_starts_at,

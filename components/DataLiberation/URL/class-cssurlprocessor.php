@@ -2,7 +2,7 @@
 
 namespace WordPress\DataLiberation\URL;
 
-require_once __DIR__ . '/class-cssprocessor.php';
+use WordPress\DataLiberation\CSS\CSSProcessor;
 
 /**
  * Provides URL specific helpers on top of the CSSProcessor tokenizer.
