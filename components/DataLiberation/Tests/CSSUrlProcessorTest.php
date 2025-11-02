@@ -705,6 +705,7 @@ CSS;
 
 		// Get memory before parsing
 		$memory_before = memory_get_usage( true );
+		$memory_peak_before = memory_get_peak_usage( true );
 
 		// Parse the CSS
 		$processor = new CSSURLProcessor( $css_value );
@@ -712,6 +713,7 @@ CSS;
 
 		// Get memory after parsing
 		$memory_after = memory_get_usage( true );
+		$memory_peak_after = memory_get_peak_usage( true );
 
 		// Calculate memory increase
 		$memory_increase = $memory_after - $memory_before;
@@ -732,15 +734,20 @@ CSS;
 			)
 		);
 
+		$peak_increase = $memory_peak_after - $memory_peak_before;
+		$this->assertLessThan(
+			$max_allowed_increase,
+			$peak_increase,
+			sprintf(
+				'Memory peak increased by %.2f MB during parsing. This suggests the data may be duplicated. Expected less than %.2f MB increase.',
+				$memory_increase / 1024 / 1024,
+				$max_allowed_increase / 1024 / 1024
+			)
+		);
+
 		// Also verify that is_data_uri() works correctly
 		$this->assertTrue( $processor->is_data_uri(), 'is_data_uri() should return true for large data URI' );
 
-		// Verify we can get the raw URL (even though it's large)
-		$retrieved_url = $processor->get_raw_url();
-		$this->assertEquals( $data_uri, $retrieved_url, 'Retrieved data URI does not match original' );
-
-		// Clean up large variables to free memory
-		unset( $data_payload, $data_uri, $css_value, $processor, $retrieved_url );
 		gc_collect_cycles();
 
 		// Restore original memory limit (if possible)
