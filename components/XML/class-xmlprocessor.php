@@ -1918,6 +1918,12 @@ class XMLProcessor {
 						// Skip whitespace.
 						$at += strspn( $this->xml, " \t\f\r\n", $at );
 
+						if ( $doc_length <= $at ) {
+							$this->mark_incomplete_input( 'Unclosed SYSTEM literal.' );
+
+							return false;
+						}
+
 						// Parse the SystemLiteral token.
 						$quoted_string_length = $this->parse_quoted_string( $at );
 						if ( self::STATE_INCOMPLETE_INPUT === $this->parser_state ) {
@@ -1933,6 +1939,16 @@ class XMLProcessor {
 							$quoted_string_length - 2
 						);
 						$at += $quoted_string_length;
+					} else {
+						$chars = strspn( $this->xml, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', $at );
+						if ( $chars === $doc_length - $at ) {
+							// The document ends with something like:
+							// <!DOCTYPE animal SYS
+							// This is a beginning of a valid DOCTYPE declaration, but it's incomplete.
+							$this->mark_incomplete_input( 'Unclosed DOCTYPE declaration.' );
+
+							return false;
+						}
 					}
 
 					// Skip whitespace.
@@ -2475,15 +2491,25 @@ class XMLProcessor {
 				$this->bail( 'Invalid conditional section declaration.', self::ERROR_SYNTAX );
 			}
 
-			$section_type = strtoupper( substr( $this->xml, $offset, $keyword_length ) );
-			$offset      += $keyword_length;
+			if ( 0 === substr_compare( $this->xml, 'INCLUDE', $offset, min( strlen( 'INCLUDE' ), $keyword_length ), true ) ) {
+				if ( $keyword_length < strlen( 'INCLUDE' ) && $offset + $keyword_length >= $doc_length ) {
+					$this->mark_incomplete_input( 'Unfinished conditional section keyword.' );
 
-			if ( 'INCLUDE' !== $section_type && 'IGNORE' !== $section_type ) {
-				$this->bail(
-					sprintf( 'Unsupported conditional section keyword "%s".', $section_type ),
-					self::ERROR_SYNTAX
-				);
+					return false;
+				}
+				$section_type = 'INCLUDE';
+			} elseif ( 0 === substr_compare( $this->xml, 'IGNORE', $offset, min( strlen( 'IGNORE' ), $keyword_length ), true ) ) {
+				if ( $keyword_length < strlen( 'IGNORE' ) && $offset + $keyword_length >= $doc_length ) {
+					$this->mark_incomplete_input( 'Unfinished conditional section keyword.' );
+
+					return false;
+				}
+				$section_type = 'IGNORE';
+			} else {
+				$this->bail( 'Unsupported conditional section keyword.', self::ERROR_SYNTAX );
 			}
+
+			$offset += $keyword_length;
 		}
 
 		$offset += strspn( $this->xml, " \t\f\r\n", $offset );
@@ -2631,28 +2657,36 @@ class XMLProcessor {
 	}
 
 	/**
-	 * Skips over a markup declaration following a '<!' sequence.
+	 * Skips the following markup declarations following a '<!' sequence:
+	 * - <!ELEMENT name (content)>
+	 * - <!ATTLIST name (content)>
+	 * - <!ENTITY name (content)>
+	 * - <!NOTATION name (content)>
 	 *
 	 * @param int &$offset Character offset immediately after '<!'.
 	 * @return bool Whether the declaration was fully consumed.
 	 */
 	private function skip_markup_declaration( &$offset ) {
-		$doc_length     = strlen( $this->xml );
 		$keyword_length = $this->parse_name( $offset );
 
 		if ( 0 === $keyword_length ) {
 			$this->bail( 'Malformed markup declaration in DOCTYPE internal subset.', self::ERROR_SYNTAX );
 		}
 
-		$keyword = strtoupper( substr( $this->xml, $offset, $keyword_length ) );
-
-		if ( ! in_array( $keyword, array( 'ELEMENT', 'ATTLIST', 'ENTITY', 'NOTATION' ), true ) ) {
-			$this->bail(
-				sprintf( 'Unsupported markup declaration "<!%s" in DOCTYPE internal subset.', $keyword ),
-				self::ERROR_UNSUPPORTED
-			);
+		static $supported_keywords = null;
+		if ( null === $supported_keywords ) {
+			$supported_keywords = array( 'ELEMENT', 'ATTLIST', 'ENTITY', 'NOTATION' );
 		}
 
+		foreach ( $supported_keywords as $keyword ) {
+			if ( 0 === substr_compare( $this->xml, $keyword, $offset, min( strlen( $keyword ), $keyword_length ), true ) ) {
+				if ( $keyword_length < strlen( $keyword ) && $offset + $keyword_length >= strlen( $this->xml ) ) {
+					$this->mark_incomplete_input( 'Unfinished markup declaration keyword.' );
+
+					return false;
+				}
+			}
+		}
 		$offset += $keyword_length;
 
 		return $this->skip_markup_declaration_body( $offset );
