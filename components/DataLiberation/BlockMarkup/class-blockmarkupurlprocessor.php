@@ -79,8 +79,10 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		$this->inspecting_html_attributes = null;
 		$this->url_in_text_processor      = null;
 		$this->css_url_processor          = null;
-		// Do not reset url_in_text_node_updated or css_url_processor_updated – they're reset.
-		// In get_updated_html() which is called in parent::next_token().
+		/*
+		 * Do not reset url_in_text_node_updated or css_url_processor_updated – they're reset
+		 * in get_updated_html() which is called in parent::next_token().
+		 */
 
 		return parent::next_token();
 	}
@@ -120,7 +122,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 			 * way to recognize a substring "WordPress.org" as a URL. We might
 			 * get some false positives this way, e.g. in this string:
 			 *
-			 * > And that's how you build a theme.Now let's take a look at..."
+			 * > And that's how you build a theme. Now let's take a look at..."
 			 *
 			 * `theme.Now` would be recognized as a URL. It's up to the API consumer
 			 * to filter out such false positives e.g. by checking the domain against
@@ -139,6 +141,11 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		return false;
 	}
 
+	/**
+	 * Advances to the next CSS URL in the `style` attribute of the current tag token.
+	 *
+	 * @return bool Whether a CSS URL was found.
+	 */
 	private function next_url_in_css() {
 		if ( '#tag' !== $this->get_token_type() ) {
 			return false;
@@ -154,16 +161,16 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		}
 
 		while ( $this->css_url_processor->next_url() ) {
+			/**
+			 * Skip data URIs. They may be really large and they don't
+			 * have a hostname to migrate.
+			 */
 			if ( $this->css_url_processor->is_data_uri() ) {
 				continue;
 			}
-			$this->raw_url = $this->css_url_processor->get_raw_url();
-
-			// Parse the URL with the base URL (CSS URLs can be relative).
+			$this->raw_url    = $this->css_url_processor->get_raw_url();
 			$this->parsed_url = WPURL::parse( $this->raw_url, $this->base_url_string );
-
 			if ( false === $this->parsed_url ) {
-				// Skip invalid URLs.
 				continue;
 			}
 
@@ -219,7 +226,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 				continue;
 			}
 
-			// Handle style attribute with CSS url() values.
+			// Rewrite any CSS `url()` declarations in the `style` attribute.
 			if ( 'style' === $attr ) {
 				$this->css_url_processor = new CSSURLProcessor( $url_maybe );
 				if ( $this->next_url_in_css() ) {
