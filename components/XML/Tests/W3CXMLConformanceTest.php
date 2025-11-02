@@ -59,21 +59,11 @@ class W3CXMLConformanceTest extends TestCase {
 		}
 
 		if (in_array($test_id, [
-			"not-sa01",
-			"not-sa02",
-			"not-sa03",
 			"not-sa04",
 			"sa04",
 			"ibm-valid-P01-ibm01v01.xml",
-			"ibm-valid-P32-ibm32v01.xml",
-			"ibm-valid-P32-ibm32v02.xml",
-			"ibm-valid-P32-ibm32v03.xml",
-			"ibm-valid-P32-ibm32v04.xml",
-			"ibm-valid-P68-ibm68v02.xml",
-			"ibm-valid-P69-ibm69v01.xml",
-			"ibm-valid-P69-ibm69v02.xml",
 		])) {
-			$this->markTestSkipped("Skipping test case: {$test_id} – XMLProcessor does not support standalone documents");
+			$this->markTestSkipped("Skipping test case: {$test_id} – XMLProcessor does not support custom processing directive targets (e.g. <?music ... ?>)");
 			return;
 		}
 

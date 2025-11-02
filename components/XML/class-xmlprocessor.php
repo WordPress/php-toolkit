@@ -21,7 +21,6 @@ use function WordPress\Encoding\utf8_ord;
  * – XML 1.0
  * – Well-formed
  * – UTF-8 encoded
- * – Not standalone (so can use external entities)
  * – No external DTD subset expansion (external entities may exist but are not fetched).
  *
  * XML 1.1 is explicitly not a design goal here. Version 1.1 is
@@ -2070,13 +2069,6 @@ class XMLProcessor {
 					&& 'UTF-8' !== strtoupper( $this->get_qualified_attribute( 'encoding' ) )
 				) {
 					$this->bail( 'Unsupported XML encoding declared, only UTF-8 is supported.', self::ERROR_UNSUPPORTED );
-					return false;
-				}
-
-				if ( null !== $this->get_qualified_attribute( 'standalone' )
-					&& 'YES' !== strtoupper( $this->get_qualified_attribute( 'standalone' ) )
-				) {
-					$this->bail( 'Standalone XML documents are not supported.', self::ERROR_UNSUPPORTED );
 					return false;
 				}
 
