@@ -2106,27 +2106,26 @@ class XMLProcessor {
 			 * `<?` denotes a processing instruction.
 			 * See https://www.w3.org/TR/xml/#sec-pi
 			 */
-			if (
-				! $this->is_closing_tag &&
-				'?' === $xml[ $at + 1 ]
-			) {
-				if ( $at + 4 >= $doc_length ) {
+			if ( ! $this->is_closing_tag && '?' === $xml[ $at + 1 ] ) {
+				if ( $at + 2 >= $doc_length ) {
 					$this->mark_incomplete_input();
 
 					return false;
 				}
 
-				if ( ! (
-					( 'x' === $xml[ $at + 2 ] || 'X' === $xml[ $at + 2 ] ) &&
-					( 'm' === $xml[ $at + 3 ] || 'M' === $xml[ $at + 3 ] ) &&
-					( 'l' === $xml[ $at + 4 ] || 'L' === $xml[ $at + 4 ] )
-				) ) {
+				$target_length = $this->parse_name( $at + 2 );
+				if ( false === $target_length ) {
+					return false;
+				}
+
+				if ( 0 === $target_length ) {
 					$this->bail( 'Invalid processing instruction target.', self::ERROR_SYNTAX );
 				}
 
-				$at += 5;
+				$target_ends_at             = $at + 2 + $target_length;
+				$this->bytes_already_parsed = $target_ends_at;
 
-				// Skip whitespace.
+				// Skip whitespace after the target, if any.
 				$this->skip_whitespace();
 
 				/*
@@ -2141,7 +2140,7 @@ class XMLProcessor {
 				 * closing ?> is found. Some failures may pass unnoticed. That may not be a problem in practice,
 				 * but if it is then this code path will require a stricter implementation.
 				 */
-				$closer_at = strpos( $xml, '?>', $at );
+				$closer_at = strpos( $xml, '?>', $this->bytes_already_parsed );
 				if ( false === $closer_at ) {
 					$this->mark_incomplete_input();
 
@@ -2149,8 +2148,8 @@ class XMLProcessor {
 				}
 
 				$this->parser_state         = self::STATE_PI_NODE;
-				$this->token_length         = $closer_at + 5 - $this->token_starts_at;
-				$this->text_starts_at       = $this->token_starts_at + 5;
+				$this->token_length         = $closer_at + 2 - $this->token_starts_at;
+				$this->text_starts_at       = $target_ends_at;
 				$this->text_length          = $closer_at - $this->text_starts_at;
 				$this->bytes_already_parsed = $closer_at + 2;
 

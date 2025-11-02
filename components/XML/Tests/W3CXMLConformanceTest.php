@@ -59,15 +59,6 @@ class W3CXMLConformanceTest extends TestCase {
 		}
 
 		if (in_array($test_id, [
-			"not-sa04",
-			"sa04",
-			"ibm-valid-P01-ibm01v01.xml",
-		])) {
-			$this->markTestSkipped("Skipping test case: {$test_id} – XMLProcessor does not support custom processing directive targets (e.g. <?music ... ?>)");
-			return;
-		}
-
-		if (in_array($test_id, [
 			"ibm-1-1-valid-P02-ibm02v01.xml",
 			"ibm-1-1-valid-P02-ibm02v02.xml",
 			"ibm-1-1-valid-P02-ibm02v03.xml",
