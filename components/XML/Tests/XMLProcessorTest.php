@@ -1271,6 +1271,43 @@ class XMLProcessorTest extends TestCase {
 		);
 	}
 
+	public function test_stream_parsing_of_incomplete_doctypes() {
+		$XML = '<!DOCTYPE root [
+		<![INCLUDE[ <data>text</data>]]>
+		<![IGNORE[ <data>text</data>]]>
+
+		<!ELEMENT html (head, body)>
+		<!ATTLIST html lang CDATA "en-US">
+		<!ENTITY % draft "INCLUDE" >
+		<!ENTITY % final "IGNORE" >
+		<!ENTITY close "]]>">
+		<!NOTATION icon SYSTEM "image/svg+xml">
+		<![ %draft; [
+			<!ELEMENT head (title)>
+			<!ELEMENT body (p*)>
+		]]>
+		<![ %final; [
+			<!ELEMENT body ANY>
+		]]>
+		]>
+		';
+		$processor = XMLProcessor::create_for_streaming( '' );
+
+		// Append one byte at a time, keep trying to advance, and confirm the
+		// parser does not emit an error at any point.
+		for($i = 0; $i < strlen($XML); $i++) {
+			$processor->append_bytes( $XML[$i] );
+			$processor->next_token();
+			$this->assertNull( $processor->get_exception() );
+			$this->assertNull( $processor->get_last_error() );
+		}
+		$processor->append_bytes( '<root />' );
+		$this->assertTrue( $processor->next_tag(), 'Did not find the root node.' );
+		$this->assertEquals( 'root', $processor->get_tag_local_name(), 'Did not find text node.' );
+		$this->assertFalse( $processor->next_token(), 'Found text node when there was none.' );
+		$this->assertNull( $processor->get_exception() );
+	}
+
 	/**
 	 * Ensures that the processor doesn't attempt to match an incomplete text node.
 	 *

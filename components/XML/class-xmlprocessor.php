@@ -2700,6 +2700,11 @@ class XMLProcessor {
 		$keyword_length = $this->parse_name( $offset );
 
 		if ( 0 === $keyword_length ) {
+			if ( $offset >= strlen( $this->xml ) ) {
+				$this->mark_incomplete_input( 'Unfinished markup declaration keyword.' );
+
+				return false;
+			}
 			$this->bail( 'Malformed markup declaration in DOCTYPE internal subset.', self::ERROR_SYNTAX );
 		}
 
