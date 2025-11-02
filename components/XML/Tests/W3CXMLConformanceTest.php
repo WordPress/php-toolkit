@@ -382,48 +382,20 @@ class W3CXMLConformanceTest extends TestCase {
 
 	private static function resolvePath( $base_path, $relative_path ) {
 		if ( '' === $relative_path ) {
-			return rtrim( $base_path, DIRECTORY_SEPARATOR );
+			return $base_path;
 		}
 
-		if ( preg_match( '#^(?:[a-zA-Z]+:)?/#', $relative_path ) ) {
-			$resolved = realpath( $relative_path );
-
-			return false !== $resolved ? $resolved : self::normalizePath( $relative_path );
+		// If it's an absolute path, use it directly
+		if ( $relative_path[0] === '/' || preg_match( '#^[a-zA-Z]:#', $relative_path ) ) {
+			return $relative_path;
 		}
 
+		// Otherwise concatenate and let realpath() normalize it
 		$candidate = rtrim( $base_path, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR . $relative_path;
 		$resolved  = realpath( $candidate );
 
-		return false !== $resolved ? $resolved : self::normalizePath( $candidate );
-	}
-
-	private static function normalizePath( $path ) {
-		$path = str_replace( '\\', '/', $path );
-
-		$segments = explode( '/', $path );
-		$resolved = array();
-
-		$prefix = '';
-		if ( isset( $segments[0] ) && preg_match( '#^[a-zA-Z]:$#', $segments[0] ) ) {
-			$prefix = array_shift( $segments ) . '/';
-		} elseif ( isset( $segments[0] ) && '' === $segments[0] ) {
-			$prefix = '/';
-			array_shift( $segments );
-		}
-
-		foreach ( $segments as $segment ) {
-			if ( '' === $segment || '.' === $segment ) {
-				continue;
-			}
-
-			if ( '..' === $segment ) {
-				array_pop( $resolved );
-				continue;
-			}
-
-			$resolved[] = $segment;
-		}
-
-		return $prefix . implode( '/', $resolved );
+		// If realpath fails (file doesn't exist), return the candidate anyway
+		// We check is_file() later, so non-existent paths will be skipped
+		return false !== $resolved ? $resolved : $candidate;
 	}
 }
