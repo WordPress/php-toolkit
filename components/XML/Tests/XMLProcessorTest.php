@@ -1501,6 +1501,19 @@ class XMLProcessorTest extends TestCase {
 			'The modifiable text was not correctly captured.' );
 	}
 
+	public function test_custom_processing_instruction_target() {
+		$processor = XMLProcessor::create_from_string( '<?music "notes"?><post/>' );
+		$this->assertTrue( $processor->next_token(), 'The custom processing instruction was not found.' );
+		$this->assertEquals(
+			'#processing-instructions',
+			$processor->get_token_type(),
+			'The custom processing instruction was not correctly identified.'
+		);
+		$this->assertSame( ' "notes"', $processor->get_modifiable_text() );
+		$this->assertTrue( $processor->next_token(), 'The element following the processing instruction was not found.' );
+		$this->assertSame( 'post', $processor->get_token_name(), 'The element following the processing instruction was not parsed correctly.' );
+	}
+
 	/**
 	 * Ensures that updates which are enqueued in front of the cursor
 	 * are applied before moving forward in the document.
