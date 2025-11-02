@@ -18,11 +18,11 @@ use function WordPress\Encoding\utf8_ord;
  * It implements a subset of the XML 1.0 specification (https://www.w3.org/TR/xml/)
  * and supports XML documents with the following characteristics:
  *
- * * XML 1.0
- * * Well-formed
- * * UTF-8 encoded
- * * Not standalone (so can use external entities)
- * * No DTD, DOCTYPE, ATTLIST, ENTITY, or conditional sections (will fail on them)
+ * – XML 1.0
+ * – Well-formed
+ * – UTF-8 encoded
+ * – Not standalone (so can use external entities)
+ * – No DTD, DOCTYPE, ATTLIST, ENTITY, or conditional sections (will fail on them)
  *
  * XML 1.1 is explicitly not a design goal here. Version 1.1 is
  * more complex specification and not so widely supported.
@@ -1196,8 +1196,8 @@ class XMLProcessor {
 			/**
 			 * Compute fully qualified attributes and assert:
 			 *
-			 * * All attributes have valid namespaces.
-			 * * No two attributes have the same (local name, namespace) pair.
+			 * – All attributes have valid namespaces.
+			 * – No two attributes have the same (local name, namespace) pair.
 			 *
 			 * @see https://www.w3.org/TR/2006/REC-xml-names11-20060816/#uniqAttrs
 			 */
@@ -1688,8 +1688,8 @@ class XMLProcessor {
 			 * names.
 			 *
 			 * Reference:
-			 * * https://www.w3.org/TR/xml/#NT-STag
-			 * * https://www.w3.org/TR/xml/#NT-Name
+			 * – https://www.w3.org/TR/xml/#NT-STag
+			 * – https://www.w3.org/TR/xml/#NT-Name
 			 */
 			$tag_name_length = $this->parse_name( $at + 1 );
 			if ( false === $tag_name_length ) {
@@ -2344,9 +2344,9 @@ class XMLProcessor {
 			 * We use a the `_wp_scan_utf8` UTF-8 decoder introduced in WordPress 6.9. No other method
 			 * is reliable and available enough to depend on it in WordPress core:
 			 *
-			 * * mb_ord() – is only available on 95% of hosts.
-			 * * iconv_substr() – is not available on all hosts.
-			 * * preg_match() – can fail with PREG_BAD_UTF8_ERROR when the input
+			 * – mb_ord() – is available on 99.5%+ or more of hosts, but not on all hosts.
+			 * – iconv_substr() – is not available on all hosts.
+			 * – preg_match() – can fail with PREG_BAD_UTF8_ERROR when the input
 			 *                  contains an incomplete UTF-8 byte sequence – even
 			 *                  when that sequence comes after a valid match. This
 			 *                  failure mode cannot be reproduced with just any string.
@@ -2358,11 +2358,11 @@ class XMLProcessor {
 			 * is pretty slow. The ASCII fast path below enables skipping most of the
 			 * UTF-8 decoder calls.
 			 *
-			 * If the UTF-8 decoder performance ever becomes a bottleneck, there is a
+			 * If the UTF-8 decoder performance ever becomes a bottleneck, there are a
 			 * few ways to significantly improve it:
 			 *
-			 * * Call a native grapheme_ function when available.
-			 * * Introduce a custom UTF-8 decoder optimized for codepoint-by-codepoint processing.
+			 * – Call a native grapheme_ function when available.
+			 * – Introduce a custom UTF-8 decoder optimized for codepoint-by-codepoint processing.
 			 *   It could be the streaming version of the UTF-8 decoder, such as `_wp_iterate_utf8`,
 			 *   that avoids the repeated strspn() calls. Alternatively, the older `utf8_codepoint_at`
 			 *   function could be restored if its codepoint-by-codepoint decoding performance is
