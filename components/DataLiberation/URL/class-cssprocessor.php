@@ -838,27 +838,26 @@ class CSSProcessor {
 	 * @return bool Whether the value was successfully updated.
 	 */
 	public function set_token_value( string $new_value ): bool {
-		// Only URL tokens are currently supported.
-		if ( self::TOKEN_URL !== $this->token_type ) {
-			return false;
+		// Only URL and string tokens are currently supported.
+		switch ($this->token_type) {
+			case self::TOKEN_URL:
+				$this->lexical_updates[] = array(
+					'start'  => $this->token_value_starts_at,
+					'length' => $this->token_value_length,
+					'text'   => $this->escape_url_value( $new_value ),
+				);
+				return true;
+			case self::TOKEN_STRING:
+				$this->lexical_updates[] = array(
+					'start'  => $this->token_starts_at,
+					'length' => $this->token_length,
+					'text'   => $this->escape_url_value( $new_value ),
+				);
+				return true;
+			default:
+				_doing_it_wrong( __METHOD__, 'set_token_value() only supports URL and string tokens. Got token type: ' . $this->token_type, '1.0.0' );
+				return false;
 		}
-
-		// Ensure we have valid token value boundaries.
-		if ( null === $this->token_value_starts_at || null === $this->token_value_length ) {
-			return false;
-		}
-
-		// Escape the URL value for unquoted URL syntax.
-		$escaped_value = $this->escape_url_value( $new_value );
-
-		// Queue the lexical update.
-		$this->lexical_updates[] = array(
-			'start'  => $this->token_value_starts_at,
-			'length' => $this->token_value_length,
-			'text'   => $escaped_value,
-		);
-
-		return true;
 	}
 
 	/**

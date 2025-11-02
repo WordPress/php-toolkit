@@ -413,7 +413,7 @@ HTML
 			'Replace single-quoted URL'          => array(
 				'<div style="background: url(\'https://old.com/image.png\');"></div>',
 				'https://new.com/image.png',
-				'<div style="background: url(\'https://new.com/image.png\');"></div>',
+				'<div style="background: url(&quot;https://new.com/image.png&quot;);"></div>',
 			),
 			'Replace relative URL'               => array(
 				'<div style="background: url(&quot;/old/path.png&quot;);"></div>',

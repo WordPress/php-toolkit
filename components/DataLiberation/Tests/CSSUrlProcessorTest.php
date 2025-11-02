@@ -344,7 +344,7 @@ class CSSURLProcessorTest extends TestCase {
 			'Replace single-quoted URL'             => array(
 				'input'    => "background: url('https://old.com/image.png')",
 				'new_url'  => 'https://new.com/image.png',
-				'expected' => "background: url('https://new.com/image.png')",
+				'expected' => "background: url(\u{22}https://new.com/image.png\u{22})",
 			),
 			'Replace unquoted URL (outputs quoted)' => array(
 				'input'    => 'background: url(https://old.com/image.png)',
@@ -360,7 +360,7 @@ class CSSURLProcessorTest extends TestCase {
 			'Sets new URL with single quotes in single-quoted string' => array(
 				'input'    => "background: url('https://old.com/old.png')",
 				'new_url'  => "https://example.com/path'with'quotes.png",
-				'expected' => "background: url('https://example.com/path'with'quotes.png')",
+				'expected' => "background: url(\u{22}https://example.com/path'with'quotes.png\u{22})",
 				// Single quotes not escaped in single-quoted context
 			),
 			'Sets new URL with backslashes in path'                   => array(
@@ -522,7 +522,7 @@ CSS;
 .card {
 	/* Multiple URLs in a single property */
 	background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
-	            url('https://replaced.test/url-2'),
+	            url("https://replaced.test/url-2"),
 	            url("https://replaced.test/url-3");
 }
 
@@ -537,7 +537,7 @@ CSS;
 }
 
 .cursor {
-	cursor: url('https://replaced.test/url-5'), auto;
+	cursor: url("https://replaced.test/url-5"), auto;
 }
 
 .content::before {
