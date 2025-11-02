@@ -1961,9 +1961,12 @@ class XMLProcessor {
 					}
 
 					if ( '[' === $this->xml[ $at ] ) {
-						if ( ! $this->skip_doctype_internal_subset( $at ) ) {
+						$new_at = $this->skip_doctype_internal_dtd_subset( $at );
+						if ( false === $new_at ) {
 							return false;
 						}
+
+						$at = $new_at;
 
 						// Skip whitespace following the internal subset.
 						$at += strspn( $this->xml, " \t\f\r\n", $at );
@@ -2347,13 +2350,16 @@ class XMLProcessor {
 	}
 
 	/**
-	 * Skips over the internal subset of a DOCTYPE declaration.
+	 * Skips over the internal subset of a DOCTYPE declaration:
 	 *
-	 * @param int &$offset Character offset of the '[' that opens the subset. The
-	 *                     offset is updated to point right after the closing ']'.
-	 * @return bool Whether the subset was fully consumed.
+	 *     <!DOCTYPE name [internal subset]>
+	 *                    ^^^^^^^^^^^^^^^^^
+	 *                        this part
+	 *
+	 * @param int $offset Byte offset of the '[' that opens the subset.
+	 * @return int|false Updated offset pointing right after the closing ']', or false on failure.
 	 */
-	private function skip_doctype_internal_subset( &$offset ) {
+	private function skip_doctype_internal_dtd_subset( $offset ) {
 		$doc_length = strlen( $this->xml );
 
 		// Consume the opening '['.
@@ -2371,11 +2377,12 @@ class XMLProcessor {
 			if ( ']' === $this->xml[ $offset ] ) {
 				++$offset;
 
-				return true;
+				return $offset;
 			}
 
 			if ( '%' === $this->xml[ $offset ] ) {
-				if ( ! $this->skip_parameter_entity_reference( $offset ) ) {
+				$offset = $this->skip_dtd_parameter_entity_reference( $offset );
+				if ( false === $offset ) {
 					return false;
 				}
 
@@ -2383,7 +2390,8 @@ class XMLProcessor {
 			}
 
 			if ( '<' === $this->xml[ $offset ] ) {
-				if ( ! $this->skip_dtd_markup( $offset ) ) {
+				$offset = $this->skip_dtd_markup( $offset );
+				if ( false === $offset ) {
 					return false;
 				}
 
@@ -2408,10 +2416,14 @@ class XMLProcessor {
 	/**
 	 * Skips a single markup declaration, comment, processing instruction, or conditional section.
 	 *
-	 * @param int &$offset Character offset pointing to the '<' that begins the markup.
-	 * @return bool Whether the markup was fully consumed.
+	 *     <!DOCTYPE name [<!ENTITY % draft 'INCLUDE' ><!ENTITY % draft 'INCLUDE' >]>
+	 *                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	 *                                         this entire part
+	 *
+	 * @param int $offset Byte offset pointing to the '<' that begins the markup.
+	 * @return int|false Updated offset on success, false on failure.
 	 */
-	private function skip_dtd_markup( &$offset ) {
+	private function skip_dtd_markup( $offset ) {
 		$doc_length = strlen( $this->xml );
 
 		if ( $offset + 1 >= $doc_length ) {
@@ -2431,8 +2443,7 @@ class XMLProcessor {
 			}
 
 			$offset = $closer + 2;
-
-			return true;
+			return $offset;
 		}
 
 		if ( '!' !== $next ) {
@@ -2449,7 +2460,7 @@ class XMLProcessor {
 
 			$offset = $closer + 3;
 
-			return true;
+			return $offset;
 		}
 
 		if ( $offset + 2 < $doc_length && '[' === $this->xml[ $offset + 2 ] ) {
@@ -2466,10 +2477,16 @@ class XMLProcessor {
 	/**
 	 * Skips over a conditional section, including any nested sections it may contain.
 	 *
-	 * @param int &$offset Character offset immediately after the '<![' sequence.
-	 * @return bool Whether the section was fully consumed.
+	 * <![%draft;[<!ELEMENT book (comments*, title, body, supplements?)>]]>
+	 *    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	 *                       this entire section
+	 *
+	 * @see https://www.w3.org/TR/xml/#sec-condition-sect
+	 *
+	 * @param int $offset Byte offset immediately after the '<![' sequence.
+	 * @return int|false Updated offset on success, false on failure.
 	 */
-	private function skip_conditional_section( &$offset ) {
+	private function skip_conditional_section( $offset ) {
 		$doc_length   = strlen( $this->xml );
 		$section_type = 'UNKNOWN';
 
@@ -2482,7 +2499,8 @@ class XMLProcessor {
 		}
 
 		if ( '%' === $this->xml[ $offset ] ) {
-			if ( ! $this->skip_parameter_entity_reference( $offset ) ) {
+			$offset = $this->skip_dtd_parameter_entity_reference( $offset );
+			if ( false === $offset ) {
 				return false;
 			}
 		} else {
@@ -2526,7 +2544,8 @@ class XMLProcessor {
 
 		++$offset;
 
-		if ( ! $this->skip_conditional_section_body( $offset, $section_type ) ) {
+		$offset = $this->skip_conditional_section_body( $offset, $section_type );
+		if ( false === $offset ) {
 			return false;
 		}
 
@@ -2542,17 +2561,22 @@ class XMLProcessor {
 
 		$offset += 3;
 
-		return true;
+		return $offset;
 	}
 
 	/**
 	 * Scans the contents of a conditional section until the matching "]]>" sequence.
 	 *
-	 * @param int    &$offset      Character offset immediately after the content opener '['.
+	 * <![%draft;[<!ELEMENT book (comments*, title, body, supplements?)>]]>
+	 *            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	 *                                this entire part
+	 *
+	 * @see https://www.w3.org/TR/xml/#sec-condition-sect
+	 * @param int    $offset      Byte offset immediately after the content opener '['.
 	 * @param string $section_type Either 'INCLUDE', 'IGNORE', or 'UNKNOWN'.
-	 * @return bool Whether the body was fully consumed.
+	 * @return int|false Updated offset on success, false on failure.
 	 */
-	private function skip_conditional_section_body( &$offset, $section_type ) {
+	private function skip_conditional_section_body( $offset, $section_type ) {
 		$doc_length = strlen( $this->xml );
 
 		while ( $offset < $doc_length ) {
@@ -2562,7 +2586,7 @@ class XMLProcessor {
 				']' === $this->xml[ $offset + 1 ] &&
 				'>' === $this->xml[ $offset + 2 ]
 			) {
-				return true;
+				return $offset;
 			}
 
 			$char = $this->xml[ $offset ];
@@ -2578,7 +2602,8 @@ class XMLProcessor {
 			}
 
 			if ( '%' === $char ) {
-				if ( ! $this->skip_parameter_entity_reference( $offset ) ) {
+				$offset = $this->skip_dtd_parameter_entity_reference( $offset );
+				if ( false === $offset ) {
 					return false;
 				}
 
@@ -2599,7 +2624,8 @@ class XMLProcessor {
 				) {
 					$offset += 3;
 
-					if ( ! $this->skip_conditional_section( $offset ) ) {
+					$offset = $this->skip_conditional_section( $offset );
+					if ( false === $offset ) {
 						return false;
 					}
 
@@ -2627,7 +2653,8 @@ class XMLProcessor {
 					if ( '!' === $this->xml[ $offset + 1 ] ) {
 						$offset += 2;
 
-						if ( ! $this->skip_markup_declaration( $offset ) ) {
+						$offset = $this->skip_markup_declaration( $offset );
+						if ( false === $offset ) {
 							return false;
 						}
 
@@ -2658,15 +2685,21 @@ class XMLProcessor {
 
 	/**
 	 * Skips the following markup declarations following a '<!' sequence:
+	 *
+	 *     <!ELEMENT name (content)>
+	 *       ^^^^^^^^^^^^^^^^^^^^^^
+	 *         this entire part
+	 *
+	 * Supported markup declarations:
 	 * - <!ELEMENT name (content)>
 	 * - <!ATTLIST name (content)>
 	 * - <!ENTITY name (content)>
 	 * - <!NOTATION name (content)>
 	 *
-	 * @param int &$offset Character offset immediately after '<!'.
+	 * @param int $offset Byte offset immediately after '<!'.
 	 * @return bool Whether the declaration was fully consumed.
 	 */
-	private function skip_markup_declaration( &$offset ) {
+	private function skip_markup_declaration( $offset ) {
 		$keyword_length = $this->parse_name( $offset );
 
 		if ( 0 === $keyword_length ) {
@@ -2695,10 +2728,15 @@ class XMLProcessor {
 	/**
 	 * Scans a markup declaration until its closing '>'.
 	 *
-	 * @param int &$offset Character offset immediately after the markup keyword.
-	 * @return bool Whether the declaration was fully consumed.
+	 *     <!ELEMENT name (content)>
+	 *               ^^^^^^^^^^^^^^
+	 *                  this part
+	 *
+	 * @see https://www.w3.org/TR/xml/#dt-markupdecl
+	 * @param int $offset Byte offset immediately after the markup keyword (e.g. 'ELEMENT', 'ATTLIST', 'ENTITY', 'NOTATION').
+	 * @return int|false Updated offset on success, false on failure.
 	 */
-	private function skip_markup_declaration_body( &$offset ) {
+	private function skip_markup_declaration_body( $offset ) {
 		$doc_length = strlen( $this->xml );
 
 		while ( $offset < $doc_length ) {
@@ -2715,7 +2753,8 @@ class XMLProcessor {
 			}
 
 			if ( '%' === $char ) {
-				if ( ! $this->skip_parameter_entity_reference( $offset ) ) {
+				$offset = $this->skip_dtd_parameter_entity_reference( $offset );
+				if ( false === $offset ) {
 					return false;
 				}
 
@@ -2725,7 +2764,7 @@ class XMLProcessor {
 			if ( '>' === $char ) {
 				++$offset;
 
-				return true;
+				return $offset;
 			}
 
 			if ( '<' === $char ) {
@@ -2741,12 +2780,18 @@ class XMLProcessor {
 	}
 
 	/**
-	 * Skips over a parameter entity reference beginning at $offset.
+	 * Skips over a **parameter entity reference** beginning at $offset.
+	 * $offset must point to the initial '%' byte of the reference.
 	 *
-	 * @param int &$offset Character offset at the '%'.
-	 * @return bool Whether the reference was fully consumed.
+	 *     <!ENTITY % ISOLat2 SYSTEM "http://www.xml.com/iso/isolat2-xml.entities" >
+	 *              ^^^^^^^^^
+	 *              this part
+	 *
+	 * @see https://www.w3.org/TR/xml/#dt-PERef
+	 * @param int $offset Byte offset at the '%'.
+	 * @return int|false Updated offset on success, false on failure.
 	 */
-	private function skip_parameter_entity_reference( &$offset ) {
+	private function skip_dtd_parameter_entity_reference( $offset ) {
 		$doc_length = strlen( $this->xml );
 
 		if ( '%' !== $this->xml[ $offset ] ) {
@@ -2760,6 +2805,12 @@ class XMLProcessor {
 
 		$name_length = $this->parse_name( $offset );
 		if ( 0 === $name_length ) {
+			if ( $offset >= $doc_length ) {
+				$this->mark_incomplete_input( 'Unterminated parameter entity reference in DOCTYPE declaration.' );
+
+				return false;
+			}
+
 			$this->bail( 'Invalid parameter entity reference in DOCTYPE declaration.', self::ERROR_SYNTAX );
 		}
 
@@ -2767,7 +2818,7 @@ class XMLProcessor {
 
 		if ( $had_whitespace ) {
 			// Parameter entity declaration (e.g. "<!ENTITY % name ...>").
-			return true;
+			return $offset;
 		}
 
 		if ( $offset >= $doc_length ) {
@@ -2782,7 +2833,7 @@ class XMLProcessor {
 
 		++$offset;
 
-		return true;
+		return $offset;
 	}
 
 	/**
