@@ -34,10 +34,8 @@ use function WordPress\Encoding\utf8_ord;
  * which is a more complex specification and not so widely supported.
  *
  * @TODO: Include the cursor string in internal bookmarks and use it for seeking.
- *
  * @TODO: Track specific error states, expose informative messages, line
  *        numbers, indexes, and other debugging info.
- *
  *
  * @package WordPress
  * @subpackage HTML-API
