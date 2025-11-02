@@ -1,94 +1,89 @@
 {
-    "name": "wordpress/components",
-    "type": "library",
-    "description": "WordPress Components",
-    "keywords": [
-        "wordpress",
-        "components"
-    ],
-    "homepage": "https://wordpress.org",
-    "license": "GPL-2.0-or-later",
-    "authors": [
-        {
-            "name": "Adam Zielinski",
-            "email": "adam@adamziel.com"
-        },
-        {
-            "name": "WordPress Contributors"
-        }
-    ],
-    "require": {
-        "php": ">=7.2",
-        "ext-json": "*",
-        "ext-mbstring": "*"
-    },
-    "require-dev": {
-        "yoast/phpunit-polyfills": "^4.0.0",
-        "phpcompatibility/php-compatibility": "^9.3.5",
-        "phpunit/phpunit": "8.5.x || ^9.5"
-    },
-    "autoload": {
-        "exclude-from-classmap": [
-            "**/Tests/",
-            "**/bin/",
-            "/Tests/"
-        ],
-        "classmap": [
-            "components/BlockParser/",
-            "components/Blueprints/",
-            "components/Blueprints/vendor-patched/",
-            "components/CLI/",
-            "components/DataLiberation/",
-            "components/DataLiberation/vendor-patched/",
-            "components/Filesystem/",
-            "components/Git/",
-            "components/HTML/./",
-            "components/HttpClient/",
-            "components/HttpServer/",
-            "components/Markdown/",
-            "components/Markdown/vendor-patched",
-            "components/Merge/",
-            "components/Merge/vendor-patched",
-            "components/ByteStream/",
-            "components/XML/",
-            "components/Zip/"
-        ],
-        "files": [
-            "components/DataLiberation/URL/functions.php",
-            "components/Encoding/utf8-decoder.php",
-            "components/Encoding/utf8-encoder.php",
-            "components/Filesystem/functions.php",
-            "components/Zip/functions.php",
-            "components/Polyfill/wordpress.php",
-            "components/Polyfill/mbstring.php",
-            "components/Git/functions.php"
-        ],
-        "psr-4": {
-            "Rowbot\\": "components/DataLiberation/vendor-patched/",
-            "Brick\\": "components/DataLiberation/vendor-patched/",
-            "WordPress\\CORSProxy\\": "components/CORSProxy/"
-        }
-    },
-    "scripts": {
-        "build-blueprints-phar": "box compile -c phar-box.json",
-        "regenerate-json-schema": "node components/Blueprints/Versions/Version2/json-schema/regenerate-schema.ts",
-        "test": "phpunit -c phpunit.xml",
-        "lint": "phpcs .",
-        "lint-fix": "phpcbf ."
-    },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "components/*",
-            "options": {
-                "symlink": true
-            }
-        }
-    ],
-    "minimum-stability": "dev",
-    "config": {
-        "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
-        }
-    }
+	"name": "wordpress/components",
+	"type": "library",
+	"description": "WordPress Components",
+	"keywords": ["wordpress", "components"],
+	"homepage": "https://wordpress.org",
+	"license": "GPL-2.0-or-later",
+	"authors": [
+		{
+			"name": "Adam Zielinski",
+			"email": "adam@adamziel.com"
+		},
+		{
+			"name": "WordPress Contributors"
+		}
+	],
+	"require": {
+		"php": ">=7.2",
+		"ext-json": "*",
+		"ext-mbstring": "*"
+	},
+	"require-dev": {
+		"yoast/phpunit-polyfills": "^4.0.0",
+		"phpcompatibility/php-compatibility": "^9.3.5",
+		"phpunit/phpunit": "8.5.x || ^9.5"
+	},
+	"autoload": {
+		"exclude-from-classmap": ["**/Tests/", "**/bin/", "/Tests/"],
+		"classmap": [
+			"components/BlockParser/",
+			"components/Blueprints/",
+			"components/Blueprints/vendor-patched/",
+			"components/CLI/",
+			"components/DataLiberation/",
+			"components/DataLiberation/vendor-patched/",
+			"components/Filesystem/",
+			"components/Git/",
+			"components/HTML/./",
+			"components/HttpClient/",
+			"components/HttpServer/",
+			"components/Markdown/",
+			"components/Markdown/vendor-patched",
+			"components/Merge/",
+			"components/Merge/vendor-patched",
+			"components/ByteStream/",
+			"components/XML/",
+			"components/Zip/"
+		],
+		"files": [
+			"components/DataLiberation/URL/functions.php",
+			"components/Encoding/utf8.php",
+			"components/Encoding/compat-utf8.php",
+			"components/Encoding/utf8-encoder.php",
+			"components/Encoding/utf8-decoder.php",
+			"components/Filesystem/functions.php",
+			"components/Zip/functions.php",
+			"components/Polyfill/wordpress.php",
+			"components/Polyfill/mbstring.php",
+			"components/Git/functions.php"
+		],
+		"psr-4": {
+			"Rowbot\\": "components/DataLiberation/vendor-patched/",
+			"Brick\\": "components/DataLiberation/vendor-patched/",
+			"WordPress\\CORSProxy\\": "components/CORSProxy/"
+		}
+	},
+	"scripts": {
+		"build-blueprints-phar": "box compile -c phar-box.json",
+		"regenerate-json-schema": "node components/Blueprints/Versions/Version2/json-schema/regenerate-schema.ts",
+		"test": "phpunit -c phpunit.xml",
+		"lint": "phpcs .",
+		"lint-fix": "phpcbf ."
+	},
+	"repositories": [
+		{
+			"type": "path",
+			"url": "components/*",
+			"options": {
+				"symlink": true
+			}
+		}
+	],
+	"minimum-stability": "dev",
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
+	}
 }

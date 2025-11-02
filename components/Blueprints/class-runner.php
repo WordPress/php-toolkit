@@ -55,7 +55,7 @@ use WordPress\HttpClient\ByteStream\RequestReadStream;
 use WordPress\HttpClient\Client;
 use WordPress\Zip\ZipFilesystem;
 
-use function WordPress\Encoding\_wp_has_noncharacters_fallback;
+use function WordPress\Encoding\wp_is_valid_utf8;
 use function WordPress\Filesystem\wp_unix_sys_get_temp_dir;
 use function WordPress\Zip\is_zip_file_stream;
 
@@ -379,14 +379,7 @@ class Runner {
 		// Validate the Blueprint string we've just loaded.
 
 		// **UTF-8 Encoding:** Assert the Blueprint input is UTF-8 encoded.
-		$is_valid_utf8 = false;
-		if ( function_exists( 'mb_check_encoding' ) ) {
-			$is_valid_utf8 = mb_check_encoding( $blueprint_string, 'UTF-8' );
-		} else {
-			$is_valid_utf8 = ! _wp_has_noncharacters_fallback( $blueprint_string );
-		}
-
-		if ( ! $is_valid_utf8 ) {
+		if ( ! wp_is_valid_utf8( $blueprint_string ) ) {
 			throw new BlueprintExecutionException( 'Blueprint must be encoded as UTF-8.' );
 		}
 
