@@ -34,7 +34,6 @@ use function WordPress\Encoding\utf8_codepoint_at;
  * @TODO: Track specific error states, expose informative messages, line
  *        numbers, indexes, and other debugging info.
  *
- *
  * @TODO: Support XML 1.1.
  *
  * @TODO: Evaluate the performance of utf8_codepoint_at() against using the mbstring
@@ -1934,23 +1933,9 @@ class XMLProcessor {
 							$quoted_string_length - 2
 						);
 						$at += $quoted_string_length;
-				}
-
-				// Skip whitespace.
-				$at += strspn( $this->xml, " \t\f\r\n", $at );
-
-				if ( $doc_length <= $at ) {
-					$this->mark_incomplete_input( 'Unclosed DOCTYPE declaration.' );
-
-					return false;
-				}
-
-				if ( '[' === $this->xml[ $at ] ) {
-					if ( ! $this->skip_doctype_internal_subset( $at ) ) {
-						return false;
 					}
 
-					// Skip whitespace following the internal subset.
+					// Skip whitespace.
 					$at += strspn( $this->xml, " \t\f\r\n", $at );
 
 					if ( $doc_length <= $at ) {
@@ -1958,9 +1943,23 @@ class XMLProcessor {
 
 						return false;
 					}
-				}
 
-				if ( '>' !== $this->xml[ $at ] ) {
+					if ( '[' === $this->xml[ $at ] ) {
+						if ( ! $this->skip_doctype_internal_subset( $at ) ) {
+							return false;
+						}
+
+						// Skip whitespace following the internal subset.
+						$at += strspn( $this->xml, " \t\f\r\n", $at );
+
+						if ( $doc_length <= $at ) {
+							$this->mark_incomplete_input( 'Unclosed DOCTYPE declaration.' );
+
+							return false;
+						}
+					}
+
+					if ( '>' !== $this->xml[ $at ] ) {
 						$this->bail(
 							sprintf(
 								'Syntax error in DOCTYPE declaration. Unexpected character "%s" at position %d.',
@@ -2638,7 +2637,7 @@ class XMLProcessor {
 	 * @return bool Whether the declaration was fully consumed.
 	 */
 	private function skip_markup_declaration( &$offset ) {
-		$doc_length = strlen( $this->xml );
+		$doc_length     = strlen( $this->xml );
 		$keyword_length = $this->parse_name( $offset );
 
 		if ( 0 === $keyword_length ) {
