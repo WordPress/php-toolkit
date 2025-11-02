@@ -4086,11 +4086,15 @@ class XMLProcessor {
 			return false;
 		}
 
-		if ( self::PROCESS_NEXT_NODE === $node_to_process ) {
-			if ( $this->is_empty_element() ) {
-				array_pop( $this->stack_of_open_elements );
+	if ( self::PROCESS_NEXT_NODE === $node_to_process ) {
+		if ( $this->is_empty_element() ) {
+			array_pop( $this->stack_of_open_elements );
+			$this->element = $this->top_element();
+			if ( 0 === count( $this->stack_of_open_elements ) ) {
+				$this->parser_context = self::IN_MISC_CONTEXT;
 			}
 		}
+	}
 
 		try {
 			switch ( $this->parser_context ) {
