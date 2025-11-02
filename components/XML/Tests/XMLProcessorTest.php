@@ -480,7 +480,9 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_updated_xml
 	 */
 	public function test_get_updated_xml_applies_the_updates_so_far_and_keeps_the_processor_on_the_current_tag() {
-		$processor = XMLProcessor::create_from_string( '<line id="remove" /><content enabled="yes" post-type="test">Test</content><text id="span-id"></text>' );
+		$processor = XMLProcessor::create_from_string( '<doc><line id="remove" /><content enabled="yes" post-type="test">Test</content><text id="span-id"></text></doc>' );
+		$processor->next_tag();
+
 		$processor->next_tag();
 		$processor->remove_attribute( '', 'id' );
 
@@ -488,7 +490,7 @@ class XMLProcessorTest extends TestCase {
 		$processor->set_attribute( '', 'id', 'content-id-1' );
 
 		$this->assertSame(
-			'<line  /><content id="content-id-1" enabled="yes" post-type="test">Test</content><text id="span-id"></text>',
+			'<doc><line  /><content id="content-id-1" enabled="yes" post-type="test">Test</content><text id="span-id"></text></doc>',
 			$processor->get_updated_xml(),
 			'Calling get_updated_xml after updating the attributes of the second tag returned different XML than expected'
 		);
@@ -496,7 +498,7 @@ class XMLProcessorTest extends TestCase {
 		$processor->set_attribute( '', 'id', 'content-id-2' );
 
 		$this->assertSame(
-			'<line  /><content id="content-id-2" enabled="yes" post-type="test">Test</content><text id="span-id"></text>',
+			'<doc><line  /><content id="content-id-2" enabled="yes" post-type="test">Test</content><text id="span-id"></text></doc>',
 			$processor->get_updated_xml(),
 			'Calling get_updated_xml after updating the attributes of the second tag for the second time returned different XML than expected'
 		);
@@ -505,7 +507,7 @@ class XMLProcessorTest extends TestCase {
 		$processor->remove_attribute( '', 'id' );
 
 		$this->assertSame(
-			'<line  /><content id="content-id-2" enabled="yes" post-type="test">Test</content><text ></text>',
+			'<doc><line  /><content id="content-id-2" enabled="yes" post-type="test">Test</content><text ></text></doc>',
 			$processor->get_updated_xml(),
 			'Calling get_updated_xml after removing the id attribute of the third tag returned different XML than expected'
 		);
@@ -1716,6 +1718,27 @@ XML
 		);
 		$this->assertFalse( $processor->next_tag(), 'Found an element when there was none.' );
 		$this->assertTrue( $processor->is_paused_at_incomplete_input(), 'Did not indicate that the XML input was incomplete.' );
+	}
+	
+	/**
+	 *
+	 * @covers XMLProcessor::next_tag
+	 */
+	public function test_tolerates_illegal_extender_in_pi_target() {
+		$processor = XMLProcessor::create_from_string(
+			'<!DOCTYPE animal [
+<!ELEMENT animal ANY>
+<?_˒ an illegal extender #x2d2 in PITarget ?>
+]>
+<animal/>
+'
+		);
+		$this->assertTrue( $processor->next_tag(), 'Found an element when there was none.' );
+		$this->assertEquals( 'animal', $processor->get_tag_local_name(), 'Did not find the expected tag.' );
+		$this->assertTrue( $processor->next_token(), 'Found an element when there was none.' );
+		$this->assertFalse( $processor->next_token(), 'Found an element when there was none.' );
+		$this->assertNull( $processor->get_last_error(), 'Did not find the expected error.' );
+		$this->assertNull( $processor->get_exception(), 'Did not find the expected error.' );
 	}
 
 	/**
