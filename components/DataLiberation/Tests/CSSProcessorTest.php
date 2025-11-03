@@ -1,7 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use WordPress\DataLiberation\URL\CSSProcessor;
+use WordPress\DataLiberation\CSS\CSSProcessor;
 
 /**
  * Comprehensive CSS processor tests based on the CSS Syntax Level 3 specification.
@@ -68,7 +68,7 @@ class CSSProcessorTest extends TestCase {
 
 	/**
 	 * Tests handling of non-UTF-8 byte sequences in identifiers.
-	 * 
+	 *
 	 * Invalid UTF-8 sequences should be replaced with U+FFFD replacement characters
 	 * during tokenization, allowing the CSS to continue processing.
 	 */
@@ -1530,5 +1530,5 @@ CSS;
 		$this->assertSame( "background: url(\"\xC0.jpg\");", $updated );
 	}
 
-	
+
 }

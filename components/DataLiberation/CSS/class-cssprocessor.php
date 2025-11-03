@@ -1,6 +1,6 @@
 <?php
 
-namespace WordPress\DataLiberation\URL;
+namespace WordPress\DataLiberation\CSS;
 
 use function WordPress\Encoding\codepoint_to_utf8_bytes;
 use function WordPress\Encoding\compat\_wp_scan_utf8;
@@ -743,6 +743,32 @@ class CSSProcessor {
 	}
 
 	/**
+	 * Determines whether the current token is a data URI.
+	 *
+	 * Only meaningful for URL and STRING tokens. Returns false for all other token types.
+	 *
+	 * @return bool Whether the current token value starts with "data:" (case-insensitive).
+	 */
+	public function is_data_uri(): bool {
+		if ( null === $this->token_value_starts_at || null === $this->token_value_length ) {
+			return false;
+		}
+
+		if ( $this->token_value_length < 5 ) {
+			return false;
+		}
+
+		$offset = $this->token_value_starts_at;
+		return (
+			( 'd' === $this->css[ $offset ] || 'D' === $this->css[ $offset ] ) &&
+			( 'a' === $this->css[ $offset + 1 ] || 'A' === $this->css[ $offset + 1 ] ) &&
+			( 't' === $this->css[ $offset + 2 ] || 'T' === $this->css[ $offset + 2 ] ) &&
+			( 'a' === $this->css[ $offset + 3 ] || 'A' === $this->css[ $offset + 3 ] ) &&
+			':' === $this->css[ $offset + 4 ]
+		);
+	}
+
+	/**
 	 * Gets the token start at.
 	 *
 	 * @return int|null
@@ -812,27 +838,26 @@ class CSSProcessor {
 	 * @return bool Whether the value was successfully updated.
 	 */
 	public function set_token_value( string $new_value ): bool {
-		// Only URL tokens are currently supported.
-		if ( self::TOKEN_URL !== $this->token_type ) {
-			return false;
+		// Only URL and string tokens are currently supported.
+		switch ( $this->token_type ) {
+			case self::TOKEN_URL:
+				$this->lexical_updates[] = array(
+					'start'  => $this->token_value_starts_at,
+					'length' => $this->token_value_length,
+					'text'   => $this->escape_url_value( $new_value ),
+				);
+				return true;
+			case self::TOKEN_STRING:
+				$this->lexical_updates[] = array(
+					'start'  => $this->token_starts_at,
+					'length' => $this->token_length,
+					'text'   => $this->escape_url_value( $new_value ),
+				);
+				return true;
+			default:
+				_doing_it_wrong( __METHOD__, 'set_token_value() only supports URL and string tokens. Got token type: ' . $this->token_type, '1.0.0' );
+				return false;
 		}
-
-		// Ensure we have valid token value boundaries.
-		if ( null === $this->token_value_starts_at || null === $this->token_value_length ) {
-			return false;
-		}
-
-		// Escape the URL value for unquoted URL syntax.
-		$escaped_value = $this->escape_url_value( $new_value );
-
-		// Queue the lexical update.
-		$this->lexical_updates[] = array(
-			'start'  => $this->token_value_starts_at,
-			'length' => $this->token_value_length,
-			'text'   => $escaped_value,
-		);
-
-		return true;
 	}
 
 	/**
