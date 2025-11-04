@@ -4,6 +4,8 @@ use PHPUnit\Framework\TestCase;
 use WordPress\DataLiberation\BlockMarkup\BlockMarkupUrlProcessor;
 use WordPress\DataLiberation\URL\WPURL;
 
+use function WordPress\DataLiberation\URL\is_child_url_of;
+
 class BlockMarkupUrlProcessorTest extends TestCase {
 
 
@@ -250,6 +252,145 @@ Have you seen my blog, site-export.internal? I told a story there of how I got m
 check it out: https://site-export.internal
 </p>
 <!-- /wp:paragraph -->
+HTML
+			,
+			$p->get_updated_html(),
+			'Failed to update all the URLs in the markup.'
+		);
+	}
+
+	public function test_long_post_with_multiple_css_urls() {
+		$p = new BlockMarkupUrlProcessor(
+			<<<HTML
+<!-- wp:paragraph -->
+<p>Testing CSS URL migration in style attributes:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background-image: url('https://playground.internal/wp-content/uploads/bg1.jpg')">Quoted URL with single quotes</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background-image: url(&quot;https://playground.internal/wp-content/uploads/bg2.jpg&quot;)">Quoted URL with double quotes</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background-image: url(https://playground.internal/wp-content/uploads/bg3.jpg)">Unquoted URL</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background: url('/wp-content/uploads/bg4.jpg') no-repeat">Relative URL with single quotes</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background: /* comment */ url(&quot;/wp-content/uploads/bg5.jpg&quot;) no-repeat">URL after CSS comment</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background-image: url('https://playground.internal/wp-content/uploads/bg6.jpg'); /* trailing comment */ ">URL with trailing comment</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="content: &quot;This is a url(fake) in a string&quot;; background: url('https://playground.internal/wp-content/uploads/bg7.jpg')">URL with string containing fake url()</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background-image: url('https://playground.internal/wp-content/uploads/bg\28special\29.jpg')">URL with escaped parentheses</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==)">Data URI (should not be migrated)</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background: url('https://playground.internal/wp-content/uploads/bg8.jpg'), url('https://playground.internal/wp-content/uploads/bg9.jpg')">Multiple URLs</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background-image: URL('https://playground.internal/wp-content/uploads/BG10.JPG')">Uppercase URL keyword</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image -->
+<figure class="wp-block-image" style="background: url('https://playground.internal/wp-content/uploads/figure-bg.jpg')"><img src="https://playground.internal/wp-content/uploads/image.jpg" alt="Test Image" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:html -->
+<div style="background-image: url('https://playground.internal/wp-content/uploads/html-bg.jpg')">
+	An HTML block with inline style
+</div>
+<!-- /wp:html -->
+HTML
+			,
+			'https://playground.internal'
+		);
+
+		// Replace every url with 'https://new-site-url.internal'
+		while ( $p->next_url() ) {
+			if ( is_child_url_of( $p->get_parsed_url(), WPURL::parse( 'https://playground.internal' ) ) ) {
+				$p->replace_base_url( WPURL::parse( 'https://new-site-url.internal' ) );
+			}
+		}
+
+		// meta.src is a nested property and not supported yet
+		$this->assertEquals(
+			<<<HTML
+<!-- wp:paragraph -->
+<p>Testing CSS URL migration in style attributes:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background-image: url(&quot;https://new-site-url.internal/wp-content/uploads/bg1.jpg&quot;)">Quoted URL with single quotes</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background-image: url(&quot;https://new-site-url.internal/wp-content/uploads/bg2.jpg&quot;)">Quoted URL with double quotes</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background-image: url(&quot;https://new-site-url.internal/wp-content/uploads/bg3.jpg&quot;)">Unquoted URL</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background: url(&quot;/wp-content/uploads/bg4.jpg&quot;) no-repeat">Relative URL with single quotes</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background: /* comment */ url(&quot;/wp-content/uploads/bg5.jpg&quot;) no-repeat">URL after CSS comment</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background-image: url(&quot;https://new-site-url.internal/wp-content/uploads/bg6.jpg&quot;); /* trailing comment */ ">URL with trailing comment</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="content: &quot;This is a url(fake) in a string&quot;; background: url(&quot;https://new-site-url.internal/wp-content/uploads/bg7.jpg&quot;)">URL with string containing fake url()</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background-image: url(&quot;https://new-site-url.internal/wp-content/uploads/bg%028special%029.jpg&quot;)">URL with escaped parentheses</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==)">Data URI (should not be migrated)</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background: url(&quot;https://new-site-url.internal/wp-content/uploads/bg8.jpg&quot;), url(&quot;https://new-site-url.internal/wp-content/uploads/bg9.jpg&quot;)">Multiple URLs</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p style="background-image: URL(&quot;https://new-site-url.internal/wp-content/uploads/BG10.JPG&quot;)">Uppercase URL keyword</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image -->
+<figure class="wp-block-image" style="background: url(&quot;https://new-site-url.internal/wp-content/uploads/figure-bg.jpg&quot;)"><img src="https://new-site-url.internal/wp-content/uploads/image.jpg" alt="Test Image" /></figure>
+<!-- /wp:image -->
+
+<!-- wp:html -->
+<div style="background-image: url(&quot;https://new-site-url.internal/wp-content/uploads/html-bg.jpg&quot;)">
+	An HTML block with inline style
+</div>
+<!-- /wp:html -->
 HTML
 			,
 			$p->get_updated_html(),
