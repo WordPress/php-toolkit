@@ -73,7 +73,8 @@
 		"psr-4": {
 			"Rowbot\\": "components/DataLiberation/vendor-patched/",
 			"Brick\\": "components/DataLiberation/vendor-patched/",
-			"WordPress\\CORSProxy\\": "components/CORSProxy/"
+			"WordPress\\CORSProxy\\": "components/CORSProxy/",
+			"WordPressPhpToolkit\\MonorepoBuilder\\": ".monorepo-builder/"
 		}
 	},
 	"scripts": {

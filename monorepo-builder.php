@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 use Symplify\MonorepoBuilder\Config\MBConfig;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\AddTagToChangelogReleaseWorker;
-use Symplify\MonorepoBuilder\Release\ReleaseWorker\PushNextDevReleaseWorker;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\PushTagReleaseWorker;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\SetCurrentMutualDependenciesReleaseWorker;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\SetNextMutualDependenciesReleaseWorker;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\TagVersionReleaseWorker;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\UpdateBranchAliasReleaseWorker;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\UpdateReplaceReleaseWorker;
+use WordPressPhpToolkit\MonorepoBuilder\CustomPushNextDevReleaseWorker;
 
 return static function ( MBConfig $config ): void {
 	// Where packages live.
@@ -30,7 +30,7 @@ return static function ( MBConfig $config ): void {
 			PushTagReleaseWorker::class,
 			SetNextMutualDependenciesReleaseWorker::class,
 			UpdateBranchAliasReleaseWorker::class,
-			PushNextDevReleaseWorker::class,
+			CustomPushNextDevReleaseWorker::class,
 		)
 	);
 };
