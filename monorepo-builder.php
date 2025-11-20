@@ -20,13 +20,13 @@ return static function ( MBConfig $config ): void {
 			__DIR__ . '/components',
 		)
 	);
-	
+
 	// Set the default branch name for release workers.
 	$config->defaultBranch( 'trunk' );
-	
+
 	// Set the branch name parameter explicitly for PushNextDevReleaseWorker.
 	$config->parameters()->set( Option::DEFAULT_BRANCH_NAME, 'trunk' );
-	
+
 	// Release workers - in order to execute.
 	$config->workers(
 		array(
