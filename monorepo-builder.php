@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 use Symplify\MonorepoBuilder\Config\MBConfig;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\AddTagToChangelogReleaseWorker;
+use Symplify\MonorepoBuilder\Release\ReleaseWorker\PushNextDevReleaseWorker;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\PushTagReleaseWorker;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\SetCurrentMutualDependenciesReleaseWorker;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\SetNextMutualDependenciesReleaseWorker;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\TagVersionReleaseWorker;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\UpdateBranchAliasReleaseWorker;
 use Symplify\MonorepoBuilder\Release\ReleaseWorker\UpdateReplaceReleaseWorker;
-use WordPressPhpToolkit\MonorepoBuilder\CustomPushNextDevReleaseWorker;
+use Symplify\MonorepoBuilder\ValueObject\Option;
 
 return static function ( MBConfig $config ): void {
 	// Where packages live.
@@ -19,7 +20,13 @@ return static function ( MBConfig $config ): void {
 			__DIR__ . '/components',
 		)
 	);
+	
+	// Set the default branch name for release workers.
 	$config->defaultBranch( 'trunk' );
+	
+	// Set the branch name parameter explicitly for PushNextDevReleaseWorker.
+	$config->parameters()->set( Option::DEFAULT_BRANCH_NAME, 'trunk' );
+	
 	// Release workers - in order to execute.
 	$config->workers(
 		array(
@@ -30,7 +37,7 @@ return static function ( MBConfig $config ): void {
 			PushTagReleaseWorker::class,
 			SetNextMutualDependenciesReleaseWorker::class,
 			UpdateBranchAliasReleaseWorker::class,
-			CustomPushNextDevReleaseWorker::class,
+			PushNextDevReleaseWorker::class,
 		)
 	);
 };
