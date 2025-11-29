@@ -24,7 +24,8 @@ if ( file_exists( __DIR__ . '/php-toolkit.phar' ) ) {
 add_action(
 	'template_redirect',
 	function () {
-		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- We need the raw URI path; further validation below.
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
 
 		// Check if the request ends with .md
 		if ( ! preg_match( '/\.md$/i', $request_uri ) ) {
@@ -47,7 +48,11 @@ add_action(
 		// Convert the post content to markdown
 		$markdown = markdown_export_convert_post_to_markdown( $post );
 
-		// Set appropriate headers
+		/*
+		 * Use text/markdown MIME type as defined in RFC 7763.
+		 * While not universally standardized, it's the most appropriate
+		 * Content-Type for markdown files.
+		 */
 		header( 'Content-Type: text/markdown; charset=utf-8' );
 		header( 'Content-Disposition: inline; filename="' . sanitize_file_name( $post->post_name ) . '.md"' );
 
@@ -103,14 +108,11 @@ function markdown_export_convert_post_to_markdown( $post ) {
 	// Prepare metadata for the markdown frontmatter
 	$metadata = array(
 		'post_title' => array( $post->post_title ),
+		'post_date'  => array( $post->post_date ),
 	);
 
-	// Add optional metadata if available
-	if ( ! empty( $post->post_date ) ) {
-		$metadata['post_date'] = array( $post->post_date );
-	}
-
-	if ( ! empty( $post->post_excerpt ) ) {
+	// Add excerpt if it has content
+	if ( '' !== $post->post_excerpt ) {
 		$metadata['post_excerpt'] = array( $post->post_excerpt );
 	}
 
