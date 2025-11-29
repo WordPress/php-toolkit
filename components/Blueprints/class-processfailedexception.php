@@ -3,7 +3,7 @@
 namespace WordPress\Blueprints;
 
 use Exception;
-use Symfony\Component\Process\Process;
+use VendorPrefix\Symfony\Component\Process\Process;
 use Throwable;
 
 class ProcessFailedException extends Exception {

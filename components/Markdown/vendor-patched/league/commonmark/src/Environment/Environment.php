@@ -40,9 +40,9 @@ use League\Config\Configuration;
 use League\Config\ConfigurationAwareInterface;
 use League\Config\ConfigurationInterface;
 use Nette\Schema\Expect;
-use Psr\EventDispatcher\EventDispatcherInterface;
-use Psr\EventDispatcher\ListenerProviderInterface;
-use Psr\EventDispatcher\StoppableEventInterface;
+use VendorPrefix\Psr\EventDispatcher\EventDispatcherInterface;
+use VendorPrefix\Psr\EventDispatcher\ListenerProviderInterface;
+use VendorPrefix\Psr\EventDispatcher\StoppableEventInterface;
 
 final class Environment implements EnvironmentInterface, EnvironmentBuilderInterface, ListenerProviderInterface
 {

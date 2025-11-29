@@ -6,7 +6,7 @@ use ArrayAccess;
 use InvalidArgumentException;
 use LogicException;
 use OutOfBoundsException;
-use Symfony\Component\EventDispatcher\EventDispatcher;
+use VendorPrefix\Symfony\Component\EventDispatcher\EventDispatcher;
 
 use function array_key_exists;
 use function array_values;

@@ -3,7 +3,7 @@
 namespace WordPress\HttpServer;
 
 use Exception;
-use Rowbot\URL\URL;
+use VendorPrefix\Rowbot\URL\URL;
 use WordPress\ByteStream\ReadStream\ByteReadStream;
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\ByteStream\ReadStream\InflateReadStream;

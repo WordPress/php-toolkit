@@ -12,7 +12,7 @@
 
 namespace Webuni\FrontMatter\Processor;
 
-use Symfony\Component\Yaml\Yaml;
+use VendorPrefix\Symfony\Component\Yaml\Yaml;
 
 final class YamlProcessor implements ProcessorInterface
 {

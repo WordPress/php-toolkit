@@ -7,10 +7,10 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Webuni\\FrontMatter\\' => array($vendorDir . '/webuni/front-matter/src'),
-    'Symfony\\Polyfill\\Php80\\' => array($vendorDir . '/symfony/polyfill-php80'),
-    'Symfony\\Polyfill\\Ctype\\' => array($vendorDir . '/symfony/polyfill-ctype'),
-    'Symfony\\Component\\Yaml\\' => array($vendorDir . '/symfony/yaml'),
-    'Psr\\EventDispatcher\\' => array($vendorDir . '/psr/event-dispatcher/src'),
+    'VendorPrefix\\Symfony\\Polyfill\\Php80\\' => array($vendorDir . '/symfony/polyfill-php80'),
+    'VendorPrefix\\Symfony\\Polyfill\\Ctype\\' => array($vendorDir . '/symfony/polyfill-ctype'),
+    'VendorPrefix\\Symfony\\Component\\Yaml\\' => array($vendorDir . '/symfony/yaml'),
+    'VendorPrefix\\Psr\\EventDispatcher\\' => array($vendorDir . '/psr/event-dispatcher/src'),
     'League\\Config\\' => array($vendorDir . '/league/config/src'),
     'League\\CommonMark\\' => array($vendorDir . '/league/commonmark/src'),
     'Dflydev\\DotAccessData\\' => array($vendorDir . '/dflydev/dot-access-data/src'),

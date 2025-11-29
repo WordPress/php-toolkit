@@ -2,7 +2,7 @@
 
 namespace WordPress\Blueprints\Logger;
 
-use Psr\Log\LoggerInterface;
+use VendorPrefix\Psr\Log\LoggerInterface;
 
 class NoopLogger implements LoggerInterface {
 	public function emergency( $message, array $context = array() ): void {

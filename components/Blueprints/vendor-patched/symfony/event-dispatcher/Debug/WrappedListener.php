@@ -9,13 +9,13 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\EventDispatcher\Debug;
+namespace VendorPrefix\Symfony\Component\EventDispatcher\Debug;
 
 use Closure;
-use Symfony\Component\EventDispatcher\Event;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Stopwatch\Stopwatch;
-use Symfony\Component\VarDumper\Caster\ClassStub;
+use VendorPrefix\Symfony\Component\EventDispatcher\Event;
+use VendorPrefix\Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use VendorPrefix\Symfony\Component\Stopwatch\Stopwatch;
+use VendorPrefix\Symfony\Component\VarDumper\Caster\ClassStub;
 
 /**
  * @author Fabien Potencier <fabien@symfony.com>

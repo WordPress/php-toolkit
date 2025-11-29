@@ -9,23 +9,23 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Yaml\Command;
+namespace VendorPrefix\Symfony\Component\Yaml\Command;
 
-use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\CI\GithubActionReporter;
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Completion\CompletionInput;
-use Symfony\Component\Console\Completion\CompletionSuggestions;
-use Symfony\Component\Console\Exception\InvalidArgumentException;
-use Symfony\Component\Console\Exception\RuntimeException;
-use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Yaml\Exception\ParseException;
-use Symfony\Component\Yaml\Parser;
-use Symfony\Component\Yaml\Yaml;
+use VendorPrefix\Symfony\Component\Console\Attribute\AsCommand;
+use VendorPrefix\Symfony\Component\Console\CI\GithubActionReporter;
+use VendorPrefix\Symfony\Component\Console\Command\Command;
+use VendorPrefix\Symfony\Component\Console\Completion\CompletionInput;
+use VendorPrefix\Symfony\Component\Console\Completion\CompletionSuggestions;
+use VendorPrefix\Symfony\Component\Console\Exception\InvalidArgumentException;
+use VendorPrefix\Symfony\Component\Console\Exception\RuntimeException;
+use VendorPrefix\Symfony\Component\Console\Input\InputArgument;
+use VendorPrefix\Symfony\Component\Console\Input\InputInterface;
+use VendorPrefix\Symfony\Component\Console\Input\InputOption;
+use VendorPrefix\Symfony\Component\Console\Output\OutputInterface;
+use VendorPrefix\Symfony\Component\Console\Style\SymfonyStyle;
+use VendorPrefix\Symfony\Component\Yaml\Exception\ParseException;
+use VendorPrefix\Symfony\Component\Yaml\Parser;
+use VendorPrefix\Symfony\Component\Yaml\Yaml;
 
 /**
  * Validates YAML files syntax and outputs encountered errors.
@@ -36,7 +36,7 @@ use Symfony\Component\Yaml\Yaml;
 class LintCommand extends Command
 {
     /**
-     * @var \Symfony\Component\Yaml\Parser
+     * @var \VendorPrefix\Symfony\Component\Yaml\Parser
      */
     private $parser;
     /**

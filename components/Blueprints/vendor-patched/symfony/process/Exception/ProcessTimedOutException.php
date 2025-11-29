@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Process\Exception;
+namespace VendorPrefix\Symfony\Component\Process\Exception;
 
-use Symfony\Component\Process\Process;
+use VendorPrefix\Symfony\Component\Process\Process;
 
 /**
  * Exception that is thrown when a process times out.

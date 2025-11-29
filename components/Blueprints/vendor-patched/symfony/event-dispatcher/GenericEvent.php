@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\EventDispatcher;
+namespace VendorPrefix\Symfony\Component\EventDispatcher;
 
 use ArrayAccess;
 use ArrayIterator;

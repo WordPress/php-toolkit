@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Process\Pipes;
+namespace VendorPrefix\Symfony\Component\Process\Pipes;
 
 use Iterator;
-use Symfony\Component\Process\Exception\InvalidArgumentException;
+use VendorPrefix\Symfony\Component\Process\Exception\InvalidArgumentException;
 
 /**
  * @author Romain Neutron <imprec@gmail.com>

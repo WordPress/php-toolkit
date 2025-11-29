@@ -15,8 +15,8 @@ namespace League\CommonMark\Extension\FrontMatter\Data;
 
 use League\CommonMark\Exception\MissingDependencyException;
 use League\CommonMark\Extension\FrontMatter\Exception\InvalidFrontMatterException;
-use Symfony\Component\Yaml\Exception\ParseException;
-use Symfony\Component\Yaml\Yaml;
+use VendorPrefix\Symfony\Component\Yaml\Exception\ParseException;
+use VendorPrefix\Symfony\Component\Yaml\Yaml;
 
 final class SymfonyYamlFrontMatterParser implements FrontMatterDataParserInterface
 {

@@ -21,7 +21,7 @@ use League\CommonMark\Parser\Block\BlockStartParserInterface;
 use League\CommonMark\Parser\Inline\InlineParserInterface;
 use League\CommonMark\Renderer\NodeRendererInterface;
 use League\Config\ConfigurationProviderInterface;
-use Psr\EventDispatcher\EventDispatcherInterface;
+use VendorPrefix\Psr\EventDispatcher\EventDispatcherInterface;
 
 interface EnvironmentInterface extends ConfigurationProviderInterface, EventDispatcherInterface
 {

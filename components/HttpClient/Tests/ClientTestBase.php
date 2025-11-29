@@ -3,7 +3,7 @@
 namespace WordPress\HttpClient\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Process\Process;
+use VendorPrefix\Symfony\Component\Process\Process;
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\HttpError;
 use WordPress\HttpClient\Request;

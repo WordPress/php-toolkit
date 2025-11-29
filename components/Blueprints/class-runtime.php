@@ -2,7 +2,7 @@
 
 namespace WordPress\Blueprints;
 
-use Psr\Log\LoggerInterface;
+use VendorPrefix\Psr\Log\LoggerInterface;
 use WordPress\Blueprints\DataReference\DataReference;
 use WordPress\Blueprints\DataReference\DataReferenceResolver;
 use WordPress\Blueprints\DataReference\Directory;
@@ -183,7 +183,7 @@ class Runtime {
 	 * @TODO: Useful error messages on process failure. Right now we get this mouthful error message:
 	 *
 	 * FAILED: The command "'php' '/var/folders/sb/cywb...
-	 * Fatal error: Uncaught Symfony\Component\Process\Exception\ProcessFailedException: The command "'php' '/var/folders/sb/cywb762129g3f0jzq1_p2q5h0000gp/T/wp-blueprints-runtime-68290ca22b771/tmp_68290cac6bea8'" failed.
+	 * Fatal error: Uncaught VendorPrefix\Symfony\Component\Process\Exception\ProcessFailedException: The command "'php' '/var/folders/sb/cywb762129g3f0jzq1_p2q5h0000gp/T/wp-blueprints-runtime-68290ca22b771/tmp_68290cac6bea8'" failed.
 	 *
 	 * Exit Code: 255(Unknown error)
 	 *

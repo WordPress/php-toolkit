@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Process;
+namespace VendorPrefix\Symfony\Component\Process;
 
 use Iterator;
 use IteratorIterator;
-use Symfony\Component\Process\Exception\InvalidArgumentException;
+use VendorPrefix\Symfony\Component\Process\Exception\InvalidArgumentException;
 use Traversable;
 
 /**

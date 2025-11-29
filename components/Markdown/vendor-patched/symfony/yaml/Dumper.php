@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Yaml;
+namespace VendorPrefix\Symfony\Component\Yaml;
 
-use Symfony\Component\Yaml\Tag\TaggedValue;
+use VendorPrefix\Symfony\Component\Yaml\Tag\TaggedValue;
 
 /**
  * Dumper dumps PHP variables to YAML strings.

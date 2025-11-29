@@ -2,7 +2,7 @@
 
 namespace WordPress\HttpClient\Tests;
 
-use Symfony\Component\Process\Process;
+use VendorPrefix\Symfony\Component\Process\Process;
 
 trait WithServerTrait {
 

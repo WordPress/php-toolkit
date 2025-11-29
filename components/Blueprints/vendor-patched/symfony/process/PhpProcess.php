@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Process;
+namespace VendorPrefix\Symfony\Component\Process;
 
-use Symfony\Component\Process\Exception\RuntimeException;
+use VendorPrefix\Symfony\Component\Process\Exception\RuntimeException;
 
 /**
  * PhpProcess runs a PHP script in an independent process.

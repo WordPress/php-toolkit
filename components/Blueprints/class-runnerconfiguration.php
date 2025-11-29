@@ -3,7 +3,7 @@
 namespace WordPress\Blueprints;
 
 use InvalidArgumentException;
-use Psr\Log\LoggerInterface;
+use VendorPrefix\Psr\Log\LoggerInterface;
 use WordPress\Blueprints\DataReference\DataReference;
 use WordPress\Blueprints\Logger\NoopLogger;
 

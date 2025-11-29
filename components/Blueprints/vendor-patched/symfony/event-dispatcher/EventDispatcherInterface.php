@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\EventDispatcher;
+namespace VendorPrefix\Symfony\Component\EventDispatcher;
 
 /**
  * The EventDispatcherInterface is the central point of Symfony's event listener system.

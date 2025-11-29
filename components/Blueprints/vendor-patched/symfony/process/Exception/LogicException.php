@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Process\Exception;
+namespace VendorPrefix\Symfony\Component\Process\Exception;
 
 /**
  * LogicException for the Process Component.

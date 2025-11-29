@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Yaml;
+namespace VendorPrefix\Symfony\Component\Yaml;
 
-use Symfony\Component\Yaml\Exception\DumpException;
-use Symfony\Component\Yaml\Exception\ParseException;
-use Symfony\Component\Yaml\Tag\TaggedValue;
+use VendorPrefix\Symfony\Component\Yaml\Exception\DumpException;
+use VendorPrefix\Symfony\Component\Yaml\Exception\ParseException;
+use VendorPrefix\Symfony\Component\Yaml\Tag\TaggedValue;
 
 /**
  * Inline implements a YAML parser/dumper for the YAML inline syntax.
