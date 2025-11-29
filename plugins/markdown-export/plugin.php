@@ -24,7 +24,7 @@ if ( file_exists( __DIR__ . '/php-toolkit.phar' ) ) {
 add_action(
 	'template_redirect',
 	function () {
-		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- We need the raw URI path; further validation below.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- We need the raw URI path; validation below.
 		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
 
 		// Check if the request ends with .md
@@ -41,6 +41,7 @@ add_action(
 
 		if ( ! $post ) {
 			status_header( 404 );
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Plain text error response.
 			echo 'Post not found';
 			exit;
 		}
@@ -54,7 +55,10 @@ add_action(
 		 * Content-Type for markdown files.
 		 */
 		header( 'Content-Type: text/markdown; charset=utf-8' );
-		header( 'Content-Disposition: inline; filename="' . sanitize_file_name( $post->post_name ) . '.md"' );
+
+		// Use rawurlencode for RFC 5987 compliant filename in Content-Disposition header.
+		$filename = rawurlencode( sanitize_file_name( $post->post_name ) . '.md' );
+		header( "Content-Disposition: inline; filename*=UTF-8''" . $filename );
 
 		echo $markdown;
 		exit;
