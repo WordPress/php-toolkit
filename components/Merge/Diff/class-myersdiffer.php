@@ -2,7 +2,7 @@
 
 namespace WordPress\Merge\Diff;
 
-use VendorPrefix\DiffMatchPatch\VendorPrefix\DiffMatchPatch;
+use ;
 
 class MyersDiffer implements Differ {
 	private $dmp;
