@@ -10,11 +10,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Webuni\FrontMatter\Pug;
+namespace VendorPrefix\Webuni\FrontMatter\Pug;
 
-use Webuni\FrontMatter\FrontMatter;
-use Webuni\FrontMatter\Processor\ProcessorInterface;
-use Webuni\FrontMatter\Processor\YamlProcessor;
+use VendorPrefix\Webuni\FrontMatter\FrontMatter;
+use VendorPrefix\Webuni\FrontMatter\Processor\ProcessorInterface;
+use VendorPrefix\Webuni\FrontMatter\Processor\YamlProcessor;
 
 /**
  * @see https://pugjs.org/language/comments.html#block-comments

@@ -14,11 +14,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Parser\Inline;
+namespace VendorPrefix\League\CommonMark\Parser\Inline;
 
-use League\CommonMark\Node\Inline\Newline;
-use League\CommonMark\Node\Inline\Text;
-use League\CommonMark\Parser\InlineParserContext;
+use VendorPrefix\League\CommonMark\Node\Inline\Newline;
+use VendorPrefix\League\CommonMark\Node\Inline\Text;
+use VendorPrefix\League\CommonMark\Parser\InlineParserContext;
 
 final class NewlineParser implements InlineParserInterface
 {

@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace Nette\Schema;
+namespace VendorPrefix\Nette\Schema;
 
 use Nette;
 
@@ -99,7 +99,7 @@ final class Message
 			[, $space, $key] = $m;
 			return $vars[$key] === null ? '' : $space . $vars[$key];
 		}, $this->message) !== null) {
-      throw new Nette\InvalidStateException(preg_last_error_msg());
+      throw new VendorPrefix\Nette\InvalidStateException(preg_last_error_msg());
   }
   return preg_replace_callback('~( ?)%(\w+)%~', function ($m) use ($vars) {
 			[, $space, $key] = $m;

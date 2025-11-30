@@ -12,27 +12,27 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Extension\Footnote\Parser;
+namespace VendorPrefix\League\CommonMark\Extension\Footnote\Parser;
 
-use League\CommonMark\Environment\EnvironmentAwareInterface;
-use League\CommonMark\Environment\EnvironmentInterface;
-use League\CommonMark\Extension\Footnote\Node\FootnoteRef;
-use League\CommonMark\Normalizer\TextNormalizerInterface;
-use League\CommonMark\Parser\Inline\InlineParserInterface;
-use League\CommonMark\Parser\Inline\InlineParserMatch;
-use League\CommonMark\Parser\InlineParserContext;
-use League\CommonMark\Reference\Reference;
-use League\Config\ConfigurationInterface;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentAwareInterface;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentInterface;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Node\FootnoteRef;
+use VendorPrefix\League\CommonMark\Normalizer\TextNormalizerInterface;
+use VendorPrefix\League\CommonMark\Parser\Inline\InlineParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Inline\InlineParserMatch;
+use VendorPrefix\League\CommonMark\Parser\InlineParserContext;
+use VendorPrefix\League\CommonMark\Reference\Reference;
+use VendorPrefix\League\Config\ConfigurationInterface;
 
 final class AnonymousFootnoteRefParser implements InlineParserInterface, EnvironmentAwareInterface
 {
     /**
-     * @var \League\Config\ConfigurationInterface
+     * @var \VendorPrefix\League\Config\ConfigurationInterface
      */
     private $config;
 
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\CommonMark\Normalizer\TextNormalizerInterface */
+     * @var \VendorPrefix\League\CommonMark\Normalizer\TextNormalizerInterface */
     private $slugNormalizer;
 
     public function getMatchDefinition(): InlineParserMatch

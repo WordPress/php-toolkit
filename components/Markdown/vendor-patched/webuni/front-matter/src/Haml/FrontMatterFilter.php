@@ -10,13 +10,13 @@
  * file that was distributed with this source code.
  */
 
-namespace Webuni\FrontMatter\Haml;
+namespace VendorPrefix\Webuni\FrontMatter\Haml;
 
 use MtHaml\Filter\FilterInterface;
 use MtHaml\Node\Filter;
 use MtHaml\NodeVisitor\RendererAbstract;
-use Webuni\FrontMatter\Document;
-use Webuni\FrontMatter\FrontMatterInterface;
+use VendorPrefix\Webuni\FrontMatter\Document;
+use VendorPrefix\Webuni\FrontMatter\FrontMatterInterface;
 
 class FrontMatterFilter implements FilterInterface
 {

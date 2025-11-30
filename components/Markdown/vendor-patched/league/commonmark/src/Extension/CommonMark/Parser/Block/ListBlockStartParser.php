@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\CommonMark\Parser\Block;
+namespace VendorPrefix\League\CommonMark\Extension\CommonMark\Parser\Block;
 
-use League\CommonMark\Extension\CommonMark\Node\Block\ListBlock;
-use League\CommonMark\Extension\CommonMark\Node\Block\ListData;
-use League\CommonMark\Parser\Block\BlockStart;
-use League\CommonMark\Parser\Block\BlockStartParserInterface;
-use League\CommonMark\Parser\Cursor;
-use League\CommonMark\Parser\MarkdownParserStateInterface;
-use League\CommonMark\Util\RegexHelper;
-use League\Config\ConfigurationAwareInterface;
-use League\Config\ConfigurationInterface;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\ListBlock;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\ListData;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockStart;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockStartParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Cursor;
+use VendorPrefix\League\CommonMark\Parser\MarkdownParserStateInterface;
+use VendorPrefix\League\CommonMark\Util\RegexHelper;
+use VendorPrefix\League\Config\ConfigurationAwareInterface;
+use VendorPrefix\League\Config\ConfigurationInterface;
 
 final class ListBlockStartParser implements BlockStartParserInterface, ConfigurationAwareInterface
 {
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\Config\ConfigurationInterface|null */
+     * @var \VendorPrefix\League\Config\ConfigurationInterface|null */
     private $config;
 
     /**

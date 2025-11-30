@@ -7,12 +7,12 @@
 
 declare(strict_types=1);
 
-namespace Nette\Schema\Elements;
+namespace VendorPrefix\Nette\Schema\Elements;
 
-use Nette\Schema\Context;
-use Nette\Schema\DynamicParameter;
-use Nette\Schema\Helpers;
-use Nette\Schema\Schema;
+use VendorPrefix\Nette\Schema\Context;
+use VendorPrefix\Nette\Schema\DynamicParameter;
+use VendorPrefix\Nette\Schema\Helpers;
+use VendorPrefix\Nette\Schema\Schema;
 
 
 final class Type implements Schema
@@ -24,11 +24,11 @@ final class Type implements Schema
   */
  private $type;
 	/**
-  * @var \Nette\Schema\Schema|null
+  * @var \VendorPrefix\Nette\Schema\Schema|null
   */
  private $itemsValue;
 	/**
-  * @var \Nette\Schema\Schema|null
+  * @var \VendorPrefix\Nette\Schema\Schema|null
   */
  private $itemsKey;
 
@@ -89,8 +89,8 @@ final class Type implements Schema
 
 	/**
   * @internal  use arrayOf() or listOf()
-  * @param string|\Nette\Schema\Schema $valueType
-  * @param string|\Nette\Schema\Schema|null $keyType
+  * @param string|\VendorPrefix\Nette\Schema\Schema $valueType
+  * @param string|\VendorPrefix\Nette\Schema\Schema|null $keyType
   */
  public function items($valueType = 'mixed', $keyType = null): self
 	{

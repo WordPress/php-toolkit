@@ -11,9 +11,9 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Output;
+namespace VendorPrefix\League\CommonMark\Output;
 
-use League\CommonMark\Node\Block\Document;
+use VendorPrefix\League\CommonMark\Node\Block\Document;
 
 interface RenderedContentInterface extends \Stringable
 {

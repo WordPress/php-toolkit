@@ -12,21 +12,21 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Extension\Footnote\Renderer;
+namespace VendorPrefix\League\CommonMark\Extension\Footnote\Renderer;
 
-use League\CommonMark\Extension\Footnote\Node\FootnoteContainer;
-use League\CommonMark\Node\Node;
-use League\CommonMark\Renderer\ChildNodeRendererInterface;
-use League\CommonMark\Renderer\NodeRendererInterface;
-use League\CommonMark\Util\HtmlElement;
-use League\CommonMark\Xml\XmlNodeRendererInterface;
-use League\Config\ConfigurationAwareInterface;
-use League\Config\ConfigurationInterface;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Node\FootnoteContainer;
+use VendorPrefix\League\CommonMark\Node\Node;
+use VendorPrefix\League\CommonMark\Renderer\ChildNodeRendererInterface;
+use VendorPrefix\League\CommonMark\Renderer\NodeRendererInterface;
+use VendorPrefix\League\CommonMark\Util\HtmlElement;
+use VendorPrefix\League\CommonMark\Xml\XmlNodeRendererInterface;
+use VendorPrefix\League\Config\ConfigurationAwareInterface;
+use VendorPrefix\League\Config\ConfigurationInterface;
 
 final class FootnoteContainerRenderer implements NodeRendererInterface, XmlNodeRendererInterface, ConfigurationAwareInterface
 {
     /**
-     * @var \League\Config\ConfigurationInterface
+     * @var \VendorPrefix\League\Config\ConfigurationInterface
      */
     private $config;
 

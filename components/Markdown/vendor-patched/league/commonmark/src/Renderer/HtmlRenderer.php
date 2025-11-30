@@ -14,21 +14,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Renderer;
+namespace VendorPrefix\League\CommonMark\Renderer;
 
-use League\CommonMark\Environment\EnvironmentInterface;
-use League\CommonMark\Event\DocumentPreRenderEvent;
-use League\CommonMark\Event\DocumentRenderedEvent;
-use League\CommonMark\Node\Block\AbstractBlock;
-use League\CommonMark\Node\Block\Document;
-use League\CommonMark\Node\Node;
-use League\CommonMark\Output\RenderedContent;
-use League\CommonMark\Output\RenderedContentInterface;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentInterface;
+use VendorPrefix\League\CommonMark\Event\DocumentPreRenderEvent;
+use VendorPrefix\League\CommonMark\Event\DocumentRenderedEvent;
+use VendorPrefix\League\CommonMark\Node\Block\AbstractBlock;
+use VendorPrefix\League\CommonMark\Node\Block\Document;
+use VendorPrefix\League\CommonMark\Node\Node;
+use VendorPrefix\League\CommonMark\Output\RenderedContent;
+use VendorPrefix\League\CommonMark\Output\RenderedContentInterface;
 
 final class HtmlRenderer implements DocumentRendererInterface, ChildNodeRendererInterface
 {
     /** @psalm-readonly
-     * @var \League\CommonMark\Environment\EnvironmentInterface */
+     * @var \VendorPrefix\League\CommonMark\Environment\EnvironmentInterface */
     private $environment;
 
     public function __construct(EnvironmentInterface $environment)

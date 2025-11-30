@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace Nette\Utils;
+namespace VendorPrefix\Nette\Utils;
 
 use Nette;
 
@@ -17,7 +17,7 @@ use Nette;
  */
 final class Json
 {
-	use Nette\StaticClass;
+	use VendorPrefix\Nette\StaticClass;
 
 	/** @deprecated use Json::decode(..., forceArrays: true) */
 	public const FORCE_ARRAY = JSON_OBJECT_AS_ARRAY;

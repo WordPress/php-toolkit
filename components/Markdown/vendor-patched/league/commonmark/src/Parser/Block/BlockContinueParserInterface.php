@@ -14,10 +14,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Parser\Block;
+namespace VendorPrefix\League\CommonMark\Parser\Block;
 
-use League\CommonMark\Node\Block\AbstractBlock;
-use League\CommonMark\Parser\Cursor;
+use VendorPrefix\League\CommonMark\Node\Block\AbstractBlock;
+use VendorPrefix\League\CommonMark\Parser\Cursor;
 
 /**
  * Interface for a block continuation parser

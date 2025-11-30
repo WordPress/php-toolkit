@@ -14,9 +14,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Reference;
+namespace VendorPrefix\League\CommonMark\Reference;
 
-use League\CommonMark\Normalizer\TextNormalizer;
+use VendorPrefix\League\CommonMark\Normalizer\TextNormalizer;
 
 /**
  * A collection of references, indexed by label
@@ -24,7 +24,7 @@ use League\CommonMark\Normalizer\TextNormalizer;
 final class ReferenceMap implements ReferenceMapInterface
 {
     /** @psalm-readonly
-     * @var \League\CommonMark\Normalizer\TextNormalizer */
+     * @var \VendorPrefix\League\CommonMark\Normalizer\TextNormalizer */
     private $normalizer;
 
     /**

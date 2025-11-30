@@ -17,15 +17,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\CommonMark\Delimiter\Processor;
+namespace VendorPrefix\League\CommonMark\Extension\CommonMark\Delimiter\Processor;
 
-use League\CommonMark\Delimiter\DelimiterInterface;
-use League\CommonMark\Delimiter\Processor\CacheableDelimiterProcessorInterface;
-use League\CommonMark\Extension\CommonMark\Node\Inline\Emphasis;
-use League\CommonMark\Extension\CommonMark\Node\Inline\Strong;
-use League\CommonMark\Node\Inline\AbstractStringContainer;
-use League\Config\ConfigurationAwareInterface;
-use League\Config\ConfigurationInterface;
+use VendorPrefix\League\CommonMark\Delimiter\DelimiterInterface;
+use VendorPrefix\League\CommonMark\Delimiter\Processor\CacheableDelimiterProcessorInterface;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Inline\Emphasis;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Inline\Strong;
+use VendorPrefix\League\CommonMark\Node\Inline\AbstractStringContainer;
+use VendorPrefix\League\Config\ConfigurationAwareInterface;
+use VendorPrefix\League\Config\ConfigurationInterface;
 
 final class EmphasisDelimiterProcessor implements CacheableDelimiterProcessorInterface, ConfigurationAwareInterface
 {
@@ -34,7 +34,7 @@ final class EmphasisDelimiterProcessor implements CacheableDelimiterProcessorInt
     private $char;
 
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\Config\ConfigurationInterface */
+     * @var \VendorPrefix\League\Config\ConfigurationInterface */
     private $config;
 
     /**

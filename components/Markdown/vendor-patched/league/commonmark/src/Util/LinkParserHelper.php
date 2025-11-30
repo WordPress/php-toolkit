@@ -14,9 +14,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Util;
+namespace VendorPrefix\League\CommonMark\Util;
 
-use League\CommonMark\Parser\Cursor;
+use VendorPrefix\League\CommonMark\Parser\Cursor;
 
 /**
  * @psalm-immutable

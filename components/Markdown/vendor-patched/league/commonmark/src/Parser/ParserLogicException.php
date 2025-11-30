@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Parser;
+namespace VendorPrefix\League\CommonMark\Parser;
 
-use League\CommonMark\Exception\CommonMarkException;
+use VendorPrefix\League\CommonMark\Exception\CommonMarkException;
 
 class ParserLogicException extends \LogicException implements CommonMarkException
 {

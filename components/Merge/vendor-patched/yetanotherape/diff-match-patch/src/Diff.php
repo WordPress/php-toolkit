@@ -145,7 +145,7 @@ class Diff
     }
 
     /**
-     * @return \DiffMatchPatch\DiffToolkit
+     * @return \VendorPrefix\DiffMatchPatch\DiffToolkit
      */
     public function getToolkit()
     {
@@ -155,7 +155,7 @@ class Diff
 
 
     /**
-     * @param \DiffMatchPatch\DiffToolkit $toolkit
+     * @param \VendorPrefix\DiffMatchPatch\DiffToolkit $toolkit
      *
      * @return $this
      */

@@ -20,7 +20,7 @@ Given a deep data structure, access data by dot notation.
 Abstract example:
 
 ```php
-use Dflydev\DotAccessData\Data;
+use VendorPrefix\Dflydev\DotAccessData\Data;
 
 $data = new Data;
 
@@ -55,7 +55,7 @@ $data->get('some.path.that.does.not.exist');
 A more concrete example:
 
 ```php
-use Dflydev\DotAccessData\Data;
+use VendorPrefix\Dflydev\DotAccessData\Data;
 
 $data = new Data([
     'hosts' => [

@@ -17,29 +17,29 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Parser;
+namespace VendorPrefix\League\CommonMark\Parser;
 
-use League\CommonMark\Environment\EnvironmentInterface;
-use League\CommonMark\Event\DocumentParsedEvent;
-use League\CommonMark\Event\DocumentPreParsedEvent;
-use League\CommonMark\Exception\CommonMarkException;
-use League\CommonMark\Input\MarkdownInput;
-use League\CommonMark\Node\Block\Document;
-use League\CommonMark\Node\Block\Paragraph;
-use League\CommonMark\Parser\Block\BlockContinueParserInterface;
-use League\CommonMark\Parser\Block\BlockContinueParserWithInlinesInterface;
-use League\CommonMark\Parser\Block\BlockStart;
-use League\CommonMark\Parser\Block\BlockStartParserInterface;
-use League\CommonMark\Parser\Block\DocumentBlockParser;
-use League\CommonMark\Parser\Block\ParagraphParser;
-use League\CommonMark\Reference\MemoryLimitedReferenceMap;
-use League\CommonMark\Reference\ReferenceInterface;
-use League\CommonMark\Reference\ReferenceMap;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentInterface;
+use VendorPrefix\League\CommonMark\Event\DocumentParsedEvent;
+use VendorPrefix\League\CommonMark\Event\DocumentPreParsedEvent;
+use VendorPrefix\League\CommonMark\Exception\CommonMarkException;
+use VendorPrefix\League\CommonMark\Input\MarkdownInput;
+use VendorPrefix\League\CommonMark\Node\Block\Document;
+use VendorPrefix\League\CommonMark\Node\Block\Paragraph;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockContinueParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockContinueParserWithInlinesInterface;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockStart;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockStartParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Block\DocumentBlockParser;
+use VendorPrefix\League\CommonMark\Parser\Block\ParagraphParser;
+use VendorPrefix\League\CommonMark\Reference\MemoryLimitedReferenceMap;
+use VendorPrefix\League\CommonMark\Reference\ReferenceInterface;
+use VendorPrefix\League\CommonMark\Reference\ReferenceMap;
 
 final class MarkdownParser implements MarkdownParserInterface
 {
     /** @psalm-readonly
-     * @var \League\CommonMark\Environment\EnvironmentInterface */
+     * @var \VendorPrefix\League\CommonMark\Environment\EnvironmentInterface */
     private $environment;
 
     /** @psalm-readonly-allow-private-mutation
@@ -47,7 +47,7 @@ final class MarkdownParser implements MarkdownParserInterface
     private $maxNestingLevel;
 
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\CommonMark\Reference\ReferenceMap */
+     * @var \VendorPrefix\League\CommonMark\Reference\ReferenceMap */
     private $referenceMap;
 
     /** @psalm-readonly-allow-private-mutation
@@ -55,7 +55,7 @@ final class MarkdownParser implements MarkdownParserInterface
     private $lineNumber = 0;
 
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\CommonMark\Parser\Cursor */
+     * @var \VendorPrefix\League\CommonMark\Parser\Cursor */
     private $cursor;
 
     /**

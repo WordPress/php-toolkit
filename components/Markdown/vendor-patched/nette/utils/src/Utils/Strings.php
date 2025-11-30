@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace Nette\Utils;
+namespace VendorPrefix\Nette\Utils;
 
 use JetBrains\PhpStorm\Language;
 use Nette;
@@ -19,7 +19,7 @@ use function is_array, is_object, strlen;
  */
 class Strings
 {
-	use Nette\StaticClass;
+	use VendorPrefix\Nette\StaticClass;
 
 	public const TrimCharacters = " \t\n\r\0\x0B\u{A0}\u{2000}\u{2001}\u{2002}\u{2003}\u{2004}\u{2005}\u{2006}\u{2007}\u{2008}\u{2009}\u{200A}\u{200B}";
 
@@ -28,7 +28,7 @@ class Strings
 
 
 	/**
-	 * @deprecated use Nette\Utils\Validator::isUnicode()
+	 * @deprecated use VendorPrefix\Nette\Utils\Validator::isUnicode()
 	 */
 	public static function checkEncoding(string $s): bool
 	{
@@ -48,14 +48,14 @@ class Strings
 
 	/**
 	 * Returns a specific character in UTF-8 from code point (number in range 0x0000..D7FF or 0xE000..10FFFF).
-	 * @throws Nette\InvalidArgumentException if code point is not in valid range
+	 * @throws VendorPrefix\Nette\InvalidArgumentException if code point is not in valid range
 	 */
 	public static function chr(int $code): string
 	{
 		if ($code < 0 || ($code >= 0xD800 && $code <= 0xDFFF) || $code > 0x10FFFF) {
-			throw new Nette\InvalidArgumentException('Code point must be in range 0x0 to 0xD7FF or 0xE000 to 0x10FFFF.');
+			throw new VendorPrefix\Nette\InvalidArgumentException('Code point must be in range 0x0 to 0xD7FF or 0xE000 to 0x10FFFF.');
 		} elseif (!extension_loaded('iconv')) {
-			throw new Nette\NotSupportedException(__METHOD__ . '() requires ICONV extension that is not loaded.');
+			throw new VendorPrefix\Nette\NotSupportedException(__METHOD__ . '() requires ICONV extension that is not loaded.');
 		}
 
 		return iconv('UTF-32BE', 'UTF-8//IGNORE', pack('N', $code));
@@ -68,12 +68,12 @@ class Strings
 	public static function ord(string $c): int
 	{
 		if (!extension_loaded('iconv')) {
-			throw new Nette\NotSupportedException(__METHOD__ . '() requires ICONV extension that is not loaded.');
+			throw new VendorPrefix\Nette\NotSupportedException(__METHOD__ . '() requires ICONV extension that is not loaded.');
 		}
 
 		$tmp = iconv('UTF-8', 'UTF-32BE//IGNORE', $c);
 		if (!$tmp) {
-			throw new Nette\InvalidArgumentException('Invalid UTF-8 character "' . ($c === '' ? '' : '\x' . strtoupper(bin2hex($c))) . '".');
+			throw new VendorPrefix\Nette\InvalidArgumentException('Invalid UTF-8 character "' . ($c === '' ? '' : '\x' . strtoupper(bin2hex($c))) . '".');
 		}
 
 		return unpack('N', $tmp)[1];
@@ -116,7 +116,7 @@ class Strings
 		if (function_exists('mb_substr')) {
 			return mb_substr($s, $start, $length, 'UTF-8'); // MB is much faster
 		} elseif (!extension_loaded('iconv')) {
-			throw new Nette\NotSupportedException(__METHOD__ . '() requires extension ICONV or MBSTRING, neither is loaded.');
+			throw new VendorPrefix\Nette\NotSupportedException(__METHOD__ . '() requires extension ICONV or MBSTRING, neither is loaded.');
 		} elseif ($length === null) {
 			$length = self::length($s);
 		} elseif ($start < 0 && $length < 0) {
@@ -444,7 +444,7 @@ class Strings
 	public static function reverse(string $s): string
 	{
 		if (!extension_loaded('iconv')) {
-			throw new Nette\NotSupportedException(__METHOD__ . '() requires ICONV extension that is not loaded.');
+			throw new VendorPrefix\Nette\NotSupportedException(__METHOD__ . '() requires ICONV extension that is not loaded.');
 		}
 
 		return iconv('UTF-32LE', 'UTF-8', strrev(iconv('UTF-8', 'UTF-32BE', $s)));
@@ -668,7 +668,7 @@ class Strings
  {
      if (is_object($replacement) || is_array($replacement)) {
    			if (!is_callable($replacement, false, $textual)) {
-   				throw new Nette\InvalidStateException("Callback '$textual' is not callable.");
+   				throw new VendorPrefix\Nette\InvalidStateException("Callback '$textual' is not callable.");
    			}
    
    			$flags = ($captureOffset ? PREG_OFFSET_CAPTURE : 0) | ($unmatchedAsNull ? PREG_UNMATCHED_AS_NULL : 0);

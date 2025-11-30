@@ -14,10 +14,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\CommonMark\Node\Block;
+namespace VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block;
 
-use League\CommonMark\Node\Block\AbstractBlock;
-use League\CommonMark\Node\StringContainerInterface;
+use VendorPrefix\League\CommonMark\Node\Block\AbstractBlock;
+use VendorPrefix\League\CommonMark\Node\StringContainerInterface;
 
 final class FencedCode extends AbstractBlock implements StringContainerInterface
 {

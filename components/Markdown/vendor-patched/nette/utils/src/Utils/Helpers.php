@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace Nette\Utils;
+namespace VendorPrefix\Nette\Utils;
 
 use Nette;
 
@@ -64,7 +64,7 @@ class Helpers
  public static function clamp($value, $min, $max)
 	{
 		if ($min > $max) {
-			throw new Nette\InvalidArgumentException("Minimum ($min) is not less than maximum ($max).");
+			throw new VendorPrefix\Nette\InvalidArgumentException("Minimum ($min) is not less than maximum ($max).");
 		}
 
 		return min(max($value, $min), $max);
@@ -117,7 +117,7 @@ class Helpers
       case '!==':
           return $left !== $right;
       default:
-          throw new Nette\InvalidArgumentException("Unknown operator '$operator'");
+          throw new VendorPrefix\Nette\InvalidArgumentException("Unknown operator '$operator'");
   }
 	}
 }

@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\Mention\Generator;
+namespace VendorPrefix\League\CommonMark\Extension\Mention\Generator;
 
-use League\CommonMark\Extension\Mention\Mention;
-use League\CommonMark\Node\Inline\AbstractInline;
+use VendorPrefix\League\CommonMark\Extension\Mention\Mention;
+use VendorPrefix\League\CommonMark\Node\Inline\AbstractInline;
 
 final class StringTemplateLinkGenerator implements MentionGeneratorInterface
 {

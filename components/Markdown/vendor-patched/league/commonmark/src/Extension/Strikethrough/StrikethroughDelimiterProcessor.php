@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\Strikethrough;
+namespace VendorPrefix\League\CommonMark\Extension\Strikethrough;
 
-use League\CommonMark\Delimiter\DelimiterInterface;
-use League\CommonMark\Delimiter\Processor\CacheableDelimiterProcessorInterface;
-use League\CommonMark\Node\Inline\AbstractStringContainer;
+use VendorPrefix\League\CommonMark\Delimiter\DelimiterInterface;
+use VendorPrefix\League\CommonMark\Delimiter\Processor\CacheableDelimiterProcessorInterface;
+use VendorPrefix\League\CommonMark\Node\Inline\AbstractStringContainer;
 
 final class StrikethroughDelimiterProcessor implements CacheableDelimiterProcessorInterface
 {

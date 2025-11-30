@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Delimiter;
+namespace VendorPrefix\League\CommonMark\Delimiter;
 
-use League\CommonMark\Delimiter\Processor\DelimiterProcessorCollection;
-use League\CommonMark\Delimiter\Processor\DelimiterProcessorInterface;
-use League\CommonMark\Node\Inline\Text;
-use League\CommonMark\Parser\Inline\InlineParserInterface;
-use League\CommonMark\Parser\Inline\InlineParserMatch;
-use League\CommonMark\Parser\InlineParserContext;
-use League\CommonMark\Util\RegexHelper;
+use VendorPrefix\League\CommonMark\Delimiter\Processor\DelimiterProcessorCollection;
+use VendorPrefix\League\CommonMark\Delimiter\Processor\DelimiterProcessorInterface;
+use VendorPrefix\League\CommonMark\Node\Inline\Text;
+use VendorPrefix\League\CommonMark\Parser\Inline\InlineParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Inline\InlineParserMatch;
+use VendorPrefix\League\CommonMark\Parser\InlineParserContext;
+use VendorPrefix\League\CommonMark\Util\RegexHelper;
 
 /**
  * Delimiter parsing is implemented as an Inline Parser with the lowest-possible priority
@@ -20,7 +20,7 @@ use League\CommonMark\Util\RegexHelper;
 final class DelimiterParser implements InlineParserInterface
 {
     /**
-     * @var \League\CommonMark\Delimiter\Processor\DelimiterProcessorCollection
+     * @var \VendorPrefix\League\CommonMark\Delimiter\Processor\DelimiterProcessorCollection
      */
     private $collection;
 

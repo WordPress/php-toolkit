@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Xml;
+namespace VendorPrefix\League\CommonMark\Xml;
 
-use League\CommonMark\Node\Node;
+use VendorPrefix\League\CommonMark\Node\Node;
 
 interface XmlNodeRendererInterface
 {

@@ -10,11 +10,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Webuni\FrontMatter;
+namespace VendorPrefix\Webuni\FrontMatter;
 
 use InvalidArgumentException;
-use Webuni\FrontMatter\Pug\PugCommentFrontMatter;
-use Webuni\FrontMatter\Twig\TwigCommentFrontMatter;
+use VendorPrefix\Webuni\FrontMatter\Pug\PugCommentFrontMatter;
+use VendorPrefix\Webuni\FrontMatter\Twig\TwigCommentFrontMatter;
 
 final class FrontMatterChain implements FrontMatterInterface
 {

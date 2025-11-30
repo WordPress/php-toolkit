@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace Nette\Utils;
+namespace VendorPrefix\Nette\Utils;
 
 use Nette;
 
@@ -20,7 +20,7 @@ use Nette;
  */
 class ArrayList implements \ArrayAccess, \Countable, \IteratorAggregate
 {
-	use Nette\SmartObject;
+	use VendorPrefix\Nette\SmartObject;
 
 	/**
   * @var mixed[]
@@ -36,7 +36,7 @@ class ArrayList implements \ArrayAccess, \Countable, \IteratorAggregate
  public static function from(array $array)
 	{
 		if (!Arrays::isList($array)) {
-			throw new Nette\InvalidArgumentException('Array is not valid list.');
+			throw new VendorPrefix\Nette\InvalidArgumentException('Array is not valid list.');
 		}
 
 		$obj = new static;
@@ -70,7 +70,7 @@ class ArrayList implements \ArrayAccess, \Countable, \IteratorAggregate
 	 * Replaces or appends a item.
 	 * @param  int|null  $index
 	 * @param  T  $value
-	 * @throws Nette\OutOfRangeException
+	 * @throws VendorPrefix\Nette\OutOfRangeException
 	 */
 	public function offsetSet($index, $value): void
 	{
@@ -78,7 +78,7 @@ class ArrayList implements \ArrayAccess, \Countable, \IteratorAggregate
 			$this->list[] = $value;
 
 		} elseif (!is_int($index) || $index < 0 || $index >= count($this->list)) {
-			throw new Nette\OutOfRangeException('Offset invalid or out of range');
+			throw new VendorPrefix\Nette\OutOfRangeException('Offset invalid or out of range');
 
 		} else {
 			$this->list[$index] = $value;
@@ -90,13 +90,13 @@ class ArrayList implements \ArrayAccess, \Countable, \IteratorAggregate
 	 * Returns a item.
 	 * @param  int  $index
 	 * @return T
-	 * @throws Nette\OutOfRangeException
+	 * @throws VendorPrefix\Nette\OutOfRangeException
 	 */
 	#[\ReturnTypeWillChange]
  public function offsetGet($index)
 	{
 		if (!is_int($index) || $index < 0 || $index >= count($this->list)) {
-			throw new Nette\OutOfRangeException('Offset invalid or out of range');
+			throw new VendorPrefix\Nette\OutOfRangeException('Offset invalid or out of range');
 		}
 
 		return $this->list[$index];
@@ -116,12 +116,12 @@ class ArrayList implements \ArrayAccess, \Countable, \IteratorAggregate
 	/**
 	 * Removes the element at the specified position in this list.
 	 * @param  int  $index
-	 * @throws Nette\OutOfRangeException
+	 * @throws VendorPrefix\Nette\OutOfRangeException
 	 */
 	public function offsetUnset($index): void
 	{
 		if (!is_int($index) || $index < 0 || $index >= count($this->list)) {
-			throw new Nette\OutOfRangeException('Offset invalid or out of range');
+			throw new VendorPrefix\Nette\OutOfRangeException('Offset invalid or out of range');
 		}
 
 		array_splice($this->list, $index, 1);

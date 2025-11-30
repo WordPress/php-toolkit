@@ -4,8 +4,8 @@
 
 namespace WordPress\Merge;
 
-use DiffMatchPatch\Diff;
-use DiffMatchPatch\DiffMatchPatch;
+use VendorPrefix\DiffMatchPatch\Diff;
+use VendorPrefix\DiffMatchPatch\DiffMatchPatch;
 
 class DiffMatchPatchMergeDriver {
 	// implements MergeDriver {.

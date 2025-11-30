@@ -2,30 +2,30 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Xml;
+namespace VendorPrefix\League\CommonMark\Xml;
 
-use League\CommonMark\Environment\EnvironmentInterface;
-use League\CommonMark\Event\DocumentPreRenderEvent;
-use League\CommonMark\Exception\InvalidArgumentException;
-use League\CommonMark\Node\Block\Document;
-use League\CommonMark\Node\Node;
-use League\CommonMark\Node\StringContainerInterface;
-use League\CommonMark\Output\RenderedContent;
-use League\CommonMark\Output\RenderedContentInterface;
-use League\CommonMark\Renderer\DocumentRendererInterface;
-use League\CommonMark\Util\Xml;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentInterface;
+use VendorPrefix\League\CommonMark\Event\DocumentPreRenderEvent;
+use VendorPrefix\League\CommonMark\Exception\InvalidArgumentException;
+use VendorPrefix\League\CommonMark\Node\Block\Document;
+use VendorPrefix\League\CommonMark\Node\Node;
+use VendorPrefix\League\CommonMark\Node\StringContainerInterface;
+use VendorPrefix\League\CommonMark\Output\RenderedContent;
+use VendorPrefix\League\CommonMark\Output\RenderedContentInterface;
+use VendorPrefix\League\CommonMark\Renderer\DocumentRendererInterface;
+use VendorPrefix\League\CommonMark\Util\Xml;
 
 final class XmlRenderer implements DocumentRendererInterface
 {
     private const INDENTATION = '    ';
 
     /**
-     * @var \League\CommonMark\Environment\EnvironmentInterface
+     * @var \VendorPrefix\League\CommonMark\Environment\EnvironmentInterface
      */
     private $environment;
 
     /**
-     * @var \League\CommonMark\Xml\XmlNodeRendererInterface
+     * @var \VendorPrefix\League\CommonMark\Xml\XmlNodeRendererInterface
      */
     private $fallbackRenderer;
 

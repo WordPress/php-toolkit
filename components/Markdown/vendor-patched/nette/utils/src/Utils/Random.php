@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace Nette\Utils;
+namespace VendorPrefix\Nette\Utils;
 
 use Nette;
 use Random\Randomizer;
@@ -18,7 +18,7 @@ use Random\Randomizer;
  */
 final class Random
 {
-	use Nette\StaticClass;
+	use VendorPrefix\Nette\StaticClass;
 
 	/**
 	 * Generates a random string of given length from characters specified in second argument.
@@ -33,9 +33,9 @@ final class Random
 		$chLen = strlen($charlist);
 
 		if ($length < 1) {
-			throw new Nette\InvalidArgumentException('Length must be greater than zero.');
+			throw new VendorPrefix\Nette\InvalidArgumentException('Length must be greater than zero.');
 		} elseif ($chLen < 2) {
-			throw new Nette\InvalidArgumentException('Character list must contain at least two chars.');
+			throw new VendorPrefix\Nette\InvalidArgumentException('Character list must contain at least two chars.');
 		} elseif (PHP_VERSION_ID >= 80300) {
 			return (new Randomizer)->getBytesFromString($charlist, $length);
 		}

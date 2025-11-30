@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\HeadingPermalink;
+namespace VendorPrefix\League\CommonMark\Extension\HeadingPermalink;
 
-use League\CommonMark\Environment\EnvironmentAwareInterface;
-use League\CommonMark\Environment\EnvironmentInterface;
-use League\CommonMark\Event\DocumentParsedEvent;
-use League\CommonMark\Extension\CommonMark\Node\Block\Heading;
-use League\CommonMark\Node\NodeIterator;
-use League\CommonMark\Node\RawMarkupContainerInterface;
-use League\CommonMark\Node\StringContainerHelper;
-use League\CommonMark\Normalizer\TextNormalizerInterface;
-use League\Config\ConfigurationInterface;
-use League\Config\Exception\InvalidConfigurationException;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentAwareInterface;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentInterface;
+use VendorPrefix\League\CommonMark\Event\DocumentParsedEvent;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\Heading;
+use VendorPrefix\League\CommonMark\Node\NodeIterator;
+use VendorPrefix\League\CommonMark\Node\RawMarkupContainerInterface;
+use VendorPrefix\League\CommonMark\Node\StringContainerHelper;
+use VendorPrefix\League\CommonMark\Normalizer\TextNormalizerInterface;
+use VendorPrefix\League\Config\ConfigurationInterface;
+use VendorPrefix\League\Config\Exception\InvalidConfigurationException;
 
 /**
  * Searches the Document for Heading elements and adds HeadingPermalinks to each one
@@ -34,11 +34,11 @@ final class HeadingPermalinkProcessor implements EnvironmentAwareInterface
     public const INSERT_NONE   = 'none';
 
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\CommonMark\Normalizer\TextNormalizerInterface */
+     * @var \VendorPrefix\League\CommonMark\Normalizer\TextNormalizerInterface */
     private $slugNormalizer;
 
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\Config\ConfigurationInterface */
+     * @var \VendorPrefix\League\Config\ConfigurationInterface */
     private $config;
 
     public function setEnvironment(EnvironmentInterface $environment): void

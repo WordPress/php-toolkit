@@ -14,7 +14,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Reference;
+namespace VendorPrefix\League\CommonMark\Reference;
 
 /**
  * A collection of references

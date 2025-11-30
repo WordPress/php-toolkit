@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Renderer;
+namespace VendorPrefix\League\CommonMark\Renderer;
 
-use League\CommonMark\Node\Node;
+use VendorPrefix\League\CommonMark\Node\Node;
 
 /**
  * Renders multiple nodes by delegating to the individual node renderers and adding spacing where needed

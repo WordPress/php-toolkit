@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Delimiter\Processor;
+namespace VendorPrefix\League\CommonMark\Delimiter\Processor;
 
-use League\CommonMark\Delimiter\DelimiterInterface;
+use VendorPrefix\League\CommonMark\Delimiter\DelimiterInterface;
 
 /**
  * Special marker interface for delimiter processors that return dynamic values from getDelimiterUse()

@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Renderer;
+namespace VendorPrefix\League\CommonMark\Renderer;
 
-use League\CommonMark\Node\Block\Document;
-use League\CommonMark\Output\RenderedContentInterface;
+use VendorPrefix\League\CommonMark\Node\Block\Document;
+use VendorPrefix\League\CommonMark\Output\RenderedContentInterface;
 
 /**
  * Renders a parsed Document AST

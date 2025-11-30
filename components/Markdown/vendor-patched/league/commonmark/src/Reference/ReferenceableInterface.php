@@ -11,7 +11,7 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Reference;
+namespace VendorPrefix\League\CommonMark\Reference;
 
 interface ReferenceableInterface
 {

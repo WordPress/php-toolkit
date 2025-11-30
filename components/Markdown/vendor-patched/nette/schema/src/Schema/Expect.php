@@ -7,12 +7,12 @@
 
 declare(strict_types=1);
 
-namespace Nette\Schema;
+namespace VendorPrefix\Nette\Schema;
 
 use Nette;
-use Nette\Schema\Elements\AnyOf;
-use Nette\Schema\Elements\Structure;
-use Nette\Schema\Elements\Type;
+use VendorPrefix\Nette\Schema\Elements\AnyOf;
+use VendorPrefix\Nette\Schema\Elements\Structure;
+use VendorPrefix\Nette\Schema\Elements\Type;
 
 
 /**
@@ -82,7 +82,7 @@ final class Expect
 					$def = ($prop instanceof \ReflectionProperty ? $prop->getValue($object) : $prop->getDefaultValue());
 					if (is_object($def)) {
 						$item = static::from($def);
-					} elseif ($def === null && !Nette\Utils\Validators::is(null, $type)) {
+					} elseif ($def === null && !VendorPrefix\Nette\Utils\Validators::is(null, $type)) {
 						$item->required();
 					} else {
 						$item->default($def);
@@ -99,19 +99,19 @@ final class Expect
 
 	/**
   * @param  mixed[]  $shape
-  * @return \Nette\Schema\Elements\Structure|\Nette\Schema\Elements\Type
+  * @return \VendorPrefix\Nette\Schema\Elements\Structure|\VendorPrefix\Nette\Schema\Elements\Type
   */
  public static function array(?array $shape = [])
 	{
-		return Nette\Utils\Arrays::first($shape ?? []) instanceof Schema
+		return VendorPrefix\Nette\Utils\Arrays::first($shape ?? []) instanceof Schema
 			? (new Structure($shape))->castTo('array')
 			: (new Type('array'))->default($shape);
 	}
 
 
 	/**
-  * @param string|\Nette\Schema\Schema $valueType
-  * @param string|\Nette\Schema\Schema|null $keyType
+  * @param string|\VendorPrefix\Nette\Schema\Schema $valueType
+  * @param string|\VendorPrefix\Nette\Schema\Schema|null $keyType
   */
  public static function arrayOf($valueType, $keyType = null): Type
 	{
@@ -120,7 +120,7 @@ final class Expect
 
 
 	/**
-  * @param string|\Nette\Schema\Schema $type
+  * @param string|\VendorPrefix\Nette\Schema\Schema $type
   */
  public static function listOf($type): Type
 	{

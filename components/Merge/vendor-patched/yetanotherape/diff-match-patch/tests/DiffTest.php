@@ -679,7 +679,7 @@ class DiffTest extends TestCase
 
     public function testBisect()
     {
-        $method = new \ReflectionMethod('DiffMatchPatch\Diff', 'bisect');
+        $method = new \ReflectionMethod('VendorPrefix\DiffMatchPatch\Diff', 'bisect');
         $method->setAccessible(true);
 
         // Since the resulting diff hasn't been normalized, it would be ok if

@@ -14,7 +14,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Node\Block;
+namespace VendorPrefix\League\CommonMark\Node\Block;
 
 class Paragraph extends AbstractBlock
 {

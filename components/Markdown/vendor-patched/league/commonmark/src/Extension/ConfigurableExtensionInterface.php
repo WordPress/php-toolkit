@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension;
+namespace VendorPrefix\League\CommonMark\Extension;
 
-use League\Config\ConfigurationBuilderInterface;
+use VendorPrefix\League\Config\ConfigurationBuilderInterface;
 
 interface ConfigurableExtensionInterface extends ExtensionInterface
 {

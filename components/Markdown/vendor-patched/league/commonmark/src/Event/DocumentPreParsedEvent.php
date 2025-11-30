@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Event;
+namespace VendorPrefix\League\CommonMark\Event;
 
-use League\CommonMark\Input\MarkdownInputInterface;
-use League\CommonMark\Node\Block\Document;
+use VendorPrefix\League\CommonMark\Input\MarkdownInputInterface;
+use VendorPrefix\League\CommonMark\Node\Block\Document;
 
 /**
  * Event dispatched when the document is about to be parsed
@@ -22,11 +22,11 @@ use League\CommonMark\Node\Block\Document;
 final class DocumentPreParsedEvent extends AbstractEvent
 {
     /** @psalm-readonly
-     * @var \League\CommonMark\Node\Block\Document */
+     * @var \VendorPrefix\League\CommonMark\Node\Block\Document */
     private $document;
 
     /**
-     * @var \League\CommonMark\Input\MarkdownInputInterface
+     * @var \VendorPrefix\League\CommonMark\Input\MarkdownInputInterface
      */
     private $markdown;
 

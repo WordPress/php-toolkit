@@ -12,13 +12,13 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Extension\Attributes\Parser;
+namespace VendorPrefix\League\CommonMark\Extension\Attributes\Parser;
 
-use League\CommonMark\Extension\Attributes\Util\AttributesHelper;
-use League\CommonMark\Parser\Block\BlockStart;
-use League\CommonMark\Parser\Block\BlockStartParserInterface;
-use League\CommonMark\Parser\Cursor;
-use League\CommonMark\Parser\MarkdownParserStateInterface;
+use VendorPrefix\League\CommonMark\Extension\Attributes\Util\AttributesHelper;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockStart;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockStartParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Cursor;
+use VendorPrefix\League\CommonMark\Parser\MarkdownParserStateInterface;
 
 final class AttributesBlockStartParser implements BlockStartParserInterface
 {

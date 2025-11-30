@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Event;
+namespace VendorPrefix\League\CommonMark\Event;
 
-use League\CommonMark\Node\Block\Document;
+use VendorPrefix\League\CommonMark\Node\Block\Document;
 
 /**
  * Event dispatched just before rendering begins
@@ -21,7 +21,7 @@ use League\CommonMark\Node\Block\Document;
 final class DocumentPreRenderEvent extends AbstractEvent
 {
     /** @psalm-readonly
-     * @var \League\CommonMark\Node\Block\Document */
+     * @var \VendorPrefix\League\CommonMark\Node\Block\Document */
     private $document;
 
     /** @psalm-readonly

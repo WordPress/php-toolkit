@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\TableOfContents;
+namespace VendorPrefix\League\CommonMark\Extension\TableOfContents;
 
-use League\CommonMark\Extension\TableOfContents\Node\TableOfContents;
-use League\CommonMark\Node\Block\Document;
+use VendorPrefix\League\CommonMark\Extension\TableOfContents\Node\TableOfContents;
+use VendorPrefix\League\CommonMark\Node\Block\Document;
 
 interface TableOfContentsGeneratorInterface
 {

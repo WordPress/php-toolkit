@@ -17,21 +17,21 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Delimiter;
+namespace VendorPrefix\League\CommonMark\Delimiter;
 
-use League\CommonMark\Delimiter\Processor\CacheableDelimiterProcessorInterface;
-use League\CommonMark\Delimiter\Processor\DelimiterProcessorCollection;
-use League\CommonMark\Node\Inline\AdjacentTextMerger;
-use League\CommonMark\Node\Node;
+use VendorPrefix\League\CommonMark\Delimiter\Processor\CacheableDelimiterProcessorInterface;
+use VendorPrefix\League\CommonMark\Delimiter\Processor\DelimiterProcessorCollection;
+use VendorPrefix\League\CommonMark\Node\Inline\AdjacentTextMerger;
+use VendorPrefix\League\CommonMark\Node\Node;
 
 final class DelimiterStack
 {
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\CommonMark\Delimiter\DelimiterInterface|null */
+     * @var \VendorPrefix\League\CommonMark\Delimiter\DelimiterInterface|null */
     private $top;
 
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\CommonMark\Delimiter\Bracket|null */
+     * @var \VendorPrefix\League\CommonMark\Delimiter\Bracket|null */
     private $brackets;
 
     /**

@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\FrontMatter\Data;
+namespace VendorPrefix\League\CommonMark\Extension\FrontMatter\Data;
 
-use League\CommonMark\Exception\MissingDependencyException;
-use League\CommonMark\Extension\FrontMatter\Exception\InvalidFrontMatterException;
+use VendorPrefix\League\CommonMark\Exception\MissingDependencyException;
+use VendorPrefix\League\CommonMark\Extension\FrontMatter\Exception\InvalidFrontMatterException;
 use VendorPrefix\Symfony\Component\Yaml\Exception\ParseException;
 use VendorPrefix\Symfony\Component\Yaml\Yaml;
 

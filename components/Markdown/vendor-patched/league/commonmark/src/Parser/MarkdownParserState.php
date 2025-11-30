@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Parser;
+namespace VendorPrefix\League\CommonMark\Parser;
 
-use League\CommonMark\Parser\Block\BlockContinueParserInterface;
-use League\CommonMark\Parser\Block\ParagraphParser;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockContinueParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Block\ParagraphParser;
 
 /**
  * @internal You should rely on the interface instead
@@ -22,11 +22,11 @@ use League\CommonMark\Parser\Block\ParagraphParser;
 final class MarkdownParserState implements MarkdownParserStateInterface
 {
     /** @psalm-readonly
-     * @var \League\CommonMark\Parser\Block\BlockContinueParserInterface */
+     * @var \VendorPrefix\League\CommonMark\Parser\Block\BlockContinueParserInterface */
     private $activeBlockParser;
 
     /** @psalm-readonly
-     * @var \League\CommonMark\Parser\Block\BlockContinueParserInterface */
+     * @var \VendorPrefix\League\CommonMark\Parser\Block\BlockContinueParserInterface */
     private $lastMatchedBlockParser;
 
     public function __construct(BlockContinueParserInterface $activeBlockParser, BlockContinueParserInterface $lastMatchedBlockParser)

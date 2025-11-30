@@ -3,7 +3,7 @@
 namespace WordPress\Blueprints\DataReference;
 
 use InvalidArgumentException;
-use Nette\NotImplementedException;
+use VendorPrefix\Nette\NotImplementedException;
 
 class DataReference {
 

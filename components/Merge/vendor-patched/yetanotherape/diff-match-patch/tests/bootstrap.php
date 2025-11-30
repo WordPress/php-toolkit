@@ -27,4 +27,4 @@ ini_set('error_reporting', E_ALL | E_STRICT);
 //ini_set('xdebug.remote_log', '/var/log/php5-xdebug-remote.log');
 
 $loader = require __DIR__ . "/../vendor/autoload.php";
-$loader->add('DiffMatchPatch\\', __DIR__);
+$loader->add('VendorPrefix\\DiffMatchPatch\\', __DIR__);

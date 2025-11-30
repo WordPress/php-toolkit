@@ -67,7 +67,7 @@ paragraph
 ```php
 <?php
 
-$frontMatter = new \Webuni\FrontMatter\FrontMatter();
+$frontMatter = new \VendorPrefix\Webuni\FrontMatter\FrontMatter();
 
 $document = $frontMatter->parse($string);
 
@@ -80,7 +80,7 @@ $content = $document->getContent();
 ```php
 <?php
 
-$frontMatter = new \Webuni\FrontMatter\FrontMatter();
+$frontMatter = new \VendorPrefix\Webuni\FrontMatter\FrontMatter();
 
 $hasFrontMatter = $frontMatter->exists($string);
 ```
@@ -104,9 +104,9 @@ Hello world!
 you can use `FrontMatterLoader`, that decorates another Twig loader:
 
 ```php
-$frontMatter = \Webuni\FrontMatter\Twig\TwigCommentFrontMatter::create();
+$frontMatter = \VendorPrefix\Webuni\FrontMatter\Twig\TwigCommentFrontMatter::create();
 $loader = new \Twig\Loader\FilesystemLoader(['path/to/templates']);
-$loader = new \Webuni\FrontMatter\Twig\FrontMatterLoader($frontMatter, $loader);
+$loader = new \VendorPrefix\Webuni\FrontMatter\Twig\FrontMatterLoader($frontMatter, $loader);
 
 $twig = new \Twig\Environment($loader);
 $content = $twig->render('template', []);
@@ -117,8 +117,8 @@ It is possible to inject front matter to Twig template as variables:
 
 ```php
 // …
-$converter = \Webuni\FrontMatter\Twig\DataToTwigConvertor::vars();
-$loader = new \Webuni\FrontMatter\Twig\FrontMatterLoader($frontMatter, $loader, $converter);
+$converter = \VendorPrefix\Webuni\FrontMatter\Twig\DataToTwigConvertor::vars();
+$loader = new \VendorPrefix\Webuni\FrontMatter\Twig\FrontMatterLoader($frontMatter, $loader, $converter);
 // …
 ```
 
@@ -164,10 +164,10 @@ tags:
 This library can be used with [league/commonmark](https://commonmark.thephpleague.com/):
 
 ```php
-$frontMatter = new \Webuni\FrontMatter\FrontMatter();
-$extension = new \Webuni\FrontMatter\Markdown\FrontMatterLeagueCommonMarkExtension($frontMatter);
+$frontMatter = new \VendorPrefix\Webuni\FrontMatter\FrontMatter();
+$extension = new \VendorPrefix\Webuni\FrontMatter\Markdown\FrontMatterLeagueCommonMarkExtension($frontMatter);
 
-$converter = new \League\CommonMark\CommonMarkConverter([]);
+$converter = new \VendorPrefix\League\CommonMark\CommonMarkConverter([]);
 $converter->getEnvironment()->addExtension($extension);
 $html = $converter->convertToHtml('markdown'); // html without front matter
 ```

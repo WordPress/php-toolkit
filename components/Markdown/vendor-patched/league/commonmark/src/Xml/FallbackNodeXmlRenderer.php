@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Xml;
+namespace VendorPrefix\League\CommonMark\Xml;
 
-use League\CommonMark\Node\Block\AbstractBlock;
-use League\CommonMark\Node\Inline\AbstractInline;
-use League\CommonMark\Node\Node;
+use VendorPrefix\League\CommonMark\Node\Block\AbstractBlock;
+use VendorPrefix\League\CommonMark\Node\Inline\AbstractInline;
+use VendorPrefix\League\CommonMark\Node\Node;
 
 /**
  * @internal

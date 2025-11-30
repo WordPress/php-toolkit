@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Parser\Block;
+namespace VendorPrefix\League\CommonMark\Parser\Block;
 
-use League\CommonMark\Node\Block\AbstractBlock;
-use League\CommonMark\Node\Block\Document;
-use League\CommonMark\Node\Block\Paragraph;
-use League\CommonMark\Parser\Cursor;
-use League\CommonMark\Reference\ReferenceMapInterface;
+use VendorPrefix\League\CommonMark\Node\Block\AbstractBlock;
+use VendorPrefix\League\CommonMark\Node\Block\Document;
+use VendorPrefix\League\CommonMark\Node\Block\Paragraph;
+use VendorPrefix\League\CommonMark\Parser\Cursor;
+use VendorPrefix\League\CommonMark\Reference\ReferenceMapInterface;
 
 /**
  * Parser implementation which ensures everything is added to the root-level Document
@@ -25,7 +25,7 @@ use League\CommonMark\Reference\ReferenceMapInterface;
 final class DocumentBlockParser extends AbstractBlockContinueParser
 {
     /** @psalm-readonly
-     * @var \League\CommonMark\Node\Block\Document */
+     * @var \VendorPrefix\League\CommonMark\Node\Block\Document */
     private $document;
 
     public function __construct(ReferenceMapInterface $referenceMap)
@@ -33,7 +33,7 @@ final class DocumentBlockParser extends AbstractBlockContinueParser
         $this->document = new Document($referenceMap);
     }
 
-    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
+    public function getBlock(): \VendorPrefix\League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->document;
     }

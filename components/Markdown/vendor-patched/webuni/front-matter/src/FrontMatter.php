@@ -10,12 +10,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Webuni\FrontMatter;
+namespace VendorPrefix\Webuni\FrontMatter;
 
-use Webuni\FrontMatter\Processor\JsonWithoutBracesProcessor;
-use Webuni\FrontMatter\Processor\ProcessorInterface;
-use Webuni\FrontMatter\Processor\TomlProcessor;
-use Webuni\FrontMatter\Processor\YamlProcessor;
+use VendorPrefix\Webuni\FrontMatter\Processor\JsonWithoutBracesProcessor;
+use VendorPrefix\Webuni\FrontMatter\Processor\ProcessorInterface;
+use VendorPrefix\Webuni\FrontMatter\Processor\TomlProcessor;
+use VendorPrefix\Webuni\FrontMatter\Processor\YamlProcessor;
 
 final class FrontMatter implements FrontMatterInterface
 {
@@ -28,7 +28,7 @@ final class FrontMatter implements FrontMatterInterface
      */
     private $endSep;
     /**
-     * @var \Webuni\FrontMatter\Processor\ProcessorInterface
+     * @var \VendorPrefix\Webuni\FrontMatter\Processor\ProcessorInterface
      */
     private $processor;
     /**

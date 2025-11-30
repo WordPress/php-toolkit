@@ -14,14 +14,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Parser;
+namespace VendorPrefix\League\CommonMark\Parser;
 
-use League\CommonMark\Environment\EnvironmentInterface;
-use League\CommonMark\Node\Block\AbstractBlock;
-use League\CommonMark\Node\Inline\AdjacentTextMerger;
-use League\CommonMark\Node\Inline\Text;
-use League\CommonMark\Parser\Inline\InlineParserInterface;
-use League\CommonMark\Reference\ReferenceMapInterface;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentInterface;
+use VendorPrefix\League\CommonMark\Node\Block\AbstractBlock;
+use VendorPrefix\League\CommonMark\Node\Inline\AdjacentTextMerger;
+use VendorPrefix\League\CommonMark\Node\Inline\Text;
+use VendorPrefix\League\CommonMark\Parser\Inline\InlineParserInterface;
+use VendorPrefix\League\CommonMark\Reference\ReferenceMapInterface;
 
 /**
  * @internal
@@ -29,11 +29,11 @@ use League\CommonMark\Reference\ReferenceMapInterface;
 final class InlineParserEngine implements InlineParserEngineInterface
 {
     /** @psalm-readonly
-     * @var \League\CommonMark\Environment\EnvironmentInterface */
+     * @var \VendorPrefix\League\CommonMark\Environment\EnvironmentInterface */
     private $environment;
 
     /** @psalm-readonly
-     * @var \League\CommonMark\Reference\ReferenceMapInterface */
+     * @var \VendorPrefix\League\CommonMark\Reference\ReferenceMapInterface */
     private $referenceMap;
 
     /**

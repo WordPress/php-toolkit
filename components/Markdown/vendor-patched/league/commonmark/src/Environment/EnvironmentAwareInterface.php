@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Environment;
+namespace VendorPrefix\League\CommonMark\Environment;
 
 interface EnvironmentAwareInterface
 {

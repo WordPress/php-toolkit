@@ -11,13 +11,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\Embed;
+namespace VendorPrefix\League\CommonMark\Extension\Embed;
 
-use League\CommonMark\Parser\Block\BlockStart;
-use League\CommonMark\Parser\Block\BlockStartParserInterface;
-use League\CommonMark\Parser\Cursor;
-use League\CommonMark\Parser\MarkdownParserStateInterface;
-use League\CommonMark\Util\LinkParserHelper;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockStart;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockStartParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Cursor;
+use VendorPrefix\League\CommonMark\Parser\MarkdownParserStateInterface;
+use VendorPrefix\League\CommonMark\Util\LinkParserHelper;
 
 class EmbedStartParser implements BlockStartParserInterface
 {

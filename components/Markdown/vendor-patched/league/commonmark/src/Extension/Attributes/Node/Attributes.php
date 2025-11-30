@@ -12,9 +12,9 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Extension\Attributes\Node;
+namespace VendorPrefix\League\CommonMark\Extension\Attributes\Node;
 
-use League\CommonMark\Node\Block\AbstractBlock;
+use VendorPrefix\League\CommonMark\Node\Block\AbstractBlock;
 
 final class Attributes extends AbstractBlock
 {

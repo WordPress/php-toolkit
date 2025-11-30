@@ -14,10 +14,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\CommonMark\Node\Inline;
+namespace VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Inline;
 
-use League\CommonMark\Node\Inline\AbstractInline;
-use League\CommonMark\Node\Inline\DelimitedInterface;
+use VendorPrefix\League\CommonMark\Node\Inline\AbstractInline;
+use VendorPrefix\League\CommonMark\Node\Inline\DelimitedInterface;
 
 final class Emphasis extends AbstractInline implements DelimitedInterface
 {

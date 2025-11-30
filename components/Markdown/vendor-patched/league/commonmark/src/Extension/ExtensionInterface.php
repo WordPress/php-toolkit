@@ -14,9 +14,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension;
+namespace VendorPrefix\League\CommonMark\Extension;
 
-use League\CommonMark\Environment\EnvironmentBuilderInterface;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentBuilderInterface;
 
 interface ExtensionInterface
 {

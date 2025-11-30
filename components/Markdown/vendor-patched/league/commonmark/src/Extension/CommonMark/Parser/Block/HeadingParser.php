@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\CommonMark\Parser\Block;
+namespace VendorPrefix\League\CommonMark\Extension\CommonMark\Parser\Block;
 
-use League\CommonMark\Extension\CommonMark\Node\Block\Heading;
-use League\CommonMark\Parser\Block\AbstractBlockContinueParser;
-use League\CommonMark\Parser\Block\BlockContinue;
-use League\CommonMark\Parser\Block\BlockContinueParserInterface;
-use League\CommonMark\Parser\Block\BlockContinueParserWithInlinesInterface;
-use League\CommonMark\Parser\Cursor;
-use League\CommonMark\Parser\InlineParserEngineInterface;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\Heading;
+use VendorPrefix\League\CommonMark\Parser\Block\AbstractBlockContinueParser;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockContinue;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockContinueParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockContinueParserWithInlinesInterface;
+use VendorPrefix\League\CommonMark\Parser\Cursor;
+use VendorPrefix\League\CommonMark\Parser\InlineParserEngineInterface;
 
 final class HeadingParser extends AbstractBlockContinueParser implements BlockContinueParserWithInlinesInterface
 {
     /** @psalm-readonly
-     * @var \League\CommonMark\Extension\CommonMark\Node\Block\Heading */
+     * @var \VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\Heading */
     private $block;
 
     /**
@@ -38,7 +38,7 @@ final class HeadingParser extends AbstractBlockContinueParser implements BlockCo
         $this->content = $content;
     }
 
-    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
+    public function getBlock(): \VendorPrefix\League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }

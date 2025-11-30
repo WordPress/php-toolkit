@@ -11,28 +11,28 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark;
+namespace VendorPrefix\League\CommonMark;
 
-use League\CommonMark\Environment\EnvironmentInterface;
-use League\CommonMark\Exception\CommonMarkException;
-use League\CommonMark\Output\RenderedContentInterface;
-use League\CommonMark\Parser\MarkdownParser;
-use League\CommonMark\Parser\MarkdownParserInterface;
-use League\CommonMark\Renderer\HtmlRenderer;
-use League\CommonMark\Renderer\MarkdownRendererInterface;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentInterface;
+use VendorPrefix\League\CommonMark\Exception\CommonMarkException;
+use VendorPrefix\League\CommonMark\Output\RenderedContentInterface;
+use VendorPrefix\League\CommonMark\Parser\MarkdownParser;
+use VendorPrefix\League\CommonMark\Parser\MarkdownParserInterface;
+use VendorPrefix\League\CommonMark\Renderer\HtmlRenderer;
+use VendorPrefix\League\CommonMark\Renderer\MarkdownRendererInterface;
 
 class MarkdownConverter implements ConverterInterface, MarkdownConverterInterface
 {
     /** @psalm-readonly
-     * @var \League\CommonMark\Environment\EnvironmentInterface */
+     * @var \VendorPrefix\League\CommonMark\Environment\EnvironmentInterface */
     protected $environment;
 
     /** @psalm-readonly
-     * @var \League\CommonMark\Parser\MarkdownParserInterface */
+     * @var \VendorPrefix\League\CommonMark\Parser\MarkdownParserInterface */
     protected $markdownParser;
 
     /** @psalm-readonly
-     * @var \League\CommonMark\Renderer\MarkdownRendererInterface */
+     * @var \VendorPrefix\League\CommonMark\Renderer\MarkdownRendererInterface */
     protected $htmlRenderer;
 
     public function __construct(EnvironmentInterface $environment)
