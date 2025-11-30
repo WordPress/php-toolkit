@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace VendorPrefix\Nette\Schema;
 
-use Nette;
+use VendorPrefix\Nette;
 use VendorPrefix\Nette\Schema\Elements\AnyOf;
 use VendorPrefix\Nette\Schema\Elements\Structure;
 use VendorPrefix\Nette\Schema\Elements\Type;

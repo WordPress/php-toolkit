@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace VendorPrefix\Nette\Utils;
 
-use Nette;
+use VendorPrefix\Nette;
 use VendorPrefix\Nette\HtmlStringable;
 use function is_array, is_float, is_object, is_string;
 

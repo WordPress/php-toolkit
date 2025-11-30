@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace VendorPrefix\Nette\Iterators;
 
-use Nette;
+use VendorPrefix\Nette;
 
 
 /**

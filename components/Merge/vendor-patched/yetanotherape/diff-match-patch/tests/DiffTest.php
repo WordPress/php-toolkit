@@ -19,7 +19,7 @@
  * limitations under the License.
  */
 
-namespace DiffMatchPatch;
+namespace VendorPrefix\DiffMatchPatch;
 
 use PHPUnit\Framework\TestCase;
 

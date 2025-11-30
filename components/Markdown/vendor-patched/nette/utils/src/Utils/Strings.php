@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace VendorPrefix\Nette\Utils;
 
 use JetBrains\PhpStorm\Language;
-use Nette;
+use VendorPrefix\Nette;
 use function is_array, is_object, strlen;
 
 

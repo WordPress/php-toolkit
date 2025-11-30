@@ -25,7 +25,7 @@ Usage:
 ```php
 <?php
 
-use VendorPrefix\DiffMatchPatch\DiffMatchPatch;
+use VendorPrefix\DiffMatchPatch\VendorPrefix\DiffMatchPatch;
 
 $text1 = "The quick brown fox jumps over the lazy dog.";
 $text2 = "That quick brown fox jumped over a lazy dog.";
@@ -63,7 +63,7 @@ Usage:
 ```php
 <?php
 
-use VendorPrefix\DiffMatchPatch\DiffMatchPatch;
+use VendorPrefix\DiffMatchPatch\VendorPrefix\DiffMatchPatch;
 
 $dmp = new DiffMatchPatch();
 $text = "The quick brown fox jumps over the lazy fox.";
@@ -88,7 +88,7 @@ Usage:
 ```php
 <?php
 
-use VendorPrefix\DiffMatchPatch\DiffMatchPatch;
+use VendorPrefix\DiffMatchPatch\VendorPrefix\DiffMatchPatch;
 
 $dmp = new DiffMatchPatch();
 $patches = $dmp->patch_make("The quick brown fox jumps over the lazy dog.", "That quick brown fox jumped over a lazy dog.");
