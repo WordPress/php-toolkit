@@ -1643,4 +1643,77 @@ class HumanFriendlySchemaValidatorTest extends TestCase {
 	private function assertIsInvalid( $result ) {
 		$this->assertInstanceOf( ValidationError::class, $result );
 	}
+
+	public function testItReturnsValidationErrorForInvalidTupleData() {
+		$schema_path = __DIR__ . '/../../../Versions/Version2/json-schema/schema-v2.json';
+		$schema      = json_decode( file_get_contents( $schema_path ), true );
+		$this->assertIsArray( $schema, 'Failed to parse schema file: ' . $schema_path );
+
+		$invalid_blueprint_json = '{
+			"version": 2,
+			"blueprintMeta": {
+				"name": "Invalid Blueprint - Wrong Post Type Format",
+				"description": "This blueprint has invalid post type definitions"
+			},
+			"postTypes": {
+				"book": {
+					"label": 123,
+					"public": "not-a-boolean",
+					"hierarchical": "wrong-type",
+					"show_in_menu": {},
+					"capability_type": [
+						"one",
+						"two",
+						"three"
+					],
+					"template": [
+						"invalid-not-an-array",
+						[
+							"valid-item-1"
+						],
+						[
+							"valid-item-2",
+							{}
+						],
+						[
+							123,
+							"not-string-first-element"
+						]
+					],
+					"supports": [
+						"title",
+						123,
+						true
+					]
+				}
+			},
+			"content": [
+				{
+					"type": "posts",
+					"source": [
+						{
+							"post_title": "Test Post",
+							"post_content": "This is a test post."
+						}
+					]
+				}
+			]
+		}';
+		$invalid_blueprint      = json_decode( $invalid_blueprint_json );
+
+		$validator = new HumanFriendlySchemaValidator( $schema );
+		try {
+			$error = $validator->validate( $invalid_blueprint );
+		} catch ( UnsupportedSchemaException $e ) {
+			$this->fail(
+				'The validator threw an UnsupportedSchemaException when it should have returned a ValidationError. Exception message: ' . $e->getMessage()
+			);
+		}
+
+		$this->assertInstanceOf(
+			ValidationError::class,
+			$error,
+			'The validator should return a ValidationError, not throw an UnsupportedSchemaException exception or pass.'
+		);
+	}
 }
