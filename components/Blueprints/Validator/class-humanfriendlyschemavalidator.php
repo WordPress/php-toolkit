@@ -582,7 +582,7 @@ final class HumanFriendlySchemaValidator {
 		}
 		if ( isset( $schema['enum'] ) ) {
 			foreach ( $schema['enum'] as $enum_value ) {
-				if ( ! $this->type_matches( $enum_value, $type ) ) {
+				if ( ! $this->type_matches_any( $enum_value, $type ) ) {
 					throw new UnsupportedSchemaException(
 						'Enum value ' . json_encode( $enum_value ) . " does not match the declared type \"{$type}\"."
 					);
@@ -731,10 +731,48 @@ final class HumanFriendlySchemaValidator {
 	private function validate_array( array $path, array $data, array $schema ): ?ValidationError {
 		$children_errors = array();
 		if ( isset( $schema['items'] ) ) {
-			foreach ( $data as $idx => $item ) {
-				$error = $this->validate_node( array_merge( $path, array( $idx ) ), $item, $schema['items'] );
-				if ( $error ) {
-					$children_errors[] = $error;
+			// In PHP, an associative array like {"type":"string"} is still an array.
+			// We need to distinguish between a list of schemas (tuple validation)
+			// and a single schema object (list validation). A simple way is to
+			// check if the keys are sequential integers from 0.
+			$is_tuple_validation = is_array( $schema['items'] ) && array_keys( $schema['items'] ) === range( 0, count( $schema['items'] ) - 1 );
+
+			if ( $is_tuple_validation ) {
+				// === TUPLE VALIDATION ===
+				// The validator doesn't support `additionalItems`, so we can report an error
+				// if the data array has more items than the schema tuple defines.
+				if ( isset( $schema['maxItems'] ) && count( $data ) > $schema['maxItems'] ) {
+					// This check is redundant if maxItems is always equal to count(items), but kept for robustness.
+				} elseif ( count( $data ) > count( $schema['items'] ) ) {
+					// This validator does not support `additionalItems`, so we treat extra items as an error.
+					$children_errors[] = new ValidationError(
+						$this->convert_path_to_string( $path ),
+						'additional-items-not-allowed',
+						'Tuple validation failed: expected ' . count( $schema['items'] ) . ' items but got ' . count( $data ) . '.',
+						array(
+							'expectedCount' => count( $schema['items'] ),
+							'actualCount' => count( $data ),
+						)
+					);
+				}
+
+				foreach ( $data as $idx => $item ) {
+					if ( isset( $schema['items'][ $idx ] ) ) {
+						// This item has a specific schema defined in the tuple.
+						$error = $this->validate_node( array_merge( $path, array( $idx ) ), $item, $schema['items'][ $idx ] );
+						if ( $error ) {
+							$children_errors[] = $error;
+						}
+					}
+					// If there's no schema at $schema['items'][$idx], it's an "additional item", handled above.
+				}
+			} else {
+				// === LIST VALIDATION (existing logic) ===
+				foreach ( $data as $idx => $item ) {
+					$error = $this->validate_node( array_merge( $path, array( $idx ) ), $item, $schema['items'] );
+					if ( $error ) {
+						$children_errors[] = $error;
+					}
 				}
 			}
 		}
