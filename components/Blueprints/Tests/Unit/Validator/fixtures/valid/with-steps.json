@@ -22,7 +22,7 @@
 		},
 		{
 			"step": "activateTheme",
-			"themeFolderName": "twentytwentythree"
+			"themeDirectoryName": "twentytwentythree"
 		},
 		{
 			"step": "cp",
@@ -38,12 +38,12 @@
 		},
 		{
 			"step": "installPlugin",
-			"plugin": "woocommerce"
+			"source": "woocommerce"
 		},
 		{
 			"step": "installTheme",
 			"source": "twentytwentyfour",
-			"activate": true,
+			"active": true,
 			"importStarterContent": true
 		},
 		{
@@ -68,7 +68,7 @@
 			"code": "echo 'Hello, World!';"
 		},
 		{
-			"step": "runSql",
+			"step": "runSQL",
 			"source": "./custom-queries.sql"
 		},
 		{
@@ -92,11 +92,9 @@
 			"command": "plugin list --format=json"
 		},
 		{
-			"step": "writeFile",
-			"path": "wp-content/uploads/new-file.txt",
-			"content": {
-				"filename": "content.txt",
-				"content": "This is the content of the file."
+			"step": "writeFiles",
+			"files": {
+				"wp-content/uploads/new-file.txt": "Content of file."
 			}
 		},
 		{

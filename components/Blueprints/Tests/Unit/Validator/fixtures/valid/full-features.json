@@ -9,7 +9,7 @@
 			"Test Author",
 			"Another Author"
 		],
-		"authorUrl": "https://example.com",
+		"homepage": "https://example.com",
 		"donateLink": "https://example.com/donate",
 		"tags": [
 			"test",
@@ -129,11 +129,9 @@
 	],
 	"additionalStepsAfterExecution": [
 		{
-			"step": "writeFile",
-			"path": "wp-content/uploads/custom-file.txt",
-			"content": {
-				"filename": "custom-file.txt",
-				"content": "This is a custom file created by the Blueprint."
+			"step": "writeFiles",
+			"files": {
+				"wp-content/uploads/custom-file.txt": "This is a custom file created by the Blueprint."
 			}
 		},
 		{

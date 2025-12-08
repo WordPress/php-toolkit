@@ -22,7 +22,7 @@
 		},
 		{
 			"step": "activateTheme",
-			"themeFolderName": "twentytwentythree"
+			"themeDirectoryName": "twentytwentythree"
 		},
 		{
 			"step": "cp",
@@ -32,18 +32,16 @@
 		{
 			"step": "defineConstants",
 			"constants": {
-				"WP_DEBUG": "true",
-				"SCRIPT_DEBUG": "false"
+				"WP_DEBUG": true,
+				"SCRIPT_DEBUG": false
 			}
 		},
 		{
 			"step": "installPlugin",
-			"plugin": {
-				"source": "jetpack",
-				"active": true,
-				"activationOptions": {
-					"mode": "development"
-				}
+			"source": "jetpack",
+			"active": true,
+			"activationOptions": {
+				"mode": "development"
 			}
 		},
 		{
@@ -58,9 +56,10 @@
 			}
 		},
 		{
-			"step": "writeFile",
-			"path": "/path/to/file.txt",
-			"content": "Hello World"
+			"step": "writeFiles",
+			"files": {
+			   "/path/to/file.txt": "Hello World"
+			}
 		}
 	]
 }

@@ -54,7 +54,10 @@
 					}
 				],
 				[
-					"core/paragraph"
+					"core/paragraph",
+					{
+						"content": "This is a sample book."
+					}
 				]
 			],
 			"template_lock": "all"
