@@ -312,6 +312,28 @@ class HumanFriendlySchemaValidatorTest extends TestCase {
 				false,
 				'Missing required field: id.',
 			],
+			'tuple validation: valid with different schemas' => [
+				[ 'type' => 'array', 'items' => [ [ 'type' => 'string' ], [ 'type' => 'integer' ] ] ],
+				[ 'a string', 123 ],
+				true,
+			],
+			'tuple validation: valid with identical schemas' => [
+				[ 'type' => 'array', 'items' => [ [ 'type' => 'string' ], [ 'type' => 'string' ] ] ],
+				[ 'hello', 'world' ],
+				true,
+			],
+			'tuple validation: invalid item type' => [
+				[ 'type' => 'array', 'items' => [ [ 'type' => 'string' ], [ 'type' => 'integer' ] ] ],
+				[ 'a string', 'another string' ], // Second item should be an integer
+				false,
+				'Expected type "integer" but got type "string".',
+			],
+			'tuple validation: too many items' => [
+				[ 'type' => 'array', 'items' => [ [ 'type' => 'string' ], [ 'type' => 'integer' ] ] ],
+				[ 'a string', 123, 'extra item' ], // Contains one too many items
+				false,
+				'Tuple validation failed: expected at most 2 items but got 3.',
+			],
 		];
 	}
 
