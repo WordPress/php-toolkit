@@ -322,6 +322,19 @@ class HumanFriendlySchemaValidatorTest extends TestCase {
 				[ 'hello', 'world' ],
 				true,
 			],
+			'tuple validation: valid with object schemas' => [
+				[ 'type' => 'array', 'items' =>
+					[
+						[ 'type' => 'object', 'properties' => [ 'name' => [ 'type' => 'string' ] ], 'required' => [ 'name' ] ],
+						[ 'type' => 'object', 'properties' => [ 'age' => [ 'type' => 'integer' ] ], 'required' => [ 'age' ] ]
+					],
+				],
+				[
+					[ 'name' => 'John' ],
+					[ 'age' => 30 ]
+				],
+				true,
+			],
 			'tuple validation: invalid item type' => [
 				[ 'type' => 'array', 'items' => [ [ 'type' => 'string' ], [ 'type' => 'integer' ] ] ],
 				[ 'a string', 'another string' ], // Second item should be an integer
