@@ -430,7 +430,7 @@ function find_first_token_index( $tokens, $type, $search = null ) {
 	return null;
 }
 
-$wp_config_path = getenv( "DOCROOT" ) . "/wp-config.php";
+$wp_config_path = getenv( "WP_CORE_DIR" ) . "/wp-config.php";
 
 if ( ! file_exists( $wp_config_path ) ) {
 	error_log( "Blueprint Error: wp-config.php file not found at " . $wp_config_path );

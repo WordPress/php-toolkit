@@ -346,7 +346,7 @@ class V1ToV2Transpiler {
 								'filename' => 'script.php',
 								'content'  => <<<'PHP'
 <?php
-require getenv('DOCROOT') . '/wp-load.php';
+require getenv('WP_CORE_DIR') . '/wp-load.php';
 
 $GLOBALS['@pdo']->query('DELETE FROM wp_posts WHERE id > 0');
 $GLOBALS['@pdo']->query("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME='wp_posts'");
@@ -448,7 +448,7 @@ PHP
 								'filename' => 'script.php',
 								'content'  => <<<'PHP'
 <?php
-include getenv("DOCROOT") . '/wp-load.php';
+include getenv("WP_CORE_DIR") . '/wp-load.php';
 $meta = json_decode(getenv("META"), true);
 foreach($meta as $name => $value) {
 update_user_meta(getenv("USER_ID"), $name, $value);

@@ -58,7 +58,7 @@ PHP;
 		$active_plugins = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 append_output( json_encode(get_option('active_plugins')) );
 PHP
 
@@ -94,7 +94,7 @@ PHP
 		$inactive_plugins = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 
 // Get all installed plugins
 $all_plugins = get_plugins();
@@ -113,7 +113,7 @@ PHP
 		$active_plugins = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 append_output( json_encode(get_option('active_plugins')) );
 PHP
 
@@ -150,7 +150,7 @@ PHP
 		$active_plugins = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 append_output( json_encode(get_option('active_plugins')) );
 PHP
 
@@ -187,7 +187,7 @@ PHP
 		$active_plugins = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 append_output( json_encode(get_option('active_plugins')) );
 PHP
 
@@ -224,7 +224,7 @@ PHP
 		$active_plugins = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 append_output( json_encode(get_option('active_plugins')) );
 PHP
 

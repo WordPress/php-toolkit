@@ -839,7 +839,7 @@ class Runner {
 				}
 
 				$code = '<?php
-				require_once(getenv("DOCROOT") . "/wp-load.php");
+				require_once(getenv("WP_CORE_DIR") . "/wp-load.php");
 				$roles = getenv("ROLES");
                 foreach ($roles as $role) {
                     if (empty($role["name"]) || !is_string($role["name"])) {
@@ -889,7 +889,7 @@ class Runner {
 				}
 
 				$code = '<?php
-                require_once(getenv("DOCROOT") . "/wp-load.php");
+                require_once(getenv("WP_CORE_DIR") . "/wp-load.php");
                 $users = getenv("USERS");
                 foreach ($users as $user) {
                     if (empty($user["username"]) || !is_string($user["username"])) {

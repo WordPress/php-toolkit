@@ -65,7 +65,7 @@ $wp_filter['plugins_loaded'][0]['importThemeStarterContent_plugins_loaded'] = ar
                                                                                      'accepted_args' => 0,
 );
 
-require getenv( "DOCROOT" ) . '/wp-load.php';
+require getenv( "WP_CORE_DIR" ) . '/wp-load.php';
 
 // Return early if there's no starter content.
 if ( ! get_theme_starter_content() ) {

@@ -151,7 +151,7 @@ PHP
 		$runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 foreach (json_decode(getenv('POSTS'), true) as $post) {
 	$result = wp_insert_post(wp_slash($post));
 	if (is_wp_error($result)) {

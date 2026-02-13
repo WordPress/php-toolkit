@@ -75,7 +75,7 @@ PHP;
 		$active_theme = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 append_output( get_option('stylesheet') );
 PHP
 
@@ -115,7 +115,7 @@ PHP
 		$active_theme = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 append_output( get_option('stylesheet') );
 PHP
 
@@ -151,7 +151,7 @@ PHP
 		$active_theme = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 append_output( get_option('stylesheet') );
 PHP
 

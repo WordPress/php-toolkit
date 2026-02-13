@@ -177,7 +177,10 @@ class Runtime {
 	 *
 	 * * append_output( $output ): A function that appends a given string to the output file. Useful for
 	 *                             separating the returned structured data from PHP warnings and echos.
-	 * * DOCROOT environment variable: The path to the WordPress root directory.
+	 * * DOCROOT environment variable: The path to the web root directory (document root).
+	 * * WP_CORE_DIR environment variable: The path to the WordPress core directory (where wp-load.php lives).
+	 *                                      On standard installs this equals DOCROOT. On WP Cloud sites
+	 *                                      the core may live in a subdirectory like __wp__/.
 	 * * OUTPUT_FILE environment variable: The path to a file where the output of the code will be appended.
 	 *
 	 * @TODO: Useful error messages on process failure. Right now we get this mouthful error message:
@@ -264,7 +267,8 @@ class Runtime {
 					array_merge(
 						array(
 							'DOCROOT'     => $this->configuration->get_target_site_root(),
-							'OUTPUT_FILE' => $output_path,
+							'WP_CORE_DIR' => $this->configuration->get_wordpress_core_dir(),
+						'OUTPUT_FILE' => $output_path,
 						),
 						$env ?? array()
 					),

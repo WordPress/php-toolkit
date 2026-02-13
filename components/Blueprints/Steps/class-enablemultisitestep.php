@@ -22,8 +22,8 @@ class EnableMultisiteStep implements StepInterface {
  * See: https://github.com/wp-cli/core-command/blob/f157fb37dae1d13fe7318452f932917161e83e53/src/Core_Command.php#L505
  */
 
-require_once getenv( 'DOCROOT' ) . '/wp-load.php';
-require_once getenv( 'DOCROOT' ) . '/wp-admin/includes/upgrade.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-load.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-admin/includes/upgrade.php';
 
 // need to register the multisite tables manually for some reason
 foreach ( $wpdb->tables( 'ms_global' ) as $table => $prefixed_table ) {
