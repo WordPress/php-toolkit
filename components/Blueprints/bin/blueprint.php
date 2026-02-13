@@ -269,7 +269,7 @@ $command_configurations = array(
 			array(
 				'site-url'                    => array( 'u', true, null, 'Public site URL (https://example.com)' ),
 				'site-path'                   => array( null, true, null, 'Target directory with WordPress install context)' ),
-				'wp-core-path'                => array( null, true, null, 'WordPress core directory (if different from site-path, e.g. on WP Cloud)' ),
+				'wp-core-path'                => array( null, true, null, 'WordPress core directory (if different from site-path)' ),
 				'execution-context'           => array( 'x', true, null, 'Source directory with Blueprint context files' ),
 				'mode'                        => array( 'm', true, Runner::EXECUTION_MODE_CREATE_NEW_SITE, sprintf( 'Execution mode (%s|%s)', Runner::EXECUTION_MODE_CREATE_NEW_SITE, Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE ) ),
 				'db-engine'                   => array( 'd', true, 'mysql', 'Database engine (mysql|sqlite)' ),

@@ -31,8 +31,8 @@ class RunnerConfiguration {
 	/**
 	 * The path to the WordPress core directory, containing wp-load.php,
 	 * wp-admin/, and wp-includes/. On standard installs this is the same
-	 * as the site root. On WP Cloud sites the core lives in a subdirectory
-	 * like __wp__/ while wp-content/ stays in the web root.
+	 * as the site root. Some hosting setups place the core in a subdirectory
+	 * while wp-content/ stays in the web root.
 	 *
 	 * @var string|null
 	 */

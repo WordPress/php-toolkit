@@ -25,9 +25,9 @@ class ExistingSiteResolver {
 		// 1. Verify it's a valid WordPress installation.
 		$progress['verify_installation']->setCaption( 'Verifying WordPress installation' );
 
-		// Auto-detect the WordPress core directory. On WP Cloud sites, the
-		// WordPress core files (wp-load.php, wp-admin, wp-includes) live in
-		// a subdirectory like __wp__/ while wp-content stays in the web root.
+		// Auto-detect the WordPress core directory. Some hosting setups place
+		// the WordPress core files (wp-load.php, wp-admin, wp-includes) in a
+		// subdirectory while wp-content stays in the web root.
 		if ( ! $target_fs->exists( 'wp-load.php' ) ) {
 			$detected_core_dir = self::detect_wordpress_core_dir( $config->get_target_site_root() );
 			if ( null !== $detected_core_dir ) {
@@ -150,9 +150,9 @@ class ExistingSiteResolver {
 	}
 
 	/**
-	 * Scans the web root for a WordPress core directory. On WP Cloud and
-	 * similar setups the core files live in a subdirectory (e.g. __wp__/)
-	 * while wp-content/ stays in the web root.
+	 * Scans the web root for a WordPress core directory. Some hosting
+	 * setups place the core files in a subdirectory while wp-content/
+	 * stays in the web root.
 	 *
 	 * @param  string $web_root Absolute path to the web root.
 	 *
@@ -166,8 +166,7 @@ class ExistingSiteResolver {
 		}
 
 		// Scan immediate subdirectories for wp-load.php. This covers the
-		// WP Cloud convention (__wp__/) as well as any other single-level
-		// subdirectory layout.
+		// Check immediate subdirectories for any single-level split layout.
 		$entries = @scandir( $web_root );
 		if ( false === $entries ) {
 			return null;

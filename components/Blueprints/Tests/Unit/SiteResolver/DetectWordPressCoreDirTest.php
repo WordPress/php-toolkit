@@ -10,10 +10,10 @@ use function WordPress\Filesystem\wp_unix_sys_get_temp_dir;
 /**
  * Tests for ExistingSiteResolver::detect_wordpress_core_dir().
  *
- * On WP Cloud sites, the WordPress core files (wp-load.php, wp-admin/,
- * wp-includes/) live in a subdirectory like __wp__/ while wp-content/
- * stays in the web root. The detection method must find wp-load.php
- * in both standard and split layouts.
+ * Some hosting setups place the WordPress core files (wp-load.php,
+ * wp-admin/, wp-includes/) in a subdirectory while wp-content/ stays
+ * in the web root. The detection method must find wp-load.php in both
+ * standard and split layouts.
  */
 class DetectWordPressCoreDirTest extends TestCase {
 	/**
@@ -42,14 +42,14 @@ class DetectWordPressCoreDirTest extends TestCase {
 	}
 
 	/**
-	 * WP Cloud layout: wp-load.php lives in __wp__/ subdirectory.
+	 * Split layout: wp-load.php lives in a subdirectory of the web root.
 	 */
-	public function test_detects_wp_cloud_layout_with___wp___subdirectory() {
+	public function test_detects_split_layout_with_subdirectory() {
 		// Web root has wp-content but not wp-load.php.
 		mkdir( $this->temp_dir . '/wp-content', 0755, true );
 
-		// WordPress core is in __wp__/.
-		$wp_core = $this->temp_dir . '/__wp__';
+		// WordPress core is in a subdirectory.
+		$wp_core = $this->temp_dir . '/wp';
 		mkdir( $wp_core, 0755, true );
 		touch( $wp_core . '/wp-load.php' );
 
