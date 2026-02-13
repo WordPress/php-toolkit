@@ -268,7 +268,7 @@ class Runtime {
 						array(
 							'DOCROOT'     => $this->configuration->get_target_site_root(),
 							'WP_CORE_DIR' => $this->configuration->get_wordpress_core_dir(),
-						'OUTPUT_FILE' => $output_path,
+							'OUTPUT_FILE' => $output_path,
 						),
 						$env ?? array()
 					),
