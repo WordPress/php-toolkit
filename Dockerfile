@@ -32,4 +32,4 @@ COPY . .
 # Re-run install in case the cached layer was stale
 RUN composer install --no-interaction --no-progress --optimize-autoloader
 
-CMD ["vendor/bin/phpunit", "-c", "phpunit.xml"]
+CMD ["bash"]

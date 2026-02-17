@@ -74,10 +74,13 @@ environment, use the Docker Compose sandbox:
 docker compose build
 
 # Run all tests
-docker compose run --rm sandbox
+docker compose run --rm sandbox vendor/bin/phpunit -c phpunit.xml
 
 # Run tests for one component
 docker compose run --rm sandbox vendor/bin/phpunit components/Zip/Tests/
+
+# Run a PHP script
+docker compose run --rm sandbox php my-script.php
 
 # Lint
 docker compose run --rm sandbox vendor/bin/phpcs -d memory_limit=1G .

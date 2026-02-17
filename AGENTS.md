@@ -169,10 +169,13 @@ and `/tmp`.
 docker compose build
 
 # Run the full test suite inside the sandbox
-docker compose run --rm sandbox
+docker compose run --rm sandbox vendor/bin/phpunit -c phpunit.xml
 
 # Run tests for a single component
 docker compose run --rm sandbox vendor/bin/phpunit components/Zip/Tests/
+
+# Run a PHP script
+docker compose run --rm sandbox php my-script.php
 
 # Run the linter
 docker compose run --rm sandbox vendor/bin/phpcs -d memory_limit=1G .
@@ -181,7 +184,7 @@ docker compose run --rm sandbox vendor/bin/phpcs -d memory_limit=1G .
 docker compose run --rm sandbox vendor/bin/phpcbf -d memory_limit=1G .
 
 # Open a shell for interactive debugging
-docker compose run --rm sandbox bash
+docker compose run --rm sandbox
 ```
 
 The container uses PHP 8.1 (matching the lint CI). Source files are bind-mounted
