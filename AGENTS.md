@@ -155,10 +155,7 @@ get results incrementally.
 
 ## Verification
 
-To verify changes work end-to-end (not just unit tests), use WordPress
-Playground. The `/wordpress-playground` skill starts a local WordPress instance
-where you can install plugins from this repo and test behavior from a user
-perspective. This is especially useful for the `plugins/` directory.
+To verify changes work end-to-end (not just unit tests).
 
 ## Sandbox
 
