@@ -57,15 +57,12 @@ For convenience, a standalone Blueprints runner and other tools from this reposi
 
 ### Development
 
-#### Dev Container (recommended)
+#### Dev Container
 
-The quickest way to get a working environment is the [Dev Container](https://containers.dev/)
-spec in `.devcontainer/`. It gives you PHP 8.1 with all the required extensions,
-Composer, and editor tooling pre-configured.
-
--   **VS Code**: Install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers), then run "Reopen in Container".
--   **GitHub Codespaces**: Click "Code > Codespaces > New codespace" on GitHub — it picks up the spec automatically.
--   **CLI**: `devcontainer up --workspace-folder .`
+A [Dev Container](https://containers.dev/) spec is included in `.devcontainer/`.
+It provides PHP 8.1 with all the required extensions, Composer, and editor
+tooling pre-configured. Works with VS Code ("Reopen in Container"), GitHub
+Codespaces, or `devcontainer up --workspace-folder .` from the CLI.
 
 #### Docker sandbox
 
