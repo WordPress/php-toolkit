@@ -1,0 +1,22 @@
+services:
+  sandbox:
+    build: .
+    volumes:
+      - .:/app
+      # Keep container's vendor dir separate so host PHP version
+      # doesn't conflict with container's compiled extensions.
+      - vendor_data:/app/vendor
+    working_dir: /app
+    # Drop all capabilities, read-only root filesystem.
+    # The agent can still write to /app (mounted volume) and /tmp.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    network_mode: none
+
+volumes:
+  vendor_data:

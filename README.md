@@ -57,17 +57,50 @@ For convenience, a standalone Blueprints runner and other tools from this reposi
 
 ### Development
 
-#### Testing
+#### Dev Container (recommended)
 
-To run the PHPUnit test suite, run:
+The quickest way to get a working environment is the [Dev Container](https://containers.dev/)
+spec in `.devcontainer/`. It gives you PHP 8.1 with all the required extensions,
+Composer, and editor tooling pre-configured.
+
+-   **VS Code**: Install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers), then run "Reopen in Container".
+-   **GitHub Codespaces**: Click "Code > Codespaces > New codespace" on GitHub — it picks up the spec automatically.
+-   **CLI**: `devcontainer up --workspace-folder .`
+
+#### Docker sandbox
+
+For running tests and lints in an isolated container without a full dev
+environment, use the Docker Compose sandbox:
+
+```sh
+# Build once
+docker compose build
+
+# Run all tests
+docker compose run --rm sandbox
+
+# Run tests for one component
+docker compose run --rm sandbox vendor/bin/phpunit components/Zip/Tests/
+
+# Lint
+docker compose run --rm sandbox vendor/bin/phpcs -d memory_limit=1G .
+```
+
+The sandbox has no network access, a read-only root filesystem, and all Linux
+capabilities dropped — the only writable areas are the project mount and `/tmp`.
+
+#### Without Docker
+
+The test suite works directly on the host too — no database, no web server,
+no external services needed. You just need PHP 7.2+ with `json` and `mbstring`.
+
+#### Testing
 
 ```sh
 composer test
 ```
 
 #### Linting
-
-To run the PHP_CodeSniffer linting suite, run:
 
 ```sh
 composer lint

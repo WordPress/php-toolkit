@@ -1,0 +1,10 @@
+vendor/
+node_modules/
+dist/
+untracked/
+.idea/
+.vscode/
+.cursor/
+.claude/
+.git/
+*.phar

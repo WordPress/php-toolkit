@@ -1,0 +1,25 @@
+{
+	"name": "PHP Toolkit",
+	"build": {
+		"dockerfile": "../Dockerfile"
+	},
+	"postCreateCommand": "composer install --no-interaction --no-progress",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"bmewburn.vscode-intelephense-client",
+				"shevaua.phpcs"
+			],
+			"settings": {
+				"php.validate.executablePath": "/usr/local/bin/php",
+				"phpcs.executablePath": "vendor/bin/phpcs",
+				"editor.insertSpaces": false,
+				"editor.tabSize": 4
+			}
+		}
+	},
+	"containerEnv": {
+		"LC_ALL": "en_US.UTF-8",
+		"LANG": "en_US.UTF-8"
+	}
+}

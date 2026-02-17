@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(composer install:*)",
+      "Bash(composer test:*)",
+      "Bash(composer lint:*)",
+      "Bash(composer lint-fix:*)",
+      "Bash(vendor/bin/phpunit:*)",
+      "Bash(vendor/bin/phpcs:*)",
+      "Bash(vendor/bin/phpcbf:*)",
+      "Bash(php bin/regenerate_composer.json.php:*)",
+      "Bash(docker compose build:*)",
+      "Bash(docker compose run --rm sandbox:*)"
+    ]
+  }
+}
