@@ -1533,7 +1533,7 @@ CSS;
 	/**
 	 * Test bounds check when consuming and ident start token.
 	 */
-	public function test_trailing_hyphen_at_end_of_input(): void {
+	public function test_ident_start_codepoint_bounds_check(): void {
 		$processor     = CSSProcessor::create( '-' );
 		$actual_tokens = $this->collect_tokens( $processor, array( 'type', 'raw' ) );
 		$expected_tokens = array(
