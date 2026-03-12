@@ -1530,5 +1530,15 @@ CSS;
 		$this->assertSame( "background: url(\"\xC0.jpg\");", $updated );
 	}
 
-
+	/**
+	 * Test bounds check when consuming and ident start token.
+	 */
+	public function test_trailing_hyphen_at_end_of_input(): void {
+		$processor     = CSSProcessor::create( '-' );
+		$actual_tokens = $this->collect_tokens( $processor, array( 'type', 'raw' ) );
+		$expected_tokens = array(
+			array( 'type' => CSSProcessor::TOKEN_DELIM, 'raw' => '-' ),
+		);
+		$this->assertSame( $expected_tokens, $actual_tokens );
+	}
 }
