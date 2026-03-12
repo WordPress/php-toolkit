@@ -1500,7 +1500,7 @@ class CSSProcessor {
 	 * @return int The number of bytes consumed.
 	 */
 	private function consume_ident_start_codepoint( $at ): int {
-		if ( $at > $this->length ) {
+		if ( $at >= $this->length ) {
 			return 0;
 		}
 
