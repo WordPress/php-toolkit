@@ -162,6 +162,17 @@ class ExistingSiteResolver {
 	public static function detect_wordpress_core_dir( string $web_root ): ?string {
 		// Standard layout: wp-load.php is in the web root itself.
 		if ( file_exists( $web_root . '/wp-load.php' ) ) {
+			// If wp-load.php is a symlink pointing into a subdirectory,
+			// resolve it to find the real core directory. Some hosting
+			// setups (e.g. WP Cloud) place a symlink at the web root
+			// while the actual core files live in a subdirectory like
+			// __wp__/.
+			if ( is_link( $web_root . '/wp-load.php' ) ) {
+				$real_path = realpath( $web_root . '/wp-load.php' );
+				if ( false !== $real_path ) {
+					return dirname( $real_path );
+				}
+			}
 			return $web_root;
 		}
 

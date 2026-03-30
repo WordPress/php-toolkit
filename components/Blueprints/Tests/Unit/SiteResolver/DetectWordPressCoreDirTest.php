@@ -72,6 +72,29 @@ class DetectWordPressCoreDirTest extends TestCase {
 	}
 
 	/**
+	 * Symlinked wp-load.php: when the web root contains a symlink to
+	 * wp-load.php inside a subdirectory, the function should resolve it
+	 * and return the subdirectory where the real core files live. This
+	 * mirrors WP Cloud setups where /srv/htdocs/wp-load.php is a symlink
+	 * to /srv/htdocs/__wp__/wp-load.php.
+	 */
+	public function test_resolves_symlinked_wp_load_to_core_subdir() {
+		// Create the real core directory with wp-load.php.
+		$wp_core = $this->temp_dir . '/__wp__';
+		mkdir( $wp_core, 0755, true );
+		touch( $wp_core . '/wp-load.php' );
+
+		// Create a symlink in the web root pointing to the real file.
+		symlink( $wp_core . '/wp-load.php', $this->temp_dir . '/wp-load.php' );
+
+		$result = ExistingSiteResolver::detect_wordpress_core_dir( $this->temp_dir );
+
+		// Use realpath on the expected value because the function resolves
+		// symlinks, and on macOS /var is itself a symlink to /private/var.
+		$this->assertSame( realpath( $wp_core ), $result );
+	}
+
+	/**
 	 * No WordPress installation: returns null when wp-load.php is not
 	 * found anywhere.
 	 */
@@ -115,7 +138,9 @@ class DetectWordPressCoreDirTest extends TestCase {
 				continue;
 			}
 			$path = $dir . '/' . $entry;
-			if ( is_dir( $path ) ) {
+			if ( is_link( $path ) ) {
+				unlink( $path );
+			} elseif ( is_dir( $path ) ) {
 				$this->remove_directory( $path );
 			} else {
 				unlink( $path );
