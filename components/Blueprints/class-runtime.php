@@ -258,6 +258,9 @@ class Runtime {
 					$php_binary = 'php';
 				}
 
+				// Inherit the parent process's environment so that
+				// hosting-injected variables (e.g. DB_HOST, DB_NAME on
+				// WP Cloud) remain available to WordPress in the subprocess.
 				return $this->start_shell_command(
 					array(
 						$php_binary,
@@ -265,6 +268,7 @@ class Runtime {
 					),
 					$this->configuration->get_target_site_root(),
 					array_merge(
+						getenv(),
 						array(
 							'DOCROOT'     => $this->configuration->get_target_site_root(),
 							'WP_CORE_DIR' => $this->configuration->get_wordpress_core_dir(),
