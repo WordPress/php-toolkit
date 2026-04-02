@@ -144,10 +144,26 @@ class WPURL {
 		$new_raw_url                = $updated_url->toString();
 		$should_trim_trailing_slash = (
 			'' !== $from_pathname &&
-			'/' !== substr( $from_pathname, -1 ) &&
-			'/' !== $from_pathname &&
 			'' === $url->search &&
-			'' === $url->hash
+			'' === $url->hash &&
+			(
+				( '/' !== substr( $from_pathname, -1 ) && '/' !== $from_pathname ) ||
+				/*
+				 * WHATWG normalises an empty path to "/", which adds a
+				 * trailing slash to origin-only URLs like
+				 * "https://example.com".  When the raw URL string is
+				 * available, use it to preserve the original
+				 * trailing-slash style so that values like siteurl/home
+				 * don't get an unwanted "/" appended.
+				 */
+				(
+					'/' === $from_pathname &&
+					array_key_exists( 'raw_url', $options ) &&
+					is_string( $options['raw_url'] ) &&
+					'' !== $options['raw_url'] &&
+					'/' !== substr( $options['raw_url'], -1 )
+				)
+			)
 		);
 		if ( $should_trim_trailing_slash ) {
 			$new_raw_url = rtrim( $new_raw_url, '/' );

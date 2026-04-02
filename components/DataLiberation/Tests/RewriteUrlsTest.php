@@ -95,6 +95,18 @@ HTML
 				'https://legacy-blog.com/~jappleseed/1997.10.1/',
 				'https://modern-webstore.org/blog/',
 			),
+			'Origin-only URL in block attribute – no trailing slash added'                                            => array(
+				'<!-- wp:paragraph {"url":"https://example.com"} -->',
+				'<!-- wp:paragraph {"url":"https:\/\/newsite.org"} -->',
+				'https://example.com',
+				'https://newsite.org',
+			),
+			'Origin-only URL in HTML attribute – no trailing slash added'                                             => array(
+				'<a href="https://example.com">Home</a>',
+				'<a href="https://newsite.org">Home</a>',
+				'https://example.com',
+				'https://newsite.org',
+			),
 			'Domain in an HTML attribute – encoded using HTML entities'                                               => array(
 				'<a href="&#104;&#116;tps://&#108;&#101;g&#97;&#99;&#121;&#45;&#98;&#108;&#111;&#103;.&#99;&#111;&#109;/pages/contact-us">Contact us</a>',
 				'<a href="https://modern-webstore.org/pages/contact-us">Contact us</a>',
