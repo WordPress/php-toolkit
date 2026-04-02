@@ -69,8 +69,38 @@ split_and_push() {
     tmp="$(mktemp -d)"
     git clone --no-hardlinks . "$tmp" >/dev/null
     pushd "$tmp" >/dev/null
+      # Save version tag timestamps before filter-repo.  Tags that point to
+      # commits not touching this component's directory will be dropped during
+      # filtering — we need the timestamps to recreate them afterward.
+      local tag_file
+      tag_file="$(mktemp)"
+      for t in $(git tag --list 'v[0-9]*'); do
+        echo "$t $(git log -1 --format='%ct' "$t")" >> "$tag_file"
+      done
+
       # Filter to that path and move it to repo root
       git filter-repo --force --path "$pkg_dir" --path-rename "${pkg_dir}/:" >/dev/null
+
+      # Recreate version tags that filter-repo dropped.  When the tagged
+      # monorepo commit only touched files outside this component (e.g. a
+      # root-level VERSION file), filter-repo removes that commit and its
+      # tag.  We map each missing tag to the latest surviving commit whose
+      # timestamp is at or before the original tag's timestamp.
+      while IFS=' ' read -r tag timestamp; do
+        if ! git rev-parse --verify "refs/tags/$tag" >/dev/null 2>&1; then
+          local target
+          target="$(git rev-list -1 --before="@${timestamp}" HEAD 2>/dev/null || true)"
+          if [[ -z "$target" ]]; then
+            target="$(git rev-list --max-parents=0 HEAD 2>/dev/null || true)"
+          fi
+          if [[ -n "$target" ]]; then
+            echo "  Recreating dropped tag: $tag -> $(git log -1 --format='%h %s' "$target")"
+            git tag "$tag" "$target"
+          fi
+        fi
+      done < "$tag_file"
+      rm -f "$tag_file"
+
       # Prefer DEFAULT_BRANCH if present; else keep current
       if git show-ref --verify --quiet "refs/heads/${DEFAULT_BRANCH}"; then
         git checkout -q "${DEFAULT_BRANCH}"
@@ -112,11 +142,20 @@ update_packagist() {
   local org="$1" repo="$2"
   [[ -n "$PACKAGIST_USERNAME" && -n "$PACKAGIST_TOKEN" ]] || return 0
   local package_name="${org}/${repo}"
+  local url="https://github.com/${org}/${repo}"
   echo "Updating Packagist package: ${package_name}"
-  curl -fsS -X POST \
-    "https://packagist.org/api/update-package?username=${PACKAGIST_USERNAME}&apiToken=${PACKAGIST_TOKEN}" \
-    -H 'Content-Type: application/json' \
-    -d "{\"repository\":{\"url\":\"https://github.com/${org}/${repo}\"}}" >/dev/null || echo "Packagist update-package call failed."
+  local attempt
+  for attempt in 1 2 3; do
+    if curl -fsS -X POST \
+      "https://packagist.org/api/update-package?username=${PACKAGIST_USERNAME}&apiToken=${PACKAGIST_TOKEN}" \
+      -H 'Content-Type: application/json' \
+      -d "{\"repository\":{\"url\":\"${url}\"}}" >/dev/null 2>&1; then
+      return 0
+    fi
+    echo "  Packagist update attempt ${attempt}/3 failed for ${package_name}, retrying in ${attempt}s..."
+    sleep "$attempt"
+  done
+  echo "  WARNING: Packagist update failed after 3 attempts for ${package_name}"
 }
 
 # Iterate packages
