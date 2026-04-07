@@ -699,7 +699,6 @@ class CSSProcessor {
 					break;
 
 				case self::TOKEN_STRING:
-				case self::TOKEN_BAD_STRING:
 				case self::TOKEN_URL:
 					// Decode and cache the string/URL value.
 					if ( null !== $this->token_value_starts_at && null !== $this->token_value_length ) {
@@ -707,10 +706,14 @@ class CSSProcessor {
 							$this->token_value_starts_at,
 							$this->token_value_length
 						);
-						$this->token_value = $this->token_value;
 					} else {
 						$this->token_value = null;
 					}
+					break;
+
+				case self::TOKEN_BAD_STRING:
+					// Bad-string-token has no associated value per the CSS spec.
+					$this->token_value = null;
 					break;
 
 				case self::TOKEN_DELIM:
