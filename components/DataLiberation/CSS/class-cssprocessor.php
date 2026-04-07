@@ -1583,15 +1583,45 @@ class CSSProcessor {
 
 			// Handle escapes (if enabled).
 			if ( '\\' === $char ) {
-				if ( $this->is_valid_escape( $at ) ) {
-					++$at;
-					$decoded .= $this->decode_escape_at( $at, $bytes_consumed );
-					$at      += $bytes_consumed;
+				++$at; // Consume the backslash.
+
+				/*
+				 * Backslash at end of range (e.g. backslash-EOF in a string token).
+				 *
+				 * Per the CSS spec, in a string token, a backslash at EOF is ignored.
+				 *
+				 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
+				 */
+				if ( $at >= $end ) {
 					continue;
 				}
-				// Invalid escape - consume the backslash and keep going.
-				$decoded .= '\\';
-				++$at;
+
+				$next_char = $this->css[ $at ];
+
+				/*
+				 * Backslash before a newline (backslash-newline) in a string token.
+				 *
+				 * Per the CSS spec, in a string token, a backslash followed by a
+				 * newline is consumed but produces nothing in the token value.
+				 *
+				 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
+				 */
+				if ( "\n" === $next_char || "\f" === $next_char ) {
+					++$at;
+					continue;
+				}
+				if ( "\r" === $next_char ) {
+					++$at;
+					// Handle \r\n as a single newline.
+					if ( $at < $end && "\n" === $this->css[ $at ] ) {
+						++$at;
+					}
+					continue;
+				}
+
+				// Otherwise, this is a valid escape: decode and append the escaped code point.
+				$decoded .= $this->decode_escape_at( $at, $bytes_consumed );
+				$at      += $bytes_consumed;
 				continue;
 			}
 

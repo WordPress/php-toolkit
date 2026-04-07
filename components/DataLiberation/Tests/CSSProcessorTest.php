@@ -1541,4 +1541,83 @@ CSS;
 		);
 		$this->assertSame( $expected_tokens, $actual_tokens );
 	}
+
+	/**
+	 * Tests that backslash-newline in a CSS string token value is ignored.
+	 *
+	 * Per the CSS spec, in a <string-token>, a U+005C REVERSE SOLIDUS (\)
+	 * followed by a newline is consumed but contributes nothing to the token
+	 * value — i.e. the logical string contains no backslash and no newline at
+	 * that position.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
+	 * @see https://github.com/WordPress/php-toolkit/issues/222
+	 */
+	public function test_string_token_backslash_newline_is_ignored(): void {
+		// LF: the canonical case from the spec.
+		$processor = CSSProcessor::create( "'str\\\ning'" );
+		$processor->next_token();
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( 'string', $processor->get_token_value() );
+
+		// CR: carriage return should also be consumed.
+		$processor = CSSProcessor::create( "'str\\\ring'" );
+		$processor->next_token();
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( 'string', $processor->get_token_value() );
+
+		// CRLF: the pair should be consumed as a single newline.
+		$processor = CSSProcessor::create( "'str\\\r\ning'" );
+		$processor->next_token();
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( 'string', $processor->get_token_value() );
+
+		// FF (form feed): treated as a newline per the spec.
+		$processor = CSSProcessor::create( "'str\\\fing'" );
+		$processor->next_token();
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( 'string', $processor->get_token_value() );
+
+		// Multiple backslash-newlines in one string.
+		$processor = CSSProcessor::create( "'A\\\nB\\\nC'" );
+		$processor->next_token();
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( 'ABC', $processor->get_token_value() );
+
+		// Backslash-newline at the very start of the string value.
+		$processor = CSSProcessor::create( "'\\\nvalue'" );
+		$processor->next_token();
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( 'value', $processor->get_token_value() );
+	}
+
+	/**
+	 * Tests that a backslash at EOF inside a CSS string token contributes
+	 * nothing to the token value.
+	 *
+	 * Per the CSS spec, in a <string-token>, a U+005C REVERSE SOLIDUS (\)
+	 * followed by EOF is consumed but produces nothing in the token value.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
+	 * @see https://github.com/WordPress/php-toolkit/issues/223
+	 */
+	public function test_string_token_backslash_eof_is_ignored(): void {
+		// Backslash at the very end of input (no closing quote).
+		$processor = CSSProcessor::create( "'string\\" );
+		$processor->next_token();
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( 'string', $processor->get_token_value() );
+
+		// Backslash immediately after opening quote, then EOF.
+		$processor = CSSProcessor::create( "'\\" );
+		$processor->next_token();
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( '', $processor->get_token_value() );
+
+		// Double-quoted variant.
+		$processor = CSSProcessor::create( '"string\\' );
+		$processor->next_token();
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( 'string', $processor->get_token_value() );
+	}
 }
