@@ -1593,7 +1593,7 @@ class CSSProcessor {
 			if ( $normal_len > 0 ) {
 				// Clamp to not exceed the end boundary.
 				$normal_len = min( $normal_len, $end - $at );
-				$decoded   .= substr( $this->css, $at, $normal_len );
+				$decoded   .= wp_scrub_utf8( substr( $this->css, $at, $normal_len ) );
 				$at        += $normal_len;
 			}
 
@@ -1634,7 +1634,7 @@ class CSSProcessor {
 
 				if ( $this->is_valid_escape( $at ) ) {
 					++$at;
-					$decoded .= $this->decode_escape_at( $at, $bytes_consumed );
+					$decoded .= wp_scrub_utf8( $this->decode_escape_at( $at, $bytes_consumed ) );
 					$at      += $bytes_consumed;
 					continue;
 				}
