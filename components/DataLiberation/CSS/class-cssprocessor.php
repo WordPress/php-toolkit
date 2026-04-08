@@ -1551,13 +1551,9 @@ class CSSProcessor {
 	}
 
 	/**
-	 * Decodes a string or URL value with escape sequences and normalization.
+	 * Decodes and normalizes ident-like or string CSS values from a byte range.
 	 *
-	 * Fast path: If the slice contains no special characters, returns the raw
-	 * substring with almost zero allocations.
-	 *
-	 * Slow path: Builds the decoded string by optionally processing escapes and
-	 * normalizing line endings and null bytes.
+	 * Applies appropriate escaping rules and normalizes newlines and null bytes.
 	 *
 	 * @param int  $start           Start byte offset.
 	 * @param int  $length          Length of the substring to decode.
