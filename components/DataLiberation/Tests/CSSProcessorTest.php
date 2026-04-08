@@ -147,6 +147,68 @@ class CSSProcessorTest extends TestCase {
 	}
 
 	/**
+	 * In the slow path of decode_string_or_url() (triggered by a backslash escape), normal
+	 * text segments must still have invalid UTF-8 bytes replaced with U+FFFD, just
+	 * as the fast path does via wp_scrub_utf8().
+	 */
+	public function test_invalid_utf8_in_normal_segment_combined_with_escape(): void {
+		// The ident token contains an invalid UTF-8 byte (0xF1) in the "normal"
+		// segment before a CSS hex escape (\41 = U+0041 = 'A'). The backslash
+		// triggers the slow path, which previously skipped wp_scrub_utf8() on the
+		// normal segment.
+		$css = ".test\xF1\\41name";
+
+		$expected = array(
+			array(
+				'type'  => CSSProcessor::TOKEN_DELIM,
+				'raw'   => '.',
+				'value' => '.',
+			),
+			array(
+				'type'  => CSSProcessor::TOKEN_IDENT,
+				// raw contains the original bytes.
+				'raw'   => "test\xF1\\41name",
+				// value must have 0xF1 replaced with U+FFFD and \41 decoded to 'A'.
+				'value' => "test\u{FFFD}Aname",
+			),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, array( 'type', 'raw', 'value' ) );
+		$this->assertSame( $expected, $actual_tokens );
+	}
+
+	/**
+	 * When an invalid UTF-8 byte is the character directly after a backslash
+	 * (i.e. it is the escaped character itself), decode_escape_at() returns the
+	 * raw byte. The caller must scrub it to U+FFFD.
+	 */
+	public function test_invalid_utf8_as_escaped_character(): void {
+		// The CSS `.\xF1` is a delim + ident containing a lone invalid byte.
+		// Adding a backslash before the invalid byte makes it an escape sequence:
+		// `.\\\xF1` => delim + ident whose value is the escaped 0xF1 byte.
+		$css = ".a\\\xF1b";
+
+		$expected = array(
+			array(
+				'type'  => CSSProcessor::TOKEN_DELIM,
+				'raw'   => '.',
+				'value' => '.',
+			),
+			array(
+				'type'  => CSSProcessor::TOKEN_IDENT,
+				'raw'   => "a\\\xF1b",
+				// The escaped 0xF1 must be replaced with U+FFFD.
+				'value' => "a\u{FFFD}b",
+			),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, array( 'type', 'raw', 'value' ) );
+		$this->assertSame( $expected, $actual_tokens );
+	}
+
+	/**
 	 * Legacy test to ensure basic tokenization still works.
 	 */
 	public function test_tokenize_labels_core_tokens(): void {
@@ -1540,65 +1602,5 @@ CSS;
 			array( 'type' => CSSProcessor::TOKEN_DELIM, 'raw' => '-' ),
 		);
 		$this->assertSame( $expected_tokens, $actual_tokens );
-	}
-
-	/**
-	 * Tests that invalid UTF-8 bytes in the slow-path normal segments of a URL token
-	 * are replaced with U+FFFD, consistent with the fast path.
-	 *
-	 * The slow path is triggered by a backslash escape in the URL content. Invalid bytes
-	 * that appear in the non-escaped portions must still be scrubbed.
-	 *
-	 * @see https://github.com/WordPress/php-toolkit/issues/229
-	 */
-	public function test_invalid_utf8_in_url_slow_path_normal_segment(): void {
-		// CSS bytes: u r l ( A \ 4 1 0xFF B )
-		// The \41 hex escape triggers the slow path.
-		// 0xFF is an invalid UTF-8 byte in a normal (non-escaped) segment.
-		$css = "url(A\\41\xFFB)";
-
-		$processor = CSSProcessor::create( $css );
-		$this->assertTrue( $processor->next_token() );
-		$this->assertSame( CSSProcessor::TOKEN_URL, $processor->get_token_type() );
-		// \41 decodes to 'A'; \xFF must be replaced with U+FFFD.
-		$this->assertSame( "AA\u{FFFD}B", $processor->get_token_value() );
-	}
-
-	/**
-	 * Tests that a backslash-escaped invalid UTF-8 byte in a URL token
-	 * is replaced with U+FFFD, consistent with the fast path.
-	 *
-	 * In the slow path, decode_escape_at() returns the raw invalid byte for
-	 * the "anything else" escape case and the caller must scrub it.
-	 *
-	 * @see https://github.com/WordPress/php-toolkit/issues/229
-	 */
-	public function test_invalid_utf8_in_url_slow_path_escaped_byte(): void {
-		// CSS bytes: u r l ( A \ 4 1 \ 0xFF )
-		// \41 is a hex escape for 'A'; \<0xFF> is "anything else" escape for the 0xFF byte.
-		$css = "url(A\\41\\\xFF)";
-
-		$processor = CSSProcessor::create( $css );
-		$this->assertTrue( $processor->next_token() );
-		$this->assertSame( CSSProcessor::TOKEN_URL, $processor->get_token_type() );
-		// \41 decodes to 'A'; \<0xFF> must produce U+FFFD.
-		$this->assertSame( "AA\u{FFFD}", $processor->get_token_value() );
-	}
-
-	/**
-	 * Tests that invalid UTF-8 bytes in the slow-path normal segments of a string token
-	 * are replaced with U+FFFD, consistent with the fast path.
-	 *
-	 * @see https://github.com/WordPress/php-toolkit/issues/229
-	 */
-	public function test_invalid_utf8_in_string_slow_path_normal_segment(): void {
-		// String token 'A\41<0xFF>B' – the \41 escape triggers the slow path.
-		$css = "'A\\41\xFFB'";
-
-		$processor = CSSProcessor::create( $css );
-		$this->assertTrue( $processor->next_token() );
-		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
-		// \41 decodes to 'A'; \xFF must be replaced with U+FFFD.
-		$this->assertSame( "AA\u{FFFD}B", $processor->get_token_value() );
 	}
 }
