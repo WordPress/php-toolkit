@@ -711,11 +711,6 @@ class CSSProcessor {
 					}
 					break;
 
-				case self::TOKEN_BAD_STRING:
-					// Bad-string-token has no associated value per the CSS spec.
-					$this->token_value = null;
-					break;
-
 				case self::TOKEN_DELIM:
 					// Delim value is the single code point.
 					$this->token_value = $this->decode_string_or_url( $this->token_starts_at, $this->token_length );
