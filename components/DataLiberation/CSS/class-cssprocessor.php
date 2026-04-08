@@ -1564,11 +1564,8 @@ class CSSProcessor {
 	 *
 	 * @param int  $start           Start byte offset.
 	 * @param int  $length          Length of the substring to decode.
-	 * @param bool $string_escapes  Optional, default false. When true, apply special CSS string
-	 *                              token escape rules:
-	 *                                - 0x5C (backslash) followed by 0x0A (LF), 0x0C (FF), or 0x0D (CR)
-	 *                                  is consumed as a line continuation (ignored).
-	 *                                - 0x5C (backslash) at EOF is silently discarded.
+	 * @param bool $string_escapes  Optional, default false. When true, apply additional escape
+	 *                              rules that apply only to string tokens (CSS §4.3.5).
 	 * @return string Decoded and normalized string.
 	 */
 	private function decode_range( int $start, int $length, bool $string_escapes = false ): string {
@@ -1608,6 +1605,8 @@ class CSSProcessor {
 				 * - 0x5C (backslash) at EOF: consume the backslash, produce no value.
 				 * - 0x5C (backslash) followed by 0x0A (LF), 0x0C (FF), or 0x0D (CR):
 				 *   consume both characters as a line continuation, produce no value.
+				 * - 0x5C (backslash) followed by 0x0D 0x0A (CRLF):
+				 *   consume all three characters as a line continuation, produce no value.
 				 * These must be checked before the general escape path.
 				 */
 				if ( $string_escapes ) {
