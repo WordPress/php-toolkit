@@ -1566,8 +1566,9 @@ class CSSProcessor {
 	 * @param int  $length          Length of the substring to decode.
 	 * @param bool $string_escapes  Optional, default false. When true, apply special CSS string
 	 *                              token escape rules:
-	 *                                - \-newline is consumed as a line continuation (ignored).
-	 *                                - \-EOF is silently discarded.
+	 *                                - 0x5C (backslash) followed by 0x0A (LF), 0x0C (FF), or 0x0D (CR)
+	 *                                  is consumed as a line continuation (ignored).
+	 *                                - 0x5C (backslash) at EOF is silently discarded.
 	 * @return string Decoded and normalized string.
 	 */
 	private function decode_range( int $start, int $length, bool $string_escapes = false ): string {
