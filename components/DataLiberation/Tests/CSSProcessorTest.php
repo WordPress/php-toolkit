@@ -1541,4 +1541,142 @@ CSS;
 		);
 		$this->assertSame( $expected_tokens, $actual_tokens );
 	}
+
+	/**
+	 * Tests that backslash-newline in a string token contributes nothing to the value.
+	 *
+	 * CSS spec §4.3.5 consume-string-token:
+	 * > U+005C REVERSE SOLIDUS (\)
+	 * > Otherwise, if the next input code point is a newline, consume it.
+	 *
+	 * The backslash and newline are both consumed and produce no value.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
+	 * @see https://github.com/WordPress/php-toolkit/issues/222
+	 *
+	 * @dataProvider data_string_backslash_newline
+	 */
+	public function test_string_backslash_newline( string $css, string $expected_value ): void {
+		$processor = CSSProcessor::create( $css );
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( $expected_value, $processor->get_token_value() );
+	}
+
+	static public function data_string_backslash_newline(): array {
+		return array(
+			'backslash-LF'   => array( "'str\\\ning'", 'string' ),
+			'backslash-FF'   => array( "'str\\\fing'", 'string' ),
+			'backslash-CR'   => array( "'str\\\ring'", 'string' ),
+			'backslash-CRLF' => array( "'str\\\r\ning'", 'string' ),
+		);
+	}
+
+	/**
+	 * Tests that backslash-EOF in a string token contributes nothing to the value.
+	 *
+	 * CSS spec §4.3.5 consume-string-token:
+	 * > U+005C REVERSE SOLIDUS (\)
+	 * > If the next input code point is EOF, do nothing.
+	 *
+	 * The trailing backslash is consumed and produces no value.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
+	 * @see https://github.com/WordPress/php-toolkit/issues/223
+	 */
+	public function test_string_backslash_eof(): void {
+		$processor = CSSProcessor::create( "'string\\" );
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( 'string', $processor->get_token_value() );
+	}
+
+	/**
+	 * Tests that backslash-newline in an unquoted URL produces a bad-url token.
+	 *
+	 * In unquoted URLs, the backslash-newline check goes through is_valid_escape()
+	 * which returns false for newlines, triggering consume_remnants_of_bad_url().
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-url-token
+	 *
+	 * @dataProvider data_url_backslash_newline
+	 */
+	public function test_url_backslash_newline( string $css ): void {
+		$processor = CSSProcessor::create( $css );
+
+		$found_bad_url = false;
+		while ( $processor->next_token() ) {
+			if ( CSSProcessor::TOKEN_BAD_URL === $processor->get_token_type() ) {
+				$found_bad_url = true;
+				break;
+			}
+		}
+
+		$this->assertTrue( $found_bad_url, 'Expected a BAD_URL token but none was found.' );
+	}
+
+	static public function data_url_backslash_newline(): array {
+		return array(
+			'backslash-LF'   => array( "url(ab\\\ncd)" ),
+			'backslash-FF'   => array( "url(ab\\\fcd)" ),
+			'backslash-CR'   => array( "url(ab\\\rcd)" ),
+			'backslash-CRLF' => array( "url(ab\\\r\ncd)" ),
+		);
+	}
+
+	/**
+	 * Tests that backslash-EOF in an unquoted URL produces U+FFFD in the value.
+	 *
+	 * In unquoted URLs, is_valid_escape() returns true for backslash-EOF,
+	 * and consuming the escaped code point at EOF produces U+FFFD per spec.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-url-token
+	 */
+	public function test_url_backslash_eof(): void {
+		$processor = CSSProcessor::create( "url(string\\" );
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_URL, $processor->get_token_type() );
+		$this->assertSame( "string\u{FFFD}", $processor->get_token_value() );
+	}
+
+	/**
+	 * Tests that backslash-newline stops an ident sequence.
+	 *
+	 * In idents, is_valid_escape() returns false for backslash-newline,
+	 * so the ident stops before the backslash.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-name
+	 *
+	 * @dataProvider data_ident_backslash_newline
+	 */
+	public function test_ident_backslash_newline( string $css ): void {
+		$processor = CSSProcessor::create( $css );
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $processor->get_token_type() );
+		$this->assertSame( 'abc', $processor->get_token_value() );
+	}
+
+	static public function data_ident_backslash_newline(): array {
+		return array(
+			'backslash-LF'   => array( "abc\\\n" ),
+			'backslash-FF'   => array( "abc\\\f" ),
+			'backslash-CR'   => array( "abc\\\r" ),
+			'backslash-CRLF' => array( "abc\\\r\n" ),
+		);
+	}
+
+	/**
+	 * Tests that backslash-EOF in an ident produces U+FFFD in the value.
+	 *
+	 * In idents, is_valid_escape() returns true for backslash-EOF,
+	 * and consuming the escaped code point at EOF produces U+FFFD per spec.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-name
+	 */
+	public function test_ident_backslash_eof(): void {
+		$processor = CSSProcessor::create( "abc\\" );
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $processor->get_token_type() );
+		$this->assertSame( "abc\u{FFFD}", $processor->get_token_value() );
+	}
 }
