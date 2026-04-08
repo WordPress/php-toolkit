@@ -1681,4 +1681,19 @@ CSS;
 		$this->assertSame( CSSProcessor::TOKEN_IDENT, $processor->get_token_type() );
 		$this->assertSame( "abc\u{FFFD}", $processor->get_token_value() );
 	}
+
+	/**
+	 * Tests that bad-string-token returns null for get_token_value().
+	 *
+	 * Per the CSS spec, bad-string-token has no associated data.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#tokenization
+	 */
+	public function test_bad_string_token_value_is_null(): void {
+		// A bad-string-token is produced when a string is broken by a newline.
+		$processor = CSSProcessor::create( "'str\ning'" );
+		$processor->next_token();
+		$this->assertSame( CSSProcessor::TOKEN_BAD_STRING, $processor->get_token_type() );
+		$this->assertNull( $processor->get_token_value() );
+	}
 }

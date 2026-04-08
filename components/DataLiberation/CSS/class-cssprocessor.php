@@ -669,7 +669,7 @@ class CSSProcessor {
 	 * - For strings/URLs: the decoded string value
 	 * - For other tokens: null
 	 *
-	 * @see https://www.w3.org/TR/css-syntax-3/#token-value
+	 * @see https://www.w3.org/TR/css-syntax-3/#tokenization
 	 * @return string|null
 	 */
 	public function get_token_value() {
@@ -700,8 +700,6 @@ class CSSProcessor {
 					break;
 
 				case self::TOKEN_STRING:
-				case self::TOKEN_BAD_STRING:
-					// Decode and cache the string value.
 					if ( null !== $this->token_value_starts_at && null !== $this->token_value_length ) {
 						$this->token_value = $this->decode_range(
 							$this->token_value_starts_at,
@@ -714,7 +712,6 @@ class CSSProcessor {
 					break;
 
 				case self::TOKEN_URL:
-					// Decode and cache the URL value.
 					if ( null !== $this->token_value_starts_at && null !== $this->token_value_length ) {
 						$this->token_value = $this->decode_range(
 							$this->token_value_starts_at,
