@@ -632,7 +632,7 @@ class CSSProcessor {
 			return null;
 		}
 
-		return $this->decode_escapes(
+		return $this->decode_range(
 			$this->token_starts_at,
 			$this->token_length,
 			self::TOKEN_STRING === $this->token_type || self::TOKEN_BAD_STRING === $this->token_type
@@ -681,29 +681,29 @@ class CSSProcessor {
 			switch ( $this->token_type ) {
 				case self::TOKEN_HASH:
 					// Hash value starts after the # character.
-					$this->token_value = $this->decode_escapes( $this->token_starts_at + 1, $this->token_length - 1 );
+					$this->token_value = $this->decode_range( $this->token_starts_at + 1, $this->token_length - 1 );
 					break;
 
 				case self::TOKEN_AT_KEYWORD:
 					// At-keyword value starts after the @ character.
-					$this->token_value = $this->decode_escapes( $this->token_starts_at + 1, $this->token_length - 1 );
+					$this->token_value = $this->decode_range( $this->token_starts_at + 1, $this->token_length - 1 );
 					break;
 
 				case self::TOKEN_FUNCTION:
 					// Function name is everything except the final (.
-					$this->token_value = $this->decode_escapes( $this->token_starts_at, $this->token_length - 1 );
+					$this->token_value = $this->decode_range( $this->token_starts_at, $this->token_length - 1 );
 					break;
 
 				case self::TOKEN_IDENT:
 					// Identifier is the entire token.
-					$this->token_value = $this->decode_escapes( $this->token_starts_at, $this->token_length );
+					$this->token_value = $this->decode_range( $this->token_starts_at, $this->token_length );
 					break;
 
 				case self::TOKEN_STRING:
 				case self::TOKEN_BAD_STRING:
 					// Decode and cache the string value.
 					if ( null !== $this->token_value_starts_at && null !== $this->token_value_length ) {
-						$this->token_value = $this->decode_escapes(
+						$this->token_value = $this->decode_range(
 							$this->token_value_starts_at,
 							$this->token_value_length,
 							true
@@ -716,7 +716,7 @@ class CSSProcessor {
 				case self::TOKEN_URL:
 					// Decode and cache the URL value.
 					if ( null !== $this->token_value_starts_at && null !== $this->token_value_length ) {
-						$this->token_value = $this->decode_escapes(
+						$this->token_value = $this->decode_range(
 							$this->token_value_starts_at,
 							$this->token_value_length
 						);
@@ -727,7 +727,7 @@ class CSSProcessor {
 
 				case self::TOKEN_DELIM:
 					// Delim value is the single code point.
-					$this->token_value = $this->decode_escapes( $this->token_starts_at, $this->token_length );
+					$this->token_value = $this->decode_range( $this->token_starts_at, $this->token_length );
 					break;
 
 				case self::TOKEN_NUMBER:
@@ -1197,7 +1197,7 @@ class CSSProcessor {
 			// Consume an ident sequence. Set the <dimension-token>'s unit to the returned value.
 			$unit_starts_at = $this->at;
 			$this->consume_ident_sequence();
-			$this->token_unit   = $this->decode_escapes( $unit_starts_at, $this->at - $unit_starts_at );
+			$this->token_unit   = $this->decode_range( $unit_starts_at, $this->at - $unit_starts_at );
 			$this->token_type   = self::TOKEN_DIMENSION;
 			$this->token_length = $this->at - $this->token_starts_at;
 			return true;
@@ -1232,7 +1232,7 @@ class CSSProcessor {
 		// Consume an ident sequence, and let string be the result.
 		$ident_start = $this->at;
 		$decoded     = $this->consume_ident_sequence();
-		$string      = $decoded ?? $this->decode_escapes( $ident_start, $this->at - $ident_start );
+		$string      = $decoded ?? $this->decode_range( $ident_start, $this->at - $ident_start );
 
 		// If string's value is an ASCII case-insensitive match for "url",
 		// and the next input code point is U+0028 LEFT PARENTHESIS (().
@@ -1553,7 +1553,17 @@ class CSSProcessor {
 	/**
 	 * Decodes and normalizes ident-like or string CSS values from a byte range.
 	 *
-	 * Applies appropriate escaping rules and normalizes newlines and null bytes.
+	 * For example:
+	 * ┌──────────────┬────────┐
+	 * │ Input        │ Output │
+	 * ├──────────────┼────────┤
+	 * │ 'xyz'        │ 'xyz'  │
+	 * │ '\x\y\z'     │ 'xyz'  │
+	 * │ 'x\79z'      │ 'xyz'  │
+	 * │ 'x\000079 z' │ 'xyz'  │
+	 * │ 'a\r\nb'     │ 'a\nb' │
+	 * │ 'a\0b'       │ 'a�b'  │
+	 * └──────────────┴────────┘
 	 *
 	 * @param int  $start           Start byte offset.
 	 * @param int  $length          Length of the substring to decode.
@@ -1563,7 +1573,7 @@ class CSSProcessor {
 	 *                                - \-EOF is silently discarded.
 	 * @return string Decoded and normalized string.
 	 */
-	private function decode_escapes( int $start, int $length, bool $string_escapes = false ): string {
+	private function decode_range( int $start, int $length, bool $string_escapes = false ): string {
 		// Fast path: check if any processing is needed.
 		$slice         = wp_scrub_utf8( substr( $this->css, $start, $length ) );
 		$special_chars = "\\\r\f\x00";
