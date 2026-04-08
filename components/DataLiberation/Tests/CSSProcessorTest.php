@@ -5,6 +5,8 @@ use WordPress\DataLiberation\CSS\CSSProcessor;
 
 /**
  * Comprehensive CSS processor tests based on the CSS Syntax Level 3 specification.
+ *
+ * @group css
  */
 class CSSProcessorTest extends TestCase {
 
