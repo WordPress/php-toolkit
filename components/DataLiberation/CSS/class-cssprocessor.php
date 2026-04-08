@@ -1559,9 +1559,13 @@ class CSSProcessor {
 	 * Slow path: Builds the decoded string by optionally processing escapes and
 	 * normalizing line endings and null bytes.
 	 *
-	 * @param int $start           Start byte offset.
-	 * @param int $length          Length of the substring to decode.
-	 * @return string Decoded/normalized string.
+	 * @param int  $start           Start byte offset.
+	 * @param int  $length          Length of the substring to decode.
+	 * @param bool $string_escapes  Optional, default false. When true, apply special CSS string
+	 *                              token escape rules:
+	 *                                - \-newline is consumed as a line continuation (ignored).
+	 *                                - \-EOF is silently discarded.
+	 * @return string Decoded and normalized string.
 	 */
 	private function decode_escapes( int $start, int $length, bool $string_escapes = false ): string {
 		// Fast path: check if any processing is needed.
