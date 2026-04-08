@@ -668,7 +668,7 @@ class CSSProcessor {
 	 * - For strings/URLs: the decoded string value
 	 * - For other tokens: null
 	 *
-	 * @see https://www.w3.org/TR/css-syntax-3/#token-value
+	 * @see https://www.w3.org/TR/css-syntax-3/#tokenization
 	 * @return string|null
 	 */
 	public function get_token_value() {
