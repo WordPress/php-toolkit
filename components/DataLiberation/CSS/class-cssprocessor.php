@@ -268,11 +268,11 @@ class CSSProcessor {
 	/**
 	 * The string value of the current token.
 	 *
-	 * For numbers, this is a float.
 	 * For identifiers/functions/strings/URLs with escapes, this is a decoded string.
+	 * For numbers, this is the numeric string.
 	 * Otherwise, it's null and the value is computed from token indices.
 	 *
-	 * @var string|float|null
+	 * @var string|null
 	 */
 	private $token_value = null;
 
