@@ -27,7 +27,7 @@ class CSSProcessorTest extends TestCase {
 	 * @see https://github.com/romainmenke/css-processor-tests/
 	 * @return array
 	 */
-	static public function corpus_provider(): array {
+	public static function corpus_provider(): array {
 		return json_decode(file_get_contents(__DIR__ . '/css-test-cases.json'), true);
 	}
 
@@ -37,7 +37,7 @@ class CSSProcessorTest extends TestCase {
 	 * @param CSSProcessor $processor The CSS processor.
 	 * @return array Array of tokens with type, raw, startIndex, endIndex, structured.
 	 */
-	static public function collect_tokens( CSSProcessor $processor, $keys = null ): array {
+	public static function collect_tokens( CSSProcessor $processor, $keys = null ): array {
 		$tokens = array();
 
 		while ( $processor->next_token() ) {
@@ -1565,7 +1565,7 @@ CSS;
 		$this->assertSame( $expected_value, $processor->get_token_value() );
 	}
 
-	static public function data_string_backslash_newline(): array {
+	public static function data_string_backslash_newline(): array {
 		return array(
 			'backslash-LF'   => array( "'str\\\ning'", 'string' ),
 			'backslash-FF'   => array( "'str\\\fing'", 'string' ),
@@ -1617,7 +1617,7 @@ CSS;
 		$this->assertTrue( $found_bad_url, 'Expected a BAD_URL token but none was found.' );
 	}
 
-	static public function data_url_backslash_newline(): array {
+	public static function data_url_backslash_newline(): array {
 		return array(
 			'backslash-LF'   => array( "url(ab\\\ncd)" ),
 			'backslash-FF'   => array( "url(ab\\\fcd)" ),
@@ -1658,7 +1658,7 @@ CSS;
 		$this->assertSame( 'abc', $processor->get_token_value() );
 	}
 
-	static public function data_ident_backslash_newline(): array {
+	public static function data_ident_backslash_newline(): array {
 		return array(
 			'backslash-LF'   => array( "abc\\\n" ),
 			'backslash-FF'   => array( "abc\\\f" ),
