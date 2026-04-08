@@ -635,7 +635,7 @@ class CSSProcessor {
 		return $this->decode_range(
 			$this->token_starts_at,
 			$this->token_length,
-			self::TOKEN_STRING === $this->token_type || self::TOKEN_BAD_STRING === $this->token_type
+			self::TOKEN_STRING === $this->token_type
 		);
 	}
 
@@ -1607,24 +1607,26 @@ class CSSProcessor {
 			if ( '\\' === $char ) {
 				/*
 				 * String tokens have special escape rules per §4.3.5:
-				 * - \-EOF: do nothing (consume the backslash, produce no value).
-				 * - \-newline: consume both (line continuation, produce no value).
+				 * - 0x5C (backslash) at EOF: consume the backslash, produce no value.
+				 * - 0x5C (backslash) followed by 0x0A (LF), 0x0C (FF), or 0x0D (CR):
+				 *   consume both characters as a line continuation, produce no value.
 				 * These must be checked before the general escape path.
 				 */
 				if ( $string_escapes ) {
 					if ( $at + 1 >= $end ) {
-						// \-EOF: consume the backslash and stop.
+						// 0x5C at EOF: consume the backslash and stop.
 						++$at;
 						continue;
 					}
 					$next = $this->css[ $at + 1 ];
 					if ( "\n" === $next || "\f" === $next ) {
+						// 0x5C followed by 0x0A (LF) or 0x0C (FF): line continuation.
 						$at += 2;
 						continue;
 					}
 					if ( "\r" === $next ) {
+						// 0x5C followed by 0x0D (CR): line continuation; 0x0D 0x0A counts as one newline.
 						$at += 2;
-						// \r\n counts as one newline.
 						if ( $at < $end && "\n" === $this->css[ $at ] ) {
 							++$at;
 						}
