@@ -55,6 +55,9 @@ class CSSProcessorTest extends TestCase {
 			if ( null !== $processor->get_token_unit() ) {
 				$token['unit'] = $processor->get_token_unit();
 			}
+			if ( null !== $processor->get_token_number_type() ) {
+				$token['numberType'] = $processor->get_token_number_type();
+			}
 
 			if ( null !== $keys ) {
 				$token = array_intersect_key( $token, array_flip( $keys ) );
