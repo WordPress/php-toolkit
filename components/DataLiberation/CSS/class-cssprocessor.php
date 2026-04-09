@@ -1156,16 +1156,16 @@ class CSSProcessor {
 		}
 
 		// If the next 2 input code points are U+002E FULL STOP (.) followed by a digit, then:
-		// Set type to "number".
 		if (
 			$this->at + 1 < $this->length &&
 			'.' === $this->css[ $this->at ] &&
 			$this->css[ $this->at + 1 ] >= '0' &&
 			$this->css[ $this->at + 1 ] <= '9'
 		) {
-			$number_type = 'number';
 			// Consume them.
 			++$this->at;
+			// Set type to "number".
+			$number_type = 'number';
 			// While the next input code point is a digit, consume it and append it to repr.
 			$digits = strspn( $this->css, '0123456789', $this->at );
 			if ( $digits > 0 ) {
@@ -1176,7 +1176,6 @@ class CSSProcessor {
 		// If the next 2 or 3 input code points are U+0045 LATIN CAPITAL LETTER E (E)
 		// or U+0065 LATIN SMALL LETTER E (e), optionally followed by U+002D HYPHEN-MINUS (-)
 		// or U+002B PLUS SIGN (+), followed by a digit, then:
-		// Set type to "number".
 		if ( $this->at < $this->length ) {
 			$e = $this->css[ $this->at ];
 			if ( 'e' === $e || 'E' === $e ) {
@@ -1197,6 +1196,7 @@ class CSSProcessor {
 				}
 
 				if ( $has_exp ) {
+					// Set type to "number".
 					$number_type = 'number';
 					// While the next input code point is a digit, consume it and append it to repr.
 					$digits = strspn( $this->css, '0123456789', $this->at );
