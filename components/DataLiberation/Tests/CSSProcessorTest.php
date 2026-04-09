@@ -1556,4 +1556,46 @@ CSS;
 		$this->assertSame( CSSProcessor::TOKEN_BAD_STRING, $processor->get_token_type() );
 		$this->assertNull( $processor->get_token_value() );
 	}
+
+	/**
+	 * Tests that decode_string_or_url() respects the token's length boundary
+	 * and does not include content from beyond the token end.
+	 *
+	 * The escape sequence \41 (= 'A') triggers the slow path in
+	 * decode_string_or_url(). The CSS string continues with "; color: red;"
+	 * after the closing quote, which must not appear in the token value.
+	 */
+	public function test_decode_string_or_url_respects_length_boundary(): void {
+		// \41 = 'A' — triggers the slow path; "; color: red;" follows the token.
+		$css = '"hello\\41 world"; color: red;';
+
+		$processor = CSSProcessor::create( $css );
+		$processor->next_token();
+
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( 'helloAworld', $processor->get_token_value() );
+		$this->assertSame( '"helloAworld"', $processor->get_normalized_token() );
+	}
+
+	/**
+	 * Tests that decode_escape_at() consumes at most 6 hex digits, as required
+	 * by the CSS Syntax Level 3 specification.
+	 *
+	 * A hex escape with 7 consecutive hex digits must only consume the first 6,
+	 * leaving the 7th as a literal character in the string value.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-escaped-code-point
+	 */
+	public function test_decode_escape_at_hex_limit_is_six_digits(): void {
+		// \000041 is 6 hex digits → U+0041 = 'A'; the trailing '1' is literal.
+		// Without the length limit, strspn() would scan 7 hex digits (0000411),
+		// giving U+0411 = 'Б' (Cyrillic), which is incorrect.
+		$css = '"\\0000411rest"';
+
+		$processor = CSSProcessor::create( $css );
+		$processor->next_token();
+
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( 'A1rest', $processor->get_token_value() );
+	}
 }
