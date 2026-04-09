@@ -1155,7 +1155,7 @@ class CSSProcessor {
 			$this->at += $digits;
 		}
 
-		// If the next 2 input code points are U+002E FULL STOP (.) followed by a digit, then:
+		// If the next 2 input code points are U+002E FULL STOP (.) followed by a digit, then.
 		if (
 			$this->at + 1 < $this->length &&
 			'.' === $this->css[ $this->at ] &&
@@ -1175,7 +1175,7 @@ class CSSProcessor {
 
 		// If the next 2 or 3 input code points are U+0045 LATIN CAPITAL LETTER E (E)
 		// or U+0065 LATIN SMALL LETTER E (e), optionally followed by U+002D HYPHEN-MINUS (-)
-		// or U+002B PLUS SIGN (+), followed by a digit, then:
+		// or U+002B PLUS SIGN (+), followed by a digit, then.
 		if ( $this->at < $this->length ) {
 			$e = $this->css[ $this->at ];
 			if ( 'e' === $e || 'E' === $e ) {
