@@ -284,6 +284,20 @@ class CSSProcessor {
 	private $token_unit = null;
 
 	/**
+	 * The numeric type flag for the current token: "integer" or "number".
+	 *
+	 * Per CSS Syntax Level 3, <number-token> and <dimension-token> have a type
+	 * flag indicating whether the number was written as an integer or a number
+	 * (with decimal point or exponent). <percentage-token> does not have a type flag.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-number
+	 *
+	 * @var string|null
+	 * @phpstan-var 'integer'|'number'|null
+	 */
+	private $token_number_type = null;
+
+	/**
 	 * Lexical replacements to apply to input CSS document.
 	 *
 	 * Tracks modifications to be applied to the CSS, such as changing URL values.
@@ -794,6 +808,26 @@ class CSSProcessor {
 	}
 
 	/**
+	 * Gets the numeric type flag for number and dimension tokens.
+	 *
+	 * This flag is only set on number and dimension tokens. For
+	 * percentage and other token types, this is always `null`.
+	 *
+	 * Returns "integer" when the number was written without a decimal point or
+	 * exponent (e.g. "42", "+7"), and "number" when it was written with one
+	 * (e.g. "42.0", "1e2", ".5"). Returns null for percentage tokens (which
+	 * have no type flag per spec) and all non-numeric tokens.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-number
+	 *
+	 * @return string|null "integer", "number", or null.
+	 * @phpstan-return 'integer'|'number'|null
+	 */
+	public function get_token_number_type(): ?string {
+		return $this->token_number_type;
+	}
+
+	/**
 	 * Gets the byte at where the token value starts (for STRING and URL tokens).
 	 *
 	 * @return int|null
@@ -979,6 +1013,7 @@ class CSSProcessor {
 		$this->token_length          = null;
 		$this->token_value           = null;
 		$this->token_unit            = null;
+		$this->token_number_type     = null;
 		$this->token_value_starts_at = null;
 		$this->token_value_length    = null;
 	}
@@ -1098,8 +1133,6 @@ class CSSProcessor {
 	 * Numbers can be integers or decimals, with optional sign and exponent.
 	 * They can be followed by % (percentage) or an identifier (dimension).
 	 *
-	 * @TODO: Keep track of the "type" flag ("integer" or "number").
-	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#consume-numeric-token
 	 * @see https://www.w3.org/TR/css-syntax-3/#consume-number
 	 *
@@ -1107,6 +1140,8 @@ class CSSProcessor {
 	 */
 	private function consume_numeric(): bool {
 		// Consume a number and let number be the result.
+		// The type flag defaults to "integer".
+		$number_type = 'integer';
 
 		// If the next input code point is U+002B PLUS SIGN (+) or U+002D HYPHEN-MINUS (-),
 		// consume it and append it to repr.
@@ -1120,13 +1155,15 @@ class CSSProcessor {
 			$this->at += $digits;
 		}
 
-		// If the next 2 input code points are U+002E FULL STOP (.) followed by a digit, then.
+		// If the next 2 input code points are U+002E FULL STOP (.) followed by a digit, then:
+		// Set type to "number".
 		if (
 			$this->at + 1 < $this->length &&
 			'.' === $this->css[ $this->at ] &&
 			$this->css[ $this->at + 1 ] >= '0' &&
 			$this->css[ $this->at + 1 ] <= '9'
 		) {
+			$number_type = 'number';
 			// Consume them.
 			++$this->at;
 			// While the next input code point is a digit, consume it and append it to repr.
@@ -1138,7 +1175,8 @@ class CSSProcessor {
 
 		// If the next 2 or 3 input code points are U+0045 LATIN CAPITAL LETTER E (E)
 		// or U+0065 LATIN SMALL LETTER E (e), optionally followed by U+002D HYPHEN-MINUS (-)
-		// or U+002B PLUS SIGN (+), followed by a digit, then.
+		// or U+002B PLUS SIGN (+), followed by a digit, then:
+		// Set type to "number".
 		if ( $this->at < $this->length ) {
 			$e = $this->css[ $this->at ];
 			if ( 'e' === $e || 'E' === $e ) {
@@ -1159,6 +1197,7 @@ class CSSProcessor {
 				}
 
 				if ( $has_exp ) {
+					$number_type = 'number';
 					// While the next input code point is a digit, consume it and append it to repr.
 					$digits = strspn( $this->css, '0123456789', $this->at );
 					if ( $digits > 0 ) {
@@ -1183,14 +1222,16 @@ class CSSProcessor {
 			// Consume an ident sequence. Set the <dimension-token>'s unit to the returned value.
 			$unit_starts_at = $this->at;
 			$this->consume_ident_sequence();
-			$this->token_unit   = $this->decode_string_or_url( $unit_starts_at, $this->at - $unit_starts_at );
-			$this->token_type   = self::TOKEN_DIMENSION;
-			$this->token_length = $this->at - $this->token_starts_at;
+			$this->token_unit        = $this->decode_string_or_url( $unit_starts_at, $this->at - $unit_starts_at );
+			$this->token_type        = self::TOKEN_DIMENSION;
+			$this->token_number_type = $number_type;
+			$this->token_length      = $this->at - $this->token_starts_at;
 			return true;
 		}
 
 		// Otherwise, if the next input code point is U+0025 PERCENTAGE SIGN (%), consume it.
 		// Create a <percentage-token> with the same value as number, and return it.
+		// Note: percentage tokens do not have a type flag per spec.
 		if ( $this->at < $this->length && '%' === $this->css[ $this->at ] ) {
 			++$this->at;
 			$this->token_type   = self::TOKEN_PERCENTAGE;
@@ -1199,8 +1240,9 @@ class CSSProcessor {
 		}
 
 		// Otherwise, create a <number-token> with the same value and type flag as number, and return it.
-		$this->token_type   = self::TOKEN_NUMBER;
-		$this->token_length = $this->at - $this->token_starts_at;
+		$this->token_type        = self::TOKEN_NUMBER;
+		$this->token_number_type = $number_type;
+		$this->token_length      = $this->at - $this->token_starts_at;
 		return true;
 	}
 

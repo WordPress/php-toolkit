@@ -955,6 +955,43 @@ CSS;
 	}
 
 	/**
+	 * Tests the numeric type flag for number, dimension, and percentage tokens.
+	 *
+	 * Per CSS Syntax Level 3, <number-token> and <dimension-token> have a type
+	 * flag of "integer" or "number". <percentage-token> does not have a type flag.
+	 *
+	 * @dataProvider data_token_number_type
+	 */
+	public function test_token_number_type( string $css, ?string $expected_type ): void {
+		$processor = CSSProcessor::create( $css );
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( $expected_type, $processor->get_token_number_type() );
+	}
+
+	public static function data_token_number_type(): array {
+		return array(
+			'integer'                   => array( '42', 'integer' ),
+			'positive integer'          => array( '+42', 'integer' ),
+			'negative integer'          => array( '-42', 'integer' ),
+			'zero'                      => array( '0', 'integer' ),
+			'decimal'                   => array( '42.0', 'number' ),
+			'decimal with fraction'     => array( '42.5', 'number' ),
+			'leading decimal point'     => array( '.5', 'number' ),
+			'exponent lowercase'        => array( '1e2', 'number' ),
+			'exponent uppercase'        => array( '1E2', 'number' ),
+			'exponent with plus'        => array( '1E+2', 'number' ),
+			'exponent with minus'       => array( '1e-2', 'number' ),
+			'dimension integer'         => array( '10px', 'integer' ),
+			'dimension decimal'         => array( '10.5px', 'number' ),
+			'dimension exponent'        => array( '1e2px', 'number' ),
+			'percentage integer'        => array( '20%', null ),
+			'percentage decimal'        => array( '20.0%', null ),
+			'ident token'               => array( 'red', null ),
+			'string token'              => array( '"hello"', null ),
+		);
+	}
+
+	/**
 	 * Tests that create() validates encoding and only accepts UTF-8.
 	 */
 	public function test_create_validates_encoding(): void {
