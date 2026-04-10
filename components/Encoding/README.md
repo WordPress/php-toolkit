@@ -130,7 +130,7 @@ The PCRE-based implementation of `wp_has_noncharacters()` is preferred when `PCR
 
 ## Attribution
 
-The `wp_is_valid_utf8()`, `wp_scrub_utf8()`, and `wp_has_noncharacters()` functions originate from [WordPress core](https://github.com/WordPress/wordpress-develop) (WordPress 6.2+). The pure PHP fallback scanner implements the UTF-8 well-formedness rules from the Unicode Standard. Licensed under GPL v2.
+The `wp_is_valid_utf8()`, `wp_scrub_utf8()`, and `wp_has_noncharacters()` functions originate from [WordPress core](https://github.com/WordPress/wordpress-develop). The pure PHP fallback scanner implements the UTF-8 well-formedness rules from the Unicode Standard. Licensed under GPL v2.
 
 ## Requirements
 

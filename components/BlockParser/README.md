@@ -210,7 +210,7 @@ $blocks = ( new WP_Block_Parser() )->parse(
 
 ## Attribution
 
-This component is extracted from [WordPress core](https://github.com/WordPress/wordpress-develop). The `WP_Block_Parser`, `WP_Block_Parser_Block`, and `WP_Block_Parser_Frame` classes originate from WordPress 5.0 and are maintained as part of the WordPress block editor infrastructure. Licensed under GPL v2.
+This component is extracted from [WordPress core](https://github.com/WordPress/wordpress-develop). The `WP_Block_Parser`, `WP_Block_Parser_Block`, and `WP_Block_Parser_Frame` classes are maintained as part of the WordPress block editor infrastructure. Licensed under GPL v2.
 
 ## Requirements
 

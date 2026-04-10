@@ -252,7 +252,7 @@ Inherits all attribute and class methods from `WP_HTML_Tag_Processor`.
 
 ## Attribution
 
-This component is extracted from [WordPress core's HTML API](https://developer.wordpress.org/reference/classes/wp_html_processor/). The `WP_HTML_Tag_Processor` (WordPress 6.2+) and `WP_HTML_Processor` (WordPress 6.4+) were created by the WordPress core team to provide a safe, spec-compliant way to modify HTML without regular expressions. Licensed under GPL v2.
+This component is extracted from [WordPress core's HTML API](https://developer.wordpress.org/reference/classes/wp_html_processor/). The `WP_HTML_Tag_Processor` and `WP_HTML_Processor` were created by the WordPress core team to provide a safe, spec-compliant way to modify HTML without regular expressions. Licensed under GPL v2.
 
 ## Requirements
 
