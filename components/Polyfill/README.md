@@ -195,6 +195,10 @@ $chars = mb_str_split( 'Hello', 1 ); // array( 'H', 'e', 'l', 'l', 'o' )
 | `WP_Error` | Minimal error container with `$code`, `$message`, and `$data` properties |
 | `WP_Exception` | Exception subclass used by `wp_trigger_error()` |
 
+## Attribution
+
+The WordPress function stubs and `WP_Error` class are modeled after their counterparts in [WordPress core](https://github.com/WordPress/wordpress-develop). The hook system (`add_filter`/`apply_filters`/`add_action`/`do_action`) implements the same interface as WordPress core's plugin API. Licensed under GPL v2.
+
 ## Requirements
 
 - PHP 7.2+

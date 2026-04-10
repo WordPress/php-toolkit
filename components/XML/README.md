@@ -213,6 +213,10 @@ while ( $processor->next_tag( 'item' ) ) {
 | `input_finished()` | Signal that all XML bytes have been provided |
 | `is_paused_at_incomplete_input()` | Whether the parser stopped due to incomplete input |
 
+## Attribution
+
+The `XMLProcessor` follows the same architecture and API patterns as [WordPress core's HTML API](https://developer.wordpress.org/reference/classes/wp_html_processor/), extending the streaming tag-processor approach from HTML to XML. Licensed under GPL v2.
+
 ## Requirements
 
 - PHP 7.2+
