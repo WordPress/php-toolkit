@@ -1609,7 +1609,7 @@ class CSSProcessor {
 				 *   consume all three characters as a line continuation, produce no value.
 				 * These must be checked before the general escape path.
 				 *
-				 * @see **https://www.w3.org/TR/css-syntax-3/#consume-string-token
+				 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
 				 */
 				if ( $string_escapes ) {
 					if ( $at + 1 >= $end ) {
