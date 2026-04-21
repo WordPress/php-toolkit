@@ -1547,14 +1547,9 @@ CSS;
 	/**
 	 * Tests that backslash-newline in a string token contributes nothing to the value.
 	 *
-	 * CSS spec §4.3.5 consume-string-token:
-	 * > U+005C REVERSE SOLIDUS (\)
-	 * > Otherwise, if the next input code point is a newline, consume it.
-	 *
 	 * The backslash and newline are both consumed and produce no value.
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
-	 * @see https://github.com/WordPress/php-toolkit/issues/222
 	 *
 	 * @dataProvider data_string_backslash_newline
 	 */
@@ -1577,14 +1572,9 @@ CSS;
 	/**
 	 * Tests that backslash-EOF in a string token contributes nothing to the value.
 	 *
-	 * CSS spec §4.3.5 consume-string-token:
-	 * > U+005C REVERSE SOLIDUS (\)
-	 * > If the next input code point is EOF, do nothing.
-	 *
 	 * The trailing backslash is consumed and produces no value.
 	 *
 	 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
-	 * @see https://github.com/WordPress/php-toolkit/issues/223
 	 */
 	public function test_string_backslash_eof(): void {
 		$processor = CSSProcessor::create( "'string\\" );
