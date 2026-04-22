@@ -3,6 +3,8 @@
 use WordPress\HttpServer\Response\ResponseWriteStream;
 
 class WP_Origin_Buffering_Response implements ResponseWriteStream {
+	const MARKER_HEADER = 'X-WP-Origin-Git-Response';
+
 	private $http_code = 200;
 	private $headers   = array();
 	private $body      = '';
@@ -24,6 +26,7 @@ class WP_Origin_Buffering_Response implements ResponseWriteStream {
 
 	public function to_rest_response() {
 		$response = new WP_REST_Response( $this->body, $this->http_code );
+		$response->header( self::MARKER_HEADER, '1' );
 		foreach ( $this->headers as $name => $value ) {
 			$response->header( $name, $value );
 		}
