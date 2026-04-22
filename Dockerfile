@@ -34,6 +34,11 @@ RUN composer install --no-interaction --no-progress --optimize-autoloader 2>/dev
 # Copy the rest of the source
 COPY . .
 
+# Prewarm the WordPress Playground cache so e2e tests can boot offline in the
+# no-network sandbox used by docker-compose.
+RUN mkdir -p /root/.wordpress-playground \
+	&& php -r '$config = json_decode(file_get_contents("plugins/wp-origin/blueprint-e2e.json"), true); if (! is_array($config) || ! isset($config["preferredVersions"]["wp"])) { fwrite(STDERR, "Missing WP Origin e2e WordPress version.\n"); exit(1); } $version = $config["preferredVersions"]["wp"]; $source = "https://downloads.wordpress.org/release/wordpress-" . $version . ".zip"; $target = "/root/.wordpress-playground/" . $version . ".zip"; if (! copy($source, $target)) { fwrite(STDERR, "Failed to prefetch " . $source . "\n"); exit(1); }'
+
 # Re-run install in case the cached layer was stale
 RUN composer install --no-interaction --no-progress --optimize-autoloader
 

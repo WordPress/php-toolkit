@@ -17,6 +17,19 @@ services:
     security_opt:
       - no-new-privileges:true
     network_mode: none
+  sandbox-wp-origin-e2e:
+    build: .
+    volumes:
+      - .:/app
+      - vendor_data:/app/vendor
+    working_dir: /app
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   vendor_data:

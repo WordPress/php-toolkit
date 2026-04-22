@@ -20,6 +20,7 @@ class WP_Origin_Plugin {
 
 	public static function bootstrap() {
 		add_action( 'rest_api_init', array( __CLASS__, 'register_routes' ) );
+		add_filter( 'rest_post_dispatch', array( __CLASS__, 'add_authentication_challenge' ), 10, 3 );
 		add_filter( 'rest_pre_serve_request', array( __CLASS__, 'serve_git_response' ), 10, 4 );
 	}
 
@@ -37,15 +38,29 @@ class WP_Origin_Plugin {
 
 	public static function check_permissions( WP_REST_Request $request ) {
 		$git_path = self::build_git_path( $request );
-		if ( self::is_push_request( $git_path ) ) {
-			return current_user_can( 'edit_posts' );
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error(
+				'wp_origin_auth_required',
+				'Authentication required.',
+				array( 'status' => 401 )
+			);
 		}
 
-		return is_user_logged_in();
+		if ( self::is_push_request( $git_path ) && ! current_user_can( 'edit_posts' ) ) {
+			return new WP_Error(
+				'wp_origin_forbidden',
+				'You do not have permission to push content changes.',
+				array( 'status' => 403 )
+			);
+		}
+
+		return true;
 	}
 
 	public static function handle_rest_request( WP_REST_Request $request ) {
 		$repository_path = null;
+		// Fail closed if PHP would otherwise emit warnings into the Git packet stream.
+		$previous_error_handler = set_error_handler( array( __CLASS__, 'throw_on_php_warning' ) ); // phpcs:ignore
 
 		try {
 			$repository_data = self::open_repository();
@@ -102,6 +117,7 @@ class WP_Origin_Plugin {
 				array( 'status' => 500 )
 			);
 		} finally {
+			restore_error_handler();
 			self::delete_directory( $repository_path );
 		}
 	}
@@ -130,6 +146,24 @@ class WP_Origin_Plugin {
 
 		echo $result->get_data();
 		return true;
+	}
+
+	public static function add_authentication_challenge( $response, $server, $request ) {
+		unset( $server );
+
+		if ( 0 !== strpos( $request->get_route(), '/' . self::ROUTE_NAMESPACE . '/md.git' ) ) {
+			return $response;
+		}
+		if ( ! $response instanceof WP_HTTP_Response ) {
+			return $response;
+		}
+		if ( 401 !== $response->get_status() ) {
+			return $response;
+		}
+
+		$response->header( 'WWW-Authenticate', 'Basic realm="WP Origin"' );
+
+		return $response;
 	}
 
 	private static function build_protocol_error_response( $service, $message ) {
@@ -167,7 +201,7 @@ class WP_Origin_Plugin {
 
 	private static function open_repository() {
 		$repository_path = trailingslashit( sys_get_temp_dir() ) . 'wp-origin-' . wp_generate_uuid4();
-		$repository = new GitRepository(
+		$repository      = new GitRepository(
 			LocalFilesystem::create( $repository_path ),
 			array(
 				'default_branch' => self::DEFAULT_BRANCH,
@@ -480,7 +514,7 @@ class WP_Origin_Plugin {
 	}
 
 	private static function parse_push_header( $request_bytes ) {
-		if ( ! preg_match( '/([0-9a-f]{40}) ([0-9a-f]{40}) refs\\/heads\\/' . self::DEFAULT_BRANCH . "\0/", $request_bytes, $matches ) ) {
+		if ( ! preg_match( '/([0-9a-f]{40}) ([0-9a-f]{40}) refs\\/heads\\/' . self::DEFAULT_BRANCH . '/', $request_bytes, $matches ) ) {
 			return false;
 		}
 
@@ -534,5 +568,13 @@ class WP_Origin_Plugin {
 		}
 
 		rmdir( $path );
+	}
+
+	public static function throw_on_php_warning( $severity, $message, $file, $line ) {
+		if ( 0 === ( error_reporting() & $severity ) ) { // phpcs:ignore
+			return false;
+		}
+
+		throw new ErrorException( $message, 0, $severity, $file, $line );
 	}
 }
