@@ -150,6 +150,17 @@ HTML
 MD
 				,
 			),
+			'Unsupported blocks are preserved as gutenberg fences' => array(
+				'blocks' => '<!-- wp:verse --><pre class="wp-block-verse">Roses are red</pre><!-- /wp:verse -->',
+				'expected' => <<<MD
+
+```gutenberg
+<!-- wp:verse --><pre class="wp-block-verse">Roses are red</pre><!-- /wp:verse -->
+```
+
+MD
+				,
+			),
 		);
 	}
 }

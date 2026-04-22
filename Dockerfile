@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libsqlite3-dev \
         libonig-dev \
         locales \
+        nodejs \
+        npm \
         unzip \
         git \
     && sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen \
@@ -19,6 +21,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Install Playground CLI for WordPress integration smoke tests.
+RUN npm install -g @wp-playground/cli@latest
 
 WORKDIR /app
 

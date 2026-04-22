@@ -282,7 +282,7 @@ class MarkdownProducer implements DataFormatProducer {
 				}
 				$markdown   = array();
 				$markdown[] = '';
-				$markdown[] = '```block';
+				$markdown[] = '```gutenberg';
 				$markdown[] = \serialize_block( $block );
 				$markdown[] = '```';
 				$markdown[] = '';
