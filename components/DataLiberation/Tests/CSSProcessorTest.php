@@ -180,8 +180,8 @@ class CSSProcessorTest extends TestCase {
 
 	/**
 	 * When an invalid UTF-8 byte is the character directly after a backslash
-	 * (i.e. it is the escaped character itself), decode_escape_at() returns the
-	 * raw byte. The caller must scrub it to U+FFFD.
+	 * (i.e. it is the escaped character itself), decode_escape_at() must replace
+	 * the invalid byte with U+FFFD.
 	 */
 	public function test_invalid_utf8_as_escaped_character(): void {
 		// The CSS `.\xF1` is a delim + ident containing a lone invalid byte.
