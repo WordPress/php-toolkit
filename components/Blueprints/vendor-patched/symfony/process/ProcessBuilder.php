@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Process;
+namespace VendorPrefix\Symfony\Component\Process;
 
-use Symfony\Component\Process\Exception\InvalidArgumentException;
-use Symfony\Component\Process\Exception\LogicException;
+use VendorPrefix\Symfony\Component\Process\Exception\InvalidArgumentException;
+use VendorPrefix\Symfony\Component\Process\Exception\LogicException;
 use Traversable;
 
 /**

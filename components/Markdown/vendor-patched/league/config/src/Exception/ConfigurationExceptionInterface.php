@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\Config\Exception;
+namespace VendorPrefix\League\Config\Exception;
 
 /**
  * Marker interface for any/all exceptions thrown by this library

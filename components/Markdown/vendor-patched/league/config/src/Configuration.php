@@ -11,24 +11,24 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\Config;
+namespace VendorPrefix\League\Config;
 
-use Dflydev\DotAccessData\Data;
-use Dflydev\DotAccessData\DataInterface;
-use Dflydev\DotAccessData\Exception\DataException;
-use Dflydev\DotAccessData\Exception\InvalidPathException;
-use Dflydev\DotAccessData\Exception\MissingPathException;
-use League\Config\Exception\UnknownOptionException;
-use League\Config\Exception\ValidationException;
-use Nette\Schema\Expect;
-use Nette\Schema\Processor;
-use Nette\Schema\Schema;
-use Nette\Schema\ValidationException as NetteValidationException;
+use VendorPrefix\Dflydev\DotAccessData\Data;
+use VendorPrefix\Dflydev\DotAccessData\DataInterface;
+use VendorPrefix\Dflydev\DotAccessData\Exception\DataException;
+use VendorPrefix\Dflydev\DotAccessData\Exception\InvalidPathException;
+use VendorPrefix\Dflydev\DotAccessData\Exception\MissingPathException;
+use VendorPrefix\League\Config\Exception\UnknownOptionException;
+use VendorPrefix\League\Config\Exception\ValidationException;
+use VendorPrefix\Nette\Schema\Expect;
+use VendorPrefix\Nette\Schema\Processor;
+use VendorPrefix\Nette\Schema\Schema;
+use VendorPrefix\Nette\Schema\ValidationException as NetteValidationException;
 
 final class Configuration implements ConfigurationBuilderInterface, ConfigurationInterface
 {
     /** @psalm-readonly
-     * @var \Dflydev\DotAccessData\Data */
+     * @var \VendorPrefix\Dflydev\DotAccessData\Data */
     private $userConfig;
 
     /**
@@ -39,7 +39,7 @@ final class Configuration implements ConfigurationBuilderInterface, Configuratio
     private $configSchemas = [];
 
     /** @psalm-allow-private-mutation
-     * @var \Dflydev\DotAccessData\Data */
+     * @var \VendorPrefix\Dflydev\DotAccessData\Data */
     private $finalConfig;
 
     /**
@@ -50,7 +50,7 @@ final class Configuration implements ConfigurationBuilderInterface, Configuratio
     private $cache = [];
 
     /** @psalm-readonly
-     * @var \League\Config\ConfigurationInterface */
+     * @var \VendorPrefix\League\Config\ConfigurationInterface */
     private $reader;
 
     /**

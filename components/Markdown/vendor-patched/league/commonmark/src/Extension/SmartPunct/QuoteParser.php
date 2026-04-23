@@ -14,13 +14,13 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\SmartPunct;
+namespace VendorPrefix\League\CommonMark\Extension\SmartPunct;
 
-use League\CommonMark\Delimiter\Delimiter;
-use League\CommonMark\Parser\Inline\InlineParserInterface;
-use League\CommonMark\Parser\Inline\InlineParserMatch;
-use League\CommonMark\Parser\InlineParserContext;
-use League\CommonMark\Util\RegexHelper;
+use VendorPrefix\League\CommonMark\Delimiter\Delimiter;
+use VendorPrefix\League\CommonMark\Parser\Inline\InlineParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Inline\InlineParserMatch;
+use VendorPrefix\League\CommonMark\Parser\InlineParserContext;
+use VendorPrefix\League\CommonMark\Util\RegexHelper;
 
 final class QuoteParser implements InlineParserInterface
 {

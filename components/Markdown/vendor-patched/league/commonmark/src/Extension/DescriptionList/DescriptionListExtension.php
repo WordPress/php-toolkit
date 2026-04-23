@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\DescriptionList;
+namespace VendorPrefix\League\CommonMark\Extension\DescriptionList;
 
-use League\CommonMark\Environment\EnvironmentBuilderInterface;
-use League\CommonMark\Event\DocumentParsedEvent;
-use League\CommonMark\Extension\DescriptionList\Event\ConsecutiveDescriptionListMerger;
-use League\CommonMark\Extension\DescriptionList\Event\LooseDescriptionHandler;
-use League\CommonMark\Extension\DescriptionList\Node\Description;
-use League\CommonMark\Extension\DescriptionList\Node\DescriptionList;
-use League\CommonMark\Extension\DescriptionList\Node\DescriptionTerm;
-use League\CommonMark\Extension\DescriptionList\Parser\DescriptionStartParser;
-use League\CommonMark\Extension\DescriptionList\Renderer\DescriptionListRenderer;
-use League\CommonMark\Extension\DescriptionList\Renderer\DescriptionRenderer;
-use League\CommonMark\Extension\DescriptionList\Renderer\DescriptionTermRenderer;
-use League\CommonMark\Extension\ExtensionInterface;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentBuilderInterface;
+use VendorPrefix\League\CommonMark\Event\DocumentParsedEvent;
+use VendorPrefix\League\CommonMark\Extension\DescriptionList\Event\ConsecutiveDescriptionListMerger;
+use VendorPrefix\League\CommonMark\Extension\DescriptionList\Event\LooseDescriptionHandler;
+use VendorPrefix\League\CommonMark\Extension\DescriptionList\Node\Description;
+use VendorPrefix\League\CommonMark\Extension\DescriptionList\Node\DescriptionList;
+use VendorPrefix\League\CommonMark\Extension\DescriptionList\Node\DescriptionTerm;
+use VendorPrefix\League\CommonMark\Extension\DescriptionList\Parser\DescriptionStartParser;
+use VendorPrefix\League\CommonMark\Extension\DescriptionList\Renderer\DescriptionListRenderer;
+use VendorPrefix\League\CommonMark\Extension\DescriptionList\Renderer\DescriptionRenderer;
+use VendorPrefix\League\CommonMark\Extension\DescriptionList\Renderer\DescriptionTermRenderer;
+use VendorPrefix\League\CommonMark\Extension\ExtensionInterface;
 
 final class DescriptionListExtension implements ExtensionInterface
 {

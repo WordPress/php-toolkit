@@ -7,9 +7,9 @@
 
 declare(strict_types=1);
 
-namespace Nette\Utils;
+namespace VendorPrefix\Nette\Utils;
 
-use Nette;
+use VendorPrefix\Nette;
 
 
 /**
@@ -90,7 +90,7 @@ use Nette;
  */
 class Image
 {
-	use Nette\SmartObject;
+	use VendorPrefix\Nette\SmartObject;
 
 	/** Prevent from getting resized to a bigger size than the original */
 	public const ShrinkOnly = 0b0001;
@@ -161,7 +161,7 @@ class Image
 
 	/**
   * Reads an image from a file and returns its type in $type.
-  * @throws Nette\NotSupportedException if gd extension is not loaded
+  * @throws VendorPrefix\Nette\NotSupportedException if gd extension is not loaded
   * @throws UnknownImageFileException if file not found or file type is not known
   * @return static
   */
@@ -179,7 +179,7 @@ class Image
 
 	/**
   * Reads an image from a string and returns its type in $type.
-  * @throws Nette\NotSupportedException if gd extension is not loaded
+  * @throws VendorPrefix\Nette\NotSupportedException if gd extension is not loaded
   * @throws ImageException
   * @return static
   */
@@ -219,15 +219,15 @@ class Image
   * Creates a new true color image of the given dimensions. The default color is black.
   * @param  positive-int  $width
   * @param  positive-int  $height
-  * @throws Nette\NotSupportedException if gd extension is not loaded
-  * @param \Nette\Utils\ImageColor|mixed[]|null $color
+  * @throws VendorPrefix\Nette\NotSupportedException if gd extension is not loaded
+  * @param \VendorPrefix\Nette\Utils\ImageColor|mixed[]|null $color
   * @return static
   */
  public static function fromBlank(int $width, int $height, $color = null)
 	{
 		self::ensureExtension();
 		if ($width < 1 || $height < 1) {
-			throw new Nette\InvalidArgumentException('Image width and height must be greater than zero.');
+			throw new VendorPrefix\Nette\InvalidArgumentException('Image width and height must be greater than zero.');
 		}
 
 		$image = new static(imagecreatetruecolor($width, $height));
@@ -271,7 +271,7 @@ class Image
 	public static function typeToExtension(int $type): string
 	{
 		if (!isset(self::Formats[$type])) {
-			throw new Nette\InvalidArgumentException("Unsupported image type '$type'.");
+			throw new VendorPrefix\Nette\InvalidArgumentException("Unsupported image type '$type'.");
 		}
 
 		return self::Formats[$type];
@@ -287,7 +287,7 @@ class Image
 		$extensions = array_flip(self::Formats) + ['jpg' => ImageType::JPEG];
 		$extension = strtolower($extension);
 		if (!isset($extensions[$extension])) {
-			throw new Nette\InvalidArgumentException("Unsupported file extension '$extension'.");
+			throw new VendorPrefix\Nette\InvalidArgumentException("Unsupported file extension '$extension'.");
 		}
 
 		return $extensions[$extension];
@@ -446,7 +446,7 @@ class Image
    		}
      if ($mode & self::Stretch) { // non-proportional
    			if (!$newWidth || !$newHeight) {
-   				throw new Nette\InvalidArgumentException('For stretching must be both width and height specified.');
+   				throw new VendorPrefix\Nette\InvalidArgumentException('For stretching must be both width and height specified.');
    			}
    
    			if ($mode & self::ShrinkOnly) {
@@ -455,7 +455,7 @@ class Image
    			}
    		} else {  // proportional
    			if (!$newWidth && !$newHeight) {
-   				throw new Nette\InvalidArgumentException('At least width or height must be specified.');
+   				throw new VendorPrefix\Nette\InvalidArgumentException('At least width or height must be specified.');
    			}
    
    			$scale = [];
@@ -734,7 +734,7 @@ class Image
 				break;
 
 			default:
-				throw new Nette\InvalidArgumentException("Unsupported image type '$type'.");
+				throw new VendorPrefix\Nette\InvalidArgumentException("Unsupported image type '$type'.");
 		}
 
 		if (!$success) {
@@ -745,7 +745,7 @@ class Image
 
 	/**
   * Call to undefined method.
-  * @throws Nette\MemberAccessException
+  * @throws VendorPrefix\Nette\MemberAccessException
   * @return mixed
   */
  public function __call(string $name, array $args)
@@ -792,7 +792,7 @@ class Image
 			return false;
 		}
 
-		throw new Nette\InvalidArgumentException("Expected dimension in int|string, '$num' given.");
+		throw new VendorPrefix\Nette\InvalidArgumentException("Expected dimension in int|string, '$num' given.");
 	}
 
 
@@ -801,12 +801,12 @@ class Image
 	 */
 	public function __sleep(): array
 	{
-		throw new Nette\NotSupportedException('You cannot serialize or unserialize ' . self::class . ' instances.');
+		throw new VendorPrefix\Nette\NotSupportedException('You cannot serialize or unserialize ' . self::class . ' instances.');
 	}
 
 
 	/**
-  * @param \Nette\Utils\ImageColor|mixed[] $color
+  * @param \VendorPrefix\Nette\Utils\ImageColor|mixed[] $color
   */
  public function resolveColor($color): int
 	{
@@ -818,7 +818,7 @@ class Image
 	private static function ensureExtension(): void
 	{
 		if (!extension_loaded('gd')) {
-			throw new Nette\NotSupportedException('PHP extension GD is not loaded.');
+			throw new VendorPrefix\Nette\NotSupportedException('PHP extension GD is not loaded.');
 		}
 	}
 }

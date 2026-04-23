@@ -9,15 +9,15 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\EventDispatcher\Debug;
+namespace VendorPrefix\Symfony\Component\EventDispatcher\Debug;
 
 use Exception;
-use Psr\Log\LoggerInterface;
+use VendorPrefix\Psr\Log\LoggerInterface;
 use SplObjectStorage;
-use Symfony\Component\EventDispatcher\Event;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\Stopwatch\Stopwatch;
+use VendorPrefix\Symfony\Component\EventDispatcher\Event;
+use VendorPrefix\Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use VendorPrefix\Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use VendorPrefix\Symfony\Component\Stopwatch\Stopwatch;
 
 /**
  * Collects some data about event listeners.

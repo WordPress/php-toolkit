@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\FrontMatter;
+namespace VendorPrefix\League\CommonMark\Extension\FrontMatter;
 
-use League\CommonMark\Environment\EnvironmentBuilderInterface;
-use League\CommonMark\Event\DocumentPreParsedEvent;
-use League\CommonMark\Event\DocumentRenderedEvent;
-use League\CommonMark\Extension\ExtensionInterface;
-use League\CommonMark\Extension\FrontMatter\Data\FrontMatterDataParserInterface;
-use League\CommonMark\Extension\FrontMatter\Data\LibYamlFrontMatterParser;
-use League\CommonMark\Extension\FrontMatter\Data\SymfonyYamlFrontMatterParser;
-use League\CommonMark\Extension\FrontMatter\Listener\FrontMatterPostRenderListener;
-use League\CommonMark\Extension\FrontMatter\Listener\FrontMatterPreParser;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentBuilderInterface;
+use VendorPrefix\League\CommonMark\Event\DocumentPreParsedEvent;
+use VendorPrefix\League\CommonMark\Event\DocumentRenderedEvent;
+use VendorPrefix\League\CommonMark\Extension\ExtensionInterface;
+use VendorPrefix\League\CommonMark\Extension\FrontMatter\Data\FrontMatterDataParserInterface;
+use VendorPrefix\League\CommonMark\Extension\FrontMatter\Data\LibYamlFrontMatterParser;
+use VendorPrefix\League\CommonMark\Extension\FrontMatter\Data\SymfonyYamlFrontMatterParser;
+use VendorPrefix\League\CommonMark\Extension\FrontMatter\Listener\FrontMatterPostRenderListener;
+use VendorPrefix\League\CommonMark\Extension\FrontMatter\Listener\FrontMatterPreParser;
 
 final class FrontMatterExtension implements ExtensionInterface
 {
     /** @psalm-readonly
-     * @var \League\CommonMark\Extension\FrontMatter\FrontMatterParserInterface */
+     * @var \VendorPrefix\League\CommonMark\Extension\FrontMatter\FrontMatterParserInterface */
     private $frontMatterParser;
 
     public function __construct(?FrontMatterDataParserInterface $dataParser = null)

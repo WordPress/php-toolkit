@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\TaskList;
+namespace VendorPrefix\League\CommonMark\Extension\TaskList;
 
-use League\CommonMark\Environment\EnvironmentBuilderInterface;
-use League\CommonMark\Extension\ExtensionInterface;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentBuilderInterface;
+use VendorPrefix\League\CommonMark\Extension\ExtensionInterface;
 
 final class TaskListExtension implements ExtensionInterface
 {

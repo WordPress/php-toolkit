@@ -11,22 +11,22 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Parser\Block;
+namespace VendorPrefix\League\CommonMark\Parser\Block;
 
-use League\CommonMark\Node\Block\Paragraph;
-use League\CommonMark\Parser\Cursor;
-use League\CommonMark\Parser\InlineParserEngineInterface;
-use League\CommonMark\Reference\ReferenceInterface;
-use League\CommonMark\Reference\ReferenceParser;
+use VendorPrefix\League\CommonMark\Node\Block\Paragraph;
+use VendorPrefix\League\CommonMark\Parser\Cursor;
+use VendorPrefix\League\CommonMark\Parser\InlineParserEngineInterface;
+use VendorPrefix\League\CommonMark\Reference\ReferenceInterface;
+use VendorPrefix\League\CommonMark\Reference\ReferenceParser;
 
 final class ParagraphParser extends AbstractBlockContinueParser implements BlockContinueParserWithInlinesInterface
 {
     /** @psalm-readonly
-     * @var \League\CommonMark\Node\Block\Paragraph */
+     * @var \VendorPrefix\League\CommonMark\Node\Block\Paragraph */
     private $block;
 
     /** @psalm-readonly
-     * @var \League\CommonMark\Reference\ReferenceParser */
+     * @var \VendorPrefix\League\CommonMark\Reference\ReferenceParser */
     private $referenceParser;
 
     public function __construct()
@@ -40,7 +40,7 @@ final class ParagraphParser extends AbstractBlockContinueParser implements Block
         return true;
     }
 
-    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
+    public function getBlock(): \VendorPrefix\League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }

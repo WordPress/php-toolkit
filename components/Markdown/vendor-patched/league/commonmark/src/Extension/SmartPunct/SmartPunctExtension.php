@@ -14,18 +14,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\SmartPunct;
+namespace VendorPrefix\League\CommonMark\Extension\SmartPunct;
 
-use League\CommonMark\Environment\EnvironmentBuilderInterface;
-use League\CommonMark\Event\DocumentParsedEvent;
-use League\CommonMark\Extension\ConfigurableExtensionInterface;
-use League\CommonMark\Node\Block\Document;
-use League\CommonMark\Node\Block\Paragraph;
-use League\CommonMark\Node\Inline\Text;
-use League\CommonMark\Renderer\Block as CoreBlockRenderer;
-use League\CommonMark\Renderer\Inline as CoreInlineRenderer;
-use League\Config\ConfigurationBuilderInterface;
-use Nette\Schema\Expect;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentBuilderInterface;
+use VendorPrefix\League\CommonMark\Event\DocumentParsedEvent;
+use VendorPrefix\League\CommonMark\Extension\ConfigurableExtensionInterface;
+use VendorPrefix\League\CommonMark\Node\Block\Document;
+use VendorPrefix\League\CommonMark\Node\Block\Paragraph;
+use VendorPrefix\League\CommonMark\Node\Inline\Text;
+use VendorPrefix\League\CommonMark\Renderer\Block as CoreBlockRenderer;
+use VendorPrefix\League\CommonMark\Renderer\Inline as CoreInlineRenderer;
+use VendorPrefix\League\Config\ConfigurationBuilderInterface;
+use VendorPrefix\Nette\Schema\Expect;
 
 final class SmartPunctExtension implements ConfigurableExtensionInterface
 {

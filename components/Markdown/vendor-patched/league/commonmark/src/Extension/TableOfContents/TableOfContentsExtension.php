@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\TableOfContents;
+namespace VendorPrefix\League\CommonMark\Extension\TableOfContents;
 
-use League\CommonMark\Environment\EnvironmentBuilderInterface;
-use League\CommonMark\Event\DocumentParsedEvent;
-use League\CommonMark\Extension\CommonMark\Node\Block\ListBlock;
-use League\CommonMark\Extension\CommonMark\Renderer\Block\ListBlockRenderer;
-use League\CommonMark\Extension\ConfigurableExtensionInterface;
-use League\CommonMark\Extension\TableOfContents\Node\TableOfContents;
-use League\CommonMark\Extension\TableOfContents\Node\TableOfContentsPlaceholder;
-use League\Config\ConfigurationBuilderInterface;
-use Nette\Schema\Expect;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentBuilderInterface;
+use VendorPrefix\League\CommonMark\Event\DocumentParsedEvent;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\ListBlock;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Renderer\Block\ListBlockRenderer;
+use VendorPrefix\League\CommonMark\Extension\ConfigurableExtensionInterface;
+use VendorPrefix\League\CommonMark\Extension\TableOfContents\Node\TableOfContents;
+use VendorPrefix\League\CommonMark\Extension\TableOfContents\Node\TableOfContentsPlaceholder;
+use VendorPrefix\League\Config\ConfigurationBuilderInterface;
+use VendorPrefix\Nette\Schema\Expect;
 
 final class TableOfContentsExtension implements ConfigurableExtensionInterface
 {

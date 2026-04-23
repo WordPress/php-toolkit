@@ -14,14 +14,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\CommonMark\Renderer\Inline;
+namespace VendorPrefix\League\CommonMark\Extension\CommonMark\Renderer\Inline;
 
-use League\CommonMark\Extension\CommonMark\Node\Inline\Strong;
-use League\CommonMark\Node\Node;
-use League\CommonMark\Renderer\ChildNodeRendererInterface;
-use League\CommonMark\Renderer\NodeRendererInterface;
-use League\CommonMark\Util\HtmlElement;
-use League\CommonMark\Xml\XmlNodeRendererInterface;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Inline\Strong;
+use VendorPrefix\League\CommonMark\Node\Node;
+use VendorPrefix\League\CommonMark\Renderer\ChildNodeRendererInterface;
+use VendorPrefix\League\CommonMark\Renderer\NodeRendererInterface;
+use VendorPrefix\League\CommonMark\Util\HtmlElement;
+use VendorPrefix\League\CommonMark\Xml\XmlNodeRendererInterface;
 
 final class StrongRenderer implements NodeRendererInterface, XmlNodeRendererInterface
 {

@@ -10,7 +10,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Webuni\FrontMatter\Processor;
+namespace VendorPrefix\Webuni\FrontMatter\Processor;
 
 final class JsonWithoutBracesProcessor implements ProcessorInterface
 {

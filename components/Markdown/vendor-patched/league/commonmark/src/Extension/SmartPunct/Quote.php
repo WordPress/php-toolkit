@@ -14,9 +14,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\SmartPunct;
+namespace VendorPrefix\League\CommonMark\Extension\SmartPunct;
 
-use League\CommonMark\Node\Inline\AbstractStringContainer;
+use VendorPrefix\League\CommonMark\Node\Inline\AbstractStringContainer;
 
 final class Quote extends AbstractStringContainer
 {

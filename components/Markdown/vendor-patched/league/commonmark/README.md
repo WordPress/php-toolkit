@@ -25,7 +25,7 @@ $ composer require league/commonmark
 The `CommonMarkConverter` class provides a simple wrapper for converting CommonMark to HTML:
 
 ```php
-use League\CommonMark\CommonMarkConverter;
+use VendorPrefix\League\CommonMark\CommonMarkConverter;
 
 $converter = new CommonMarkConverter([
     'html_input' => 'strip',
@@ -40,7 +40,7 @@ echo $converter->convert('# Hello World!');
 Or if you want GitHub-Flavored Markdown, use the `GithubFlavoredMarkdownConverter` class instead:
 
 ```php
-use League\CommonMark\GithubFlavoredMarkdownConverter;
+use VendorPrefix\League\CommonMark\GithubFlavoredMarkdownConverter;
 
 $converter = new GithubFlavoredMarkdownConverter([
     'html_input' => 'strip',

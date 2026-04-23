@@ -14,9 +14,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Delimiter;
+namespace VendorPrefix\League\CommonMark\Delimiter;
 
-use League\CommonMark\Node\Inline\AbstractStringContainer;
+use VendorPrefix\League\CommonMark\Node\Inline\AbstractStringContainer;
 
 final class Delimiter implements DelimiterInterface
 {
@@ -33,15 +33,15 @@ final class Delimiter implements DelimiterInterface
     private $originalLength;
 
     /** @psalm-readonly
-     * @var \League\CommonMark\Node\Inline\AbstractStringContainer */
+     * @var \VendorPrefix\League\CommonMark\Node\Inline\AbstractStringContainer */
     private $inlineNode;
 
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\CommonMark\Delimiter\DelimiterInterface|null */
+     * @var \VendorPrefix\League\CommonMark\Delimiter\DelimiterInterface|null */
     private $previous;
 
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\CommonMark\Delimiter\DelimiterInterface|null */
+     * @var \VendorPrefix\League\CommonMark\Delimiter\DelimiterInterface|null */
     private $next;
 
     /** @psalm-readonly

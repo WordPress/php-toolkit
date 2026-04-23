@@ -14,9 +14,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\CommonMark\Node\Inline;
+namespace VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Inline;
 
-use League\CommonMark\Node\Inline\Text;
+use VendorPrefix\League\CommonMark\Node\Inline\Text;
 
 class Link extends AbstractWebResource
 {

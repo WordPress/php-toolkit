@@ -14,11 +14,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\SmartPunct;
+namespace VendorPrefix\League\CommonMark\Extension\SmartPunct;
 
-use League\CommonMark\Delimiter\DelimiterInterface;
-use League\CommonMark\Delimiter\Processor\DelimiterProcessorInterface;
-use League\CommonMark\Node\Inline\AbstractStringContainer;
+use VendorPrefix\League\CommonMark\Delimiter\DelimiterInterface;
+use VendorPrefix\League\CommonMark\Delimiter\Processor\DelimiterProcessorInterface;
+use VendorPrefix\League\CommonMark\Node\Inline\AbstractStringContainer;
 
 final class QuoteProcessor implements DelimiterProcessorInterface
 {

@@ -11,18 +11,18 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\TableOfContents;
+namespace VendorPrefix\League\CommonMark\Extension\TableOfContents;
 
-use League\CommonMark\Event\DocumentParsedEvent;
-use League\CommonMark\Extension\CommonMark\Node\Block\Heading;
-use League\CommonMark\Extension\HeadingPermalink\HeadingPermalink;
-use League\CommonMark\Extension\TableOfContents\Node\TableOfContents;
-use League\CommonMark\Extension\TableOfContents\Node\TableOfContentsPlaceholder;
-use League\CommonMark\Node\Block\Document;
-use League\CommonMark\Node\NodeIterator;
-use League\Config\ConfigurationAwareInterface;
-use League\Config\ConfigurationInterface;
-use League\Config\Exception\InvalidConfigurationException;
+use VendorPrefix\League\CommonMark\Event\DocumentParsedEvent;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\Heading;
+use VendorPrefix\League\CommonMark\Extension\HeadingPermalink\HeadingPermalink;
+use VendorPrefix\League\CommonMark\Extension\TableOfContents\Node\TableOfContents;
+use VendorPrefix\League\CommonMark\Extension\TableOfContents\Node\TableOfContentsPlaceholder;
+use VendorPrefix\League\CommonMark\Node\Block\Document;
+use VendorPrefix\League\CommonMark\Node\NodeIterator;
+use VendorPrefix\League\Config\ConfigurationAwareInterface;
+use VendorPrefix\League\Config\ConfigurationInterface;
+use VendorPrefix\League\Config\Exception\InvalidConfigurationException;
 
 final class TableOfContentsBuilder implements ConfigurationAwareInterface
 {
@@ -31,7 +31,7 @@ final class TableOfContentsBuilder implements ConfigurationAwareInterface
     public const POSITION_PLACEHOLDER     = 'placeholder';
 
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\Config\ConfigurationInterface */
+     * @var \VendorPrefix\League\Config\ConfigurationInterface */
     private $config;
 
     public function onDocumentParsed(DocumentParsedEvent $event): void

@@ -11,14 +11,14 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Event;
+namespace VendorPrefix\League\CommonMark\Event;
 
-use League\CommonMark\Output\RenderedContentInterface;
+use VendorPrefix\League\CommonMark\Output\RenderedContentInterface;
 
 final class DocumentRenderedEvent extends AbstractEvent
 {
     /**
-     * @var \League\CommonMark\Output\RenderedContentInterface
+     * @var \VendorPrefix\League\CommonMark\Output\RenderedContentInterface
      */
     private $output;
 

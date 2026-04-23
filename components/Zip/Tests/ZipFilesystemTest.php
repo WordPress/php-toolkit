@@ -1,7 +1,7 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Process\Process;
+use VendorPrefix\Symfony\Component\Process\Process;
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\HttpClient\ByteStream\SeekableRequestReadStream;
 use WordPress\HttpClient\Client;

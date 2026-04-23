@@ -23,8 +23,8 @@ composer require league/config
 The `Configuration` class provides everything you need to define the configuration structure and fetch values:
 
 ```php
-use League\Config\Configuration;
-use Nette\Schema\Expect;
+use VendorPrefix\League\Config\Configuration;
+use VendorPrefix\Nette\Schema\Expect;
 
 // Define your configuration schema
 $config = new Configuration([

@@ -11,10 +11,10 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Extension\FrontMatter\Listener;
+namespace VendorPrefix\League\CommonMark\Extension\FrontMatter\Listener;
 
-use League\CommonMark\Event\DocumentRenderedEvent;
-use League\CommonMark\Extension\FrontMatter\Output\RenderedContentWithFrontMatter;
+use VendorPrefix\League\CommonMark\Event\DocumentRenderedEvent;
+use VendorPrefix\League\CommonMark\Extension\FrontMatter\Output\RenderedContentWithFrontMatter;
 
 final class FrontMatterPostRenderListener
 {

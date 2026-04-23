@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\HeadingPermalink;
+namespace VendorPrefix\League\CommonMark\Extension\HeadingPermalink;
 
-use League\CommonMark\Node\Node;
-use League\CommonMark\Renderer\ChildNodeRendererInterface;
-use League\CommonMark\Renderer\NodeRendererInterface;
-use League\CommonMark\Util\HtmlElement;
-use League\CommonMark\Xml\XmlNodeRendererInterface;
-use League\Config\ConfigurationAwareInterface;
-use League\Config\ConfigurationInterface;
+use VendorPrefix\League\CommonMark\Node\Node;
+use VendorPrefix\League\CommonMark\Renderer\ChildNodeRendererInterface;
+use VendorPrefix\League\CommonMark\Renderer\NodeRendererInterface;
+use VendorPrefix\League\CommonMark\Util\HtmlElement;
+use VendorPrefix\League\CommonMark\Xml\XmlNodeRendererInterface;
+use VendorPrefix\League\Config\ConfigurationAwareInterface;
+use VendorPrefix\League\Config\ConfigurationInterface;
 
 /**
  * Renders the HeadingPermalink elements
@@ -29,7 +29,7 @@ final class HeadingPermalinkRenderer implements NodeRendererInterface, XmlNodeRe
     public const DEFAULT_SYMBOL = '¶';
 
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\Config\ConfigurationInterface */
+     * @var \VendorPrefix\League\Config\ConfigurationInterface */
     private $config;
 
     public function setConfiguration(ConfigurationInterface $configuration): void

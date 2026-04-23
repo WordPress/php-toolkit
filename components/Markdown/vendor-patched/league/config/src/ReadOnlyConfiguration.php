@@ -11,7 +11,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\Config;
+namespace VendorPrefix\League\Config;
 
 /**
  * Provides read-only access to a given Configuration object
@@ -19,7 +19,7 @@ namespace League\Config;
 final class ReadOnlyConfiguration implements ConfigurationInterface
 {
     /**
-     * @var \League\Config\Configuration
+     * @var \VendorPrefix\League\Config\Configuration
      */
     private $config;
 

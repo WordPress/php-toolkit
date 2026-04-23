@@ -7,9 +7,9 @@
 
 declare(strict_types=1);
 
-namespace Nette\Utils;
+namespace VendorPrefix\Nette\Utils;
 
-use Nette;
+use VendorPrefix\Nette;
 
 
 /**
@@ -17,16 +17,16 @@ use Nette;
  */
 final class Reflection
 {
-	use Nette\StaticClass;
+	use VendorPrefix\Nette\StaticClass;
 
-	/** @deprecated use Nette\Utils\Validator::isBuiltinType() */
+	/** @deprecated use VendorPrefix\Nette\Utils\Validator::isBuiltinType() */
 	public static function isBuiltinType(string $type): bool
 	{
 		return Validators::isBuiltinType($type);
 	}
 
 
-	/** @deprecated use Nette\Utils\Validator::isClassKeyword() */
+	/** @deprecated use VendorPrefix\Nette\Utils\Validator::isClassKeyword() */
 	public static function isClassKeyword(string $name): bool
 	{
 		return Validators::isClassKeyword($name);
@@ -145,7 +145,7 @@ final class Reflection
 		} elseif ($ref instanceof \ReflectionParameter) {
 			return '$' . $ref->name . ' in ' . self::toString($ref->getDeclaringFunction());
 		} else {
-			throw new Nette\InvalidArgumentException;
+			throw new VendorPrefix\Nette\InvalidArgumentException;
 		}
 	}
 
@@ -153,13 +153,13 @@ final class Reflection
 	/**
 	 * Expands the name of the class to full name in the given context of given class.
 	 * Thus, it returns how the PHP parser would understand $name if it were written in the body of the class $context.
-	 * @throws Nette\InvalidArgumentException
+	 * @throws VendorPrefix\Nette\InvalidArgumentException
 	 */
 	public static function expandClassName(string $name, \ReflectionClass $context): string
 	{
 		$lower = strtolower($name);
 		if (empty($name)) {
-			throw new Nette\InvalidArgumentException('Class name must not be empty.');
+			throw new VendorPrefix\Nette\InvalidArgumentException('Class name must not be empty.');
 
 		} elseif (Validators::isBuiltinType($lower)) {
 			return $lower;
@@ -195,7 +195,7 @@ final class Reflection
 	public static function getUseStatements(\ReflectionClass $class): array
 	{
 		if ($class->isAnonymous()) {
-			throw new Nette\NotImplementedException('Anonymous classes are not supported.');
+			throw new VendorPrefix\Nette\NotImplementedException('Anonymous classes are not supported.');
 		}
 
 		static $cache = [];

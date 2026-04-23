@@ -7,11 +7,11 @@
 
 declare(strict_types=1);
 
-namespace Nette\Schema\Elements;
+namespace VendorPrefix\Nette\Schema\Elements;
 
-use Nette;
-use Nette\Schema\Context;
-use Nette\Schema\Helpers;
+use VendorPrefix\Nette;
+use VendorPrefix\Nette\Schema\Context;
+use VendorPrefix\Nette\Schema\Helpers;
 
 
 /**
@@ -83,7 +83,7 @@ trait Base
 			if ($handler($value)) {
 				return $value;
 			}
-			$context->addError('Failed assertion ' . ($description ? "'%assertion%'" : '%assertion%') . ' for %label% %path% with value %value%.', Nette\Schema\Message::FailedAssertion, ['value' => $value, 'assertion' => $expected]);
+			$context->addError('Failed assertion ' . ($description ? "'%assertion%'" : '%assertion%') . ' for %label% %path% with value %value%.', VendorPrefix\Nette\Schema\Message::FailedAssertion, ['value' => $value, 'assertion' => $expected]);
 		});
 	}
 
@@ -102,7 +102,7 @@ trait Base
  public function completeDefault(Context $context)
 	{
 		if ($this->required) {
-			$context->addError('The mandatory item %path% is missing.', Nette\Schema\Message::MissingItem);
+			$context->addError('The mandatory item %path% is missing.', VendorPrefix\Nette\Schema\Message::MissingItem);
 			return null;
 		}
 
@@ -127,7 +127,7 @@ trait Base
 	private function doDeprecation(Context $context): void
 	{
 		if ($this->deprecated !== null) {
-			$context->addWarning($this->deprecated, Nette\Schema\Message::Deprecated);
+			$context->addWarning($this->deprecated, VendorPrefix\Nette\Schema\Message::Deprecated);
 		}
 	}
 
@@ -149,7 +149,7 @@ trait Base
 	}
 
 
-	/** @deprecated use Nette\Schema\Validators::validateType()
+	/** @deprecated use VendorPrefix\Nette\Schema\Validators::validateType()
   * @param mixed $value */
  private function doValidate($value, string $expected, Context $context): bool
 	{
@@ -159,7 +159,7 @@ trait Base
 	}
 
 
-	/** @deprecated use Nette\Schema\Validators::validateRange()
+	/** @deprecated use VendorPrefix\Nette\Schema\Validators::validateRange()
   * @param mixed $value */
  private static function doValidateRange($value, array $range, Context $context, string $types = ''): bool
 	{

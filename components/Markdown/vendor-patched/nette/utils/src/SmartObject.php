@@ -7,9 +7,9 @@
 
 declare(strict_types=1);
 
-namespace Nette;
+namespace VendorPrefix\Nette;
 
-use Nette\Utils\ObjectHelpers;
+use VendorPrefix\Nette\Utils\ObjectHelpers;
 
 
 /**

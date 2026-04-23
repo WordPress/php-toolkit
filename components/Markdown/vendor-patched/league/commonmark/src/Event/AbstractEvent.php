@@ -14,9 +14,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Event;
+namespace VendorPrefix\League\CommonMark\Event;
 
-use Psr\EventDispatcher\StoppableEventInterface;
+use VendorPrefix\Psr\EventDispatcher\StoppableEventInterface;
 
 /**
  * Base class for classes containing event data.

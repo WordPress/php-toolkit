@@ -14,9 +14,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Node\Inline;
+namespace VendorPrefix\League\CommonMark\Node\Inline;
 
-use League\CommonMark\Node\Node;
+use VendorPrefix\League\CommonMark\Node\Node;
 
 /**
  * @internal

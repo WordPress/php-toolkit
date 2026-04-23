@@ -11,19 +11,19 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Extension\DescriptionList\Parser;
+namespace VendorPrefix\League\CommonMark\Extension\DescriptionList\Parser;
 
-use League\CommonMark\Extension\DescriptionList\Node\Description;
-use League\CommonMark\Node\Block\AbstractBlock;
-use League\CommonMark\Parser\Block\AbstractBlockContinueParser;
-use League\CommonMark\Parser\Block\BlockContinue;
-use League\CommonMark\Parser\Block\BlockContinueParserInterface;
-use League\CommonMark\Parser\Cursor;
+use VendorPrefix\League\CommonMark\Extension\DescriptionList\Node\Description;
+use VendorPrefix\League\CommonMark\Node\Block\AbstractBlock;
+use VendorPrefix\League\CommonMark\Parser\Block\AbstractBlockContinueParser;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockContinue;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockContinueParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Cursor;
 
 final class DescriptionContinueParser extends AbstractBlockContinueParser
 {
     /**
-     * @var \League\CommonMark\Extension\DescriptionList\Node\Description
+     * @var \VendorPrefix\League\CommonMark\Extension\DescriptionList\Node\Description
      */
     private $block;
 
@@ -38,7 +38,7 @@ final class DescriptionContinueParser extends AbstractBlockContinueParser
         $this->indentation = $indentation;
     }
 
-    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
+    public function getBlock(): \VendorPrefix\League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }

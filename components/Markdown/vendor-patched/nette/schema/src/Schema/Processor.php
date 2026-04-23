@@ -7,9 +7,9 @@
 
 declare(strict_types=1);
 
-namespace Nette\Schema;
+namespace VendorPrefix\Nette\Schema;
 
-use Nette;
+use VendorPrefix\Nette;
 
 
 /**
@@ -22,7 +22,7 @@ final class Processor
   */
  public $onNewContext = [];
 	/**
-  * @var \Nette\Schema\Context
+  * @var \VendorPrefix\Nette\Schema\Context
   */
  private $context;
 	/**
@@ -103,6 +103,6 @@ final class Processor
 	{
 		$this->context = new Context;
 		$this->context->skipDefaults = $this->skipDefaults;
-		Nette\Utils\Arrays::invoke($this->onNewContext, $this->context);
+		VendorPrefix\Nette\Utils\Arrays::invoke($this->onNewContext, $this->context);
 	}
 }

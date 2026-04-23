@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace Nette\Localization;
+namespace VendorPrefix\Nette\Localization;
 
 
 /**

@@ -14,12 +14,12 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\CommonMark\Parser\Inline;
+namespace VendorPrefix\League\CommonMark\Extension\CommonMark\Parser\Inline;
 
-use League\CommonMark\Node\Inline\Text;
-use League\CommonMark\Parser\Inline\InlineParserInterface;
-use League\CommonMark\Parser\Inline\InlineParserMatch;
-use League\CommonMark\Parser\InlineParserContext;
+use VendorPrefix\League\CommonMark\Node\Inline\Text;
+use VendorPrefix\League\CommonMark\Parser\Inline\InlineParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Inline\InlineParserMatch;
+use VendorPrefix\League\CommonMark\Parser\InlineParserContext;
 
 final class OpenBracketParser implements InlineParserInterface
 {

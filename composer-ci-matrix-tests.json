@@ -58,8 +58,8 @@
 			"components/Git/functions.php"
 		],
 		"psr-4": {
-			"Rowbot\\": "components/DataLiberation/vendor-patched/",
-			"Brick\\": "components/DataLiberation/vendor-patched/",
+			"VendorPrefix\\Rowbot\\": "components/DataLiberation/vendor-patched/",
+			"VendorPrefix\\Brick\\": "components/DataLiberation/vendor-patched/",
 			"WordPress\\CORSProxy\\": "components/CORSProxy/"
 		}
 	},

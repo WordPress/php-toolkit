@@ -14,16 +14,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\CommonMark;
+namespace VendorPrefix\League\CommonMark\Extension\CommonMark;
 
-use League\CommonMark\Environment\EnvironmentBuilderInterface;
-use League\CommonMark\Extension\CommonMark\Delimiter\Processor\EmphasisDelimiterProcessor;
-use League\CommonMark\Extension\ConfigurableExtensionInterface;
-use League\CommonMark\Node as CoreNode;
-use League\CommonMark\Parser as CoreParser;
-use League\CommonMark\Renderer as CoreRenderer;
-use League\Config\ConfigurationBuilderInterface;
-use Nette\Schema\Expect;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentBuilderInterface;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Delimiter\Processor\EmphasisDelimiterProcessor;
+use VendorPrefix\League\CommonMark\Extension\ConfigurableExtensionInterface;
+use VendorPrefix\League\CommonMark\Node as CoreNode;
+use VendorPrefix\League\CommonMark\Parser as CoreParser;
+use VendorPrefix\League\CommonMark\Renderer as CoreRenderer;
+use VendorPrefix\League\Config\ConfigurationBuilderInterface;
+use VendorPrefix\Nette\Schema\Expect;
 
 final class CommonMarkCoreExtension implements ConfigurableExtensionInterface
 {

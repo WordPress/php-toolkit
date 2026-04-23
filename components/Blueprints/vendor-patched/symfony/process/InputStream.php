@@ -9,11 +9,11 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Process;
+namespace VendorPrefix\Symfony\Component\Process;
 
 use Iterator;
 use IteratorAggregate;
-use Symfony\Component\Process\Exception\RuntimeException;
+use VendorPrefix\Symfony\Component\Process\Exception\RuntimeException;
 use Traversable;
 
 /**

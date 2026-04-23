@@ -1,6 +1,6 @@
 <?php
 
-use Rowbot\URL\URL;
+use VendorPrefix\Rowbot\URL\URL;
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\DataLiberation\EntityReader\EPubEntityReader;
 use WordPress\DataLiberation\EntityReader\FilesystemEntityReader;

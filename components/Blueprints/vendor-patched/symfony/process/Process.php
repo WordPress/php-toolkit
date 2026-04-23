@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Process;
+namespace VendorPrefix\Symfony\Component\Process;
 
 use Closure;
 use Generator;
@@ -17,14 +17,14 @@ use Iterator;
 use IteratorAggregate;
 use ReflectionMethod;
 use ReturnTypeWillChange;
-use Symfony\Component\Process\Exception\InvalidArgumentException;
-use Symfony\Component\Process\Exception\LogicException;
-use Symfony\Component\Process\Exception\ProcessFailedException;
-use Symfony\Component\Process\Exception\ProcessTimedOutException;
-use Symfony\Component\Process\Exception\RuntimeException;
-use Symfony\Component\Process\Pipes\PipesInterface;
-use Symfony\Component\Process\Pipes\UnixPipes;
-use Symfony\Component\Process\Pipes\WindowsPipes;
+use VendorPrefix\Symfony\Component\Process\Exception\InvalidArgumentException;
+use VendorPrefix\Symfony\Component\Process\Exception\LogicException;
+use VendorPrefix\Symfony\Component\Process\Exception\ProcessFailedException;
+use VendorPrefix\Symfony\Component\Process\Exception\ProcessTimedOutException;
+use VendorPrefix\Symfony\Component\Process\Exception\RuntimeException;
+use VendorPrefix\Symfony\Component\Process\Pipes\PipesInterface;
+use VendorPrefix\Symfony\Component\Process\Pipes\UnixPipes;
+use VendorPrefix\Symfony\Component\Process\Pipes\WindowsPipes;
 use Traversable;
 
 /**

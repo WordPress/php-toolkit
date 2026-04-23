@@ -3,7 +3,7 @@
 namespace WordPress\Blueprints\Steps;
 
 use RuntimeException;
-use Symfony\Component\Process\Exception\ProcessFailedException;
+use VendorPrefix\Symfony\Component\Process\Exception\ProcessFailedException;
 use WordPress\Blueprints\DataReference\File;
 use WordPress\Blueprints\Exception\BlueprintExecutionException;
 use WordPress\Blueprints\Process;

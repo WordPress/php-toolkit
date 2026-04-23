@@ -2,8 +2,8 @@
 
 namespace WordPress\Blueprints\Logger;
 
-use Psr\Log\InvalidArgumentException;
-use Psr\Log\LoggerInterface;
+use VendorPrefix\Psr\Log\InvalidArgumentException;
+use VendorPrefix\Psr\Log\LoggerInterface;
 
 class CLILogger implements LoggerInterface {
 	private $stream;

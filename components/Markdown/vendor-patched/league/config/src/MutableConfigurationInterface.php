@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\Config;
+namespace VendorPrefix\League\Config;
 
-use League\Config\Exception\UnknownOptionException;
+use VendorPrefix\League\Config\Exception\UnknownOptionException;
 
 /**
  * Interface for setting/merging user-defined configuration values into the configuration object

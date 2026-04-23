@@ -9,10 +9,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Process\Pipes;
+namespace VendorPrefix\Symfony\Component\Process\Pipes;
 
-use Symfony\Component\Process\Exception\RuntimeException;
-use Symfony\Component\Process\Process;
+use VendorPrefix\Symfony\Component\Process\Exception\RuntimeException;
+use VendorPrefix\Symfony\Component\Process\Process;
 
 /**
  * WindowsPipes implementation uses temporary files as handles.

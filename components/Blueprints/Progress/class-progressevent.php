@@ -2,7 +2,7 @@
 
 namespace WordPress\Blueprints\Progress;
 
-use Symfony\Component\EventDispatcher\Event;
+use VendorPrefix\Symfony\Component\EventDispatcher\Event;
 
 /**
  * Event class for tracking progress updates

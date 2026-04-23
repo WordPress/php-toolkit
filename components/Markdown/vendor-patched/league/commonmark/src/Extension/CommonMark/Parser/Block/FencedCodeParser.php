@@ -11,20 +11,20 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\CommonMark\Parser\Block;
+namespace VendorPrefix\League\CommonMark\Extension\CommonMark\Parser\Block;
 
-use League\CommonMark\Extension\CommonMark\Node\Block\FencedCode;
-use League\CommonMark\Parser\Block\AbstractBlockContinueParser;
-use League\CommonMark\Parser\Block\BlockContinue;
-use League\CommonMark\Parser\Block\BlockContinueParserInterface;
-use League\CommonMark\Parser\Cursor;
-use League\CommonMark\Util\ArrayCollection;
-use League\CommonMark\Util\RegexHelper;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\FencedCode;
+use VendorPrefix\League\CommonMark\Parser\Block\AbstractBlockContinueParser;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockContinue;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockContinueParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Cursor;
+use VendorPrefix\League\CommonMark\Util\ArrayCollection;
+use VendorPrefix\League\CommonMark\Util\RegexHelper;
 
 final class FencedCodeParser extends AbstractBlockContinueParser
 {
     /** @psalm-readonly
-     * @var \League\CommonMark\Extension\CommonMark\Node\Block\FencedCode */
+     * @var \VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\FencedCode */
     private $block;
 
     /** @var ArrayCollection<string> */
@@ -36,7 +36,7 @@ final class FencedCodeParser extends AbstractBlockContinueParser
         $this->strings = new ArrayCollection();
     }
 
-    public function getBlock(): \League\CommonMark\Node\Block\AbstractBlock
+    public function getBlock(): \VendorPrefix\League\CommonMark\Node\Block\AbstractBlock
     {
         return $this->block;
     }

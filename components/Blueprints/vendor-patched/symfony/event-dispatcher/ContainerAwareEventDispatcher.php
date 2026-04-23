@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\EventDispatcher;
+namespace VendorPrefix\Symfony\Component\EventDispatcher;
 
 use InvalidArgumentException;
 use PHPUnit_Framework_MockObject_MockObject;
 use Prophecy\Doubler\DoubleInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use VendorPrefix\Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Lazily loads listeners and subscribers from the dependency injection

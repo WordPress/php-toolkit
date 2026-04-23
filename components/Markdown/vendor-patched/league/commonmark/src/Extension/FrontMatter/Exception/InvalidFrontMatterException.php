@@ -11,9 +11,9 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Extension\FrontMatter\Exception;
+namespace VendorPrefix\League\CommonMark\Extension\FrontMatter\Exception;
 
-use League\CommonMark\Exception\CommonMarkException;
+use VendorPrefix\League\CommonMark\Exception\CommonMarkException;
 
 class InvalidFrontMatterException extends \RuntimeException implements CommonMarkException
 {

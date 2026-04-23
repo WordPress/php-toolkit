@@ -12,25 +12,25 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Extension\Attributes\Parser;
+namespace VendorPrefix\League\CommonMark\Extension\Attributes\Parser;
 
-use League\CommonMark\Extension\Attributes\Node\Attributes;
-use League\CommonMark\Extension\Attributes\Util\AttributesHelper;
-use League\CommonMark\Node\Block\AbstractBlock;
-use League\CommonMark\Parser\Block\AbstractBlockContinueParser;
-use League\CommonMark\Parser\Block\BlockContinue;
-use League\CommonMark\Parser\Block\BlockContinueParserInterface;
-use League\CommonMark\Parser\Cursor;
+use VendorPrefix\League\CommonMark\Extension\Attributes\Node\Attributes;
+use VendorPrefix\League\CommonMark\Extension\Attributes\Util\AttributesHelper;
+use VendorPrefix\League\CommonMark\Node\Block\AbstractBlock;
+use VendorPrefix\League\CommonMark\Parser\Block\AbstractBlockContinueParser;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockContinue;
+use VendorPrefix\League\CommonMark\Parser\Block\BlockContinueParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Cursor;
 
 final class AttributesBlockContinueParser extends AbstractBlockContinueParser
 {
     /**
-     * @var \League\CommonMark\Extension\Attributes\Node\Attributes
+     * @var \VendorPrefix\League\CommonMark\Extension\Attributes\Node\Attributes
      */
     private $block;
 
     /**
-     * @var \League\CommonMark\Node\Block\AbstractBlock
+     * @var \VendorPrefix\League\CommonMark\Node\Block\AbstractBlock
      */
     private $container;
 

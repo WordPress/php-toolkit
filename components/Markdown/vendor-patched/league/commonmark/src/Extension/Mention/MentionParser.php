@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\Mention;
+namespace VendorPrefix\League\CommonMark\Extension\Mention;
 
-use League\CommonMark\Extension\Mention\Generator\CallbackGenerator;
-use League\CommonMark\Extension\Mention\Generator\MentionGeneratorInterface;
-use League\CommonMark\Extension\Mention\Generator\StringTemplateLinkGenerator;
-use League\CommonMark\Parser\Inline\InlineParserInterface;
-use League\CommonMark\Parser\Inline\InlineParserMatch;
-use League\CommonMark\Parser\InlineParserContext;
+use VendorPrefix\League\CommonMark\Extension\Mention\Generator\CallbackGenerator;
+use VendorPrefix\League\CommonMark\Extension\Mention\Generator\MentionGeneratorInterface;
+use VendorPrefix\League\CommonMark\Extension\Mention\Generator\StringTemplateLinkGenerator;
+use VendorPrefix\League\CommonMark\Parser\Inline\InlineParserInterface;
+use VendorPrefix\League\CommonMark\Parser\Inline\InlineParserMatch;
+use VendorPrefix\League\CommonMark\Parser\InlineParserContext;
 
 final class MentionParser implements InlineParserInterface
 {
@@ -35,7 +35,7 @@ final class MentionParser implements InlineParserInterface
     private $identifierPattern;
 
     /** @psalm-readonly
-     * @var \League\CommonMark\Extension\Mention\Generator\MentionGeneratorInterface */
+     * @var \VendorPrefix\League\CommonMark\Extension\Mention\Generator\MentionGeneratorInterface */
     private $mentionGenerator;
 
     public function __construct(string $name, string $prefix, string $identifierPattern, MentionGeneratorInterface $mentionGenerator)

@@ -11,24 +11,24 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Xml;
+namespace VendorPrefix\League\CommonMark\Xml;
 
-use League\CommonMark\ConverterInterface;
-use League\CommonMark\Environment\EnvironmentInterface;
-use League\CommonMark\Exception\CommonMarkException;
-use League\CommonMark\Output\RenderedContentInterface;
-use League\CommonMark\Parser\MarkdownParser;
-use League\CommonMark\Parser\MarkdownParserInterface;
-use League\CommonMark\Renderer\DocumentRendererInterface;
+use VendorPrefix\League\CommonMark\ConverterInterface;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentInterface;
+use VendorPrefix\League\CommonMark\Exception\CommonMarkException;
+use VendorPrefix\League\CommonMark\Output\RenderedContentInterface;
+use VendorPrefix\League\CommonMark\Parser\MarkdownParser;
+use VendorPrefix\League\CommonMark\Parser\MarkdownParserInterface;
+use VendorPrefix\League\CommonMark\Renderer\DocumentRendererInterface;
 
 final class MarkdownToXmlConverter implements ConverterInterface
 {
     /** @psalm-readonly
-     * @var \League\CommonMark\Parser\MarkdownParserInterface */
+     * @var \VendorPrefix\League\CommonMark\Parser\MarkdownParserInterface */
     private $parser;
 
     /** @psalm-readonly
-     * @var \League\CommonMark\Renderer\DocumentRendererInterface */
+     * @var \VendorPrefix\League\CommonMark\Renderer\DocumentRendererInterface */
     private $renderer;
 
     public function __construct(EnvironmentInterface $environment)

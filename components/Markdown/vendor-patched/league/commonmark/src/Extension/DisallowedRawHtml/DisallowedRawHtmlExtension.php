@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\DisallowedRawHtml;
+namespace VendorPrefix\League\CommonMark\Extension\DisallowedRawHtml;
 
-use League\CommonMark\Environment\EnvironmentBuilderInterface;
-use League\CommonMark\Extension\CommonMark\Node\Block\HtmlBlock;
-use League\CommonMark\Extension\CommonMark\Node\Inline\HtmlInline;
-use League\CommonMark\Extension\CommonMark\Renderer\Block\HtmlBlockRenderer;
-use League\CommonMark\Extension\CommonMark\Renderer\Inline\HtmlInlineRenderer;
-use League\CommonMark\Extension\ConfigurableExtensionInterface;
-use League\Config\ConfigurationBuilderInterface;
-use Nette\Schema\Expect;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentBuilderInterface;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\HtmlBlock;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Inline\HtmlInline;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Renderer\Block\HtmlBlockRenderer;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Renderer\Inline\HtmlInlineRenderer;
+use VendorPrefix\League\CommonMark\Extension\ConfigurableExtensionInterface;
+use VendorPrefix\League\Config\ConfigurationBuilderInterface;
+use VendorPrefix\Nette\Schema\Expect;
 
 final class DisallowedRawHtmlExtension implements ConfigurableExtensionInterface
 {

@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Renderer;
+namespace VendorPrefix\League\CommonMark\Renderer;
 
-use League\CommonMark\Exception\InvalidArgumentException;
-use League\CommonMark\Node\Node;
+use VendorPrefix\League\CommonMark\Exception\InvalidArgumentException;
+use VendorPrefix\League\CommonMark\Node\Node;
 
 interface NodeRendererInterface
 {

@@ -7,10 +7,10 @@
 
 declare(strict_types=1);
 
-namespace Nette\Schema;
+namespace VendorPrefix\Nette\Schema;
 
-use Nette;
-use Nette\Utils\Reflection;
+use VendorPrefix\Nette;
+use VendorPrefix\Nette\Utils\Reflection;
 
 
 /**
@@ -18,7 +18,7 @@ use Nette\Utils\Reflection;
  */
 final class Helpers
 {
-	use Nette\StaticClass;
+	use VendorPrefix\Nette\StaticClass;
 
 	public const PreventMerging = '_prevent_merging';
 
@@ -63,7 +63,7 @@ final class Helpers
   */
  public static function getPropertyType($prop): ?string
 	{
-		if ($type = Nette\Utils\Type::fromReflection($prop)) {
+		if ($type = VendorPrefix\Nette\Utils\Type::fromReflection($prop)) {
 			return (string) $type;
 		} elseif (
 			($prop instanceof \ReflectionProperty)
@@ -86,7 +86,7 @@ final class Helpers
 	public static function parseAnnotation(\Reflector $ref, string $name): ?string
 	{
 		if (!Reflection::areCommentsAvailable()) {
-			throw new Nette\InvalidStateException('You have to enable phpDoc comments in opcode cache.');
+			throw new VendorPrefix\Nette\InvalidStateException('You have to enable phpDoc comments in opcode cache.');
 		}
 
 		$re = '#[\s*]@' . preg_quote($name, '#') . '(?=\s|$)(?:[ \t]+([^@\s]\S*))?#';
@@ -108,7 +108,7 @@ final class Helpers
 		} elseif (is_object($value)) {
 			return 'object ' . get_class($value);
 		} elseif (is_string($value)) {
-			return "'" . Nette\Utils\Strings::truncate($value, 15, '...') . "'";
+			return "'" . VendorPrefix\Nette\Utils\Strings::truncate($value, 15, '...') . "'";
 		} elseif (is_scalar($value)) {
 			return var_export($value, true);
 		} else {
@@ -122,7 +122,7 @@ final class Helpers
   */
  public static function validateType($value, string $expected, Context $context): void
 	{
-		if (!Nette\Utils\Validators::is($value, $expected)) {
+		if (!VendorPrefix\Nette\Utils\Validators::is($value, $expected)) {
 			$expected = str_replace(DynamicParameter::class . '|', '', $expected);
 			$expected = str_replace(['|', ':'], [' or ', ' in range '], $expected);
 			$context->addError('The %label% %path% expects to be %expected%, %value% given.', Message::TypeMismatch, ['value' => $value, 'expected' => $expected]);
@@ -139,7 +139,7 @@ final class Helpers
 			[$length, $label] = is_array($value)
 				? [count($value), 'items']
 				: (in_array('unicode', explode('|', $types), true)
-					? [Nette\Utils\Strings::length($value), 'characters']
+					? [VendorPrefix\Nette\Utils\Strings::length($value), 'characters']
 					: [strlen($value), 'bytes']);
 
 			if (!self::isInRange($length, $range)) {
@@ -171,7 +171,7 @@ final class Helpers
 
 	public static function getCastStrategy(string $type): \Closure
 	{
-		if (Nette\Utils\Reflection::isBuiltinType($type)) {
+		if (VendorPrefix\Nette\Utils\Reflection::isBuiltinType($type)) {
 			return static function ($value) use ($type) {
 				settype($value, $type);
 				return $value;
@@ -184,7 +184,7 @@ final class Helpers
    };
 		} else {
 			return static function ($value) use ($type) {
-       return Nette\Utils\Arrays::toObject((array) $value, new $type);
+       return VendorPrefix\Nette\Utils\Arrays::toObject((array) $value, new $type);
    };
 		}
 	}

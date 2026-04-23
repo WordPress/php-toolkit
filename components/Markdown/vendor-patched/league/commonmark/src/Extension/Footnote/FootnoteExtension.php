@@ -12,28 +12,28 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Extension\Footnote;
+namespace VendorPrefix\League\CommonMark\Extension\Footnote;
 
-use League\CommonMark\Environment\EnvironmentBuilderInterface;
-use League\CommonMark\Event\DocumentParsedEvent;
-use League\CommonMark\Extension\ConfigurableExtensionInterface;
-use League\CommonMark\Extension\Footnote\Event\AnonymousFootnotesListener;
-use League\CommonMark\Extension\Footnote\Event\FixOrphanedFootnotesAndRefsListener;
-use League\CommonMark\Extension\Footnote\Event\GatherFootnotesListener;
-use League\CommonMark\Extension\Footnote\Event\NumberFootnotesListener;
-use League\CommonMark\Extension\Footnote\Node\Footnote;
-use League\CommonMark\Extension\Footnote\Node\FootnoteBackref;
-use League\CommonMark\Extension\Footnote\Node\FootnoteContainer;
-use League\CommonMark\Extension\Footnote\Node\FootnoteRef;
-use League\CommonMark\Extension\Footnote\Parser\AnonymousFootnoteRefParser;
-use League\CommonMark\Extension\Footnote\Parser\FootnoteRefParser;
-use League\CommonMark\Extension\Footnote\Parser\FootnoteStartParser;
-use League\CommonMark\Extension\Footnote\Renderer\FootnoteBackrefRenderer;
-use League\CommonMark\Extension\Footnote\Renderer\FootnoteContainerRenderer;
-use League\CommonMark\Extension\Footnote\Renderer\FootnoteRefRenderer;
-use League\CommonMark\Extension\Footnote\Renderer\FootnoteRenderer;
-use League\Config\ConfigurationBuilderInterface;
-use Nette\Schema\Expect;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentBuilderInterface;
+use VendorPrefix\League\CommonMark\Event\DocumentParsedEvent;
+use VendorPrefix\League\CommonMark\Extension\ConfigurableExtensionInterface;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Event\AnonymousFootnotesListener;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Event\FixOrphanedFootnotesAndRefsListener;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Event\GatherFootnotesListener;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Event\NumberFootnotesListener;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Node\Footnote;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Node\FootnoteBackref;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Node\FootnoteContainer;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Node\FootnoteRef;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Parser\AnonymousFootnoteRefParser;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Parser\FootnoteRefParser;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Parser\FootnoteStartParser;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Renderer\FootnoteBackrefRenderer;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Renderer\FootnoteContainerRenderer;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Renderer\FootnoteRefRenderer;
+use VendorPrefix\League\CommonMark\Extension\Footnote\Renderer\FootnoteRenderer;
+use VendorPrefix\League\Config\ConfigurationBuilderInterface;
+use VendorPrefix\Nette\Schema\Expect;
 
 final class FootnoteExtension implements ConfigurableExtensionInterface
 {

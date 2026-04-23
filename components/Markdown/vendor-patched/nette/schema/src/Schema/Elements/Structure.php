@@ -7,12 +7,12 @@
 
 declare(strict_types=1);
 
-namespace Nette\Schema\Elements;
+namespace VendorPrefix\Nette\Schema\Elements;
 
-use Nette;
-use Nette\Schema\Context;
-use Nette\Schema\Helpers;
-use Nette\Schema\Schema;
+use VendorPrefix\Nette;
+use VendorPrefix\Nette\Schema\Context;
+use VendorPrefix\Nette\Schema\Helpers;
+use VendorPrefix\Nette\Schema\Schema;
 
 
 final class Structure implements Schema
@@ -23,7 +23,7 @@ final class Structure implements Schema
 	private $items;
 
 	/** for array|list
-  * @var \Nette\Schema\Schema|null */
+  * @var \VendorPrefix\Nette\Schema\Schema|null */
  private $otherItems;
 
 	/** @var array{?int, ?int} */
@@ -51,7 +51,7 @@ final class Structure implements Schema
   */
  public function default($value): self
 	{
-		throw new Nette\InvalidStateException('Structure cannot have default value.');
+		throw new VendorPrefix\Nette\InvalidStateException('Structure cannot have default value.');
 	}
 
 
@@ -70,7 +70,7 @@ final class Structure implements Schema
 
 
 	/**
-  * @param string|\Nette\Schema\Schema $type
+  * @param string|\VendorPrefix\Nette\Schema\Schema $type
   */
  public function otherItems($type = 'mixed'): self
 	{
@@ -199,8 +199,8 @@ final class Structure implements Schema
 			} else {
 				$keys = array_map('strval', array_keys($items));
 				foreach ($extraKeys as $key) {
-					$hint = Nette\Utils\Helpers::getSuggestion($keys, (string) $key);
-					$context->addError('Unexpected item %path%' . ($hint ? ", did you mean '%hint%'?" : '.'), Nette\Schema\Message::UnexpectedItem, ['hint' => $hint])->path[] = $key;
+					$hint = VendorPrefix\Nette\Utils\Helpers::getSuggestion($keys, (string) $key);
+					$context->addError('Unexpected item %path%' . ($hint ? ", did you mean '%hint%'?" : '.'), VendorPrefix\Nette\Schema\Message::UnexpectedItem, ['hint' => $hint])->path[] = $key;
 				}
 			}
 		}

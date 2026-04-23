@@ -2,18 +2,18 @@
 
 namespace WordPress\Markdown;
 
-use League\CommonMark\Environment\Environment;
-use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
-use League\CommonMark\Extension\CommonMark\Node\Block as ExtensionBlock;
-use League\CommonMark\Extension\CommonMark\Node\Inline as ExtensionInline;
-use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
-use League\CommonMark\Extension\Table\Table;
-use League\CommonMark\Extension\Table\TableCell;
-use League\CommonMark\Extension\Table\TableRow;
-use League\CommonMark\Extension\Table\TableSection;
-use League\CommonMark\Node\Block;
-use League\CommonMark\Node\Inline;
-use League\CommonMark\Parser\MarkdownParser;
+use VendorPrefix\League\CommonMark\Environment\Environment;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block as ExtensionBlock;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Inline as ExtensionInline;
+use VendorPrefix\League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
+use VendorPrefix\League\CommonMark\Extension\Table\Table;
+use VendorPrefix\League\CommonMark\Extension\Table\TableCell;
+use VendorPrefix\League\CommonMark\Extension\Table\TableRow;
+use VendorPrefix\League\CommonMark\Extension\Table\TableSection;
+use VendorPrefix\League\CommonMark\Node\Block;
+use VendorPrefix\League\CommonMark\Node\Inline;
+use VendorPrefix\League\CommonMark\Parser\MarkdownParser;
 use WordPress\DataLiberation\BlockMarkup\BlockObject;
 use WordPress\DataLiberation\DataFormatConsumer\BlocksWithMetadata;
 use WordPress\DataLiberation\DataFormatConsumer\DataFormatConsumer;
@@ -75,8 +75,8 @@ class MarkdownConsumer implements DataFormatConsumer {
 		$environment->addExtension( new CommonMarkCoreExtension() );
 		$environment->addExtension( new GithubFlavoredMarkdownExtension() );
 		$environment->addExtension(
-			new \Webuni\FrontMatter\Markdown\FrontMatterLeagueCommonMarkExtension(
-				new \Webuni\FrontMatter\FrontMatter()
+			new \VendorPrefix\Webuni\FrontMatter\Markdown\FrontMatterLeagueCommonMarkExtension(
+				new \VendorPrefix\Webuni\FrontMatter\FrontMatter()
 			)
 		);
 

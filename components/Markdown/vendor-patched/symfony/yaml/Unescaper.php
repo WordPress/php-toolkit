@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\Yaml;
+namespace VendorPrefix\Symfony\Component\Yaml;
 
-use Symfony\Component\Yaml\Exception\ParseException;
+use VendorPrefix\Symfony\Component\Yaml\Exception\ParseException;
 
 /**
  * Unescaper encapsulates unescaping rules for single and double-quoted

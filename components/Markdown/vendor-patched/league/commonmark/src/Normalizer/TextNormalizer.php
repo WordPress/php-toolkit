@@ -11,7 +11,7 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Normalizer;
+namespace VendorPrefix\League\CommonMark\Normalizer;
 
 /***
  * Normalize text input using the steps given by the CommonMark spec to normalize labels

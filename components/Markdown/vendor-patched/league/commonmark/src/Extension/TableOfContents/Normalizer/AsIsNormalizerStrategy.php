@@ -11,16 +11,16 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\TableOfContents\Normalizer;
+namespace VendorPrefix\League\CommonMark\Extension\TableOfContents\Normalizer;
 
-use League\CommonMark\Extension\CommonMark\Node\Block\ListBlock;
-use League\CommonMark\Extension\CommonMark\Node\Block\ListItem;
-use League\CommonMark\Extension\TableOfContents\Node\TableOfContents;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\ListBlock;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\ListItem;
+use VendorPrefix\League\CommonMark\Extension\TableOfContents\Node\TableOfContents;
 
 final class AsIsNormalizerStrategy implements NormalizerStrategyInterface
 {
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\CommonMark\Extension\CommonMark\Node\Block\ListBlock */
+     * @var \VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\ListBlock */
     private $parentListBlock;
 
     /** @psalm-readonly-allow-private-mutation
@@ -28,7 +28,7 @@ final class AsIsNormalizerStrategy implements NormalizerStrategyInterface
     private $parentLevel = 1;
 
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\CommonMark\Extension\CommonMark\Node\Block\ListItem|null */
+     * @var \VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\ListItem|null */
     private $lastListItem;
 
     public function __construct(TableOfContents $toc)

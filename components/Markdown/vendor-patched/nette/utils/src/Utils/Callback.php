@@ -7,9 +7,9 @@
 
 declare(strict_types=1);
 
-namespace Nette\Utils;
+namespace VendorPrefix\Nette\Utils;
 
-use Nette;
+use VendorPrefix\Nette;
 use function is_array, is_object, is_string;
 
 
@@ -18,7 +18,7 @@ use function is_array, is_object, is_string;
  */
 final class Callback
 {
-	use Nette\StaticClass;
+	use VendorPrefix\Nette\StaticClass;
 
 	/**
   * Invokes internal PHP function with own error handler.
@@ -52,13 +52,13 @@ final class Callback
   * Checks that $callable is valid PHP callback. Otherwise throws exception. If the $syntax is set to true, only verifies
   * that $callable has a valid structure to be used as a callback, but does not verify if the class or method actually exists.
   * @return callable
-  * @throws Nette\InvalidArgumentException
+  * @throws VendorPrefix\Nette\InvalidArgumentException
   * @param mixed $callable
   */
  public static function check($callable, bool $syntax = false)
 	{
 		if (!is_callable($callable, $syntax)) {
-			throw new Nette\InvalidArgumentException($syntax
+			throw new VendorPrefix\Nette\InvalidArgumentException($syntax
 				? 'Given value is not a callable type.'
 				: sprintf("Callback '%s' is not callable.", self::toString($callable)));
 		}

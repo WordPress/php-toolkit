@@ -11,9 +11,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\Config\Exception;
+namespace VendorPrefix\League\Config\Exception;
 
-use Nette\Schema\ValidationException as NetteException;
+use VendorPrefix\Nette\Schema\ValidationException as NetteException;
 
 final class ValidationException extends InvalidConfigurationException
 {

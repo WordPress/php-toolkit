@@ -11,14 +11,14 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\Mention;
+namespace VendorPrefix\League\CommonMark\Extension\Mention;
 
-use League\CommonMark\Environment\EnvironmentBuilderInterface;
-use League\CommonMark\Extension\ConfigurableExtensionInterface;
-use League\CommonMark\Extension\Mention\Generator\MentionGeneratorInterface;
-use League\Config\ConfigurationBuilderInterface;
-use League\Config\Exception\InvalidConfigurationException;
-use Nette\Schema\Expect;
+use VendorPrefix\League\CommonMark\Environment\EnvironmentBuilderInterface;
+use VendorPrefix\League\CommonMark\Extension\ConfigurableExtensionInterface;
+use VendorPrefix\League\CommonMark\Extension\Mention\Generator\MentionGeneratorInterface;
+use VendorPrefix\League\Config\ConfigurationBuilderInterface;
+use VendorPrefix\League\Config\Exception\InvalidConfigurationException;
+use VendorPrefix\Nette\Schema\Expect;
 
 final class MentionExtension implements ConfigurableExtensionInterface
 {

@@ -14,10 +14,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\Mention;
+namespace VendorPrefix\League\CommonMark\Extension\Mention;
 
-use League\CommonMark\Extension\CommonMark\Node\Inline\Link;
-use League\CommonMark\Node\Inline\Text;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Inline\Link;
+use VendorPrefix\League\CommonMark\Node\Inline\Text;
 
 class Mention extends Link
 {

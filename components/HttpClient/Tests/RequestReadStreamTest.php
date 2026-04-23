@@ -3,7 +3,7 @@
 namespace WordPress\HttpClient\Tests;
 
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Process\Process;
+use VendorPrefix\Symfony\Component\Process\Process;
 use WordPress\ByteStream\ByteStreamException;
 use WordPress\HttpClient\ByteStream\RequestReadStream;
 use WordPress\HttpClient\Client;

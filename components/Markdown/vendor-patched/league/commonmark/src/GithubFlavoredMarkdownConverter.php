@@ -11,11 +11,11 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark;
+namespace VendorPrefix\League\CommonMark;
 
-use League\CommonMark\Environment\Environment;
-use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
-use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
+use VendorPrefix\League\CommonMark\Environment\Environment;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
+use VendorPrefix\League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
 
 /**
  * Converts GitHub Flavored Markdown to HTML.
@@ -36,7 +36,7 @@ final class GithubFlavoredMarkdownConverter extends MarkdownConverter
         parent::__construct($environment);
     }
 
-    public function getEnvironment(): \League\CommonMark\Environment\EnvironmentInterface
+    public function getEnvironment(): \VendorPrefix\League\CommonMark\Environment\EnvironmentInterface
     {
         \assert($this->environment instanceof Environment);
 

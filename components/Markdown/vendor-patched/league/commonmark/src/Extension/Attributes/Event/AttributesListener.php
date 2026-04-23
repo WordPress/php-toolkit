@@ -12,17 +12,17 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Extension\Attributes\Event;
+namespace VendorPrefix\League\CommonMark\Extension\Attributes\Event;
 
-use League\CommonMark\Event\DocumentParsedEvent;
-use League\CommonMark\Extension\Attributes\Node\Attributes;
-use League\CommonMark\Extension\Attributes\Node\AttributesInline;
-use League\CommonMark\Extension\Attributes\Util\AttributesHelper;
-use League\CommonMark\Extension\CommonMark\Node\Block\FencedCode;
-use League\CommonMark\Extension\CommonMark\Node\Block\ListBlock;
-use League\CommonMark\Extension\CommonMark\Node\Block\ListItem;
-use League\CommonMark\Node\Inline\AbstractInline;
-use League\CommonMark\Node\Node;
+use VendorPrefix\League\CommonMark\Event\DocumentParsedEvent;
+use VendorPrefix\League\CommonMark\Extension\Attributes\Node\Attributes;
+use VendorPrefix\League\CommonMark\Extension\Attributes\Node\AttributesInline;
+use VendorPrefix\League\CommonMark\Extension\Attributes\Util\AttributesHelper;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\FencedCode;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\ListBlock;
+use VendorPrefix\League\CommonMark\Extension\CommonMark\Node\Block\ListItem;
+use VendorPrefix\League\CommonMark\Node\Inline\AbstractInline;
+use VendorPrefix\League\CommonMark\Node\Node;
 
 final class AttributesListener
 {

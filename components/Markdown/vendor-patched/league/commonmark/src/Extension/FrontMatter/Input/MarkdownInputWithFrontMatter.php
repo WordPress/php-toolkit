@@ -11,10 +11,10 @@
 
 declare(strict_types=1);
 
-namespace League\CommonMark\Extension\FrontMatter\Input;
+namespace VendorPrefix\League\CommonMark\Extension\FrontMatter\Input;
 
-use League\CommonMark\Extension\FrontMatter\FrontMatterProviderInterface;
-use League\CommonMark\Input\MarkdownInput;
+use VendorPrefix\League\CommonMark\Extension\FrontMatter\FrontMatterProviderInterface;
+use VendorPrefix\League\CommonMark\Input\MarkdownInput;
 
 final class MarkdownInputWithFrontMatter extends MarkdownInput implements FrontMatterProviderInterface
 {

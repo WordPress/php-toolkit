@@ -34,26 +34,26 @@ Thank you!
 
 In variable `$schema` we have a validation schema (what exactly this means and how to create it we will say later) and in variable `$data` we have a data structure that we want to validate and normalize. This can be, for example, data sent by the user through an API, configuration file, etc.
 
-The task is handled by the [Nette\Schema\Processor](https://api.nette.org/schema/master/Nette/Schema/Processor.html) class, which processes the input and either returns normalized data or throws an [Nette\Schema\ValidationException](https://api.nette.org/schema/master/Nette/Schema/ValidationException.html) exception on error.
+The task is handled by the [VendorPrefix\Nette\Schema\Processor](https://api.nette.org/schema/master/Nette/Schema/Processor.html) class, which processes the input and either returns normalized data or throws an [VendorPrefix\Nette\Schema\ValidationException](https://api.nette.org/schema/master/Nette/Schema/ValidationException.html) exception on error.
 
 ```php
-$processor = new Nette\Schema\Processor;
+$processor = new VendorPrefix\Nette\Schema\Processor;
 
 try {
 	$normalized = $processor->process($schema, $data);
-} catch (Nette\Schema\ValidationException $e) {
+} catch (VendorPrefix\Nette\Schema\ValidationException $e) {
 	echo 'Data is invalid: ' . $e->getMessage();
 }
 ```
 
-Method `$e->getMessages()` returns array of all message strings and `$e->getMessageObjects()` return all messages as [Nette\Schema\Message](https://api.nette.org/schema/master/Nette/Schema/Message.html) objects.
+Method `$e->getMessages()` returns array of all message strings and `$e->getMessageObjects()` return all messages as [VendorPrefix\Nette\Schema\Message](https://api.nette.org/schema/master/Nette/Schema/Message.html) objects.
 
 ## Defining Schema
 
-And now let's create a schema. The class [Nette\Schema\Expect](https://api.nette.org/schema/master/Nette/Schema/Expect.html) is used to define it, we actually define expectations of what the data should look like. Let's say that the input data must be a structure (e.g. an array) containing elements `processRefund` of type bool and `refundAmount` of type int.
+And now let's create a schema. The class [VendorPrefix\Nette\Schema\Expect](https://api.nette.org/schema/master/Nette/Schema/Expect.html) is used to define it, we actually define expectations of what the data should look like. Let's say that the input data must be a structure (e.g. an array) containing elements `processRefund` of type bool and `refundAmount` of type int.
 
 ```php
-use Nette\Schema\Expect;
+use VendorPrefix\Nette\Schema\Expect;
 
 $schema = Expect::structure([
 	'processRefund' => Expect::bool(),
@@ -373,11 +373,11 @@ Expect::type('string|int')
 	->transform(fn(string $s) => strtoupper($s)); // conversion to uppercase
 ```
 
-The `transform()` method can both transform and validate the value simultaneously. This is often simpler and less redundant than chaining `transform()` and `assert()`. For this purpose, the function receives a [Nette\Schema\Context](https://api.nette.org/schema/master/Nette/Schema/Context.html) object with an `addError()` method, which can be used to add information about validation issues:
+The `transform()` method can both transform and validate the value simultaneously. This is often simpler and less redundant than chaining `transform()` and `assert()`. For this purpose, the function receives a [VendorPrefix\Nette\Schema\Context](https://api.nette.org/schema/master/Nette/Schema/Context.html) object with an `addError()` method, which can be used to add information about validation issues:
 
 ```php
 Expect::string()
-	->transform(function (string $s, Nette\Schema\Context $context) {
+	->transform(function (string $s, VendorPrefix\Nette\Schema\Context $context) {
 		if (!ctype_lower($s)) {
 			$context->addError('All characters must be lowercased', 'my.case.error');
 			return null;

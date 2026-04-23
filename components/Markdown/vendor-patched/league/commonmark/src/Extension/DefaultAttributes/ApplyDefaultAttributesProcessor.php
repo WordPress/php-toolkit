@@ -11,17 +11,17 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\DefaultAttributes;
+namespace VendorPrefix\League\CommonMark\Extension\DefaultAttributes;
 
-use League\CommonMark\Event\DocumentParsedEvent;
-use League\CommonMark\Extension\Attributes\Util\AttributesHelper;
-use League\Config\ConfigurationAwareInterface;
-use League\Config\ConfigurationInterface;
+use VendorPrefix\League\CommonMark\Event\DocumentParsedEvent;
+use VendorPrefix\League\CommonMark\Extension\Attributes\Util\AttributesHelper;
+use VendorPrefix\League\Config\ConfigurationAwareInterface;
+use VendorPrefix\League\Config\ConfigurationInterface;
 
 final class ApplyDefaultAttributesProcessor implements ConfigurationAwareInterface
 {
     /**
-     * @var \League\Config\ConfigurationInterface
+     * @var \VendorPrefix\League\Config\ConfigurationInterface
      */
     private $config;
 

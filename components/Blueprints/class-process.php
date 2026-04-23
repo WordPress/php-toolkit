@@ -2,7 +2,7 @@
 
 namespace WordPress\Blueprints;
 
-use Symfony\Component\Process\Process as SymfonyProcess;
+use VendorPrefix\Symfony\Component\Process\Process as SymfonyProcess;
 use WordPress\ByteStream\ReadStream\BaseByteReadStream;
 
 class Process extends SymfonyProcess {

@@ -7,9 +7,9 @@
 
 declare(strict_types=1);
 
-namespace Nette\Utils;
+namespace VendorPrefix\Nette\Utils;
 
-use Nette;
+use VendorPrefix\Nette;
 
 
 /**
@@ -17,7 +17,7 @@ use Nette;
  */
 class Floats
 {
-	use Nette\StaticClass;
+	use VendorPrefix\Nette\StaticClass;
 
 	private const Epsilon = 1e-10;
 

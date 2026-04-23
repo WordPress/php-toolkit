@@ -11,10 +11,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Parser\Block;
+namespace VendorPrefix\League\CommonMark\Parser\Block;
 
-use League\CommonMark\Parser\Cursor;
-use League\CommonMark\Parser\CursorState;
+use VendorPrefix\League\CommonMark\Parser\Cursor;
+use VendorPrefix\League\CommonMark\Parser\CursorState;
 
 /**
  * Result object for starting parsing of a block; see static methods for constructors
@@ -29,7 +29,7 @@ final class BlockStart
     private $blockParsers;
 
     /** @psalm-readonly-allow-private-mutation
-     * @var \League\CommonMark\Parser\CursorState|null */
+     * @var \VendorPrefix\League\CommonMark\Parser\CursorState|null */
     private $cursorState;
 
     /** @psalm-readonly-allow-private-mutation

@@ -11,15 +11,15 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Extension\DescriptionList\Event;
+namespace VendorPrefix\League\CommonMark\Extension\DescriptionList\Event;
 
-use League\CommonMark\Event\DocumentParsedEvent;
-use League\CommonMark\Extension\DescriptionList\Node\Description;
-use League\CommonMark\Extension\DescriptionList\Node\DescriptionList;
-use League\CommonMark\Extension\DescriptionList\Node\DescriptionTerm;
-use League\CommonMark\Node\Block\Paragraph;
-use League\CommonMark\Node\Inline\Newline;
-use League\CommonMark\Node\NodeIterator;
+use VendorPrefix\League\CommonMark\Event\DocumentParsedEvent;
+use VendorPrefix\League\CommonMark\Extension\DescriptionList\Node\Description;
+use VendorPrefix\League\CommonMark\Extension\DescriptionList\Node\DescriptionList;
+use VendorPrefix\League\CommonMark\Extension\DescriptionList\Node\DescriptionTerm;
+use VendorPrefix\League\CommonMark\Node\Block\Paragraph;
+use VendorPrefix\League\CommonMark\Node\Inline\Newline;
+use VendorPrefix\League\CommonMark\Node\NodeIterator;
 
 final class LooseDescriptionHandler
 {

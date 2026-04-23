@@ -35,7 +35,7 @@
 			"installation-source": "dist",
 			"autoload": {
 				"psr-4": {
-					"Dflydev\\DotAccessData\\": "src/"
+					"VendorPrefix\\Dflydev\\DotAccessData\\": "src/"
 				}
 			},
 			"notification-url": "https://packagist.org/downloads/",
@@ -127,7 +127,7 @@
 			"installation-source": "dist",
 			"autoload": {
 				"psr-4": {
-					"League\\CommonMark\\": "src"
+					"VendorPrefix\\League\\CommonMark\\": "src"
 				}
 			},
 			"notification-url": "https://packagist.org/downloads/",
@@ -216,7 +216,7 @@
 			"installation-source": "dist",
 			"autoload": {
 				"psr-4": {
-					"League\\Config\\": "src"
+					"VendorPrefix\\League\\Config\\": "src"
 				}
 			},
 			"notification-url": "https://packagist.org/downloads/",
@@ -350,9 +350,9 @@
 				"ext-gd": "to use Image",
 				"ext-iconv": "to use Strings::webalize(), toAscii(), chr() and reverse()",
 				"ext-intl": "to use Strings::webalize(), toAscii(), normalize() and compare()",
-				"ext-json": "to use Nette\\Utils\\Json",
+				"ext-json": "to use VendorPrefix\\Nette\\Utils\\Json",
 				"ext-mbstring": "to use Strings::lower() etc...",
-				"ext-tokenizer": "to use Nette\\Utils\\Reflection::getUseStatements()"
+				"ext-tokenizer": "to use VendorPrefix\\Nette\\Utils\\Reflection::getUseStatements()"
 			},
 			"time": "2024-08-07T15:39:19+00:00",
 			"type": "library",
@@ -429,7 +429,7 @@
 			"installation-source": "dist",
 			"autoload": {
 				"psr-4": {
-					"Psr\\EventDispatcher\\": "src/"
+					"VendorPrefix\\Psr\\EventDispatcher\\": "src/"
 				}
 			},
 			"notification-url": "https://packagist.org/downloads/",
@@ -550,7 +550,7 @@
 			"autoload": {
 				"files": ["bootstrap.php"],
 				"psr-4": {
-					"Symfony\\Polyfill\\Ctype\\": ""
+					"VendorPrefix\\Symfony\\Polyfill\\Ctype\\": ""
 				}
 			},
 			"notification-url": "https://packagist.org/downloads/",
@@ -617,7 +617,7 @@
 			"autoload": {
 				"files": ["bootstrap.php"],
 				"psr-4": {
-					"Symfony\\Polyfill\\Php80\\": ""
+					"VendorPrefix\\Symfony\\Polyfill\\Php80\\": ""
 				},
 				"classmap": ["Resources/stubs"]
 			},
@@ -691,7 +691,7 @@
 			"installation-source": "dist",
 			"autoload": {
 				"psr-4": {
-					"Symfony\\Component\\Yaml\\": ""
+					"VendorPrefix\\Symfony\\Component\\Yaml\\": ""
 				},
 				"exclude-from-classmap": ["/Tests/"]
 			},
@@ -772,7 +772,7 @@
 			"installation-source": "dist",
 			"autoload": {
 				"psr-4": {
-					"Webuni\\FrontMatter\\": "src"
+					"VendorPrefix\\Webuni\\FrontMatter\\": "src"
 				}
 			},
 			"notification-url": "https://packagist.org/downloads/",

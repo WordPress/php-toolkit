@@ -2,7 +2,7 @@
 
 namespace WordPress\Blueprints\Steps;
 
-use Symfony\Component\Process\Exception\ProcessFailedException;
+use VendorPrefix\Symfony\Component\Process\Exception\ProcessFailedException;
 use WordPress\Blueprints\Exception\BlueprintExecutionException;
 use WordPress\Blueprints\Progress\Tracker;
 use WordPress\Blueprints\Runtime;

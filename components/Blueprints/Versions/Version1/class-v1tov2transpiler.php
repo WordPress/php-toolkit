@@ -2,7 +2,7 @@
 
 namespace WordPress\Blueprints\Versions\Version1;
 
-use Psr\Log\LoggerInterface;
+use VendorPrefix\Psr\Log\LoggerInterface;
 use WordPress\Blueprints\Exception\BlueprintExecutionException;
 use WordPress\Blueprints\Validator\HumanFriendlySchemaValidator;
 use WordPress\Blueprints\Validator\ValidationError;

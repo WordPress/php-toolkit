@@ -20,8 +20,8 @@ if ('cli' !== \PHP_SAPI) {
  * @author Jan Schädlich <jan.schaedlich@sensiolabs.de>
  */
 
-use Symfony\Component\Console\Application;
-use Symfony\Component\Yaml\Command\LintCommand;
+use VendorPrefix\Symfony\Component\Console\Application;
+use VendorPrefix\Symfony\Component\Yaml\Command\LintCommand;
 
 function includeIfExists(string $file): bool
 {

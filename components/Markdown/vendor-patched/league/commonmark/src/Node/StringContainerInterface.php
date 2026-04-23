@@ -14,7 +14,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace League\CommonMark\Node;
+namespace VendorPrefix\League\CommonMark\Node;
 
 /**
  * Interface for a node which directly contains line(s) of text
