@@ -15,7 +15,7 @@
     ],
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/encoding": "^0.6.2"
+        "wp-php-toolkit/encoding": "^0.7"
     },
     "autoload": {
         "classmap": [
