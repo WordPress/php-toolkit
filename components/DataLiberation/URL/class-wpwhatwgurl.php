@@ -23,6 +23,9 @@ class WPWhatwgUrl {
 	/** @var \Uri\WhatWg\Url */
 	private $url;
 
+	/** @var WPWhatwgUrlSearchParams|null */
+	private $search_params;
+
 	public function __construct( \Uri\WhatWg\Url $url ) {
 		$this->url = $url;
 	}
@@ -121,6 +124,12 @@ class WPWhatwgUrl {
 
 			case 'origin':
 				return $this->compute_origin();
+
+			case 'searchParams':
+				if ( null === $this->search_params ) {
+					$this->search_params = new WPWhatwgUrlSearchParams( $this );
+				}
+				return $this->search_params;
 		}
 
 		return null;
