@@ -33,15 +33,15 @@
 			<li><a href="../markdown/">Markdown</a></li>
 			<li><a href="../xml/">XML</a></li>
 			<li><a href="../encoding/">Encoding</a></li>
-			<li><a href="../polyfill/">Polyfill</a></li>
-			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
 			<li><a href="../git/">Git</a></li>
 			<li><a href="../merge/">Merge</a></li>
 			<li><a href="../httpclient/">HttpClient</a></li>
 			<li><a href="../httpserver/">HttpServer</a></li>
 			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
 			<li><a href="../blueprints/">Blueprints</a></li>
-			<li><a href="../dataliberation/">DataLiberation</a></li>
 			<li class="current"><a href="../coding-standards/">ToolkitCodingStandards</a></li>
 			</ol>
 		</details>
@@ -51,10 +51,31 @@
 		<p class="lede">PHP_CodeSniffer sniffs used by this project: enforce Yoda comparisons, ban the short ternary.</p>
 		<code class="install">composer require wp-php-toolkit/toolkit-coding-standards</code>
 		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
-		<h2 id="how-to-use-it">How to use it</h2>
-		<p>This component is a phpcs ruleset, not runtime code, so there's nothing to demo in Playground. Reference the standard from your <code>phpcs.xml</code>:</p><pre style="background:var(--code-bg);padding:1rem;border-radius:5px;overflow-x:auto"><code>&lt;ruleset&gt;
+		<h2 id="reference-the-standard-from-your-phpcsxml">Reference the standard from your phpcs.xml</h2>
+		<p>The component is a phpcs ruleset, so there's no runtime code to demo. Activate both sniffs at once by referencing <code>WordPressToolkitCodingStandards</code>:</p><pre><code>&lt;?xml version="1.0"?&gt;
+&lt;ruleset name="My Project"&gt;
+  &lt;file&gt;src/&lt;/file&gt;
+
+  &lt;!-- Activate both toolkit sniffs --&gt;
   &lt;rule ref="WordPressToolkitCodingStandards"/&gt;
-&lt;/ruleset&gt;</code></pre><p>See the <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/ToolkitCodingStandards/README.md">README</a> for individual sniff selection and example fixes.</p>
+
+  &lt;!-- Or pick them individually --&gt;
+  &lt;!-- &lt;rule ref="WordPressToolkitCodingStandards.PHP.EnforceYodaComparison"/&gt; --&gt;
+  &lt;!-- &lt;rule ref="WordPressToolkitCodingStandards.PHP.DisallowShortTernary"/&gt; --&gt;
+&lt;/ruleset&gt;</code></pre><p>Then run phpcs and phpcbf the usual way:</p><pre><code>vendor/bin/phpcs --standard=phpcs.xml .
+vendor/bin/phpcbf --standard=phpcs.xml .</code></pre>
+		<h2 id="enforceyodacomparison-catches-accidental-assignment">EnforceYodaComparison: catches accidental assignment</h2>
+		<p>Yoda comparisons (<code>true === $x</code>) make typo-induced assignments into syntax errors:</p><pre><code>// Bug: single = inside a condition. Always truthy, mutates $status.
+if ( $status = 'published' ) {
+    publish_post( $post );
+}
+
+// Yoda style: writing this typo would be a parse error.
+if ( 'published' === $status ) {
+    publish_post( $post );
+}</code></pre><p>The sniff covers <code>===</code>, <code>!==</code>, <code>==</code>, and <code>!=</code>, and stays quiet when both sides are dynamic.</p>
+		<h2 id="why-ban-the-short-ternary">Why ban the short ternary</h2>
+		<p>The short ternary (<code>$a ?: $b</code>) is often confused with the null-coalescing operator (<code>$a ?? $b</code>). They differ on falsy-but-not-null values: <code>0 ?: 'fallback'</code> returns <code>'fallback'</code>, but <code>0 ?? 'fallback'</code> returns <code>0</code>. The sniff bans <code>?:</code> entirely so reviewers don't have to relitigate this on every PR.</p>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/ToolkitCodingStandards/README.md">ToolkitCodingStandards README</a>.</p>
 	</article>
 </div>

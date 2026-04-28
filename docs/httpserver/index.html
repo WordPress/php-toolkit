@@ -33,15 +33,15 @@
 			<li><a href="../markdown/">Markdown</a></li>
 			<li><a href="../xml/">XML</a></li>
 			<li><a href="../encoding/">Encoding</a></li>
-			<li><a href="../polyfill/">Polyfill</a></li>
-			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
 			<li><a href="../git/">Git</a></li>
 			<li><a href="../merge/">Merge</a></li>
 			<li><a href="../httpclient/">HttpClient</a></li>
 			<li class="current"><a href="../httpserver/">HttpServer</a></li>
 			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
 			<li><a href="../blueprints/">Blueprints</a></li>
-			<li><a href="../dataliberation/">DataLiberation</a></li>
 			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
 			</ol>
 		</details>
@@ -51,13 +51,11 @@
 		<p class="lede">A minimal blocking TCP HTTP server in pure PHP. For CLI tools and tests, not for production traffic.</p>
 		<code class="install">composer require wp-php-toolkit/http-server</code>
 		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
-		<h2 id="api-shape">API shape</h2>
-		<p>Bind a port, set a handler that takes <code>IncomingRequest</code> and writes to a <code>ResponseWriteStream</code>, call <code>serve()</code>. The handler runs synchronously per request.</p><p class="callout"><strong>Won't bind in this runtime.</strong> The Playground sandbox doesn't allow listening on TCP ports, so the snippet below is illustrative — copy it to your machine to run it.</p>
-<php-snippet blueprint="toolkit-setup" name="server.php">
+		<h2 id="hello-world-on-port-8080">Hello world on port 8080</h2>
+		<p class="callout"><strong>Run on your machine:</strong> the Playground sandbox does not allow processes to bind listening TCP ports. Save this snippet locally and run <code>php hello-server.php</code>.</p>
+<php-snippet blueprint="toolkit-setup" name="hello-server.php">
 <script type="application/x-php">
 <?php
-// Run on your machine, not in Playground:
-//   php server.php
 require __DIR__ . '/vendor/autoload.php';
 
 use WordPress\HttpServer\TcpServer;
@@ -65,14 +63,82 @@ use WordPress\HttpServer\IncomingRequest;
 use WordPress\HttpServer\Response\ResponseWriteStream;
 
 $server = new TcpServer( '127.0.0.1', 8080 );
+
 $server->set_handler( function ( IncomingRequest $request, ResponseWriteStream $response ) {
 	$response->send_http_code( 200 );
 	$response->send_header( 'Content-Type', 'text/plain' );
-	$response->append_bytes( 'Hello, world!' );
+	$response->append_bytes( "Hello from " . $request->method . " " . $request->url . "\n" );
 } );
 
-echo "Listening on http://127.0.0.1:8080\n";
+$server->serve( function ( $host, $port ) {
+	echo "Listening on http://{$host}:{$port}\n";
+} );
+</script>
+</php-snippet>
+		<h2 id="a-tiny-json-router">A tiny JSON router</h2>
+		<p class="callout"><strong>Run on your machine:</strong> needs a listening port. Once running, try <code>curl localhost:8080/api/status</code>.</p><p>Build a CLI tool with a web UI by switching on the parsed path and method.</p>
+<php-snippet blueprint="toolkit-setup" name="mini-router.php">
+<script type="application/x-php">
+<?php
+require __DIR__ . '/vendor/autoload.php';
+
+use WordPress\HttpServer\TcpServer;
+use WordPress\HttpServer\IncomingRequest;
+use WordPress\HttpServer\Response\ResponseWriteStream;
+
+$server = new TcpServer( '127.0.0.1', 8080 );
+
+$server->set_handler( function ( IncomingRequest $request, ResponseWriteStream $response ) {
+	$path = $request->get_parsed_url()->pathname;
+
+	if ( '/api/status' === $path ) {
+		$response->send_http_code( 200 );
+		$response->send_header( 'Content-Type', 'application/json' );
+		$response->append_bytes( json_encode( array(
+			'ok'     => true,
+			'pid'    => getmypid(),
+			'memory' => memory_get_usage( true ),
+		) ) );
+		return;
+	}
+
+	if ( '/api/echo' === $path && 'POST' === $request->method ) {
+		$body = '';
+		while ( ! $request->body_stream->reached_end_of_data() ) {
+			$n = $request->body_stream->pull( 4096 );
+			if ( $n > 0 ) $body .= $request->body_stream->consume( $n );
+		}
+		$response->send_http_code( 200 );
+		$response->send_header( 'Content-Type', 'text/plain' );
+		$response->append_bytes( $body );
+		return;
+	}
+
+	$response->send_http_code( 404 );
+	$response->append_bytes( "Not found\n" );
+} );
+
 $server->serve();
+</script>
+</php-snippet>
+		<h2 id="buffered-response-with-auto-content-length">Buffered response with auto Content-Length</h2>
+		<p>Use <code>BufferingResponseWriter</code> when you want the framework to compute <code>Content-Length</code> for you, or when the runtime is CGI-shaped and expects the full body up front. This one runs anywhere — no socket required.</p>
+<php-snippet blueprint="toolkit-setup" name="buffered-writer.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\HttpServer\Response\BufferingResponseWriter;
+
+$writer = new BufferingResponseWriter();
+$writer->send_http_code( 200 );
+$writer->send_header( 'Content-Type', 'text/html' );
+$writer->append_bytes( '<!doctype html><title>Hi</title><h1>Hello</h1>' );
+$writer->append_bytes( '<p>Generated at ' . date( 'c' ) . '</p>' );
+$writer->close_writing();
+
+echo "Captured response:\n\n";
+echo $writer->get_buffer();
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/HttpServer/README.md">HttpServer README</a>.</p>

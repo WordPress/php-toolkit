@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HttpClient — PHP Toolkit</title>
-<meta name="description" content="Async HTTP client without &lt;code&gt;curl&lt;/code&gt; required. Uses sockets when curl is missing, supports concurrent requests and streaming responses.">
+<meta name="description" content="Async HTTP client without curl required. Uses sockets when curl is missing, supports concurrent requests and streaming responses.">
 <link rel="stylesheet" href="../assets/style.css">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
@@ -33,15 +33,15 @@
 			<li><a href="../markdown/">Markdown</a></li>
 			<li><a href="../xml/">XML</a></li>
 			<li><a href="../encoding/">Encoding</a></li>
-			<li><a href="../polyfill/">Polyfill</a></li>
-			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
 			<li><a href="../git/">Git</a></li>
 			<li><a href="../merge/">Merge</a></li>
 			<li class="current"><a href="../httpclient/">HttpClient</a></li>
 			<li><a href="../httpserver/">HttpServer</a></li>
 			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
 			<li><a href="../blueprints/">Blueprints</a></li>
-			<li><a href="../dataliberation/">DataLiberation</a></li>
 			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
 			</ol>
 		</details>
@@ -52,7 +52,7 @@
 		<code class="install">composer require wp-php-toolkit/http-client</code>
 		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
 		<h2 id="note">Note</h2>
-		<p class="callout"><strong>Network access in the demo runtime.</strong> Snippets execute inside a sandboxed Playground; outbound HTTP requires the CORS proxy. The example below shows the API, but the request itself may not complete in this environment.</p>
+		<p class="callout"><strong>Network access in the demo runtime.</strong> Snippets execute inside a sandboxed Playground; outbound HTTP requires the CORS proxy. The examples below show the API; real network calls may not complete in this environment.</p>
 		<h2 id="get-a-url">GET a URL</h2>
 		<p>Build a <code>Request</code>, hand it to <code>Client::fetch()</code>, await the response, read the body.</p>
 <php-snippet blueprint="toolkit-setup" name="get.php">
@@ -69,6 +69,125 @@ $stream  = $client->fetch( new Request( 'https://example.com/' ) );
 $response = $stream->await_response();
 echo "status: " . $response->status_code . "\n";
 echo "first 80 bytes: " . substr( $stream->consume_all(), 0, 80 ) . "\n";
+</script>
+</php-snippet>
+		<h2 id="inspect-headers-without-reading-the-body">Inspect headers without reading the body</h2>
+		<p>Call <code>await_response()</code> to get the <code>Response</code> as soon as headers arrive. Useful for HEAD-style metadata checks, content-type sniffing, or deciding whether to keep reading.</p>
+<php-snippet blueprint="toolkit-setup" name="head-metadata.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$client  = new Client();
+$request = new Request( 'https://wordpress.org/latest.zip', array(
+	'method' => 'HEAD',
+) );
+
+$stream   = $client->fetch( $request );
+$response = $stream->await_response();
+
+echo "Status: " . $response->status_code . " " . $response->get_reason_phrase() . "\n";
+echo "Type:   " . $response->get_header( 'content-type' ) . "\n";
+echo "Size:   " . $response->get_header( 'content-length' ) . " bytes\n";
+</script>
+</php-snippet>
+		<h2 id="post-json-with-a-request-body">POST JSON with a request body</h2>
+		<p>Stream a JSON body up to the server using <code>MemoryPipe</code>. Same pattern works for any payload by switching the <code>content-type</code> header.</p>
+<php-snippet blueprint="toolkit-setup" name="post-json.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+use WordPress\ByteStream\MemoryPipe;
+
+$payload = json_encode( array( 'title' => 'Hello', 'tags' => array( 'http', 'php' ) ) );
+
+$client  = new Client();
+$request = new Request( 'https://httpbin.org/post', array(
+	'method'      => 'POST',
+	'headers'     => array(
+		'content-type'   => 'application/json',
+		'content-length' => (string) strlen( $payload ),
+	),
+	'body_stream' => new MemoryPipe( $payload ),
+) );
+
+$response = $client->fetch( $request )->json();
+echo "Server saw body: " . $response['data'] . "\n";
+</script>
+</php-snippet>
+		<h2 id="parallel-fan-out-fetch-many-urls-at-once">Parallel fan-out: fetch many URLs at once</h2>
+		<p>Enqueue a batch of requests and react to events as they fire. The client multiplexes them — total wall time is roughly the slowest request, not the sum.</p>
+<php-snippet blueprint="toolkit-setup" name="fan-out.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$urls = array(
+	'https://wordpress.org/',
+	'https://make.wordpress.org/',
+	'https://developer.wordpress.org/',
+);
+
+$client = new Client();
+$client->enqueue( array_map( function ( $url ) {
+	return new Request( $url, array( 'method' => 'HEAD' ) );
+}, $urls ) );
+
+$results = array();
+while ( $client->await_next_event() ) {
+	$request = $client->get_request();
+	if ( Client::EVENT_GOT_HEADERS === $client->get_event() ) {
+		$results[ $request->url ] = $request->response->status_code;
+	} elseif ( Client::EVENT_FAILED === $client->get_event() ) {
+		$results[ $request->url ] = 'ERR ' . $request->error->message;
+	}
+}
+
+foreach ( $results as $url => $status ) {
+	printf( "%-40s %s\n", $url, $status );
+}
+</script>
+</php-snippet>
+		<h2 id="stream-a-download-to-disk-without-oom">Stream a download to disk without OOM</h2>
+		<p>Process the body chunk-by-chunk via the event loop. Memory stays flat regardless of file size.</p>
+<php-snippet blueprint="toolkit-setup" name="stream-to-disk.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$dest   = sys_get_temp_dir() . '/wp-readme.html';
+$client = new Client();
+$client->enqueue( array( new Request( 'https://wordpress.org/' ) ) );
+
+$bytes = 0;
+@unlink( $dest );
+
+while ( $client->await_next_event() ) {
+	switch ( $client->get_event() ) {
+		case Client::EVENT_BODY_CHUNK_AVAILABLE:
+			$chunk  = $client->get_response_body_chunk();
+			$bytes += strlen( $chunk );
+			file_put_contents( $dest, $chunk, FILE_APPEND );
+			break;
+		case Client::EVENT_FINISHED:
+			echo "Wrote {$bytes} bytes to {$dest}\n";
+			break;
+	}
+}
+
+echo "Peak memory: " . round( memory_get_peak_usage( true ) / 1024 / 1024, 2 ) . " MB\n";
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/HttpClient/README.md">HttpClient README</a>.</p>

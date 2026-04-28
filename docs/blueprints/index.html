@@ -33,15 +33,15 @@
 			<li><a href="../markdown/">Markdown</a></li>
 			<li><a href="../xml/">XML</a></li>
 			<li><a href="../encoding/">Encoding</a></li>
-			<li><a href="../polyfill/">Polyfill</a></li>
-			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
 			<li><a href="../git/">Git</a></li>
 			<li><a href="../merge/">Merge</a></li>
 			<li><a href="../httpclient/">HttpClient</a></li>
 			<li><a href="../httpserver/">HttpServer</a></li>
 			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
 			<li class="current"><a href="../blueprints/">Blueprints</a></li>
-			<li><a href="../dataliberation/">DataLiberation</a></li>
 			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
 			</ol>
 		</details>
@@ -52,10 +52,10 @@
 		<code class="install">composer require wp-php-toolkit/blueprints</code>
 		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
 		<h2 id="two-execution-modes">Two execution modes</h2>
-		<p><code>EXECUTION_MODE_CREATE_NEW_SITE</code> downloads WordPress and installs it. <code>EXECUTION_MODE_APPLY_TO_EXISTING_SITE</code> applies steps to an installed site. The snippet below shows the second; the first needs filesystem write access this runtime doesn't have.</p>
-		<h2 id="apply-a-step">Apply a step</h2>
-		<p>You can run a single Blueprint step against the currently-running WordPress install — exactly what the <code>&lt;php-snippet&gt;</code> blueprint mechanism does under the hood.</p>
-<php-snippet blueprint="toolkit-setup" name="apply-step.php">
+		<p>Blueprints can <em>create</em> a new WordPress install (download core, set up the database, apply steps) or <em>apply to an existing</em> site. Creating a fresh site needs filesystem access this in-browser runtime doesn't have, so the snippets focus on <code>APPLY_TO_EXISTING_SITE</code>.</p>
+		<h2 id="configure-a-runner-for-an-existing-site">Configure a runner for an existing site</h2>
+		<p><code>RunnerConfiguration</code> is a fluent builder. The minimum: target site root, target site URL, execution mode.</p>
+<php-snippet blueprint="toolkit-setup" name="configure.php">
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -68,10 +68,26 @@ $config = ( new RunnerConfiguration() )
 	->set_target_site_root( '/wordpress' )
 	->set_target_site_url( 'http://playground.test/' );
 
-echo "Configured runner for: " . $config->get_target_site_root() . "\n";
-echo "Mode: " . $config->get_execution_mode() . "\n";
+echo "mode: " . $config->get_execution_mode() . "\n";
+echo "root: " . $config->get_target_site_root() . "\n";
+echo "url:  " . $config->get_target_site_url() . "\n";
 </script>
 </php-snippet>
+		<h2 id="the-blueprint-json-shape">The Blueprint JSON shape</h2>
+		<p>A blueprint is a JSON document with a <code>version</code> field and a <code>steps</code> array. Each step has a <code>"step"</code> discriminator and step-specific fields. This is the same shape used by <a href="https://playground.wordpress.net/">WordPress Playground</a>.</p><pre><code>{
+  "version": 2,
+  "steps": [
+    { "step": "setSiteOptions",
+      "options": {
+        "blogname": "Demo Site",
+        "permalink_structure": "/%postname%/"
+      } },
+    { "step": "installPlugin",
+      "pluginData": "https://downloads.wordpress.org/plugin/gutenberg.zip" },
+    { "step": "activatePlugin",
+      "plugin": "gutenberg/gutenberg.php" }
+  ]
+}</code></pre>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Blueprints/README.md">Blueprints README</a>.</p>
 	</article>
 </div>

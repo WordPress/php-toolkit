@@ -33,15 +33,15 @@
 			<li><a href="../markdown/">Markdown</a></li>
 			<li><a href="../xml/">XML</a></li>
 			<li><a href="../encoding/">Encoding</a></li>
-			<li><a href="../polyfill/">Polyfill</a></li>
-			<li><a href="../cli/">CLI</a></li>
+			<li class="current"><a href="../dataliberation/">DataLiberation</a></li>
 			<li><a href="../git/">Git</a></li>
 			<li><a href="../merge/">Merge</a></li>
 			<li><a href="../httpclient/">HttpClient</a></li>
 			<li><a href="../httpserver/">HttpServer</a></li>
 			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
 			<li><a href="../blueprints/">Blueprints</a></li>
-			<li class="current"><a href="../dataliberation/">DataLiberation</a></li>
 			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
 			</ol>
 		</details>
@@ -51,9 +51,9 @@
 		<p class="lede">Streaming WordPress import/export. WXR, SQL, block markup — without loading whole datasets into memory.</p>
 		<code class="install">composer require wp-php-toolkit/data-liberation</code>
 		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
-		<h2 id="write-a-wxr-export">Write a WXR export</h2>
-		<p>Feed entities to <code>WXRWriter</code> in logical order: post first, then meta/terms/comments belonging to it.</p>
-<php-snippet blueprint="toolkit-setup" name="wxr-writer.php">
+		<h2 id="write-a-wxr-file-in-five-lines">Write a WXR file in five lines</h2>
+		<p>Stream a single post into a WXR document via <code>WXRWriter</code>. The writer holds no buffer beyond what is needed to close currently-open tags, so memory stays flat regardless of input size.</p>
+<php-snippet blueprint="toolkit-setup" name="wxr-quickstart.php">
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -62,25 +62,182 @@ use WordPress\ByteStream\MemoryPipe;
 use WordPress\DataLiberation\EntityWriter\WXRWriter;
 use WordPress\DataLiberation\ImportEntity;
 
-$output = new MemoryPipe();
-$writer = new WXRWriter( $output );
-
+$pipe   = new MemoryPipe();
+$writer = new WXRWriter( $pipe );
 $writer->append_entity( new ImportEntity( 'post', array(
-	'post_title' => 'Hello World',
-	'post_date'  => '2024-01-15',
-	'guid'       => 'https://example.com/?p=1',
-	'content'    => '<p>Welcome to my site.</p>',
+	'post_title' => 'Hello',
+	'content'    => 'World.',
 	'post_id'    => '1',
-	'post_name'  => 'hello-world',
 	'status'     => 'publish',
-	'post_type'  => 'post',
 ) ) );
+$writer->finalize();
+$writer->close_writing();
+$pipe->close_writing();
+echo $pipe->consume_all();
+</script>
+</php-snippet>
+		<h2 id="build-a-wxr-programmatically-from-any-source">Build a WXR programmatically from any source</h2>
+		<p>The writer doesn't care where entities come from. Loop over rows from a CMS, a CSV, or a Notion API dump and emit posts plus their meta and comments.</p>
+<php-snippet blueprint="toolkit-setup" name="build-wxr.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\DataLiberation\EntityWriter\WXRWriter;
+use WordPress\DataLiberation\ImportEntity;
+
+$rows = array(
+	array( 'id' => 10, 'title' => 'About', 'body' => '<p>About us.</p>', 'tags' => array( 'company' ) ),
+	array( 'id' => 11, 'title' => 'Blog',  'body' => '<p>Hello world.</p>', 'tags' => array( 'news', 'launch' ) ),
+);
+
+$pipe   = new MemoryPipe();
+$writer = new WXRWriter( $pipe );
+
+foreach ( $rows as $row ) {
+	$writer->append_entity( new ImportEntity( 'post', array(
+		'post_id'    => (string) $row['id'],
+		'post_title' => $row['title'],
+		'content'    => $row['body'],
+		'status'     => 'publish',
+		'post_type'  => 'post',
+	) ) );
+	foreach ( $row['tags'] as $i => $tag ) {
+		$writer->append_entity( new ImportEntity( 'term', array(
+			'term_id'  => (string) ( $row['id'] * 100 + $i ),
+			'taxonomy' => 'post_tag',
+			'slug'     => $tag,
+			'parent'   => '0',
+		) ) );
+	}
+}
 
 $writer->finalize();
 $writer->close_writing();
-$output->close_writing();
+$pipe->close_writing();
 
-echo $output->consume_all();
+echo $pipe->consume_all();
+</script>
+</php-snippet>
+		<h2 id="read-entities-from-a-wxr-file-with-constant-memory">Read entities from a WXR file with constant memory</h2>
+		<p><code>WXREntityReader</code> emits one entity at a time. A 10 GB WXR uses the same memory as a 10 KB one.</p>
+<php-snippet blueprint="toolkit-setup" name="wxr-read.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\DataLiberation\EntityReader\WXREntityReader;
+
+$wxr = <<<XML
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:wp="http://wordpress.org/export/1.2/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<channel>
+<title>Demo</title>
+<item><title>First</title><wp:post_id>1</wp:post_id><wp:post_type>post</wp:post_type><content:encoded>Body 1</content:encoded></item>
+<item><title>Second</title><wp:post_id>2</wp:post_id><wp:post_type>post</wp:post_type><content:encoded>Body 2</content:encoded></item>
+</channel>
+</rss>
+XML;
+
+$reader = WXREntityReader::create();
+$reader->append_bytes( $wxr );
+$reader->input_finished();
+
+while ( $reader->next_entity() ) {
+	$entity = $reader->get_entity();
+	echo $entity->get_type() . ': ' . json_encode( $entity->get_data() ) . "\n";
+}
+</script>
+</php-snippet>
+		<h2 id="streaming-transform-rewrite-urls-while-copying-wxr">Streaming transform: rewrite URLs while copying WXR</h2>
+		<p>Wire reader to writer to rewrite a WXR file on the fly. This pattern is how you migrate a staging export to production: swap <code>staging.example.com</code> for <code>example.com</code> without ever loading the file into memory.</p>
+<php-snippet blueprint="toolkit-setup" name="rewrite-urls.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\DataLiberation\EntityReader\WXREntityReader;
+use WordPress\DataLiberation\EntityWriter\WXRWriter;
+use WordPress\DataLiberation\ImportEntity;
+
+$source_xml = <<<XML
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:wp="http://wordpress.org/export/1.2/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<channel>
+<item><title>Hello</title><wp:post_id>1</wp:post_id><wp:post_type>post</wp:post_type>
+<content:encoded>Visit https://staging.example.com/about for more.</content:encoded></item>
+</channel>
+</rss>
+XML;
+
+$reader = WXREntityReader::create();
+$reader->append_bytes( $source_xml );
+$reader->input_finished();
+
+$out_pipe = new MemoryPipe();
+$writer   = new WXRWriter( $out_pipe );
+
+while ( $reader->next_entity() ) {
+	$entity = $reader->get_entity();
+	$data   = $entity->get_data();
+	foreach ( array( 'post_content', 'content', 'description' ) as $field ) {
+		if ( isset( $data[ $field ] ) ) {
+			$data[ $field ] = str_replace( 'staging.example.com', 'example.com', $data[ $field ] );
+		}
+	}
+	if ( 'post' === $entity->get_type() ) {
+		$data['content'] = isset( $data['post_content'] ) ? $data['post_content'] : ( isset( $data['content'] ) ? $data['content'] : '' );
+	}
+	$writer->append_entity( new ImportEntity( $entity->get_type(), $data ) );
+}
+
+$writer->finalize();
+$writer->close_writing();
+$out_pipe->close_writing();
+
+echo $out_pipe->consume_all();
+</script>
+</php-snippet>
+		<h2 id="render-markdown-into-a-wxr-import-in-one-pipeline">Render Markdown into a WXR import in one pipeline</h2>
+		<p>Compose <code>MarkdownConsumer</code> with <code>WXRWriter</code> to publish a folder of Markdown directly as a WordPress import file.</p>
+<php-snippet blueprint="toolkit-setup" name="md-to-wxr.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\DataLiberation\EntityWriter\WXRWriter;
+use WordPress\DataLiberation\ImportEntity;
+use WordPress\Markdown\MarkdownConsumer;
+
+@mkdir( '/tmp/md-src', 0777, true );
+file_put_contents( '/tmp/md-src/hello.md',  "---\ntitle: Hello\n---\n\n# Hello\n\nFirst post." );
+file_put_contents( '/tmp/md-src/second.md', "---\ntitle: Second\n---\n\nMore text **here**." );
+
+$pipe   = new MemoryPipe();
+$writer = new WXRWriter( $pipe );
+
+$id = 1;
+foreach ( glob( '/tmp/md-src/*.md' ) as $path ) {
+	$consumer = new MarkdownConsumer( file_get_contents( $path ) );
+	$consumer->consume();
+	$writer->append_entity( new ImportEntity( 'post', array(
+		'post_id'    => (string) $id++,
+		'post_title' => $consumer->get_meta_value( 'title' ) ?: basename( $path, '.md' ),
+		'content'    => $consumer->get_block_markup(),
+		'status'     => 'publish',
+		'post_type'  => 'post',
+		'post_name'  => basename( $path, '.md' ),
+	) ) );
+}
+
+$writer->finalize();
+$writer->close_writing();
+$pipe->close_writing();
+
+echo $pipe->consume_all();
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/DataLiberation/README.md">DataLiberation README</a>.</p>

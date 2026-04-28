@@ -33,15 +33,15 @@
 			<li class="current"><a href="../markdown/">Markdown</a></li>
 			<li><a href="../xml/">XML</a></li>
 			<li><a href="../encoding/">Encoding</a></li>
-			<li><a href="../polyfill/">Polyfill</a></li>
-			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
 			<li><a href="../git/">Git</a></li>
 			<li><a href="../merge/">Merge</a></li>
 			<li><a href="../httpclient/">HttpClient</a></li>
 			<li><a href="../httpserver/">HttpServer</a></li>
 			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
 			<li><a href="../blueprints/">Blueprints</a></li>
-			<li><a href="../dataliberation/">DataLiberation</a></li>
 			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
 			</ol>
 		</details>
@@ -52,24 +52,21 @@
 		<code class="install">composer require wp-php-toolkit/markdown</code>
 		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
 		<h2 id="markdown-to-blocks">Markdown to blocks</h2>
-		<p>Pass a Markdown string to <code>MarkdownConsumer</code> and call <code>consume()</code>. The result exposes block markup and any YAML frontmatter as metadata.</p>
-<php-snippet blueprint="toolkit-setup" name="md-to-blocks.php">
+		<p>Feed Markdown into <code>MarkdownConsumer</code>, get block markup back. The result is a <code>BlocksWithMetadata</code> object that holds both the rendered blocks and any frontmatter parsed from the document.</p>
+<php-snippet blueprint="toolkit-setup" name="quickstart.php">
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\Markdown\MarkdownConsumer;
 
-$markdown = "# Hello World\n\nThis is a paragraph with **bold** text.";
-
-$consumer = new MarkdownConsumer( $markdown );
-$result   = $consumer->consume();
+$result = ( new MarkdownConsumer( "# Hello\n\nWelcome to **WordPress**." ) )->consume();
 echo $result->get_block_markup();
 </script>
 </php-snippet>
-		<h2 id="blocks-back-to-markdown">Blocks back to Markdown</h2>
-		<p><code>MarkdownProducer</code> walks block markup and emits matching Markdown. Round-tripping a document should produce equivalent output (modulo whitespace normalization).</p>
-<php-snippet blueprint="toolkit-setup" name="blocks-to-md.php">
+		<h2 id="round-trip-blocks-back-to-markdown">Round-trip: blocks back to Markdown</h2>
+		<p>Pair <code>MarkdownProducer</code> with <code>MarkdownConsumer</code> to convert in either direction. Round-tripping is lossy for block attributes that have no Markdown representation (custom classes, alignment), so do not expect byte-perfect equality.</p>
+<php-snippet blueprint="toolkit-setup" name="roundtrip.php">
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -77,14 +74,15 @@ require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 use WordPress\Markdown\MarkdownConsumer;
 use WordPress\Markdown\MarkdownProducer;
 
-$source  = "## Setup\n\n1. Install\n2. Configure\n3. Profit";
-$blocks  = ( new MarkdownConsumer( $source ) )->consume()->get_block_markup();
-$round   = new MarkdownProducer( $blocks );
-echo $round->produce();
+$md       = "## Round trip\n\n- one\n- two\n- three\n";
+$blocks   = ( new MarkdownConsumer( $md ) )->consume();
+$markdown = ( new MarkdownProducer( $blocks ) )->produce();
+
+echo $markdown;
 </script>
 </php-snippet>
-		<h2 id="frontmatter">Frontmatter</h2>
-		<p>YAML frontmatter is parsed and exposed as metadata so the block markup stays clean.</p>
+		<h2 id="reading-yaml-frontmatter-as-post-meta">Reading YAML frontmatter as post meta</h2>
+		<p>Frontmatter keys come back as arrays so a single key can hold multiple values. Use <code>get_meta_value()</code> when you only want the first scalar.</p>
 <php-snippet blueprint="toolkit-setup" name="frontmatter.php">
 <script type="application/x-php">
 <?php
@@ -92,21 +90,79 @@ require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\Markdown\MarkdownConsumer;
 
-$markdown = <<<MD
+$md = <<<MD
 ---
-post_title: "WordPress 6.8 was released"
-post_date: "2024-12-16"
+post_title: "The Name of the Wind"
+post_status: publish
+tags: [fantasy, kingkiller]
 ---
 
-## WordPress 6.8 was released
-
-A short post body.
+Once upon a time...
 MD;
 
-$result = ( new MarkdownConsumer( $markdown ) )->consume();
-print_r( $result->get_all_metadata() );
-echo "\n--- block markup ---\n";
-echo $result->get_block_markup();
+$consumer = new MarkdownConsumer( $md );
+$consumer->consume();
+
+echo 'Title: '   . $consumer->get_meta_value( 'post_title' )  . "\n";
+echo 'Status: '  . $consumer->get_meta_value( 'post_status' ) . "\n";
+print_r( $consumer->get_all_metadata() );
+</script>
+</php-snippet>
+		<h2 id="migrating-an-obsidian-or-hugo-folder-of-markdown">Migrating an Obsidian or Hugo folder of Markdown</h2>
+		<p>Walk a directory of <code>.md</code> files (Obsidian vault, Hugo <code>content/</code>, Jekyll <code>_posts</code>) and emit one block-markup record per file.</p>
+<php-snippet blueprint="toolkit-setup" name="migrate-folder.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Markdown\MarkdownConsumer;
+
+@mkdir( '/tmp/vault', 0777, true );
+file_put_contents( '/tmp/vault/welcome.md', "---\ntitle: Welcome\n---\n\nHello world." );
+file_put_contents( '/tmp/vault/roadmap.md', "# Roadmap\n\n1. Ship\n2. Iterate" );
+
+foreach ( glob( '/tmp/vault/*.md' ) as $path ) {
+	$consumer = new MarkdownConsumer( file_get_contents( $path ) );
+	$consumer->consume();
+	$title = $consumer->get_meta_value( 'title' );
+	if ( ! $title ) $title = basename( $path, '.md' );
+	echo "=== $title ($path) ===\n";
+	echo substr( $consumer->get_block_markup(), 0, 120 ) . "...\n\n";
+}
+</script>
+</php-snippet>
+		<h2 id="counting-blocks-produced-by-a-markdown-document">Counting blocks produced by a Markdown document</h2>
+		<p>After conversion, the block markup is plain WordPress block markup, so <code>parse_blocks()</code> works on it directly. The standard way to introspect what the converter emitted before saving to the database.</p>
+<php-snippet blueprint="toolkit-setup" name="count-blocks.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Markdown\MarkdownConsumer;
+
+$md = <<<MD
+# Title
+
+A paragraph with **bold** and *italics*.
+
+| Col A | Col B |
+|-------|-------|
+| 1     | 2     |
+
+```php
+echo 'hi';
+```
+
+> A quote.
+MD;
+
+$blocks = ( new MarkdownConsumer( $md ) )->consume()->get_block_markup();
+$counts = array();
+foreach ( parse_blocks( $blocks ) as $block ) {
+	if ( ! $block['blockName'] ) continue;
+	$counts[ $block['blockName'] ] = ( isset( $counts[ $block['blockName'] ] ) ? $counts[ $block['blockName'] ] : 0 ) + 1;
+}
+print_r( $counts );
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Markdown/README.md">Markdown README</a>.</p>

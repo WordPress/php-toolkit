@@ -33,15 +33,15 @@
 			<li><a href="../markdown/">Markdown</a></li>
 			<li><a href="../xml/">XML</a></li>
 			<li><a href="../encoding/">Encoding</a></li>
-			<li class="current"><a href="../polyfill/">Polyfill</a></li>
-			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
 			<li><a href="../git/">Git</a></li>
 			<li><a href="../merge/">Merge</a></li>
 			<li><a href="../httpclient/">HttpClient</a></li>
 			<li><a href="../httpserver/">HttpServer</a></li>
 			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li class="current"><a href="../polyfill/">Polyfill</a></li>
 			<li><a href="../blueprints/">Blueprints</a></li>
-			<li><a href="../dataliberation/">DataLiberation</a></li>
 			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
 			</ol>
 		</details>
@@ -51,31 +51,105 @@
 		<p class="lede">PHP 8 string functions on PHP 7.2+, WordPress hook stubs, and translation/escaping passthroughs so toolkit code runs without WordPress.</p>
 		<code class="install">composer require wp-php-toolkit/polyfill</code>
 		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
-		<h2 id="php-8-strings-on-72">PHP 8 strings on 7.2</h2>
-		<p>Polyfills are loaded automatically through Composer's <code>autoload.files</code>. They define functions only when missing, so they're safe to use alongside PHP 8.</p>
+		<h2 id="why-this-exists">Why this exists</h2>
+		<p>A lot of WordPress-adjacent code wants to call <code>esc_html()</code>, <code>__()</code>, or <code>apply_filters()</code> without booting WordPress. The polyfill component provides minimal but real implementations so that code runs unchanged outside WordPress, and stays out of the way when WordPress is loaded (every function uses <code>function_exists()</code> guards).</p>
+		<h2 id="php-8-string-functions-on-php-72">PHP 8 string functions on PHP 7.2</h2>
+		<p>The polyfills define <code>str_contains</code>, <code>str_starts_with</code>, <code>str_ends_with</code>, and <code>array_key_first</code> only when missing.</p>
 <php-snippet blueprint="toolkit-setup" name="php8-strings.php">
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-var_dump( str_starts_with( '/var/www', '/var' ) );
+var_dump( str_starts_with( '/var/www/html', '/var' ) );
 var_dump( str_ends_with( 'image.png', '.png' ) );
 var_dump( str_contains( 'WordPress Toolkit', 'Toolkit' ) );
+
+$first_key = array_key_first( array( 'alpha' => 1, 'beta' => 2 ) );
+echo "first key: {$first_key}\n";
 </script>
 </php-snippet>
-		<h2 id="wordpress-hooks-without-wordpress">WordPress hooks without WordPress</h2>
-		<p>A minimal but real implementation of <code>add_filter</code>, <code>apply_filters</code>, and the action equivalents — priorities and all.</p>
-<php-snippet blueprint="toolkit-setup" name="hooks.php">
+		<h2 id="escaping-and-translation-stubs">Escaping and translation stubs</h2>
+		<p>Pass-through implementations let you write code that looks WordPressy and runs anywhere.</p>
+<php-snippet blueprint="toolkit-setup" name="wp-stubs.php">
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-add_filter( 'the_title', 'strtoupper' );
-add_filter( 'the_title', function ( $title ) {
-	return '> ' . $title;
-}, 20 );
+echo __( 'Hello, world' ) . "\n";
+echo esc_html( '<script>alert("xss")<\/script>' ) . "\n";
+echo esc_attr( 'a "quoted" value' ) . "\n";
+echo esc_url( 'https://example.com/?a=1&b=2' ) . "\n";
+</script>
+</php-snippet>
+		<h2 id="a-simple-filter-chain">A simple filter chain</h2>
+		<p>The hook system is a real implementation of the WordPress filter API: registered callbacks get applied in priority order, and each one transforms the running value.</p>
+<php-snippet blueprint="toolkit-setup" name="filter-chain.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-echo apply_filters( 'the_title', 'hello world' ) . "\n";
+add_filter( 'sanitize_title', 'trim' );
+add_filter( 'sanitize_title', 'strtolower' );
+add_filter( 'sanitize_title', function ( $title ) {
+	return preg_replace( '/\s+/', '-', $title );
+} );
+
+echo apply_filters( 'sanitize_title', '  My Post Title  ' ) . "\n";
+</script>
+</php-snippet>
+		<h2 id="priority-ordering-and-multi-arg-passing">Priority ordering and multi-arg passing</h2>
+		<p>Lower priority numbers run first. The fourth argument to <code>add_filter</code> controls how many context values get passed to the callback.</p>
+<php-snippet blueprint="toolkit-setup" name="priority-args.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+add_filter( 'render_price', function ( $html, $price, $currency ) {
+	return $html . " ({$currency} markup)";
+}, 30, 3 );
+
+add_filter( 'render_price', function ( $html, $price ) {
+	return "<strong>{$html}</strong>";
+}, 10, 2 );
+
+add_filter( 'render_price', function ( $html, $price, $currency ) {
+	if ( 'EUR' === $currency ) return $html . ' EUR';
+	return $html . " {$currency}";
+}, 20, 3 );
+
+echo apply_filters( 'render_price', '19.99', 19.99, 'EUR' ) . "\n";
+</script>
+</php-snippet>
+		<h2 id="hook-based-extension-points-in-standalone-libraries">Hook-based extension points in standalone libraries</h2>
+		<p>Use <code>do_action</code> and <code>apply_filters</code> as cheap extension points in your own code, without depending on WordPress.</p>
+<php-snippet blueprint="toolkit-setup" name="library-hooks.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+class ImportPipeline {
+	public function process( array $row ) {
+		$row = apply_filters( 'import_pipeline_normalize', $row );
+		do_action( 'import_pipeline_row_processed', $row );
+		return $row;
+	}
+}
+
+add_filter( 'import_pipeline_normalize', function ( $row ) {
+	$row['email'] = strtolower( trim( $row['email'] ) );
+	return $row;
+} );
+
+$log = array();
+add_action( 'import_pipeline_row_processed', function ( $row ) use ( &$log ) {
+	$log[] = $row['email'];
+} );
+
+$pipeline = new ImportPipeline();
+$pipeline->process( array( 'email' => '  USER@EXAMPLE.COM  ' ) );
+$pipeline->process( array( 'email' => 'OTHER@example.com' ) );
+
+print_r( $log );
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Polyfill/README.md">Polyfill README</a>.</p>
