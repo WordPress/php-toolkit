@@ -1,0 +1,47 @@
+name: Verify docs snippets
+
+# Runs every PHP snippet in bin/_docs_components.py against the local toolkit
+# and compares stdout against bin/_expected_outputs.json. Anything that drifts
+# fails CI; anything that errors out also fails CI.
+#
+# Snippets that can't run locally (need network, a listening port, or other
+# Playground-only features) are not in the JSON and are skipped — the runner
+# only enforces matches for snippets that already have captured output.
+
+on:
+  pull_request:
+    paths:
+      - 'components/**'
+      - 'bin/_docs_components.py'
+      - 'bin/_expected_outputs.json'
+      - 'bin/run-snippets.py'
+      - 'composer.json'
+      - 'composer.lock'
+      - '.github/workflows/snippet-tests.yml'
+  push:
+    branches: [trunk]
+  workflow_dispatch:
+
+jobs:
+  run-snippets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+          coverage: none
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install toolkit dependencies
+        run: composer install --no-dev --optimize-autoloader --no-progress
+
+      - name: Run docs snippets and compare to expected output
+        run: bin/run-snippets.py --check
