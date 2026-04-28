@@ -74,6 +74,13 @@ list( $positionals, $options ) = CLI::parse_command_args_and_options(
 var_dump( $options['verbose'] );
 var_dump( $positionals );
 </script>
+<script type="text/expected-output">
+bool(true)
+array(1) {
+  [0]=>
+  string(9) "input.txt"
+}
+</script>
 </php-snippet>
 		<h2 id="mix-values-flags-and-bundles">Mix values, flags, and bundles</h2>
 		<p>Values can be passed as <code>--port 8080</code>, <code>--port=8080</code>, <code>-p 8080</code>, or <code>-p=8080</code>. Boolean shorts can be bundled (<code>-afv</code>).</p>
@@ -96,6 +103,25 @@ $argv = array( '-afv', '--port=8080', '-o', '/tmp/result.txt', 'input.json' );
 list( $positionals, $options ) = CLI::parse_command_args_and_options( $argv, $option_defs );
 
 print_r( array( 'positionals' => $positionals, 'options' => $options ) );
+</script>
+<script type="text/expected-output">
+Array
+(
+    [positionals] => Array
+        (
+            [0] => input.json
+        )
+
+    [options] => Array
+        (
+            [all] => 1
+            [force] => 1
+            [verbose] => 1
+            [output] => /tmp/<tempfile>.txt
+            [port] => 8080
+        )
+
+)
 </script>
 </php-snippet>
 		<h2 id="validate-required-options">Validate required options</h2>
@@ -126,6 +152,9 @@ try {
 	echo "error: " . $e->getMessage() . "\n";
 }
 </script>
+<script type="text/expected-output">
+error: Missing required option --site-path
+</script>
 </php-snippet>
 		<h2 id="generate---help-from-definitions">Generate --help from definitions</h2>
 		<p>Because each option carries its own description, you can render help text by walking the same definitions you parse with. No second source of truth.</p>
@@ -155,6 +184,15 @@ function render_help( array $defs ) {
 
 list( , $options ) = CLI::parse_command_args_and_options( array( '-h' ), $option_defs );
 if ( $options['help'] ) render_help( $option_defs );
+</script>
+<script type="text/expected-output">
+Usage: mytool [options] <input>
+
+Options:
+  -o, --output=VALUE           Write result to FILE
+  -f, --force                  Overwrite existing files
+  -v, --verbose                Verbose output
+  -h, --help                   Show this help and exit
 </script>
 </php-snippet>
 		<h2 id="git-style-subcommands">Git-style subcommands</h2>
@@ -195,6 +233,15 @@ function run( array $argv, array $commands ) {
 run( array( 'deploy', '--env=production', '-n', 'web-01', 'web-02' ), $commands );
 echo "---\n";
 run( array( 'rollback', '-t', 'abc123' ), $commands );
+</script>
+<script type="text/expected-output">
+command=deploy
+options: {"env":"production","dry-run":true}
+positionals: ["web-01","web-02"]
+---
+command=rollback
+options: {"to":"abc123"}
+positionals: []
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/CLI/README.md">CLI README</a>.</p>

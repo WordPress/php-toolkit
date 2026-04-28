@@ -66,6 +66,13 @@ var_dump( wp_is_valid_utf8( "B\xFCch" ) );
 var_dump( wp_is_valid_utf8( "\xC1\xBF" ) );
 var_dump( wp_is_valid_utf8( "\xED\xB0\x80" ) );
 </script>
+<script type="text/expected-output">
+bool(true)
+bool(true)
+bool(false)
+bool(false)
+bool(false)
+</script>
 </php-snippet>
 		<h2 id="scrubbing-invalid-bytes-with-ufffd">Scrubbing invalid bytes with U+FFFD</h2>
 		<p>Replace each ill-formed sequence with the Unicode replacement character. Useful right before serializing to XML, JSON, or sending to an LLM that will choke on broken bytes.</p>
@@ -81,6 +88,10 @@ echo wp_scrub_utf8( $broken ) . "\n";
 
 echo wp_scrub_utf8( ".\xE2\x8C\xE2\x8C." ) . "\n";
 </script>
+<script type="text/expected-output">
+the byte � should not be here.
+.��.
+</script>
 </php-snippet>
 		<h2 id="detecting-noncharacters-mysqlutf8mb4-will-reject">Detecting noncharacters MySQL/utf8mb4 will reject</h2>
 		<p>Code points like U+FFFE, U+FFFF, and the U+FDD0–U+FDEF block are valid Unicode but forbidden in XML and rejected by some databases. Check before inserting user-submitted content into a strict <code>utf8mb4</code> column.</p>
@@ -94,6 +105,11 @@ use function WordPress\Encoding\wp_has_noncharacters;
 var_dump( wp_has_noncharacters( 'normal text' ) );
 var_dump( wp_has_noncharacters( "oops \u{FFFE}" ) );
 var_dump( wp_has_noncharacters( "hi \u{FDD0} bye" ) );
+</script>
+<script type="text/expected-output">
+bool(false)
+bool(true)
+bool(true)
 </script>
 </php-snippet>
 		<h2 id="three-way-pipeline-validate-scrub-then-check-noncharacters">Three-way pipeline: validate, scrub, then check noncharacters</h2>
@@ -120,6 +136,12 @@ foreach ( $inputs as $label => $bytes ) {
 	$weird    = wp_has_noncharacters( $cleaned );
 	echo sprintf( "%-10s valid=%s noncharacter=%s -> %s\n", $label, $valid ? 'Y' : 'N', $weird ? 'Y' : 'N', $cleaned );
 }
+</script>
+<script type="text/expected-output">
+good       valid=Y noncharacter=N -> Café
+latin1     valid=N noncharacter=N -> caf�
+overlong   valid=N noncharacter=N -> x��y
+noncharac  valid=Y noncharacter=Y -> hi ￾ there
 </script>
 </php-snippet>
 		<h2 id="salvaging-a-legacy-iso-8859-1-column-inside-a-utf-8-corpus">Salvaging a legacy ISO-8859-1 column inside a UTF-8 corpus</h2>
@@ -151,6 +173,12 @@ foreach ( $rows as $id => $value ) {
 		echo "#$id unrecoverable, scrubbing: " . wp_scrub_utf8( $value ) . "\n";
 	}
 }
+</script>
+<script type="text/expected-output">
+#1 ok: Plain ASCII
+#2 ok: Café
+#3 recovered as latin1: café
+#4 recovered as latin1: weird À byte
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Encoding/README.md">Encoding README</a>.</p>

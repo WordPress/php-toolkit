@@ -77,6 +77,13 @@ while ( $tags->next_tag( 'img' ) ) {
 
 echo $tags->get_updated_html();
 </script>
+<script type="text/expected-output">
+<article>
+	<img decoding="async" loading="lazy" src="hero.jpg" alt="Hero">
+	<p>Intro copy.</p>
+	<img decoding="async" loading="lazy" src="inline.jpg" alt="Inline">
+</article>
+</script>
 </php-snippet>
 		<h2 id="rewrite-relative-links-to-absolute-urls">Rewrite relative links to absolute URLs</h2>
 		<p>Useful when rendering content for an RSS feed, an email, or a site behind a CDN where relative paths break. The processor only rewrites the bytes that changed, so untouched markup stays byte-identical.</p>
@@ -103,6 +110,9 @@ while ( $tags->next_tag( 'a' ) ) {
 }
 
 echo $tags->get_updated_html();
+</script>
+<script type="text/expected-output">
+<p>See <a href="https://my-site.test/about">about</a>, <a href="https://example.com/x">x</a>, and <a href="https://my-site.test/contact.html">contact</a>.</p>
 </script>
 </php-snippet>
 		<h2 id="strip-every-script-and-inline-event-handler">Strip every script and inline event handler</h2>
@@ -131,6 +141,9 @@ while ( $tags->next_tag() ) {
 
 echo $tags->get_updated_html();
 </script>
+<script type="text/expected-output">
+<p>Hi <b >friend</b>!</p><script><\/script><img src=x >
+</script>
 </php-snippet>
 		<h2 id="stamp-a-csp-nonce-on-inline-scripts-and-styles">Stamp a CSP nonce on inline scripts and styles</h2>
 		<p>Content Security Policy in <code>nonce-</code> mode requires every inline <code>&lt;script&gt;</code> and <code>&lt;style&gt;</code> to carry a matching nonce attribute. Tag-by-tag is exactly the right granularity.</p>
@@ -154,6 +167,11 @@ while ( $tags->next_tag() ) {
 
 echo "nonce: {$nonce}\n\n";
 echo $tags->get_updated_html();
+</script>
+<script type="text/expected-output">
+nonce: <random>
+
+<head><style nonce="4d1254aa164b4eef">body{font:16px sans-serif}</style></head><body><script nonce="4d1254aa164b4eef">console.log("hi")<\/script><script nonce="4d1254aa164b4eef" src="vendor.js"><\/script></body>
 </script>
 </php-snippet>
 		<h2 id="build-a-srcset-from-a-single-src">Build a srcset from a single src</h2>
@@ -182,6 +200,9 @@ while ( $tags->next_tag( 'img' ) ) {
 
 echo $tags->get_updated_html();
 </script>
+<script type="text/expected-output">
+<figure><img sizes="(max-width: 768px) 100vw, 768px" srcset="https://cdn.test/uploads/photo.jpg?w=480 480w, https://cdn.test/uploads/photo.jpg?w=768 768w, https://cdn.test/uploads/photo.jpg?w=1200 1200w" src="https://cdn.test/uploads/photo.jpg" alt="Sunset"></figure>
+</script>
 </php-snippet>
 		<h2 id="decode-html-entities-the-way-the-spec-demands">Decode HTML entities the way the spec demands</h2>
 		<p>The HTML5 entity table has roughly 2,200 named references and a long list of edge cases. <code>WP_HTML_Decoder</code> implements the algorithm — don't roll your own.</p>
@@ -200,6 +221,11 @@ $is_javascript = WP_HTML_Decoder::attribute_starts_with(
 	'ascii-case-insensitive'
 );
 var_dump( $is_javascript );
+</script>
+<script type="text/expected-output">
+attribute: path?a=1&b=2&copy
+text:      AT&T — 100% 😀
+bool(false)
 </script>
 </php-snippet>
 		<h2 id="find-images-by-ancestry-with-breadcrumbs">Find images by ancestry with breadcrumbs</h2>
@@ -224,6 +250,10 @@ while ( $p->next_tag( array( 'breadcrumbs' => array( 'FIGURE', 'IMG' ) ) ) ) {
 
 echo "found {$figure_images} figure images\n";
 echo $p->get_updated_html();
+</script>
+<script type="text/expected-output">
+found 2 figure images
+<article><figure><img class="figure-image" src="hero.jpg" alt="Hero"><figcaption>Hero shot</figcaption></figure><p>Body copy <img src="emoji.png" alt=""> mid-paragraph.</p><figure><img class="figure-image" src="diagram.png" alt="Diagram"></figure></article>
 </script>
 </php-snippet>
 		<h2 id="outline-a-document-by-walking-tokens-with-depth">Outline a document by walking tokens with depth</h2>
@@ -261,6 +291,11 @@ while ( $p->next_token() ) {
 	echo "{$indent}{$tag}  {$text}\n";
 }
 </script>
+<script type="text/expected-output">
+    H1  Title
+      H2  Chapter 1
+      H2  Chapter 2
+</script>
 </php-snippet>
 		<h2 id="bookmarks-annotate-a-parent-based-on-its-children">Bookmarks: annotate a parent based on its children</h2>
 		<p>Bookmarks are the one escape from forward-only scanning. Save a position, scan ahead, decide what to do, then <code>seek()</code> back and rewrite the earlier tag.</p>
@@ -293,6 +328,9 @@ $tags->set_attribute( 'data-progress', $done . '/' . $total );
 $tags->release_bookmark( 'list' );
 
 echo $tags->get_updated_html();
+</script>
+<script type="text/expected-output">
+<ul data-progress="2/3"><li><input type="checkbox" checked> Buy milk</li><li><input type="checkbox"> Walk the dog</li><li><input type="checkbox" checked> Read book</li></ul>
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/HTML/README.md">HTML README</a>.</p>

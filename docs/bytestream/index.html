@@ -75,6 +75,9 @@ while ( ! $reader->reached_end_of_data() ) {
 $reader->close_reading();
 echo "Read {$total} bytes in 256-byte chunks.\n";
 </script>
+<script type="text/expected-output">
+Read 1800 bytes in 256-byte chunks.
+</script>
 </php-snippet>
 		<h2 id="memorypipe-as-write-then-read-buffer">MemoryPipe as write-then-read buffer</h2>
 		<p><code>MemoryPipe</code> is bidirectional: you <code>append_bytes()</code> as a writer and <code>pull/consume</code> as a reader. Easiest way to wire one component's output into another's input.</p><p>Gotcha: a producer must call <code>close_writing()</code> when done — otherwise the consumer eventually throws <code>NotEnoughDataException</code> instead of seeing EOF.</p>
@@ -96,6 +99,11 @@ while ( ! $pipe->reached_end_of_data() ) {
 	if ( 0 === $n ) break;
 	echo "got: " . $pipe->consume( $n );
 }
+</script>
+<script type="text/expected-output">
+got: first chunk
+second chunk
+third chunk
 </script>
 </php-snippet>
 		<h2 id="compress-on-the-way-in-decompress-on-the-way-out">Compress on the way in, decompress on the way out</h2>
@@ -124,6 +132,11 @@ $round    = $inflated->consume_all();
 printf( "original  : %d bytes\n", strlen( $original ) );
 printf( "deflated  : %d bytes (%.1f%%)\n", strlen( $compressed ), 100 * strlen( $compressed ) / strlen( $original ) );
 printf( "round-trip: %s\n", $round === $original ? 'OK' : 'BROKEN' );
+</script>
+<script type="text/expected-output">
+original  : 1050 bytes
+deflated  : 45 bytes (4.3%)
+round-trip: OK
 </script>
 </php-snippet>
 		<h2 id="line-by-line-reads-from-a-chunked-source">Line-by-line reads from a chunked source</h2>
@@ -156,6 +169,13 @@ if ( '' !== $tail ) {
 	printf( "[%d] %s\n", ++$count, $tail );
 }
 </script>
+<script type="text/expected-output">
+[1] alpha
+[2] bravo
+[3] charlie
+[4] delta
+[5] echo
+</script>
 </php-snippet>
 		<h2 id="limit-a-stream-to-a-fixed-window">Limit a stream to a fixed window</h2>
 		<p><code>LimitedByteReadStream</code> exposes only the next N bytes of an underlying stream as if those were the entire stream. This is how the ZIP decoder hands you the body of one entry without letting you read into the next.</p>
@@ -176,6 +196,10 @@ $source->consume( 10 );
 $body = new LimitedByteReadStream( $source, 16 );
 echo "body sees: " . $body->consume_all() . "\n";
 echo "remaining in source: " . $source->consume_all() . "\n";
+</script>
+<script type="text/expected-output">
+body sees: BODY:hello there
+remaining in source: |FOOTER:done
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/ByteStream/README.md">ByteStream README</a>.</p>

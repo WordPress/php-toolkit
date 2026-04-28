@@ -5,6 +5,7 @@ landing page. The component catalog lives in bin/_docs_components.py so that
 content and orchestration stay separate.
 """
 
+import json
 import os
 import re
 import sys
@@ -14,6 +15,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _docs_components import COMPONENTS
 
 DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs')
+EXPECTED_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_expected_outputs.json')
+
+EXPECTED = {}
+if os.path.exists(EXPECTED_PATH):
+    with open(EXPECTED_PATH) as f:
+        EXPECTED = {tuple(k.split('::')): v for k, v in json.load(f).items()}
 
 PAGE_HEAD = '''<!doctype html>
 <html lang="en">
@@ -45,14 +52,24 @@ PAGE_FOOT = '''<footer class="site">
 '''
 
 
-def snippet_block(name, code):
+def snippet_block(slug, name, code):
     # <script type="application/x-php"> content is parsed as raw text — entities
     # are not decoded — so the PHP must be inserted verbatim. Guard only against
     # the literal closing-tag string.
     safe = code.rstrip().replace('</script', '<\\/script')
+    expected = EXPECTED.get((slug, name))
+    expected_block = ''
+    if expected is not None:
+        expected_safe = expected.rstrip().replace('</script', '<\\/script')
+        # Pre-rendered output: <php-snippet> reads the script child and skips
+        # booting the Playground runtime entirely, so first-Run is instant.
+        expected_block = (
+            f'<script type="text/expected-output">\n{expected_safe}\n</script>\n'
+        )
     return (
         f'<php-snippet blueprint="toolkit-setup" name="{h(name)}">\n'
         f'<script type="application/x-php">\n{safe}\n</script>\n'
+        f'{expected_block}'
         f'</php-snippet>\n'
     )
 
@@ -100,7 +117,7 @@ def render_component(slug, title, lede, install, sections):
             out.append(f'\t\t{body_html}\n')
         if snippet:
             name, code = snippet
-            out.append(snippet_block(name, code))
+            out.append(snippet_block(slug, name, code))
     readme_dir = title.replace(' ', '')
     if slug == 'coding-standards':
         readme_dir = 'ToolkitCodingStandards'

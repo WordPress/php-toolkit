@@ -69,6 +69,10 @@ foreach ( $blocks as $block ) {
 	echo $block['blockName'] . ': ' . trim( strip_tags( $block['innerHTML'] ) ) . "\n";
 }
 </script>
+<script type="text/expected-output">
+core/heading: Welcome
+core/paragraph: Hello from the block editor.
+</script>
 </php-snippet>
 		<h2 id="count-every-block-type-in-a-post">Count every block type in a post</h2>
 		<p>The first thing most plugin authors actually want: a histogram. Combine recursion with <code>blockName</code> to handle <code>core/columns</code>, <code>core/group</code>, and other containers.</p>
@@ -102,6 +106,12 @@ arsort( $counts );
 foreach ( $counts as $name => $n ) {
 	echo str_pad( (string) $n, 4, ' ', STR_PAD_LEFT ) . '  ' . $name . "\n";
 }
+</script>
+<script type="text/expected-output">
+   2  core/paragraph
+   1  core/group
+   1  core/heading
+   1  core/image
 </script>
 </php-snippet>
 		<h2 id="lint-headings-for-hierarchy-mistakes">Lint headings for hierarchy mistakes</h2>
@@ -137,6 +147,11 @@ $walk = function ( $blocks ) use ( &$walk, &$last, &$index ) {
 };
 $walk( $blocks );
 </script>
+<script type="text/expected-output">
+ok   heading #1: H2
+WARN heading #2: jumped from H2 to H4
+ok   heading #3: H3
+</script>
 </php-snippet>
 		<h2 id="find-all-instances-of-a-custom-block">Find all instances of a custom block</h2>
 		<p>Useful when auditing an export for a block your plugin owns: every <code>my-plugin/testimonial</code>, with its attributes and inner content.</p>
@@ -169,6 +184,10 @@ foreach ( $find( $blocks, 'my-plugin/testimonial' ) as $i => $b ) {
 	echo ( $i + 1 ) . '. ' . $b['attrs']['author'] . ' (' . $b['attrs']['rating'] . '/5): '
 		. trim( strip_tags( $b['innerHTML'] ) ) . "\n";
 }
+</script>
+<script type="text/expected-output">
+1. Jane (5/5): Loved it.
+2. Joe (4/5): Pretty good.
 </script>
 </php-snippet>
 		<h2 id="migrate-attributes-from-an-old-block-version">Migrate attributes from an old block version</h2>
@@ -211,6 +230,12 @@ $migrate = function ( $blocks ) use ( &$migrate ) {
 $migrated = $migrate( $blocks );
 echo json_encode( $migrated[0]['attrs'], JSON_PRETTY_PRINT ) . "\n";
 </script>
+<script type="text/expected-output">
+{
+    "color": "red",
+    "fontWeight": 700
+}
+</script>
 </php-snippet>
 		<h2 id="detect-blocks-with-stale-embed-urls">Detect blocks with stale embed URLs</h2>
 		<p>A real-world scrub: find every <code>core/embed</code> whose URL points at a domain you've retired. Useful when auditing a multi-thousand-post export.</p>
@@ -232,6 +257,11 @@ foreach ( ( new WP_Block_Parser() )->parse( $document ) as $b ) {
 	$bad  = $host && in_array( $host, $retired, true );
 	echo ( $bad ? 'STALE  ' : 'ok     ' ) . $url . "\n";
 }
+</script>
+<script type="text/expected-output">
+ok     https://twitter.com/wordpress/status/1
+ok     https://youtube.com/watch?v=abc
+STALE  https://vine.co/v/xyz
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/BlockParser/README.md">BlockParser README</a>.</p>

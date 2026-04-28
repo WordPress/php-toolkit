@@ -72,6 +72,11 @@ echo "mode: " . $config->get_execution_mode() . "\n";
 echo "root: " . $config->get_target_site_root() . "\n";
 echo "url:  " . $config->get_target_site_url() . "\n";
 </script>
+<script type="text/expected-output">
+mode: apply-to-existing-site
+root: /wordpress
+url:  http://playground.test/
+</script>
 </php-snippet>
 		<h2 id="the-blueprint-json-shape">The Blueprint JSON shape</h2>
 		<p>A blueprint is a JSON document with a <code>version</code> field and a <code>steps</code> array. Each step has a <code>"step"</code> discriminator and step-specific fields. This is the same shape used by <a href="https://playground.wordpress.net/">WordPress Playground</a>.</p><pre><code>{

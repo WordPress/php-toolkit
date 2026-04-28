@@ -82,6 +82,9 @@ $out->close_writing();
 $zip = ZipFilesystem::create( FileReadStream::from_path( $path ) );
 echo $zip->get_contents( 'readme.txt' );
 </script>
+<script type="text/expected-output">
+Hello from inside the zip.
+</script>
 </php-snippet>
 		<h2 id="build-an-epub-from-scratch">Build an EPUB from scratch</h2>
 		<p>An EPUB is a ZIP with one strict rule: the <code>mimetype</code> entry must come first and must be Stored. Everything else can be Deflate.</p><p>Gotcha: e-readers reject EPUBs whose <code>mimetype</code> entry has compression. Use <code>COMPRESSION_NONE</code> for that single entry.</p>
@@ -132,6 +135,10 @@ $zip = ZipFilesystem::create( FileReadStream::from_path( $path ) );
 printf( "mimetype: %s\n", $zip->get_contents( 'mimetype' ) );
 printf( "size on disk: %d bytes\n", filesize( $path ) );
 </script>
+<script type="text/expected-output">
+mimetype: application/epub+zip
+size on disk: 839 bytes
+</script>
 </php-snippet>
 		<h2 id="stream-a-large-entry-without-buffering-it">Stream a large entry without buffering it</h2>
 		<p>Calling <code>get_contents()</code> on a 500 MB CSV inside a ZIP would eat 500 MB of RAM. Use <code>open_read_stream()</code> instead and inflate-as-you-go.</p><p>Gotcha: only one entry stream open at a time. Drain or finish the previous stream before opening the next.</p>
@@ -175,6 +182,9 @@ while ( ! $stream->reached_end_of_data() ) {
 	$bytes += $n;
 }
 printf( "Inflated %d bytes in 8 KB chunks, parsed %d rows.\n", $bytes, $rows );
+</script>
+<script type="text/expected-output">
+Inflated 205000 bytes in 8 KB chunks, parsed 15000 rows.
 </script>
 </php-snippet>
 		<h2 id="repack-modify-one-file-copy-the-rest">Repack: modify one file, copy the rest</h2>
@@ -240,6 +250,10 @@ $repacked = ZipFilesystem::create( FileReadStream::from_path( $dst_path ) );
 echo "new config.json: " . $repacked->get_contents( 'config.json' ) . "\n";
 echo "untouched: " . $repacked->get_contents( 'app/index.php' ) . "\n";
 </script>
+<script type="text/expected-output">
+new config.json: {"debug":true,"version":"1.0.1"}
+untouched: <?php echo "hello";
+</script>
 </php-snippet>
 		<h2 id="defend-against-zip-slip">Defend against zip-slip</h2>
 		<p>A malicious archive can name an entry <code>../../etc/passwd</code> and trick a naive extractor into clobbering files outside the destination. <code>ZipDecoder::sanitize_path()</code> strips leading <code>../</code> segments and collapses internal <code>/../</code> sequences before exposing the path.</p>
@@ -260,6 +274,13 @@ $evil_inputs = array(
 foreach ( $evil_inputs as $name ) {
 	printf( "%-45s => %s\n", $name, ZipDecoder::sanitize_path( $name ) );
 }
+</script>
+<script type="text/expected-output">
+../../etc/passwd                              => etc/passwd
+./safe/path.txt                               => ./safe/path.txt
+a/../../b/secret                              => a/../b/secret
+a//b///c.txt                                  => a/b/c.txt
+../../../../root/.ssh/authorized_keys         => root/.ssh/authorized_keys
 </script>
 </php-snippet>
 		<h2 id="pipe-zip-entries-into-an-inmemoryfilesystem">Pipe ZIP entries into an InMemoryFilesystem</h2>
@@ -315,6 +336,14 @@ $walk = function ( $dir ) use ( &$walk, $mem ) {
 	}
 };
 $walk( '/' );
+</script>
+<script type="text/expected-output">
+files now in memory:
+  /app/index.php
+  /app/lib/util.php
+  /app/assets/style.css
+  /app/README.md
+  /app/VERSION
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Zip/README.md">Zip README</a>.</p>

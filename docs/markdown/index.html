@@ -63,6 +63,15 @@ use WordPress\Markdown\MarkdownConsumer;
 $result = ( new MarkdownConsumer( "# Hello\n\nWelcome to **WordPress**." ) )->consume();
 echo $result->get_block_markup();
 </script>
+<script type="text/expected-output">
+<!-- wp:heading {"level":1} -->
+<h1 class="wp-block-heading" id="hello">Hello</h1>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Welcome to <b>WordPress</b>.</p>
+<!-- /wp:paragraph -->
+</script>
 </php-snippet>
 		<h2 id="round-trip-blocks-back-to-markdown">Round-trip: blocks back to Markdown</h2>
 		<p>Pair <code>MarkdownProducer</code> with <code>MarkdownConsumer</code> to convert in either direction. Round-tripping is lossy for block attributes that have no Markdown representation (custom classes, alignment), so do not expect byte-perfect equality.</p>
@@ -79,6 +88,13 @@ $blocks   = ( new MarkdownConsumer( $md ) )->consume();
 $markdown = ( new MarkdownProducer( $blocks ) )->produce();
 
 echo $markdown;
+</script>
+<script type="text/expected-output">
+## Round trip
+
+- one
+- two
+- three
 </script>
 </php-snippet>
 		<h2 id="reading-yaml-frontmatter-as-post-meta">Reading YAML frontmatter as post meta</h2>
@@ -107,6 +123,33 @@ echo 'Title: '   . $consumer->get_meta_value( 'post_title' )  . "\n";
 echo 'Status: '  . $consumer->get_meta_value( 'post_status' ) . "\n";
 print_r( $consumer->get_all_metadata() );
 </script>
+<script type="text/expected-output">
+Title: The Name of the Wind
+Status: publish
+Array
+(
+    [post_title] => Array
+        (
+            [0] => The Name of the Wind
+        )
+
+    [post_status] => Array
+        (
+            [0] => publish
+        )
+
+    [tags] => Array
+        (
+            [0] => Array
+                (
+                    [0] => fantasy
+                    [1] => kingkiller
+                )
+
+        )
+
+)
+</script>
 </php-snippet>
 		<h2 id="migrating-an-obsidian-or-hugo-folder-of-markdown">Migrating an Obsidian or Hugo folder of Markdown</h2>
 		<p>Walk a directory of <code>.md</code> files (Obsidian vault, Hugo <code>content/</code>, Jekyll <code>_posts</code>) and emit one block-markup record per file.</p>
@@ -129,6 +172,21 @@ foreach ( glob( '/tmp/vault/*.md' ) as $path ) {
 	echo "=== $title ($path) ===\n";
 	echo substr( $consumer->get_block_markup(), 0, 120 ) . "...\n\n";
 }
+</script>
+<script type="text/expected-output">
+=== roadmap (/tmp/<tempfile>/roadmap.md) ===
+<!-- wp:heading {"level":1} -->
+<h1 class="wp-block-heading" id="roadmap">Roadmap</h1>
+<!-- /wp:heading -->
+
+<!-- wp:lis...
+
+=== Welcome (/tmp/<tempfile>/welcome.md) ===
+<!-- wp:paragraph -->
+<p>Hello world.</p>
+<!-- /wp:paragraph -->
+
+...
 </script>
 </php-snippet>
 		<h2 id="counting-blocks-produced-by-a-markdown-document">Counting blocks produced by a Markdown document</h2>
@@ -163,6 +221,16 @@ foreach ( parse_blocks( $blocks ) as $block ) {
 	$counts[ $block['blockName'] ] = ( isset( $counts[ $block['blockName'] ] ) ? $counts[ $block['blockName'] ] : 0 ) + 1;
 }
 print_r( $counts );
+</script>
+<script type="text/expected-output">
+Array
+(
+    [core/heading] => 1
+    [core/paragraph] => 1
+    [core/table] => 1
+    [core/code] => 1
+    [core/quote] => 1
+)
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Markdown/README.md">Markdown README</a>.</p>

@@ -94,6 +94,9 @@ function playground_cors_proxy_maybe_rate_limit() {
 
 echo "Config loaded — rate limiter armed.\n";
 </script>
+<script type="text/expected-output">
+Config loaded — rate limiter armed.
+</script>
 </php-snippet>
 		<h2 id="allowlist-upstream-hosts">Allowlist upstream hosts</h2>
 		<p>Out of the box the proxy will fetch any public URL. Most real deployments want a fixed list of upstreams — GitHub, Packagist, wp.org.</p>
@@ -123,6 +126,9 @@ function playground_cors_proxy_maybe_rate_limit() {
 }
 
 echo "Allowlist config active.\n";
+</script>
+<script type="text/expected-output">
+Allowlist config active.
 </script>
 </php-snippet>
 		<h2 id="browser-side-fetch-through-the-proxy">Browser-side fetch through the proxy</h2>

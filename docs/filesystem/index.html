@@ -66,6 +66,9 @@ $fs = InMemoryFilesystem::create();
 $fs->put_contents( '/hello.txt', 'Hello, world!' );
 echo $fs->get_contents( '/hello.txt' );
 </script>
+<script type="text/expected-output">
+Hello, world!
+</script>
 </php-snippet>
 		<h2 id="test-code-without-touching-disk">Test code without touching disk</h2>
 		<p>Pass production code a <code>Filesystem</code> instead of using <code>file_get_contents</code> directly, and your tests run against an in-memory tree with no setup or teardown.</p>
@@ -90,6 +93,9 @@ bump_version( $fs, '/package.json' );
 
 echo $fs->get_contents( '/package.json' ) . "\n";
 </script>
+<script type="text/expected-output">
+{"version":"1.2.4"}
+</script>
 </php-snippet>
 		<h2 id="local-disk-with-a-chrooted-root">Local disk with a chrooted root</h2>
 		<p><code>LocalFilesystem::create($root)</code> is implicitly chrooted: every path resolves relative to <code>$root</code> and a <code>../</code> can't escape. Useful when the path comes from user input.</p>
@@ -111,6 +117,10 @@ echo $fs->get_contents( '/uploads/../uploads/note.txt' ) . "\n";
 $fs->rmdir( '/', array( 'recursive' => true ) );
 echo "exists after cleanup? " . ( is_dir( $root ) ? 'yes' : 'no' ) . "\n";
 </script>
+<script type="text/expected-output">
+Hi from local disk.
+exists after cleanup? no
+</script>
 </php-snippet>
 		<h2 id="sqlite-as-a-portable-file-store">SQLite as a portable file store</h2>
 		<p>The whole tree lives in one SQLite file you can ship anywhere PHP runs. Useful for plugins that want self-contained scratch storage that survives process boundaries without leaving loose files behind.</p>
@@ -131,6 +141,11 @@ foreach ( $fs->ls( '/posts' ) as $name ) {
 	$first = strtok( $fs->get_contents( '/posts/' . $name ), "\n" );
 	echo "{$name}: {$first}\n";
 }
+</script>
+<script type="text/expected-output">
+post-1.md: # Post 1
+post-2.md: # Post 2
+post-3.md: # Post 3
 </script>
 </php-snippet>
 		<h2 id="copy-a-tree-across-backends">Copy a tree across backends</h2>
@@ -173,6 +188,11 @@ echo "  index: " . $mem->get_contents( '/copy/index.html' ) . "\n";
 
 $local->rmdir( '/', array( 'recursive' => true ) );
 </script>
+<script type="text/expected-output">
+in memory after two copies:
+  posts: 2024-01.md
+  index: <h1>Home</h1>
+</script>
 </php-snippet>
 		<h2 id="atomic-write-via-tempfile-rename">Atomic write via tempfile rename</h2>
 		<p>Write to a sibling tempfile, then rename — that's how you avoid leaving a half-written file on crash. <code>rename()</code> is atomic within a single filesystem.</p>
@@ -201,6 +221,10 @@ echo "no .tmp leftovers: " . count( $fs->ls( '/' ) ) . " entries in root\n";
 
 $fs->rmdir( '/', array( 'recursive' => true ) );
 </script>
+<script type="text/expected-output">
+config: {"v":2}
+no .tmp leftovers: 1 entries in root
+</script>
 </php-snippet>
 		<h2 id="path-helpers-that-behave-the-same-on-windows">Path helpers that behave the same on Windows</h2>
 		<p>Unix path semantics on every host OS. Useful when the path is something abstract — a key in a SQLite filesystem, an entry name in a ZIP — that doesn't live on a real drive.</p>
@@ -216,6 +240,11 @@ use function WordPress\Filesystem\wp_unix_path_resolve_dots;
 echo wp_join_unix_paths( '/var/www', '/site/', '/index.php' ) . "\n";
 echo wp_unix_dirname( '/a/b/c/d.txt', 2 ) . "\n";
 echo wp_unix_path_resolve_dots( '/a/b/../c/./d/../e' ) . "\n";
+</script>
+<script type="text/expected-output">
+/var/www/site/index.php
+/a/b
+a/c/e
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Filesystem/README.md">Filesystem README</a>.</p>

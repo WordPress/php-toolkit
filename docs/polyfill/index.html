@@ -67,6 +67,12 @@ var_dump( str_contains( 'WordPress Toolkit', 'Toolkit' ) );
 $first_key = array_key_first( array( 'alpha' => 1, 'beta' => 2 ) );
 echo "first key: {$first_key}\n";
 </script>
+<script type="text/expected-output">
+bool(true)
+bool(true)
+bool(true)
+first key: alpha
+</script>
 </php-snippet>
 		<h2 id="escaping-and-translation-stubs">Escaping and translation stubs</h2>
 		<p>Pass-through implementations let you write code that looks WordPressy and runs anywhere.</p>
@@ -79,6 +85,12 @@ echo __( 'Hello, world' ) . "\n";
 echo esc_html( '<script>alert("xss")<\/script>' ) . "\n";
 echo esc_attr( 'a "quoted" value' ) . "\n";
 echo esc_url( 'https://example.com/?a=1&b=2' ) . "\n";
+</script>
+<script type="text/expected-output">
+Hello, world
+&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;
+a &quot;quoted&quot; value
+https://example.com/?a=1&amp;b=2
 </script>
 </php-snippet>
 		<h2 id="a-simple-filter-chain">A simple filter chain</h2>
@@ -95,6 +107,9 @@ add_filter( 'sanitize_title', function ( $title ) {
 } );
 
 echo apply_filters( 'sanitize_title', '  My Post Title  ' ) . "\n";
+</script>
+<script type="text/expected-output">
+my-post-title
 </script>
 </php-snippet>
 		<h2 id="priority-ordering-and-multi-arg-passing">Priority ordering and multi-arg passing</h2>
@@ -118,6 +133,9 @@ add_filter( 'render_price', function ( $html, $price, $currency ) {
 }, 20, 3 );
 
 echo apply_filters( 'render_price', '19.99', 19.99, 'EUR' ) . "\n";
+</script>
+<script type="text/expected-output">
+<strong>19.99</strong> EUR (EUR markup)
 </script>
 </php-snippet>
 		<h2 id="hook-based-extension-points-in-standalone-libraries">Hook-based extension points in standalone libraries</h2>
@@ -150,6 +168,13 @@ $pipeline->process( array( 'email' => '  USER@EXAMPLE.COM  ' ) );
 $pipeline->process( array( 'email' => 'OTHER@example.com' ) );
 
 print_r( $log );
+</script>
+<script type="text/expected-output">
+Array
+(
+    [0] => user@example.com
+    [1] => other@example.com
+)
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Polyfill/README.md">Polyfill README</a>.</p>
