@@ -35,6 +35,17 @@ from _docs_components import COMPONENTS  # noqa: E402
 VENDOR_AUTOLOAD = os.path.join(ROOT, 'vendor', 'autoload.php')
 EXPECTED_PATH = os.path.join(THIS, '_expected_outputs.json')
 
+# Snippets that can run but whose output isn't stable (real network, timestamps,
+# host-specific values). They're verified to exit 0 but their stdout isn't
+# captured into the JSON, so the docs page boots Playground at click time.
+NO_EXPECTED = {
+    ('httpclient', 'get.php'),
+    ('httpclient', 'head-metadata.php'),
+    ('httpclient', 'post-json.php'),
+    ('httpclient', 'fan-out.php'),
+    ('httpclient', 'stream-to-disk.php'),
+}
+
 PLAYGROUND_AUTOLOAD = "/wordpress/wp-content/php-toolkit/vendor/autoload.php"
 
 # Tiny polyfill so WordPress-only globals don't break local runs.
@@ -85,7 +96,7 @@ def normalize(text):
     # uniqid suffixes from sys_get_temp_dir paths in code
     text = re.sub(r'/(toolkit|atomic|copytree|big|orig|repacked|app|book|demo|sample|hash|gz|dl)-[a-f0-9]+', r'/\1-XXXXXX', text)
     # Random nonces / hex strings
-    text = re.sub(r'\bnonce: [0-9a-f]{16}\b', 'nonce: <random>', text)
+    text = re.sub(r'\bnonce(?:: |=")([0-9a-f]{16})"?', lambda m: m.group(0).replace(m.group(1), '<random>'), text)
     text = re.sub(r'\bcommit: [0-9a-f]{40}\b', 'commit: <oid>', text)
     text = re.sub(r'\bHEAD:\s+[0-9a-f]{40}', 'HEAD: <oid>', text)
     text = re.sub(r'\boid: [0-9a-f]{40}\b', 'oid: <oid>', text)
@@ -136,8 +147,13 @@ def main():
                 skipped += 1
                 continue
 
-            normalized = normalize(stdout)
             key = (slug, filename)
+            if key in NO_EXPECTED:
+                # Ran successfully but we don't compare output. Don't store.
+                matched += 1
+                continue
+
+            normalized = normalize(stdout)
             new[key] = normalized
 
             if args.check:
