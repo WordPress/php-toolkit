@@ -18,9 +18,34 @@
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
-<button class="toc-toggle" type="button">On this page ▾</button>
 <div class="layout">
-	<nav class="toc" aria-label="Table of contents"></nav>
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li class="current"><a href="../encoding/">Encoding</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+		<nav class="toc" aria-label="Table of contents"></nav>
+	</aside>
 	<article class="content">
 		<h1>Encoding</h1>
 		<p class="lede">Pure-PHP UTF-8 validation and scrubbing. Detects malformed bytes, replaces them per the Unicode maximal-subpart algorithm, and works without <code>mbstring</code>.</p>
@@ -29,42 +54,42 @@
 		<h2 id="validate">Validate</h2>
 <php-snippet blueprint="toolkit-setup" name="validate.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use function WordPress\Encoding\wp_is_valid_utf8;
 
-var_dump( wp_is_valid_utf8( &#x27;plain ASCII&#x27; ) );          // true
-var_dump( wp_is_valid_utf8( &quot;Pencil: \xE2\x9C\x8F&quot; ) ); // true
-var_dump( wp_is_valid_utf8( &quot;stray \xC0 byte&quot; ) );      // false
-var_dump( wp_is_valid_utf8( &quot;\xC1\xBF&quot; ) );             // false (overlong)
+var_dump( wp_is_valid_utf8( 'plain ASCII' ) );          // true
+var_dump( wp_is_valid_utf8( "Pencil: \xE2\x9C\x8F" ) ); // true
+var_dump( wp_is_valid_utf8( "stray \xC0 byte" ) );      // false
+var_dump( wp_is_valid_utf8( "\xC1\xBF" ) );             // false (overlong)
 </script>
 </php-snippet>
 		<h2 id="scrub-invalid-bytes">Scrub invalid bytes</h2>
 		<p>Replace each maximal subpart with U+FFFD.</p>
 <php-snippet blueprint="toolkit-setup" name="scrub.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use function WordPress\Encoding\wp_scrub_utf8;
 
-echo wp_scrub_utf8( &quot;caf\xC0 latte&quot; ) . &quot;\n&quot;;   // caf? latte
-echo wp_scrub_utf8( &quot;.\xE2\x8C.&quot; ) . &quot;\n&quot;;       // .?.   (incomplete)
-echo wp_scrub_utf8( &quot;.\xC1\xBF.&quot; ) . &quot;\n&quot;;       // .??.  (two subparts)
+echo wp_scrub_utf8( "caf\xC0 latte" ) . "\n";   // caf? latte
+echo wp_scrub_utf8( ".\xE2\x8C." ) . "\n";       // .?.   (incomplete)
+echo wp_scrub_utf8( ".\xC1\xBF." ) . "\n";       // .??.  (two subparts)
 </script>
 </php-snippet>
 		<h2 id="detect-noncharacters">Detect noncharacters</h2>
 		<p>Code points like U+FFFE that should never appear in interchange.</p>
 <php-snippet blueprint="toolkit-setup" name="noncharacters.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use function WordPress\Encoding\wp_has_noncharacters;
 
-var_dump( wp_has_noncharacters( &quot;Plain text&quot; ) );      // false
-var_dump( wp_has_noncharacters( &quot;\xEF\xBF\xBE&quot; ) ); // true (U+FFFE)
+var_dump( wp_has_noncharacters( "Plain text" ) );      // false
+var_dump( wp_has_noncharacters( "\xEF\xBF\xBE" ) ); // true (U+FFFE)
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Encoding/README.md">Encoding README</a>.</p>

@@ -18,9 +18,34 @@
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
-<button class="toc-toggle" type="button">On this page ▾</button>
 <div class="layout">
-	<nav class="toc" aria-label="Table of contents"></nav>
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li class="current"><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+		<nav class="toc" aria-label="Table of contents"></nav>
+	</aside>
 	<article class="content">
 		<h1>DataLiberation</h1>
 		<p class="lede">Streaming WordPress import/export. WXR, SQL, block markup — without loading whole datasets into memory.</p>
@@ -30,8 +55,8 @@
 		<p>Feed entities to <code>WXRWriter</code> in logical order: post first, then meta/terms/comments belonging to it.</p>
 <php-snippet blueprint="toolkit-setup" name="wxr-writer.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\DataLiberation\EntityWriter\WXRWriter;
@@ -40,22 +65,22 @@ use WordPress\DataLiberation\ImportEntity;
 $output = new MemoryPipe();
 $writer = new WXRWriter( $output );
 
-$writer-&gt;append_entity( new ImportEntity( &#x27;post&#x27;, array(
-	&#x27;post_title&#x27; =&gt; &#x27;Hello World&#x27;,
-	&#x27;post_date&#x27;  =&gt; &#x27;2024-01-15&#x27;,
-	&#x27;guid&#x27;       =&gt; &#x27;https://example.com/?p=1&#x27;,
-	&#x27;content&#x27;    =&gt; &#x27;&lt;p&gt;Welcome to my site.&lt;/p&gt;&#x27;,
-	&#x27;post_id&#x27;    =&gt; &#x27;1&#x27;,
-	&#x27;post_name&#x27;  =&gt; &#x27;hello-world&#x27;,
-	&#x27;status&#x27;     =&gt; &#x27;publish&#x27;,
-	&#x27;post_type&#x27;  =&gt; &#x27;post&#x27;,
+$writer->append_entity( new ImportEntity( 'post', array(
+	'post_title' => 'Hello World',
+	'post_date'  => '2024-01-15',
+	'guid'       => 'https://example.com/?p=1',
+	'content'    => '<p>Welcome to my site.</p>',
+	'post_id'    => '1',
+	'post_name'  => 'hello-world',
+	'status'     => 'publish',
+	'post_type'  => 'post',
 ) ) );
 
-$writer-&gt;finalize();
-$writer-&gt;close_writing();
-$output-&gt;close_writing();
+$writer->finalize();
+$writer->close_writing();
+$output->close_writing();
 
-echo $output-&gt;consume_all();
+echo $output->consume_all();
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/DataLiberation/README.md">DataLiberation README</a>.</p>

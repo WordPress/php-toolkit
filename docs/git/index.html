@@ -18,9 +18,34 @@
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
-<button class="toc-toggle" type="button">On this page ▾</button>
 <div class="layout">
-	<nav class="toc" aria-label="Table of contents"></nav>
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li class="current"><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+		<nav class="toc" aria-label="Table of contents"></nav>
+	</aside>
 	<article class="content">
 		<h1>Git</h1>
 		<p class="lede">A pure-PHP Git client and server. Commits, branches, diffs, HTTP push/pull — all without shelling out to <code>git</code>.</p>
@@ -30,42 +55,42 @@
 		<p>The repository builds the blob, tree, and commit objects for you. Backed by any <code>Filesystem</code>, including <code>InMemoryFilesystem</code> for ephemeral repos.</p>
 <php-snippet blueprint="toolkit-setup" name="commit.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\Filesystem\InMemoryFilesystem;
 use WordPress\Git\GitRepository;
 
 $repo = new GitRepository( InMemoryFilesystem::create() );
 
-$oid = $repo-&gt;commit( array(
-	&#x27;updates&#x27; =&gt; array(
-		&#x27;README.md&#x27;           =&gt; &#x27;# My Project&#x27;,
-		&#x27;src/hello-world.php&#x27; =&gt; &#x27;&lt;?php echo &quot;Hello!&quot;;&#x27;,
+$oid = $repo->commit( array(
+	'updates' => array(
+		'README.md'           => '# My Project',
+		'src/hello-world.php' => '<?php echo "Hello!";',
 	),
 ) );
 
-echo &quot;commit: {$oid}\n&quot;;
-echo $repo-&gt;read_object_by_path( &#x27;/README.md&#x27; )-&gt;consume_all();
+echo "commit: {$oid}\n";
+echo $repo->read_object_by_path( '/README.md' )->consume_all();
 </script>
 </php-snippet>
 		<h2 id="read-objects-by-hash">Read objects by hash</h2>
 		<p>Every Git object is identified by its SHA-1. Store a blob, get the hash back, read it later.</p>
 <php-snippet blueprint="toolkit-setup" name="objects.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\Filesystem\InMemoryFilesystem;
 use WordPress\Git\GitRepository;
 
 $repo = new GitRepository( InMemoryFilesystem::create() );
-$blob = $repo-&gt;add_object( &#x27;blob&#x27;, &#x27;Hello, world!&#x27; );
-echo &quot;oid: {$blob}\n&quot;;
+$blob = $repo->add_object( 'blob', 'Hello, world!' );
+echo "oid: {$blob}\n";
 
-$reader = $repo-&gt;read_object( $blob );
-$reader-&gt;pull( 8096 );
-echo $reader-&gt;peek( 8096 ) . &quot;\n&quot;;
+$reader = $repo->read_object( $blob );
+$reader->pull( 8096 );
+echo $reader->peek( 8096 ) . "\n";
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Git/README.md">Git README</a>.</p>

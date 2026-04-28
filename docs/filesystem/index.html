@@ -18,9 +18,34 @@
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
-<button class="toc-toggle" type="button">On this page ▾</button>
 <div class="layout">
-	<nav class="toc" aria-label="Table of contents"></nav>
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li class="current"><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+		<nav class="toc" aria-label="Table of contents"></nav>
+	</aside>
 	<article class="content">
 		<h1>Filesystem</h1>
 		<p class="lede">A unified filesystem abstraction across local disk, in-memory trees, SQLite, and ZIP archives. Forward-slash paths everywhere, even on Windows.</p>
@@ -32,77 +57,77 @@
 		<p>The fastest backend. Stores everything in PHP arrays; ideal for tests and ephemeral processing.</p>
 <php-snippet blueprint="toolkit-setup" name="in-memory.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\Filesystem\InMemoryFilesystem;
 
 $fs = InMemoryFilesystem::create();
-$fs-&gt;mkdir( &#x27;/src/components&#x27;, array( &#x27;recursive&#x27; =&gt; true ) );
-$fs-&gt;put_contents( &#x27;/src/components/button.php&#x27;, &#x27;&lt;?php // button&#x27; );
-$fs-&gt;put_contents( &#x27;/src/components/form.php&#x27;, &#x27;&lt;?php // form&#x27; );
+$fs->mkdir( '/src/components', array( 'recursive' => true ) );
+$fs->put_contents( '/src/components/button.php', '<?php // button' );
+$fs->put_contents( '/src/components/form.php', '<?php // form' );
 
-print_r( $fs-&gt;ls( &#x27;/src/components&#x27; ) );
+print_r( $fs->ls( '/src/components' ) );
 </script>
 </php-snippet>
 		<h2 id="local-disk">Local disk</h2>
 		<p><code>LocalFilesystem::create($root)</code> chroots all paths to <code>$root</code>. The forward-slash convention is enforced even on Windows.</p>
 <php-snippet blueprint="toolkit-setup" name="local.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\Filesystem\LocalFilesystem;
 
-$root = sys_get_temp_dir() . &#x27;/toolkit-demo&#x27;;
+$root = sys_get_temp_dir() . '/toolkit-demo';
 $fs = LocalFilesystem::create( $root );
 
-$fs-&gt;put_contents( &#x27;/hello.txt&#x27;, &quot;Hi!\n&quot; );
-echo $fs-&gt;get_contents( &#x27;/hello.txt&#x27; );
-echo &quot;exists? &quot; . ( $fs-&gt;exists( &#x27;/hello.txt&#x27; ) ? &#x27;yes&#x27; : &#x27;no&#x27; ) . &quot;\n&quot;;
+$fs->put_contents( '/hello.txt', "Hi!\n" );
+echo $fs->get_contents( '/hello.txt' );
+echo "exists? " . ( $fs->exists( '/hello.txt' ) ? 'yes' : 'no' ) . "\n";
 </script>
 </php-snippet>
 		<h2 id="sqlite-backed">SQLite-backed</h2>
 		<p>Everything lives in a single SQLite file. Convenient for portable scratch storage that survives a process boundary.</p>
 <php-snippet blueprint="toolkit-setup" name="sqlite.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\Filesystem\SQLiteFilesystem;
 
-$fs = SQLiteFilesystem::create( &#x27;:memory:&#x27; );
-$fs-&gt;put_contents( &#x27;/notes.md&#x27;, &quot;# Hello\n\nFrom SQLite.&quot; );
-echo $fs-&gt;get_contents( &#x27;/notes.md&#x27; );
+$fs = SQLiteFilesystem::create( ':memory:' );
+$fs->put_contents( '/notes.md', "# Hello\n\nFrom SQLite." );
+echo $fs->get_contents( '/notes.md' );
 </script>
 </php-snippet>
 		<h2 id="walk-a-tree">Walk a tree</h2>
 		<p>The interface includes a recursive walker so you can iterate every file regardless of backend.</p>
 <php-snippet blueprint="toolkit-setup" name="walk.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\Filesystem\InMemoryFilesystem;
 
 $fs = InMemoryFilesystem::create();
 foreach ( array(
-	&#x27;/a.txt&#x27;           =&gt; &#x27;A&#x27;,
-	&#x27;/dir/b.txt&#x27;       =&gt; &#x27;B&#x27;,
-	&#x27;/dir/sub/c.txt&#x27;   =&gt; &#x27;C&#x27;,
-) as $path =&gt; $body ) {
-	$fs-&gt;mkdir( dirname( $path ), array( &#x27;recursive&#x27; =&gt; true ) );
-	$fs-&gt;put_contents( $path, $body );
+	'/a.txt'           => 'A',
+	'/dir/b.txt'       => 'B',
+	'/dir/sub/c.txt'   => 'C',
+) as $path => $body ) {
+	$fs->mkdir( dirname( $path ), array( 'recursive' => true ) );
+	$fs->put_contents( $path, $body );
 }
 
-$walker = function ( $dir ) use ( $fs, &amp;$walker ) {
-	foreach ( $fs-&gt;ls( $dir ) as $name ) {
-		$full = rtrim( $dir, &#x27;/&#x27; ) . &#x27;/&#x27; . $name;
-		if ( $fs-&gt;is_dir( $full ) ) $walker( $full );
-		else echo &quot;{$full}\n&quot;;
+$walker = function ( $dir ) use ( $fs, &$walker ) {
+	foreach ( $fs->ls( $dir ) as $name ) {
+		$full = rtrim( $dir, '/' ) . '/' . $name;
+		if ( $fs->is_dir( $full ) ) $walker( $full );
+		else echo "{$full}\n";
 	}
 };
-$walker( &#x27;/&#x27; );
+$walker( '/' );
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Filesystem/README.md">Filesystem README</a>.</p>

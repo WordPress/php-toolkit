@@ -18,9 +18,34 @@
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
-<button class="toc-toggle" type="button">On this page ▾</button>
 <div class="layout">
-	<nav class="toc" aria-label="Table of contents"></nav>
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li class="current"><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+		<nav class="toc" aria-label="Table of contents"></nav>
+	</aside>
 	<article class="content">
 		<h1>Merge</h1>
 		<p class="lede">Three-way merge and diff. Pluggable differ + merger + optional validator.</p>
@@ -30,8 +55,8 @@
 		<p>Give it a base, branch A, and branch B. Get a merge result with conflicts (if any) and the merged content.</p>
 <php-snippet blueprint="toolkit-setup" name="three-way.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\Merge\Diff\LineDiffer;
 use WordPress\Merge\Merge\LineMerger;
@@ -39,33 +64,33 @@ use WordPress\Merge\MergeStrategy;
 
 $strategy = new MergeStrategy( new LineDiffer(), new LineMerger() );
 
-$result = $strategy-&gt;merge(
-	&quot;Line 1\nLine 2\nLine 3\n&quot;,
-	&quot;Line 1\nLine 2 modified\nLine 3\n&quot;,
-	&quot;Line 1\nLine 2\nLine 3\nLine 4\n&quot;
+$result = $strategy->merge(
+	"Line 1\nLine 2\nLine 3\n",
+	"Line 1\nLine 2 modified\nLine 3\n",
+	"Line 1\nLine 2\nLine 3\nLine 4\n"
 );
 
-echo $result-&gt;get_merged_content();
+echo $result->get_merged_content();
 </script>
 </php-snippet>
 		<h2 id="inspect-a-diff">Inspect a diff</h2>
 		<p>The <code>Diff</code> object is a flat list of equal/insert/delete operations.</p>
 <php-snippet blueprint="toolkit-setup" name="diff.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\Merge\Diff\Diff;
 use WordPress\Merge\Diff\LineDiffer;
 
-$diff = ( new LineDiffer() )-&gt;diff(
-	&quot;The quick brown fox\njumps over the lazy dog.\n&quot;,
-	&quot;The quick brown fox\njumps over the lazy cat.\nA new line.\n&quot;
+$diff = ( new LineDiffer() )->diff(
+	"The quick brown fox\njumps over the lazy dog.\n",
+	"The quick brown fox\njumps over the lazy cat.\nA new line.\n"
 );
 
-foreach ( $diff-&gt;get_changes() as $change ) {
-	$op = array( Diff::DIFF_EQUAL =&gt; &#x27;=&#x27;, Diff::DIFF_DELETE =&gt; &#x27;-&#x27;, Diff::DIFF_INSERT =&gt; &#x27;+&#x27; )[ $change[0] ];
-	echo $op . &#x27; &#x27; . trim( $change[1] ) . &quot;\n&quot;;
+foreach ( $diff->get_changes() as $change ) {
+	$op = array( Diff::DIFF_EQUAL => '=', Diff::DIFF_DELETE => '-', Diff::DIFF_INSERT => '+' )[ $change[0] ];
+	echo $op . ' ' . trim( $change[1] ) . "\n";
 }
 </script>
 </php-snippet>

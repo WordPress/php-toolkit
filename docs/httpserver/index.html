@@ -18,9 +18,34 @@
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
-<button class="toc-toggle" type="button">On this page ▾</button>
 <div class="layout">
-	<nav class="toc" aria-label="Table of contents"></nav>
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li class="current"><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+		<nav class="toc" aria-label="Table of contents"></nav>
+	</aside>
 	<article class="content">
 		<h1>HttpServer</h1>
 		<p class="lede">A minimal blocking TCP HTTP server in pure PHP. For CLI tools and tests, not for production traffic.</p>
@@ -30,24 +55,24 @@
 		<p>Bind a port, set a handler that takes <code>IncomingRequest</code> and writes to a <code>ResponseWriteStream</code>, call <code>serve()</code>. The handler runs synchronously per request.</p><p class="callout"><strong>Won't bind in this runtime.</strong> The Playground sandbox doesn't allow listening on TCP ports, so the snippet below is illustrative — copy it to your machine to run it.</p>
 <php-snippet blueprint="toolkit-setup" name="server.php">
 <script type="application/x-php">
-&lt;?php
+<?php
 // Run on your machine, not in Playground:
 //   php server.php
-require __DIR__ . &#x27;/vendor/autoload.php&#x27;;
+require __DIR__ . '/vendor/autoload.php';
 
 use WordPress\HttpServer\TcpServer;
 use WordPress\HttpServer\IncomingRequest;
 use WordPress\HttpServer\Response\ResponseWriteStream;
 
-$server = new TcpServer( &#x27;127.0.0.1&#x27;, 8080 );
-$server-&gt;set_handler( function ( IncomingRequest $request, ResponseWriteStream $response ) {
-	$response-&gt;send_http_code( 200 );
-	$response-&gt;send_header( &#x27;Content-Type&#x27;, &#x27;text/plain&#x27; );
-	$response-&gt;append_bytes( &#x27;Hello, world!&#x27; );
+$server = new TcpServer( '127.0.0.1', 8080 );
+$server->set_handler( function ( IncomingRequest $request, ResponseWriteStream $response ) {
+	$response->send_http_code( 200 );
+	$response->send_header( 'Content-Type', 'text/plain' );
+	$response->append_bytes( 'Hello, world!' );
 } );
 
-echo &quot;Listening on http://127.0.0.1:8080\n&quot;;
-$server-&gt;serve();
+echo "Listening on http://127.0.0.1:8080\n";
+$server->serve();
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/HttpServer/README.md">HttpServer README</a>.</p>

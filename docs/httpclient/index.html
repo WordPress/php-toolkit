@@ -18,9 +18,34 @@
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
-<button class="toc-toggle" type="button">On this page ▾</button>
 <div class="layout">
-	<nav class="toc" aria-label="Table of contents"></nav>
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li class="current"><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+		<nav class="toc" aria-label="Table of contents"></nav>
+	</aside>
 	<article class="content">
 		<h1>HttpClient</h1>
 		<p class="lede">Async HTTP client without <code>curl</code> required. Uses sockets when curl is missing, supports concurrent requests and streaming responses.</p>
@@ -32,18 +57,18 @@
 		<p>Build a <code>Request</code>, hand it to <code>Client::fetch()</code>, await the response, read the body.</p>
 <php-snippet blueprint="toolkit-setup" name="get.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
 
 $client  = new Client();
-$stream  = $client-&gt;fetch( new Request( &#x27;https://example.com/&#x27; ) );
+$stream  = $client->fetch( new Request( 'https://example.com/' ) );
 
-$response = $stream-&gt;await_response();
-echo &quot;status: &quot; . $response-&gt;status_code . &quot;\n&quot;;
-echo &quot;first 80 bytes: &quot; . substr( $stream-&gt;consume_all(), 0, 80 ) . &quot;\n&quot;;
+$response = $stream->await_response();
+echo "status: " . $response->status_code . "\n";
+echo "first 80 bytes: " . substr( $stream->consume_all(), 0, 80 ) . "\n";
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/HttpClient/README.md">HttpClient README</a>.</p>

@@ -18,9 +18,34 @@
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
-<button class="toc-toggle" type="button">On this page ▾</button>
 <div class="layout">
-	<nav class="toc" aria-label="Table of contents"></nav>
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li class="current"><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+		<nav class="toc" aria-label="Table of contents"></nav>
+	</aside>
 	<article class="content">
 		<h1>Markdown</h1>
 		<p class="lede">Bidirectional converter between Markdown and WordPress block markup. Round-trips faithfully so you can keep Markdown files and a WP database in sync.</p>
@@ -30,47 +55,47 @@
 		<p>Pass a Markdown string to <code>MarkdownConsumer</code> and call <code>consume()</code>. The result exposes block markup and any YAML frontmatter as metadata.</p>
 <php-snippet blueprint="toolkit-setup" name="md-to-blocks.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\Markdown\MarkdownConsumer;
 
-$markdown = &quot;# Hello World\n\nThis is a paragraph with **bold** text.&quot;;
+$markdown = "# Hello World\n\nThis is a paragraph with **bold** text.";
 
 $consumer = new MarkdownConsumer( $markdown );
-$result   = $consumer-&gt;consume();
-echo $result-&gt;get_block_markup();
+$result   = $consumer->consume();
+echo $result->get_block_markup();
 </script>
 </php-snippet>
 		<h2 id="blocks-back-to-markdown">Blocks back to Markdown</h2>
 		<p><code>MarkdownProducer</code> walks block markup and emits matching Markdown. Round-tripping a document should produce equivalent output (modulo whitespace normalization).</p>
 <php-snippet blueprint="toolkit-setup" name="blocks-to-md.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\Markdown\MarkdownConsumer;
 use WordPress\Markdown\MarkdownProducer;
 
-$source  = &quot;## Setup\n\n1. Install\n2. Configure\n3. Profit&quot;;
-$blocks  = ( new MarkdownConsumer( $source ) )-&gt;consume()-&gt;get_block_markup();
+$source  = "## Setup\n\n1. Install\n2. Configure\n3. Profit";
+$blocks  = ( new MarkdownConsumer( $source ) )->consume()->get_block_markup();
 $round   = new MarkdownProducer( $blocks );
-echo $round-&gt;produce();
+echo $round->produce();
 </script>
 </php-snippet>
 		<h2 id="frontmatter">Frontmatter</h2>
 		<p>YAML frontmatter is parsed and exposed as metadata so the block markup stays clean.</p>
 <php-snippet blueprint="toolkit-setup" name="frontmatter.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\Markdown\MarkdownConsumer;
 
-$markdown = &lt;&lt;&lt;MD
+$markdown = <<<MD
 ---
-post_title: &quot;WordPress 6.8 was released&quot;
-post_date: &quot;2024-12-16&quot;
+post_title: "WordPress 6.8 was released"
+post_date: "2024-12-16"
 ---
 
 ## WordPress 6.8 was released
@@ -78,10 +103,10 @@ post_date: &quot;2024-12-16&quot;
 A short post body.
 MD;
 
-$result = ( new MarkdownConsumer( $markdown ) )-&gt;consume();
-print_r( $result-&gt;get_all_metadata() );
-echo &quot;\n--- block markup ---\n&quot;;
-echo $result-&gt;get_block_markup();
+$result = ( new MarkdownConsumer( $markdown ) )->consume();
+print_r( $result->get_all_metadata() );
+echo "\n--- block markup ---\n";
+echo $result->get_block_markup();
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Markdown/README.md">Markdown README</a>.</p>

@@ -141,20 +141,63 @@ footer.site {
 	padding: 2.5rem 1.5rem 4rem;
 }
 
-@media (max-width: 880px) {
-	.layout { grid-template-columns: 1fr; gap: 1rem; padding-top: 1.5rem; }
-	.toc { position: static !important; max-height: none !important; padding: 0 !important; border-left: 0 !important; border-top: 1px solid var(--border); padding-top: 1rem !important; }
-	.toc-toggle { display: block !important; }
-	.toc[hidden] { display: none; }
-}
-
-.toc {
+.sidebar {
 	position: sticky;
 	top: 5rem;
 	align-self: start;
 	max-height: calc(100vh - 6rem);
 	overflow-y: auto;
 	padding-left: 0.5rem;
+	font-size: 0.88rem;
+	line-height: 1.5;
+}
+
+.components-nav {
+	margin-bottom: 1.75rem;
+	padding-bottom: 1.25rem;
+	border-bottom: 1px solid var(--border);
+}
+
+.components-nav summary {
+	text-transform: uppercase;
+	font-size: 0.72rem;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	color: var(--muted);
+	cursor: pointer;
+	list-style: none;
+	margin: 0 0 0.6rem;
+	user-select: none;
+}
+
+.components-nav summary::-webkit-details-marker { display: none; }
+.components-nav summary::before {
+	content: "▸";
+	display: inline-block;
+	width: 1em;
+	transition: transform 0.15s;
+	color: var(--muted);
+}
+.components-nav[open] summary::before { transform: rotate(90deg); }
+
+.components-nav ol { list-style: none; padding: 0; margin: 0; }
+.components-nav li { margin: 0; }
+.components-nav a {
+	display: block;
+	padding: 0.18rem 0.65rem;
+	color: var(--toc-fg);
+	border-left: 2px solid transparent;
+	margin-left: -0.65rem;
+	font-size: 0.85rem;
+}
+.components-nav a:hover { color: var(--fg); text-decoration: none; }
+.components-nav li.current a {
+	color: var(--toc-active);
+	border-left-color: var(--toc-active);
+	font-weight: 600;
+}
+
+.toc {
 	font-size: 0.88rem;
 	line-height: 1.5;
 }
@@ -181,7 +224,7 @@ footer.site {
 .toc a:hover { color: var(--fg); text-decoration: none; }
 .toc a.active { color: var(--toc-active); border-left-color: var(--toc-active); font-weight: 500; }
 
-.toc-toggle {
+.sidebar-toggle {
 	display: none;
 	background: transparent;
 	border: 1px solid var(--border);
@@ -191,6 +234,20 @@ footer.site {
 	padding: 0.4rem 0.7rem;
 	cursor: pointer;
 	margin-bottom: 0.5rem;
+}
+
+@media (max-width: 880px) {
+	.layout { grid-template-columns: 1fr; gap: 1rem; padding-top: 1.5rem; }
+	.sidebar {
+		position: static;
+		max-height: none;
+		padding: 0;
+	}
+	.sidebar-toggle { display: block; }
+	.sidebar > .components-nav,
+	.sidebar > .toc { display: none; }
+	.sidebar.open > .components-nav,
+	.sidebar.open > .toc { display: block; }
 }
 
 .content {

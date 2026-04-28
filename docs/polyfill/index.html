@@ -18,9 +18,34 @@
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
-<button class="toc-toggle" type="button">On this page ▾</button>
 <div class="layout">
-	<nav class="toc" aria-label="Table of contents"></nav>
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li class="current"><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+		<nav class="toc" aria-label="Table of contents"></nav>
+	</aside>
 	<article class="content">
 		<h1>Polyfill</h1>
 		<p class="lede">PHP 8 string functions on PHP 7.2+, WordPress hook stubs, and translation/escaping passthroughs so toolkit code runs without WordPress.</p>
@@ -30,27 +55,27 @@
 		<p>Polyfills are loaded automatically through Composer's <code>autoload.files</code>. They define functions only when missing, so they're safe to use alongside PHP 8.</p>
 <php-snippet blueprint="toolkit-setup" name="php8-strings.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-var_dump( str_starts_with( &#x27;/var/www&#x27;, &#x27;/var&#x27; ) );
-var_dump( str_ends_with( &#x27;image.png&#x27;, &#x27;.png&#x27; ) );
-var_dump( str_contains( &#x27;WordPress Toolkit&#x27;, &#x27;Toolkit&#x27; ) );
+var_dump( str_starts_with( '/var/www', '/var' ) );
+var_dump( str_ends_with( 'image.png', '.png' ) );
+var_dump( str_contains( 'WordPress Toolkit', 'Toolkit' ) );
 </script>
 </php-snippet>
 		<h2 id="wordpress-hooks-without-wordpress">WordPress hooks without WordPress</h2>
 		<p>A minimal but real implementation of <code>add_filter</code>, <code>apply_filters</code>, and the action equivalents — priorities and all.</p>
 <php-snippet blueprint="toolkit-setup" name="hooks.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-add_filter( &#x27;the_title&#x27;, &#x27;strtoupper&#x27; );
-add_filter( &#x27;the_title&#x27;, function ( $title ) {
-	return &#x27;&gt; &#x27; . $title;
+add_filter( 'the_title', 'strtoupper' );
+add_filter( 'the_title', function ( $title ) {
+	return '> ' . $title;
 }, 20 );
 
-echo apply_filters( &#x27;the_title&#x27;, &#x27;hello world&#x27; ) . &quot;\n&quot;;
+echo apply_filters( 'the_title', 'hello world' ) . "\n";
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Polyfill/README.md">Polyfill README</a>.</p>

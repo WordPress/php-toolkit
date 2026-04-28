@@ -18,9 +18,34 @@
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
-<button class="toc-toggle" type="button">On this page ▾</button>
 <div class="layout">
-	<nav class="toc" aria-label="Table of contents"></nav>
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li class="current"><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+		<nav class="toc" aria-label="Table of contents"></nav>
+	</aside>
 	<article class="content">
 		<h1>BlockParser</h1>
 		<p class="lede">WordPress core's block parser as a standalone library. Same parser, no WP dependency.</p>
@@ -30,15 +55,15 @@
 		<p>Pass the parser any HTML containing block delimiters and get back a structured array — <code>blockName</code>, <code>attrs</code>, <code>innerBlocks</code>, <code>innerHTML</code>, <code>innerContent</code>.</p>
 <php-snippet blueprint="toolkit-setup" name="parse-blocks.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$document = &quot;&lt;!-- wp:heading {\&quot;level\&quot;:2} --&gt;\n&lt;h2&gt;Welcome&lt;/h2&gt;\n&lt;!-- /wp:heading --&gt;\n\n&lt;!-- wp:paragraph --&gt;\n&lt;p&gt;Hello from the block editor.&lt;/p&gt;\n&lt;!-- /wp:paragraph --&gt;&quot;;
+$document = "<!-- wp:heading {\"level\":2} -->\n<h2>Welcome</h2>\n<!-- /wp:heading -->\n\n<!-- wp:paragraph -->\n<p>Hello from the block editor.</p>\n<!-- /wp:paragraph -->";
 
-$blocks = ( new WP_Block_Parser() )-&gt;parse( $document );
+$blocks = ( new WP_Block_Parser() )->parse( $document );
 foreach ( $blocks as $block ) {
-	if ( $block[&#x27;blockName&#x27;] ) {
-		echo &quot;{$block[&#x27;blockName&#x27;]}: &quot; . trim( strip_tags( $block[&#x27;innerHTML&#x27;] ) ) . &quot;\n&quot;;
+	if ( $block['blockName'] ) {
+		echo "{$block['blockName']}: " . trim( strip_tags( $block['innerHTML'] ) ) . "\n";
 	}
 }
 </script>
@@ -47,11 +72,11 @@ foreach ( $blocks as $block ) {
 		<p>Void blocks like <code>core/spacer</code> end with <code>/--&gt;</code>. They have no inner HTML, just attributes.</p>
 <php-snippet blueprint="toolkit-setup" name="void-blocks.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$blocks = ( new WP_Block_Parser() )-&gt;parse(
-	&#x27;&lt;!-- wp:spacer {&quot;height&quot;:&quot;50px&quot;} /--&gt;&#x27;
+$blocks = ( new WP_Block_Parser() )->parse(
+	'<!-- wp:spacer {"height":"50px"} /-->'
 );
 print_r( $blocks[0] );
 </script>
@@ -60,17 +85,17 @@ print_r( $blocks[0] );
 		<p>Inner blocks recurse with the same shape, so a depth-first walk is a small recursive function.</p>
 <php-snippet blueprint="toolkit-setup" name="walk-blocks.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$document = &quot;&lt;!-- wp:group --&gt;\n&lt;div class=\&quot;wp-block-group\&quot;&gt;\n&lt;!-- wp:heading --&gt;\n&lt;h2&gt;Title&lt;/h2&gt;\n&lt;!-- /wp:heading --&gt;\n&lt;!-- wp:paragraph --&gt;\n&lt;p&gt;Body.&lt;/p&gt;\n&lt;!-- /wp:paragraph --&gt;\n&lt;/div&gt;\n&lt;!-- /wp:group --&gt;&quot;;
+$document = "<!-- wp:group -->\n<div class=\"wp-block-group\">\n<!-- wp:heading -->\n<h2>Title</h2>\n<!-- /wp:heading -->\n<!-- wp:paragraph -->\n<p>Body.</p>\n<!-- /wp:paragraph -->\n</div>\n<!-- /wp:group -->";
 
-$blocks = ( new WP_Block_Parser() )-&gt;parse( $document );
-$walk = function ( array $blocks, int $depth = 0 ) use ( &amp;$walk ) {
+$blocks = ( new WP_Block_Parser() )->parse( $document );
+$walk = function ( array $blocks, int $depth = 0 ) use ( &$walk ) {
 	foreach ( $blocks as $block ) {
-		if ( ! $block[&#x27;blockName&#x27;] ) continue;
-		echo str_repeat( &#x27;  &#x27;, $depth ) . $block[&#x27;blockName&#x27;] . &quot;\n&quot;;
-		if ( ! empty( $block[&#x27;innerBlocks&#x27;] ) ) $walk( $block[&#x27;innerBlocks&#x27;], $depth + 1 );
+		if ( ! $block['blockName'] ) continue;
+		echo str_repeat( '  ', $depth ) . $block['blockName'] . "\n";
+		if ( ! empty( $block['innerBlocks'] ) ) $walk( $block['innerBlocks'], $depth + 1 );
 	}
 };
 $walk( $blocks );

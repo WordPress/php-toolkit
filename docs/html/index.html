@@ -18,9 +18,34 @@
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
-<button class="toc-toggle" type="button">On this page ▾</button>
 <div class="layout">
-	<nav class="toc" aria-label="Table of contents"></nav>
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li class="current"><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+		<nav class="toc" aria-label="Table of contents"></nav>
+	</aside>
 	<article class="content">
 		<h1>HTML</h1>
 		<p class="lede">A full HTML5 parser and tag processor in pure PHP, mirroring WordPress core's HTML API. No libxml2, no DOM extension, no external dependencies.</p>
@@ -32,56 +57,56 @@
 		<p>The most common need: rewrite tag attributes without reserializing the document. The tag processor handles each <code>&lt;img&gt;</code> in a single linear pass.</p>
 <php-snippet blueprint="toolkit-setup" name="lazy-load-images.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = &#x27;&lt;article&gt;
-	&lt;img src=&quot;hero.jpg&quot; alt=&quot;Hero&quot;&gt;
-	&lt;img src=&quot;inline.jpg&quot; alt=&quot;Inline&quot;&gt;
-&lt;/article&gt;&#x27;;
+$html = '<article>
+	<img src="hero.jpg" alt="Hero">
+	<img src="inline.jpg" alt="Inline">
+</article>';
 
 $tags = new WP_HTML_Tag_Processor( $html );
-while ( $tags-&gt;next_tag( &#x27;img&#x27; ) ) {
-	$tags-&gt;set_attribute( &#x27;loading&#x27;, &#x27;lazy&#x27; );
-	$tags-&gt;add_class( &#x27;responsive&#x27; );
+while ( $tags->next_tag( 'img' ) ) {
+	$tags->set_attribute( 'loading', 'lazy' );
+	$tags->add_class( 'responsive' );
 }
 
-echo $tags-&gt;get_updated_html();
+echo $tags->get_updated_html();
 </script>
 </php-snippet>
 		<h2 id="query-by-tag-and-class">Query by tag and class</h2>
 		<p>Pass an array to <code>next_tag()</code> to find tags matching a tag name, a CSS class, or both. The processor never builds a DOM; it just advances a cursor.</p>
 <php-snippet blueprint="toolkit-setup" name="query-tags.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = &#x27;&lt;ul&gt;&lt;li class=&quot;todo&quot;&gt;Buy milk&lt;/li&gt;&#x27;
-	. &#x27;&lt;li class=&quot;todo done&quot;&gt;Walk dog&lt;/li&gt;&#x27;
-	. &#x27;&lt;li class=&quot;todo&quot;&gt;Read book&lt;/li&gt;&lt;/ul&gt;&#x27;;
+$html = '<ul><li class="todo">Buy milk</li>'
+	. '<li class="todo done">Walk dog</li>'
+	. '<li class="todo">Read book</li></ul>';
 
 $tags = new WP_HTML_Tag_Processor( $html );
-while ( $tags-&gt;next_tag( array( &#x27;tag_name&#x27; =&gt; &#x27;li&#x27;, &#x27;class_name&#x27; =&gt; &#x27;done&#x27; ) ) ) {
-	$tags-&gt;set_attribute( &#x27;aria-checked&#x27;, &#x27;true&#x27; );
+while ( $tags->next_tag( array( 'tag_name' => 'li', 'class_name' => 'done' ) ) ) {
+	$tags->set_attribute( 'aria-checked', 'true' );
 }
-echo $tags-&gt;get_updated_html();
+echo $tags->get_updated_html();
 </script>
 </php-snippet>
 		<h2 id="walk-the-structure">Walk the structure</h2>
 		<p><code>WP_HTML_Processor</code> understands HTML5 tree construction. You can ask it for the current depth, breadcrumbs, and whether a tag is implicitly closed.</p>
 <php-snippet blueprint="toolkit-setup" name="walk-tree.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = &#x27;&lt;section&gt;&lt;p&gt;First&lt;p&gt;Second&lt;ul&gt;&lt;li&gt;A&lt;li&gt;B&lt;/ul&gt;&lt;/section&gt;&#x27;;
+$html = '<section><p>First<p>Second<ul><li>A<li>B</ul></section>';
 
 $p = WP_HTML_Processor::create_fragment( $html );
-while ( $p-&gt;next_token() ) {
-	if ( $p-&gt;get_token_type() !== &#x27;#tag&#x27; ) continue;
-	$prefix = str_repeat( &#x27;  &#x27;, $p-&gt;get_current_depth() );
-	$close  = $p-&gt;is_tag_closer() ? &#x27;/&#x27; : &#x27;&#x27;;
-	echo &quot;{$prefix}&lt;{$close}{$p-&gt;get_tag()}&gt;\n&quot;;
+while ( $p->next_token() ) {
+	if ( $p->get_token_type() !== '#tag' ) continue;
+	$prefix = str_repeat( '  ', $p->get_current_depth() );
+	$close  = $p->is_tag_closer() ? '/' : '';
+	echo "{$prefix}<{$close}{$p->get_tag()}>\n";
 }
 </script>
 </php-snippet>
@@ -89,18 +114,18 @@ while ( $p-&gt;next_token() ) {
 		<p>Need to read attribute values or text content as their decoded form? <code>WP_HTML_Decoder::decode_attribute()</code> handles entity references the way the spec demands — including the long tail of HTML5 named entities and the special rules for unterminated references in attributes.</p>
 <php-snippet blueprint="toolkit-setup" name="decode-entities.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = &#x27;&lt;a href=&quot;?q=hello&amp;amp;world&amp;amp;copy&quot;&gt;Hello&amp;nbsp;&amp;amp;&amp;nbsp;World &amp;copy; 2026&lt;/a&gt;&#x27;;
+$html = '<a href="?q=hello&amp;world&amp;copy">Hello&nbsp;&amp;&nbsp;World &copy; 2026</a>';
 
 $tags = new WP_HTML_Tag_Processor( $html );
-$tags-&gt;next_tag( &#x27;a&#x27; );
-echo &quot;href=&quot; . $tags-&gt;get_attribute( &#x27;href&#x27; ) . &quot;\n&quot;;
+$tags->next_tag( 'a' );
+echo "href=" . $tags->get_attribute( 'href' ) . "\n";
 
-while ( $tags-&gt;next_token() ) {
-	if ( $tags-&gt;get_token_type() === &#x27;#text&#x27; ) {
-		echo &quot;text=&quot; . $tags-&gt;get_modifiable_text() . &quot;\n&quot;;
+while ( $tags->next_token() ) {
+	if ( $tags->get_token_type() === '#text' ) {
+		echo "text=" . $tags->get_modifiable_text() . "\n";
 	}
 }
 </script>
@@ -109,23 +134,23 @@ while ( $tags-&gt;next_token() ) {
 		<p>The full processor lets you replace, insert, or remove entire subtrees by addressing a bookmark. Useful for scrubbing posts before display.</p>
 <php-snippet blueprint="toolkit-setup" name="strip-scripts.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = &lt;&lt;&lt;HTML
-&lt;article&gt;
-	&lt;p&gt;Body copy.&lt;/p&gt;
-	&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;
-	&lt;p&gt;More copy.&lt;/p&gt;
-&lt;/article&gt;
+$html = <<<HTML
+<article>
+	<p>Body copy.</p>
+	<script>alert("xss")<\/script>
+	<p>More copy.</p>
+</article>
 HTML;
 
 $tags = new WP_HTML_Tag_Processor( $html );
-while ( $tags-&gt;next_tag( &#x27;script&#x27; ) ) {
+while ( $tags->next_tag( 'script' ) ) {
 	// Drop the script element entirely, including its content.
-	$tags-&gt;remove_node();
+	$tags->remove_node();
 }
-echo $tags-&gt;get_updated_html();
+echo $tags->get_updated_html();
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/HTML/README.md">HTML README</a>.</p>

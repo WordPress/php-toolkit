@@ -53,19 +53,41 @@ PAGE_FOOT = '''<footer class="site">
 
 
 def snippet_block(name, code):
-    code_html = h(code).rstrip()
+    # <script type="application/x-php"> content is parsed as raw text —
+    # entities are not decoded — so the PHP must be inserted verbatim. The
+    # only sequence that ends raw-text mode is "</script", which we guard
+    # against in the unlikely case PHP code mentions it.
+    safe = code.rstrip().replace('</script', '<\\/script')
     return (
         f'<php-snippet blueprint="toolkit-setup" name="{h(name)}">\n'
-        f'<script type="application/x-php">\n{code_html}\n</script>\n'
+        f'<script type="application/x-php">\n{safe}\n</script>\n'
         f'</php-snippet>\n'
     )
 
 
 def render_component(slug, title, lede, install, sections):
+    # Component sidebar: all sibling pages, with the current one highlighted.
+    nav_items = []
+    for s, t, _, _, _ in COMPONENTS:
+        cls = ' class="current"' if s == slug else ''
+        nav_items.append(f'\t\t\t<li{cls}><a href="../{s}/">{h(t)}</a></li>')
+    components_nav = (
+        '\t<aside class="sidebar" aria-label="Component navigation">\n'
+        '\t\t<button class="sidebar-toggle" type="button" aria-expanded="false">'
+        f'On this page ▾</button>\n'
+        '\t\t<details class="components-nav" open>\n'
+        '\t\t\t<summary>All components</summary>\n'
+        '\t\t\t<ol>\n'
+        + '\n'.join(nav_items) + '\n'
+        '\t\t\t</ol>\n'
+        '\t\t</details>\n'
+        '\t\t<nav class="toc" aria-label="Table of contents"></nav>\n'
+        '\t</aside>\n'
+    )
+
     out = [PAGE_HEAD.format(title=h(title), description=h(lede))]
-    out.append('<button class="toc-toggle" type="button">On this page ▾</button>\n')
     out.append('<div class="layout">\n')
-    out.append('\t<nav class="toc" aria-label="Table of contents"></nav>\n')
+    out.append(components_nav)
     out.append('\t<article class="content">\n')
     out.append(f'\t\t<h1>{h(title)}</h1>\n')
     out.append(f'\t\t<p class="lede">{lede}</p>\n')

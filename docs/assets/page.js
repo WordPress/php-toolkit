@@ -158,18 +158,18 @@
 		});
 	}
 
-	// ---------- TOC mobile toggle ----------
+	// ---------- Sidebar mobile toggle ----------
 	function wireTocToggle() {
-		const toggle = document.querySelector('.toc-toggle');
-		const toc = document.querySelector('.toc');
-		if (!toggle || !toc) return;
+		const toggle = document.querySelector('.sidebar-toggle');
+		const sidebar = document.querySelector('.sidebar');
+		if (!toggle || !sidebar) return;
 		toggle.addEventListener('click', function () {
-			toc.hidden = !toc.hidden;
+			sidebar.classList.toggle('open');
+			toggle.setAttribute(
+				'aria-expanded',
+				sidebar.classList.contains('open') ? 'true' : 'false'
+			);
 		});
-		// Hidden by default on small screens.
-		if (window.matchMedia('(max-width: 880px)').matches) {
-			toc.hidden = true;
-		}
 	}
 
 	if (document.readyState === 'loading') {

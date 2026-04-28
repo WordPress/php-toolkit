@@ -18,9 +18,34 @@
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
-<button class="toc-toggle" type="button">On this page ▾</button>
 <div class="layout">
-	<nav class="toc" aria-label="Table of contents"></nav>
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li class="current"><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+		<nav class="toc" aria-label="Table of contents"></nav>
+	</aside>
 	<article class="content">
 		<h1>XML</h1>
 		<p class="lede">Streaming XML processor without libxml2. Modify attributes, walk namespaces, scan large documents without loading them into memory.</p>
@@ -30,41 +55,41 @@
 		<p>The <code>XMLProcessor</code> mirrors the HTML tag processor — find a tag, read or set attributes, get the modified document back.</p>
 <php-snippet blueprint="toolkit-setup" name="rewrite-attr.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\XML\XMLProcessor;
 
-$xml = &#x27;&lt;catalog&gt;&lt;book price=&quot;29.99&quot;&gt;&lt;title&gt;PHP Internals&lt;/title&gt;&lt;/book&gt;&lt;/catalog&gt;&#x27;;
+$xml = '<catalog><book price="29.99"><title>PHP Internals</title></book></catalog>';
 $p   = XMLProcessor::create_from_string( $xml );
 
-if ( $p-&gt;next_tag( &#x27;book&#x27; ) ) {
-	echo &quot;before: &quot; . $p-&gt;get_attribute( &#x27;&#x27;, &#x27;price&#x27; ) . &quot;\n&quot;;
-	$p-&gt;set_attribute( &#x27;&#x27;, &#x27;price&#x27;, &#x27;24.99&#x27; );
+if ( $p->next_tag( 'book' ) ) {
+	echo "before: " . $p->get_attribute( '', 'price' ) . "\n";
+	$p->set_attribute( '', 'price', '24.99' );
 }
-echo $p-&gt;get_updated_xml();
+echo $p->get_updated_xml();
 </script>
 </php-snippet>
 		<h2 id="namespaces-are-first-class">Namespaces are first-class</h2>
 		<p>Methods take a namespace URI as the first argument, never a prefix. The processor resolves prefixes itself.</p>
 <php-snippet blueprint="toolkit-setup" name="namespaces.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\XML\XMLProcessor;
 
-$xml = &#x27;&lt;root xmlns:wp=&quot;http://wordpress.org/export/1.2/&quot;&gt;&#x27;
-	. &#x27;&lt;wp:post wp:status=&quot;draft&quot;&gt;Content&lt;/wp:post&gt;&lt;/root&gt;&#x27;;
+$xml = '<root xmlns:wp="http://wordpress.org/export/1.2/">'
+	. '<wp:post wp:status="draft">Content</wp:post></root>';
 
 $p  = XMLProcessor::create_from_string( $xml );
-$ns = &#x27;http://wordpress.org/export/1.2/&#x27;;
-if ( $p-&gt;next_tag( array( $ns, &#x27;post&#x27; ) ) ) {
-	echo &quot;tag: &quot; . $p-&gt;get_tag_local_name() . &quot;\n&quot;;
-	echo &quot;status: &quot; . $p-&gt;get_attribute( $ns, &#x27;status&#x27; ) . &quot;\n&quot;;
-	$p-&gt;set_attribute( $ns, &#x27;status&#x27;, &#x27;published&#x27; );
+$ns = 'http://wordpress.org/export/1.2/';
+if ( $p->next_tag( array( $ns, 'post' ) ) ) {
+	echo "tag: " . $p->get_tag_local_name() . "\n";
+	echo "status: " . $p->get_attribute( $ns, 'status' ) . "\n";
+	$p->set_attribute( $ns, 'status', 'published' );
 }
-echo $p-&gt;get_updated_xml();
+echo $p->get_updated_xml();
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/XML/README.md">XML README</a>.</p>

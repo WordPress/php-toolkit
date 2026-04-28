@@ -18,9 +18,34 @@
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
-<button class="toc-toggle" type="button">On this page ▾</button>
 <div class="layout">
-	<nav class="toc" aria-label="Table of contents"></nav>
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li class="current"><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+		<nav class="toc" aria-label="Table of contents"></nav>
+	</aside>
 	<article class="content">
 		<h1>ByteStream</h1>
 		<p class="lede">Composable streaming primitives for reading, writing, and transforming byte data. Pull-based, peek-friendly, and zero-copy where it matters.</p>
@@ -32,44 +57,44 @@
 		<p>The classic streaming-read loop: pull until you get bytes, consume them, repeat. Memory usage is bounded by the buffer size.</p>
 <php-snippet blueprint="toolkit-setup" name="read-file.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\ReadStream\FileReadStream;
 
 // Make a sample file inside the snippet so it is self-contained.
-$path = tempnam( sys_get_temp_dir(), &#x27;sample&#x27; );
-file_put_contents( $path, str_repeat( &quot;line of text\n&quot;, 50 ) );
+$path = tempnam( sys_get_temp_dir(), 'sample' );
+file_put_contents( $path, str_repeat( "line of text\n", 50 ) );
 
 $reader = FileReadStream::from_path( $path );
 $total  = 0;
-while ( ! $reader-&gt;reached_end_of_data() ) {
-	$n = $reader-&gt;pull( 64 );
-	if ( $n &lt;= 0 ) break;
-	$total += strlen( $reader-&gt;consume( $n ) );
+while ( ! $reader->reached_end_of_data() ) {
+	$n = $reader->pull( 64 );
+	if ( $n <= 0 ) break;
+	$total += strlen( $reader->consume( $n ) );
 }
-$reader-&gt;close_reading();
-echo &quot;Read {$total} bytes.\n&quot;;
+$reader->close_reading();
+echo "Read {$total} bytes.\n";
 </script>
 </php-snippet>
 		<h2 id="memory-pipes">Memory pipes</h2>
 		<p><code>MemoryPipe</code> is a bidirectional buffer — useful for tests, for wrapping a string in the stream interface, and for piping output of one component into another in-process.</p>
 <php-snippet blueprint="toolkit-setup" name="memory-pipe.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\MemoryPipe;
 
 $pipe = new MemoryPipe();
-$pipe-&gt;append_bytes( &quot;first line\n&quot; );
-$pipe-&gt;append_bytes( &quot;second line\n&quot; );
-$pipe-&gt;close_writing();
+$pipe->append_bytes( "first line\n" );
+$pipe->append_bytes( "second line\n" );
+$pipe->close_writing();
 
-while ( ! $pipe-&gt;reached_end_of_data() ) {
-	$n = $pipe-&gt;pull( 1024 );
-	if ( $n &lt;= 0 ) break;
-	echo &quot;chunk: &quot; . $pipe-&gt;consume( $n );
+while ( ! $pipe->reached_end_of_data() ) {
+	$n = $pipe->pull( 1024 );
+	if ( $n <= 0 ) break;
+	echo "chunk: " . $pipe->consume( $n );
 }
 </script>
 </php-snippet>
@@ -77,30 +102,30 @@ while ( ! $pipe-&gt;reached_end_of_data() ) {
 		<p>Wrap any read stream with a transformer to compute checksums, count bytes, or compress as data flows through. The wrapped stream still satisfies <code>ByteReadStream</code>, so it composes.</p>
 <php-snippet blueprint="toolkit-setup" name="count-lines.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\ByteStream\ReadStream\TransformedReadStream;
 
-$source = new MemoryPipe( &quot;alpha\nbeta\ngamma\ndelta\n&quot; );
-$source-&gt;close_writing();
+$source = new MemoryPipe( "alpha\nbeta\ngamma\ndelta\n" );
+$source->close_writing();
 
 $line_count = 0;
 $counter = new TransformedReadStream(
 	$source,
-	function ( $bytes ) use ( &amp;$line_count ) {
-		$line_count += substr_count( $bytes, &quot;\n&quot; );
+	function ( $bytes ) use ( &$line_count ) {
+		$line_count += substr_count( $bytes, "\n" );
 		return $bytes;
 	}
 );
 
-while ( ! $counter-&gt;reached_end_of_data() ) {
-	$n = $counter-&gt;pull( 1024 );
-	if ( $n &lt;= 0 ) break;
-	$counter-&gt;consume( $n );
+while ( ! $counter->reached_end_of_data() ) {
+	$n = $counter->pull( 1024 );
+	if ( $n <= 0 ) break;
+	$counter->consume( $n );
 }
-echo &quot;{$line_count} lines.\n&quot;;
+echo "{$line_count} lines.\n";
 </script>
 </php-snippet>
 		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/ByteStream/README.md">ByteStream README</a>.</p>

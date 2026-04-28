@@ -18,9 +18,34 @@
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
-<button class="toc-toggle" type="button">On this page ▾</button>
 <div class="layout">
-	<nav class="toc" aria-label="Table of contents"></nav>
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li class="current"><a href="../cli/">CLI</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+		<nav class="toc" aria-label="Table of contents"></nav>
+	</aside>
 	<article class="content">
 		<h1>CLI</h1>
 		<p class="lede">POSIX-style argument parser. Long options, short bundles, inline values, positional args — one static call.</p>
@@ -30,23 +55,23 @@
 		<p>Define options as a four-tuple of <code>[ short, has_value, default, description ]</code>, pass <code>argv</code>, get back positionals and an option map.</p>
 <php-snippet blueprint="toolkit-setup" name="parse-args.php">
 <script type="application/x-php">
-&lt;?php
-require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 use WordPress\CLI\CLI;
 
 $option_defs = array(
-	&#x27;output&#x27;  =&gt; array( &#x27;o&#x27;, true,  null,  &#x27;Output file path&#x27; ),
-	&#x27;force&#x27;   =&gt; array( &#x27;f&#x27;, false, false, &#x27;Overwrite existing files&#x27; ),
-	&#x27;verbose&#x27; =&gt; array( &#x27;v&#x27;, false, false, &#x27;Verbose output&#x27; ),
+	'output'  => array( 'o', true,  null,  'Output file path' ),
+	'force'   => array( 'f', false, false, 'Overwrite existing files' ),
+	'verbose' => array( 'v', false, false, 'Verbose output' ),
 );
 
-$argv = array( &#x27;--output=/tmp/result.txt&#x27;, &#x27;-fv&#x27;, &#x27;input.json&#x27; );
+$argv = array( '--output=/tmp/result.txt', '-fv', 'input.json' );
 list( $positionals, $options ) = CLI::parse_command_args_and_options( $argv, $option_defs );
 
 print_r( array(
-	&#x27;positionals&#x27; =&gt; $positionals,
-	&#x27;options&#x27;     =&gt; $options,
+	'positionals' => $positionals,
+	'options'     => $options,
 ) );
 </script>
 </php-snippet>
