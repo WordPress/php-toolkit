@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zip — PHP Toolkit</title>
+<meta name="description" content="Read and write ZIP archives in pure PHP. No &lt;code&gt;libzip&lt;/code&gt;, no &lt;code&gt;ZipArchive&lt;/code&gt;. Streams entries incrementally so it works on multi-gigabyte archives without exhausting memory.">
+<link rel="stylesheet" href="../assets/style.css">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<button class="toc-toggle" type="button">On this page ▾</button>
+<div class="layout">
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<article class="content">
+		<h1>Zip</h1>
+		<p class="lede">Read and write ZIP archives in pure PHP. No <code>libzip</code>, no <code>ZipArchive</code>. Streams entries incrementally so it works on multi-gigabyte archives without exhausting memory.</p>
+		<code class="install">composer require wp-php-toolkit/zip</code>
+		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
+		<h2 id="why-this-exists">Why this exists</h2>
+		<p>PHP's built-in ZIP support requires the <code>libzip</code>-backed <code>ZipArchive</code> extension, which isn't available everywhere — sandboxed shared hosts, WebAssembly runtimes, alpine images without the extension. The toolkit's Zip component reads and writes Stored and Deflate-compressed archives entirely in PHP and exposes a streaming API so you never have to load an archive into memory.</p>
+		<h2 id="create-an-archive">Create an archive</h2>
+		<p>Encoder writes one entry at a time. The sink is any <code>WriteStream</code> — here a temp file. For huge archives, a <code>FileWriteStream</code> on the final destination keeps memory flat.</p>
+<php-snippet blueprint="toolkit-setup" name="create-zip.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\ByteStream\WriteStream\FileWriteStream;
+use WordPress\Zip\FileEntry;
+use WordPress\Zip\ZipDecoder;
+use WordPress\Zip\ZipEncoder;
+
+$path = tempnam( sys_get_temp_dir(), &#x27;demo&#x27; ) . &#x27;.zip&#x27;;
+$out  = FileWriteStream::from_path( $path, &#x27;truncate&#x27; );
+$enc  = new ZipEncoder( $out );
+
+foreach ( array(
+	&#x27;readme.txt&#x27;      =&gt; &#x27;Hello from the toolkit.&#x27;,
+	&#x27;data/hello.json&#x27; =&gt; json_encode( array( &#x27;ok&#x27; =&gt; true ) ),
+) as $name =&gt; $body ) {
+	$enc-&gt;append_file( new FileEntry( array(
+		&#x27;path&#x27;               =&gt; $name,
+		&#x27;compression_method&#x27; =&gt; ZipDecoder::COMPRESSION_DEFLATE,
+		&#x27;body_reader&#x27;        =&gt; new MemoryPipe( $body ),
+	) ) );
+}
+$enc-&gt;close();
+$out-&gt;close_writing();
+
+$bytes = file_get_contents( $path );
+printf( &quot;Wrote %d bytes, %d entries.\n&quot;, strlen( $bytes ), substr_count( $bytes, &quot;PK\x01\x02&quot; ) );
+</script>
+</php-snippet>
+		<h2 id="read-entries-through-a-filesystem">Read entries through a filesystem</h2>
+		<p><code>ZipFilesystem</code> implements the toolkit's <code>Filesystem</code> interface, so you can <code>ls()</code>, <code>is_file()</code>, and <code>get_contents()</code> as if the archive were a directory tree.</p>
+<php-snippet blueprint="toolkit-setup" name="read-zip.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\ByteStream\ReadStream\FileReadStream;
+use WordPress\ByteStream\WriteStream\FileWriteStream;
+use WordPress\Zip\FileEntry;
+use WordPress\Zip\ZipDecoder;
+use WordPress\Zip\ZipEncoder;
+use WordPress\Zip\ZipFilesystem;
+
+// Build an archive on the fly so the example is self-contained.
+$path = tempnam( sys_get_temp_dir(), &#x27;demo&#x27; ) . &#x27;.zip&#x27;;
+$out  = FileWriteStream::from_path( $path, &#x27;truncate&#x27; );
+$enc  = new ZipEncoder( $out );
+foreach ( array(
+	&#x27;mimetype&#x27;        =&gt; &#x27;application/epub+zip&#x27;,
+	&#x27;EPUB/package.opf&#x27; =&gt; &#x27;&lt;package/&gt;&#x27;,
+) as $name =&gt; $body ) {
+	$enc-&gt;append_file( new FileEntry( array(
+		&#x27;path&#x27;               =&gt; $name,
+		&#x27;compression_method&#x27; =&gt; ZipDecoder::COMPRESSION_NONE,
+		&#x27;body_reader&#x27;        =&gt; new MemoryPipe( $body ),
+	) ) );
+}
+$enc-&gt;close();
+$out-&gt;close_writing();
+
+$zip = ZipFilesystem::create( FileReadStream::from_path( $path ) );
+foreach ( $zip-&gt;ls() as $entry ) {
+	echo $zip-&gt;is_dir( $entry )
+		? &quot;[dir] {$entry}\n&quot;
+		: &quot;{$entry}: &quot; . $zip-&gt;get_contents( $entry ) . &quot;\n&quot;;
+}
+</script>
+</php-snippet>
+		<h2 id="stream-a-large-file-out-of-an-archive">Stream a large file out of an archive</h2>
+		<p>For multi-megabyte entries inside an archive, use <code>open_read_stream()</code> instead of loading the whole file. The decoder inflates as you pull.</p>
+<php-snippet blueprint="toolkit-setup" name="stream-large-entry.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\ByteStream\ReadStream\FileReadStream;
+use WordPress\ByteStream\WriteStream\FileWriteStream;
+use WordPress\Zip\FileEntry;
+use WordPress\Zip\ZipDecoder;
+use WordPress\Zip\ZipEncoder;
+use WordPress\Zip\ZipFilesystem;
+
+$path = tempnam( sys_get_temp_dir(), &#x27;demo&#x27; ) . &#x27;.zip&#x27;;
+$out  = FileWriteStream::from_path( $path, &#x27;truncate&#x27; );
+$enc  = new ZipEncoder( $out );
+$enc-&gt;append_file( new FileEntry( array(
+	&#x27;path&#x27;               =&gt; &#x27;big.csv&#x27;,
+	&#x27;compression_method&#x27; =&gt; ZipDecoder::COMPRESSION_DEFLATE,
+	&#x27;body_reader&#x27;        =&gt; new MemoryPipe( str_repeat( &quot;id,value\n1,foo\n2,bar\n&quot;, 200 ) ),
+) ) );
+$enc-&gt;close();
+$out-&gt;close_writing();
+
+$zip    = ZipFilesystem::create( FileReadStream::from_path( $path ) );
+$stream = $zip-&gt;open_read_stream( &#x27;big.csv&#x27; );
+$lines  = 0;
+while ( ! $stream-&gt;reached_end_of_data() ) {
+	$n = $stream-&gt;pull( 4096 );
+	if ( $n &lt;= 0 ) break;
+	$lines += substr_count( $stream-&gt;consume( $n ), &quot;\n&quot; );
+}
+echo &quot;Streamed {$lines} lines.\n&quot;;
+</script>
+</php-snippet>
+		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Zip/README.md">Zip README</a>.</p>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>

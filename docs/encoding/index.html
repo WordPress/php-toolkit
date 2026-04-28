@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Encoding — PHP Toolkit</title>
+<meta name="description" content="Pure-PHP UTF-8 validation and scrubbing. Detects malformed bytes, replaces them per the Unicode maximal-subpart algorithm, and works without &lt;code&gt;mbstring&lt;/code&gt;.">
+<link rel="stylesheet" href="../assets/style.css">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<button class="toc-toggle" type="button">On this page ▾</button>
+<div class="layout">
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<article class="content">
+		<h1>Encoding</h1>
+		<p class="lede">Pure-PHP UTF-8 validation and scrubbing. Detects malformed bytes, replaces them per the Unicode maximal-subpart algorithm, and works without <code>mbstring</code>.</p>
+		<code class="install">composer require wp-php-toolkit/encoding</code>
+		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
+		<h2 id="validate">Validate</h2>
+<php-snippet blueprint="toolkit-setup" name="validate.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use function WordPress\Encoding\wp_is_valid_utf8;
+
+var_dump( wp_is_valid_utf8( &#x27;plain ASCII&#x27; ) );          // true
+var_dump( wp_is_valid_utf8( &quot;Pencil: \xE2\x9C\x8F&quot; ) ); // true
+var_dump( wp_is_valid_utf8( &quot;stray \xC0 byte&quot; ) );      // false
+var_dump( wp_is_valid_utf8( &quot;\xC1\xBF&quot; ) );             // false (overlong)
+</script>
+</php-snippet>
+		<h2 id="scrub-invalid-bytes">Scrub invalid bytes</h2>
+		<p>Replace each maximal subpart with U+FFFD.</p>
+<php-snippet blueprint="toolkit-setup" name="scrub.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use function WordPress\Encoding\wp_scrub_utf8;
+
+echo wp_scrub_utf8( &quot;caf\xC0 latte&quot; ) . &quot;\n&quot;;   // caf? latte
+echo wp_scrub_utf8( &quot;.\xE2\x8C.&quot; ) . &quot;\n&quot;;       // .?.   (incomplete)
+echo wp_scrub_utf8( &quot;.\xC1\xBF.&quot; ) . &quot;\n&quot;;       // .??.  (two subparts)
+</script>
+</php-snippet>
+		<h2 id="detect-noncharacters">Detect noncharacters</h2>
+		<p>Code points like U+FFFE that should never appear in interchange.</p>
+<php-snippet blueprint="toolkit-setup" name="noncharacters.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use function WordPress\Encoding\wp_has_noncharacters;
+
+var_dump( wp_has_noncharacters( &quot;Plain text&quot; ) );      // false
+var_dump( wp_has_noncharacters( &quot;\xEF\xBF\xBE&quot; ) ); // true (U+FFFE)
+</script>
+</php-snippet>
+		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Encoding/README.md">Encoding README</a>.</p>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>

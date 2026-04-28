@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Markdown — PHP Toolkit</title>
+<meta name="description" content="Bidirectional converter between Markdown and WordPress block markup. Round-trips faithfully so you can keep Markdown files and a WP database in sync.">
+<link rel="stylesheet" href="../assets/style.css">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<button class="toc-toggle" type="button">On this page ▾</button>
+<div class="layout">
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<article class="content">
+		<h1>Markdown</h1>
+		<p class="lede">Bidirectional converter between Markdown and WordPress block markup. Round-trips faithfully so you can keep Markdown files and a WP database in sync.</p>
+		<code class="install">composer require wp-php-toolkit/markdown</code>
+		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
+		<h2 id="markdown-to-blocks">Markdown to blocks</h2>
+		<p>Pass a Markdown string to <code>MarkdownConsumer</code> and call <code>consume()</code>. The result exposes block markup and any YAML frontmatter as metadata.</p>
+<php-snippet blueprint="toolkit-setup" name="md-to-blocks.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Markdown\MarkdownConsumer;
+
+$markdown = &quot;# Hello World\n\nThis is a paragraph with **bold** text.&quot;;
+
+$consumer = new MarkdownConsumer( $markdown );
+$result   = $consumer-&gt;consume();
+echo $result-&gt;get_block_markup();
+</script>
+</php-snippet>
+		<h2 id="blocks-back-to-markdown">Blocks back to Markdown</h2>
+		<p><code>MarkdownProducer</code> walks block markup and emits matching Markdown. Round-tripping a document should produce equivalent output (modulo whitespace normalization).</p>
+<php-snippet blueprint="toolkit-setup" name="blocks-to-md.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Markdown\MarkdownConsumer;
+use WordPress\Markdown\MarkdownProducer;
+
+$source  = &quot;## Setup\n\n1. Install\n2. Configure\n3. Profit&quot;;
+$blocks  = ( new MarkdownConsumer( $source ) )-&gt;consume()-&gt;get_block_markup();
+$round   = new MarkdownProducer( $blocks );
+echo $round-&gt;produce();
+</script>
+</php-snippet>
+		<h2 id="frontmatter">Frontmatter</h2>
+		<p>YAML frontmatter is parsed and exposed as metadata so the block markup stays clean.</p>
+<php-snippet blueprint="toolkit-setup" name="frontmatter.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Markdown\MarkdownConsumer;
+
+$markdown = &lt;&lt;&lt;MD
+---
+post_title: &quot;WordPress 6.8 was released&quot;
+post_date: &quot;2024-12-16&quot;
+---
+
+## WordPress 6.8 was released
+
+A short post body.
+MD;
+
+$result = ( new MarkdownConsumer( $markdown ) )-&gt;consume();
+print_r( $result-&gt;get_all_metadata() );
+echo &quot;\n--- block markup ---\n&quot;;
+echo $result-&gt;get_block_markup();
+</script>
+</php-snippet>
+		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Markdown/README.md">Markdown README</a>.</p>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>

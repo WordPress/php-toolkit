@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BlockParser — PHP Toolkit</title>
+<meta name="description" content="WordPress core&#x27;s block parser as a standalone library. Same parser, no WP dependency.">
+<link rel="stylesheet" href="../assets/style.css">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<button class="toc-toggle" type="button">On this page ▾</button>
+<div class="layout">
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<article class="content">
+		<h1>BlockParser</h1>
+		<p class="lede">WordPress core's block parser as a standalone library. Same parser, no WP dependency.</p>
+		<code class="install">composer require wp-php-toolkit/blockparser</code>
+		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
+		<h2 id="parse-block-markup">Parse block markup</h2>
+		<p>Pass the parser any HTML containing block delimiters and get back a structured array — <code>blockName</code>, <code>attrs</code>, <code>innerBlocks</code>, <code>innerHTML</code>, <code>innerContent</code>.</p>
+<php-snippet blueprint="toolkit-setup" name="parse-blocks.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$document = &quot;&lt;!-- wp:heading {\&quot;level\&quot;:2} --&gt;\n&lt;h2&gt;Welcome&lt;/h2&gt;\n&lt;!-- /wp:heading --&gt;\n\n&lt;!-- wp:paragraph --&gt;\n&lt;p&gt;Hello from the block editor.&lt;/p&gt;\n&lt;!-- /wp:paragraph --&gt;&quot;;
+
+$blocks = ( new WP_Block_Parser() )-&gt;parse( $document );
+foreach ( $blocks as $block ) {
+	if ( $block[&#x27;blockName&#x27;] ) {
+		echo &quot;{$block[&#x27;blockName&#x27;]}: &quot; . trim( strip_tags( $block[&#x27;innerHTML&#x27;] ) ) . &quot;\n&quot;;
+	}
+}
+</script>
+</php-snippet>
+		<h2 id="self-closing-blocks">Self-closing blocks</h2>
+		<p>Void blocks like <code>core/spacer</code> end with <code>/--&gt;</code>. They have no inner HTML, just attributes.</p>
+<php-snippet blueprint="toolkit-setup" name="void-blocks.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$blocks = ( new WP_Block_Parser() )-&gt;parse(
+	&#x27;&lt;!-- wp:spacer {&quot;height&quot;:&quot;50px&quot;} /--&gt;&#x27;
+);
+print_r( $blocks[0] );
+</script>
+</php-snippet>
+		<h2 id="walk-nested-blocks">Walk nested blocks</h2>
+		<p>Inner blocks recurse with the same shape, so a depth-first walk is a small recursive function.</p>
+<php-snippet blueprint="toolkit-setup" name="walk-blocks.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$document = &quot;&lt;!-- wp:group --&gt;\n&lt;div class=\&quot;wp-block-group\&quot;&gt;\n&lt;!-- wp:heading --&gt;\n&lt;h2&gt;Title&lt;/h2&gt;\n&lt;!-- /wp:heading --&gt;\n&lt;!-- wp:paragraph --&gt;\n&lt;p&gt;Body.&lt;/p&gt;\n&lt;!-- /wp:paragraph --&gt;\n&lt;/div&gt;\n&lt;!-- /wp:group --&gt;&quot;;
+
+$blocks = ( new WP_Block_Parser() )-&gt;parse( $document );
+$walk = function ( array $blocks, int $depth = 0 ) use ( &amp;$walk ) {
+	foreach ( $blocks as $block ) {
+		if ( ! $block[&#x27;blockName&#x27;] ) continue;
+		echo str_repeat( &#x27;  &#x27;, $depth ) . $block[&#x27;blockName&#x27;] . &quot;\n&quot;;
+		if ( ! empty( $block[&#x27;innerBlocks&#x27;] ) ) $walk( $block[&#x27;innerBlocks&#x27;], $depth + 1 );
+	}
+};
+$walk( $blocks );
+</script>
+</php-snippet>
+		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/BlockParser/README.md">BlockParser README</a>.</p>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>

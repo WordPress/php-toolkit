@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CLI — PHP Toolkit</title>
+<meta name="description" content="POSIX-style argument parser. Long options, short bundles, inline values, positional args — one static call.">
+<link rel="stylesheet" href="../assets/style.css">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<button class="toc-toggle" type="button">On this page ▾</button>
+<div class="layout">
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<article class="content">
+		<h1>CLI</h1>
+		<p class="lede">POSIX-style argument parser. Long options, short bundles, inline values, positional args — one static call.</p>
+		<code class="install">composer require wp-php-toolkit/cli</code>
+		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
+		<h2 id="parse-argv">Parse argv</h2>
+		<p>Define options as a four-tuple of <code>[ short, has_value, default, description ]</code>, pass <code>argv</code>, get back positionals and an option map.</p>
+<php-snippet blueprint="toolkit-setup" name="parse-args.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\CLI\CLI;
+
+$option_defs = array(
+	&#x27;output&#x27;  =&gt; array( &#x27;o&#x27;, true,  null,  &#x27;Output file path&#x27; ),
+	&#x27;force&#x27;   =&gt; array( &#x27;f&#x27;, false, false, &#x27;Overwrite existing files&#x27; ),
+	&#x27;verbose&#x27; =&gt; array( &#x27;v&#x27;, false, false, &#x27;Verbose output&#x27; ),
+);
+
+$argv = array( &#x27;--output=/tmp/result.txt&#x27;, &#x27;-fv&#x27;, &#x27;input.json&#x27; );
+list( $positionals, $options ) = CLI::parse_command_args_and_options( $argv, $option_defs );
+
+print_r( array(
+	&#x27;positionals&#x27; =&gt; $positionals,
+	&#x27;options&#x27;     =&gt; $options,
+) );
+</script>
+</php-snippet>
+		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/CLI/README.md">CLI README</a>.</p>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>

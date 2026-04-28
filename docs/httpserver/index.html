@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HttpServer — PHP Toolkit</title>
+<meta name="description" content="A minimal blocking TCP HTTP server in pure PHP. For CLI tools and tests, not for production traffic.">
+<link rel="stylesheet" href="../assets/style.css">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<button class="toc-toggle" type="button">On this page ▾</button>
+<div class="layout">
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<article class="content">
+		<h1>HttpServer</h1>
+		<p class="lede">A minimal blocking TCP HTTP server in pure PHP. For CLI tools and tests, not for production traffic.</p>
+		<code class="install">composer require wp-php-toolkit/http-server</code>
+		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
+		<h2 id="api-shape">API shape</h2>
+		<p>Bind a port, set a handler that takes <code>IncomingRequest</code> and writes to a <code>ResponseWriteStream</code>, call <code>serve()</code>. The handler runs synchronously per request.</p><p class="callout"><strong>Won't bind in this runtime.</strong> The Playground sandbox doesn't allow listening on TCP ports, so the snippet below is illustrative — copy it to your machine to run it.</p>
+<php-snippet blueprint="toolkit-setup" name="server.php">
+<script type="application/x-php">
+&lt;?php
+// Run on your machine, not in Playground:
+//   php server.php
+require __DIR__ . &#x27;/vendor/autoload.php&#x27;;
+
+use WordPress\HttpServer\TcpServer;
+use WordPress\HttpServer\IncomingRequest;
+use WordPress\HttpServer\Response\ResponseWriteStream;
+
+$server = new TcpServer( &#x27;127.0.0.1&#x27;, 8080 );
+$server-&gt;set_handler( function ( IncomingRequest $request, ResponseWriteStream $response ) {
+	$response-&gt;send_http_code( 200 );
+	$response-&gt;send_header( &#x27;Content-Type&#x27;, &#x27;text/plain&#x27; );
+	$response-&gt;append_bytes( &#x27;Hello, world!&#x27; );
+} );
+
+echo &quot;Listening on http://127.0.0.1:8080\n&quot;;
+$server-&gt;serve();
+</script>
+</php-snippet>
+		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/HttpServer/README.md">HttpServer README</a>.</p>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HttpClient — PHP Toolkit</title>
+<meta name="description" content="Async HTTP client without &lt;code&gt;curl&lt;/code&gt; required. Uses sockets when curl is missing, supports concurrent requests and streaming responses.">
+<link rel="stylesheet" href="../assets/style.css">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<button class="toc-toggle" type="button">On this page ▾</button>
+<div class="layout">
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<article class="content">
+		<h1>HttpClient</h1>
+		<p class="lede">Async HTTP client without <code>curl</code> required. Uses sockets when curl is missing, supports concurrent requests and streaming responses.</p>
+		<code class="install">composer require wp-php-toolkit/http-client</code>
+		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
+		<h2 id="note">Note</h2>
+		<p class="callout"><strong>Network access in the demo runtime.</strong> Snippets execute inside a sandboxed Playground; outbound HTTP requires the CORS proxy. The example below shows the API, but the request itself may not complete in this environment.</p>
+		<h2 id="get-a-url">GET a URL</h2>
+		<p>Build a <code>Request</code>, hand it to <code>Client::fetch()</code>, await the response, read the body.</p>
+<php-snippet blueprint="toolkit-setup" name="get.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$client  = new Client();
+$stream  = $client-&gt;fetch( new Request( &#x27;https://example.com/&#x27; ) );
+
+$response = $stream-&gt;await_response();
+echo &quot;status: &quot; . $response-&gt;status_code . &quot;\n&quot;;
+echo &quot;first 80 bytes: &quot; . substr( $stream-&gt;consume_all(), 0, 80 ) . &quot;\n&quot;;
+</script>
+</php-snippet>
+		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/HttpClient/README.md">HttpClient README</a>.</p>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>

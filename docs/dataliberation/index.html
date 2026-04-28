@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DataLiberation — PHP Toolkit</title>
+<meta name="description" content="Streaming WordPress import/export. WXR, SQL, block markup — without loading whole datasets into memory.">
+<link rel="stylesheet" href="../assets/style.css">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<button class="toc-toggle" type="button">On this page ▾</button>
+<div class="layout">
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<article class="content">
+		<h1>DataLiberation</h1>
+		<p class="lede">Streaming WordPress import/export. WXR, SQL, block markup — without loading whole datasets into memory.</p>
+		<code class="install">composer require wp-php-toolkit/data-liberation</code>
+		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
+		<h2 id="write-a-wxr-export">Write a WXR export</h2>
+		<p>Feed entities to <code>WXRWriter</code> in logical order: post first, then meta/terms/comments belonging to it.</p>
+<php-snippet blueprint="toolkit-setup" name="wxr-writer.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\DataLiberation\EntityWriter\WXRWriter;
+use WordPress\DataLiberation\ImportEntity;
+
+$output = new MemoryPipe();
+$writer = new WXRWriter( $output );
+
+$writer-&gt;append_entity( new ImportEntity( &#x27;post&#x27;, array(
+	&#x27;post_title&#x27; =&gt; &#x27;Hello World&#x27;,
+	&#x27;post_date&#x27;  =&gt; &#x27;2024-01-15&#x27;,
+	&#x27;guid&#x27;       =&gt; &#x27;https://example.com/?p=1&#x27;,
+	&#x27;content&#x27;    =&gt; &#x27;&lt;p&gt;Welcome to my site.&lt;/p&gt;&#x27;,
+	&#x27;post_id&#x27;    =&gt; &#x27;1&#x27;,
+	&#x27;post_name&#x27;  =&gt; &#x27;hello-world&#x27;,
+	&#x27;status&#x27;     =&gt; &#x27;publish&#x27;,
+	&#x27;post_type&#x27;  =&gt; &#x27;post&#x27;,
+) ) );
+
+$writer-&gt;finalize();
+$writer-&gt;close_writing();
+$output-&gt;close_writing();
+
+echo $output-&gt;consume_all();
+</script>
+</php-snippet>
+		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/DataLiberation/README.md">DataLiberation README</a>.</p>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>

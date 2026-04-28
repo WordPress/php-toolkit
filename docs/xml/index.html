@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XML — PHP Toolkit</title>
+<meta name="description" content="Streaming XML processor without libxml2. Modify attributes, walk namespaces, scan large documents without loading them into memory.">
+<link rel="stylesheet" href="../assets/style.css">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<button class="toc-toggle" type="button">On this page ▾</button>
+<div class="layout">
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<article class="content">
+		<h1>XML</h1>
+		<p class="lede">Streaming XML processor without libxml2. Modify attributes, walk namespaces, scan large documents without loading them into memory.</p>
+		<code class="install">composer require wp-php-toolkit/xml</code>
+		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
+		<h2 id="read-and-rewrite-an-attribute">Read and rewrite an attribute</h2>
+		<p>The <code>XMLProcessor</code> mirrors the HTML tag processor — find a tag, read or set attributes, get the modified document back.</p>
+<php-snippet blueprint="toolkit-setup" name="rewrite-attr.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\XML\XMLProcessor;
+
+$xml = &#x27;&lt;catalog&gt;&lt;book price=&quot;29.99&quot;&gt;&lt;title&gt;PHP Internals&lt;/title&gt;&lt;/book&gt;&lt;/catalog&gt;&#x27;;
+$p   = XMLProcessor::create_from_string( $xml );
+
+if ( $p-&gt;next_tag( &#x27;book&#x27; ) ) {
+	echo &quot;before: &quot; . $p-&gt;get_attribute( &#x27;&#x27;, &#x27;price&#x27; ) . &quot;\n&quot;;
+	$p-&gt;set_attribute( &#x27;&#x27;, &#x27;price&#x27;, &#x27;24.99&#x27; );
+}
+echo $p-&gt;get_updated_xml();
+</script>
+</php-snippet>
+		<h2 id="namespaces-are-first-class">Namespaces are first-class</h2>
+		<p>Methods take a namespace URI as the first argument, never a prefix. The processor resolves prefixes itself.</p>
+<php-snippet blueprint="toolkit-setup" name="namespaces.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\XML\XMLProcessor;
+
+$xml = &#x27;&lt;root xmlns:wp=&quot;http://wordpress.org/export/1.2/&quot;&gt;&#x27;
+	. &#x27;&lt;wp:post wp:status=&quot;draft&quot;&gt;Content&lt;/wp:post&gt;&lt;/root&gt;&#x27;;
+
+$p  = XMLProcessor::create_from_string( $xml );
+$ns = &#x27;http://wordpress.org/export/1.2/&#x27;;
+if ( $p-&gt;next_tag( array( $ns, &#x27;post&#x27; ) ) ) {
+	echo &quot;tag: &quot; . $p-&gt;get_tag_local_name() . &quot;\n&quot;;
+	echo &quot;status: &quot; . $p-&gt;get_attribute( $ns, &#x27;status&#x27; ) . &quot;\n&quot;;
+	$p-&gt;set_attribute( $ns, &#x27;status&#x27;, &#x27;published&#x27; );
+}
+echo $p-&gt;get_updated_xml();
+</script>
+</php-snippet>
+		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/XML/README.md">XML README</a>.</p>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>

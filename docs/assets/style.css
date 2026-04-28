@@ -1,0 +1,306 @@
+:root {
+	--bg: #ffffff;
+	--fg: #1a1a1a;
+	--muted: #5a5a5a;
+	--border: #e3e3e3;
+	--accent: #2563eb;
+	--accent-hover: #1d4ed8;
+	--code-bg: #f6f8fa;
+	--code-fg: #24292f;
+	--toc-fg: #444;
+	--toc-active: var(--accent);
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #0d1117;
+		--fg: #e6edf3;
+		--muted: #8b949e;
+		--border: #30363d;
+		--accent: #58a6ff;
+		--accent-hover: #79b8ff;
+		--code-bg: #161b22;
+		--code-fg: #e6edf3;
+		--toc-fg: #b3becd;
+	}
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	background: var(--bg);
+	color: var(--fg);
+	margin: 0;
+	line-height: 1.65;
+	-webkit-font-smoothing: antialiased;
+	font-size: 16px;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-hover); text-decoration: underline; }
+
+header.site {
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	background: var(--bg);
+	border-bottom: 1px solid var(--border);
+	padding: 0.85rem 1.5rem;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: 0.92rem;
+}
+
+header.site a.brand {
+	color: var(--fg);
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+header.site nav { display: flex; gap: 1.25rem; }
+header.site nav a { color: var(--muted); }
+header.site nav a:hover { color: var(--fg); text-decoration: none; }
+
+footer.site {
+	border-top: 1px solid var(--border);
+	padding: 1.5rem;
+	text-align: center;
+	font-size: 0.85rem;
+	color: var(--muted);
+	margin-top: 4rem;
+}
+
+/* ---------- Landing page ---------- */
+
+.landing {
+	max-width: 880px;
+	margin: 0 auto;
+	padding: 4rem 1.5rem 3rem;
+}
+
+.landing h1 {
+	font-size: 2.6rem;
+	margin: 0 0 0.5rem;
+	letter-spacing: -0.025em;
+	font-weight: 700;
+}
+
+.landing .lede {
+	font-size: 1.15rem;
+	color: var(--muted);
+	margin: 0 0 2rem;
+	max-width: 60ch;
+}
+
+.landing h2 {
+	font-size: 1.35rem;
+	margin: 3rem 0 1rem;
+	letter-spacing: -0.01em;
+	font-weight: 600;
+}
+
+.components {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 0.75rem;
+	margin: 1.5rem 0;
+	padding: 0;
+	list-style: none;
+}
+
+.components a {
+	display: block;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 1rem 1.1rem;
+	color: var(--fg);
+	transition: border-color 0.15s, transform 0.15s;
+}
+
+.components a:hover {
+	border-color: var(--accent);
+	transform: translateY(-1px);
+	text-decoration: none;
+}
+
+.components strong { display: block; font-size: 1rem; margin-bottom: 0.2rem; font-weight: 600; }
+.components span { display: block; font-size: 0.85rem; color: var(--muted); line-height: 1.45; }
+
+/* ---------- Component page layout ---------- */
+
+.layout {
+	display: grid;
+	grid-template-columns: 240px minmax(0, 1fr);
+	gap: 3rem;
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: 2.5rem 1.5rem 4rem;
+}
+
+@media (max-width: 880px) {
+	.layout { grid-template-columns: 1fr; gap: 1rem; padding-top: 1.5rem; }
+	.toc { position: static !important; max-height: none !important; padding: 0 !important; border-left: 0 !important; border-top: 1px solid var(--border); padding-top: 1rem !important; }
+	.toc-toggle { display: block !important; }
+	.toc[hidden] { display: none; }
+}
+
+.toc {
+	position: sticky;
+	top: 5rem;
+	align-self: start;
+	max-height: calc(100vh - 6rem);
+	overflow-y: auto;
+	padding-left: 0.5rem;
+	font-size: 0.88rem;
+	line-height: 1.5;
+}
+
+.toc-title {
+	text-transform: uppercase;
+	font-size: 0.72rem;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	color: var(--muted);
+	margin: 0 0 0.6rem;
+}
+
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc li { margin: 0; }
+.toc a {
+	display: block;
+	padding: 0.25rem 0;
+	color: var(--toc-fg);
+	border-left: 2px solid transparent;
+	padding-left: 0.65rem;
+	margin-left: -0.65rem;
+}
+.toc a:hover { color: var(--fg); text-decoration: none; }
+.toc a.active { color: var(--toc-active); border-left-color: var(--toc-active); font-weight: 500; }
+
+.toc-toggle {
+	display: none;
+	background: transparent;
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	color: var(--fg);
+	font-size: 0.85rem;
+	padding: 0.4rem 0.7rem;
+	cursor: pointer;
+	margin-bottom: 0.5rem;
+}
+
+.content {
+	min-width: 0;
+	max-width: 720px;
+}
+
+.content h1 {
+	font-size: 2.1rem;
+	margin: 0 0 0.4rem;
+	letter-spacing: -0.02em;
+	font-weight: 700;
+}
+
+.content > .lede {
+	font-size: 1.08rem;
+	color: var(--muted);
+	margin: 0 0 0.5rem;
+	max-width: 60ch;
+}
+
+.content .install {
+	display: inline-block;
+	font-family: ui-monospace, "SF Mono", Menlo, monospace;
+	font-size: 0.85rem;
+	background: var(--code-bg);
+	color: var(--code-fg);
+	padding: 0.35rem 0.7rem;
+	border-radius: 5px;
+	border: 1px solid var(--border);
+	margin: 1rem 0 1.5rem;
+}
+
+.content h2 {
+	font-size: 1.4rem;
+	margin: 3rem 0 0.5rem;
+	letter-spacing: -0.012em;
+	font-weight: 600;
+	scroll-margin-top: 5rem;
+}
+
+.content h3 {
+	font-size: 1.05rem;
+	margin: 1.75rem 0 0.4rem;
+	font-weight: 600;
+}
+
+.content p { margin: 0 0 0.9rem; }
+
+p code, li code, td code {
+	background: var(--code-bg);
+	padding: 0.12em 0.4em;
+	border-radius: 4px;
+	font-family: ui-monospace, "SF Mono", Menlo, monospace;
+	font-size: 0.88em;
+}
+
+.content blockquote {
+	border-left: 3px solid var(--border);
+	margin: 1rem 0;
+	padding: 0.05rem 0 0.05rem 1rem;
+	color: var(--muted);
+}
+
+.content table {
+	border-collapse: collapse;
+	margin: 1rem 0;
+	font-size: 0.92rem;
+}
+.content th, .content td {
+	border: 1px solid var(--border);
+	padding: 0.4rem 0.7rem;
+	text-align: left;
+}
+.content th { background: var(--code-bg); font-weight: 600; }
+
+.runtime-note {
+	font-size: 0.85rem;
+	color: var(--muted);
+	background: var(--code-bg);
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	padding: 0.65rem 0.85rem;
+	margin: 1rem 0 2rem;
+}
+
+.runtime-note strong { color: var(--fg); }
+
+php-snippet { display: block; margin: 1rem 0 1.75rem; }
+
+/* When the editable hack is wired, hint at it without nagging. */
+php-snippet[data-editable] { position: relative; }
+php-snippet[data-editable]::after {
+	content: "Editable — click in the code to change it";
+	position: absolute;
+	right: 0.75rem;
+	bottom: -1.2rem;
+	font-size: 0.72rem;
+	color: var(--muted);
+	pointer-events: none;
+}
+
+.callout {
+	border: 1px solid var(--border);
+	border-left: 3px solid var(--accent);
+	background: var(--code-bg);
+	padding: 0.65rem 0.85rem;
+	border-radius: 4px;
+	font-size: 0.92rem;
+	margin: 1rem 0;
+}
+
+.callout strong { color: var(--fg); }

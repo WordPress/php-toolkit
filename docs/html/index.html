@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML — PHP Toolkit</title>
+<meta name="description" content="A full HTML5 parser and tag processor in pure PHP, mirroring WordPress core&#x27;s HTML API. No libxml2, no DOM extension, no external dependencies.">
+<link rel="stylesheet" href="../assets/style.css">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<button class="toc-toggle" type="button">On this page ▾</button>
+<div class="layout">
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<article class="content">
+		<h1>HTML</h1>
+		<p class="lede">A full HTML5 parser and tag processor in pure PHP, mirroring WordPress core's HTML API. No libxml2, no DOM extension, no external dependencies.</p>
+		<code class="install">composer require wp-php-toolkit/html</code>
+		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
+		<h2 id="why-this-exists">Why this exists</h2>
+		<p>Working with HTML in PHP usually means choosing between <code>libxml2</code> (heavyweight, parses HTML loosely), regex (broken on the first edge case), or <code>DOMDocument</code> (full document mode only). The toolkit's HTML component gives you the same API WordPress core uses, runs anywhere, and treats HTML5 the way browsers do.</p><p>You get two layers: <code>WP_HTML_Tag_Processor</code> for fast linear scanning and attribute rewriting, and <code>WP_HTML_Processor</code> for full HTML5 tree-construction semantics including implicit closers, foster parenting, and the active formatting elements algorithm.</p>
+		<h2 id="lazy-load-every-image">Lazy-load every image</h2>
+		<p>The most common need: rewrite tag attributes without reserializing the document. The tag processor handles each <code>&lt;img&gt;</code> in a single linear pass.</p>
+<php-snippet blueprint="toolkit-setup" name="lazy-load-images.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$html = &#x27;&lt;article&gt;
+	&lt;img src=&quot;hero.jpg&quot; alt=&quot;Hero&quot;&gt;
+	&lt;img src=&quot;inline.jpg&quot; alt=&quot;Inline&quot;&gt;
+&lt;/article&gt;&#x27;;
+
+$tags = new WP_HTML_Tag_Processor( $html );
+while ( $tags-&gt;next_tag( &#x27;img&#x27; ) ) {
+	$tags-&gt;set_attribute( &#x27;loading&#x27;, &#x27;lazy&#x27; );
+	$tags-&gt;add_class( &#x27;responsive&#x27; );
+}
+
+echo $tags-&gt;get_updated_html();
+</script>
+</php-snippet>
+		<h2 id="query-by-tag-and-class">Query by tag and class</h2>
+		<p>Pass an array to <code>next_tag()</code> to find tags matching a tag name, a CSS class, or both. The processor never builds a DOM; it just advances a cursor.</p>
+<php-snippet blueprint="toolkit-setup" name="query-tags.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$html = &#x27;&lt;ul&gt;&lt;li class=&quot;todo&quot;&gt;Buy milk&lt;/li&gt;&#x27;
+	. &#x27;&lt;li class=&quot;todo done&quot;&gt;Walk dog&lt;/li&gt;&#x27;
+	. &#x27;&lt;li class=&quot;todo&quot;&gt;Read book&lt;/li&gt;&lt;/ul&gt;&#x27;;
+
+$tags = new WP_HTML_Tag_Processor( $html );
+while ( $tags-&gt;next_tag( array( &#x27;tag_name&#x27; =&gt; &#x27;li&#x27;, &#x27;class_name&#x27; =&gt; &#x27;done&#x27; ) ) ) {
+	$tags-&gt;set_attribute( &#x27;aria-checked&#x27;, &#x27;true&#x27; );
+}
+echo $tags-&gt;get_updated_html();
+</script>
+</php-snippet>
+		<h2 id="walk-the-structure">Walk the structure</h2>
+		<p><code>WP_HTML_Processor</code> understands HTML5 tree construction. You can ask it for the current depth, breadcrumbs, and whether a tag is implicitly closed.</p>
+<php-snippet blueprint="toolkit-setup" name="walk-tree.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$html = &#x27;&lt;section&gt;&lt;p&gt;First&lt;p&gt;Second&lt;ul&gt;&lt;li&gt;A&lt;li&gt;B&lt;/ul&gt;&lt;/section&gt;&#x27;;
+
+$p = WP_HTML_Processor::create_fragment( $html );
+while ( $p-&gt;next_token() ) {
+	if ( $p-&gt;get_token_type() !== &#x27;#tag&#x27; ) continue;
+	$prefix = str_repeat( &#x27;  &#x27;, $p-&gt;get_current_depth() );
+	$close  = $p-&gt;is_tag_closer() ? &#x27;/&#x27; : &#x27;&#x27;;
+	echo &quot;{$prefix}&lt;{$close}{$p-&gt;get_tag()}&gt;\n&quot;;
+}
+</script>
+</php-snippet>
+		<h2 id="decode-html-entities">Decode HTML entities</h2>
+		<p>Need to read attribute values or text content as their decoded form? <code>WP_HTML_Decoder::decode_attribute()</code> handles entity references the way the spec demands — including the long tail of HTML5 named entities and the special rules for unterminated references in attributes.</p>
+<php-snippet blueprint="toolkit-setup" name="decode-entities.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$html = &#x27;&lt;a href=&quot;?q=hello&amp;amp;world&amp;amp;copy&quot;&gt;Hello&amp;nbsp;&amp;amp;&amp;nbsp;World &amp;copy; 2026&lt;/a&gt;&#x27;;
+
+$tags = new WP_HTML_Tag_Processor( $html );
+$tags-&gt;next_tag( &#x27;a&#x27; );
+echo &quot;href=&quot; . $tags-&gt;get_attribute( &#x27;href&#x27; ) . &quot;\n&quot;;
+
+while ( $tags-&gt;next_token() ) {
+	if ( $tags-&gt;get_token_type() === &#x27;#text&#x27; ) {
+		echo &quot;text=&quot; . $tags-&gt;get_modifiable_text() . &quot;\n&quot;;
+	}
+}
+</script>
+</php-snippet>
+		<h2 id="insert-and-remove-subtrees">Insert and remove subtrees</h2>
+		<p>The full processor lets you replace, insert, or remove entire subtrees by addressing a bookmark. Useful for scrubbing posts before display.</p>
+<php-snippet blueprint="toolkit-setup" name="strip-scripts.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$html = &lt;&lt;&lt;HTML
+&lt;article&gt;
+	&lt;p&gt;Body copy.&lt;/p&gt;
+	&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;
+	&lt;p&gt;More copy.&lt;/p&gt;
+&lt;/article&gt;
+HTML;
+
+$tags = new WP_HTML_Tag_Processor( $html );
+while ( $tags-&gt;next_tag( &#x27;script&#x27; ) ) {
+	// Drop the script element entirely, including its content.
+	$tags-&gt;remove_node();
+}
+echo $tags-&gt;get_updated_html();
+</script>
+</php-snippet>
+		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/HTML/README.md">HTML README</a>.</p>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>

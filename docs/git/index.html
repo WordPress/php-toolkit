@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Git — PHP Toolkit</title>
+<meta name="description" content="A pure-PHP Git client and server. Commits, branches, diffs, HTTP push/pull — all without shelling out to &lt;code&gt;git&lt;/code&gt;.">
+<link rel="stylesheet" href="../assets/style.css">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<button class="toc-toggle" type="button">On this page ▾</button>
+<div class="layout">
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<article class="content">
+		<h1>Git</h1>
+		<p class="lede">A pure-PHP Git client and server. Commits, branches, diffs, HTTP push/pull — all without shelling out to <code>git</code>.</p>
+		<code class="install">composer require wp-php-toolkit/git</code>
+		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
+		<h2 id="commit-files-in-memory">Commit files in memory</h2>
+		<p>The repository builds the blob, tree, and commit objects for you. Backed by any <code>Filesystem</code>, including <code>InMemoryFilesystem</code> for ephemeral repos.</p>
+<php-snippet blueprint="toolkit-setup" name="commit.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Git\GitRepository;
+
+$repo = new GitRepository( InMemoryFilesystem::create() );
+
+$oid = $repo-&gt;commit( array(
+	&#x27;updates&#x27; =&gt; array(
+		&#x27;README.md&#x27;           =&gt; &#x27;# My Project&#x27;,
+		&#x27;src/hello-world.php&#x27; =&gt; &#x27;&lt;?php echo &quot;Hello!&quot;;&#x27;,
+	),
+) );
+
+echo &quot;commit: {$oid}\n&quot;;
+echo $repo-&gt;read_object_by_path( &#x27;/README.md&#x27; )-&gt;consume_all();
+</script>
+</php-snippet>
+		<h2 id="read-objects-by-hash">Read objects by hash</h2>
+		<p>Every Git object is identified by its SHA-1. Store a blob, get the hash back, read it later.</p>
+<php-snippet blueprint="toolkit-setup" name="objects.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Git\GitRepository;
+
+$repo = new GitRepository( InMemoryFilesystem::create() );
+$blob = $repo-&gt;add_object( &#x27;blob&#x27;, &#x27;Hello, world!&#x27; );
+echo &quot;oid: {$blob}\n&quot;;
+
+$reader = $repo-&gt;read_object( $blob );
+$reader-&gt;pull( 8096 );
+echo $reader-&gt;peek( 8096 ) . &quot;\n&quot;;
+</script>
+</php-snippet>
+		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Git/README.md">Git README</a>.</p>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>

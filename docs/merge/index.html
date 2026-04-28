@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Merge — PHP Toolkit</title>
+<meta name="description" content="Three-way merge and diff. Pluggable differ + merger + optional validator.">
+<link rel="stylesheet" href="../assets/style.css">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<button class="toc-toggle" type="button">On this page ▾</button>
+<div class="layout">
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<article class="content">
+		<h1>Merge</h1>
+		<p class="lede">Three-way merge and diff. Pluggable differ + merger + optional validator.</p>
+		<code class="install">composer require wp-php-toolkit/merge</code>
+		<p class="runtime-note"><strong>Runnable docs.</strong> Click <em>Run</em> on any snippet to execute it on PHP 8.3 in your browser via WordPress Playground. Click into the code to edit it before running. The toolkit ships as a self-contained bundle with the page; nothing extra is downloaded.</p>
+		<h2 id="merge-two-branches">Merge two branches</h2>
+		<p>Give it a base, branch A, and branch B. Get a merge result with conflicts (if any) and the merged content.</p>
+<php-snippet blueprint="toolkit-setup" name="three-way.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Merge\Diff\LineDiffer;
+use WordPress\Merge\Merge\LineMerger;
+use WordPress\Merge\MergeStrategy;
+
+$strategy = new MergeStrategy( new LineDiffer(), new LineMerger() );
+
+$result = $strategy-&gt;merge(
+	&quot;Line 1\nLine 2\nLine 3\n&quot;,
+	&quot;Line 1\nLine 2 modified\nLine 3\n&quot;,
+	&quot;Line 1\nLine 2\nLine 3\nLine 4\n&quot;
+);
+
+echo $result-&gt;get_merged_content();
+</script>
+</php-snippet>
+		<h2 id="inspect-a-diff">Inspect a diff</h2>
+		<p>The <code>Diff</code> object is a flat list of equal/insert/delete operations.</p>
+<php-snippet blueprint="toolkit-setup" name="diff.php">
+<script type="application/x-php">
+&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Merge\Diff\Diff;
+use WordPress\Merge\Diff\LineDiffer;
+
+$diff = ( new LineDiffer() )-&gt;diff(
+	&quot;The quick brown fox\njumps over the lazy dog.\n&quot;,
+	&quot;The quick brown fox\njumps over the lazy cat.\nA new line.\n&quot;
+);
+
+foreach ( $diff-&gt;get_changes() as $change ) {
+	$op = array( Diff::DIFF_EQUAL =&gt; &#x27;=&#x27;, Diff::DIFF_DELETE =&gt; &#x27;-&#x27;, Diff::DIFF_INSERT =&gt; &#x27;+&#x27; )[ $change[0] ];
+	echo $op . &#x27; &#x27; . trim( $change[1] ) . &quot;\n&quot;;
+}
+</script>
+</php-snippet>
+		<p style="margin-top:3rem;color:var(--muted);font-size:0.9rem">Full API reference: <a href="https://github.com/WordPress/php-toolkit/blob/trunk/components/Merge/README.md">Merge README</a>.</p>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>
