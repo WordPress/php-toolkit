@@ -75,13 +75,13 @@ def render_component(slug, title, lede, install, sections):
         '\t<aside class="sidebar" aria-label="Component navigation">\n'
         '\t\t<button class="sidebar-toggle" type="button" aria-expanded="false">'
         f'On this page ▾</button>\n'
+        '\t\t<nav class="toc" aria-label="Table of contents"></nav>\n'
         '\t\t<details class="components-nav" open>\n'
         '\t\t\t<summary>All components</summary>\n'
         '\t\t\t<ol>\n'
         + '\n'.join(nav_items) + '\n'
         '\t\t\t</ol>\n'
         '\t\t</details>\n'
-        '\t\t<nav class="toc" aria-label="Table of contents"></nav>\n'
         '\t</aside>\n'
     )
 
