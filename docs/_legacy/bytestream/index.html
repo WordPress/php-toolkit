@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ByteStream — PHP Toolkit</title>
+<meta name="description" content="Composable streaming primitives for reading, writing, transforming, hashing, and compressing byte data. Pull/peek/consume semantics let parsers backtrack without copying, and deflate, inflate, and checksum filters snap together like Lego.">
+<link rel="stylesheet" href="../assets/style.css?v=20260429-concept-guide">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js?v=20260429-concept-guide" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<div class="layout">
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<nav class="toc" aria-label="Table of contents"></nav>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li class="current"><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+	</aside>
+	<article class="content">
+		<h1>ByteStream</h1>
+		<p class="lede">Composable streaming primitives for reading, writing, transforming, hashing, and compressing byte data. Pull/peek/consume semantics let parsers backtrack without copying, and deflate, inflate, and checksum filters snap together like Lego.</p>
+		<code class="install">composer require wp-php-toolkit/bytestream</code>
+		<p>PHP's native streams are powerful but inconsistent. <code>fread</code> on a socket may return short reads with no warning; <code>stream_filter_append</code> is awkward to compose; gzip helpers and file handles expose different APIs. The ByteStream component normalizes these behind one small interface — <code>pull / peek / consume</code> — so a parser, a hash function, and a deflate filter all see the same shape.</p><p>The split between <em>pull</em> (buffer up to N bytes) and <em>consume</em> (advance past N bytes) is the secret. Parsers can <code>peek</code> ahead to detect a record boundary and decide whether to <code>consume</code>, without copying or allocating.</p>
+		<p>A read stream separates three actions: pull bytes, inspect the buffer, then consume the bytes you accepted. That pattern lets a parser wait for a full line, a ZIP decoder wait for a complete header, or an HTTP client report progress without losing data.</p><p>Write streams make the destination boring. The caller writes chunks; the sink decides whether those bytes go to memory, a file, a compressor, or another component.</p>
+		<p class="you-will-learn-label">You will learn to:</p>
+		<ul class="you-will-learn">
+			<li>Read in chunks</li>
+			<li>Handle awkward boundaries</li>
+			<li>Add behavior around bytes</li>
+		</ul>
+		<p class="runtime-note">Most snippets below run in the browser through WordPress Playground. Click <em>Run</em> on any example to execute it; edit the code and run again to see what changes. Static snippets show config or shell commands that need a real local environment.</p>
+		<h2 id="read-a-file-in-chunks">Read a file in chunks</h2>
+		<p>The canonical loop. <code>pull()</code> tells you how many bytes are buffered; <code>consume()</code> reads them and advances. The buffer never grows beyond the chunk size you ask for.</p>
+<php-snippet blueprint="toolkit-setup" name="teaser-read.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\ReadStream\FileReadStream;
+
+$path = tempnam( sys_get_temp_dir(), 'demo' );
+file_put_contents( $path, str_repeat( "log line\n", 200 ) );
+
+$reader = FileReadStream::from_path( $path );
+$total = 0;
+while ( ! $reader->reached_end_of_data() ) {
+	$n = $reader->pull( 256 );
+	if ( 0 === $n ) break;
+	$total += strlen( $reader->consume( $n ) );
+}
+$reader->close_reading();
+echo "Read {$total} bytes in 256-byte chunks.\n";
+</script>
+<script type="text/expected-output">
+Read 1800 bytes in 256-byte chunks.
+</script>
+</php-snippet>
+		<h2 id="memorypipe-as-write-then-read-buffer">MemoryPipe as write-then-read buffer</h2>
+		<p><code>MemoryPipe</code> is bidirectional: you <code>append_bytes()</code> as a writer and <code>pull/consume</code> as a reader. Easiest way to wire one component's output into another's input.</p><p>Gotcha: a producer must call <code>close_writing()</code> when done — otherwise the consumer eventually throws <code>NotEnoughDataException</code> instead of seeing EOF.</p>
+<php-snippet blueprint="toolkit-setup" name="memory-pipe.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+
+$pipe = new MemoryPipe();
+$pipe->append_bytes( "first chunk\n" );
+$pipe->append_bytes( "second chunk\n" );
+$pipe->append_bytes( "third chunk\n" );
+$pipe->close_writing();
+
+while ( ! $pipe->reached_end_of_data() ) {
+	$n = $pipe->pull( 1024 );
+	if ( 0 === $n ) break;
+	echo "got: " . $pipe->consume( $n );
+}
+</script>
+<script type="text/expected-output">
+got: first chunk
+second chunk
+third chunk
+</script>
+</php-snippet>
+		<h2 id="compress-on-the-way-in-decompress-on-the-way-out">Compress on the way in, decompress on the way out</h2>
+		<p>Wrap a stream in <code>DeflateReadStream</code> to get compressed bytes out; wrap it in <code>InflateReadStream</code> to get decompressed bytes out. Both are full <code>ByteReadStream</code> implementations, so they nest into anything else that takes a stream.</p>
+<php-snippet blueprint="toolkit-setup" name="deflate-roundtrip.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\ByteStream\ReadStream\DeflateReadStream;
+use WordPress\ByteStream\ReadStream\InflateReadStream;
+
+$original = str_repeat( "the quick brown fox. ", 50 );
+
+$src        = new MemoryPipe( $original );
+$src->close_writing();
+$deflated   = new DeflateReadStream( $src, ZLIB_ENCODING_DEFLATE );
+$compressed = $deflated->consume_all();
+
+$src2     = new MemoryPipe( $compressed );
+$src2->close_writing();
+$inflated = new InflateReadStream( $src2, ZLIB_ENCODING_DEFLATE );
+$round    = $inflated->consume_all();
+
+printf( "original  : %d bytes\n", strlen( $original ) );
+printf( "deflated  : %d bytes (%.1f%%)\n", strlen( $compressed ), 100 * strlen( $compressed ) / strlen( $original ) );
+printf( "round-trip: %s\n", $round === $original ? 'OK' : 'BROKEN' );
+</script>
+<script type="text/expected-output">
+original  : 1050 bytes
+deflated  : 45 bytes (4.3%)
+round-trip: OK
+</script>
+</php-snippet>
+		<h2 id="line-by-line-reads-from-a-chunked-source">Line-by-line reads from a chunked source</h2>
+		<p>Reading text by line means handling chunk boundaries that fall mid-line. Keep the trailing partial line and prepend it to the next pull. The rest of the loop pretends the data was always whole.</p>
+<php-snippet blueprint="toolkit-setup" name="lines.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+
+$pipe = new MemoryPipe();
+$pipe->append_bytes( "alpha\nbravo\ncharl" );
+$pipe->append_bytes( "ie\ndelta\necho\n" );
+$pipe->close_writing();
+
+$tail = '';
+$count = 0;
+while ( ! $pipe->reached_end_of_data() ) {
+	$n = $pipe->pull( 8 );
+	if ( 0 === $n ) break;
+	$buf   = $tail . $pipe->consume( $n );
+	$lines = explode( "\n", $buf );
+	$tail  = array_pop( $lines );
+	foreach ( $lines as $line ) {
+		printf( "[%d] %s\n", ++$count, $line );
+	}
+}
+if ( '' !== $tail ) {
+	printf( "[%d] %s\n", ++$count, $tail );
+}
+</script>
+<script type="text/expected-output">
+[1] alpha
+[2] bravo
+[3] charlie
+[4] delta
+[5] echo
+</script>
+</php-snippet>
+		<h2 id="limit-a-stream-to-a-fixed-window">Limit a stream to a fixed window</h2>
+		<p><code>LimitedByteReadStream</code> exposes only the next N bytes of an underlying stream as if those were the entire stream. This is how the ZIP decoder hands you the body of one entry without letting you read into the next.</p>
+<php-snippet blueprint="toolkit-setup" name="limited.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\ByteStream\ReadStream\LimitedByteReadStream;
+
+$source = new MemoryPipe( "HEADER:42|BODY:hello there|FOOTER:done" );
+$source->close_writing();
+
+$source->pull( 10 );
+$source->consume( 10 );
+
+$body = new LimitedByteReadStream( $source, 16 );
+echo "body sees: " . $body->consume_all() . "\n";
+echo "remaining in source: " . $source->consume_all() . "\n";
+</script>
+<script type="text/expected-output">
+body sees: BODY:hello there
+remaining in source: |FOOTER:done
+</script>
+</php-snippet>
+		<h2 id="see-also">See also</h2>
+		<ul class="related-components">
+			<li><a href="../filesystem/">Filesystem</a><span>Back file reads and writes with the same stream primitives.</span></li>
+			<li><a href="../zip/">Zip</a><span>Read and write archive entries one stream at a time.</span></li>
+			<li><a href="../httpclient/">HttpClient</a><span>Process request and response bodies incrementally.</span></li>
+		</ul>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>

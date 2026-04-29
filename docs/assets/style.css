@@ -48,22 +48,45 @@ header.site {
 	z-index: 10;
 	background: var(--bg);
 	border-bottom: 1px solid var(--border);
-	padding: 0.85rem 1.5rem;
+	padding: 1rem 1.75rem;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	font-size: 0.92rem;
+	font-size: 1rem;
+	box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
 }
 
 header.site a.brand {
 	color: var(--fg);
-	font-weight: 600;
-	letter-spacing: -0.01em;
+	font-weight: 700;
+	letter-spacing: -0.015em;
+	font-size: 1.08rem;
 }
 
-header.site nav { display: flex; gap: 1.25rem; }
-header.site nav a { color: var(--muted); }
-header.site nav a:hover { color: var(--fg); text-decoration: none; }
+header.site nav { display: flex; gap: 0.4rem; align-items: center; }
+header.site nav a {
+	color: var(--fg);
+	font-weight: 500;
+	padding: 0.45rem 0.85rem;
+	border-radius: 6px;
+	transition: background 0.12s, color 0.12s;
+}
+header.site nav a:hover {
+	background: var(--code-bg);
+	color: var(--accent);
+	text-decoration: none;
+}
+header.site nav a.github {
+	background: var(--accent);
+	color: white;
+	margin-left: 0.4rem;
+}
+header.site nav a.github:hover { background: var(--accent-hover); color: white; }
+@media (max-width: 600px) {
+	header.site { padding: 0.75rem 1rem; flex-wrap: wrap; }
+	header.site nav { gap: 0.2rem; }
+	header.site nav a { padding: 0.35rem 0.6rem; font-size: 0.92rem; }
+}
 
 footer.site {
 	border-top: 1px solid var(--border);
@@ -129,6 +152,55 @@ footer.site {
 
 .components strong { display: block; font-size: 1rem; margin-bottom: 0.2rem; font-weight: 600; }
 .components span { display: block; font-size: 0.85rem; color: var(--muted); line-height: 1.45; }
+
+.starter-paths {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 0.85rem;
+	margin: 1.25rem 0 2rem;
+	padding: 0;
+	list-style: none;
+}
+
+.starter-paths li {
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 1rem 1.1rem;
+}
+
+.starter-paths strong {
+	display: block;
+	font-size: 1rem;
+	margin-bottom: 0.2rem;
+}
+
+.starter-paths span {
+	display: block;
+	color: var(--muted);
+	font-size: 0.88rem;
+	line-height: 1.5;
+}
+
+.starter-paths nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.45rem;
+	margin-top: 0.8rem;
+}
+
+.starter-paths nav a {
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	padding: 0.18rem 0.55rem;
+	font-size: 0.78rem;
+	color: var(--fg);
+}
+
+.starter-paths nav a:hover {
+	border-color: var(--accent);
+	color: var(--accent);
+	text-decoration: none;
+}
 
 /* ---------- Component page layout ---------- */
 
@@ -223,6 +295,11 @@ footer.site {
 }
 .toc a:hover { color: var(--fg); text-decoration: none; }
 .toc a.active { color: var(--toc-active); border-left-color: var(--toc-active); font-weight: 500; }
+.toc .toc-depth-3 a {
+	font-size: 0.82rem;
+	line-height: 1.35;
+	padding-left: 1.35rem;
+}
 
 .sidebar-toggle {
 	display: none;
@@ -297,6 +374,72 @@ footer.site {
 
 .content p { margin: 0 0 0.9rem; }
 
+.you-will-learn-label {
+	margin: 1.2rem 0 0.3rem;
+	font-weight: 600;
+	color: var(--muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	font-size: 0.78rem;
+}
+
+.you-will-learn {
+	margin: 0 0 1.5rem;
+	padding-left: 1.2rem;
+	display: grid;
+	gap: 0.3rem;
+}
+
+.you-will-learn li {
+	line-height: 1.5;
+}
+
+.learning-path {
+	display: grid;
+	gap: 0.85rem;
+	padding-left: 1.4rem;
+	margin: 0.5rem 0 1.5rem;
+}
+
+.learning-path li {
+	padding-left: 0.2rem;
+}
+
+.learning-path strong {
+	display: block;
+	margin-bottom: 0.15rem;
+}
+
+.learning-path span {
+	display: block;
+	color: var(--muted);
+}
+
+.related-components {
+	display: grid;
+	gap: 0.65rem;
+	margin: 0.75rem 0 1.5rem;
+	padding: 0;
+	list-style: none;
+}
+
+.related-components li {
+	border-left: 3px solid var(--border);
+	padding-left: 0.85rem;
+}
+
+.related-components a {
+	display: inline-block;
+	font-weight: 600;
+}
+
+.related-components span {
+	display: block;
+	color: var(--muted);
+	font-size: 0.9rem;
+	line-height: 1.5;
+}
+
 p code, li code, td code {
 	background: var(--code-bg);
 	padding: 0.12em 0.4em;
@@ -316,11 +459,13 @@ p code, li code, td code {
 	border-collapse: collapse;
 	margin: 1rem 0;
 	font-size: 0.92rem;
+	width: 100%;
 }
 .content th, .content td {
 	border: 1px solid var(--border);
 	padding: 0.4rem 0.7rem;
 	text-align: left;
+	vertical-align: top;
 }
 .content th { background: var(--code-bg); font-weight: 600; }
 
@@ -331,12 +476,40 @@ p code, li code, td code {
 	border: 1px solid var(--border);
 	border-radius: 6px;
 	padding: 0.65rem 0.85rem;
-	margin: 1rem 0 2rem;
+	margin: 0 0 2rem;
 }
 
 .runtime-note strong { color: var(--fg); }
 
 php-snippet { display: block; margin: 1rem 0 1.75rem; }
+
+.code-example {
+	margin: 1rem 0 1.75rem;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	overflow: hidden;
+	background: var(--code-bg);
+}
+
+.code-example figcaption {
+	border-bottom: 1px solid var(--border);
+	color: var(--muted);
+	font-family: ui-monospace, "SF Mono", Menlo, monospace;
+	font-size: 0.78rem;
+	padding: 0.45rem 0.7rem;
+}
+
+.code-example pre {
+	margin: 0;
+	padding: 0.9rem;
+	overflow-x: auto;
+}
+
+.code-example code {
+	font-family: ui-monospace, "SF Mono", Menlo, monospace;
+	font-size: 0.85rem;
+	color: var(--code-fg);
+}
 
 /* When the editable hack is wired, hint at it without nagging. */
 php-snippet[data-editable] { position: relative; }
@@ -361,3 +534,283 @@ php-snippet[data-editable]::after {
 }
 
 .callout strong { color: var(--fg); }
+
+/* ============================================================
+ * Rewritten docs surface (April 2026)
+ * Landing page, learn track, reference pages, callouts.
+ * ============================================================ */
+
+/* ----- Landing page ----- */
+
+main.landing {
+	max-width: 980px;
+	margin: 0 auto;
+	padding: 2.5rem 1.5rem 4rem;
+}
+
+main.landing h1 {
+	font-size: 2.6rem;
+	line-height: 1.15;
+	margin: 0 0 1rem;
+	letter-spacing: -0.02em;
+}
+
+main.landing .lede {
+	font-size: 1.15rem;
+	color: var(--muted);
+	max-width: 70ch;
+	margin: 0 0 2rem;
+}
+
+.cta-row {
+	display: flex;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	margin: 1.5rem 0 3rem;
+}
+
+.cta {
+	display: inline-block;
+	padding: 0.7rem 1.2rem;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	font-weight: 500;
+	color: var(--fg);
+}
+
+.cta:hover { border-color: var(--accent); text-decoration: none; }
+
+.cta.primary {
+	background: var(--accent);
+	color: white;
+	border-color: var(--accent);
+}
+
+.cta.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: white; }
+
+.origins, .insight, .two-doors, .proofs, .how-runnable, .prereqs, .path, .canonical-artifact, .next, .ref-group {
+	margin: 2.5rem 0;
+}
+
+main.landing h2,
+main.learn-landing h2,
+main.reference-landing h2 {
+	font-size: 1.6rem;
+	margin: 0 0 1rem;
+	letter-spacing: -0.01em;
+}
+
+.component-summary {
+	list-style: none;
+	padding: 0;
+	display: grid;
+	gap: 0.6rem;
+	margin: 1rem 0;
+}
+
+.component-summary li {
+	padding: 0.7rem 0.9rem;
+	border-left: 3px solid var(--border);
+	background: var(--code-bg);
+	border-radius: 0 4px 4px 0;
+}
+
+.component-summary strong { display: inline-block; min-width: 9rem; }
+
+.doors {
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: 1fr 1fr;
+	margin: 1rem 0;
+}
+
+@media (max-width: 720px) { .doors { grid-template-columns: 1fr; } }
+
+.door {
+	display: block;
+	padding: 1.4rem;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	color: var(--fg);
+	transition: border-color 0.15s, transform 0.15s;
+}
+
+.door:hover { border-color: var(--accent); text-decoration: none; transform: translateY(-2px); }
+.door strong { display: block; font-size: 1.1rem; margin-bottom: 0.5rem; }
+.door span { display: block; color: var(--muted); margin-bottom: 0.7rem; }
+.door em { color: var(--accent); font-style: normal; font-weight: 500; }
+
+.proof-table {
+	border-collapse: collapse;
+	width: 100%;
+	margin: 1rem 0;
+	font-size: 0.93rem;
+}
+
+.proof-table td {
+	padding: 0.55rem 0.75rem;
+	border-bottom: 1px solid var(--border);
+	vertical-align: top;
+}
+
+.proof-table td:first-child { white-space: nowrap; color: var(--muted); }
+.proof-table td:nth-child(2) { color: var(--muted); width: 1.5rem; }
+
+/* ----- Learn landing ----- */
+
+main.learn-landing, main.reference-landing {
+	max-width: 880px;
+	margin: 0 auto;
+	padding: 2.5rem 1.5rem 4rem;
+}
+
+ol.chapters {
+	list-style: none;
+	counter-reset: ch;
+	padding: 0;
+	display: grid;
+	gap: 0.7rem;
+	margin: 1rem 0;
+}
+
+ol.chapters li { counter-increment: ch; }
+
+ol.chapters a {
+	display: block;
+	padding: 1rem 1.2rem;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	color: var(--fg);
+}
+
+ol.chapters a:hover { border-color: var(--accent); text-decoration: none; }
+ol.chapters strong { display: block; margin-bottom: 0.3rem; }
+ol.chapters span { display: block; color: var(--muted); font-size: 0.93rem; }
+
+.canonical-artifact pre {
+	background: var(--code-bg);
+	padding: 1rem;
+	border-radius: 6px;
+	overflow-x: auto;
+	border: 1px solid var(--border);
+	font-size: 0.88rem;
+	line-height: 1.55;
+}
+
+/* ----- Reference landing ----- */
+
+.ref-grid {
+	list-style: none;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 0.7rem;
+	margin: 1rem 0 1.5rem;
+}
+
+.ref-grid a {
+	display: block;
+	padding: 0.9rem 1rem;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	color: var(--fg);
+	height: 100%;
+}
+
+.ref-grid a:hover { border-color: var(--accent); text-decoration: none; }
+.ref-grid strong { display: block; margin-bottom: 0.3rem; }
+.ref-grid span { display: block; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
+
+.legacy-note {
+	margin-top: 2rem;
+	padding: 0.75rem 1rem;
+	background: var(--code-bg);
+	border-left: 3px solid var(--border);
+	color: var(--muted);
+	font-size: 0.92rem;
+}
+
+/* ----- Article chrome (shared with reference + learn pages) ----- */
+
+.breadcrumb {
+	color: var(--muted);
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	margin: 0 0 0.5rem;
+}
+
+.chapter-nav {
+	display: flex;
+	justify-content: space-between;
+	gap: 1rem;
+	margin: 2.5rem 0 0.5rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid var(--border);
+	font-weight: 500;
+	flex-wrap: wrap;
+}
+
+.chapter-nav .prev { margin-right: auto; }
+.chapter-nav .next { margin-left: auto; }
+
+.next-preview {
+	color: var(--muted);
+	font-size: 0.95rem;
+	margin: 0.5rem 0 0;
+	max-width: 65ch;
+}
+
+/* ----- Callouts ----- */
+
+.callout {
+	display: block;
+	margin: 1.2rem 0;
+	padding: 0.85rem 1rem;
+	border-left: 4px solid var(--border);
+	background: var(--code-bg);
+	border-radius: 0 4px 4px 0;
+	font-size: 0.96rem;
+}
+
+.callout strong { display: inline; margin-right: 0.3rem; }
+
+.callout.try { border-left-color: #10b981; }
+.callout.pitfall { border-left-color: #ef4444; }
+.callout.warning { border-left-color: #f59e0b; }
+.callout.note { border-left-color: var(--accent); }
+
+.callout.you-will-learn { border-left-color: var(--accent); }
+.callout.you-will-learn ul { margin: 0.5rem 0 0; padding-left: 1.2rem; }
+.callout.you-will-learn li { margin: 0.2rem 0; }
+
+/* ----- API tables on reference pages ----- */
+
+.api-table {
+	border-collapse: collapse;
+	width: 100%;
+	margin: 1rem 0 1.5rem;
+	font-size: 0.93rem;
+}
+
+.api-table th, .api-table td {
+	padding: 0.6rem 0.8rem;
+	border-bottom: 1px solid var(--border);
+	vertical-align: top;
+	text-align: left;
+}
+
+.api-table th {
+	font-size: 0.78rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--muted);
+	font-weight: 600;
+}
+
+.api-table td:first-child { white-space: nowrap; }
+
+.callout.credit {
+	border-left-color: #8b5cf6;
+	background: linear-gradient(to right, rgba(139, 92, 246, 0.06), transparent);
+}

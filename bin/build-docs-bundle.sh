@@ -14,7 +14,10 @@ rm -f docs/assets/php-toolkit.zip
 zip -qr docs/assets/php-toolkit.zip components vendor bootstrap.php composer.json \
   -x "*/Tests/*" "*/tests/*" "*/.git/*" "*/.github/*" "*/node_modules/*"
 
-echo "==> generating docs/*/index.html"
+echo "==> regenerating legacy docs/_legacy/*/index.html"
 python3 bin/build-docs.py
+
+echo "==> regenerating docs/reference/*.html"
+python3 bin/build-reference.py
 
 echo "Done. docs/assets/php-toolkit.zip = $(du -h docs/assets/php-toolkit.zip | cut -f1)"

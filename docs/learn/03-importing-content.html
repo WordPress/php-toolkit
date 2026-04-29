@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 3 — Markdown to WXR · PHP Toolkit</title>
+<meta name="description" content="Convert Markdown posts to WordPress block markup, audit the result with BlockParser, and stream a WXR export with DataLiberation. Chapter 3 of the importer tutorial.">
+<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="./">Learn</a>
+		<a href="../reference/">Reference</a>
+		<a class="github" href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+
+<div class="layout">
+
+<aside class="sidebar" aria-label="Tutorial navigation">
+	<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<details class="components-nav" open>
+		<summary>The path</summary>
+		<ol>
+			<li><a href="quickstart.html">Quickstart</a></li>
+			<li><a href="01-rewriting-html.html">1. Rewriting HTML</a></li>
+			<li><a href="02-streaming-archives.html">2. Streaming archives</a></li>
+			<li class="current"><a href="03-importing-content.html">3. Markdown to WXR</a></li>
+			<li><a href="04-talking-to-the-network.html">4. Talking to the network</a></li>
+			<li><a href="recap.html">Recap</a></li>
+		</ol>
+	</details>
+</aside>
+
+<article class="content">
+
+<p class="breadcrumb">Chapter 3 of 4</p>
+<h1>Markdown to blocks to WXR</h1>
+
+<p class="lede">Chapter 1 cleaned a single HTML string. Chapter 2 staged a folder of Markdown files in memory. This chapter turns each of those files into the actual format the WordPress importer plugin reads: WXR, an extended-RSS export. Along the way we meet three more components — Markdown, BlockParser, and DataLiberation — and watch them compose into something none of them could do alone.</p>
+
+<aside class="callout you-will-learn">
+	<strong>You will learn to:</strong>
+	<ul>
+		<li>Convert a Markdown document into WordPress block markup with <code>MarkdownConsumer</code>, including frontmatter as post metadata.</li>
+		<li>Inspect the produced blocks with <code>WP_Block_Parser</code> to count, audit, or rewrite them.</li>
+		<li>Stream a WXR export with <code>WXRWriter</code>, one entity at a time, with constant memory.</li>
+		<li>Combine those components into a single end-to-end pipeline: Markdown in, WXR out.</li>
+	</ul>
+</aside>
+
+<h2 id="markdown-to-blocks">Markdown to block markup</h2>
+
+<p>The <code>Markdown</code> component does one thing well: it bridges Markdown and <a href="https://developer.wordpress.org/block-editor/reference-guides/block-api/">WordPress block markup</a>, in either direction. The <code>MarkdownConsumer</code> class takes a Markdown string and returns a result object containing both the rendered block markup and any frontmatter parsed from the document's leading YAML.</p>
+
+<php-snippet blueprint="toolkit-setup" name="md-to-blocks.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Markdown\MarkdownConsumer;
+
+$markdown = <<<MD
+---
+title: Weeknight pasta
+status: publish
+tags: [dinner, quick]
+---
+
+# Weeknight pasta
+
+A 20-minute recipe for **busy nights**.
+
+## Ingredients
+
+- 200 g spaghetti
+- 2 cloves garlic
+- 50 g parmesan
+
+> Use a heavy pan; it makes a difference.
+MD;
+
+$consumer = new MarkdownConsumer( $markdown );
+$result   = $consumer->consume();
+
+echo "title:  " . $consumer->get_meta_value( 'title' ) . "\n";
+echo "status: " . $consumer->get_meta_value( 'status' ) . "\n\n";
+echo "block markup (first 400 chars):\n";
+echo substr( $result->get_block_markup(), 0, 400 ) . "...\n";
+</script>
+</php-snippet>
+
+<p>Two outputs come back: the post metadata (read with <code>get_meta_value()</code> for scalars, or <code>get_all_metadata()</code> for the raw structure) and the block markup itself, which is the <code>&lt;!-- wp:heading --&gt;…&lt;!-- /wp:heading --&gt;</code> string that WordPress stores in <code>post_content</code>. From here on we treat that string the way WordPress treats it.</p>
+
+<aside class="callout note">
+	<strong>Note — two ways to read frontmatter.</strong> <code>get_meta_value( 'title' )</code> returns the first occurrence of that key as a scalar; for everything else use <code>get_all_metadata()</code> and index into the resulting array. The toolkit wraps repeated keys so the same call works whether a key appears once or many times.
+</aside>
+
+<h2 id="audit-blocks">Audit the produced blocks</h2>
+
+<p>Before we ship the converted post into a WXR file, the importer should sanity-check what came out. Did Markdown conversion produce blocks the destination site can render? Are there headings out of order? Are there blocks the importer doesn't know how to handle? <code>WP_Block_Parser</code> walks the same block markup WordPress core uses and gives us a structured tree:</p>
+
+<php-snippet blueprint="toolkit-setup" name="audit-blocks.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Markdown\MarkdownConsumer;
+
+$markdown = "# Title\n\nIntro.\n\n## Section\n\nBody.\n\n#### Skipped a level\n\nDetails.";
+$blocks   = ( new MarkdownConsumer( $markdown ) )->consume()->get_block_markup();
+
+$tree = ( new WP_Block_Parser() )->parse( $blocks );
+
+// Count blocks by name.
+$counts = array();
+$queue  = $tree;
+while ( $queue ) {
+	$block = array_shift( $queue );
+	if ( null !== $block['blockName'] ) {
+		$name             = $block['blockName'];
+		$counts[ $name ] = isset( $counts[ $name ] ) ? $counts[ $name ] + 1 : 1;
+	}
+	foreach ( $block['innerBlocks'] as $inner ) {
+		$queue[] = $inner;
+	}
+}
+echo "block counts:\n";
+foreach ( $counts as $name => $n ) {
+	printf( "  %-20s %d\n", $name, $n );
+}
+
+// Lint heading levels.
+$last = 1;
+foreach ( $tree as $b ) {
+	if ( 'core/heading' !== $b['blockName'] ) continue;
+	$level = isset( $b['attrs']['level'] ) ? (int) $b['attrs']['level'] : 2;
+	$text  = trim( strip_tags( $b['innerHTML'] ) );
+	if ( $level > $last + 1 ) {
+		echo "  WARN '{$text}': jumped from H{$last} to H{$level}\n";
+	}
+	$last = $level;
+}
+</script>
+</php-snippet>
+
+<p>Two patterns to keep. The flat counter (a queue that walks <code>innerBlocks</code>) answers any "how many" or "does it use" question. The level checker is a domain-specific rule — accessibility wants no jumps in heading depth — but every audit you'll write follows the same shape: walk the tree, gate by <code>blockName</code>, ask the question. The reference page for <a href="../reference/blockparser.html">BlockParser</a> covers both patterns in more depth.</p>
+
+<h2 id="clean-html-inside-blocks">Apply chapter 1's cleaner inside the blocks</h2>
+
+<p>Block markup is HTML embedded in HTML comments. Chapter 1's <code>clean_post_html()</code> takes an HTML string and returns a clean one — we can run it on the whole block-markup string in one pass, because <code>WP_HTML_Tag_Processor</code> is happy to walk the HTML between the block-comment delimiters. The block comments themselves don't look like tags to the processor, so they pass through untouched:</p>
+
+<php-snippet blueprint="toolkit-setup" name="clean-blocks.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Markdown\MarkdownConsumer;
+
+function clean_post_html( $html, $base_url ) {
+	$tags = new WP_HTML_Tag_Processor( $html );
+	while ( $tags->next_tag() ) {
+		$tag = $tags->get_tag();
+		if ( 'SCRIPT' === $tag && ! $tags->is_tag_closer() ) {
+			$tags->set_modifiable_text( '' );
+			foreach ( $tags->get_attribute_names_with_prefix( '' ) as $a ) {
+				$tags->remove_attribute( $a );
+			}
+			continue;
+		}
+		foreach ( $tags->get_attribute_names_with_prefix( 'on' ) as $a ) {
+			$tags->remove_attribute( $a );
+		}
+		if ( 'IMG' === $tag && ! $tags->is_tag_closer() ) {
+			if ( null === $tags->get_attribute( 'loading' ) ) {
+				$tags->set_attribute( 'loading', 'lazy' );
+			}
+		}
+		if ( 'A' === $tag && ! $tags->is_tag_closer() ) {
+			$href = $tags->get_attribute( 'href' );
+			if ( is_string( $href ) && '' !== $href
+				&& ! preg_match( '#^[a-z][a-z0-9+.\-]*:#i', $href )
+				&& 0 !== strpos( $href, '//' )
+				&& 0 !== strpos( $href, '#' ) ) {
+				$tags->set_attribute( 'href', rtrim( $base_url, '/' ) . '/' . ltrim( $href, '/' ) );
+			}
+		}
+	}
+	return $tags->get_updated_html();
+}
+
+$markdown = <<<MD
+# Hello
+
+See [our docs](/docs) — and an inline image:
+
+![](photo.jpg)
+MD;
+
+$blocks = ( new MarkdownConsumer( $markdown ) )->consume()->get_block_markup();
+$cleaned = clean_post_html( $blocks, 'https://example.com' );
+
+echo $cleaned;
+</script>
+</php-snippet>
+
+<p>Notice how <code>&lt;!-- wp:heading --&gt;</code> survived the walk verbatim. The Tag Processor only sees real HTML tags; comments and text aren't tags to it. That's why combining the two components here works without any special-casing — Markdown produces block markup, the cleaner walks the HTML inside it, and the comments pass through as plain bytes.</p>
+
+<h2 id="wxr">Stream a WXR file with DataLiberation</h2>
+
+<p>We have post titles, post content (clean block markup), post metadata. The format the WordPress importer reads is WXR — WordPress eXtended RSS — an XML dialect with a fixed shape. <code>DataLiberation</code>'s <code>WXRWriter</code> takes <code>ImportEntity</code> objects and streams them into a byte sink, one entity at a time, without ever holding the whole export in memory:</p>
+
+<php-snippet blueprint="toolkit-setup" name="wxr-stream.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\DataLiberation\EntityWriter\WXRWriter;
+use WordPress\DataLiberation\ImportEntity;
+
+$pipe   = new MemoryPipe();
+$writer = new WXRWriter( $pipe );
+
+$writer->append_entity( new ImportEntity( 'post', array(
+	'post_id'    => '1',
+	'post_title' => 'Weeknight pasta',
+	'content'    => '<!-- wp:paragraph --><p>Quick recipe.</p><!-- /wp:paragraph -->',
+	'status'     => 'publish',
+	'post_type'  => 'post',
+	'post_name'  => 'weeknight-pasta',
+) ) );
+$writer->append_entity( new ImportEntity( 'post', array(
+	'post_id'    => '2',
+	'post_title' => 'Carrot soup',
+	'content'    => '<!-- wp:paragraph --><p>Cold-day standby.</p><!-- /wp:paragraph -->',
+	'status'     => 'publish',
+	'post_type'  => 'post',
+	'post_name'  => 'carrot-soup',
+) ) );
+
+$writer->finalize();
+$writer->close_writing();
+$pipe->close_writing();
+
+$wxr = $pipe->consume_all();
+echo "WXR size: " . strlen( $wxr ) . " bytes\n";
+echo "items in WXR: " . substr_count( $wxr, '<item>' ) . "\n";
+echo "first 600 chars:\n" . substr( $wxr, 0, 600 ) . "...\n";
+</script>
+</php-snippet>
+
+<p>The writer holds only what it needs to close currently-open XML tags — fewer than ten kilobytes of state for any reasonable pipeline. Every <code>append_entity()</code> writes one item to the underlying byte sink and forgets it. You can build a WXR from twenty thousand posts on a host with sixty-four megabytes of RAM and the importer code looks no different from the two-post version above.</p>
+
+<aside class="callout note">
+	<strong>Note.</strong> The byte sink here is <code>MemoryPipe</code> for the example. In the real importer you'd pass <code>FileWriteStream::from_path( 'export.xml', 'truncate' )</code> and the WXR would stream straight to disk without ever existing as a single in-memory string.
+</aside>
+
+<h2 id="end-to-end">End-to-end: Markdown folder to WXR file</h2>
+
+<p>Now we wire it all together. The pipeline reads the staged Markdown files from chapter 2, converts each to block markup, cleans the HTML inside it, builds an <code>ImportEntity</code> with title and slug from frontmatter, and streams the whole thing into a WXR document. This is the importer's first complete end-to-end run:</p>
+
+<php-snippet blueprint="toolkit-setup" name="importer-step-3.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\DataLiberation\EntityWriter\WXRWriter;
+use WordPress\DataLiberation\ImportEntity;
+use WordPress\Markdown\MarkdownConsumer;
+
+// The combined cleaner from chapter 1, unchanged.
+function clean_post_html( $html, $base_url ) {
+	$tags = new WP_HTML_Tag_Processor( $html );
+	while ( $tags->next_tag() ) {
+		$tag = $tags->get_tag();
+
+		if ( 'SCRIPT' === $tag && ! $tags->is_tag_closer() ) {
+			$tags->set_modifiable_text( '' );
+			foreach ( $tags->get_attribute_names_with_prefix( '' ) as $a ) {
+				$tags->remove_attribute( $a );
+			}
+			continue;
+		}
+
+		foreach ( $tags->get_attribute_names_with_prefix( 'on' ) as $a ) {
+			$tags->remove_attribute( $a );
+		}
+
+		if ( 'IMG' === $tag && ! $tags->is_tag_closer() ) {
+			if ( null === $tags->get_attribute( 'loading' ) ) {
+				$tags->set_attribute( 'loading', 'lazy' );
+			}
+		}
+
+		if ( 'A' === $tag && ! $tags->is_tag_closer() ) {
+			$href = $tags->get_attribute( 'href' );
+			if ( is_string( $href ) && '' !== $href
+				&& ! preg_match( '#^[a-z][a-z0-9+.\-]*:#i', $href )
+				&& 0 !== strpos( $href, '//' )
+				&& 0 !== strpos( $href, '#' ) ) {
+				$tags->set_attribute( 'href', rtrim( $base_url, '/' ) . '/' . ltrim( $href, '/' ) );
+			}
+		}
+	}
+	return $tags->get_updated_html();
+}
+
+// Three sample Markdown posts. In the real importer these came from chapter 2's stage.
+$inputs = array(
+	'pasta.md' => "---\ntitle: Weeknight pasta\ntags: [dinner]\n---\n\n# Pasta\n\nA 20-minute recipe. See [our sauce primer](/sauces).",
+	'soup.md'  => "---\ntitle: Carrot soup\n---\n\n# Soup\n\nA cold-day standby with [a step-by-step video](video.html).",
+	'bread.md' => "---\ntitle: No-knead bread\n---\n\n# Bread\n\nA loaf in your sleep. ![](https://cdn.example.com/bread.jpg)",
+);
+
+$pipe   = new MemoryPipe();
+$writer = new WXRWriter( $pipe );
+$base   = 'https://recipes.example.com';
+
+$id = 1;
+foreach ( $inputs as $filename => $markdown ) {
+	$consumer = new MarkdownConsumer( $markdown );
+	$result   = $consumer->consume();
+	$cleaned  = clean_post_html( $result->get_block_markup(), $base );
+
+	$writer->append_entity( new ImportEntity( 'post', array(
+		'post_id'    => (string) $id++,
+		'post_title' => $consumer->get_meta_value( 'title' ) ?: basename( $filename, '.md' ),
+		'content'    => $cleaned,
+		'status'     => 'publish',
+		'post_type'  => 'post',
+		'post_name'  => basename( $filename, '.md' ),
+	) ) );
+}
+
+$writer->finalize();
+$writer->close_writing();
+$pipe->close_writing();
+
+$wxr = $pipe->consume_all();
+echo "wrote WXR (" . count( $inputs ) . " posts, " . strlen( $wxr ) . " bytes)\n\n";
+
+// A snippet of the output so you can see what the importer plugin will read:
+$start = strpos( $wxr, '<item>' );
+echo substr( $wxr, $start, 800 ) . "...\n";
+</script>
+</php-snippet>
+
+<p>One pass. Three components composed (Markdown for parsing, HTML for cleaning, DataLiberation for WXR), each doing one thing well. The output is real WXR — drop it on a WordPress site through the importer plugin and you get three published posts with the cleaned content, the right slugs, and the frontmatter titles.</p>
+
+<aside class="callout try">
+	<strong>Try this:</strong> add a fourth Markdown post with an <code>onclick</code> handler in raw inline HTML. Run. The handler is gone in the WXR output — the cleaner is doing its job inside block markup the same way it did on a bare HTML string in chapter 1.
+</aside>
+
+<h2 id="rewriting-on-stream">Refinement: rewrite URLs across an existing WXR</h2>
+
+<p>The pattern above (build WXR from sources) is one half of DataLiberation. The other half is reading and transforming an existing WXR. <code>WXREntityReader</code> emits one entity at a time from a WXR document, and you can wire it to a <code>WXRWriter</code> to produce a transformed copy:</p>
+
+<php-snippet blueprint="toolkit-setup" name="wxr-rewrite.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\DataLiberation\EntityReader\WXREntityReader;
+use WordPress\DataLiberation\EntityWriter\WXRWriter;
+use WordPress\DataLiberation\ImportEntity;
+
+// A small staging-export WXR. In production this is your real export.
+$source = <<<XML
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:wp="http://wordpress.org/export/1.2/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<channel>
+<item><title>About</title><wp:post_id>1</wp:post_id><wp:post_type>post</wp:post_type>
+<content:encoded>Visit https://staging.example.com/contact for details.</content:encoded></item>
+</channel>
+</rss>
+XML;
+
+$reader = WXREntityReader::create();
+$reader->append_bytes( $source );
+$reader->input_finished();
+
+$pipe   = new MemoryPipe();
+$writer = new WXRWriter( $pipe );
+
+while ( $reader->next_entity() ) {
+	$entity = $reader->get_entity();
+	$data   = $entity->get_data();
+	foreach ( array( 'post_content', 'content', 'description' ) as $f ) {
+		if ( isset( $data[ $f ] ) ) {
+			$data[ $f ] = str_replace( 'staging.example.com', 'example.com', $data[ $f ] );
+		}
+	}
+	if ( 'post' === $entity->get_type() && isset( $data['post_content'] ) ) {
+		$data['content'] = $data['post_content'];
+	}
+	$writer->append_entity( new ImportEntity( $entity->get_type(), $data ) );
+}
+
+$writer->finalize();
+$writer->close_writing();
+$pipe->close_writing();
+
+$out = $pipe->consume_all();
+echo strpos( $out, 'https://example.com/contact' ) !== false ? "rewrite ok\n" : "rewrite missing\n";
+echo strpos( $out, 'staging.example.com' ) === false ? "old URL gone\n" : "old URL still present\n";
+</script>
+</php-snippet>
+
+<p>The same pattern handles every "transform an export between sites" job — staging-to-production URL rewrites, theme migrations, slug normalization. Reader on the left, writer on the right, your transformation in the middle. Feed the reader bytes incrementally (instead of <code>append_bytes( $source )</code> all at once) and pipe the writer to a file sink (instead of <code>MemoryPipe</code>), and the same code processes a 10 GB export with the memory footprint of one entity at a time.</p>
+
+<aside class="callout note">
+	<strong>Note — asymmetric field names.</strong> <code>WXREntityReader</code> emits the post body under <code>post_content</code> (matching WordPress's database column); <code>WXRWriter</code> reads it under <code>content</code> (matching its own internal mapping). Pipelines that read on one side and write on the other have to copy the value across, as the example does.
+</aside>
+
+<h2 id="recap">Recap</h2>
+
+<p>You can now:</p>
+
+<ul>
+	<li>Convert Markdown plus YAML frontmatter into block markup with <code>MarkdownConsumer</code>.</li>
+	<li>Walk the produced block tree with <code>WP_Block_Parser</code> to count, audit, or rewrite blocks.</li>
+	<li>Apply HTML rewrites to block markup without breaking the surrounding block comments.</li>
+	<li>Stream a WXR document with <code>WXRWriter</code> in constant memory regardless of input size.</li>
+	<li>Read an existing WXR with <code>WXREntityReader</code> and pipe its entities through a transformation into a new WXR.</li>
+</ul>
+
+<p>The importer is now functionally complete for text content. What's missing is the network — when a Markdown post references <code>![](https://cdn.example.com/bread.jpg)</code>, the destination site doesn't have that image. Chapter 4 fixes that.</p>
+
+<nav class="chapter-nav">
+	<a class="prev" href="02-streaming-archives.html">← Previous: Streaming archives</a>
+	<a class="next" href="04-talking-to-the-network.html">Next: Talking to the network →</a>
+</nav>
+
+<p class="next-preview">In chapter 4 the importer learns to fetch the images referenced from imported posts: ten downloads at a time, with progress reporting, ranged-resume on partial failures, and the option to mount a remote ZIP without downloading it first. The HttpClient component meets the importer.</p>
+
+</article>
+</div>
+
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a>
+</footer>
+</body>
+</html>
