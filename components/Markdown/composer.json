@@ -15,8 +15,8 @@
     ],
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/data-liberation": "^0.7",
-        "wp-php-toolkit/filesystem": "^0.7"
+        "wp-php-toolkit/data-liberation": "^0.8",
+        "wp-php-toolkit/filesystem": "^0.8"
     },
     "autoload": {
         "classmap": [
