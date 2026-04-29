@@ -23,12 +23,5 @@
         "exclude-from-classmap": [
             "/Tests/"
         ]
-    },
-    "archive": {
-        "exclude": [
-            "**/.github/",
-            "**/Tests/",
-            "**/bin/"
-        ]
     }
 }
