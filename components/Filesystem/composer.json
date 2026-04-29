@@ -30,12 +30,5 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5"
-    },
-    "archive": {
-        "exclude": [
-            "**/.github/",
-            "**/Tests/",
-            "**/bin/"
-        ]
     }
 }

@@ -32,12 +32,5 @@
     },
     "config": {
         "sort-packages": true
-    },
-    "archive": {
-        "exclude": [
-            "**/.github/",
-            "**/Tests/",
-            "**/bin/"
-        ]
     }
 }
