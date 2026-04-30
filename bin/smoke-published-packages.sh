@@ -56,11 +56,14 @@ PACKAGES=(
 
 REPO_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 CHECK_SCRIPT="${REPO_ROOT}/bin/check-package-autoload.php"
+COEXIST_SCRIPT="${REPO_ROOT}/bin/check-wp-coexistence.php"
 
-if [[ ! -f "${CHECK_SCRIPT}" ]]; then
-  echo "missing ${CHECK_SCRIPT}" >&2
-  exit 2
-fi
+for f in "${CHECK_SCRIPT}" "${COEXIST_SCRIPT}"; do
+  if [[ ! -f "${f}" ]]; then
+    echo "missing ${f}" >&2
+    exit 2
+  fi
+done
 
 # Wait for Packagist to expose the new version. The publish workflow calls
 # the update-package webhook, but indexing can take a moment.
@@ -106,6 +109,11 @@ for pkg in "${PACKAGES[@]}"; do
   fi
 
   if ! php "${CHECK_SCRIPT}" "wp-php-toolkit/${pkg}" "vendor/wp-php-toolkit/${pkg}"; then
+    failed+=( "${pkg}" )
+  elif ! php "${COEXIST_SCRIPT}"; then
+    # Even if every class autoloads, the package can still break consumers
+    # that boot WordPress: any WP-core class declared at composer-bootstrap
+    # time will fatal when WP later loads its own copy.
     failed+=( "${pkg}" )
   fi
 
