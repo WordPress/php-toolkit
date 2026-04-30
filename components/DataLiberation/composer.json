@@ -15,10 +15,10 @@
     ],
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/bytestream": "^0.8",
-        "wp-php-toolkit/filesystem": "^0.8",
-        "wp-php-toolkit/http-client": "^0.8",
-        "wp-php-toolkit/xml": "^0.8"
+        "wp-php-toolkit/bytestream": "^0.7.1",
+        "wp-php-toolkit/filesystem": "^0.7.1",
+        "wp-php-toolkit/http-client": "^0.7.1",
+        "wp-php-toolkit/xml": "^0.7.1"
     },
     "autoload": {
         "classmap": [
