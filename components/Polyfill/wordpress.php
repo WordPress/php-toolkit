@@ -5,12 +5,12 @@
 
  // phpcs:disable
 
-if (
-	! isset( $html5_named_character_references ) &&
-	file_exists( __DIR__ . '/../HTML/html5-named-character-references.php' )
-) {
-	require_once __DIR__ . '/../HTML/html5-named-character-references.php';
-}
+// $html5_named_character_references and the WP_Block_Parser_* classes are
+// provided by wp-php-toolkit/html and wp-php-toolkit/blockparser via
+// Composer (HTML loads its char-references file through autoload.files;
+// BlockParser is autoloaded by classmap on first use). The previous inline
+// require_once calls used monorepo-relative paths (../HTML, ../BlockParser)
+// that broke once each component was split into its own Packagist package.
 
 if ( ! class_exists( 'WP_Error' ) ) {
 	class WP_Error {
@@ -27,12 +27,6 @@ if ( ! class_exists( 'WP_Error' ) ) {
 			$this->data = $data;
 		}
 	}
-}
-
-if ( ! class_exists( 'WP_Block_Parser' ) ) {
-	require_once __DIR__ . '/../BlockParser/class-wp-block-parser-block.php';
-	require_once __DIR__ . '/../BlockParser/class-wp-block-parser-frame.php';
-	require_once __DIR__ . '/../BlockParser/class-wp-block-parser.php';
 }
 
 if ( ! function_exists( '_doing_it_wrong' ) ) {

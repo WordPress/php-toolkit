@@ -14,7 +14,9 @@
         }
     ],
     "require": {
-        "php": ">=7.2"
+        "php": ">=7.2",
+        "wp-php-toolkit/blockparser": "^0.8",
+        "wp-php-toolkit/html": "^0.8"
     },
     "autoload": {
         "files": [
