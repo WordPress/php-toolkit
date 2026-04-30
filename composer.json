@@ -64,7 +64,6 @@
 			"components/Encoding/compat-utf8.php",
 			"components/Encoding/utf8-encoder.php",
 			"components/Filesystem/functions.php",
-			"components/HTML/html5-named-character-references.php",
 			"components/Zip/functions.php",
 			"components/Polyfill/wordpress.php",
 			"components/Polyfill/mbstring.php",

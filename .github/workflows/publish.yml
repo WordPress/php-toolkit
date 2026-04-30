@@ -101,6 +101,32 @@ jobs:
           git config --global user.name "github-actions[bot]"
           bash bin/split-code.sh
 
+  smoke-published-packages:
+    needs: release-composer-packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Determine release tag
+        id: tag
+        run: |
+          git fetch --tags --prune --quiet || true
+          latest="$(git tag --list 'v[0-9]*' --sort=-version:refname | head -n 1)"
+          if [ -z "$latest" ]; then echo "No version tags found" >&2; exit 1; fi
+          echo "version=${latest#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke-test every published package
+        run: bash bin/smoke-published-packages.sh "${{ steps.tag.outputs.version }}"
+
   build-phar-files:
     needs: release-composer-packages
     runs-on: ubuntu-latest

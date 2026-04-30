@@ -20,11 +20,9 @@
         "classmap": [
             "./"
         ],
-        "files": [
-            "html5-named-character-references.php"
-        ],
         "exclude-from-classmap": [
-            "/Tests/"
+            "/Tests/",
+            "/html5-named-character-references.php"
         ]
     },
     "require-dev": {
