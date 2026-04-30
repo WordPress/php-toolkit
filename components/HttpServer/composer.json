@@ -20,9 +20,9 @@
         "wp-php-toolkit/http-client": "^0.8"
     },
     "autoload": {
-        "psr-4": {
-            "WordPress\\HttpServer\\": ""
-        },
+        "classmap": [
+            "./"
+        ],
         "exclude-from-classmap": [
             "/Tests/"
         ]

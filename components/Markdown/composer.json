@@ -20,11 +20,9 @@
     },
     "autoload": {
         "classmap": [
+            "./",
             "vendor-patched"
         ],
-        "psr-4": {
-            "WordPress\\Markdown\\": ""
-        },
         "exclude-from-classmap": [
             "/Tests/"
         ]

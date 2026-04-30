@@ -18,9 +18,9 @@
         "wp-php-toolkit/bytestream": "^0.8"
     },
     "autoload": {
-        "psr-4": {
-            "WordPress\\Filesystem\\": ""
-        },
+        "classmap": [
+            "./"
+        ],
         "files": [
             "functions.php"
         ],
