@@ -5,13 +5,6 @@
 
  // phpcs:disable
 
-if (
-	! isset( $html5_named_character_references ) &&
-	file_exists( __DIR__ . '/../HTML/html5-named-character-references.php' )
-) {
-	require_once __DIR__ . '/../HTML/html5-named-character-references.php';
-}
-
 if ( ! class_exists( 'WP_Error' ) ) {
 	class WP_Error {
 		public $code;
@@ -27,12 +20,6 @@ if ( ! class_exists( 'WP_Error' ) ) {
 			$this->data = $data;
 		}
 	}
-}
-
-if ( ! class_exists( 'WP_Block_Parser' ) ) {
-	require_once __DIR__ . '/../BlockParser/class-wp-block-parser-block.php';
-	require_once __DIR__ . '/../BlockParser/class-wp-block-parser-frame.php';
-	require_once __DIR__ . '/../BlockParser/class-wp-block-parser.php';
 }
 
 if ( ! function_exists( '_doing_it_wrong' ) ) {
