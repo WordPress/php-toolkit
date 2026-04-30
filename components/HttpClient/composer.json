@@ -20,9 +20,9 @@
         "wp-php-toolkit/filesystem": "^0.8"
     },
     "autoload": {
-        "psr-4": {
-            "WordPress\\HttpClient\\": ""
-        },
+        "classmap": [
+            "./"
+        ],
         "exclude-from-classmap": [
             "/Tests/"
         ]
