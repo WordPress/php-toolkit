@@ -5,13 +5,6 @@
 
  // phpcs:disable
 
-// $html5_named_character_references and the WP_Block_Parser_* classes are
-// provided by wp-php-toolkit/html and wp-php-toolkit/blockparser via
-// Composer (HTML loads its char-references file through autoload.files;
-// BlockParser is autoloaded by classmap on first use). The previous inline
-// require_once calls used monorepo-relative paths (../HTML, ../BlockParser)
-// that broke once each component was split into its own Packagist package.
-
 if ( ! class_exists( 'WP_Error' ) ) {
 	class WP_Error {
 		public $code;
