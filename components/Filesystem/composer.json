@@ -15,7 +15,7 @@
     ],
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/bytestream": "^0.7.2"
+        "wp-php-toolkit/bytestream": "^0.8"
     },
     "autoload": {
         "classmap": [
