@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Encoding — PHP Toolkit reference</title>
+<meta name="description" content="UTF-8 validation and scrubbing with a pure-PHP fallback when mbstring is unavailable. Detects malformed bytes and replaces them per the Unicode maximal-subpart algorithm.">
+<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../learn/">Learn</a>
+		<a href="./">Reference</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+
+<div class="layout">
+	<aside class="sidebar" aria-label="Reference navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<nav class="toc" aria-label="Table of contents"></nav>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="html.html">HTML</a></li>
+			<li><a href="zip.html">Zip</a></li>
+			<li><a href="bytestream.html">ByteStream</a></li>
+			<li><a href="filesystem.html">Filesystem</a></li>
+			<li><a href="blockparser.html">BlockParser</a></li>
+			<li><a href="markdown.html">Markdown</a></li>
+			<li><a href="xml.html">XML</a></li>
+			<li class="current"><a href="encoding.html">Encoding</a></li>
+			<li><a href="dataliberation.html">DataLiberation</a></li>
+			<li><a href="git.html">Git</a></li>
+			<li><a href="merge.html">Merge</a></li>
+			<li><a href="httpclient.html">HttpClient</a></li>
+			<li><a href="httpserver.html">HttpServer</a></li>
+			<li><a href="corsproxy.html">CORSProxy</a></li>
+			<li><a href="cli.html">CLI</a></li>
+			<li><a href="polyfill.html">Polyfill</a></li>
+			<li><a href="blueprints.html">Blueprints</a></li>
+			<li><a href="coding-standards.html">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+	</aside>
+	<article class="content">
+
+<h1>Encoding</h1>
+
+<p class="lede">UTF-8 validation and scrubbing with a pure-PHP fallback when <code>mbstring</code> is unavailable. Detects malformed bytes and replaces them per the Unicode maximal-subpart algorithm.</p>
+
+<pre><code class="install">composer require wp-php-toolkit/encoding</code></pre>
+
+<p>Every parser in this toolkit eventually has to decide what to do with text bytes. XML rejects malformed UTF-8. JSON and databases can fail late. CSS, HTML, WXR, and Blueprint validation all need consistent answers about whether a string is well-formed Unicode.</p><p>The Encoding component provides the small UTF-8 primitives the rest of the toolkit can share: validate bytes, scrub invalid sequences, scan code points, and detect Unicode noncharacters. When <code>mbstring</code> is available it can delegate to it; when it is not, the component uses its own byte scanner so behavior stays available in restricted PHP environments.</p><p>Historically, this became the common foundation for Blueprint validation and CSS/XML processing, replacing ad hoc Unicode helpers with the WordPress core UTF-8 routines used here.</p>
+
+<h2 id="a-minimal-example">A minimal example</h2>
+
+<p><code>wp_is_valid_utf8()</code> rejects overlong sequences, surrogate halves, and stray ISO-8859-1 bytes. Use it as a guard in front of any code path that assumes UTF-8 (database, JSON, XML).</p>
+
+<php-snippet blueprint="toolkit-setup" name="validate.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use function WordPress\Encoding\wp_is_valid_utf8;
+
+$samples = array(
+	'ASCII'          => 'just a test',
+	'UTF-8 pencil'   => "\xE2\x9C\x8F",
+	'latin-1 byte'   => "B\xFCch",
+	'overlong slash' => "\xC1\xBF",
+	'surrogate half' => "\xED\xB0\x80",
+);
+
+foreach ( $samples as $label => $bytes ) {
+	echo sprintf( "%-14s %s\n", $label . ':', wp_is_valid_utf8( $bytes ) ? 'valid' : 'invalid' );
+}
+</script>
+<script type="text/expected-output">
+ASCII:         valid
+UTF-8 pencil:  valid
+latin-1 byte:  invalid
+overlong slash: invalid
+surrogate half: invalid
+</script>
+</php-snippet>
+
+<h2 id="refinement-scrubbing-invalid-bytes-with-ufffd">Refinement: scrubbing invalid bytes with U+FFFD</h2>
+
+<p>Replace each ill-formed sequence with the Unicode replacement character. Useful right before serializing to XML, JSON, or sending to an LLM that will choke on broken bytes.</p>
+
+<php-snippet blueprint="toolkit-setup" name="scrub.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use function WordPress\Encoding\wp_scrub_utf8;
+
+$broken = "the byte \xC0 should not be here.";
+echo wp_scrub_utf8( $broken ) . "\n";
+
+echo wp_scrub_utf8( ".\xE2\x8C\xE2\x8C." ) . "\n";
+</script>
+<script type="text/expected-output">
+the byte � should not be here.
+.��.
+</script>
+</php-snippet>
+
+<h2 id="refinement-detecting-noncharacters-mysqlutf8mb4-will-reject">Refinement: detecting noncharacters MySQL/utf8mb4 will reject</h2>
+
+<p>Code points like U+FFFE, U+FFFF, and the U+FDD0–U+FDEF block are valid Unicode but forbidden in XML and rejected by some databases. Check before inserting user-submitted content into a strict <code>utf8mb4</code> column.</p>
+
+<php-snippet blueprint="toolkit-setup" name="noncharacters.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use function WordPress\Encoding\wp_has_noncharacters;
+
+$samples = array(
+	'normal text' => 'normal text',
+	'U+FFFE'      => "oops \u{FFFE}",
+	'U+FDD0'      => "hi \u{FDD0} bye",
+);
+
+foreach ( $samples as $label => $text ) {
+	echo sprintf( "%-12s %s\n", $label . ':', wp_has_noncharacters( $text ) ? 'reject' : 'ok' );
+}
+</script>
+<script type="text/expected-output">
+normal text: ok
+U+FFFE:      reject
+U+FDD0:      reject
+</script>
+</php-snippet>
+
+<h2 id="refinement-three-way-pipeline-validate-scrub-then-check-noncharacters">Refinement: three-way pipeline: validate, scrub, then check noncharacters</h2>
+
+<p>Real-world inputs are messy: an old WXR export, a CSV with mixed encodings, a paste from Word. Combination of validate + scrub + noncharacter-check covers the three classes of breakage that bite later.</p>
+
+<php-snippet blueprint="toolkit-setup" name="pipeline.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use function WordPress\Encoding\wp_is_valid_utf8;
+use function WordPress\Encoding\wp_scrub_utf8;
+use function WordPress\Encoding\wp_has_noncharacters;
+
+$inputs = array(
+	'good'      => 'Café',
+	'latin1'    => "caf\xE9",
+	'overlong'  => "x\xC1\xBFy",
+	'noncharac' => "hi \u{FFFE} there",
+);
+
+foreach ( $inputs as $label => $bytes ) {
+	$valid    = wp_is_valid_utf8( $bytes );
+	$cleaned  = wp_scrub_utf8( $bytes );
+	$weird    = wp_has_noncharacters( $cleaned );
+	echo sprintf( "%-10s valid=%s noncharacter=%s -> %s\n", $label, $valid ? 'Y' : 'N', $weird ? 'Y' : 'N', $cleaned );
+}
+</script>
+<script type="text/expected-output">
+good       valid=Y noncharacter=N -> Café
+latin1     valid=N noncharacter=N -> caf�
+overlong   valid=N noncharacter=N -> x��y
+noncharac  valid=Y noncharacter=Y -> hi ￾ there
+</script>
+</php-snippet>
+
+<h2 id="refinement-salvaging-a-legacy-iso-8859-1-column-inside-a-utf-8-corpus">Refinement: salvaging a legacy ISO-8859-1 column inside a UTF-8 corpus</h2>
+
+<p>Old WordPress databases sometimes mix encodings: most rows are UTF-8 but a few were stored as latin-1. Detect the bad rows with <code>wp_is_valid_utf8()</code> and only re-encode those.</p>
+
+<php-snippet blueprint="toolkit-setup" name="mixed-encoding.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use function WordPress\Encoding\wp_is_valid_utf8;
+use function WordPress\Encoding\wp_scrub_utf8;
+
+$rows = array(
+	1 => 'Plain ASCII',
+	2 => 'Café',
+	3 => "caf\xE9",
+	4 => "weird \xC0 byte",
+);
+
+foreach ( $rows as $id => $value ) {
+	if ( wp_is_valid_utf8( $value ) ) {
+		echo "#$id ok: $value\n";
+		continue;
+	}
+	$converted = @iconv( 'ISO-8859-1', 'UTF-8', $value );
+	if ( false !== $converted && wp_is_valid_utf8( $converted ) ) {
+		echo "#$id recovered as latin1: $converted\n";
+	} else {
+		echo "#$id unrecoverable, scrubbing: " . wp_scrub_utf8( $value ) . "\n";
+	}
+}
+</script>
+<script type="text/expected-output">
+#1 ok: Plain ASCII
+#2 ok: Café
+#3 recovered as latin1: café
+#4 recovered as latin1: weird À byte
+</script>
+</php-snippet>
+
+<h2 id="see-also">See also</h2>
+
+<ul class="related-components">
+	<li><a href="html.html"><strong>HTML</strong></a><span>Normalize incoming text before HTML tokenization.</span></li>
+	<li><a href="xml.html"><strong>XML</strong></a><span>Keep invalid bytes out of XML streams.</span></li>
+	<li><a href="dataliberation.html"><strong>DataLiberation</strong></a><span>Clean content before importing it into WordPress.</span></li>
+</ul>
+
+	</article>
+</div>
+
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a>
+</footer>
+</body>
+</html>

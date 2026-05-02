@@ -85,19 +85,19 @@ use function WordPress\Encoding\utf8_ord;
  * | Find any tag.                                            | `$processor->next_tag();`                                |
  * | Find next image tag.                                     | `$processor->next_tag( array( 'tag_name' => 'image' ) );`|
  * | Find next image tag (shorthand).                         | `$processor->next_tag( 'image' );`                       |
- * | Find next image tag in the "wp.org" namespace.           | `$processor->next_tag( array( 'wp.org', 'image' ) );`    |
+ * | Find next image tag in the "wp.org" namespace name.      | `$processor->next_tag( array( 'wp.org', 'image' ) );`    |
  *
  * #### Namespace Examples
  *
- * To work with namespaces, you can use the `breadcrumbs` query format, where each breadcrumb is a tuple of (namespace prefix, local name):
+ * To work with namespaces, pass a tuple of (namespace name, local name):
  *
- *     $xml = '<root xmlns:wp="http://wordpress.org/export/1.2/"><wp:image src="cat.jpg" /></root>';
+ *     $xml = '<root xmlns:wp="http://wordpress.org/export/1.2/"><wp:image wp:src="cat.jpg" /></root>';
  *     $processor = XMLProcessor::create_from_string( $xml );
  *     // Find the <wp:image> tag
  *     if ( $processor->next_tag( array( 'http://wordpress.org/export/1.2/', 'image' ) ) ) {
- *         // Get the namespace URI of the matched tag
+ *         // Get the namespace name of the matched tag
  *         $ns = $processor->get_tag_namespace(); // 'http://wordpress.org/export/1.2/'
- *         // Get the value of the 'src' attribute
+ *         // Get the value of the wp:src attribute
  *         $src = $processor->get_attribute( $ns, 'src' );
  *         // Set a new attribute in the same namespace
  *         $processor->set_attribute( $ns, 'alt', 'A cat' );
@@ -315,9 +315,10 @@ use function WordPress\Encoding\utf8_ord;
  *
  * ### Namespaces
  *
- * Namespaces are first-class citizens in the XMLProcessor. Methods such as `set_attribute()` and `remove_attribute()`
- * require the full namespace URI, not just the local name. The XML specification treats the local
- * name as a mere syntax sugar. The actual matching is always done on the fully qualified namespace name.
+ * Namespaces are first-class citizens in the XMLProcessor. Namespace-aware methods such as
+ * `set_attribute()` and `remove_attribute()` require the expanded namespace name from the
+ * matching `xmlns` declaration, not the prefix written in the tag.
+ * The actual matching is done on the expanded namespace name plus the local name.
  *
  * Example:
  *

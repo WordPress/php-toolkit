@@ -1,218 +1,137 @@
 # BlockParser
 
-A standalone extraction of WordPress core's block parser. It takes a document containing WordPress block markup (`<!-- wp:name -->...<!-- /wp:name -->`) and returns a structured array of parsed blocks with their attributes, inner HTML, inner blocks, and content interleaving. This is the same parser that powers `parse_blocks()` in WordPress core, packaged as an independent library with no WordPress dependency.
+## Why this exists
 
-## Installation
+WordPress stores post content as annotated HTML. Instead of inventing a separate file format, it embeds block boundaries directly inside HTML comments:
 
-```
-composer require wp-php-toolkit/blockparser
-```
-
-## Quick Start
-
-```php
-$document = <<<HTML
-<!-- wp:heading {"level":2} -->
-<h2>Welcome</h2>
-<!-- /wp:heading -->
-
+```html
 <!-- wp:paragraph -->
-<p>Hello from the block editor.</p>
+<p>Hello, world.</p>
 <!-- /wp:paragraph -->
-HTML;
 
-$parser = new WP_Block_Parser();
-$blocks = $parser->parse( $document );
-
-foreach ( $blocks as $block ) {
-    if ( 'core/heading' === $block['blockName'] ) {
-        echo 'Found heading: ' . strip_tags( $block['innerHTML'] );
-        // "Found heading: Welcome"
-    }
-}
+<!-- wp:image {"align":"center","sizeSlug":"large"} -->
+<figure class="wp-block-image aligncenter"><img src="photo.jpg" /></figure>
+<!-- /wp:image -->
 ```
+
+Every WordPress editor, REST API response, and block renderer needs to turn that serialized markup into a structured tree. WordPress core ships `WP_Block_Parser` to do exactly that — but it's buried inside WordPress itself, tied to the full WordPress load. This component extracts it so you can parse block markup anywhere: CLI tools, build scripts, data-migration pipelines, standalone PHP apps — without booting WordPress.
+
+## How it works
+
+The parser is a single-pass, stack-based scanner. It moves forward through the document looking for HTML comments that follow the block annotation pattern. When it finds an opening comment like `<!-- wp:image {"align":"center"} -->`, it:
+
+1. Decodes the JSON attributes from the comment body.
+2. Pushes a frame onto a stack, recording the block name, attributes, and the byte offset where the block started.
+3. Keeps scanning, collecting the raw HTML between the opening and closing comments as `innerHTML`.
+4. If it encounters another `<!-- wp:... -->` before the closing comment, it recurses — pushing a new frame for the inner block.
+5. When it finds a closing comment (`<!-- /wp:image -->`), it pops the frame, attaches any collected inner blocks, and appends the completed block to its parent.
+
+Freeform content between blocks — plain HTML with no block annotations — becomes a "classic block" with `blockName` set to `null`.
+
+The `innerContent` array is the most subtle part of the output. It interleaves child block positions with raw HTML chunks, letting renderers reconstruct the exact original layout. This is how the columns block describes which raw HTML wraps each inner column.
 
 ## Usage
 
-### Parsing a Document
-
-Call `parse()` with any string containing block markup. It returns an array of block arrays, each with the following keys:
+### Parse a post's block content
 
 ```php
-$parser = new WP_Block_Parser();
-$blocks = $parser->parse( $document );
-
-// Each element in $blocks is an array:
-// array(
-//     'blockName'    => 'core/paragraph',   // Fully-qualified block name, or null for freeform HTML.
-//     'attrs'        => array(),             // Attributes from the block comment delimiter.
-//     'innerBlocks'  => array(),             // Nested blocks (same structure, recursive).
-//     'innerHTML'    => '<p>Text</p>',       // The HTML inside the block, with inner blocks removed.
-//     'innerContent' => array( '<p>Text</p>' ), // Interleaved HTML strings and null markers for inner block positions.
-// )
-```
-
-### Block Types
-
-The parser recognizes three kinds of block tokens:
-
-**Standard blocks** have an opener and closer:
-
-```php
-$blocks = ( new WP_Block_Parser() )->parse(
-    '<!-- wp:paragraph --><p>Hello</p><!-- /wp:paragraph -->'
-);
-// $blocks[0]['blockName'] === 'core/paragraph'
-// $blocks[0]['innerHTML'] === '<p>Hello</p>'
-```
-
-**Self-closing (void) blocks** end with `/-→`:
-
-```php
-$blocks = ( new WP_Block_Parser() )->parse(
-    '<!-- wp:spacer {"height":"50px"} /-->'
-);
-// $blocks[0]['blockName'] === 'core/spacer'
-// $blocks[0]['attrs']     === array( 'height' => '50px' )
-// $blocks[0]['innerHTML'] === ''
-```
-
-**Freeform HTML** is any content outside of block delimiters:
-
-```php
-$blocks = ( new WP_Block_Parser() )->parse(
-    '<p>Just some HTML, no blocks here.</p>'
-);
-// $blocks[0]['blockName'] === null
-// $blocks[0]['innerHTML'] === '<p>Just some HTML, no blocks here.</p>'
-```
-
-### Block Attributes
-
-Attributes are encoded as JSON inside the block comment delimiter. The parser decodes them into a PHP associative array:
-
-```php
-$blocks = ( new WP_Block_Parser() )->parse(
-    '<!-- wp:image {"id":123,"sizeSlug":"large","linkDestination":"none"} -->' .
-    '<figure class="wp-block-image size-large"><img src="photo.jpg" class="wp-image-123"/></figure>' .
-    '<!-- /wp:image -->'
-);
-
-$attrs = $blocks[0]['attrs'];
-// array(
-//     'id'              => 123,
-//     'sizeSlug'        => 'large',
-//     'linkDestination' => 'none',
-// )
-```
-
-### Nested Blocks
-
-Blocks can contain other blocks. Inner blocks appear in the `innerBlocks` array, and `innerContent` interleaves the HTML fragments with `null` markers showing where each inner block was located:
-
-```php
-$document = <<<HTML
-<!-- wp:columns -->
-<div class="wp-block-columns">
-<!-- wp:column -->
-<div class="wp-block-column">
-<!-- wp:paragraph -->
-<p>Left column</p>
-<!-- /wp:paragraph -->
-</div>
-<!-- /wp:column -->
-<!-- wp:column -->
-<div class="wp-block-column">
-<!-- wp:paragraph -->
-<p>Right column</p>
-<!-- /wp:paragraph -->
-</div>
-<!-- /wp:column -->
-</div>
-<!-- /wp:columns -->
-HTML;
+use WordPress\BlockParser\WP_Block_Parser;
 
 $parser = new WP_Block_Parser();
-$blocks = $parser->parse( $document );
+$blocks = $parser->parse( $post_content );
 
-$columns = $blocks[0];
-// $columns['blockName']   === 'core/columns'
-// count( $columns['innerBlocks'] ) === 2
-
-$left_column = $columns['innerBlocks'][0];
-// $left_column['blockName'] === 'core/column'
-// $left_column['innerBlocks'][0]['blockName'] === 'core/paragraph'
-
-// innerContent shows the interleaving of HTML and inner block positions:
-// array(
-//     '<div class="wp-block-columns">\n',  // HTML before first inner block
-//     null,                                 // Position of first inner block (core/column)
-//     '\n',                                 // HTML between inner blocks
-//     null,                                 // Position of second inner block (core/column)
-//     '\n</div>\n',                         // HTML after last inner block
-// )
+foreach ( $blocks as $block ) {
+    echo $block['blockName'];   // e.g. "core/paragraph"
+    echo $block['innerHTML'];   // the raw HTML inside the block
+    // $block['attrs']          — decoded JSON attributes
+    // $block['innerBlocks']    — nested blocks (same structure, recursive)
+    // $block['innerContent']   — interleaved HTML chunks + child-block slots
+}
 ```
 
-### Namespaced Blocks
+### Inspect block attributes
 
-The parser handles both core blocks (`wp:paragraph`) and namespaced third-party blocks (`wp:my-plugin/custom-block`). Block names without an explicit namespace are prefixed with `core/`:
+Attributes are encoded as JSON in the opening comment and decoded automatically:
 
 ```php
-$blocks = ( new WP_Block_Parser() )->parse(
-    '<!-- wp:my-plugin/testimonial {"author":"Jane"} -->' .
-    '<blockquote>Great product!</blockquote>' .
-    '<!-- /wp:my-plugin/testimonial -->'
-);
-// $blocks[0]['blockName'] === 'my-plugin/testimonial'
-// $blocks[0]['attrs']     === array( 'author' => 'Jane' )
+$markup = '<!-- wp:image {"sizeSlug":"large","linkDestination":"none"} -->'
+        . '<figure>...</figure>'
+        . '<!-- /wp:image -->';
+
+$blocks = $parser->parse( $markup );
+echo $blocks[0]['attrs']['sizeSlug'];  // "large"
 ```
 
-### Error Recovery
+### Walk a nested block tree
 
-The parser is designed to never fail. When it encounters malformed markup such as missing closers or mismatched block names, it produces a best-effort parse rather than returning an error:
+Blocks can contain other blocks. The `innerBlocks` key holds them recursively:
 
 ```php
-// Missing closer -- the parser treats it as implicitly closed.
-$blocks = ( new WP_Block_Parser() )->parse(
-    '<!-- wp:paragraph --><p>No closer here'
-);
-// $blocks[0]['blockName'] === 'core/paragraph'
-// $blocks[0]['innerHTML'] === '<p>No closer here'
+function walk( array $blocks, int $depth = 0 ): void {
+    foreach ( $blocks as $block ) {
+        if ( $block['blockName'] === null ) {
+            continue; // skip freeform HTML between blocks
+        }
+        echo str_repeat( '  ', $depth ) . $block['blockName'] . "\n";
+        walk( $block['innerBlocks'], $depth + 1 );
+    }
+}
+
+walk( $parser->parse( $post_content ) );
+// core/columns
+//   core/column
+//     core/paragraph
+//   core/column
+//     core/image
 ```
 
-## API Reference
+### Reconstruct output using innerContent
 
-### WP_Block_Parser
+The `innerContent` array lets you rebuild the original markup while swapping in rendered child blocks:
 
-| Method | Description |
-|--------|-------------|
-| `parse( $document )` | Parse block markup and return an array of block structures |
+```php
+function render_block( array $block ): string {
+    $output      = '';
+    $child_index = 0;
 
-### Block Structure (array keys)
+    foreach ( $block['innerContent'] as $chunk ) {
+        if ( is_string( $chunk ) ) {
+            $output .= $chunk;
+        } else {
+            // null = "insert rendered child block here"
+            $output .= render_block( $block['innerBlocks'][ $child_index++ ] );
+        }
+    }
+
+    return $output;
+}
+```
+
+### Find all blocks of a specific type
+
+```php
+function find_blocks( array $blocks, string $name ): array {
+    $found = array();
+    foreach ( $blocks as $block ) {
+        if ( $block['blockName'] === $name ) {
+            $found[] = $block;
+        }
+        $found = array_merge( $found, find_blocks( $block['innerBlocks'], $name ) );
+    }
+    return $found;
+}
+
+$images = find_blocks( $parser->parse( $post_content ), 'core/image' );
+```
+
+## Block structure reference
+
+Each parsed block is an associative array:
 
 | Key | Type | Description |
 |-----|------|-------------|
-| `blockName` | `string\|null` | Fully-qualified name (e.g. `core/paragraph`), or `null` for freeform HTML |
-| `attrs` | `array` | Block attributes decoded from the JSON in the comment delimiter |
-| `innerBlocks` | `array` | Nested blocks, same structure recursively |
-| `innerHTML` | `string` | HTML content with inner blocks stripped out |
-| `innerContent` | `array` | Interleaved HTML strings and `null` markers for inner block positions |
-
-### WP_Block_Parser_Block
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `$blockName` | `string\|null` | Block name |
-| `$attrs` | `array\|null` | Block attributes |
-| `$innerBlocks` | `array` | Nested block instances |
-| `$innerHTML` | `string` | Inner HTML content |
-| `$innerContent` | `array` | Interleaved content with `null` placeholders |
-
-## Attribution
-
-This component is extracted from [WordPress core](https://github.com/WordPress/wordpress-develop). The `WP_Block_Parser`, `WP_Block_Parser_Block`, and `WP_Block_Parser_Frame` classes are maintained as part of the WordPress block editor infrastructure. Licensed under GPL v2.
-
-## Requirements
-
-- PHP 7.2+
-- No external dependencies
+| `blockName` | `string\|null` | Namespaced block name, e.g. `"core/paragraph"`. `null` for classic/freeform content between blocks. |
+| `attrs` | `array` | Decoded JSON attributes from the opening comment. Empty array if none. |
+| `innerBlocks` | `array` | Recursively parsed child blocks in order of appearance. |
+| `innerHTML` | `string` | The full raw HTML between the opening and closing comments, including inner block markup verbatim. |
+| `innerContent` | `array` | Interleaved array: strings are raw HTML chunks, `null` values mark positions where a child block from `innerBlocks` should be inserted. |

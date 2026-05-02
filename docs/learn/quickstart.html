@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quickstart — PHP Toolkit</title>
+<meta name="description" content="Five minutes from zero to a runnable HTML rewrite using PHP Toolkit's HTML component.">
+<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="./">Learn</a>
+		<a href="../reference/">Reference</a>
+		<a class="github" href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+
+<div class="layout">
+
+<aside class="sidebar" aria-label="Tutorial navigation">
+	<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<details class="components-nav" open>
+		<summary>The path</summary>
+		<ol>
+			<li class="current"><a href="quickstart.html">Quickstart</a></li>
+			<li><a href="01-rewriting-html.html">1. Rewriting HTML</a></li>
+			<li><a href="02-streaming-archives.html">2. Streaming archives</a></li>
+			<li><a href="03-importing-content.html">3. Markdown to WXR</a></li>
+			<li><a href="04-talking-to-the-network.html">4. Talking to the network</a></li>
+			<li><a href="recap.html">Recap</a></li>
+		</ol>
+	</details>
+</aside>
+
+<article class="content">
+
+<h1>Quickstart</h1>
+
+<p class="lede">By the end of this page you will have rewritten an HTML attribute in five lines of PHP, in a runtime that lives inside this browser tab. You'll see the shape every chapter of the tutorial follows: a problem in plain English, a small chunk of code, and a paragraph that points at what to look at.</p>
+
+<h2 id="install">Install</h2>
+
+<p>You don't need to install anything to follow the tutorial — the snippets on this site run in your browser. If you want to run the same code in your own project later, this is the line you'll copy:</p>
+
+<pre><code>composer require wp-php-toolkit/html</code></pre>
+
+<p>Each component installs separately; you only pull in what you use. The HTML component depends on nothing except PHP itself.</p>
+
+<h2 id="rewrite">Rewrite an attribute</h2>
+
+<p>Here's the smallest useful thing the toolkit does. The example feeds a snippet of HTML into <code>WP_HTML_Tag_Processor</code>, finds every <code>&lt;img&gt;</code> tag, and adds <code>loading="lazy"</code> if the author didn't already set <code>loading</code> themselves.</p>
+
+<p>Click <em>Run</em>. The first run on this page boots a PHP runtime in WebAssembly and unzips the toolkit into it; later runs reuse the same runtime, so they're instant.</p>
+
+<php-snippet blueprint="toolkit-setup" name="quickstart.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+$html = '<article>
+	<img src="hero.jpg" alt="Hero shot">
+	<p>Welcome to the site.</p>
+	<img src="diagram.png" alt="" loading="eager">
+</article>';
+
+$tags = new WP_HTML_Tag_Processor( $html );
+while ( $tags->next_tag( 'img' ) ) {
+	if ( null === $tags->get_attribute( 'loading' ) ) {
+		$tags->set_attribute( 'loading', 'lazy' );
+	}
+}
+
+echo $tags->get_updated_html();
+</script>
+<script type="text/expected-output">
+<article>
+	<img src="hero.jpg" alt="Hero shot" loading="lazy">
+	<p>Welcome to the site.</p>
+	<img src="diagram.png" alt="" loading="eager">
+</article>
+</script>
+</php-snippet>
+
+<p>Look at the output. The first <code>&lt;img&gt;</code> gained <code>loading="lazy"</code>. The second one — which had <code>loading="eager"</code> already — was left alone. The whitespace, the <code>&lt;p&gt;</code> tag, the <code>&lt;article&gt;</code> wrapper, every byte we didn't ask the processor to touch came through unchanged. That property is the entire reason this component exists: rewriting HTML byte-for-byte without re-serializing it.</p>
+
+<aside class="callout try">
+	<strong>Try this:</strong> change <code>'lazy'</code> to <code>'eager'</code>, click <em>Run</em>, and see that only the first image flips. Then add a third <code>&lt;img&gt;</code> tag inside the <code>&lt;p&gt;</code> and run again — the processor finds it without you touching the loop.
+</aside>
+
+<h2 id="why-cursor">Why a cursor, not a DOM</h2>
+
+<p>The traditional PHP move here is <code>DOMDocument::loadHTML</code>. That works, but loading 50 KB of post content into a libxml DOM, mutating it, and serializing it back gives you a string that's <em>nearly</em> the same as the input — different whitespace, normalized attribute quoting, occasionally a self-closing tag where there wasn't one before. For email templates and feed readers that compare strings byte-for-byte, that's a bug.</p>
+
+<p>The Tag Processor walks the HTML linearly, records edits as a small list of byte-range replacements, and applies them only when you call <code>get_updated_html()</code>. The HTML you didn't edit comes through bit-identical. The HTML you edited contains exactly your edits, and nothing else.</p>
+
+<p>That model — small, linear, byte-honest — is the toolkit's whole sensibility. Every other component that follows uses some version of it.</p>
+
+<h2 id="recap">Recap</h2>
+
+<p>You can now:</p>
+
+<ul>
+	<li>Run a PHP Toolkit snippet in the browser without installing anything.</li>
+	<li>Read an HTML string with <code>WP_HTML_Tag_Processor</code> and walk every tag of a given name.</li>
+	<li>Add or replace an attribute with <code>set_attribute()</code> and read the modified HTML with <code>get_updated_html()</code>.</li>
+</ul>
+
+<p>That's the whole shape of the tutorial. Each chapter takes one component, shows you the smallest useful thing it does, and folds the result into a content importer that grows page by page.</p>
+
+<nav class="chapter-nav">
+	<a class="next" href="01-rewriting-html.html">Next: Chapter 1 — Rewriting HTML safely →</a>
+</nav>
+
+<p class="next-preview">In chapter 1 you'll meet the canonical importer's first input — a folder of Markdown posts whose embedded HTML needs cleaning before it ever sees a WordPress database. We'll add lazy loading, rewrite relative URLs, and strip event handlers in a single linear pass.</p>
+
+</article>
+</div>
+
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a>
+</footer>
+</body>
+</html>

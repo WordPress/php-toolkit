@@ -4,7 +4,7 @@
 //   1. Fills the shared <script id="toolkit-setup"> blueprint with a runtime-resolved
 //      absolute URL to docs/assets/php-toolkit.zip (must be absolute since the
 //      Playground iframe is cross-origin).
-//   2. Builds a sticky table of contents from <h2> headings inside .content.
+//   2. Builds a sticky table of contents from <h2>/<h3> headings inside .content.
 //   3. Patches each <php-snippet>'s shadow DOM to make the rendered code editable
 //      and to reflect the user's edits back into the runner. This is a stopgap
 //      until <php-snippet> ships an `editable` attribute.
@@ -33,7 +33,7 @@
 		const content = document.querySelector('.content');
 		if (!container || !content) return;
 
-		const headings = content.querySelectorAll('h2[id], h2');
+		const headings = content.querySelectorAll('h2[id], h2, h3[id], h3');
 		if (!headings.length) {
 			container.remove();
 			return;
@@ -50,6 +50,7 @@
 					.replace(/\s+/g, '-');
 			}
 			const li = document.createElement('li');
+			li.className = 'toc-depth-' + h.tagName.substring(1);
 			const a = document.createElement('a');
 			a.href = '#' + h.id;
 			a.textContent = h.textContent;
@@ -102,6 +103,17 @@
 		}
 		const code = root.querySelector('pre code');
 		if (!code) return;
+
+		if (el.getAttribute('runnable') === 'false') {
+			root.querySelectorAll('button').forEach(function (button) {
+				if (/run/i.test(button.textContent || button.getAttribute('aria-label') || '')) {
+					button.style.display = 'none';
+				}
+			});
+			el.setAttribute('data-static-snippet', '');
+			el._editablePatched = true;
+			return;
+		}
 
 		code.setAttribute('contenteditable', 'plaintext-only');
 		code.setAttribute('spellcheck', 'false');
