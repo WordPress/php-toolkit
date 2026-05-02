@@ -2,6 +2,14 @@
 slug: markdown
 title: Markdown
 install: wp-php-toolkit/markdown
+
+credit_title: Built on league/commonmark
+credit_body: |
+  Markdown parsing is delegated to <a href="https://commonmark.thephpleague.com/"><code>league/commonmark</code></a>; YAML frontmatter is handled by <a href="https://github.com/webuni/front-matter"><code>webuni/front-matter</code></a>. The toolkit's own work is the bridge between CommonMark's AST and <a href="https://developer.wordpress.org/block-editor/reference-guides/block-api/">WordPress block markup</a>, in both directions.
+
+see_also: blockparser | BlockParser | Understand the block tree created from Markdown output.
+see_also: html | HTML | Rewrite rendered HTML fragments without using DOMDocument.
+see_also: dataliberation | DataLiberation | Turn Markdown folders into import/export streams.
 ---
 
 Bidirectional converter between Markdown and WordPress block markup. Useful for moving content between Markdown files and WordPress while preserving the structures both formats can express.
@@ -30,6 +38,17 @@ $result = ( new MarkdownConsumer( "# Hello\n\nWelcome to **WordPress**." ) )->co
 echo $result->get_block_markup();
 ```
 
+<!-- expected-output -->
+```
+<!-- wp:heading {"level":1} -->
+<h1 class="wp-block-heading" id="hello">Hello</h1>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Welcome to <b>WordPress</b>.</p>
+<!-- /wp:paragraph -->
+```
+
 ## Round-trip: blocks back to Markdown
 
 <p>Pair <code>MarkdownProducer</code> with <code>MarkdownConsumer</code> to convert in either direction. Round-tripping is lossy for block attributes that have no Markdown representation (custom classes, alignment), so do not expect byte-perfect equality.</p>
@@ -50,6 +69,15 @@ $blocks   = ( new MarkdownConsumer( $md ) )->consume();
 $markdown = ( new MarkdownProducer( $blocks ) )->produce();
 
 echo $markdown;
+```
+
+<!-- expected-output -->
+```
+## Round trip
+
+- one
+- two
+- three
 ```
 
 ## Reading YAML frontmatter as post meta
@@ -85,6 +113,13 @@ $metadata = $consumer->get_all_metadata();
 echo 'Tags: ' . implode( ', ', $metadata['tags'][0] ) . "\n";
 ```
 
+<!-- expected-output -->
+```
+Title: The Name of the Wind
+Status: publish
+Tags: fantasy, kingkiller
+```
+
 ## Migrating an Obsidian or Hugo folder of Markdown
 
 <p>Walk a directory of <code>.md</code> files (Obsidian vault, Hugo <code>content/</code>, Jekyll <code>_posts</code>) and emit one block-markup record per file.</p>
@@ -111,6 +146,23 @@ foreach ( glob( '/tmp/vault/*.md' ) as $path ) {
 	echo "=== $title ($path) ===\n";
 	echo substr( $consumer->get_block_markup(), 0, 120 ) . "...\n\n";
 }
+```
+
+<!-- expected-output -->
+```
+=== roadmap (/tmp/<tempfile>/roadmap.md) ===
+<!-- wp:heading {"level":1} -->
+<h1 class="wp-block-heading" id="roadmap">Roadmap</h1>
+<!-- /wp:heading -->
+
+<!-- wp:lis...
+
+=== Welcome (/tmp/<tempfile>/welcome.md) ===
+<!-- wp:paragraph -->
+<p>Hello world.</p>
+<!-- /wp:paragraph -->
+
+...
 ```
 
 ## Counting blocks produced by a Markdown document
@@ -161,3 +213,12 @@ foreach ( $counts as $name => $count ) {
 	echo "{$name}: {$count}\n";
 }
 ````
+
+<!-- expected-output -->
+```
+core/heading: 1
+core/paragraph: 2
+core/table: 1
+core/code: 1
+core/quote: 1
+```

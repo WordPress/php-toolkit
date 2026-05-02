@@ -2,6 +2,10 @@
 slug: blueprints
 title: Blueprints
 install: wp-php-toolkit/blueprints
+
+see_also: filesystem | Filesystem | Prepare files and fixtures before applying site setup steps.
+see_also: httpclient | HttpClient | Download packages or source data as part of provisioning workflows.
+see_also: cli | CLI | Wrap repeatable blueprint operations in a small command.
 ---
 
 Declarative WordPress site provisioning. Write a JSON description of plugins, options, and content; let the runner execute it.
@@ -39,6 +43,13 @@ $config = ( new RunnerConfiguration() )
 echo "mode: " . $config->get_execution_mode() . "\n";
 echo "root: " . $config->get_target_site_root() . "\n";
 echo "url:  " . $config->get_target_site_url() . "\n";
+```
+
+<!-- expected-output -->
+```
+mode: apply-to-existing-site
+root: /wordpress
+url:  http://playground.test/
 ```
 
 ## Generate blueprint JSON from PHP
@@ -82,6 +93,39 @@ foreach ( $plugins as $slug ) {
 }
 
 echo json_encode( $blueprint, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n";
+```
+
+<!-- expected-output -->
+```
+{
+    "version": 2,
+    "steps": [
+        {
+            "step": "setSiteOptions",
+            "options": {
+                "blogname": "Demo Site",
+                "permalink_structure": "/%postname%/",
+                "show_on_front": "page"
+            }
+        },
+        {
+            "step": "installPlugin",
+            "pluginData": "https://downloads.wordpress.org/plugin/gutenberg.zip"
+        },
+        {
+            "step": "activatePlugin",
+            "plugin": "gutenberg/gutenberg.php"
+        },
+        {
+            "step": "installPlugin",
+            "pluginData": "https://downloads.wordpress.org/plugin/classic-editor.zip"
+        },
+        {
+            "step": "activatePlugin",
+            "plugin": "classic-editor/classic-editor.php"
+        }
+    ]
+}
 ```
 
 ## Validate before running
@@ -129,6 +173,11 @@ if ( null === $error ) {
 } else {
 	echo $error->get_pretty_path() . ": " . $error->message . "\n";
 }
+```
+
+<!-- expected-output -->
+```
+Blueprint root["steps"][0]: Missing required field: step.
 ```
 
 ## The Blueprint JSON shape

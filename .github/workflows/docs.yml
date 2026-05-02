@@ -11,7 +11,6 @@ on:
       - 'bin/_docs_components.py'
       - 'bin/_docs_components/**'
       - 'bin/_load_catalog.py'
-      - 'bin/_expected_outputs.json'
       - 'composer.json'
       - 'composer.lock'
       - '.github/workflows/docs.yml'

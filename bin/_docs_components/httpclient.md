@@ -2,6 +2,10 @@
 slug: httpclient
 title: HttpClient
 install: wp-php-toolkit/http-client
+
+see_also: bytestream | ByteStream | Stream request and response bodies.
+see_also: filesystem | Filesystem | Persist large downloads without buffering them in memory.
+see_also: corsproxy | CORSProxy | Bridge browser-side tools to servers without CORS headers.
 ---
 
 Async HTTP client without <code>curl</code> required. Uses sockets when curl is missing, supports concurrent requests and streaming responses.
@@ -111,6 +115,14 @@ echo "content-length: " . $request->get_header( 'content-length' ) . "\n";
 echo "authorization: " . substr( $request->get_header( 'authorization' ), 0, 10 ) . "...\n";
 ```
 
+<!-- expected-output -->
+```
+POST https://api.example.test/posts
+content-type: application/json
+content-length: 39
+authorization: Basic dXNl...
+```
+
 ## Parse response headers
 
 <p>Most applications receive <code>Response</code> objects from <code>await_response()</code>. Transports, middleware, and tests sometimes need the lower-level parser: <code>Response::from_http_headers()</code> turns raw HTTP header bytes into normalized status and case-insensitive headers.</p>
@@ -138,6 +150,14 @@ echo "status: " . $response->status_code . ' ' . $response->get_reason_phrase() 
 echo "ok:     " . ( $response->ok() ? 'yes' : 'no' ) . "\n";
 echo "type:   " . $response->get_header( 'CONTENT-TYPE' ) . "\n";
 echo "size:   " . $response->total_bytes . " bytes\n";
+```
+
+<!-- expected-output -->
+```
+status: 201 Created
+ok:     yes
+type:   application/json
+size:   27 bytes
 ```
 
 ## Pick the right reading style

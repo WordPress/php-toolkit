@@ -2,6 +2,10 @@
 slug: zip
 title: Zip
 install: wp-php-toolkit/zip
+
+see_also: filesystem | Filesystem | Treat an archive like a swappable filesystem backend.
+see_also: bytestream | ByteStream | Feed readers and writers without whole-file buffers.
+see_also: httpclient | HttpClient | Stream downloaded archives into validation or extraction workflows.
 ---
 
 Read and write ZIP archives in pure PHP — no <code>libzip</code>, no <code>ZipArchive</code>. Streams entries one at a time, so you can build EPUBs, .docx files, and multi-gigabyte plugin bundles without buffering the archive in memory.
@@ -47,6 +51,11 @@ $out->close_writing();
 
 $zip = ZipFilesystem::create( FileReadStream::from_path( $path ) );
 echo $zip->get_contents( 'readme.txt' );
+```
+
+<!-- expected-output -->
+```
+Hello from inside the zip.
 ```
 
 ## Build an EPUB from scratch
@@ -106,6 +115,12 @@ printf( "mimetype: %s\n", $zip->get_contents( 'mimetype' ) );
 printf( "size on disk: %d bytes\n", filesize( $path ) );
 ```
 
+<!-- expected-output -->
+```
+mimetype: application/epub+zip
+size on disk: 839 bytes
+```
+
 ## Stream a large entry without buffering it
 
 <p>Calling <code>get_contents()</code> on a 500 MB CSV inside a ZIP would eat 500 MB of RAM. Use <code>open_read_stream()</code> instead and inflate-as-you-go.</p>
@@ -155,6 +170,11 @@ while ( ! $stream->reached_end_of_data() ) {
 	$bytes += $n;
 }
 printf( "Inflated %d bytes in 8 KB chunks, parsed %d rows.\n", $bytes, $rows );
+```
+
+<!-- expected-output -->
+```
+Inflated 205000 bytes in 8 KB chunks, parsed 15000 rows.
 ```
 
 ## Repack: modify one file, copy the rest
@@ -227,6 +247,12 @@ echo "new config.json: " . $repacked->get_contents( 'config.json' ) . "\n";
 echo "untouched: " . $repacked->get_contents( 'app/index.php' ) . "\n";
 ```
 
+<!-- expected-output -->
+```
+new config.json: {"debug":true,"version":"1.0.1"}
+untouched: <?php echo "hello";
+```
+
 ## Defend against zip-slip
 
 <p>A malicious archive can name an entry <code>../../etc/passwd</code> and trick a naive extractor into clobbering files outside the destination. <code>ZipDecoder::sanitize_path()</code> strips leading <code>../</code> segments and collapses internal <code>/../</code> sequences before exposing the path.</p>
@@ -251,6 +277,15 @@ $evil_inputs = array(
 foreach ( $evil_inputs as $name ) {
 	printf( "%-45s => %s\n", $name, ZipDecoder::sanitize_path( $name ) );
 }
+```
+
+<!-- expected-output -->
+```
+../../etc/passwd                              => etc/passwd
+./safe/path.txt                               => ./safe/path.txt
+a/../../b/secret                              => a/../b/secret
+a//b///c.txt                                  => a/b/c.txt
+../../../../root/.ssh/authorized_keys         => root/.ssh/authorized_keys
 ```
 
 ## Pipe ZIP entries into an InMemoryFilesystem
@@ -321,6 +356,16 @@ sort( $files );
 foreach ( $files as $path ) {
 	echo "  " . $path . "\n";
 }
+```
+
+<!-- expected-output -->
+```
+files now in memory:
+  /app/README.md
+  /app/VERSION
+  /app/assets/style.css
+  /app/index.php
+  /app/lib/util.php
 ```
 
 ## When to use which type

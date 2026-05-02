@@ -2,6 +2,10 @@
 slug: bytestream
 title: ByteStream
 install: wp-php-toolkit/bytestream
+
+see_also: filesystem | Filesystem | Back file reads and writes with the same stream primitives.
+see_also: zip | Zip | Read and write archive entries one stream at a time.
+see_also: httpclient | HttpClient | Process request and response bodies incrementally.
 ---
 
 Composable streaming primitives for reading, writing, transforming, hashing, and compressing byte data. Pull/peek/consume semantics let parsers backtrack without copying, and deflate, inflate, and checksum filters snap together like Lego.
@@ -40,6 +44,11 @@ $reader->close_reading();
 echo "Read {$total} bytes in 256-byte chunks.\n";
 ```
 
+<!-- expected-output -->
+```
+Read 1800 bytes in 256-byte chunks.
+```
+
 ## MemoryPipe as write-then-read buffer
 
 <p><code>MemoryPipe</code> is bidirectional: you <code>append_bytes()</code> as a writer and <code>pull/consume</code> as a reader. Easiest way to wire one component's output into another's input.</p>
@@ -67,6 +76,13 @@ while ( ! $pipe->reached_end_of_data() ) {
 	if ( 0 === $n ) break;
 	echo "got: " . $pipe->consume( $n );
 }
+```
+
+<!-- expected-output -->
+```
+got: first chunk
+second chunk
+third chunk
 ```
 
 ## Compress on the way in, decompress on the way out
@@ -100,6 +116,13 @@ $round    = $inflated->consume_all();
 printf( "original  : %d bytes\n", strlen( $original ) );
 printf( "deflated  : %d bytes (%.1f%%)\n", strlen( $compressed ), 100 * strlen( $compressed ) / strlen( $original ) );
 printf( "round-trip: %s\n", $round === $original ? 'OK' : 'BROKEN' );
+```
+
+<!-- expected-output -->
+```
+original  : 1050 bytes
+deflated  : 45 bytes (4.3%)
+round-trip: OK
 ```
 
 ## Line-by-line reads from a chunked source
@@ -138,6 +161,15 @@ if ( '' !== $tail ) {
 }
 ```
 
+<!-- expected-output -->
+```
+[1] alpha
+[2] bravo
+[3] charlie
+[4] delta
+[5] echo
+```
+
 ## Limit a stream to a fixed window
 
 <p><code>LimitedByteReadStream</code> exposes only the next N bytes of an underlying stream as if those were the entire stream. This is how the ZIP decoder hands you the body of one entry without letting you read into the next.</p>
@@ -162,4 +194,10 @@ $source->consume( 10 );
 $body = new LimitedByteReadStream( $source, 16 );
 echo "body sees: " . $body->consume_all() . "\n";
 echo "remaining in source: " . $source->consume_all() . "\n";
+```
+
+<!-- expected-output -->
+```
+body sees: BODY:hello there
+remaining in source: |FOOTER:done
 ```

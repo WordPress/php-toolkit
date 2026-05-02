@@ -2,6 +2,10 @@
 slug: merge
 title: Merge
 install: wp-php-toolkit/merge
+
+see_also: git | Git | Merge file contents discovered through repository history.
+see_also: markdown | Markdown | Resolve file-based editorial workflows before converting to blocks.
+see_also: dataliberation | DataLiberation | Make content synchronization conflicts visible.
 ---
 
 Three-way merge and diff. Pluggable differ + merger + optional validator.
@@ -40,6 +44,16 @@ foreach ( $diff->get_changes() as $change ) {
 }
 ```
 
+<!-- expected-output -->
+```
+= alpha
+- beta
++ BETA
+= gamma
++ delta
+= 
+```
+
 ## Render a unified patch
 
 <p><code>format_as_git_patch()</code> produces output that mirrors <code>git diff</code>, including hunk headers — handy for emails, CI annotations, or a "what changed?" panel.</p>
@@ -62,6 +76,20 @@ echo $diff->format_as_git_patch( array(
 	'a_source' => 'a/post.yml',
 	'b_source' => 'b/post.yml',
 ) );
+```
+
+<!-- expected-output -->
+```
+diff --git a/post.yml b/post.yml
+--- a/post.yml
++++ b/post.yml
+@@ -1,4 +1,5 @@- title: Hello
++ title: Hello, world
+  author: Alice
+- status: draft
++ status: published
++ tags: greeting
+  
 ```
 
 ## Three-way merge with no conflicts
@@ -90,6 +118,15 @@ $result = $strategy->merge(
 
 echo $result->has_conflicts() ? "conflicts!\n" : "clean merge:\n";
 echo $result->get_merged_content();
+```
+
+<!-- expected-output -->
+```
+clean merge:
+intro updated
+body
+outro
+appendix
 ```
 
 ## Inspect and surface conflicts
@@ -123,6 +160,23 @@ if ( $result->has_conflicts() ) {
 }
 echo "\n--- merged content with markers ---\n";
 echo $result->get_merged_content();
+```
+
+<!-- expected-output -->
+```
+ours:   line 2 from Alice
+theirs: line 2 from Bob
+
+--- merged content with markers ---
+line 1
+
+<<<<<<< HEAD
+line 2 from Alice
+
+=======
+line 2 from Bob
+
+>>>>>>> incoming 
 ```
 
 ## Sync a Markdown folder against an edited DB copy
@@ -162,4 +216,32 @@ foreach ( $posts as $name => $sides ) {
 	echo $result->has_conflicts() ? "(conflict — needs review)\n" : "(auto-merged)\n";
 	echo $result->get_merged_content() . "\n";
 }
+```
+
+<!-- expected-output -->
+```
+=== hello.md ===
+(conflict — needs review)
+# Hello
+
+<<<<<<< HEAD
+Draft body, expanded on disk.
+
+=======
+New section from the editor.
+
+>>>>>>> incoming 
+
+
+=== about.md ===
+(conflict — needs review)
+# About
+
+<<<<<<< HEAD
+Who *they* are.
+
+=======
+Who we really are.
+
+>>>>>>> incoming 
 ```

@@ -2,6 +2,14 @@
 slug: blockparser
 title: BlockParser
 install: wp-php-toolkit/blockparser
+
+credit_title: WordPress core, packaged standalone
+credit_body: |
+  <code>WP_Block_Parser</code> is WordPress core's block parser, packaged here so importers and linters can read <a href="https://developer.wordpress.org/block-editor/reference-guides/block-api/">block markup</a> without booting WordPress. Source: <a href="https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/class-wp-block-parser.php">WordPress/wordpress-develop</a>.
+
+see_also: html | HTML | Inspect or rewrite the HTML carried by parsed blocks.
+see_also: markdown | Markdown | Move between author-friendly Markdown and serialized block markup.
+see_also: dataliberation | DataLiberation | Audit and transform blocks while migrating content.
 ---
 
 WordPress core's block parser, packaged as a standalone library. Turn block markup into a structured tree, lint posts for common authoring mistakes, and audit block usage — all without booting WordPress.
@@ -48,6 +56,12 @@ foreach ( $blocks as $block ) {
 }
 ```
 
+<!-- expected-output -->
+```
+core/heading: Welcome
+core/paragraph: Hello from the block editor.
+```
+
 ## Count every block type in a post
 
 <p>A common audit task: "How many Paragraph, Image, and Gallery blocks does this post use?" A small queue keeps the example readable while still visiting nested blocks.</p>
@@ -91,6 +105,14 @@ foreach ( $counts as $name => $n ) {
 }
 ```
 
+<!-- expected-output -->
+```
+   2  core/paragraph
+   1  core/group
+   1  core/heading
+   1  core/image
+```
+
 ## Check whether a post uses a block
 
 <p>Useful for templates, audits, and migrations: answer one yes/no question without caring where the block appears in the tree.</p>
@@ -130,6 +152,12 @@ function post_has_block( $blocks, $name ) {
 
 echo post_has_block( $blocks, 'core/button' ) ? "has button\n" : "missing button\n";
 echo post_has_block( $blocks, 'core/gallery' ) ? "has gallery\n" : "missing gallery\n";
+```
+
+<!-- expected-output -->
+```
+has button
+missing gallery
 ```
 
 ## Lint headings for hierarchy mistakes
@@ -180,6 +208,13 @@ foreach ( $headings as $heading ) {
 }
 ```
 
+<!-- expected-output -->
+```
+ok   Intro: H2
+WARN Subsection: jumped from H2 to H4
+ok   Body: H3
+```
+
 ## Find all instances of a custom block
 
 <p>When auditing an export for a block your plugin owns, collect every match and print the fields a human cares about.</p>
@@ -221,6 +256,12 @@ foreach ( $testimonials as $i => $b ) {
 }
 ```
 
+<!-- expected-output -->
+```
+1. Jane (5/5): Loved it.
+2. Joe (4/5): Pretty good.
+```
+
 ## Detect blocks with stale embed URLs
 
 <p>A real-world content audit: find every <code>core/embed</code> whose URL points at a domain you have retired.</p>
@@ -248,4 +289,11 @@ foreach ( ( new WP_Block_Parser() )->parse( $document ) as $b ) {
 	$bad  = $host && in_array( $host, $retired, true );
 	echo ( $bad ? 'STALE  ' : 'ok     ' ) . $url . "\n";
 }
+```
+
+<!-- expected-output -->
+```
+ok     https://twitter.com/wordpress/status/1
+ok     https://youtube.com/watch?v=abc
+STALE  https://vine.co/v/xyz
 ```

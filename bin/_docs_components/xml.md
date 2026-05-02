@@ -2,6 +2,10 @@
 slug: xml
 title: XML
 install: wp-php-toolkit/xml
+
+see_also: dataliberation | DataLiberation | Read and write WXR-sized WordPress exports as entities.
+see_also: encoding | Encoding | Validate and scrub text before strict XML processing.
+see_also: bytestream | ByteStream | Keep large XML reads incremental.
 ---
 
 A streaming, namespace-aware XML processor in pure PHP. Read and modify huge feeds, WXR exports, ePub manifests, and Office Open XML parts without ever loading the document into memory and without depending on <code>libxml2</code>.
@@ -45,6 +49,11 @@ while ( $p->next_tag( 'book' ) ) {
 echo $p->get_updated_xml();
 ```
 
+<!-- expected-output -->
+```
+<catalog><book sku="A1" price="32.99"><title>PHP Internals</title></book><book sku="A2" price="15.95"><title>WordPress at Scale</title></book></catalog>
+```
+
 ## Read namespaced attributes from a WXR export
 
 <p>WordPress's WXR commonly uses <code>wp:</code>, <code>dc:</code>, and <code>content:</code> prefixes bound to namespace names such as <code>http://wordpress.org/export/1.2/</code>. Pass that expanded namespace name, not the prefix; the processor handles whichever prefix the document actually uses.</p>
@@ -86,6 +95,14 @@ while ( $p->next_tag( 'item' ) ) {
 }
 ```
 
+<!-- expected-output -->
+```
+title: Hello World
+dc/creator: admin
+wp/post_id: 42
+wp/status: publish
+```
+
 ## Rewrite URLs across an entire WXR export
 
 <p>Large WXR exports can hold many URLs in <code>&lt;link&gt;</code>, <code>&lt;guid&gt;</code>, and post content. Streaming the file lets you rewrite large exports without loading the whole XML document into memory.</p>
@@ -124,6 +141,13 @@ echo "rewrote {$rewritten} text nodes\n\n";
 echo $p->get_updated_xml();
 ```
 
+<!-- expected-output -->
+```
+rewrote 3 text nodes
+
+<?xml version="1.0"?><rss xmlns:wp="http://wordpress.org/export/1.2/"><channel><wp:base_site_url>https://new.example.com</wp:base_site_url><item><link>https://new.example.com/2024/post-1</link><guid>https://new.example.com/?p=1</guid></item></channel></rss>
+```
+
 ## Parse OPML to extract feed URLs
 
 <p>OPML is the format Feedly and many readers use to import/export feed lists. Flat, attribute-heavy XML — exactly what a tag processor handles best.</p>
@@ -151,4 +175,11 @@ while ( $p->next_tag( 'outline' ) ) {
 	if ( null === $url ) continue;
 	echo $p->get_attribute( '', 'text' ) . "\t" . $url . "\n";
 }
+```
+
+<!-- expected-output -->
+```
+Hacker News	https://news.ycombinator.com/rss
+LWN	https://lwn.net/headlines/rss
+WordPress	https://wordpress.org/news/feed/
 ```

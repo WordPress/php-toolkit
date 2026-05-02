@@ -2,6 +2,10 @@
 slug: encoding
 title: Encoding
 install: wp-php-toolkit/encoding
+
+see_also: html | HTML | Normalize incoming text before HTML tokenization.
+see_also: xml | XML | Keep invalid bytes out of XML streams.
+see_also: dataliberation | DataLiberation | Clean content before importing it into WordPress.
 ---
 
 UTF-8 validation and scrubbing with a pure-PHP fallback when <code>mbstring</code> is unavailable. Detects malformed bytes and replaces them per the Unicode maximal-subpart algorithm.
@@ -41,6 +45,15 @@ foreach ( $samples as $label => $bytes ) {
 }
 ```
 
+<!-- expected-output -->
+```
+ASCII:         valid
+UTF-8 pencil:  valid
+latin-1 byte:  invalid
+overlong slash: invalid
+surrogate half: invalid
+```
+
 ## Scrubbing invalid bytes with U+FFFD
 
 <p>Replace each ill-formed sequence with the Unicode replacement character. Useful right before serializing to XML, JSON, or sending to an LLM that will choke on broken bytes.</p>
@@ -59,6 +72,12 @@ $broken = "the byte \xC0 should not be here.";
 echo wp_scrub_utf8( $broken ) . "\n";
 
 echo wp_scrub_utf8( ".\xE2\x8C\xE2\x8C." ) . "\n";
+```
+
+<!-- expected-output -->
+```
+the byte � should not be here.
+.��.
 ```
 
 ## Detecting noncharacters MySQL/utf8mb4 will reject
@@ -84,6 +103,13 @@ $samples = array(
 foreach ( $samples as $label => $text ) {
 	echo sprintf( "%-12s %s\n", $label . ':', wp_has_noncharacters( $text ) ? 'reject' : 'ok' );
 }
+```
+
+<!-- expected-output -->
+```
+normal text: ok
+U+FFFE:      reject
+U+FDD0:      reject
 ```
 
 ## Three-way pipeline: validate, scrub, then check noncharacters
@@ -115,6 +141,14 @@ foreach ( $inputs as $label => $bytes ) {
 	$weird    = wp_has_noncharacters( $cleaned );
 	echo sprintf( "%-10s valid=%s noncharacter=%s -> %s\n", $label, $valid ? 'Y' : 'N', $weird ? 'Y' : 'N', $cleaned );
 }
+```
+
+<!-- expected-output -->
+```
+good       valid=Y noncharacter=N -> Café
+latin1     valid=N noncharacter=N -> caf�
+overlong   valid=N noncharacter=N -> x��y
+noncharac  valid=Y noncharacter=Y -> hi ￾ there
 ```
 
 ## Salvaging a legacy ISO-8859-1 column inside a UTF-8 corpus
@@ -151,4 +185,12 @@ foreach ( $rows as $id => $value ) {
 		echo "#$id unrecoverable, scrubbing: " . wp_scrub_utf8( $value ) . "\n";
 	}
 }
+```
+
+<!-- expected-output -->
+```
+#1 ok: Plain ASCII
+#2 ok: Café
+#3 recovered as latin1: café
+#4 recovered as latin1: weird À byte
 ```

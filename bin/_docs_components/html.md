@@ -2,6 +2,14 @@
 slug: html
 title: HTML
 install: wp-php-toolkit/html
+
+credit_title: Ported from WordPress core
+credit_body: |
+  The HTML component is a port of WordPress core's <code>WP_HTML_Tag_Processor</code> and <code>WP_HTML_Processor</code>. Source: <a href="https://github.com/WordPress/wordpress-develop/tree/trunk/src/wp-includes/html-api">WordPress/wordpress-develop</a>. Bug fixes flow in both directions.
+
+see_also: blockparser | BlockParser | Parse block comments first, then rewrite the HTML inside each block.
+see_also: markdown | Markdown | Convert Markdown to blocks before polishing generated HTML.
+see_also: dataliberation | DataLiberation | Rewrite URLs and media references during import/export pipelines.
 ---
 
 A pure-PHP HTML5 parser and tag rewriter mirroring WordPress core's HTML API. Treat HTML the way browsers do — without <code>libxml2</code>, <code>DOMDocument</code>, or regex hacks — and rewrite attributes in a single linear pass.
@@ -48,6 +56,15 @@ while ( $tags->next_tag( 'img' ) ) {
 echo $tags->get_updated_html();
 ```
 
+<!-- expected-output -->
+```
+<article>
+	<img decoding="async" loading="lazy" src="hero.jpg" alt="Hero">
+	<p>Intro copy.</p>
+	<img decoding="async" loading="lazy" src="inline.jpg" alt="Inline">
+</article>
+```
+
 ## Rewrite relative links to absolute URLs
 
 <p>Use this before sending post content to an RSS feed, an email template, or a CDN-backed copy of a site. The processor rewrites only the changed bytes, so untouched markup stays byte-identical.</p>
@@ -78,6 +95,11 @@ while ( $tags->next_tag( 'a' ) ) {
 }
 
 echo $tags->get_updated_html();
+```
+
+<!-- expected-output -->
+```
+<p>See <a href="https://my-site.test/about">about</a>, <a href="https://example.com/x">x</a>, and <a href="https://my-site.test/contact.html">contact</a>.</p>
 ```
 
 ## Strip every script and inline event handler
@@ -112,6 +134,11 @@ while ( $tags->next_tag() ) {
 echo $tags->get_updated_html();
 ```
 
+<!-- expected-output -->
+```
+<p>Hi <b >friend</b>!</p><script></script><img src=x >
+```
+
 ## Stamp a CSP nonce on inline scripts and styles
 
 <p>Content Security Policy in <code>nonce-</code> mode requires every inline <code>&lt;script&gt;</code> and <code>&lt;style&gt;</code> to carry a matching nonce attribute. Tag-by-tag is exactly the right granularity.</p>
@@ -139,6 +166,13 @@ while ( $tags->next_tag() ) {
 
 echo "nonce: {$nonce}\n\n";
 echo $tags->get_updated_html();
+```
+
+<!-- expected-output -->
+```
+nonce: <random>
+
+<head><style nonce="<random>">body{font:16px sans-serif}</style></head><body><script nonce="<random>">console.log("hi")</script><script nonce="<random>" src="vendor.js"></script></body>
 ```
 
 ## Build a srcset from a single src
@@ -173,6 +207,11 @@ while ( $tags->next_tag( 'img' ) ) {
 echo $tags->get_updated_html();
 ```
 
+<!-- expected-output -->
+```
+<figure><img sizes="(max-width: 768px) 100vw, 768px" srcset="https://cdn.test/uploads/photo.jpg?w=480 480w, https://cdn.test/uploads/photo.jpg?w=768 768w, https://cdn.test/uploads/photo.jpg?w=1200 1200w" src="https://cdn.test/uploads/photo.jpg" alt="Sunset"></figure>
+```
+
 ## Decode HTML entities the way the spec demands
 
 <p>The HTML5 entity table has roughly 2,200 named references and a long list of edge cases. <code>WP_HTML_Decoder</code> implements the algorithm — don't roll your own.</p>
@@ -195,6 +234,13 @@ $is_javascript = WP_HTML_Decoder::attribute_starts_with(
 	'ascii-case-insensitive'
 );
 var_dump( $is_javascript );
+```
+
+<!-- expected-output -->
+```
+attribute: path?a=1&b=2&copy
+text:      AT&T — 100% 😀
+bool(false)
 ```
 
 ## Find images by ancestry with breadcrumbs
@@ -224,6 +270,12 @@ while ( $p->next_tag( array( 'breadcrumbs' => array( 'FIGURE', 'IMG' ) ) ) ) {
 
 echo "found {$figure_images} figure images\n";
 echo $p->get_updated_html();
+```
+
+<!-- expected-output -->
+```
+found 2 figure images
+<article><figure><img class="figure-image" src="hero.jpg" alt="Hero"><figcaption>Hero shot</figcaption></figure><p>Body copy <img src="emoji.png" alt=""> mid-paragraph.</p><figure><img class="figure-image" src="diagram.png" alt="Diagram"></figure></article>
 ```
 
 ## Outline a document by walking tokens with depth
@@ -267,6 +319,13 @@ while ( $p->next_token() ) {
 }
 ```
 
+<!-- expected-output -->
+```
+    H1  Title
+      H2  Chapter 1
+      H2  Chapter 2
+```
+
 ## Bookmarks: annotate a parent based on its children
 
 <p>Bookmarks are the one escape from forward-only scanning. Save a position, scan ahead, decide what to do, then <code>seek()</code> back and rewrite the earlier tag.</p>
@@ -303,6 +362,11 @@ $tags->set_attribute( 'data-progress', $done . '/' . $total );
 $tags->release_bookmark( 'list' );
 
 echo $tags->get_updated_html();
+```
+
+<!-- expected-output -->
+```
+<ul data-progress="2/3"><li><input type="checkbox" checked> Buy milk</li><li><input type="checkbox"> Walk the dog</li><li><input type="checkbox" checked> Read book</li></ul>
 ```
 
 ## When to use which

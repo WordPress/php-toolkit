@@ -7,23 +7,16 @@ lede + install + context paragraphs + minimal example + refinements +
 pitfalls + see also. There are no hand-authored exceptions.
 """
 
-import json
 import os
 import re
 import sys
 from html import escape as h, unescape
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _docs_components import COMPONENTS, COMPONENT_RELATIONS, CREDITS
+from _load_catalog import load_components_rich
 
 DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', 'reference')
-EXPECTED_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_expected_outputs.json')
 ASSET_VERSION = '20260429-rewrite'
-
-EXPECTED = {}
-if os.path.exists(EXPECTED_PATH):
-    with open(EXPECTED_PATH) as f:
-        EXPECTED = {tuple(k.split('::')): v for k, v in json.load(f).items()}
 
 
 PAGE_HEAD = '''<!doctype html>
@@ -83,9 +76,18 @@ def split_pitfalls(body_html):
     return ''.join(rest), pitfalls
 
 
-def snippet_block(slug, name, code, runnable=True):
+def snippet_block(snippet):
+    """Render a snippet dict as a <php-snippet> custom-element block.
+
+    Includes the captured expected-output (when present) so the docs page
+    paints the result before WordPress Playground finishes booting.
+    """
+    name = snippet['filename']
+    code = snippet['code']
+    runnable = snippet['runnable']
+    expected = snippet['expected_output'] if runnable else None
+
     safe = code.rstrip().replace('</script', '<\\/script')
-    expected = EXPECTED.get((slug, name)) if runnable else None
     expected_block = ''
     if expected is not None:
         expected_safe = expected.rstrip().replace('</script', '<\\/script')
@@ -101,18 +103,12 @@ def snippet_block(slug, name, code, runnable=True):
     )
 
 
-def render_example(slug, snippet):
-    name, code = snippet[0], snippet[1]
-    runnable = len(snippet) < 3 or snippet[2]
-    return snippet_block(slug, name, code, runnable)
-
-
-def sidebar(current_slug):
+def sidebar(components, current_slug):
     items = []
-    for slug, title, _, _, _ in COMPONENTS:
-        href = f'{slug}.html'
-        cls = ' class="current"' if slug == current_slug else ''
-        items.append(f'\t\t\t<li{cls}><a href="{href}">{h(title)}</a></li>')
+    for c in components:
+        href = f'{c["slug"]}.html'
+        cls = ' class="current"' if c['slug'] == current_slug else ''
+        items.append(f'\t\t\t<li{cls}><a href="{href}">{h(c["title"])}</a></li>')
     return (
         '\t<aside class="sidebar" aria-label="Reference navigation">\n'
         '\t\t<button class="sidebar-toggle" type="button" aria-expanded="false">'
@@ -128,29 +124,30 @@ def sidebar(current_slug):
     )
 
 
-def render_component(slug, title, lede, install, sections):
+def render_component(components, c):
     # Separate the "Why this exists" intro from the worked sections.
     purpose_html = ''
     pitfalls_from_purpose = []
+    sections = c['sections']
     usage = sections
-    if sections and sections[0][0].lower() == 'why this exists':
-        _, body, _ = sections[0]
-        purpose_html, pitfalls_from_purpose = split_pitfalls(unescape(body or ''))
+    if sections and sections[0]['heading'].lower() == 'why this exists':
+        body = sections[0]['body'] or ''
+        purpose_html, pitfalls_from_purpose = split_pitfalls(unescape(body))
         usage = sections[1:]
 
     out = [PAGE_HEAD.format(
-        title=h(title),
-        description=h(re.sub(r'<[^>]+>', '', lede)),
+        title=h(c['title']),
+        description=h(re.sub(r'<[^>]+>', '', c['lede'])),
         asset_version=ASSET_VERSION,
     )]
-    out.append(sidebar(slug))
+    out.append(sidebar(components, c['slug']))
     out.append('\t<article class="content">\n\n')
-    out.append(f'<h1>{h(title)}</h1>\n\n')
-    out.append(f'<p class="lede">{lede}</p>\n\n')
-    if install:
-        out.append(f'<pre><code class="install">composer require {h(install)}</code></pre>\n\n')
-    if slug in CREDITS:
-        title_credit, body_credit = CREDITS[slug]
+    out.append(f'<h1>{h(c["title"])}</h1>\n\n')
+    out.append(f'<p class="lede">{c["lede"]}</p>\n\n')
+    if c['install']:
+        out.append(f'<pre><code class="install">composer require {h(c["install"])}</code></pre>\n\n')
+    if c['credit']:
+        title_credit, body_credit = c['credit']
         out.append(
             '<aside class="callout credit">\n'
             f'\t<strong>{h(title_credit)}.</strong> {body_credit}\n'
@@ -162,9 +159,11 @@ def render_component(slug, title, lede, install, sections):
     # Worked examples + accumulated pitfalls.
     pitfalls = list(pitfalls_from_purpose)
     minimal_emitted = False
-    for heading, body_html, snippet in usage:
-        # Pull pitfalls out of section body too.
-        rest, found = split_pitfalls(unescape(body_html or ''))
+    for section in usage:
+        heading = section['heading']
+        body_html = section['body'] or ''
+        snippet = section['snippet']
+        rest, found = split_pitfalls(unescape(body_html))
         pitfalls.extend(found)
         h2 = heading
         if not minimal_emitted and snippet:
@@ -176,18 +175,17 @@ def render_component(slug, title, lede, install, sections):
         if rest:
             out.append(rest + '\n\n')
         if snippet:
-            out.append(render_example(slug, snippet) + '\n')
+            out.append(snippet_block(snippet) + '\n')
 
     if pitfalls:
         out.append('<h2 id="pitfalls">Pitfalls</h2>\n\n')
         for p in pitfalls:
             out.append(f'<aside class="callout pitfall">{p}</aside>\n\n')
 
-    related = COMPONENT_RELATIONS.get(slug, ())
-    if related:
+    if c['see_also']:
         out.append('<h2 id="see-also">See also</h2>\n\n')
         out.append('<ul class="related-components">\n')
-        for rel_slug, rel_title, reason in related:
+        for rel_slug, rel_title, reason in c['see_also']:
             href = f'{rel_slug}.html'
             out.append(
                 f'\t<li><a href="{href}"><strong>{h(rel_title)}</strong></a>'
@@ -201,12 +199,13 @@ def render_component(slug, title, lede, install, sections):
 
 def main():
     os.makedirs(DOCS, exist_ok=True)
-    for slug, title, lede, install, sections in COMPONENTS:
-        out = render_component(slug, title, lede, install, sections)
-        path = os.path.join(DOCS, f'{slug}.html')
+    components = load_components_rich()
+    for c in components:
+        out = render_component(components, c)
+        path = os.path.join(DOCS, f'{c["slug"]}.html')
         with open(path, 'w') as f:
             f.write(out)
-        print(f'wrote reference/{slug}.html')
+        print(f'wrote reference/{c["slug"]}.html')
 
 
 if __name__ == '__main__':

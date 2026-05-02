@@ -2,6 +2,10 @@
 slug: git
 title: Git
 install: wp-php-toolkit/git
+
+see_also: filesystem | Filesystem | Work with repository trees through a storage abstraction.
+see_also: merge | Merge | Resolve divergent histories with explicit three-way merge logic.
+see_also: bytestream | ByteStream | Read and write object data without accidental buffering.
 ---
 
 A pure-PHP Git client and server. Commits, branches, diffs, HTTP push/pull — all without shelling out to <code>git</code>.
@@ -45,6 +49,13 @@ echo "HEAD:   " . $repo->get_branch_tip( 'HEAD' ) . "\n";
 echo "README: " . $repo->read_object_by_path( '/README.md' )->consume_all();
 ```
 
+<!-- expected-output -->
+```
+commit: <oid>
+HEAD: <oid>
+README: # My Project
+```
+
 ## Walk the commit history
 
 <p>Follow the parent chain from <code>HEAD</code> backwards. Building block for a WP-CLI "post revisions" log or a "what changed since release X" report.</p>
@@ -78,6 +89,13 @@ while ( ! Commit::is_null_hash( $oid ) ) {
 }
 ```
 
+<!-- expected-output -->
+```
+<hash>  expand examples
+<hash>  fix typo
+<hash>  add intro
+```
+
 ## Treat a repository like a filesystem
 
 <p><code>GitFilesystem</code> wraps a repository in this toolkit's <code>Filesystem</code> interface. With the default options, each <code>put_contents()</code> records a new commit.</p>
@@ -106,6 +124,17 @@ foreach ( $fs->ls( '/posts' ) as $name ) {
 	echo "  /posts/{$name}\n";
 }
 echo "\nhello.md now:\n" . $fs->get_contents( '/posts/hello.md' ) . "\n";
+```
+
+<!-- expected-output -->
+```
+tree:
+  /posts/about.md
+  /posts/hello.md
+
+hello.md now:
+# Hello
+Second draft.
 ```
 
 ## Branch, edit, and switch back
@@ -140,6 +169,12 @@ echo "on experiment: " . $repo->read_object_by_path( '/config.json' )->consume_a
 
 $repo->checkout( 'refs/heads/trunk' );
 echo "on trunk:      " . $repo->read_object_by_path( '/config.json' )->consume_all() . "\n";
+```
+
+<!-- expected-output -->
+```
+on experiment: {"flag":true}
+on trunk:      {"flag":false}
 ```
 
 ## Three-way merge two branches
@@ -180,6 +215,17 @@ echo "conflicts:  " . ( $result['conflicts'] ? implode( ',', $result['conflicts'
 echo "result:\n" . $repo->read_object_by_path( '/todo.txt' )->consume_all();
 ```
 
+<!-- expected-output -->
+```
+merge head: <oid>
+conflicts:  none
+result:
+buy oat milk
+walk dog
+read book
+write blog post
+```
+
 ## Snapshot WordPress options into a repo
 
 <p>Serialize a chunk of WP state (options, post meta, a theme config) on every save and commit it. You get free history, diffs between snapshots, and a "rollback to last week" button.</p>
@@ -218,4 +264,10 @@ echo "Files changed in last snapshot:\n";
 foreach ( $diff as $name => $entry ) {
 	echo "  {$name}\n";
 }
+```
+
+<!-- expected-output -->
+```
+Files changed in last snapshot:
+  options.json
 ```

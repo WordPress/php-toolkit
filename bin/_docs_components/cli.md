@@ -2,6 +2,10 @@
 slug: cli
 title: CLI
 install: wp-php-toolkit/cli
+
+see_also: filesystem | Filesystem | Keep command behavior testable with in-memory storage.
+see_also: blueprints | Blueprints | Build repeatable site setup commands around parsed options.
+see_also: httpserver | HttpServer | Add a local web UI to a CLI workflow.
 ---
 
 POSIX-style argument parser. Long options, short bundles, inline values, positional args — one static call.
@@ -35,6 +39,12 @@ list( $positionals, $options ) = CLI::parse_command_args_and_options(
 
 echo "verbose: " . ( $options['verbose'] ? 'yes' : 'no' ) . "\n";
 echo "input:   " . $positionals[0] . "\n";
+```
+
+<!-- expected-output -->
+```
+verbose: yes
+input:   input.txt
 ```
 
 ## Mix values, flags, and bundles
@@ -72,6 +82,14 @@ echo "output:  " . $options['output'] . "\n";
 echo "port:    " . $options['port'] . "\n";
 ```
 
+<!-- expected-output -->
+```
+input:   input.json
+flags:   all, force, verbose
+output:  /tmp/<tempfile>.txt
+port:    8080
+```
+
 ## Validate required options
 
 <p>The parser fills in defaults but never enforces "required". Check for <code>null</code> after parsing — full control over the error message.</p>
@@ -104,6 +122,11 @@ try {
 } catch ( Exception $e ) {
 	echo "error: " . $e->getMessage() . "\n";
 }
+```
+
+<!-- expected-output -->
+```
+error: Missing required option --site-path
 ```
 
 ## Generate --help from definitions
@@ -139,6 +162,17 @@ function render_help( array $defs ) {
 
 list( , $options ) = CLI::parse_command_args_and_options( array( '-h' ), $option_defs );
 if ( $options['help'] ) render_help( $option_defs );
+```
+
+<!-- expected-output -->
+```
+Usage: mytool [options] <input>
+
+Options:
+  -o, --output=VALUE           Write result to FILE
+  -f, --force                  Overwrite existing files
+  -v, --verbose                Verbose output
+  -h, --help                   Show this help and exit
 ```
 
 ## Git-style subcommands
@@ -184,4 +218,15 @@ function run( array $argv, array $commands ) {
 run( array( 'deploy', '--env=production', '-n', 'web-01', 'web-02' ), $commands );
 echo "---\n";
 run( array( 'rollback', '-t', 'abc123' ), $commands );
+```
+
+<!-- expected-output -->
+```
+command=deploy
+options: {"env":"production","dry-run":true}
+positionals: ["web-01","web-02"]
+---
+command=rollback
+options: {"to":"abc123"}
+positionals: []
 ```

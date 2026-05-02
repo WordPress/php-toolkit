@@ -2,6 +2,8 @@
 slug: coding-standards
 title: ToolkitCodingStandards
 install: wp-php-toolkit/toolkit-coding-standards
+
+see_also: polyfill | Polyfill | Share WordPress-style compatibility expectations across standalone packages.
 ---
 
 PHP_CodeSniffer sniffs used by this project: enforce Yoda comparisons and ban the short ternary where it hides falsy-value bugs.

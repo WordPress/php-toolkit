@@ -1,13 +1,14 @@
 # Component catalog for the runnable docs site.
 #
-# Per-component content (lede, sections, snippets) is sourced from
+# Per-component content (lede, sections, snippets, credit callouts,
+# see-also links, expected snippet outputs) is sourced from
 # bin/_docs_components/<slug>.md — see bin/_load_catalog.py for the format.
 # That keeps the docs source in plain markdown with code-fence snippets,
 # editable in any text editor and renderable as-is on github.com.
 #
-# This file still owns the small structural metadata that does not belong in
-# any single component's markdown: cross-component relations, the four
-# starter paths on the landing page, and upstream credits.
+# This file still owns the small global metadata that doesn't belong in any
+# single component's markdown: the landing-page starter paths and the
+# per-component mental-model guides used on the landing page.
 
 import os as _os
 import sys as _sys
@@ -18,43 +19,6 @@ from _load_catalog import load_components  # noqa: E402
 
 COMPONENTS = load_components()
 
-
-
-# Upstream credits surfaced as a callout on each reference page.
-# Keep these brief — the landing page's "Credits" section carries the longer note.
-CREDITS = {
-    'html': (
-        'Ported from WordPress core',
-        'The HTML component is a port of WordPress core\'s '
-        '<code>WP_HTML_Tag_Processor</code> and <code>WP_HTML_Processor</code>. '
-        'Source: <a href="https://github.com/WordPress/wordpress-develop/tree/trunk/src/wp-includes/html-api">WordPress/wordpress-develop</a>. '
-        'Bug fixes flow in both directions.',
-    ),
-    'blockparser': (
-        'WordPress core, packaged standalone',
-        '<code>WP_Block_Parser</code> is WordPress core\'s block parser, '
-        'packaged here so importers and linters can read '
-        '<a href="https://developer.wordpress.org/block-editor/reference-guides/block-api/">block markup</a> '
-        'without booting WordPress. Source: '
-        '<a href="https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/class-wp-block-parser.php">WordPress/wordpress-develop</a>.',
-    ),
-    'markdown': (
-        'Built on league/commonmark',
-        'Markdown parsing is delegated to '
-        '<a href="https://commonmark.thephpleague.com/"><code>league/commonmark</code></a>; '
-        'YAML frontmatter is handled by '
-        '<a href="https://github.com/webuni/front-matter"><code>webuni/front-matter</code></a>. '
-        'The toolkit\'s own work is the bridge between CommonMark\'s AST and '
-        '<a href="https://developer.wordpress.org/block-editor/reference-guides/block-api/">WordPress block markup</a>, in both directions.',
-    ),
-    'polyfill': (
-        'WordPress-shaped behavior',
-        'When WordPress is loaded, every function in this component defers to WordPress. '
-        'The standalone implementations of <code>esc_html()</code>, <code>add_filter()</code>, '
-        '<code>__()</code>, and friends match WordPress core\'s behavior so the same code runs '
-        'inside and outside the platform.',
-    ),
-}
 
 
 COMPONENT_GUIDES = {
@@ -263,92 +227,3 @@ STARTER_PATHS = (
         ('polyfill', 'blueprints', 'coding-standards'),
     ),
 )
-
-
-COMPONENT_RELATIONS = {
-    'html': (
-        ('blockparser', 'BlockParser', 'Parse block comments first, then rewrite the HTML inside each block.'),
-        ('markdown', 'Markdown', 'Convert Markdown to blocks before polishing generated HTML.'),
-        ('dataliberation', 'DataLiberation', 'Rewrite URLs and media references during import/export pipelines.'),
-    ),
-    'zip': (
-        ('filesystem', 'Filesystem', 'Treat an archive like a swappable filesystem backend.'),
-        ('bytestream', 'ByteStream', 'Feed readers and writers without whole-file buffers.'),
-        ('httpclient', 'HttpClient', 'Stream downloaded archives into validation or extraction workflows.'),
-    ),
-    'bytestream': (
-        ('filesystem', 'Filesystem', 'Back file reads and writes with the same stream primitives.'),
-        ('zip', 'Zip', 'Read and write archive entries one stream at a time.'),
-        ('httpclient', 'HttpClient', 'Process request and response bodies incrementally.'),
-    ),
-    'filesystem': (
-        ('bytestream', 'ByteStream', 'Open files as readers and writers instead of loading full strings.'),
-        ('zip', 'Zip', 'Mount archives and copy data between archive-backed and normal filesystems.'),
-        ('git', 'Git', 'Expose repository trees through a filesystem-shaped API.'),
-    ),
-    'blockparser': (
-        ('html', 'HTML', 'Inspect or rewrite the HTML carried by parsed blocks.'),
-        ('markdown', 'Markdown', 'Move between author-friendly Markdown and serialized block markup.'),
-        ('dataliberation', 'DataLiberation', 'Audit and transform blocks while migrating content.'),
-    ),
-    'markdown': (
-        ('blockparser', 'BlockParser', 'Understand the block tree created from Markdown output.'),
-        ('html', 'HTML', 'Rewrite rendered HTML fragments without using DOMDocument.'),
-        ('dataliberation', 'DataLiberation', 'Turn Markdown folders into import/export streams.'),
-    ),
-    'xml': (
-        ('dataliberation', 'DataLiberation', 'Read and write WXR-sized WordPress exports as entities.'),
-        ('encoding', 'Encoding', 'Validate and scrub text before strict XML processing.'),
-        ('bytestream', 'ByteStream', 'Keep large XML reads incremental.'),
-    ),
-    'encoding': (
-        ('html', 'HTML', 'Normalize incoming text before HTML tokenization.'),
-        ('xml', 'XML', 'Keep invalid bytes out of XML streams.'),
-        ('dataliberation', 'DataLiberation', 'Clean content before importing it into WordPress.'),
-    ),
-    'dataliberation': (
-        ('markdown', 'Markdown', 'Use Markdown as a source or destination format.'),
-        ('blockparser', 'BlockParser', 'Analyze serialized blocks inside post content.'),
-        ('httpclient', 'HttpClient', 'Download media and remote source data while importing.'),
-    ),
-    'git': (
-        ('filesystem', 'Filesystem', 'Work with repository trees through a storage abstraction.'),
-        ('merge', 'Merge', 'Resolve divergent histories with explicit three-way merge logic.'),
-        ('bytestream', 'ByteStream', 'Read and write object data without accidental buffering.'),
-    ),
-    'merge': (
-        ('git', 'Git', 'Merge file contents discovered through repository history.'),
-        ('markdown', 'Markdown', 'Resolve file-based editorial workflows before converting to blocks.'),
-        ('dataliberation', 'DataLiberation', 'Make content synchronization conflicts visible.'),
-    ),
-    'httpclient': (
-        ('bytestream', 'ByteStream', 'Stream request and response bodies.'),
-        ('filesystem', 'Filesystem', 'Persist large downloads without buffering them in memory.'),
-        ('corsproxy', 'CORSProxy', 'Bridge browser-side tools to servers without CORS headers.'),
-    ),
-    'httpserver': (
-        ('cli', 'CLI', 'Expose a local browser UI from a command-line tool.'),
-        ('httpclient', 'HttpClient', 'Test client code against a small local fixture server.'),
-    ),
-    'corsproxy': (
-        ('httpclient', 'HttpClient', 'Fetch upstream responses from PHP when browser CORS blocks direct access.'),
-        ('httpserver', 'HttpServer', 'Understand the local-server shape before deploying a proxy endpoint.'),
-    ),
-    'cli': (
-        ('filesystem', 'Filesystem', 'Keep command behavior testable with in-memory storage.'),
-        ('blueprints', 'Blueprints', 'Build repeatable site setup commands around parsed options.'),
-        ('httpserver', 'HttpServer', 'Add a local web UI to a CLI workflow.'),
-    ),
-    'polyfill': (
-        ('html', 'HTML', 'Run WordPress-shaped escaping and translation helpers beside HTML processors.'),
-        ('blockparser', 'BlockParser', 'Keep standalone block tooling familiar outside WordPress.'),
-    ),
-    'blueprints': (
-        ('filesystem', 'Filesystem', 'Prepare files and fixtures before applying site setup steps.'),
-        ('httpclient', 'HttpClient', 'Download packages or source data as part of provisioning workflows.'),
-        ('cli', 'CLI', 'Wrap repeatable blueprint operations in a small command.'),
-    ),
-    'coding-standards': (
-        ('polyfill', 'Polyfill', 'Share WordPress-style compatibility expectations across standalone packages.'),
-    ),
-}

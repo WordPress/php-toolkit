@@ -2,6 +2,13 @@
 slug: polyfill
 title: Polyfill
 install: wp-php-toolkit/polyfill
+
+credit_title: WordPress-shaped behavior
+credit_body: |
+  When WordPress is loaded, every function in this component defers to WordPress. The standalone implementations of <code>esc_html()</code>, <code>add_filter()</code>, <code>__()</code>, and friends match WordPress core's behavior so the same code runs inside and outside the platform.
+
+see_also: html | HTML | Run WordPress-shaped escaping and translation helpers beside HTML processors.
+see_also: blockparser | BlockParser | Keep standalone block tooling familiar outside WordPress.
 ---
 
 PHP 8 string functions on PHP 7.2+, WordPress hook stubs, and translation/escaping passthroughs so toolkit code runs without WordPress.
@@ -30,6 +37,14 @@ $first_key = array_key_first( array( 'alpha' => 1, 'beta' => 2 ) );
 echo "first key: {$first_key}\n";
 ```
 
+<!-- expected-output -->
+```
+bool(true)
+bool(true)
+bool(true)
+first key: alpha
+```
+
 ## Escaping and translation stubs
 
 <p>Pass-through implementations let you write code that looks WordPressy and runs anywhere.</p>
@@ -46,6 +61,14 @@ echo __( 'Hello, world' ) . "\n";
 echo esc_html( '<script>alert("xss")</script>' ) . "\n";
 echo esc_attr( 'a "quoted" value' ) . "\n";
 echo esc_url( 'https://example.com/?a=1&b=2' ) . "\n";
+```
+
+<!-- expected-output -->
+```
+Hello, world
+&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;
+a &quot;quoted&quot; value
+https://example.com/?a=1&amp;b=2
 ```
 
 ## A simple filter chain
@@ -67,6 +90,11 @@ add_filter( 'sanitize_title', function ( $title ) {
 } );
 
 echo apply_filters( 'sanitize_title', '  My Post Title  ' ) . "\n";
+```
+
+<!-- expected-output -->
+```
+my-post-title
 ```
 
 ## Priority ordering and multi-arg passing
@@ -95,6 +123,11 @@ add_filter( 'render_price', function ( $html, $price, $currency ) {
 }, 20, 3 );
 
 echo apply_filters( 'render_price', '19.99', 19.99, 'EUR' ) . "\n";
+```
+
+<!-- expected-output -->
+```
+<strong>19.99</strong> EUR (EUR markup)
 ```
 
 ## Hook-based extension points in standalone libraries
@@ -132,4 +165,10 @@ $pipeline->process( array( 'email' => '  USER@EXAMPLE.COM  ' ) );
 $pipeline->process( array( 'email' => 'OTHER@example.com' ) );
 
 echo implode( "\n", $log ) . "\n";
+```
+
+<!-- expected-output -->
+```
+user@example.com
+other@example.com
 ```

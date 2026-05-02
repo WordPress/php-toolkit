@@ -2,6 +2,10 @@
 slug: dataliberation
 title: DataLiberation
 install: wp-php-toolkit/data-liberation
+
+see_also: markdown | Markdown | Use Markdown as a source or destination format.
+see_also: blockparser | BlockParser | Analyze serialized blocks inside post content.
+see_also: httpclient | HttpClient | Download media and remote source data while importing.
 ---
 
 Streaming WordPress import/export. WXR, SQL, block markup — without loading whole datasets into memory.
@@ -48,6 +52,13 @@ $wxr = $pipe->consume_all();
 echo "bytes: " . strlen( $wxr ) . "\n";
 echo false !== strpos( $wxr, '<title>Hello</title>' ) ? "title exported\n" : "title missing\n";
 echo false !== strpos( $wxr, '<wp:status>publish</wp:status>' ) ? "status exported\n" : "status missing\n";
+```
+
+<!-- expected-output -->
+```
+bytes: 475
+title exported
+status exported
 ```
 
 ## Build a WXR programmatically from any source
@@ -102,6 +113,13 @@ echo "terms: " . substr_count( $wxr, '<wp:term>' ) . "\n";
 echo false !== strpos( $wxr, '<title>Blog</title>' ) ? "Blog post exported\n" : "Blog post missing\n";
 ```
 
+<!-- expected-output -->
+```
+items: 2
+terms: 3
+Blog post exported
+```
+
 ## Read entities from a WXR file with constant memory
 
 <p><code>WXREntityReader</code> emits one entity at a time. A 10 GB WXR uses the same memory as a 10 KB one.</p>
@@ -135,6 +153,13 @@ while ( $reader->next_entity() ) {
 	$entity = $reader->get_entity();
 	echo $entity->get_type() . ': ' . json_encode( $entity->get_data() ) . "\n";
 }
+```
+
+<!-- expected-output -->
+```
+site_option: {"option_name":"blogname","option_value":"Demo"}
+post: {"post_title":"First","post_id":"1","post_type":"post","post_content":"Body 1"}
+post: {"post_title":"Second","post_id":"2","post_type":"post","post_content":"Body 2"}
 ```
 
 ## Streaming transform: rewrite URLs while copying WXR
@@ -194,6 +219,12 @@ echo false !== strpos( $wxr, 'https://example.com/about' ) ? "new URL present\n"
 echo false === strpos( $wxr, 'staging.example.com' ) ? "old URL removed\n" : "old URL still present\n";
 ```
 
+<!-- expected-output -->
+```
+new URL present
+old URL removed
+```
+
 ## Render Markdown into a WXR import in one pipeline
 
 <p>Compose <code>MarkdownConsumer</code> with <code>WXRWriter</code> to publish a folder of Markdown directly as a WordPress import file.</p>
@@ -240,4 +271,11 @@ $wxr = $pipe->consume_all();
 echo "posts: " . substr_count( $wxr, '<item>' ) . "\n";
 echo false !== strpos( $wxr, '&lt;!-- wp:heading' ) ? "block markup exported\n" : "block markup missing\n";
 echo false !== strpos( $wxr, '<title>Second</title>' ) ? "frontmatter title exported\n" : "frontmatter title missing\n";
+```
+
+<!-- expected-output -->
+```
+posts: 2
+block markup exported
+frontmatter title exported
 ```

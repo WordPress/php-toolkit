@@ -2,6 +2,10 @@
 slug: filesystem
 title: Filesystem
 install: wp-php-toolkit/filesystem
+
+see_also: bytestream | ByteStream | Open files as readers and writers instead of loading full strings.
+see_also: zip | Zip | Mount archives and copy data between archive-backed and normal filesystems.
+see_also: git | Git | Expose repository trees through a filesystem-shaped API.
 ---
 
 One <code>Filesystem</code> interface across local disk, in-memory trees, SQLite databases, and ZIP archives. Forward-slash paths everywhere — even on Windows — so the same code runs in tests, in production, and inside read-only ZIPs.
@@ -29,6 +33,11 @@ use WordPress\Filesystem\InMemoryFilesystem;
 $fs = InMemoryFilesystem::create();
 $fs->put_contents( '/hello.txt', 'Hello, world!' );
 echo $fs->get_contents( '/hello.txt' );
+```
+
+<!-- expected-output -->
+```
+Hello, world!
 ```
 
 ## Test code without touching disk
@@ -60,6 +69,11 @@ bump_version( $fs, '/package.json' );
 echo $fs->get_contents( '/package.json' ) . "\n";
 ```
 
+<!-- expected-output -->
+```
+{"version":"1.2.4"}
+```
+
 ## Local disk with a chrooted root
 
 <p><code>LocalFilesystem::create($root)</code> is implicitly chrooted: every path resolves relative to <code>$root</code> and a <code>../</code> cannot escape. Reach for it when a request path or CLI argument names a file inside one project directory.</p>
@@ -86,6 +100,12 @@ $fs->rmdir( '/', array( 'recursive' => true ) );
 echo "exists after cleanup? " . ( is_dir( $root ) ? 'yes' : 'no' ) . "\n";
 ```
 
+<!-- expected-output -->
+```
+Hi from local disk.
+exists after cleanup? no
+```
+
 ## SQLite as a portable file store
 
 <p>The whole tree lives in one SQLite database file. Use it for self-contained scratch storage that survives process boundaries without leaving loose files behind.</p>
@@ -110,6 +130,13 @@ foreach ( $fs->ls( '/posts' ) as $name ) {
 	$first = strtok( $fs->get_contents( '/posts/' . $name ), "\n" );
 	echo "{$name}: {$first}\n";
 }
+```
+
+<!-- expected-output -->
+```
+post-1.md: # Post 1
+post-2.md: # Post 2
+post-3.md: # Post 3
 ```
 
 ## Copy a tree across backends
@@ -158,6 +185,13 @@ echo "  index: " . $mem->get_contents( '/copy/index.html' ) . "\n";
 $local->rmdir( '/', array( 'recursive' => true ) );
 ```
 
+<!-- expected-output -->
+```
+in memory after two copies:
+  posts: 2024-01.md
+  index: <h1>Home</h1>
+```
+
 ## Atomic write via tempfile rename
 
 <p>Write to a sibling tempfile, then rename — that's how you avoid leaving a half-written file on crash. <code>rename()</code> is atomic within a single filesystem.</p>
@@ -191,6 +225,12 @@ echo "no .tmp leftovers: " . count( $fs->ls( '/' ) ) . " entries in root\n";
 $fs->rmdir( '/', array( 'recursive' => true ) );
 ```
 
+<!-- expected-output -->
+```
+config: {"v":2}
+no .tmp leftovers: 1 entries in root
+```
+
 ## Path helpers that behave the same on Windows
 
 <p>Unix path semantics apply on every host OS. This matters for abstract paths such as a SQLite key or a ZIP entry name because those paths do not live on a real drive.</p>
@@ -210,4 +250,11 @@ use function WordPress\Filesystem\wp_unix_path_resolve_dots;
 echo wp_join_unix_paths( '/var/www', '/site/', '/index.php' ) . "\n";
 echo wp_unix_dirname( '/a/b/c/d.txt', 2 ) . "\n";
 echo wp_unix_path_resolve_dots( '/a/b/../c/./d/../e' ) . "\n";
+```
+
+<!-- expected-output -->
+```
+/var/www/site/index.php
+/a/b
+a/c/e
 ```
