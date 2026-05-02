@@ -13,7 +13,9 @@ on:
     paths:
       - 'components/**'
       - 'bin/_docs_components.py'
+      - 'bin/_docs_components/**'
       - 'bin/_expected_outputs.json'
+      - 'bin/_load_catalog.py'
       - 'bin/run-snippets.py'
       - 'composer.json'
       - 'composer.lock'
