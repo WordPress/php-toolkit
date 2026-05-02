@@ -11,6 +11,7 @@
     <exclude-pattern>/plugins/url-updater/</exclude-pattern>
     <exclude-pattern>/bin/build-phar</exclude-pattern>
     <exclude-pattern>/examples/</exclude-pattern>
+    <exclude-pattern>/docs/</exclude-pattern>
     <exclude-pattern>rector.php</exclude-pattern>
     <exclude-pattern>components/CORSProxy/cors-proxy-functions.php</exclude-pattern>
     <exclude-pattern>components/Markdown/bin/build/*</exclude-pattern>

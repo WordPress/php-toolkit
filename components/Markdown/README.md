@@ -1,6 +1,6 @@
 # Markdown
 
-Bidirectional converter between Markdown and WordPress block markup. Use `MarkdownConsumer` to parse Markdown (with optional YAML frontmatter) into WordPress blocks, and `MarkdownProducer` to serialize blocks back to Markdown. Designed for content synchronization workflows where round-trip fidelity and whitespace preservation matter, such as three-way merging of static Markdown files with a WordPress database.
+Bidirectional converter between Markdown and WordPress block markup. Use `MarkdownConsumer` to parse Markdown (with optional YAML frontmatter) into WordPress blocks, and `MarkdownProducer` to serialize supported blocks back to Markdown. Designed for content synchronization workflows where a practical, structured conversion matters, such as three-way merging of static Markdown files with a WordPress database. It is not a byte-perfect Markdown formatter, and block attributes with no Markdown representation may be lost.
 
 ## Installation
 

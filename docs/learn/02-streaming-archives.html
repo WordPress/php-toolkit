@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 2 — Streaming archives · PHP Toolkit</title>
+<meta name="description" content="Read a ZIP archive without buffering it, mount it as a Filesystem, and stage entries in memory. Chapter 2 of the content-importer tutorial.">
+<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="./">Learn</a>
+		<a href="../reference/">Reference</a>
+		<a class="github" href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+
+<div class="layout">
+
+<aside class="sidebar" aria-label="Tutorial navigation">
+	<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<details class="components-nav" open>
+		<summary>The path</summary>
+		<ol>
+			<li><a href="quickstart.html">Quickstart</a></li>
+			<li><a href="01-rewriting-html.html">1. Rewriting HTML</a></li>
+			<li class="current"><a href="02-streaming-archives.html">2. Streaming archives</a></li>
+			<li><a href="03-importing-content.html">3. Markdown to WXR</a></li>
+			<li><a href="04-talking-to-the-network.html">4. Talking to the network</a></li>
+			<li><a href="recap.html">Recap</a></li>
+		</ol>
+	</details>
+</aside>
+
+<article class="content">
+
+<p class="breadcrumb">Chapter 2 of 4</p>
+<h1>Streaming archives</h1>
+
+<p class="lede">In chapter 1 you wrote <code>clean_post_html()</code>, a function that takes one HTML string and returns a clean one. The importer needs to run that on a thousand posts at a time. In this chapter the input becomes a real ZIP file: a folder of Markdown posts that you can't always extract to disk — the host might not give you a writable scratch directory, the runtime might not have a persistent filesystem at all. We'll wrap the archive as a <code>Filesystem</code>, read entries one at a time, and stage them in memory for chapter 3 to import.</p>
+
+<aside class="callout you-will-learn">
+	<strong>You will learn to:</strong>
+	<ul>
+		<li>Read a ZIP archive through the <code>ZipFilesystem</code> interface — same calls as a local directory.</li>
+		<li>Stream a single large entry with <code>open_read_stream()</code> and the pull / consume loop.</li>
+		<li>Compose two filesystems with <code>copy_between_filesystems()</code> to move data between backends.</li>
+		<li>Recognize when an in-memory staging filesystem is the right tool, and what swaps out for production.</li>
+	</ul>
+</aside>
+
+<h2 id="why-streams">Why we don't extract to disk</h2>
+
+<p>The naive approach to importing a ZIP of posts is <code>$zip->extractTo('/tmp/staging')</code>, then walk the directory. That's fine if you control the host. The toolkit's whole point is that you often don't. Shared hosts ration disk quota; WebAssembly runtimes have no persistent disk; Docker containers running as non-root may not be able to write where you'd like.</p>
+
+<p>We sidestep the issue by never extracting. <code>ZipFilesystem</code> reads entry data on demand directly from the archive bytes, and an <code>InMemoryFilesystem</code> gives us a place to stage results that vanishes when the process ends. The importer reads from one and writes to the other; the disk is never involved.</p>
+
+<h2 id="open-zip">Open the input ZIP as a filesystem</h2>
+
+<p>The ZIP component's highest-level type is <code>ZipFilesystem</code> — an archive presented through the same <code>Filesystem</code> interface that <code>InMemoryFilesystem</code> and <code>LocalFilesystem</code> implement. Once you've wrapped it, you call <code>get_contents()</code>, <code>ls()</code>, and <code>is_dir()</code> the same way you would on disk:</p>
+
+<php-snippet blueprint="toolkit-setup" name="open-zip.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\ByteStream\ReadStream\FileReadStream;
+use WordPress\ByteStream\WriteStream\FileWriteStream;
+use WordPress\Zip\FileEntry;
+use WordPress\Zip\ZipDecoder;
+use WordPress\Zip\ZipEncoder;
+use WordPress\Zip\ZipFilesystem;
+
+// In a real importer this is `$argv[1]`. Here we synthesize the input ZIP
+// inline so the snippet runs end-to-end.
+$path = tempnam( sys_get_temp_dir(), 'posts' ) . '.zip';
+$out  = FileWriteStream::from_path( $path, 'truncate' );
+$enc  = new ZipEncoder( $out );
+foreach ( array(
+	'posts/2024-01-pasta.md'   => "---\ntitle: Weeknight pasta\ntags: [dinner, quick]\n---\n\n# Weeknight pasta\n\nA 20-minute recipe.",
+	'posts/2024-02-soup.md'    => "---\ntitle: Carrot soup\ntags: [soup]\n---\n\n# Carrot soup\n\nA cold-day standby.",
+	'posts/2024-03-bread.md'   => "---\ntitle: No-knead bread\n---\n\n# No-knead bread\n\nA loaf in your sleep.",
+) as $name => $body ) {
+	$enc->append_file( new FileEntry( array(
+		'path'               => $name,
+		'compression_method' => ZipDecoder::COMPRESSION_DEFLATE,
+		'body_reader'        => new MemoryPipe( $body ),
+	) ) );
+}
+$enc->close();
+$out->close_writing();
+
+// And here's the part the importer actually does.
+$zip = ZipFilesystem::create( FileReadStream::from_path( $path ) );
+echo "entries in /posts:\n";
+foreach ( $zip->ls( '/posts' ) as $name ) {
+	$first_line = strtok( $zip->get_contents( '/posts/' . $name ), "\n" );
+	echo "  {$name}  --  {$first_line}\n";
+}
+</script>
+<script type="text/expected-output">
+entries in /posts:
+  2024-01-pasta.md  --  ---
+  2024-02-soup.md  --  ---
+  2024-03-bread.md  --  ---
+</script>
+</php-snippet>
+
+<p>Three things matter in that snippet. The build-the-archive part (<code>ZipEncoder</code>, <code>FileEntry</code>, <code>MemoryPipe</code>) is scaffolding so the example runs end-to-end; in your real importer the ZIP comes from <code>argv</code>. The read part is one line: <code>ZipFilesystem::create( FileReadStream::from_path( $path ) )</code> wraps the archive bytes and gives you the interface. And the loop reads each entry's contents, <em>but doesn't extract</em> — the bytes get inflated on demand and discarded after we're done with them. Memory stays flat regardless of how big the archive is.</p>
+
+<aside class="callout pitfall">
+	<strong>Pitfall — one entry stream at a time.</strong> The decoder is positional. <code>get_contents()</code> opens an entry, reads it whole, and closes it. If you switch to <code>open_read_stream()</code> for a large entry (next section), you must drain or close that stream before opening another. Holding two open simultaneously is undefined.
+</aside>
+
+<h2 id="stream-large">Stream a large entry without buffering it</h2>
+
+<p>For our small Markdown posts <code>get_contents()</code> is fine. But the importer might also include a <code>data.csv</code> with twenty thousand rows of metadata, or a large JSON file describing categories. <code>open_read_stream()</code> returns a pull-based byte reader instead of a buffered string, so you can process the entry chunk-by-chunk:</p>
+
+<php-snippet blueprint="toolkit-setup" name="stream-large.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\ByteStream\ReadStream\FileReadStream;
+use WordPress\ByteStream\WriteStream\FileWriteStream;
+use WordPress\Zip\FileEntry;
+use WordPress\Zip\ZipDecoder;
+use WordPress\Zip\ZipEncoder;
+use WordPress\Zip\ZipFilesystem;
+
+$path = tempnam( sys_get_temp_dir(), 'big' ) . '.zip';
+$out  = FileWriteStream::from_path( $path, 'truncate' );
+$enc  = new ZipEncoder( $out );
+$enc->append_file( new FileEntry( array(
+	'path'               => 'metadata.csv',
+	'compression_method' => ZipDecoder::COMPRESSION_DEFLATE,
+	'body_reader'        => new MemoryPipe( str_repeat( "id,slug,date\n1,pasta,2024-01\n", 5000 ) ),
+) ) );
+$enc->close();
+$out->close_writing();
+
+$zip    = ZipFilesystem::create( FileReadStream::from_path( $path ) );
+$stream = $zip->open_read_stream( 'metadata.csv' );
+
+$rows = 0;
+$tail = '';
+while ( ! $stream->reached_end_of_data() ) {
+	$n = $stream->pull( 8192 );
+	if ( 0 === $n ) break;
+	$chunk  = $tail . $stream->consume( $n );
+	$lines  = explode( "\n", $chunk );
+	$tail   = array_pop( $lines );
+	$rows  += count( $lines );
+}
+printf( "parsed %d CSV rows in 8 KB chunks; peak memory ~%d KB\n",
+	$rows, (int)( memory_get_peak_usage() / 1024 ) );
+</script>
+</php-snippet>
+
+<p>That pull-loop is the same shape every byte stream in the toolkit uses. <code>pull(8192)</code> means "buffer up to 8 KB"; <code>consume($n)</code> reads and advances. The trailing partial line gets carried into the next iteration. Memory used is the chunk size plus one partial line — the same regardless of whether the file is 50 KB or 5 GB.</p>
+
+<aside class="callout note">
+	<strong>Note.</strong> The reference page for ByteStream covers the same loop pattern in more detail, plus the filters that wrap streams: gzip, hash, limit, window. See <a href="../reference/bytestream.html">reference/bytestream.html</a>.
+</aside>
+
+<h2 id="staging">Stage the imports in memory</h2>
+
+<p>Now we connect the two halves. The input is the ZIP we just opened. The staging area is an <code>InMemoryFilesystem</code> — same interface, no disk. Walking the input and copying into the stage is one helper:</p>
+
+<php-snippet blueprint="toolkit-setup" name="stage-imports.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\ByteStream\ReadStream\FileReadStream;
+use WordPress\ByteStream\WriteStream\FileWriteStream;
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Zip\FileEntry;
+use WordPress\Zip\ZipDecoder;
+use WordPress\Zip\ZipEncoder;
+use WordPress\Zip\ZipFilesystem;
+use function WordPress\Filesystem\copy_between_filesystems;
+
+// Build a sample input ZIP.
+$path = tempnam( sys_get_temp_dir(), 'posts' ) . '.zip';
+$out  = FileWriteStream::from_path( $path, 'truncate' );
+$enc  = new ZipEncoder( $out );
+foreach ( array(
+	'posts/pasta.md'  => "---\ntitle: Pasta\n---\n\nQuick pasta.",
+	'posts/soup.md'   => "---\ntitle: Soup\n---\n\nWarm soup.",
+	'images/hero.jpg' => "(fake jpeg bytes)",
+) as $name => $body ) {
+	$enc->append_file( new FileEntry( array(
+		'path'               => $name,
+		'compression_method' => ZipDecoder::COMPRESSION_DEFLATE,
+		'body_reader'        => new MemoryPipe( $body ),
+	) ) );
+}
+$enc->close();
+$out->close_writing();
+
+// Open the input ZIP and a fresh staging filesystem.
+$zip   = ZipFilesystem::create( FileReadStream::from_path( $path ) );
+$stage = InMemoryFilesystem::create();
+
+// One call walks the source and writes to the destination.
+copy_between_filesystems( array(
+	'source_filesystem' => $zip,
+	'source_path'       => '/',
+	'target_filesystem' => $stage,
+	'target_path'       => '/',
+) );
+
+// The stage is now a writable in-memory tree mirroring the archive.
+echo "staged files:\n";
+foreach ( array( '/posts', '/images' ) as $dir ) {
+	foreach ( $stage->ls( $dir ) as $name ) {
+		echo "  {$dir}/{$name}\n";
+	}
+}
+
+// You can still write to the stage afterwards — it's mutable.
+$stage->put_contents( '/MANIFEST', "imported " . date( 'c' ) );
+echo "manifest: " . $stage->get_contents( '/MANIFEST' ) . "\n";
+</script>
+</php-snippet>
+
+<p>Read that example carefully because it's the heart of how the importer composes. The input is read-only (a ZIP) and the output is writable (in-memory). Both expose the same interface, so a generic <code>copy_between_filesystems()</code> works on both. In chapter 3 we'll iterate the staged Markdown files and convert them; in chapter 4 we'll add downloaded media to the same stage. The shape doesn't change between chapters — only what's in the stage.</p>
+
+<aside class="callout try">
+	<strong>Try this:</strong> swap <code>InMemoryFilesystem::create()</code> for <code>LocalFilesystem::create($somePath)</code>. The rest of the example works identically — that's the point of the shared interface. For a CLI tool you'd ship to disk; for an in-process importer you'd stay in memory; for tests you'd use the in-memory backend so each test starts fresh.
+</aside>
+
+<h2 id="zip-slip">Defend against malicious archive paths</h2>
+
+<p>Every importer that accepts external ZIPs needs to defend against <em>zip-slip</em>: an archive containing an entry named <code>../../etc/passwd</code> that, if extracted naively, writes outside the intended destination. The toolkit ships a one-line defense:</p>
+
+<php-snippet blueprint="toolkit-setup" name="zip-slip-defense.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Zip\ZipDecoder;
+
+$inputs = array(
+	'../../etc/passwd',
+	'./safe/path.txt',
+	'a/../../b/secret',
+	'a//b///c.txt',
+	'../../../../root/.ssh/authorized_keys',
+);
+foreach ( $inputs as $name ) {
+	printf( "%-30s -> %s\n", $name, ZipDecoder::sanitize_path( $name ) );
+}
+</script>
+</php-snippet>
+
+<p>Run any entry path through <code>ZipDecoder::sanitize_path()</code> before using it as a key in your destination filesystem. <code>copy_between_filesystems()</code> already does this; if you build your own loop you must too.</p>
+
+<h2 id="combine">Folding it into the importer</h2>
+
+<p>The importer so far has chapter 1's <code>clean_post_html()</code> and chapter 2's stage. Combine them: open the input ZIP, copy it into the stage, then iterate the stage's <code>posts/</code> directory and remember to apply <code>clean_post_html()</code> when we render in chapter 3. We're not invoking it yet because the Markdown-to-HTML conversion is chapter 3's job — but we can already see the shape:</p>
+
+<php-snippet blueprint="toolkit-setup" name="importer-step-2.php" runnable="false">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\ReadStream\FileReadStream;
+use WordPress\Filesystem\Filesystem;
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Zip\ZipFilesystem;
+use function WordPress\Filesystem\copy_between_filesystems;
+
+function open_input_zip( $path ) {
+	return ZipFilesystem::create( FileReadStream::from_path( $path ) );
+}
+
+function stage_input( ZipFilesystem $input ) {
+	$stage = InMemoryFilesystem::create();
+	copy_between_filesystems( array(
+		'source_filesystem' => $input,
+		'source_path'       => '/',
+		'target_filesystem' => $stage,
+		'target_path'       => '/',
+	) );
+	return $stage;
+}
+
+function each_post( Filesystem $stage ) {
+	foreach ( $stage->ls( '/posts' ) as $name ) {
+		yield array(
+			'name'     => $name,
+			'markdown' => $stage->get_contents( '/posts/' . $name ),
+		);
+	}
+}
+
+// Caller (omitted here; chapter 3 wires this in):
+//   $input  = open_input_zip( $argv[1] );
+//   $stage  = stage_input( $input );
+//   foreach ( each_post( $stage ) as $post ) {
+//       $blocks = markdown_to_blocks( $post['markdown'] );
+//       $html   = clean_post_html( render_blocks( $blocks ), $base_url );
+//       ...
+//   }
+</script>
+</php-snippet>
+
+<p>Three small functions, each with a single job. <code>open_input_zip()</code> is one line and exists mostly for readability. <code>stage_input()</code> is the composition we just built. <code>each_post()</code> is a generator so the caller can iterate without loading every post's text at once. The signatures take the abstract <code>Filesystem</code> type, not <code>InMemoryFilesystem</code>, which means a future version of the importer that stages on disk for a debugging session would not need any code change.</p>
+
+<h2 id="recap">Recap</h2>
+
+<p>You can now:</p>
+
+<ul>
+	<li>Wrap a ZIP archive as a <code>Filesystem</code> with <code>ZipFilesystem::create()</code> and read entries through the standard interface.</li>
+	<li>Stream a large entry with <code>open_read_stream()</code>, the <code>pull()</code> / <code>consume()</code> loop, and a trailing-partial-line carry.</li>
+	<li>Stage data in <code>InMemoryFilesystem</code> for in-process work, and swap to a different backend without changing the calling code.</li>
+	<li>Compose source and destination filesystems with <code>copy_between_filesystems()</code> in one helper call.</li>
+	<li>Defend against zip-slip with <code>ZipDecoder::sanitize_path()</code>.</li>
+</ul>
+
+<p>The stage is now ready to feed chapter 3, where the Markdown-to-blocks conversion actually happens.</p>
+
+<nav class="chapter-nav">
+	<a class="prev" href="01-rewriting-html.html">← Previous: Rewriting HTML</a>
+	<a class="next" href="03-importing-content.html">Next: Markdown to WXR →</a>
+</nav>
+
+<p class="next-preview">In chapter 3 we'll turn each Markdown post into WordPress block markup, run it through <code>clean_post_html()</code>, and stream the whole thing into a WXR file the WordPress importer plugin will accept. Three more components — Markdown, BlockParser, and DataLiberation — finally meet the importer.</p>
+
+</article>
+</div>
+
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a>
+</footer>
+</body>
+</html>

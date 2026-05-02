@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recap · PHP Toolkit</title>
+<meta name="description" content="Where to go after the four-chapter tutorial — what the importer used, what the toolkit covers beyond it.">
+<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="./">Learn</a>
+		<a href="../reference/">Reference</a>
+		<a class="github" href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+
+<main class="learn-landing">
+
+<h1>Recap and where to go next</h1>
+
+<p class="lede">Across four chapters you built a working content importer. It reads a ZIP of Markdown posts, cleans the HTML inside each one, frontloads referenced images over HTTP, and streams a WXR file the WordPress importer plugin will accept. None of it required curl, libzip, libxml2, or DOMDocument; all of it runs on PHP 7.2 through 8.3 and inside a browser via WordPress Playground.</p>
+
+<section class="what-you-built">
+	<h2>What you built</h2>
+
+	<table class="proof-table">
+	<tr><td>Chapter 1</td><td>→</td><td><code>clean_post_html()</code> using <code>WP_HTML_Tag_Processor</code>: lazy-load images, rewrite URLs, strip scripts, all in one pass.</td></tr>
+	<tr><td>Chapter 2</td><td>→</td><td>Read the input ZIP through <code>ZipFilesystem</code>, stage it in <code>InMemoryFilesystem</code>, defend against zip-slip with <code>ZipDecoder::sanitize_path()</code>.</td></tr>
+	<tr><td>Chapter 3</td><td>→</td><td>Convert each post with <code>MarkdownConsumer</code>, audit the output with <code>WP_Block_Parser</code>, stream the WXR with <code>WXRWriter</code>.</td></tr>
+	<tr><td>Chapter 4</td><td>→</td><td>Frontload images with <code>HttpClient</code> through a sliding-window event loop; mount remote archives with <code>SeekableRequestReadStream</code>.</td></tr>
+	</table>
+</section>
+
+<section class="not-covered">
+	<h2>What the toolkit does that the tutorial didn't touch</h2>
+
+	<p>The importer used eight components. The toolkit ships eighteen. Here's what's left, with the use case each one shows up in:</p>
+
+	<ul class="component-summary">
+		<li><strong>Git</strong> — snapshot your importer's runs into a pure-PHP Git repository for revision history. Useful for "what changed between last week's import and this week's." <a href="../reference/git.html">Reference →</a></li>
+		<li><strong>Merge</strong> — three-way diff and merge for content sync. If posts edit on both the source and the destination side, this is how you reconcile them. <a href="../reference/merge.html">Reference →</a></li>
+		<li><strong>HttpServer</strong> — a tiny local listening port for OAuth callbacks during a CLI workflow, fixture servers for HttpClient tests, or a status page during a long import. Not for production traffic. <a href="../reference/httpserver.html">Reference →</a></li>
+		<li><strong>CORSProxy</strong> — when you ship the importer as a browser tool, a server-side proxy to fetch URLs that don't send the right CORS headers. <a href="../reference/corsproxy.html">Reference →</a></li>
+		<li><strong>CLI</strong> — POSIX-style argument parser to wrap your importer as <code>importer.php --site-url=… --dry-run</code>. <a href="../reference/cli.html">Reference →</a></li>
+		<li><strong>Encoding</strong> — UTF-8 validation and scrubbing for inputs that may contain mixed encodings. Most importers eventually need it. <a href="../reference/encoding.html">Reference →</a></li>
+		<li><strong>XML</strong> — the cursor-based XML processor underneath DataLiberation; reach for it directly when you need to walk export-sized files. <a href="../reference/xml.html">Reference →</a></li>
+		<li><strong>Blueprints</strong> — declarative site setup. Spin up the destination WordPress with the right plugins and options before running the importer against it. <a href="../reference/blueprints.html">Reference →</a></li>
+		<li><strong>Polyfill</strong> — WordPress-shaped helpers (<code>esc_html</code>, <code>add_filter</code>, <code>__</code>) so toolkit code can run outside WordPress without ifdefs. <a href="../reference/polyfill.html">Reference →</a></li>
+		<li><strong>ToolkitCodingStandards</strong> — PHPCS sniffs encoding the project's review feedback as enforceable rules. Borrow if your project follows WordPress style. <a href="../reference/coding-standards.html">Reference →</a></li>
+	</ul>
+</section>
+
+<section class="patterns">
+	<h2>Patterns worth keeping</h2>
+
+	<p>Three shapes recurred across the tutorial. Watch for them in your own code:</p>
+
+	<h3>Cursor over a string</h3>
+	<p><code>WP_HTML_Tag_Processor</code> walks a string forward, records edits as a side-buffer of byte-range replacements, and emits the modified string only when you call <code>get_updated_html()</code>. The result is byte-honest — bytes you didn't edit come through bit-identical. When you need to make small changes to large markup, that property is gold. The XML component's <code>XMLProcessor</code> applies the same pattern to XML.</p>
+
+	<h3>Pull / consume streams</h3>
+	<p><code>ZipFilesystem::open_read_stream()</code>, <code>HttpClient</code> response bodies, <code>InflateReadStream</code>, and the rest all share the same shape: <code>pull(N)</code> reads up to <code>N</code> bytes from the underlying source into an internal buffer and returns how many ended up there; <code>consume(N)</code> reads <code>N</code> bytes from that buffer and advances past them. Memory used is bounded by the chunk size, never by the file size. Once you internalize this loop you can compose any byte source with any byte sink.</p>
+
+	<h3>One interface, multiple backends</h3>
+	<p>Code that takes a <code>Filesystem</code> rather than a path doesn't care if the filesystem is on disk, in memory, in a SQLite database, or inside a ZIP. That's how the importer's stage works for both production (memory) and debugging (local disk) without a code change. Same pattern shows up in HttpClient (curl vs sockets transport) and ByteStream (file, memory, deflate, hash all implementing the same byte-stream interface).</p>
+</section>
+
+<section class="next-actions">
+	<h2>Where to go from here</h2>
+
+	<p>Three honest paths:</p>
+
+	<ol>
+		<li><strong>Take the importer further.</strong> Add a <code>--dry-run</code> flag with the CLI component. Snapshot each run into a Git repository so you can diff between imports. Wrap it in a CORSProxy-fronted browser tool. Each of those is a one-component addition; the structure you have already accommodates them.</li>
+		<li><strong>Pick a single component and go deep.</strong> The reference pages all have refinements past the minimal example — bookmarks and breadcrumbs in HTML, three-way merges in Git, sliding windows and resumable downloads in HttpClient. The depth is there when the project asks for it.</li>
+		<li><strong>Read the source.</strong> Each component lives under <code>components/&lt;Name&gt;/</code>. <code>components/HTML/class-wp-html-tag-processor.php</code> is the same code WordPress core ships in <code>wp-includes/html-api/</code>; <code>components/Zip/class-zipdecoder.php</code> is a clean implementation of the parts of the ZIP spec that the toolkit actually uses. The code is written to be read.</li>
+	</ol>
+</section>
+
+<section class="cta-row" style="margin-top: 3rem;">
+	<a class="cta primary" href="../reference/">Browse all 18 components →</a>
+	<a class="cta" href="../">Back to landing</a>
+	<a class="cta" href="https://github.com/WordPress/php-toolkit">GitHub</a>
+</section>
+
+</main>
+
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a>
+</footer>
+</body>
+</html>

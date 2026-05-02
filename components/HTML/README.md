@@ -1,260 +1,142 @@
 # HTML
 
-A full HTML5 parser and tag processor implemented in pure PHP, mirroring WordPress core's HTML API. It provides two levels of access: `WP_HTML_Tag_Processor` for fast, linear scanning and modification of HTML attributes, and `WP_HTML_Processor` for structure-aware parsing that understands nested elements, implicit tag closers, and the HTML5 insertion algorithm. No libxml2, no DOM extension, no external dependencies.
+## Why this exists
 
-## Installation
+Modifying HTML in PHP usually means one of two things: string manipulation (fragile, breaks on any attribute ordering or whitespace variation) or loading the DOM extension (which requires libxml2, triggers errors on valid HTML5 that doesn't conform to XML rules, and mangles the document in the process).
 
-```
-composer require wp-php-toolkit/html
-```
+WordPress needed a third option: a parser that can safely scan and modify real-world HTML — including malformed markup — without any native extension, without loading the whole document into memory, and without altering content it wasn't asked to change. The result is `WP_HTML_Tag_Processor` and `WP_HTML_Processor`, both mirrored here from WordPress core for use outside WordPress.
 
-## Quick Start
+The key design insight is that most HTML processing tasks don't need a full DOM tree. You want to find a tag and change one of its attributes. You want to add a class to every `<img>`. You don't need to understand the document structure for that — you just need to scan forward efficiently. `WP_HTML_Tag_Processor` handles that case. When you do need structure — "find the `<img>` inside a `<figure>` inside a `<div class='gallery'>`" — `WP_HTML_Processor` adds the HTML5 insertion algorithm on top.
 
-Find and modify HTML tags:
+## How it works
 
-```php
-$html = '<div class="entry"><img src="photo.jpg"><p>Hello</p></div>';
+### WP_HTML_Tag_Processor — fast linear scanning
 
-$tags = new WP_HTML_Tag_Processor( $html );
-if ( $tags->next_tag( 'img' ) ) {
-    $tags->set_attribute( 'loading', 'lazy' );
-    $tags->add_class( 'responsive' );
-}
+`WP_HTML_Tag_Processor` is a forward-only cursor over raw HTML bytes. You call `next_tag()` to advance to the next opening tag, optionally filtering by tag name or attribute. When the cursor is on a tag, you can read and modify its attributes. Calling `get_updated_html()` at the end returns the original HTML with your modifications applied.
 
-echo $tags->get_updated_html();
-// <div class="entry"><img loading="lazy" class="responsive" src="photo.jpg"><p>Hello</p></div>
-```
+The important thing it does *not* do: it doesn't build a tree, it doesn't understand nesting, it doesn't run the HTML5 parsing algorithm. It's a fast string scanner that knows what a tag looks like. This makes it useful for a huge class of real-world tasks that don't need structure awareness, and it makes it very fast.
+
+### WP_HTML_Processor — structure-aware parsing
+
+`WP_HTML_Processor` extends the tag processor with the HTML5 tree-construction algorithm. It understands that `<li>` implicitly closes a previous `<li>`, that `<p>` can't contain `<div>`, that `<table>` creates a distinct parsing context. This lets you query by breadcrumb — a sequence of ancestor tags — rather than just by tag name.
+
+When it encounters markup it can't safely handle (certain edge cases in the HTML5 spec), it returns `null` rather than producing incorrect output. The design principle is "correct output or no output" — it refuses to silently corrupt a document.
 
 ## Usage
 
-### Tag Processor: Linear Scanning
-
-`WP_HTML_Tag_Processor` scans through HTML linearly, finding tags by name, class, or other criteria. It does not parse the DOM tree -- it operates on a flat stream of tags, which makes it fast and predictable.
+### Add a class to every image
 
 ```php
-$html = '<ul><li class="active">First</li><li>Second</li><li>Third</li></ul>';
-$tags = new WP_HTML_Tag_Processor( $html );
+use WordPress\HTML\WP_HTML_Tag_Processor;
 
-// Find tags by name.
-while ( $tags->next_tag( 'li' ) ) {
-    $tags->set_attribute( 'role', 'listitem' );
+$html = new WP_HTML_Tag_Processor( $content );
+
+while ( $html->next_tag( 'img' ) ) {
+    $html->add_class( 'responsive' );
 }
-echo $tags->get_updated_html();
-// Every <li> now has role="listitem".
+
+echo $html->get_updated_html();
 ```
 
-#### Querying with Arrays
-
-Pass an array to `next_tag()` to match by tag name, class, or both:
+### Find a tag with a specific attribute
 
 ```php
-$tags = new WP_HTML_Tag_Processor( $html );
+$html = new WP_HTML_Tag_Processor( $content );
 
-// Find by tag name.
-$tags->next_tag( array( 'tag_name' => 'img' ) );
-
-// Find by CSS class.
-$tags->next_tag( array( 'class_name' => 'hero' ) );
-
-// Find by both.
-$tags->next_tag( array( 'tag_name' => 'div', 'class_name' => 'sidebar' ) );
-```
-
-#### Reading Attributes
-
-```php
-$html = '<a href="https://wordpress.org" title="WP" class="button primary">Visit</a>';
-$tags = new WP_HTML_Tag_Processor( $html );
-
-if ( $tags->next_tag( 'a' ) ) {
-    $tags->get_tag();                   // 'A'
-    $tags->get_attribute( 'href' );     // 'https://wordpress.org'
-    $tags->get_attribute( 'title' );    // 'WP'
-    $tags->get_attribute( 'missing' );  // null (attribute not present)
-    $tags->has_class( 'button' );       // true
-    $tags->has_class( 'danger' );       // false
+// Find the first <a> with a rel="noopener" attribute.
+if ( $html->next_tag( array( 'tag_name' => 'a', 'tag_closers' => 'skip' ) ) ) {
+    while ( $html->get_attribute( 'rel' ) !== 'noopener' ) {
+        if ( ! $html->next_tag( array( 'tag_name' => 'a' ) ) ) {
+            break;
+        }
+    }
+    $html->set_attribute( 'target', '_blank' );
 }
 ```
 
-#### Modifying Attributes and Classes
+### Read and modify attributes
 
 ```php
-$tags = new WP_HTML_Tag_Processor( '<div class="old" data-x="1">' );
-$tags->next_tag();
+$html = new WP_HTML_Tag_Processor( '<img src="old.jpg" alt="A photo" class="hero">' );
+$html->next_tag( 'img' );
 
-$tags->set_attribute( 'id', 'main' );       // Add a new attribute.
-$tags->set_attribute( 'data-x', '2' );      // Update an existing attribute.
-$tags->remove_attribute( 'data-x' );        // Remove an attribute.
-$tags->add_class( 'new' );                  // Add a CSS class.
-$tags->remove_class( 'old' );               // Remove a CSS class.
+echo $html->get_attribute( 'src' );   // "old.jpg"
+echo $html->get_attribute( 'alt' );   // "A photo"
 
-echo $tags->get_updated_html();
-// <div id="main" class=" new">
+$html->set_attribute( 'src', 'new.jpg' );
+$html->remove_attribute( 'class' );
+
+echo $html->get_updated_html();
+// <img src="new.jpg" alt="A photo">
 ```
 
-#### Custom Filtering
+### Query by structure with WP_HTML_Processor
 
-When the query syntax is not enough, loop through tags and inspect them directly:
+When you need to find a tag based on where it sits in the document tree, use `WP_HTML_Processor`. Breadcrumbs work like a simplified CSS selector with only the child combinator:
 
 ```php
-$tags = new WP_HTML_Tag_Processor( $html );
-while ( $tags->next_tag() ) {
-    if (
-        ( 'DIV' === $tags->get_tag() || 'SPAN' === $tags->get_tag() ) &&
-        'highlight' === $tags->get_attribute( 'data-style' )
-    ) {
-        $tags->add_class( 'theme-highlight' );
+use WordPress\HTML\WP_HTML_Processor;
+
+$html = WP_HTML_Processor::create_fragment( $content );
+
+// Find every <img> that is a direct child of a <figure>.
+while ( $html->next_tag( array( 'breadcrumbs' => array( 'figure', 'img' ) ) ) ) {
+    $html->set_attribute( 'loading', 'lazy' );
+}
+
+echo $html->get_updated_html();
+```
+
+### Use bookmarks to return to a position
+
+Sometimes you want to mark a position in the document and come back to it later:
+
+```php
+$html = new WP_HTML_Tag_Processor( $content );
+
+while ( $html->next_tag( 'div' ) ) {
+    if ( $html->get_attribute( 'id' ) === 'header' ) {
+        $html->set_bookmark( 'header' );
     }
 }
+
+// ... do other work ...
+
+$html->seek( 'header' );
+$html->add_class( 'processed' );
 ```
 
-#### Bookmarks
+### Decode HTML entities
 
-Bookmarks let you save a position and return to it later. This is the one exception to the forward-only scanning rule:
+`WP_HTML_Decoder` handles entity decoding, including numeric character references and all named HTML entities, without needing the DOM or `html_entity_decode()`:
 
 ```php
-$tags = new WP_HTML_Tag_Processor( '<div><span>text</span></div>' );
-$tags->next_tag( 'div' );
-$tags->set_bookmark( 'the-div' );
+use WordPress\HTML\WP_HTML_Decoder;
 
-$tags->next_tag( 'span' );
-$tags->set_attribute( 'class', 'inner' );
+echo WP_HTML_Decoder::decode( '&lt;em&gt;Hello&lt;/em&gt;' );
+// <em>Hello</em>
 
-// Jump back to the bookmarked position.
-$tags->seek( 'the-div' );
-$tags->set_attribute( 'class', 'outer' );
-
-$tags->release_bookmark( 'the-div' );
-echo $tags->get_updated_html();
-// <div class="outer"><span class="inner">text</span></div>
+echo WP_HTML_Decoder::decode( '&#128512;' );
+// 😀
 ```
 
-### HTML Processor: Structure-Aware Parsing
+## Choosing between the two processors
 
-`WP_HTML_Processor` extends the tag processor with HTML5-compliant structural parsing. It understands nested elements, implied closers, and can query by element nesting (breadcrumbs).
+Use `WP_HTML_Tag_Processor` when:
+- You're modifying attributes on specific tags (add/remove classes, change `src`, set `data-*`).
+- You don't care about document structure — just "find tags matching this name/attribute."
+- You want maximum performance on large documents.
 
-```php
-$html = '<figure><img src="photo.jpg"><figcaption>A <em>lovely</em> day</figcaption></figure>';
+Use `WP_HTML_Processor` when:
+- You need to find tags based on their ancestors ("the `<img>` inside a `<figure>`").
+- You're working with content that relies on implicit tag behavior (e.g., HTML that omits `</p>` or `</li>` close tags).
+- You need to understand the document tree, not just scan its surface.
 
-$processor = WP_HTML_Processor::create_fragment( $html );
+## Important limitations
 
-// Find an IMG that is a direct child of FIGURE.
-if ( $processor->next_tag( array( 'breadcrumbs' => array( 'FIGURE', 'IMG' ) ) ) ) {
-    $processor->set_attribute( 'loading', 'lazy' );
-}
-```
+Neither processor supports:
+- Modifying text content (only attributes and class names can be changed).
+- Inserting or removing entire tags (you can modify existing ones only).
+- JavaScript or CSS inside the document (those are treated as opaque text).
 
-#### Breadcrumbs
-
-Breadcrumbs represent the stack of open elements from the root down to the current tag. They work like a CSS child combinator (`FIGURE > IMG`):
-
-```php
-$html = '<div><p>One</p><p>Two <em>Three</em></p></div>';
-$processor = WP_HTML_Processor::create_fragment( $html );
-
-while ( $processor->next_tag() ) {
-    $crumbs = $processor->get_breadcrumbs();
-    // First match:  array( 'HTML', 'BODY', 'DIV' )
-    // Second match: array( 'HTML', 'BODY', 'DIV', 'P' )
-    // ... and so on for each tag encountered.
-}
-```
-
-#### Token-Level Access
-
-Both processors support token-level iteration via `next_token()`, which visits every token in the document including text nodes, comments, and tags:
-
-```php
-$processor = WP_HTML_Processor::create_fragment( '<p>Hello <b>world</b></p>' );
-
-while ( $processor->next_token() ) {
-    $type = $processor->get_token_type();
-    // '#tag'  for HTML tags (openers and closers)
-    // '#text' for text content
-    // Other types for comments, doctypes, etc.
-
-    if ( '#text' === $type ) {
-        echo $processor->get_modifiable_text();
-        // "Hello ", then "world"
-    }
-}
-```
-
-#### Serialization
-
-The processor can serialize its parsed document back to a well-formed HTML string:
-
-```php
-$messy = '<p>one<p>two';  // Missing closer -- valid HTML5, parsed as two paragraphs.
-$processor = WP_HTML_Processor::create_fragment( $messy );
-echo $processor->serialize();
-// <html><head></head><body><p>one</p><p>two</p></body></html>
-```
-
-### HTML Decoder
-
-`WP_HTML_Decoder` decodes HTML character references in text nodes and attribute values, handling named entities, numeric references, and edge cases from the HTML5 spec:
-
-```php
-$decoded = WP_HTML_Decoder::decode_text_node( 'AT&amp;T &mdash; 100&percnt;' );
-// 'AT&T — 100%'
-
-$decoded = WP_HTML_Decoder::decode_attribute( 'path?a=1&amp;b=2' );
-// 'path?a=1&b=2'
-
-// Check if an encoded attribute value starts with a given string.
-$starts = WP_HTML_Decoder::attribute_starts_with( 'http&colon;//example.com', 'http:', 'ascii-case-insensitive' );
-// true
-```
-
-## API Reference
-
-### WP_HTML_Tag_Processor
-
-| Method | Description |
-|--------|-------------|
-| `__construct( $html )` | Create a processor for the given HTML string |
-| `next_tag( $query = null )` | Advance to the next matching tag; returns `bool` |
-| `next_token()` | Advance to the next token (tag, text, comment); returns `bool` |
-| `get_tag()` | Get the uppercase tag name of the current tag |
-| `get_token_type()` | Get the token type (`#tag`, `#text`, `#comment`, etc.) |
-| `get_attribute( $name )` | Get an attribute value, `null` if missing, `true` for boolean attributes |
-| `set_attribute( $name, $value )` | Set or update an attribute |
-| `remove_attribute( $name )` | Remove an attribute |
-| `add_class( $class_name )` | Add a CSS class |
-| `remove_class( $class_name )` | Remove a CSS class |
-| `has_class( $wanted_class )` | Check if a CSS class is present |
-| `get_updated_html()` | Get the modified HTML string |
-| `get_modifiable_text()` | Get the text content of the current text node |
-| `set_bookmark( $name )` | Save the current position |
-| `seek( $bookmark_name )` | Return to a bookmarked position |
-| `release_bookmark( $name )` | Free a bookmark |
-
-### WP_HTML_Processor
-
-| Method | Description |
-|--------|-------------|
-| `create_fragment( $html )` | Create a processor for an HTML fragment (static factory) |
-| `next_tag( $query = null )` | Find the next tag, supports `'breadcrumbs'` queries |
-| `next_token()` | Advance to the next token with structural awareness |
-| `get_breadcrumbs()` | Get the stack of open elements as an array of tag names |
-| `serialize()` | Serialize the parsed document to well-formed HTML |
-
-Inherits all attribute and class methods from `WP_HTML_Tag_Processor`.
-
-### WP_HTML_Decoder
-
-| Method | Description |
-|--------|-------------|
-| `decode_text_node( $text )` | Decode character references in an HTML text node |
-| `decode_attribute( $text )` | Decode character references in an attribute value |
-| `attribute_starts_with( $haystack, $search, $case )` | Check if an encoded attribute starts with a plain string |
-
-## Attribution
-
-This component is extracted from [WordPress core's HTML API](https://developer.wordpress.org/reference/classes/wp_html_processor/). The `WP_HTML_Tag_Processor` and `WP_HTML_Processor` were created by the WordPress core team to provide a safe, spec-compliant way to modify HTML without regular expressions. Licensed under GPL v2.
-
-## Requirements
-
-- PHP 7.2+
-- No external dependencies
+`WP_HTML_Processor` will abort with `null` on constructs it can't safely handle. Always check return values when using it on untrusted or complex HTML.

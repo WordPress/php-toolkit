@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PHP Toolkit — runnable docs</title>
+<meta name="description" content="Guided docs for eighteen pure-PHP libraries for WordPress and general PHP, with runnable examples powered by WordPress Playground.">
+<link rel="stylesheet" href="assets/style.css?v=20260429-concept-guide">
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="./">PHP Toolkit</a>
+	<nav>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<main class="landing">
+	<h1>PHP Toolkit</h1>
+	<p class="lede">Eighteen standalone pure-PHP libraries for WordPress and general PHP, with no extension or Composer dependencies. Each guide starts with the story for that component, outlines the route through the page, names the main APIs, and then uses examples only where code clarifies the idea.</p>
+
+	<h2>Choose a Path</h2>
+	<ul class="starter-paths">
+		<li><strong>Content and migration</strong><span>Start here when you are importing, exporting, rewriting, or auditing WordPress content.</span><nav aria-label="Content and migration path"><a href="html/">HTML</a> <a href="blockparser/">BlockParser</a> <a href="markdown/">Markdown</a> <a href="xml/">XML</a> <a href="dataliberation/">DataLiberation</a></nav></li>
+		<li><strong>Streams and storage</strong><span>Use this path for archives, large files, testable storage backends, and pure-PHP file movement.</span><nav aria-label="Streams and storage path"><a href="bytestream/">ByteStream</a> <a href="filesystem/">Filesystem</a> <a href="zip/">Zip</a> <a href="git/">Git</a> <a href="merge/">Merge</a></nav></li>
+		<li><strong>Networked tools</strong><span>Use this path for clients, local fixture servers, browser-facing proxies, and CLI workflows.</span><nav aria-label="Networked tools path"><a href="httpclient/">HttpClient</a> <a href="httpserver/">HttpServer</a> <a href="corsproxy/">CORSProxy</a> <a href="cli/">CLI</a></nav></li>
+		<li><strong>WordPress runtime support</strong><span>Use this path when your code needs WordPress-shaped helpers, repeatable sites, or project-specific review rules.</span><nav aria-label="WordPress runtime support path"><a href="polyfill/">Polyfill</a> <a href="blueprints/">Blueprints</a> <a href="coding-standards/">ToolkitCodingStandards</a></nav></li>
+	</ul>
+
+	<h2>Components</h2>
+	<ul class="components">
+		<li><a href="html/"><strong>HTML</strong><span>A pure-PHP HTML5 parser and tag rewriter mirroring WordPress core&#x27;s HTML API.</span></a></li>
+		<li><a href="zip/"><strong>Zip</strong><span>Read and write ZIP archives in pure PHP — no libzip, no ZipArchive.</span></a></li>
+		<li><a href="bytestream/"><strong>ByteStream</strong><span>Composable streaming primitives for reading, writing, transforming, hashing, and compressing byte data.</span></a></li>
+		<li><a href="filesystem/"><strong>Filesystem</strong><span>One Filesystem interface across local disk, in-memory trees, SQLite databases, and ZIP archives.</span></a></li>
+		<li><a href="blockparser/"><strong>BlockParser</strong><span>WordPress core&#x27;s block parser, packaged as a standalone library.</span></a></li>
+		<li><a href="markdown/"><strong>Markdown</strong><span>Bidirectional converter between Markdown and WordPress block markup.</span></a></li>
+		<li><a href="xml/"><strong>XML</strong><span>A streaming, namespace-aware XML processor in pure PHP.</span></a></li>
+		<li><a href="encoding/"><strong>Encoding</strong><span>UTF-8 validation and scrubbing with a pure-PHP fallback when mbstring is unavailable.</span></a></li>
+		<li><a href="dataliberation/"><strong>DataLiberation</strong><span>Streaming WordPress import/export.</span></a></li>
+		<li><a href="git/"><strong>Git</strong><span>A pure-PHP Git client and server.</span></a></li>
+		<li><a href="merge/"><strong>Merge</strong><span>Three-way merge and diff.</span></a></li>
+		<li><a href="httpclient/"><strong>HttpClient</strong><span>Async HTTP client without curl required.</span></a></li>
+		<li><a href="httpserver/"><strong>HttpServer</strong><span>A minimal blocking TCP HTTP server in pure PHP.</span></a></li>
+		<li><a href="corsproxy/"><strong>CORSProxy</strong><span>A small PHP CORS proxy intended for browser-side code that needs to reach servers without CORS headers.</span></a></li>
+		<li><a href="cli/"><strong>CLI</strong><span>POSIX-style argument parser.</span></a></li>
+		<li><a href="polyfill/"><strong>Polyfill</strong><span>PHP 8 string functions on PHP 7.</span></a></li>
+		<li><a href="blueprints/"><strong>Blueprints</strong><span>Declarative WordPress site provisioning.</span></a></li>
+		<li><a href="coding-standards/"><strong>ToolkitCodingStandards</strong><span>PHP_CodeSniffer sniffs used by this project: enforce Yoda comparisons and ban the short ternary where it…</span></a></li>
+	</ul>
+
+	<h2>How these examples work</h2>
+	<p>Most PHP examples embed <code>&lt;php-snippet&gt;</code> elements from <a href="https://playground.wordpress.net/">WordPress Playground</a>. The first <em>Run</em> click on a page boots a single shared PHP+WordPress runtime in your browser via WebAssembly and unzips the toolkit into it. Subsequent snippets reuse the same runtime, so only the first run pays the boot cost.</p>
+	<p>Examples that need a local listening port, a web server, or deployment-specific config are presented as static code blocks so the page does not imply they can run in the browser sandbox.</p>
+	<p>The toolkit bundle (<code>docs/assets/php-toolkit.zip</code>, ≈1.8&nbsp;MB) ships with the docs, so no third-party CDN is involved.</p>
+</main>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a>
+</footer>
+</body>
+</html>

@@ -1,173 +1,139 @@
 # Zip
 
-A pure PHP library for reading and writing ZIP archives without the `libzip` extension or `ZipArchive` class. It provides a streaming `ZipFilesystem` reader that exposes ZIP contents through a standard filesystem interface, and a `ZipEncoder` that writes ZIP files incrementally. Handles both stored and deflate-compressed entries.
+## Why this exists
 
-## Installation
+PHP ships with `ZipArchive`, a convenient class for reading and writing ZIP files. The catch: it requires the `libzip` native extension, which isn't available everywhere. WordPress Playground compiles PHP to WebAssembly and runs it in the browser — no native extensions, no `libzip`, no `ZipArchive`.
 
-```
-composer require wp-php-toolkit/zip
-```
+WordPress Playground needs ZIP files constantly. Installing a plugin, importing a theme, exporting a site — all of these move data as ZIP archives. This component implements ZIP reading and writing entirely in pure PHP so that Playground (and any other extension-free PHP environment) can work with ZIP files without restriction.
 
-## Quick Start
+## How it works
 
-```php
-use WordPress\ByteStream\ReadStream\FileReadStream;
-use WordPress\Zip\ZipFilesystem;
+A ZIP file is structured with the actual file data at the front and a "central directory" at the end. The central directory is an index: it lists every file in the archive along with the offset where its data starts. This layout is what makes ZIP files streamable — you can start writing file data immediately without knowing the final offsets, then write the index at the end.
 
-// Open a ZIP file and read its contents
-$zip = ZipFilesystem::create( FileReadStream::from_path( 'archive.zip' ) );
+### Reading: ZipFilesystem
 
-// List top-level entries
-$entries = $zip->ls(); // ['readme.txt', 'src', 'images']
+`ZipFilesystem` reads the central directory first (from the end of the file) to build an in-memory index, then lazily reads individual file entries on demand. It implements the `Filesystem` interface from this toolkit, so reading a ZIP archive looks identical to reading a local directory. Code that accepts a `Filesystem` argument works against a ZIP file without any changes.
 
-// Read a file
-$content = $zip->get_contents( 'readme.txt' );
-```
+The central directory is capped at 2 MB to keep memory usage predictable even for large archives.
+
+### Writing: ZipEncoder
+
+`ZipEncoder` writes a ZIP archive incrementally to a `ByteWriteStream`. You add files one at a time; it writes each local file header and data immediately. When you call `finish()`, it writes the central directory and end-of-central-directory record, completing the archive.
+
+Files can be stored uncompressed (`STORE`) or compressed with DEFLATE. The encoder handles CRC32 checksums and compressed/uncompressed size tracking automatically.
 
 ## Usage
 
-### Reading ZIP Archives
-
-`ZipFilesystem` implements the `Filesystem` interface, so you can list directories, check paths, and read files just like a regular filesystem.
+### Read files from a ZIP archive
 
 ```php
-use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\Zip\ZipFilesystem;
 
-$zip = ZipFilesystem::create( FileReadStream::from_path( 'book.epub' ) );
+$fs = ZipFilesystem::create( '/path/to/plugin.zip' );
 
-// List the root directory
-$entries = $zip->ls();
-// ['mimetype', 'EPUB', 'META-INF']
+// Works just like any other Filesystem.
+foreach ( $fs->ls( '/' ) as $name ) {
+    echo $name . "\n";
+}
 
-// List a subdirectory
-$epub_files = $zip->ls( '/EPUB' );
-// ['cover.xhtml', 'css', 'images', 'nav.xhtml', 'package.opf', ...]
-
-// Check if a path exists
-$zip->exists( 'mimetype' );      // true
-$zip->is_file( 'mimetype' );     // true
-$zip->is_dir( 'EPUB' );          // true
-$zip->is_file( 'EPUB' );         // false
-
-// Read file contents
-$mimetype = $zip->get_contents( 'mimetype' );
-// "application/epub+zip"
-
-$cover = $zip->get_contents( 'EPUB/cover.xhtml' );
-// "<?xml version="1.0" encoding="UTF-8"?>..."
+$contents = $fs->get_contents( '/readme.txt' );
 ```
 
-### Streaming File Reads
-
-For large files inside the archive, use `open_read_stream()` to read data incrementally instead of loading everything into memory.
+### Check if a path exists
 
 ```php
-use WordPress\ByteStream\ReadStream\FileReadStream;
-use WordPress\Zip\ZipFilesystem;
+if ( $fs->is_file( '/plugin.php' ) ) {
+    $main_file = $fs->get_contents( '/plugin.php' );
+}
 
-$zip = ZipFilesystem::create( FileReadStream::from_path( 'archive.zip' ) );
-
-$stream = $zip->open_read_stream( 'large-dataset.csv' );
-while ( $bytes = $stream->pull( 4096 ) ) {
-    $chunk = $stream->consume( $bytes );
-    // Process the chunk...
+if ( $fs->is_dir( '/assets' ) ) {
+    foreach ( $fs->ls( '/assets' ) as $asset ) {
+        echo $asset . "\n";
+    }
 }
 ```
 
-### Creating ZIP Archives
+### Mount a ZIP archive alongside other filesystems
 
-Use `ZipEncoder` to build ZIP files from scratch. Write individual files with `append_file()`, or copy an entire filesystem tree with `append_from_filesystem()`.
-
-```php
-use WordPress\ByteStream\MemoryPipe;
-use WordPress\ByteStream\WriteStream\FileWriteStream;
-use WordPress\Zip\FileEntry;
-use WordPress\Zip\ZipDecoder;
-use WordPress\Zip\ZipEncoder;
-
-// Create a new ZIP file
-$output = FileWriteStream::from_path( 'output.zip', 'truncate' );
-$encoder = new ZipEncoder( $output );
-
-// Add a file with no compression
-$encoder->append_file(
-    new FileEntry( array(
-        'path'               => 'hello.txt',
-        'compression_method' => ZipDecoder::COMPRESSION_NONE,
-        'body_reader'        => new MemoryPipe( 'Hello, world!' ),
-    ) )
-);
-
-// Add a file with deflate compression
-$encoder->append_file(
-    new FileEntry( array(
-        'path'               => 'data/notes.txt',
-        'compression_method' => ZipDecoder::COMPRESSION_DEFLATE,
-        'body_reader'        => new MemoryPipe( 'This will be compressed.' ),
-    ) )
-);
-
-// Finalize and close
-$encoder->close();
-$output->close_writing();
-```
-
-### Copying from One ZIP to Another
-
-Because `ZipFilesystem` implements the standard `Filesystem` interface, you can pass it directly to `ZipEncoder::append_from_filesystem()` to repackage a ZIP archive.
+Because `ZipFilesystem` implements `Filesystem`, you can pass it anywhere a filesystem is expected — including to code that recursively copies files:
 
 ```php
-use WordPress\ByteStream\ReadStream\FileReadStream;
-use WordPress\ByteStream\WriteStream\FileWriteStream;
-use WordPress\Zip\ZipEncoder;
 use WordPress\Zip\ZipFilesystem;
+use WordPress\Filesystem\LocalFilesystem;
+use WordPress\Filesystem\Visitor\FilesystemVisitor;
 
-// Open the source ZIP
-$source = ZipFilesystem::create( FileReadStream::from_path( 'original.zip' ) );
+$zip   = ZipFilesystem::create( '/tmp/theme.zip' );
+$local = new LocalFilesystem( '/var/www/html/wp-content/themes' );
 
-// Create a new ZIP with the same contents
-$output = FileWriteStream::from_path( 'copy.zip', 'truncate' );
-$encoder = new ZipEncoder( $output );
-$encoder->append_from_filesystem( $source );
-$encoder->close();
-$output->close_writing();
+// Extract the ZIP to the local filesystem.
+$visitor = new FilesystemVisitor( $zip, '/' );
+while ( $visitor->next() ) {
+    $event = $visitor->get_event();
+    $path  = $event->get_path();
+    if ( $event->is_dir() ) {
+        $local->mkdir( $path );
+    } elseif ( $event->is_file() ) {
+        $local->put_contents( $path, $zip->get_contents( $path ) );
+    }
+}
 ```
 
-## API Reference
+### Create a ZIP archive
 
-### ZipFilesystem
+```php
+use WordPress\Zip\ZipEncoder;
+use WordPress\Zip\FileEntry;
 
-| Method | Description |
-|--------|-------------|
-| `create( ByteReadStream $reader )` | Create a filesystem view of a ZIP archive |
-| `ls( $dir = '/' )` | List entries in a directory |
-| `is_file( $path )` | Check if a path is a file |
-| `is_dir( $path )` | Check if a path is a directory |
-| `exists( $path )` | Check if a path exists |
-| `get_contents( $path )` | Read an entire file as a string |
-| `open_read_stream( $path )` | Open a streaming reader for a file |
+// Write to a file on disk.
+$handle = fopen( '/tmp/output.zip', 'wb' );
+$stream = new FileWriteStream( $handle );
 
-### ZipEncoder
+$encoder = new ZipEncoder( $stream );
 
-| Method | Description |
-|--------|-------------|
-| `__construct( ByteWriteStream $output )` | Create an encoder that writes to the given stream |
-| `append_file( FileEntry $entry )` | Add a single file to the archive |
-| `append_from_filesystem( Filesystem $fs, $path )` | Recursively add files from a filesystem |
-| `close()` | Write the central directory and finalize the archive |
+// Add a simple text file (stored uncompressed).
+$entry = new FileEntry( 'hello.txt', 'Hello, world.' );
+$encoder->append_file( $entry );
 
-### FileEntry
+// Add a compressed file.
+$entry = new FileEntry( 'data.json', json_encode( $data ), ZipEncoder::COMPRESSION_DEFLATE );
+$encoder->append_file( $entry );
 
-Constructed with an associative array of header fields:
+$encoder->finish();
+fclose( $handle );
+```
 
-| Field | Description |
-|-------|-------------|
-| `path` | File path inside the archive |
-| `body_reader` | A `ByteReadStream` with the file data |
-| `compression_method` | `ZipDecoder::COMPRESSION_NONE` or `ZipDecoder::COMPRESSION_DEFLATE` |
+### Package a filesystem as a ZIP
 
-## Requirements
+`ZipEncoder` can recursively archive any `Filesystem` implementation — a local directory, an in-memory tree, or even another ZIP:
 
-- PHP 7.2+
-- No external PHP extensions required (no libzip)
+```php
+use WordPress\Zip\ZipEncoder;
+use WordPress\Filesystem\LocalFilesystem;
+
+$fs      = new LocalFilesystem( '/var/www/html' );
+$handle  = fopen( '/tmp/site-backup.zip', 'wb' );
+$encoder = new ZipEncoder( new FileWriteStream( $handle ) );
+
+$encoder->append_from_filesystem( $fs, '/' );
+$encoder->finish();
+fclose( $handle );
+```
+
+### Stream a ZIP archive directly to the browser
+
+Because `ZipEncoder` writes to any `ByteWriteStream`, you can send a ZIP to the browser without creating a temporary file:
+
+```php
+header( 'Content-Type: application/zip' );
+header( 'Content-Disposition: attachment; filename="export.zip"' );
+
+$encoder = new ZipEncoder( new StdoutWriteStream() );
+$encoder->append_from_filesystem( $fs, '/' );
+$encoder->finish();
+```
+
+## ZIP format notes
+
+ZIP stores file data as individual local file records followed by a central directory at the end. Because the encoder writes data before it knows final sizes (for streamed or large files), it uses data descriptors — a technique allowed by the ZIP specification — to record CRC32 and size values after the file data rather than before it.
+
+Compression uses PHP's built-in `deflate_init()` / `deflate_add()` functions from the `zlib` extension. If `zlib` is unavailable, files can still be stored uncompressed; only DEFLATE compression requires it.

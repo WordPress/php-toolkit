@@ -1,0 +1,60 @@
+name: Deploy docs to GitHub Pages
+
+on:
+  push:
+    branches: [trunk]
+    paths:
+      - 'components/**'
+      - 'docs/**'
+      - 'bin/build-docs*'
+      - 'composer.json'
+      - 'composer.lock'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-dev --optimize-autoloader --no-progress
+
+      - name: Bundle toolkit and regenerate docs
+        run: |
+          mkdir -p docs/assets
+          rm -f docs/assets/php-toolkit.zip
+          zip -qr docs/assets/php-toolkit.zip components vendor bootstrap.php composer.json \
+            -x "*/Tests/*" "*/tests/*" "*/.git/*" "*/.github/*" "*/node_modules/*"
+          python3 bin/build-docs.py
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
