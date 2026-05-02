@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BlockParser — PHP Toolkit</title>
+<meta name="description" content="WordPress core&#x27;s block parser, packaged as a standalone library. Turn block markup into a structured tree, lint posts for common authoring mistakes, and audit block usage — all without booting WordPress.">
+<link rel="stylesheet" href="../assets/style.css?v=20260429-concept-guide">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js?v=20260429-concept-guide" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<div class="layout">
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<nav class="toc" aria-label="Table of contents"></nav>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li class="current"><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+	</aside>
+	<article class="content">
+		<h1>BlockParser</h1>
+		<p class="lede">WordPress core's block parser, packaged as a standalone library. Turn block markup into a structured tree, lint posts for common authoring mistakes, and audit block usage — all without booting WordPress.</p>
+		<code class="install">composer require wp-php-toolkit/blockparser</code>
+		<p>Block markup is not plain HTML. A post can contain HTML comments that identify blocks, JSON attributes inside those comments, freeform HTML between blocks, and nested blocks whose rendered HTML is interleaved with parent markup.</p><p>This component packages WordPress core's block parser so importers, linters, migration tools, and static analyzers can understand block content without loading WordPress. It deliberately mirrors core behavior, including <code>null</code> blocks for freeform HTML and core block names such as <code>core/paragraph</code>.</p><p>That fidelity to core is intentional. The project history includes removing toolkit-only behavior that was not present in WordPress core because even small mismatches can break importer and migration code that expects core parser semantics.</p><p>Reach for it when you need answers about the block tree: which blocks a post uses, which attributes they carry, where nested blocks appear, or whether content violates a rule your project cares about.</p>
+		<p>The parser turns serialized post content into the block array shape WordPress core returns. It does not render blocks, load <code>block.json</code>, or ask a registry whether a block exists.</p><p>Handle <code>blockName === null</code> first. A real post can contain a paragraph block, a custom block, and loose HTML before or after both.</p>
+		<p class="you-will-learn-label">You will learn to:</p>
+		<ul class="you-will-learn">
+			<li>Inspect the returned shape</li>
+			<li>Walk the tree</li>
+			<li>Ask editorial questions</li>
+		</ul>
+		<p class="runtime-note">Most snippets below run in the browser through WordPress Playground. Click <em>Run</em> on any example to execute it; edit the code and run again to see what changes. Static snippets show config or shell commands that need a real local environment.</p>
+		<h2 id="what-you-get-back">What you get back</h2>
+		<p><code>WP_Block_Parser::parse()</code> returns an array of blocks. Each block is an associative array with five keys: <code>blockName</code>, <code>attrs</code>, <code>innerBlocks</code>, <code>innerHTML</code>, and <code>innerContent</code>.</p><p><code>innerHTML</code> is the HTML inside the block <em>with inner blocks stripped out</em>. <code>innerContent</code> is the interleaved version: an array of HTML strings with <code>null</code> placeholders marking where each inner block belongs.</p><p>Most code starts by checking <code>blockName</code>, then reading <code>attrs</code> or <code>innerHTML</code>. When a post has container blocks such as Group, Columns, or Navigation, look inside <code>innerBlocks</code> too.</p><p><strong>Footgun:</strong> freeform HTML between blocks shows up as a block with <code>blockName === null</code>. Always skip that case before comparing names.</p>
+		<h2 id="parse-a-document">Parse a document</h2>
+		<p>The simplest possible use. Pass a string, get back a tree.</p>
+<php-snippet blueprint="toolkit-setup" name="parse.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+$document = "<!-- wp:heading {\"level\":2} -->\n<h2>Welcome</h2>\n<!-- /wp:heading -->\n\n"
+	. "<!-- wp:paragraph -->\n<p>Hello from the block editor.</p>\n<!-- /wp:paragraph -->";
+
+$blocks = ( new WP_Block_Parser() )->parse( $document );
+foreach ( $blocks as $block ) {
+	if ( null === $block['blockName'] ) {
+		continue;
+	}
+	echo $block['blockName'] . ': ' . trim( strip_tags( $block['innerHTML'] ) ) . "\n";
+}
+</script>
+<script type="text/expected-output">
+core/heading: Welcome
+core/paragraph: Hello from the block editor.
+</script>
+</php-snippet>
+		<h2 id="count-every-block-type-in-a-post">Count every block type in a post</h2>
+		<p>A common audit task: "How many Paragraph, Image, and Gallery blocks does this post use?" A small queue keeps the example readable while still visiting nested blocks.</p>
+<php-snippet blueprint="toolkit-setup" name="count-blocks.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+$document = "<!-- wp:group --><div class=\"wp-block-group\">"
+	. "<!-- wp:heading --><h2>Title</h2><!-- /wp:heading -->"
+	. "<!-- wp:paragraph --><p>One.</p><!-- /wp:paragraph -->"
+	. "<!-- wp:paragraph --><p>Two.</p><!-- /wp:paragraph -->"
+	. "<!-- wp:image {\"id\":1} --><figure><img src=\"a.jpg\"/></figure><!-- /wp:image -->"
+	. "</div><!-- /wp:group -->";
+
+$blocks = ( new WP_Block_Parser() )->parse( $document );
+
+$counts = array();
+$queue  = $blocks;
+
+while ( ! empty( $queue ) ) {
+	$block = array_shift( $queue );
+
+	if ( null !== $block['blockName'] ) {
+		$name             = $block['blockName'];
+		$counts[ $name ] = isset( $counts[ $name ] ) ? $counts[ $name ] + 1 : 1;
+	}
+
+	foreach ( $block['innerBlocks'] as $inner_block ) {
+		$queue[] = $inner_block;
+	}
+}
+
+arsort( $counts );
+foreach ( $counts as $name => $n ) {
+	echo str_pad( (string) $n, 4, ' ', STR_PAD_LEFT ) . '  ' . $name . "\n";
+}
+</script>
+<script type="text/expected-output">
+   2  core/paragraph
+   1  core/group
+   1  core/heading
+   1  core/image
+</script>
+</php-snippet>
+		<h2 id="check-whether-a-post-uses-a-block">Check whether a post uses a block</h2>
+		<p>Useful for templates, audits, and migrations: answer one yes/no question without caring where the block appears in the tree.</p>
+<php-snippet blueprint="toolkit-setup" name="has-block.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+$document = "<!-- wp:group --><div class=\"wp-block-group\">"
+	. "<!-- wp:buttons --><div class=\"wp-block-buttons\">"
+	. "<!-- wp:button --><div class=\"wp-block-button\"><a>Buy now</a></div><!-- /wp:button -->"
+	. "</div><!-- /wp:buttons -->"
+	. "</div><!-- /wp:group -->";
+
+$blocks = ( new WP_Block_Parser() )->parse( $document );
+
+function post_has_block( $blocks, $name ) {
+	$queue = $blocks;
+
+	while ( ! empty( $queue ) ) {
+		$block = array_shift( $queue );
+		if ( $name === $block['blockName'] ) {
+			return true;
+		}
+
+		foreach ( $block['innerBlocks'] as $inner_block ) {
+			$queue[] = $inner_block;
+		}
+	}
+
+	return false;
+}
+
+echo post_has_block( $blocks, 'core/button' ) ? "has button\n" : "missing button\n";
+echo post_has_block( $blocks, 'core/gallery' ) ? "has gallery\n" : "missing gallery\n";
+</script>
+<script type="text/expected-output">
+has button
+missing gallery
+</script>
+</php-snippet>
+		<h2 id="lint-headings-for-hierarchy-mistakes">Lint headings for hierarchy mistakes</h2>
+		<p>"Don't skip from H2 to H4" is a real accessibility rule. The helper below keeps headings in document order, including headings nested inside Group, Column, and Cover blocks.</p>
+<php-snippet blueprint="toolkit-setup" name="lint-headings.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+$document = "<!-- wp:heading -->\n<h2>Intro</h2>\n<!-- /wp:heading -->"
+	. "<!-- wp:heading {\"level\":4} -->\n<h4>Subsection</h4>\n<!-- /wp:heading -->"
+	. "<!-- wp:heading {\"level\":3} -->\n<h3>Body</h3>\n<!-- /wp:heading -->";
+
+$blocks = ( new WP_Block_Parser() )->parse( $document );
+
+function collect_headings( $blocks, &$headings ) {
+	foreach ( $blocks as $block ) {
+		if ( 'core/heading' === $block['blockName'] ) {
+			$headings[] = array(
+				'level' => isset( $block['attrs']['level'] ) ? (int) $block['attrs']['level'] : 2,
+				'text'  => trim( strip_tags( $block['innerHTML'] ) ),
+			);
+		}
+
+		collect_headings( $block['innerBlocks'], $headings );
+	}
+}
+
+$headings = array();
+collect_headings( $blocks, $headings );
+
+$last = 1;
+foreach ( $headings as $heading ) {
+	$level = $heading['level'];
+	$label = $heading['text'];
+
+	if ( $level > $last + 1 ) {
+		echo "WARN {$label}: jumped from H{$last} to H{$level}\n";
+	} else {
+		echo "ok   {$label}: H{$level}\n";
+	}
+	$last = $level;
+}
+</script>
+<script type="text/expected-output">
+ok   Intro: H2
+WARN Subsection: jumped from H2 to H4
+ok   Body: H3
+</script>
+</php-snippet>
+		<h2 id="find-all-instances-of-a-custom-block">Find all instances of a custom block</h2>
+		<p>When auditing an export for a block your plugin owns, collect every match and print the fields a human cares about.</p>
+<php-snippet blueprint="toolkit-setup" name="find-custom-block.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+$document = "<!-- wp:paragraph --><p>Reviews</p><!-- /wp:paragraph -->"
+	. "<!-- wp:my-plugin/testimonial {\"author\":\"Jane\",\"rating\":5} -->"
+	. "<blockquote>Loved it.</blockquote>"
+	. "<!-- /wp:my-plugin/testimonial -->"
+	. "<!-- wp:my-plugin/testimonial {\"author\":\"Joe\",\"rating\":4} -->"
+	. "<blockquote>Pretty good.</blockquote>"
+	. "<!-- /wp:my-plugin/testimonial -->";
+
+$blocks = ( new WP_Block_Parser() )->parse( $document );
+
+function find_blocks_by_name( $blocks, $name, &$matches ) {
+	foreach ( $blocks as $block ) {
+		if ( $name === $block['blockName'] ) {
+			$matches[] = $block;
+		}
+
+		find_blocks_by_name( $block['innerBlocks'], $name, $matches );
+	}
+}
+
+$testimonials = array();
+find_blocks_by_name( $blocks, 'my-plugin/testimonial', $testimonials );
+
+foreach ( $testimonials as $i => $b ) {
+	echo ( $i + 1 ) . '. ' . $b['attrs']['author'] . ' (' . $b['attrs']['rating'] . '/5): '
+		. trim( strip_tags( $b['innerHTML'] ) ) . "\n";
+}
+</script>
+<script type="text/expected-output">
+1. Jane (5/5): Loved it.
+2. Joe (4/5): Pretty good.
+</script>
+</php-snippet>
+		<h2 id="detect-blocks-with-stale-embed-urls">Detect blocks with stale embed URLs</h2>
+		<p>A real-world content audit: find every <code>core/embed</code> whose URL points at a domain you have retired.</p>
+<php-snippet blueprint="toolkit-setup" name="audit-embeds.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+$document = '<!-- wp:embed {"url":"https://twitter.com/wordpress/status/1","providerNameSlug":"twitter"} /-->'
+	. '<!-- wp:embed {"url":"https://youtube.com/watch?v=abc","providerNameSlug":"youtube"} /-->'
+	. '<!-- wp:embed {"url":"https://vine.co/v/xyz","providerNameSlug":"vine"} /-->';
+
+$retired = array( 'vine.co', 'plus.google.com' );
+
+foreach ( ( new WP_Block_Parser() )->parse( $document ) as $b ) {
+	if ( 'core/embed' !== $b['blockName'] ) {
+		continue;
+	}
+	$url  = isset( $b['attrs']['url'] ) ? $b['attrs']['url'] : '';
+	$host = parse_url( $url, PHP_URL_HOST );
+	$bad  = $host && in_array( $host, $retired, true );
+	echo ( $bad ? 'STALE  ' : 'ok     ' ) . $url . "\n";
+}
+</script>
+<script type="text/expected-output">
+ok     https://twitter.com/wordpress/status/1
+ok     https://youtube.com/watch?v=abc
+STALE  https://vine.co/v/xyz
+</script>
+</php-snippet>
+		<h2 id="see-also">See also</h2>
+		<ul class="related-components">
+			<li><a href="../html/">HTML</a><span>Inspect or rewrite the HTML carried by parsed blocks.</span></li>
+			<li><a href="../markdown/">Markdown</a><span>Move between author-friendly Markdown and serialized block markup.</span></li>
+			<li><a href="../dataliberation/">DataLiberation</a><span>Audit and transform blocks while migrating content.</span></li>
+		</ul>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>

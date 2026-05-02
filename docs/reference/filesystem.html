@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Filesystem — PHP Toolkit reference</title>
+<meta name="description" content="One Filesystem interface across local disk, in-memory trees, SQLite databases, and ZIP archives. Forward-slash paths everywhere — even on Windows — so the same code runs in tests, in production, and inside read-only ZIPs.">
+<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../learn/">Learn</a>
+		<a href="./">Reference</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+
+<div class="layout">
+	<aside class="sidebar" aria-label="Reference navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<nav class="toc" aria-label="Table of contents"></nav>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="html.html">HTML</a></li>
+			<li><a href="zip.html">Zip</a></li>
+			<li><a href="bytestream.html">ByteStream</a></li>
+			<li class="current"><a href="filesystem.html">Filesystem</a></li>
+			<li><a href="blockparser.html">BlockParser</a></li>
+			<li><a href="markdown.html">Markdown</a></li>
+			<li><a href="xml.html">XML</a></li>
+			<li><a href="encoding.html">Encoding</a></li>
+			<li><a href="dataliberation.html">DataLiberation</a></li>
+			<li><a href="git.html">Git</a></li>
+			<li><a href="merge.html">Merge</a></li>
+			<li><a href="httpclient.html">HttpClient</a></li>
+			<li><a href="httpserver.html">HttpServer</a></li>
+			<li><a href="corsproxy.html">CORSProxy</a></li>
+			<li><a href="cli.html">CLI</a></li>
+			<li><a href="polyfill.html">Polyfill</a></li>
+			<li><a href="blueprints.html">Blueprints</a></li>
+			<li><a href="coding-standards.html">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+	</aside>
+	<article class="content">
+
+<h1>Filesystem</h1>
+
+<p class="lede">One <code>Filesystem</code> interface across local disk, in-memory trees, SQLite databases, and ZIP archives. Forward-slash paths everywhere — even on Windows — so the same code runs in tests, in production, and inside read-only ZIPs.</p>
+
+<pre><code class="install">composer require wp-php-toolkit/filesystem</code></pre>
+
+<p>Code that touches the filesystem is hard to test, hard to port to Windows, and impossible to point at non-disk storage without rewriting it. Swap <code>LocalFilesystem</code> for <code>InMemoryFilesystem</code> in tests and your suite stops touching <code>/tmp</code>; swap it for <code>SQLiteFilesystem</code> and your "files" become rows in a portable database; swap it for <code>ZipFilesystem</code> and you can read inside an archive with the same calls.</p><p>Every backend uses forward slashes regardless of host OS. No <code>DIRECTORY_SEPARATOR</code> juggling, no Windows-only test failures, no surprises when a path moves between backends.</p>
+
+<h2 id="a-minimal-example">A minimal example</h2>
+
+<p>The fastest backend. No disk I/O, no cleanup, no test-isolation problems.</p>
+
+<php-snippet blueprint="toolkit-setup" name="teaser-memory.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Filesystem\InMemoryFilesystem;
+
+$fs = InMemoryFilesystem::create();
+$fs->put_contents( '/hello.txt', 'Hello, world!' );
+echo $fs->get_contents( '/hello.txt' );
+</script>
+<script type="text/expected-output">
+Hello, world!
+</script>
+</php-snippet>
+
+<h2 id="refinement-test-code-without-touching-disk">Refinement: test code without touching disk</h2>
+
+<p>Code that takes a <code>Filesystem</code> parameter, instead of calling <code>file_get_contents()</code> directly, can be tested against an <code>InMemoryFilesystem</code>. The test sets up files in memory, exercises the function, and asserts on what got written — no temp directories, no cleanup.</p>
+
+<php-snippet blueprint="toolkit-setup" name="test-without-disk.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Filesystem\Filesystem;
+use WordPress\Filesystem\InMemoryFilesystem;
+
+function bump_version( Filesystem $fs, $path ) {
+	$json = json_decode( $fs->get_contents( $path ), true );
+	list( $maj, $min, $patch ) = explode( '.', $json['version'] );
+	$json['version'] = $maj . '.' . $min . '.' . ( (int) $patch + 1 );
+	$fs->put_contents( $path, json_encode( $json ) );
+}
+
+$fs = InMemoryFilesystem::create();
+$fs->put_contents( '/package.json', '{"version":"1.2.3"}' );
+bump_version( $fs, '/package.json' );
+
+echo $fs->get_contents( '/package.json' ) . "\n";
+</script>
+<script type="text/expected-output">
+{"version":"1.2.4"}
+</script>
+</php-snippet>
+
+<h2 id="refinement-local-disk-with-a-chrooted-root">Refinement: local disk with a chrooted root</h2>
+
+<p><code>LocalFilesystem::create($root)</code> is implicitly chrooted: every path resolves relative to <code>$root</code> and a <code>../</code> cannot escape. Reach for it when a request path or CLI argument names a file inside one project directory.</p>
+
+<php-snippet blueprint="toolkit-setup" name="local-chroot.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Filesystem\LocalFilesystem;
+
+$root = sys_get_temp_dir() . '/toolkit-' . uniqid();
+$fs   = LocalFilesystem::create( $root );
+
+$fs->mkdir( '/uploads', array( 'recursive' => true ) );
+$fs->put_contents( '/uploads/note.txt', 'Hi from local disk.' );
+
+echo $fs->get_contents( '/uploads/../uploads/note.txt' ) . "\n";
+
+$fs->rmdir( '/', array( 'recursive' => true ) );
+echo "exists after cleanup? " . ( is_dir( $root ) ? 'yes' : 'no' ) . "\n";
+</script>
+<script type="text/expected-output">
+Hi from local disk.
+exists after cleanup? no
+</script>
+</php-snippet>
+
+<h2 id="refinement-sqlite-as-a-portable-file-store">Refinement: sQLite as a portable file store</h2>
+
+<p>The whole tree lives in one SQLite database file. Use it for self-contained scratch storage that survives process boundaries without leaving loose files behind.</p>
+
+<php-snippet blueprint="toolkit-setup" name="sqlite.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Filesystem\SQLiteFilesystem;
+
+$fs = SQLiteFilesystem::create( ':memory:' );
+$fs->mkdir( '/posts', array( 'recursive' => true ) );
+for ( $i = 1; $i <= 3; $i++ ) {
+	$fs->put_contents( "/posts/post-{$i}.md", "# Post {$i}\n\nBody {$i}." );
+}
+
+foreach ( $fs->ls( '/posts' ) as $name ) {
+	$first = strtok( $fs->get_contents( '/posts/' . $name ), "\n" );
+	echo "{$name}: {$first}\n";
+}
+</script>
+<script type="text/expected-output">
+post-1.md: # Post 1
+post-2.md: # Post 2
+post-3.md: # Post 3
+</script>
+</php-snippet>
+
+<h2 id="refinement-copy-a-tree-across-backends">Refinement: copy a tree across backends</h2>
+
+<p>The killer composability move: <code>copy_between_filesystems()</code> streams files chunk-by-chunk from any source to any target. Pull a ZIP into SQLite, snapshot SQLite to disk, mirror disk into RAM — all the same call.</p>
+
+<php-snippet blueprint="toolkit-setup" name="cross-backend-copy.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Filesystem\LocalFilesystem;
+use WordPress\Filesystem\SQLiteFilesystem;
+use function WordPress\Filesystem\copy_between_filesystems;
+
+$root  = sys_get_temp_dir() . '/copytree-' . uniqid();
+$local = LocalFilesystem::create( $root );
+$local->mkdir( '/site/posts', array( 'recursive' => true ) );
+$local->put_contents( '/site/posts/2024-01.md', '# Hello 2024' );
+$local->put_contents( '/site/index.html', '<h1>Home</h1>' );
+
+$sqlite = SQLiteFilesystem::create( ':memory:' );
+copy_between_filesystems( array(
+	'source_filesystem' => $local,
+	'source_path'       => '/site',
+	'target_filesystem' => $sqlite,
+	'target_path'       => '/snapshot',
+) );
+
+$mem = InMemoryFilesystem::create();
+copy_between_filesystems( array(
+	'source_filesystem' => $sqlite,
+	'source_path'       => '/snapshot',
+	'target_filesystem' => $mem,
+	'target_path'       => '/copy',
+) );
+
+echo "in memory after two copies:\n";
+echo "  posts: " . implode( ', ', $mem->ls( '/copy/posts' ) ) . "\n";
+echo "  index: " . $mem->get_contents( '/copy/index.html' ) . "\n";
+
+$local->rmdir( '/', array( 'recursive' => true ) );
+</script>
+<script type="text/expected-output">
+in memory after two copies:
+  posts: 2024-01.md
+  index: <h1>Home</h1>
+</script>
+</php-snippet>
+
+<h2 id="refinement-atomic-write-via-tempfile-rename">Refinement: atomic write via tempfile rename</h2>
+
+<p>Write to a sibling tempfile, then rename — that's how you avoid leaving a half-written file on crash. <code>rename()</code> is atomic within a single filesystem.</p>
+
+<php-snippet blueprint="toolkit-setup" name="atomic-write.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Filesystem\Filesystem;
+use WordPress\Filesystem\LocalFilesystem;
+
+function atomic_put_contents( Filesystem $fs, $path, $bytes ) {
+	$tmp = $path . '.tmp.' . bin2hex( random_bytes( 4 ) );
+	$fs->put_contents( $tmp, $bytes );
+	$fs->rename( $tmp, $path );
+}
+
+$root = sys_get_temp_dir() . '/atomic-' . uniqid();
+$fs   = LocalFilesystem::create( $root );
+
+$fs->put_contents( '/config.json', '{"v":1}' );
+atomic_put_contents( $fs, '/config.json', '{"v":2}' );
+
+echo "config: " . $fs->get_contents( '/config.json' ) . "\n";
+echo "no .tmp leftovers: " . count( $fs->ls( '/' ) ) . " entries in root\n";
+
+$fs->rmdir( '/', array( 'recursive' => true ) );
+</script>
+<script type="text/expected-output">
+config: {"v":2}
+no .tmp leftovers: 1 entries in root
+</script>
+</php-snippet>
+
+<h2 id="refinement-path-helpers-that-behave-the-same-on-windows">Refinement: path helpers that behave the same on Windows</h2>
+
+<p>Unix path semantics apply on every host OS. This matters for abstract paths such as a SQLite key or a ZIP entry name because those paths do not live on a real drive.</p>
+
+<php-snippet blueprint="toolkit-setup" name="path-helpers.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use function WordPress\Filesystem\wp_join_unix_paths;
+use function WordPress\Filesystem\wp_unix_dirname;
+use function WordPress\Filesystem\wp_unix_path_resolve_dots;
+
+echo wp_join_unix_paths( '/var/www', '/site/', '/index.php' ) . "\n";
+echo wp_unix_dirname( '/a/b/c/d.txt', 2 ) . "\n";
+echo wp_unix_path_resolve_dots( '/a/b/../c/./d/../e' ) . "\n";
+</script>
+<script type="text/expected-output">
+/var/www/site/index.php
+/a/b
+a/c/e
+</script>
+</php-snippet>
+
+<h2 id="see-also">See also</h2>
+
+<ul class="related-components">
+	<li><a href="bytestream.html"><strong>ByteStream</strong></a><span>Open files as readers and writers instead of loading full strings.</span></li>
+	<li><a href="zip.html"><strong>Zip</strong></a><span>Mount archives and copy data between archive-backed and normal filesystems.</span></li>
+	<li><a href="git.html"><strong>Git</strong></a><span>Expose repository trees through a filesystem-shaped API.</span></li>
+</ul>
+
+	</article>
+</div>
+
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a>
+</footer>
+</body>
+</html>

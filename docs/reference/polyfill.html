@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polyfill — PHP Toolkit reference</title>
+<meta name="description" content="PHP 8 string functions on PHP 7.2+, WordPress hook stubs, and translation/escaping passthroughs so toolkit code runs without WordPress.">
+<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../learn/">Learn</a>
+		<a href="./">Reference</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+
+<div class="layout">
+	<aside class="sidebar" aria-label="Reference navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<nav class="toc" aria-label="Table of contents"></nav>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="html.html">HTML</a></li>
+			<li><a href="zip.html">Zip</a></li>
+			<li><a href="bytestream.html">ByteStream</a></li>
+			<li><a href="filesystem.html">Filesystem</a></li>
+			<li><a href="blockparser.html">BlockParser</a></li>
+			<li><a href="markdown.html">Markdown</a></li>
+			<li><a href="xml.html">XML</a></li>
+			<li><a href="encoding.html">Encoding</a></li>
+			<li><a href="dataliberation.html">DataLiberation</a></li>
+			<li><a href="git.html">Git</a></li>
+			<li><a href="merge.html">Merge</a></li>
+			<li><a href="httpclient.html">HttpClient</a></li>
+			<li><a href="httpserver.html">HttpServer</a></li>
+			<li><a href="corsproxy.html">CORSProxy</a></li>
+			<li><a href="cli.html">CLI</a></li>
+			<li class="current"><a href="polyfill.html">Polyfill</a></li>
+			<li><a href="blueprints.html">Blueprints</a></li>
+			<li><a href="coding-standards.html">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+	</aside>
+	<article class="content">
+
+<h1>Polyfill</h1>
+
+<p class="lede">PHP 8 string functions on PHP 7.2+, WordPress hook stubs, and translation/escaping passthroughs so toolkit code runs without WordPress.</p>
+
+<pre><code class="install">composer require wp-php-toolkit/polyfill</code></pre>
+
+<aside class="callout credit">
+	<strong>WordPress-shaped behavior.</strong> When WordPress is loaded, every function in this component defers to WordPress. The standalone implementations of <code>esc_html()</code>, <code>add_filter()</code>, <code>__()</code>, and friends match WordPress core's behavior so the same code runs inside and outside the platform.
+</aside>
+
+<p>A lot of WordPress-adjacent code wants to call <code>esc_html()</code>, <code>__()</code>, or <code>apply_filters()</code> without booting WordPress. The polyfill component provides minimal but real implementations so that code runs unchanged outside WordPress, and stays out of the way when WordPress is loaded (every function uses <code>function_exists()</code> guards).</p>
+
+<h2 id="a-minimal-example">A minimal example</h2>
+
+<p>The polyfills define <code>str_contains</code>, <code>str_starts_with</code>, <code>str_ends_with</code>, and <code>array_key_first</code> only when missing.</p>
+
+<php-snippet blueprint="toolkit-setup" name="php8-strings.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+var_dump( str_starts_with( '/var/www/html', '/var' ) );
+var_dump( str_ends_with( 'image.png', '.png' ) );
+var_dump( str_contains( 'WordPress Toolkit', 'Toolkit' ) );
+
+$first_key = array_key_first( array( 'alpha' => 1, 'beta' => 2 ) );
+echo "first key: {$first_key}\n";
+</script>
+<script type="text/expected-output">
+bool(true)
+bool(true)
+bool(true)
+first key: alpha
+</script>
+</php-snippet>
+
+<h2 id="refinement-escaping-and-translation-stubs">Refinement: escaping and translation stubs</h2>
+
+<p>Pass-through implementations let you write code that looks WordPressy and runs anywhere.</p>
+
+<php-snippet blueprint="toolkit-setup" name="wp-stubs.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+echo __( 'Hello, world' ) . "\n";
+echo esc_html( '<script>alert("xss")<\/script>' ) . "\n";
+echo esc_attr( 'a "quoted" value' ) . "\n";
+echo esc_url( 'https://example.com/?a=1&b=2' ) . "\n";
+</script>
+<script type="text/expected-output">
+Hello, world
+&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;
+a &quot;quoted&quot; value
+https://example.com/?a=1&amp;b=2
+</script>
+</php-snippet>
+
+<h2 id="refinement-a-simple-filter-chain">Refinement: a simple filter chain</h2>
+
+<p>The hook system is a real implementation of the WordPress filter API: registered callbacks get applied in priority order, and each one transforms the running value.</p>
+
+<php-snippet blueprint="toolkit-setup" name="filter-chain.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+add_filter( 'sanitize_title', 'trim' );
+add_filter( 'sanitize_title', 'strtolower' );
+add_filter( 'sanitize_title', function ( $title ) {
+	return preg_replace( '/\s+/', '-', $title );
+} );
+
+echo apply_filters( 'sanitize_title', '  My Post Title  ' ) . "\n";
+</script>
+<script type="text/expected-output">
+my-post-title
+</script>
+</php-snippet>
+
+<h2 id="refinement-priority-ordering-and-multi-arg-passing">Refinement: priority ordering and multi-arg passing</h2>
+
+<p>Lower priority numbers run first. The fourth argument to <code>add_filter</code> controls how many context values get passed to the callback.</p>
+
+<php-snippet blueprint="toolkit-setup" name="priority-args.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+add_filter( 'render_price', function ( $html, $price, $currency ) {
+	return $html . " ({$currency} markup)";
+}, 30, 3 );
+
+add_filter( 'render_price', function ( $html, $price ) {
+	return "<strong>{$html}</strong>";
+}, 10, 2 );
+
+add_filter( 'render_price', function ( $html, $price, $currency ) {
+	if ( 'EUR' === $currency ) return $html . ' EUR';
+	return $html . " {$currency}";
+}, 20, 3 );
+
+echo apply_filters( 'render_price', '19.99', 19.99, 'EUR' ) . "\n";
+</script>
+<script type="text/expected-output">
+<strong>19.99</strong> EUR (EUR markup)
+</script>
+</php-snippet>
+
+<h2 id="refinement-hook-based-extension-points-in-standalone-libraries">Refinement: hook-based extension points in standalone libraries</h2>
+
+<p>Use <code>do_action</code> and <code>apply_filters</code> as cheap extension points in your own code, without depending on WordPress.</p>
+
+<php-snippet blueprint="toolkit-setup" name="library-hooks.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+class ImportPipeline {
+	public function process( array $row ) {
+		$row = apply_filters( 'import_pipeline_normalize', $row );
+		do_action( 'import_pipeline_row_processed', $row );
+		return $row;
+	}
+}
+
+add_filter( 'import_pipeline_normalize', function ( $row ) {
+	$row['email'] = strtolower( trim( $row['email'] ) );
+	return $row;
+} );
+
+$log = array();
+add_action( 'import_pipeline_row_processed', function ( $row ) use ( &$log ) {
+	$log[] = $row['email'];
+} );
+
+$pipeline = new ImportPipeline();
+$pipeline->process( array( 'email' => '  USER@EXAMPLE.COM  ' ) );
+$pipeline->process( array( 'email' => 'OTHER@example.com' ) );
+
+echo implode( "\n", $log ) . "\n";
+</script>
+<script type="text/expected-output">
+user@example.com
+other@example.com
+</script>
+</php-snippet>
+
+<h2 id="see-also">See also</h2>
+
+<ul class="related-components">
+	<li><a href="html.html"><strong>HTML</strong></a><span>Run WordPress-shaped escaping and translation helpers beside HTML processors.</span></li>
+	<li><a href="blockparser.html"><strong>BlockParser</strong></a><span>Keep standalone block tooling familiar outside WordPress.</span></li>
+</ul>
+
+	</article>
+</div>
+
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a>
+</footer>
+</body>
+</html>

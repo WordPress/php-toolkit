@@ -14,9 +14,9 @@ Snippets reference '/wordpress/wp-content/php-toolkit/vendor/autoload.php' —
 the path that exists inside Playground. The runner rewrites that to the
 repo's local vendor/autoload.php before executing.
 
-Snippets that need WordPress, network access, or a listening TCP port
-won't run locally. Those simply don't appear in the JSON; the docs site
-boots Playground for them at click time, same as before.
+Snippets marked non-runnable in the catalog are skipped. Snippets that need
+WordPress, network access, or a listening TCP port may run locally but avoid
+committing expected output because their stdout is environment-dependent.
 """
 
 import argparse
@@ -40,8 +40,11 @@ EXPECTED_PATH = os.path.join(THIS, '_expected_outputs.json')
 # captured into the JSON, so the docs page boots Playground at click time.
 NO_EXPECTED = {
     ('httpclient', 'get.php'),
-    ('httpclient', 'head-metadata.php'),
-    ('httpclient', 'post-json.php'),
+    ('httpclient', 'post.php'),
+    ('httpclient', 'progress.php'),
+    ('httpclient', 'sliding-window.php'),
+    ('httpclient', 'resume-download.php'),
+    ('httpclient', 'stream-unzip.php'),
     ('httpclient', 'fan-out.php'),
     ('httpclient', 'stream-to-disk.php'),
 }
@@ -136,7 +139,10 @@ def main():
         for heading, _, snippet in sections:
             if not snippet:
                 continue
-            filename, code = snippet
+            filename, code = snippet[0], snippet[1]
+            runnable = len(snippet) < 3 or snippet[2]
+            if not runnable:
+                continue
             if args.filter and args.filter not in slug and args.filter not in filename:
                 continue
             rc, stdout, stderr = run_one(code)

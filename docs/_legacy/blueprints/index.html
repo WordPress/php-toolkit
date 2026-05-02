@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blueprints — PHP Toolkit</title>
+<meta name="description" content="Declarative WordPress site provisioning. Write a JSON description of plugins, options, and content; let the runner execute it.">
+<link rel="stylesheet" href="../assets/style.css?v=20260429-concept-guide">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js?v=20260429-concept-guide" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../">Components</a>
+		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+<div class="layout">
+	<aside class="sidebar" aria-label="Component navigation">
+		<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+		<nav class="toc" aria-label="Table of contents"></nav>
+		<details class="components-nav" open>
+			<summary>All components</summary>
+			<ol>
+			<li><a href="../html/">HTML</a></li>
+			<li><a href="../zip/">Zip</a></li>
+			<li><a href="../bytestream/">ByteStream</a></li>
+			<li><a href="../filesystem/">Filesystem</a></li>
+			<li><a href="../blockparser/">BlockParser</a></li>
+			<li><a href="../markdown/">Markdown</a></li>
+			<li><a href="../xml/">XML</a></li>
+			<li><a href="../encoding/">Encoding</a></li>
+			<li><a href="../dataliberation/">DataLiberation</a></li>
+			<li><a href="../git/">Git</a></li>
+			<li><a href="../merge/">Merge</a></li>
+			<li><a href="../httpclient/">HttpClient</a></li>
+			<li><a href="../httpserver/">HttpServer</a></li>
+			<li><a href="../corsproxy/">CORSProxy</a></li>
+			<li><a href="../cli/">CLI</a></li>
+			<li><a href="../polyfill/">Polyfill</a></li>
+			<li class="current"><a href="../blueprints/">Blueprints</a></li>
+			<li><a href="../coding-standards/">ToolkitCodingStandards</a></li>
+			</ol>
+		</details>
+	</aside>
+	<article class="content">
+		<h1>Blueprints</h1>
+		<p class="lede">Declarative WordPress site provisioning. Write a JSON description of plugins, options, and content; let the runner execute it.</p>
+		<code class="install">composer require wp-php-toolkit/blueprints</code>
+		<p>A WordPress environment is more than a database dump. It can require a specific core version, plugins, themes, site options, uploaded files, content, and setup steps. Rebuilding that by hand makes demos, tests, bug reports, workshops, and CI fixtures drift over time.</p><p>The Blueprints component treats site setup as data. A blueprint JSON document describes the desired steps, and the runner applies them to either a new WordPress install or an existing one. The validator exists because user-authored JSON needs clear, path-specific errors rather than generic schema failures.</p><p>Recent design work also reflects real hosting layouts: the web root and WordPress core directory can live in separate directories, so runner configuration makes those paths explicit instead of assuming one common directory shape.</p><p>Blueprints can <em>create</em> a new WordPress install (download core, set up the database, apply steps) or <em>apply to an existing</em> site. Creating a fresh site needs filesystem access this in-browser runtime doesn't have, so the snippets focus on <code>APPLY_TO_EXISTING_SITE</code>.</p>
+		<p>A Blueprint is a versioned recipe for a WordPress site. It can install Gutenberg, set permalink structure, import content, copy files, and run WP-CLI steps in a predictable order.</p><p>The runner supplies the environment: site root, site URL, execution mode, and filesystem access. The validator checks user-authored JSON before the runner mutates the target site.</p>
+		<p class="you-will-learn-label">You will learn to:</p>
+		<ul class="you-will-learn">
+			<li>Configure the target</li>
+			<li>Generate repeatable recipes</li>
+			<li>Validate before running</li>
+		</ul>
+		<p class="runtime-note">Most snippets below run in the browser through WordPress Playground. Click <em>Run</em> on any example to execute it; edit the code and run again to see what changes. Static snippets show config or shell commands that need a real local environment.</p>
+		<h2 id="configure-a-runner-for-an-existing-site">Configure a runner for an existing site</h2>
+		<p><code>RunnerConfiguration</code> is a fluent builder. The minimum: target site root, target site URL, execution mode.</p>
+<php-snippet blueprint="toolkit-setup" name="configure.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Blueprints\Runner;
+use WordPress\Blueprints\RunnerConfiguration;
+
+$config = ( new RunnerConfiguration() )
+	->set_execution_mode( Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE )
+	->set_target_site_root( '/wordpress' )
+	->set_target_site_url( 'http://playground.test/' );
+
+echo "mode: " . $config->get_execution_mode() . "\n";
+echo "root: " . $config->get_target_site_root() . "\n";
+echo "url:  " . $config->get_target_site_url() . "\n";
+</script>
+<script type="text/expected-output">
+mode: apply-to-existing-site
+root: /wordpress
+url:  http://playground.test/
+</script>
+</php-snippet>
+		<h2 id="generate-blueprint-json-from-php">Generate blueprint JSON from PHP</h2>
+		<p>CI jobs and tests stay clearer when PHP builds the blueprint from data instead of hand-writing JSON. Keep the structure plain: <code>version</code>, then a list of step arrays.</p>
+<php-snippet blueprint="toolkit-setup" name="build-json.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+$site_name = 'Demo Site';
+$plugins   = array( 'gutenberg', 'classic-editor' );
+
+$blueprint = array(
+	'version' => 2,
+	'steps'   => array(
+		array(
+			'step'    => 'setSiteOptions',
+			'options' => array(
+				'blogname'              => $site_name,
+				'permalink_structure'   => '/%postname%/',
+				'show_on_front'         => 'page',
+			),
+		),
+	),
+);
+
+foreach ( $plugins as $slug ) {
+	$blueprint['steps'][] = array(
+		'step'       => 'installPlugin',
+		'pluginData' => "https://downloads.wordpress.org/plugin/{$slug}.zip",
+	);
+	$blueprint['steps'][] = array(
+		'step'   => 'activatePlugin',
+		'plugin' => "{$slug}/{$slug}.php",
+	);
+}
+
+echo json_encode( $blueprint, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n";
+</script>
+<script type="text/expected-output">
+{
+    "version": 2,
+    "steps": [
+        {
+            "step": "setSiteOptions",
+            "options": {
+                "blogname": "Demo Site",
+                "permalink_structure": "/%postname%/",
+                "show_on_front": "page"
+            }
+        },
+        {
+            "step": "installPlugin",
+            "pluginData": "https://downloads.wordpress.org/plugin/gutenberg.zip"
+        },
+        {
+            "step": "activatePlugin",
+            "plugin": "gutenberg/gutenberg.php"
+        },
+        {
+            "step": "installPlugin",
+            "pluginData": "https://downloads.wordpress.org/plugin/classic-editor.zip"
+        },
+        {
+            "step": "activatePlugin",
+            "plugin": "classic-editor/classic-editor.php"
+        }
+    ]
+}
+</script>
+</php-snippet>
+		<h2 id="validate-before-running">Validate before running</h2>
+		<p>The schema validator returns a human-readable <code>ValidationError</code> instead of a generic "does not match schema" failure. Use it before handing user-authored JSON to a runner.</p>
+<php-snippet blueprint="toolkit-setup" name="validate.php">
+<script type="application/x-php">
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Blueprints\Validator\HumanFriendlySchemaValidator;
+
+$schema = array(
+	'type'       => 'object',
+	'required'   => array( 'version', 'steps' ),
+	'properties' => array(
+		'version' => array( 'type' => 'integer' ),
+		'steps'   => array(
+			'type'  => 'array',
+			'items' => array(
+				'type'       => 'object',
+				'required'   => array( 'step' ),
+				'properties' => array(
+					'step' => array( 'type' => 'string' ),
+				),
+			),
+		),
+	),
+);
+
+$blueprint = array(
+	'version' => 2,
+	'steps'   => array(
+		array( 'pluginData' => 'https://downloads.wordpress.org/plugin/gutenberg.zip' ),
+	),
+);
+
+$error = ( new HumanFriendlySchemaValidator( $schema ) )->validate( $blueprint );
+if ( null === $error ) {
+	echo "valid\n";
+} else {
+	echo $error->get_pretty_path() . ": " . $error->message . "\n";
+}
+</script>
+<script type="text/expected-output">
+Blueprint root["steps"][0]: Missing required field: step.
+</script>
+</php-snippet>
+		<h2 id="the-blueprint-json-shape">The Blueprint JSON shape</h2>
+		<p>A blueprint is a JSON document with a <code>version</code> field and a <code>steps</code> array. Each step has a <code>"step"</code> discriminator and step-specific fields. This is the same shape used by <a href="https://playground.wordpress.net/">WordPress Playground</a>.</p><pre><code>{
+  "version": 2,
+  "steps": [
+    { "step": "setSiteOptions",
+      "options": {
+        "blogname": "Demo Site",
+        "permalink_structure": "/%postname%/"
+      } },
+    { "step": "installPlugin",
+      "pluginData": "https://downloads.wordpress.org/plugin/gutenberg.zip" },
+    { "step": "activatePlugin",
+      "plugin": "gutenberg/gutenberg.php" }
+  ]
+}</code></pre>
+		<h2 id="see-also">See also</h2>
+		<ul class="related-components">
+			<li><a href="../filesystem/">Filesystem</a><span>Prepare files and fixtures before applying site setup steps.</span></li>
+			<li><a href="../httpclient/">HttpClient</a><span>Download packages or source data as part of provisioning workflows.</span></li>
+			<li><a href="../cli/">CLI</a><span>Wrap repeatable blueprint operations in a small command.</span></li>
+		</ul>
+	</article>
+</div>
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · runnable docs powered by <a href="https://wordpress.github.io/wordpress-playground/">WordPress Playground</a>
+</footer>
+</body>
+</html>
