@@ -322,3 +322,14 @@ foreach ( $files as $path ) {
 	echo "  " . $path . "\n";
 }
 ```
+
+## When to use which type
+
+<table class="api-table">
+<tr><th>Use</th><th>For</th></tr>
+<tr><td><code>ZipFilesystem::create()</code></td><td>Reading. You want <code>get_contents()</code>, <code>ls()</code>, <code>is_dir()</code> over a ZIP. The most common case.</td></tr>
+<tr><td><code>ZipEncoder</code></td><td>Writing. Stream entries into any <code>ByteWriteStream</code> sink. Required when format rules matter (EPUB, .docx).</td></tr>
+<tr><td><code>ZipDecoder</code></td><td>Low-level read access to the central directory and individual entry headers. Most code reaches for <code>ZipFilesystem</code> instead.</td></tr>
+<tr><td><code>open_read_stream()</code> on a ZipFilesystem</td><td>Inflating a single large entry without buffering it whole in memory.</td></tr>
+<tr><td><code>copy_between_filesystems()</code></td><td>Moving entries from a ZIP into another filesystem (memory, local, SQLite).</td></tr>
+</table>

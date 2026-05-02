@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Generates docs/reference/<slug>.html for components not already hand-written.
-Pulls catalog data from _docs_components.py and emits the concept-guide shape:
-lede + install + context paragraphs + minimal example + refinements + pitfalls + see also.
+"""Generates docs/reference/<slug>.html for every component.
 
-The hand-written reference pages (html, zip) are skipped — they live as
-authored HTML files and we don't overwrite them.
+The catalog comes from bin/_docs_components/<slug>.md (loaded via
+bin/_docs_components.py). Every page uses the same concept-guide shape:
+lede + install + context paragraphs + minimal example + refinements +
+pitfalls + see also. There are no hand-authored exceptions.
 """
 
 import json
@@ -25,8 +25,6 @@ if os.path.exists(EXPECTED_PATH):
     with open(EXPECTED_PATH) as f:
         EXPECTED = {tuple(k.split('::')): v for k, v in json.load(f).items()}
 
-# Skip the hand-written ones.
-SKIP = {'html', 'zip'}
 
 PAGE_HEAD = '''<!doctype html>
 <html lang="en">
@@ -112,12 +110,6 @@ def render_example(slug, snippet):
 def sidebar(current_slug):
     items = []
     for slug, title, _, _, _ in COMPONENTS:
-        is_legacy = slug in SKIP or slug in {
-            'bytestream', 'filesystem', 'blockparser', 'markdown', 'xml', 'encoding',
-            'dataliberation', 'git', 'merge', 'httpclient', 'httpserver', 'corsproxy',
-            'cli', 'polyfill', 'blueprints', 'coding-standards',
-        }
-        # Reference page exists for skipped (handwritten) and the ones we generate here.
         href = f'{slug}.html'
         cls = ' class="current"' if slug == current_slug else ''
         items.append(f'\t\t\t<li{cls}><a href="{href}">{h(title)}</a></li>')
@@ -210,8 +202,6 @@ def render_component(slug, title, lede, install, sections):
 def main():
     os.makedirs(DOCS, exist_ok=True)
     for slug, title, lede, install, sections in COMPONENTS:
-        if slug in SKIP:
-            continue
         out = render_component(slug, title, lede, install, sections)
         path = os.path.join(DOCS, f'{slug}.html')
         with open(path, 'w') as f:

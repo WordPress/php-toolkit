@@ -6,7 +6,7 @@ on:
     paths:
       - 'components/**'
       - 'docs/**'
-      - 'bin/build-docs*'
+      - 'bin/build-docs-bundle.sh'
       - 'bin/build-reference.py'
       - 'bin/_docs_components.py'
       - 'bin/_docs_components/**'
@@ -42,13 +42,13 @@ jobs:
       - name: Install dependencies
         run: composer install --no-dev --optimize-autoloader --no-progress
 
-      - name: Bundle toolkit and regenerate docs
+      - name: Bundle toolkit and regenerate reference pages from markdown
         run: |
           mkdir -p docs/assets
           rm -f docs/assets/php-toolkit.zip
           zip -qr docs/assets/php-toolkit.zip components vendor bootstrap.php composer.json \
             -x "*/Tests/*" "*/tests/*" "*/.git/*" "*/.github/*" "*/node_modules/*"
-          python3 bin/build-docs.py
+          python3 bin/build-reference.py
 
       - uses: actions/upload-pages-artifact@v3
         with:

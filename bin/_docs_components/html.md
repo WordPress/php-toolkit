@@ -304,3 +304,13 @@ $tags->release_bookmark( 'list' );
 
 echo $tags->get_updated_html();
 ```
+
+## When to use which
+
+<table class="api-table">
+<tr><th>Use</th><th>For</th></tr>
+<tr><td><code>WP_HTML_Tag_Processor</code></td><td>Attribute rewriting, sanitization, finding tags by name. Forward-only walks. Anything where speed and byte-honesty matter more than context.</td></tr>
+<tr><td><code>WP_HTML_Processor::create_fragment()</code></td><td>Queries by ancestry (<code>breadcrumbs</code>), heading outline extraction, anything that needs to know "is this tag inside that one."</td></tr>
+<tr><td><code>WP_HTML_Decoder::decode_text_node()</code></td><td>Turning entity-encoded text (<code>AT&amp;amp;T</code>) back into raw text correctly. Implements the HTML5 entity algorithm — don't roll your own.</td></tr>
+<tr><td><code>WP_HTML_Decoder::attribute_starts_with()</code></td><td>Safe URL-prefix checks that respect encoded characters (<code>java&amp;#x09;script:</code>). The classic <code>strpos</code> approach misses these.</td></tr>
+</table>

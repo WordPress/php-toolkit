@@ -129,7 +129,7 @@ def _join_blocks(text):
     lines that appear inside a ``<pre>...</pre>`` (or any preformatted) span,
     which are preserved verbatim so embedded code samples round-trip.
 
-    The build-docs.py renderer concatenates body content directly into
+    The build-reference.py renderer concatenates body content directly into
     `<section>` markup, so blocks join with no separator between them.
     """
     if not text:

@@ -86,8 +86,8 @@ echo "hello";
 ## Round-trip and verification
 
 `bin/_load_catalog.py` parses these files at build/check time and feeds the
-existing build scripts (`bin/build-docs.py`, `bin/build-reference.py`,
-`bin/run-snippets.py`). The schema is intentionally trivial — there is no
+existing build scripts (`bin/build-reference.py`, `bin/run-snippets.py`).
+The schema is intentionally trivial — there is no
 templating or include system, so what you see in the markdown file is what
 ships on the site.
 
