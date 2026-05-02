@@ -1,5 +1,10 @@
 name: Deploy docs to GitHub Pages
 
+# Builds the runnable docs site from `trunk` and pushes the result to the
+# `gh-pages` branch root. The branch is also where preview deploys land
+# (under `next-version-preview/`); this workflow uses `keep_files: true`
+# so trunk deploys never wipe out a sibling preview.
+
 on:
   push:
     branches: [trunk]
@@ -7,22 +12,25 @@ on:
       - 'components/**'
       - 'docs/**'
       - 'bin/build-docs*'
+      - 'bin/build-reference.py'
+      - 'bin/_docs_components.py'
+      - 'bin/_docs_components/**'
+      - 'bin/_load_catalog.py'
       - 'composer.json'
       - 'composer.lock'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write    # required: peaceiris pushes to the gh-pages branch
+  pages: read
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: gh-pages
+  cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,18 +51,22 @@ jobs:
           rm -f docs/assets/php-toolkit.zip
           zip -qr docs/assets/php-toolkit.zip components vendor bootstrap.php composer.json \
             -x "*/Tests/*" "*/tests/*" "*/.git/*" "*/.github/*" "*/node_modules/*"
-          python3 bin/build-docs.py
+          # Regenerate every page the catalog drives. build-docs.py and
+          # build-reference.py both exist for now; tolerate either being
+          # absent so this workflow keeps working through the catalog
+          # refactor (PR #254).
+          if [ -f bin/build-docs.py ]; then python3 bin/build-docs.py; fi
+          if [ -f bin/build-reference.py ]; then python3 bin/build-reference.py; fi
 
-      - uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages root
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: ./docs
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          publish_branch: gh-pages
+          # Preserve preview content (e.g. next-version-preview/) on the
+          # branch — trunk deploys only own the root.
+          keep_files: true
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'docs: deploy from trunk @ ${{ github.sha }}'

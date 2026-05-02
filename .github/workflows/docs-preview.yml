@@ -1,0 +1,106 @@
+name: Deploy docs preview
+
+# Publishes a "next version" preview of the docs site at
+# https://wordpress.github.io/php-toolkit/next-version-preview/
+#
+# Trigger options:
+#   - Manually via the Actions tab (workflow_dispatch). Pick any branch /
+#     SHA via the `ref` input. Useful for previewing in-flight work that
+#     isn't tied to a single PR.
+#   - Push to a `preview/*` branch. Lets a contributor put up a preview
+#     by pushing `git push origin HEAD:preview/my-thing` without ever
+#     opening a PR.
+#
+# A single preview slot lives at /next-version-preview/. Whatever ran
+# this workflow most recently is what readers see there. Each deploy
+# replaces the contents of that subdirectory; the rest of gh-pages
+# (notably the trunk site at /) is preserved via keep_files: true.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref to build (branch, tag, or SHA)'
+        required: true
+        default: 'trunk'
+  push:
+    branches:
+      - 'preview/*'
+
+permissions:
+  contents: write       # peaceiris pushes to gh-pages
+  pull-requests: write  # used to comment the preview URL on a PR
+  pages: read
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout requested ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-dev --optimize-autoloader --no-progress
+
+      - name: Bundle toolkit and regenerate docs
+        run: |
+          mkdir -p docs/assets
+          rm -f docs/assets/php-toolkit.zip
+          zip -qr docs/assets/php-toolkit.zip components vendor bootstrap.php composer.json \
+            -x "*/Tests/*" "*/tests/*" "*/.git/*" "*/.github/*" "*/node_modules/*"
+          if [ -f bin/build-docs.py ]; then python3 bin/build-docs.py; fi
+          if [ -f bin/build-reference.py ]; then python3 bin/build-reference.py; fi
+
+      - name: Deploy to gh-pages /next-version-preview/
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          publish_branch: gh-pages
+          destination_dir: next-version-preview
+          # Within the destination_dir scope, replace contents fully so a
+          # preview always reflects only what was just built.
+          keep_files: false
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'docs(preview): deploy ${{ github.event.inputs.ref || github.ref_name }} @ ${{ github.sha }}'
+
+      - name: Find PR for this ref
+        id: find_pr
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF: ${{ github.event.inputs.ref }}
+        run: |
+          # If the requested ref is a branch with an open PR, capture its
+          # number so we can drop a preview-link comment.
+          PR_NUMBER=$(gh pr list --state open --head "${REF}" --json number --jq '.[0].number // empty' || true)
+          if [ -n "$PR_NUMBER" ]; then
+            echo "pr_number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment preview URL on PR
+        if: steps.find_pr.outputs.pr_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.find_pr.outputs.pr_number }}
+          REF: ${{ github.event.inputs.ref || github.ref_name }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body "📚 Preview deployed from \`${REF}\`: https://wordpress.github.io/php-toolkit/next-version-preview/"
+
+      - name: Print preview URL
+        run: |
+          echo "Preview deployed: https://wordpress.github.io/php-toolkit/next-version-preview/"
