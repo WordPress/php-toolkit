@@ -1,5 +1,10 @@
 # Zip
 
+<!-- docs-site-banner -->
+> **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/zip.html](https://wordpress.github.io/php-toolkit/reference/zip.html)
+> Snippets execute live in WordPress Playground — edit them in your browser and see real output.
+<!-- /docs-site-banner -->
+
 ## Why this exists
 
 PHP ships with `ZipArchive`, a convenient class for reading and writing ZIP files. The catch: it requires the `libzip` native extension, which isn't available everywhere. WordPress Playground compiles PHP to WebAssembly and runs it in the browser — no native extensions, no `libzip`, no `ZipArchive`.

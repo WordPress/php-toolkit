@@ -1,5 +1,9 @@
 # Import Static Files Examples
 
+<!-- docs-site-banner -->
+> **📚 Looking for runnable PHP Toolkit examples?** See **<https://wordpress.github.io/php-toolkit/>** — every component has a reference page with snippets that execute in WordPress Playground.
+<!-- /docs-site-banner -->
+
 This repository contains scripts and examples demonstrating how to import static files and documentation from various sources into your project using `bun` and custom scripts.
 
 ## Usage

@@ -1,5 +1,10 @@
 # XML
 
+<!-- docs-site-banner -->
+> **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/xml.html](https://wordpress.github.io/php-toolkit/reference/xml.html)
+> Snippets execute live in WordPress Playground — edit them in your browser and see real output.
+<!-- /docs-site-banner -->
+
 ## Why this exists
 
 PHP ships with excellent XML support — `SimpleXML`, `DOMDocument`, `XMLReader` — but all of them rely on `libxml2`, a native C library. In most PHP environments that's fine. In WordPress Playground, which runs PHP compiled to WebAssembly in the browser, native extensions aren't available. You get the PHP standard library and nothing else.

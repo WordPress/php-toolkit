@@ -1,5 +1,10 @@
 # Blueprints
 
+<!-- docs-site-banner -->
+> **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/blueprints.html](https://wordpress.github.io/php-toolkit/reference/blueprints.html)
+> Snippets execute live in WordPress Playground — edit them in your browser and see real output.
+<!-- /docs-site-banner -->
+
 Declarative WordPress site provisioning. Define a site's desired state as a JSON blueprint -- which plugins to install, which options to set, which content to import -- and let the runner execute it. Blueprints can create a new WordPress site from scratch or modify an existing one, making them useful for development environments, demo sites, automated testing, and reproducible WordPress setups.
 
 ## Installation

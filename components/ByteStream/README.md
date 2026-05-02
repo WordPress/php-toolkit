@@ -1,5 +1,10 @@
 # ByteStream
 
+<!-- docs-site-banner -->
+> **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/bytestream.html](https://wordpress.github.io/php-toolkit/reference/bytestream.html)
+> Snippets execute live in WordPress Playground — edit them in your browser and see real output.
+<!-- /docs-site-banner -->
+
 Composable streaming primitives for reading, writing, and transforming byte data in pure PHP. ByteStream provides a pull-based model where you request bytes from a source, peek at or consume them, and optionally transform them through filters like compression or checksums -- all without loading entire files into memory.
 
 ## Installation

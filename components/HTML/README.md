@@ -1,5 +1,10 @@
 # HTML
 
+<!-- docs-site-banner -->
+> **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/html.html](https://wordpress.github.io/php-toolkit/reference/html.html)
+> Snippets execute live in WordPress Playground — edit them in your browser and see real output.
+<!-- /docs-site-banner -->
+
 ## Why this exists
 
 Modifying HTML in PHP usually means one of two things: string manipulation (fragile, breaks on any attribute ordering or whitespace variation) or loading the DOM extension (which requires libxml2, triggers errors on valid HTML5 that doesn't conform to XML rules, and mangles the document in the process).

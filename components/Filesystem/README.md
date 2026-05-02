@@ -1,5 +1,10 @@
 # Filesystem
 
+<!-- docs-site-banner -->
+> **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/filesystem.html](https://wordpress.github.io/php-toolkit/reference/filesystem.html)
+> Snippets execute live in WordPress Playground — edit them in your browser and see real output.
+<!-- /docs-site-banner -->
+
 ## Why this exists
 
 PHP's built-in file functions (`file_get_contents`, `fopen`, `mkdir`, etc.) are tightly coupled to the local disk. That's fine for simple scripts, but it creates a real problem when you want to:

@@ -1,5 +1,10 @@
 # HttpClient
 
+<!-- docs-site-banner -->
+> **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/httpclient.html](https://wordpress.github.io/php-toolkit/reference/httpclient.html)
+> Snippets execute live in WordPress Playground — edit them in your browser and see real output.
+<!-- /docs-site-banner -->
+
 An asynchronous HTTP client that works on vanilla PHP without requiring `curl` or any other extensions. It can use `curl` when available for better performance, but falls back to pure PHP sockets automatically. Supports concurrent requests, streaming responses, redirects, chunked encoding, gzip decompression, and basic auth.
 
 ## Installation

@@ -1,5 +1,10 @@
 # HttpServer
 
+<!-- docs-site-banner -->
+> **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/httpserver.html](https://wordpress.github.io/php-toolkit/reference/httpserver.html)
+> Snippets execute live in WordPress Playground — edit them in your browser and see real output.
+<!-- /docs-site-banner -->
+
 A minimal, blocking TCP-based HTTP server written in pure PHP. It is designed for CLI tools, local development servers, and test harnesses where you need a lightweight HTTP endpoint without pulling in a full web server.
 
 ## Installation

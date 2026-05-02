@@ -1,5 +1,10 @@
 # CORSProxy
 
+<!-- docs-site-banner -->
+> **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/corsproxy.html](https://wordpress.github.io/php-toolkit/reference/corsproxy.html)
+> Snippets execute live in WordPress Playground — edit them in your browser and see real output.
+<!-- /docs-site-banner -->
+
 A PHP CORS proxy that lets browser-based JavaScript make cross-origin requests to external services. Built for WordPress Playground to bridge `fetch()` calls to git servers and other APIs that don't set CORS headers. The proxy streams data bidirectionally, blocks requests to private IP ranges, filters sensitive headers, and enforces size limits -- all without external dependencies.
 
 ## Installation

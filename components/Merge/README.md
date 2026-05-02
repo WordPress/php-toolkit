@@ -1,5 +1,10 @@
 # Merge
 
+<!-- docs-site-banner -->
+> **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/merge.html](https://wordpress.github.io/php-toolkit/reference/merge.html)
+> Snippets execute live in WordPress Playground — edit them in your browser and see real output.
+<!-- /docs-site-banner -->
+
 A three-way merge and diff library for PHP. Given a common base version and two diverging branches, it computes diffs and merges the changes together, detecting conflicts along the way. The architecture is pluggable: swap out the differ (line-based or character-based), the merger (line-level or chunk-level), and add optional validation of the merged result.
 
 ## Installation

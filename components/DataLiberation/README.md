@@ -1,5 +1,10 @@
 # DataLiberation
 
+<!-- docs-site-banner -->
+> **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/dataliberation.html](https://wordpress.github.io/php-toolkit/reference/dataliberation.html)
+> Snippets execute live in WordPress Playground — edit them in your browser and see real output.
+<!-- /docs-site-banner -->
+
 Streaming data import and export for WordPress. Reads and writes WordPress content in multiple formats -- WXR (WordPress eXtended RSS), SQL dumps, block markup, and more -- without loading everything into memory. Designed for migrating content between WordPress sites, converting between formats, and processing large exports that would otherwise exhaust PHP's memory limits.
 
 ## Installation
