@@ -181,7 +181,7 @@ class MarkdownConsumer implements DataFormatConsumer {
 						if ( method_exists( $node, 'getInfo' ) && $node->getInfo() ) {
 							$attrs['language'] = preg_replace( '/[ \t\r\n\f].*/', '', $node->getInfo() );
 						}
-						if ( 'block' === $attrs['language'] ) {
+						if ( 'block' === $attrs['language'] || 'gutenberg' === $attrs['language'] ) {
 							// This is a special case for preserving block literals that could not be expressed as markdown.
 							$this->append_content( "\n" . $node->getLiteral() . "\n" );
 						} else {
@@ -287,7 +287,6 @@ BLOCK;
 						break;
 
 					default:
-						error_log( 'Unhandled node type: ' . get_class( $node ) );
 						return null;
 				}
 			} else {

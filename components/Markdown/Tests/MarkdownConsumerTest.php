@@ -204,4 +204,19 @@ MD;
 		);
 		$this->assertEquals( $expected_metadata, $metadata );
 	}
+
+	public function test_gutenberg_fence_is_preserved_as_block_markup() {
+		$markdown = <<<MD
+```gutenberg
+<!-- wp:verse --><pre class="wp-block-verse">Roses are red</pre><!-- /wp:verse -->
+```
+MD;
+		$consumer = new MarkdownConsumer( $markdown );
+		$result   = $consumer->consume();
+
+		$this->assertEquals(
+			'<!-- wp:verse --><pre class="wp-block-verse">Roses are red</pre><!-- /wp:verse -->',
+			trim( $result->get_block_markup() )
+		);
+	}
 }

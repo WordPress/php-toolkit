@@ -1,0 +1,25 @@
+{
+	"$schema": "https://playground.wordpress.net/blueprint-schema.json",
+	"meta": {
+		"title": "WP Origin E2E",
+		"description": "Boot a WordPress site with WP Origin active and seeded content.",
+		"author": "adamziel"
+	},
+	"preferredVersions": {
+		"php": "8.1",
+		"wp": "6.9.4"
+	},
+	"steps": [
+		{
+			"step": "activatePlugin",
+			"pluginPath": "/wordpress/wp-content/plugins/wp-origin"
+		},
+		{
+			"step": "runPHP",
+			"code": {
+				"filename": "seed-wp-origin-e2e.php",
+				"content": "<?php\nrequire '/wordpress/wp-load.php';\n$admins = get_users( array( 'role' => 'Administrator', 'number' => 1 ) );\n$admin = $admins[0];\nupdate_option( 'permalink_structure', '/%postname%/' );\nflush_rewrite_rules();\n$hello = get_page_by_path( 'hello-world', OBJECT, 'post' );\nif ( $hello ) {\n\twp_update_post( array(\n\t\t'ID' => $hello->ID,\n\t\t'post_title' => 'Hello World',\n\t\t'post_content' => '<!-- wp:paragraph --><p>Hello from WordPress</p><!-- /wp:paragraph -->',\n\t\t'post_status' => 'publish',\n\t) );\n}\n$page = get_page_by_path( 'sample-page', OBJECT, 'page' );\nif ( $page ) {\n\twp_update_post( array(\n\t\t'ID' => $page->ID,\n\t\t'post_title' => 'Sample Page',\n\t\t'post_content' => '<!-- wp:paragraph --><p>Page from WordPress</p><!-- /wp:paragraph -->',\n\t\t'post_status' => 'publish',\n\t) );\n}\nlist( $raw_password ) = WP_Application_Passwords::create_new_application_password( $admin->ID, array( 'name' => 'WP Origin E2E' ) );\n$password = preg_replace( '/\\s+/', '', $raw_password );\nfile_put_contents(\n\t'__WP_ORIGIN_CREDENTIALS_FILE__',\n\twp_json_encode(\n\t\tarray(\n\t\t\t'username' => $admin->user_login,\n\t\t\t'password' => $password,\n\t\t\t'post_slug' => 'hello-world',\n\t\t\t'page_slug' => 'sample-page',\n\t\t)\n\t)\n);\n"
+			}
+		}
+	]
+}
