@@ -1,22 +1,34 @@
 #!/usr/bin/env python3
 """
-Runs every PHP snippet in bin/_docs_components.py against the local
-toolkit (`composer install` first, so vendor/autoload.php exists) and
-captures stdout. Used in two ways:
+Verifies the PHP snippets advertised by the docs site against the local
+toolkit. Used in two ways:
 
     bin/run-snippets.py --update     Regenerate bin/_expected_outputs.json
-                                     from the snippets that ran successfully.
-    bin/run-snippets.py --check      Run every snippet, compare against the
-                                     committed JSON. Exit nonzero on drift.
-                                     Used by .github/workflows/snippet-tests.yml.
+                                     from snippets that ran successfully.
+    bin/run-snippets.py --check      Run/syntax-check every snippet, compare
+                                     against the committed JSON. Exit nonzero
+                                     on any drift, runtime failure, or syntax
+                                     error. Used by snippet-tests.yml.
+
+How a snippet is verified depends on its catalog flags:
+
+  - runnable=True  (default): executed end-to-end with `php -d
+    display_errors=stderr`. Output is normalized and compared against
+    `_expected_outputs.json`. A non-zero exit, a missing entry, or an
+    output diff fails the run. Snippets in NO_EXPECTED are still required
+    to exit zero, but their stdout is not pinned (they have unstable
+    output: real network traffic, timestamps, host-specific values).
+
+  - runnable=False: not executed (the snippet needs a listening port,
+    a daemon, or some other non-CLI environment). It is still validated
+    with `php -l`, so syntax errors fail the run.
+
+There is no silent-skip path: every snippet is verified one way or the
+other.
 
 Snippets reference '/wordpress/wp-content/php-toolkit/vendor/autoload.php' —
 the path that exists inside Playground. The runner rewrites that to the
 repo's local vendor/autoload.php before executing.
-
-Snippets marked non-runnable in the catalog are skipped. Snippets that need
-WordPress, network access, or a listening TCP port may run locally but avoid
-committing expected output because their stdout is environment-dependent.
 """
 
 import argparse
@@ -35,18 +47,19 @@ from _docs_components import COMPONENTS  # noqa: E402
 VENDOR_AUTOLOAD = os.path.join(ROOT, 'vendor', 'autoload.php')
 EXPECTED_PATH = os.path.join(THIS, '_expected_outputs.json')
 
-# Snippets that can run but whose output isn't stable (real network, timestamps,
-# host-specific values). They're verified to exit 0 but their stdout isn't
-# captured into the JSON, so the docs page boots Playground at click time.
+# Snippets that run successfully but whose stdout is not stable. They are
+# verified to exit 0; output is not pinned. Add an entry only when the
+# snippet does real network I/O, depends on time, or otherwise produces
+# host-specific output that can't be reproduced byte-for-byte in CI.
 NO_EXPECTED = {
-    ('httpclient', 'get.php'),
-    ('httpclient', 'post.php'),
-    ('httpclient', 'progress.php'),
-    ('httpclient', 'sliding-window.php'),
-    ('httpclient', 'resume-download.php'),
-    ('httpclient', 'stream-unzip.php'),
-    ('httpclient', 'fan-out.php'),
-    ('httpclient', 'stream-to-disk.php'),
+    ('httpclient', 'get.php'):              'real network response',
+    ('httpclient', 'post.php'):             'real network response',
+    ('httpclient', 'progress.php'):         'real network + progress timing',
+    ('httpclient', 'sliding-window.php'):   'real network response',
+    ('httpclient', 'resume-download.php'):  'real network response',
+    ('httpclient', 'stream-unzip.php'):     'real network response',
+    ('httpclient', 'fan-out.php'):          'real network response',
+    ('httpclient', 'stream-to-disk.php'):   'real network response',
 }
 
 PLAYGROUND_AUTOLOAD = "/wordpress/wp-content/php-toolkit/vendor/autoload.php"
@@ -90,6 +103,25 @@ def run_one(code, timeout=15):
             pass
 
 
+def lint_one(code):
+    """Run `php -l` against a snippet (after autoload-path rewrite). Returns
+    (rc, stderr) — rc 0 means valid syntax."""
+    with tempfile.NamedTemporaryFile(suffix='.php', mode='w', delete=False) as f:
+        f.write(rewrite(code))
+        path = f.name
+    try:
+        proc = subprocess.run(
+            ['php', '-l', path],
+            capture_output=True, text=True, timeout=10,
+        )
+        return proc.returncode, proc.stderr or proc.stdout
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+
+
 def normalize(text):
     """Strip noise that varies between runs (tempfile names, timestamps)."""
     # tempnam paths
@@ -110,11 +142,22 @@ def normalize(text):
     return text
 
 
+def iter_snippets():
+    """Yield (slug, filename, code, runnable) for every snippet in the catalog."""
+    for slug, _, _, _, sections in COMPONENTS:
+        for heading, _, snippet in sections:
+            if not snippet:
+                continue
+            filename, code = snippet[0], snippet[1]
+            runnable = len(snippet) < 3 or snippet[2]
+            yield slug, filename, code, runnable
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--update', action='store_true', help='Regenerate _expected_outputs.json')
-    ap.add_argument('--check', action='store_true', help='Verify against _expected_outputs.json')
-    ap.add_argument('--filter', default=None, help='Only run snippets whose slug or filename match this substring')
+    ap.add_argument('--check', action='store_true', help='Verify against _expected_outputs.json (default)')
+    ap.add_argument('--filter', default=None, help='Only run snippets whose slug or filename contain this substring')
     args = ap.parse_args()
 
     if not args.update and not args.check:
@@ -130,56 +173,73 @@ def main():
             existing = {tuple(k.split('::')): v for k, v in json.load(f).items()}
 
     new = {}
-    failures = []
-    skipped = 0
     matched = 0
-    drift = []
+    syntax_only = 0
+    runtime_failures = []   # snippet expected to run, blew up
+    syntax_failures = []    # any snippet, php -l failed
+    output_drift = []       # output changed or missing in JSON
 
-    for slug, _, _, _, sections in COMPONENTS:
-        for heading, _, snippet in sections:
-            if not snippet:
-                continue
-            filename, code = snippet[0], snippet[1]
-            runnable = len(snippet) < 3 or snippet[2]
-            if not runnable:
-                continue
-            if args.filter and args.filter not in slug and args.filter not in filename:
-                continue
-            rc, stdout, stderr = run_one(code)
+    for slug, filename, code, runnable in iter_snippets():
+        if args.filter and args.filter not in slug and args.filter not in filename:
+            continue
+        key = (slug, filename)
+
+        if not runnable:
+            rc, msg = lint_one(code)
             if rc != 0:
-                # Snippet can't run locally — leave it out of JSON. The docs
-                # site will boot Playground for it at click time.
-                failures.append((slug, filename, stderr.strip().splitlines()[:2]))
-                skipped += 1
-                continue
+                syntax_failures.append((slug, filename, msg.strip().splitlines()[:3]))
+            else:
+                syntax_only += 1
+            continue
 
-            key = (slug, filename)
-            if key in NO_EXPECTED:
-                # Ran successfully but we don't compare output. Don't store.
-                matched += 1
-                continue
+        rc, stdout, stderr = run_one(code)
+        if rc != 0:
+            # Distinguish syntax errors from runtime errors so the message is
+            # useful, but both are hard failures for a snippet that's
+            # advertised as runnable.
+            lint_rc, lint_msg = lint_one(code)
+            if lint_rc != 0:
+                syntax_failures.append((slug, filename, lint_msg.strip().splitlines()[:3]))
+            else:
+                runtime_failures.append((slug, filename, (stderr or '(no stderr)').strip().splitlines()[:3]))
+            continue
 
-            normalized = normalize(stdout)
-            new[key] = normalized
+        if key in NO_EXPECTED:
+            matched += 1
+            continue
 
-            if args.check:
-                expected = existing.get(key)
-                if expected is None:
-                    drift.append((slug, filename, 'NEW (run --update to add)'))
-                elif normalize(expected) != normalized:
-                    drift.append((slug, filename, 'OUTPUT CHANGED'))
-                else:
-                    matched += 1
+        normalized = normalize(stdout)
+        new[key] = normalized
+
+        if args.check:
+            expected = existing.get(key)
+            if expected is None:
+                output_drift.append((slug, filename, 'NEW (run --update to add)'))
+            elif normalize(expected) != normalized:
+                output_drift.append((slug, filename, 'OUTPUT CHANGED'))
             else:
                 matched += 1
+        else:
+            matched += 1
 
-    print(f'\nRan {matched + len(drift)} snippets; {skipped} couldn\'t run locally.')
-    for slug, filename, why in failures:
-        why_text = ' '.join(why) if why else '(no stderr)'
-        print(f'  skip   {slug}/{filename:<32} {why_text[:80]}')
-    if args.check:
-        for slug, filename, kind in drift:
-            print(f'  DRIFT  {slug}/{filename:<32} {kind}')
+    total = matched + syntax_only + len(runtime_failures) + len(syntax_failures) + len(output_drift)
+    print(f'\nChecked {total} snippets:')
+    print(f'  {matched} runnable, output verified')
+    print(f'  {syntax_only} non-runnable, syntax verified')
+    if syntax_failures:
+        print(f'  {len(syntax_failures)} SYNTAX FAILURES:')
+        for slug, filename, msg in syntax_failures:
+            text = ' / '.join(msg) if msg else '(no message)'
+            print(f'    {slug}/{filename:<32} {text[:120]}')
+    if runtime_failures:
+        print(f'  {len(runtime_failures)} RUNTIME FAILURES:')
+        for slug, filename, msg in runtime_failures:
+            text = ' / '.join(msg) if msg else '(no stderr)'
+            print(f'    {slug}/{filename:<32} {text[:120]}')
+    if output_drift and args.check:
+        print(f'  {len(output_drift)} OUTPUT DRIFT:')
+        for slug, filename, kind in output_drift:
+            print(f'    {slug}/{filename:<32} {kind}')
 
     if args.update:
         joined = {f'{k[0]}::{k[1]}': v for k, v in sorted(new.items())}
@@ -187,12 +247,15 @@ def main():
             json.dump(joined, f, indent=2, sort_keys=True)
             f.write('\n')
         print(f'\nWrote {len(joined)} expected outputs to {EXPECTED_PATH}')
+        if syntax_failures or runtime_failures:
+            sys.exit(1)
         sys.exit(0)
 
-    if drift:
-        print(f'\n{len(drift)} snippet(s) drifted. Run `bin/run-snippets.py --update` to refresh.')
+    if syntax_failures or runtime_failures or output_drift:
+        if output_drift:
+            print('\nFor output drift only: run `bin/run-snippets.py --update` to refresh expected outputs.')
         sys.exit(1)
-    print('\nAll snippets match expected outputs.')
+    print('\nAll snippets verified.')
 
 
 if __name__ == '__main__':

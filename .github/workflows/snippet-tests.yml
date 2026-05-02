@@ -1,12 +1,21 @@
 name: Verify docs snippets
 
-# Runs every PHP snippet in bin/_docs_components.py against the local toolkit
-# and compares stdout against bin/_expected_outputs.json. Anything that drifts
-# fails CI; anything that errors out also fails CI.
+# Runs bin/run-snippets.py --check against every snippet advertised by the
+# docs site (bin/_docs_components.py). The runner verifies each snippet
+# according to its catalog flags:
 #
-# Snippets that can't run locally (need network, a listening port, or other
-# Playground-only features) are not in the JSON and are skipped — the runner
-# only enforces matches for snippets that already have captured output.
+#   * Snippets marked runnable are executed and their stdout is compared to
+#     bin/_expected_outputs.json. Runtime failures, output drift, or new
+#     snippets without a captured baseline all fail CI.
+#   * A small NO_EXPECTED allowlist (in run-snippets.py) covers runnable
+#     snippets whose stdout is unstable (real network traffic, timestamps).
+#     They still must exit 0; their output is not pinned.
+#   * Snippets marked non-runnable (ones that need a listening port or a
+#     long-lived daemon) are validated with `php -l` so syntax errors still
+#     fail CI.
+#
+# In short: every snippet in the catalog is verified one way or the other —
+# none is silently skipped.
 
 on:
   pull_request:
