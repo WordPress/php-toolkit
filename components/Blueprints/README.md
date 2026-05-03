@@ -1,301 +1,200 @@
-# Blueprints
+---
+slug: blueprints
+title: Blueprints
+install: wp-php-toolkit/blueprints
 
-<!-- docs-site-banner -->
-> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/blueprints.html](https://wordpress.github.io/php-toolkit/reference/blueprints.html)
-> Open the page to edit each snippet in your browser and run it in WordPress Playground.
-<!-- /docs-site-banner -->
+see_also: filesystem | Filesystem | Prepare files and fixtures before applying site setup steps.
+see_also: httpclient | HttpClient | Download packages or source data as part of provisioning workflows.
+see_also: cli | CLI | Wrap repeatable blueprint operations in a small command.
+---
 
-Declarative WordPress site provisioning. Define a site's desired state as a JSON blueprint -- which plugins to install, which options to set, which content to import -- and let the runner execute it. Blueprints can create a new WordPress site from scratch or modify an existing one, making them useful for development environments, demo sites, automated testing, and reproducible WordPress setups.
+Declarative WordPress site provisioning. Write a JSON description of plugins, options, and content; let the runner execute it.
 
-## Installation
+## Why this exists
 
-```
-composer require wp-php-toolkit/blueprints
-```
+<p>A WordPress environment is more than a database dump. It can require a specific core version, plugins, themes, site options, uploaded files, content, and setup steps. Rebuilding that by hand makes demos, tests, bug reports, workshops, and CI fixtures drift over time.</p>
 
-## Quick Start
+<p>The Blueprints component treats site setup as data. A blueprint JSON document describes the desired steps, and the runner applies them to either a new WordPress install or an existing one. The validator exists because user-authored JSON needs clear, path-specific errors rather than generic schema failures.</p>
 
-Create a new WordPress site from a blueprint JSON file:
+<p><code>RunnerConfiguration</code> separates the web root from the WordPress core directory, since real hosts often put them in different places. Both paths are explicit on the runner, never inferred.</p>
 
+<p>Blueprints can <em>create</em> a new WordPress install (download core, set up the database, apply steps) or <em>apply to an existing</em> site. Creating a fresh install needs filesystem access this in-browser runtime doesn't have, so the runnable snippets focus on <code>APPLY_TO_EXISTING_SITE</code>.</p>
+
+## Configure a runner for an existing site
+
+<p><code>RunnerConfiguration</code> is a fluent builder. The minimum: target site root, target site URL, execution mode.</p>
+
+<!-- snippet:
+filename: configure.php
+runnable: true
+-->
 ```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
 use WordPress\Blueprints\Runner;
 use WordPress\Blueprints\RunnerConfiguration;
-use WordPress\Blueprints\DataReference\AbsoluteLocalPath;
 
 $config = ( new RunnerConfiguration() )
-    ->set_execution_mode( Runner::EXECUTION_MODE_CREATE_NEW_SITE )
-    ->set_blueprint( new AbsoluteLocalPath( '/path/to/blueprint.json' ) )
-    ->set_target_site_root( '/var/www/my-site' )
-    ->set_target_site_url( 'http://localhost:8080' )
-    ->set_database_engine( 'sqlite' );
+	->set_execution_mode( Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE )
+	->set_target_site_root( '/wordpress' )
+	->set_target_site_url( 'http://playground.test/' );
 
-$runner = new Runner( $config );
-$runner->run();
+echo "mode: " . $config->get_execution_mode() . "\n";
+echo "root: " . $config->get_target_site_root() . "\n";
+echo "url:  " . $config->get_target_site_url() . "\n";
 ```
 
-Where `blueprint.json` looks like:
+<!-- expected-output -->
+```
+mode: apply-to-existing-site
+root: /wordpress
+url:  http://playground.test/
+```
 
-```json
+## Generate blueprint JSON from PHP
+
+<p>CI jobs and tests stay clearer when PHP builds the blueprint from data instead of hand-writing JSON. Keep the structure plain: <code>version</code>, then a list of step arrays.</p>
+
+<!-- snippet:
+filename: build-json.php
+runnable: true
+-->
+```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+$site_name = 'Demo Site';
+$plugins   = array( 'gutenberg', 'classic-editor' );
+
+$blueprint = array(
+	'version' => 2,
+	'steps'   => array(
+		array(
+			'step'    => 'setSiteOptions',
+			'options' => array(
+				'blogname'              => $site_name,
+				'permalink_structure'   => '/%postname%/',
+				'show_on_front'         => 'page',
+			),
+		),
+	),
+);
+
+foreach ( $plugins as $slug ) {
+	$blueprint['steps'][] = array(
+		'step'       => 'installPlugin',
+		'pluginData' => "https://downloads.wordpress.org/plugin/{$slug}.zip",
+	);
+	$blueprint['steps'][] = array(
+		'step'   => 'activatePlugin',
+		'plugin' => "{$slug}/{$slug}.php",
+	);
+}
+
+echo json_encode( $blueprint, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n";
+```
+
+<!-- expected-output -->
+```
 {
     "version": 2,
     "steps": [
+        {
+            "step": "setSiteOptions",
+            "options": {
+                "blogname": "Demo Site",
+                "permalink_structure": "/%postname%/",
+                "show_on_front": "page"
+            }
+        },
         {
             "step": "installPlugin",
             "pluginData": "https://downloads.wordpress.org/plugin/gutenberg.zip"
         },
         {
-            "step": "setSiteOptions",
-            "options": {
-                "blogname": "My Test Site",
-                "blogdescription": "Built with Blueprints"
-            }
-        }
-    ]
-}
-```
-
-## Usage
-
-### Execution modes
-
-Blueprints supports two execution modes:
-
-- **`EXECUTION_MODE_CREATE_NEW_SITE`** -- Downloads WordPress, creates the database, and applies the blueprint steps. Use this for spinning up fresh sites.
-- **`EXECUTION_MODE_APPLY_TO_EXISTING_SITE`** -- Applies the blueprint steps to an already-installed WordPress site. Use this for modifying live or staging sites.
-
-```php
-use WordPress\Blueprints\Runner;
-use WordPress\Blueprints\RunnerConfiguration;
-use WordPress\Blueprints\DataReference\AbsoluteLocalPath;
-
-// Apply a blueprint to an existing site
-$config = ( new RunnerConfiguration() )
-    ->set_execution_mode( Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE )
-    ->set_blueprint( new AbsoluteLocalPath( '/path/to/blueprint.json' ) )
-    ->set_target_site_root( '/var/www/existing-site' )
-    ->set_target_site_url( 'http://localhost:8080' )
-    ->set_database_engine( 'mysql' )
-    ->set_database_credentials( array(
-        'host'     => '127.0.0.1',
-        'port'     => 3306,
-        'user'     => 'wp',
-        'password' => 'secret',
-        'dbname'   => 'wordpress',
-    ) );
-
-$runner = new Runner( $config );
-$runner->run();
-```
-
-### Blueprint JSON structure
-
-A blueprint is a JSON document with a `version` field and a `steps` array. Each step declares a single operation:
-
-```json
-{
-    "version": 2,
-    "steps": [
-        {
-            "step": "mkdir",
-            "path": "wp-content/custom-dir"
-        },
-        {
-            "step": "writeFiles",
-            "files": {
-                "wp-content/custom-dir/config.txt": {
-                    "data": "inline",
-                    "content": "key=value"
-                }
-            }
+            "step": "activatePlugin",
+            "plugin": "gutenberg/gutenberg.php"
         },
         {
             "step": "installPlugin",
-            "pluginData": "https://downloads.wordpress.org/plugin/akismet.zip"
+            "pluginData": "https://downloads.wordpress.org/plugin/classic-editor.zip"
         },
         {
             "step": "activatePlugin",
-            "plugin": "akismet/akismet.php"
-        },
-        {
-            "step": "installTheme",
-            "themeData": "https://downloads.wordpress.org/theme/twentytwentyfour.zip"
-        },
-        {
-            "step": "activateTheme",
-            "theme": "twentytwentyfour"
-        },
-        {
-            "step": "setSiteOptions",
-            "options": {
-                "blogname": "My Site",
-                "permalink_structure": "/%postname%/"
-            }
-        },
-        {
-            "step": "runPHP",
-            "code": "<?php echo 'Hello from Blueprint!';"
-        },
-        {
-            "step": "runSql",
-            "sql": "INSERT INTO wp_options (option_name, option_value) VALUES ('custom_opt', 'custom_val');"
-        },
-        {
-            "step": "importContent",
-            "content": "https://example.com/export.wxr"
+            "plugin": "classic-editor/classic-editor.php"
         }
     ]
 }
 ```
 
-### Available steps
+## Validate before running
 
-| Step | Description |
-|------|-------------|
-| `mkdir` | Create a directory (supports recursive creation). |
-| `writeFiles` | Write files with inline or referenced content. |
-| `cp` | Copy files or directories. |
-| `mv` | Move or rename files and directories. |
-| `rm` | Delete a file. |
-| `rmDir` | Delete a directory. |
-| `unzip` | Extract a zip archive to a target path. |
-| `installPlugin` | Download and install a plugin from a URL or WordPress.org. |
-| `activatePlugin` | Activate an installed plugin. |
-| `installTheme` | Download and install a theme from a URL or WordPress.org. |
-| `activateTheme` | Activate an installed theme. |
-| `setSiteOptions` | Set WordPress options (calls `update_option` for each). |
-| `defineConstants` | Add `define()` statements to `wp-config.php`. |
-| `enableMultisite` | Enable WordPress Multisite. |
-| `runPHP` | Execute a PHP script in a subprocess with WordPress loaded. |
-| `runSql` | Execute raw SQL queries against the site database. |
-| `importContent` | Import WXR content into the site. |
-| `importMedia` | Import media files. |
-| `wpCLI` | Run a WP-CLI command. |
-| `setSiteLanguage` | Set the site language and download language packs. |
+<p>The schema validator returns a human-readable <code>ValidationError</code> instead of a generic "does not match schema" failure. Use it before handing user-authored JSON to a runner.</p>
 
-### Data references
-
-Blueprint steps that accept file data use a data reference system. References can point to different sources:
-
-```json
-{
-    "step": "writeFiles",
-    "files": {
-        "output.txt": {
-            "data": "inline",
-            "content": "Direct content here"
-        }
-    }
-}
-```
-
-```json
-{
-    "step": "installPlugin",
-    "pluginData": "https://downloads.wordpress.org/plugin/gutenberg.zip"
-}
-```
-
-```json
-{
-    "step": "installPlugin",
-    "pluginData": "./local-plugin.zip"
-}
-```
-
-### CLI usage
-
-Blueprints ships a CLI tool (packaged as `blueprints.phar`) for command-line execution:
-
-```bash
-php blueprints.phar exec --blueprint=blueprint.json --target=/var/www/my-site --url=http://localhost:8080
-```
-
-### Tracking progress
-
-Attach a progress observer to receive updates during execution:
-
+<!-- snippet:
+filename: validate.php
+runnable: true
+-->
 ```php
-use WordPress\Blueprints\ProgressObserver;
-use WordPress\Blueprints\Runner;
-use WordPress\Blueprints\RunnerConfiguration;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$observer = new ProgressObserver();
-$observer->on(
-    'progress',
-    function ( $event ) {
-        echo sprintf(
-            "[%d%%] %s\n",
-            $event->progress,
-            $event->caption
-        );
-    }
-);
-
-$config = ( new RunnerConfiguration() )
-    ->set_progress_observer( $observer );
-    // ... other configuration ...
-```
-
-### Blueprint validation
-
-Validate a blueprint against the JSON schema before executing it:
-
-```php
 use WordPress\Blueprints\Validator\HumanFriendlySchemaValidator;
 
 $schema = array(
-    'type' => 'object',
-    'properties' => array(
-        'version' => array( 'type' => 'integer' ),
-        'steps'   => array( 'type' => 'array' ),
-    ),
-    'required' => array( 'version' ),
+	'type'       => 'object',
+	'required'   => array( 'version', 'steps' ),
+	'properties' => array(
+		'version' => array( 'type' => 'integer' ),
+		'steps'   => array(
+			'type'  => 'array',
+			'items' => array(
+				'type'       => 'object',
+				'required'   => array( 'step' ),
+				'properties' => array(
+					'step' => array( 'type' => 'string' ),
+				),
+			),
+		),
+	),
 );
 
-$validator = new HumanFriendlySchemaValidator( $schema );
-$error = $validator->validate( json_decode( $blueprint_json ) );
+$blueprint = array(
+	'version' => 2,
+	'steps'   => array(
+		array( 'pluginData' => 'https://downloads.wordpress.org/plugin/gutenberg.zip' ),
+	),
+);
 
-if ( null !== $error ) {
-    echo 'Validation failed: ' . $error->get_message();
+$error = ( new HumanFriendlySchemaValidator( $schema ) )->validate( $blueprint );
+if ( null === $error ) {
+	echo "valid\n";
+} else {
+	echo $error->get_pretty_path() . ": " . $error->message . "\n";
 }
 ```
 
-## API Reference
+<!-- expected-output -->
+```
+Blueprint root["steps"][0]: Missing required field: step.
+```
 
-### Core classes
+## The Blueprint JSON shape
 
-| Class | Purpose |
-|-------|---------|
-| `Runner` | Executes a blueprint. Constructor takes a `RunnerConfiguration`. Call `run()` to execute. |
-| `RunnerConfiguration` | Fluent configuration builder. Key methods: `set_blueprint()`, `set_execution_mode()`, `set_target_site_root()`, `set_target_site_url()`, `set_database_engine()`, `set_database_credentials()`, `set_progress_observer()`. |
-| `Runtime` | Execution context available to steps. Provides `get_target_filesystem()`, `eval_php_code_in_subprocess()`. |
+<p>A blueprint is a JSON document with a <code>version</code> field and a <code>steps</code> array. Each step has a <code>"step"</code> discriminator and step-specific fields. This is the same shape used by <a href="https://playground.wordpress.net/">WordPress Playground</a>.</p>
 
-### Execution mode constants
-
-| Constant | Value |
-|----------|-------|
-| `Runner::EXECUTION_MODE_CREATE_NEW_SITE` | `'create-new-site'` |
-| `Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE` | `'apply-to-existing-site'` |
-
-### Data reference classes
-
-| Class | Purpose |
-|-------|---------|
-| `DataReference` | Factory class. Use `DataReference::create( $value )` to auto-detect the source type. |
-| `InlineFile` | Embed file content directly. Constructor takes `array( 'filename' => '...', 'content' => '...' )`. |
-| `AbsoluteLocalPath` | Reference a file by its absolute path on disk. |
-| `ExecutionContextPath` | Reference a file relative to the blueprint's directory. |
-| `URLReference` | Reference a file by URL (downloaded at execution time). |
-| `WordPressOrgPlugin` | Reference a plugin on wordpress.org by slug. |
-| `WordPressOrgTheme` | Reference a theme on wordpress.org by slug. |
-
-### Validation
-
-| Class | Purpose |
-|-------|---------|
-| `HumanFriendlySchemaValidator` | Validates data against a JSON Schema. Returns `null` on success or a `ValidationError` on failure. |
-
-## Requirements
-
-- PHP 7.2+
-- No external dependencies
+<pre><code>{
+  "version": 2,
+  "steps": [
+    { "step": "setSiteOptions",
+      "options": {
+        "blogname": "Demo Site",
+        "permalink_structure": "/%postname%/"
+      } },
+    { "step": "installPlugin",
+      "pluginData": "https://downloads.wordpress.org/plugin/gutenberg.zip" },
+    { "step": "activatePlugin",
+      "plugin": "gutenberg/gutenberg.php" }
+  ]
+}</code></pre>

@@ -1,260 +1,203 @@
-# ByteStream
+---
+slug: bytestream
+title: ByteStream
+install: wp-php-toolkit/bytestream
 
-<!-- docs-site-banner -->
-> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/bytestream.html](https://wordpress.github.io/php-toolkit/reference/bytestream.html)
-> Open the page to edit each snippet in your browser and run it in WordPress Playground.
-<!-- /docs-site-banner -->
+see_also: filesystem | Filesystem | Back file reads and writes with the same stream primitives.
+see_also: zip | Zip | Read and write archive entries one stream at a time.
+see_also: httpclient | HttpClient | Process request and response bodies incrementally.
+---
 
-Composable streaming primitives for reading, writing, and transforming byte data in pure PHP. ByteStream provides a pull-based model where you request bytes from a source, peek at or consume them, and optionally transform them through filters like compression or checksums -- all without loading entire files into memory.
+Composable streaming primitives for reading, writing, transforming, hashing, and compressing byte data. Pull/peek/consume semantics let parsers backtrack without copying, and deflate, inflate, and checksum filters snap together like Lego.
 
-## Installation
+## Why this exists
 
-```bash
-composer require wp-php-toolkit/bytestream
-```
+<p>PHP's native streams are powerful but inconsistent. <code>fread</code> on a socket may return short reads with no warning; <code>stream_filter_append</code> is awkward to compose; gzip helpers and file handles expose different APIs. The ByteStream component normalizes these behind one small interface — <code>pull / peek / consume</code> — so a parser, a hash function, and a deflate filter all see the same shape.</p>
 
-## Quick Start
+<p>The split between <em>pull</em> (buffer up to N bytes) and <em>consume</em> (advance past N bytes) is the secret. Parsers can <code>peek</code> ahead to detect a record boundary and decide whether to <code>consume</code>, without copying or allocating.</p>
 
+## Read a file in chunks
+
+<p>The canonical loop. <code>pull(N)</code> reads up to <code>N</code> bytes from the underlying source into an internal buffer and returns how many ended up there; <code>consume(N)</code> reads <code>N</code> bytes from that buffer and advances past them. The buffer never grows beyond the chunk size you ask for.</p>
+
+<!-- snippet:
+filename: teaser-read.php
+runnable: true
+-->
 ```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
 use WordPress\ByteStream\ReadStream\FileReadStream;
 
-// Read a file in chunks
-$reader = FileReadStream::from_path( '/path/to/file.txt' );
+$path = tempnam( sys_get_temp_dir(), 'demo' );
+file_put_contents( $path, str_repeat( "log line\n", 200 ) );
+
+$reader = FileReadStream::from_path( $path );
+$total = 0;
 while ( ! $reader->reached_end_of_data() ) {
-    $available = $reader->pull( 1024 );
-    $chunk = $reader->consume( $available );
-    // Process $chunk...
+	$n = $reader->pull( 256 );
+	if ( 0 === $n ) break;
+	$total += strlen( $reader->consume( $n ) );
 }
 $reader->close_reading();
+echo "Read {$total} bytes in 256-byte chunks.\n";
 ```
 
-## Usage
-
-### Reading Files
-
-`FileReadStream` opens a file and exposes it through the pull/consume model. Use `pull()` to buffer bytes, `peek()` to inspect them without advancing, and `consume()` to read and advance the position.
-
-```php
-use WordPress\ByteStream\ReadStream\FileReadStream;
-
-$reader = FileReadStream::from_path( '/path/to/data.bin' );
-
-// Pull up to 100 bytes into the internal buffer
-$reader->pull( 100 );
-
-// Peek at the first 10 bytes without consuming them
-$header = $reader->peek( 10 );
-
-// Consume (read and advance past) 10 bytes
-$header = $reader->consume( 10 );
-
-// Read the current position
-$offset = $reader->tell(); // 10
-
-// Seek to a specific offset
-$reader->seek( 0 );
-
-// Read all remaining bytes at once
-$rest = $reader->consume_all();
-
-$reader->close_reading();
+<!-- expected-output -->
+```
+Read 1800 bytes in 256-byte chunks.
 ```
 
-You can also create a `FileReadStream` from an existing resource handle:
+## MemoryPipe as write-then-read buffer
 
+<p><code>MemoryPipe</code> is bidirectional: you <code>append_bytes()</code> as a writer and <code>pull/consume</code> as a reader. Easiest way to wire one component's output into another's input.</p>
+
+<p>Gotcha: <strong>A producer must call <code>close_writing()</code> when done — otherwise the consumer eventually throws <code>NotEnoughDataException</code> instead of seeing EOF.</strong> </p>
+
+<!-- snippet:
+filename: memory-pipe.php
+runnable: true
+-->
 ```php
-$handle = fopen( '/path/to/file.txt', 'r' );
-$reader = FileReadStream::from_resource( $handle, filesize( '/path/to/file.txt' ) );
-```
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-### In-Memory Streams with MemoryPipe
-
-`MemoryPipe` holds data in memory and supports both reading and writing. It is useful for testing, for wrapping string data in the stream interface, or for piping data between components.
-
-```php
 use WordPress\ByteStream\MemoryPipe;
 
-// Wrap a string as a readable stream
-$pipe = new MemoryPipe( 'Hello, world!' );
-$pipe->pull( 5 );
-echo $pipe->consume( 5 ); // "Hello"
-
-// Use as a write-then-read pipe
-$pipe = new MemoryPipe( null, 1024 ); // Expected length of 1024
-$pipe->append_bytes( 'chunk one ' );
-$pipe->append_bytes( 'chunk two' );
+$pipe = new MemoryPipe();
+$pipe->append_bytes( "first chunk\n" );
+$pipe->append_bytes( "second chunk\n" );
+$pipe->append_bytes( "third chunk\n" );
 $pipe->close_writing();
 
-echo $pipe->consume_all(); // "chunk one chunk two"
+while ( ! $pipe->reached_end_of_data() ) {
+	$n = $pipe->pull( 1024 );
+	if ( 0 === $n ) break;
+	echo "got: " . $pipe->consume( $n );
+}
 ```
 
-### Writing Files
-
-`FileWriteStream` appends data to a file. It supports truncating or appending to existing files.
-
-```php
-use WordPress\ByteStream\WriteStream\FileWriteStream;
-
-// Truncate and write
-$writer = FileWriteStream::from_path( '/path/to/output.txt', 'truncate' );
-$writer->append_bytes( 'First line' );
-$writer->append_bytes( "\nSecond line" );
-$writer->close_writing();
-
-// Append to existing file
-$writer = FileWriteStream::from_path( '/path/to/output.txt', 'append' );
-$writer->append_bytes( "\nThird line" );
-$writer->close_writing();
+<!-- expected-output -->
+```
+got: first chunk
+second chunk
+third chunk
 ```
 
-### Reading and Writing the Same File
+## Compress on the way in, decompress on the way out
 
-`FileReadWriteStream` provides both read and write access to a single file. Writes always append to the end while reads track their own position independently.
+<p>Wrap a stream in <code>DeflateReadStream</code> to get compressed bytes out; wrap it in <code>InflateReadStream</code> to get decompressed bytes out. Both are full <code>ByteReadStream</code> implementations, so they nest into anything else that takes a stream.</p>
 
+<!-- snippet:
+filename: deflate-roundtrip.php
+runnable: true
+-->
 ```php
-use WordPress\ByteStream\FileReadWriteStream;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$stream = FileReadWriteStream::from_path( '/tmp/buffer.bin', true );
-$stream->append_bytes( 'Hello' );
-$stream->append_bytes( ' World' );
-
-// Read back from the beginning
-$stream->pull( 11 );
-echo $stream->consume( 11 ); // "Hello World"
-
-$stream->close_writing();
-$stream->close_reading();
-```
-
-### Compression and Decompression
-
-`DeflateReadStream` compresses data as you read it, and `InflateReadStream` decompresses. They wrap any `ByteReadStream` and produce a new stream of transformed bytes.
-
-```php
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\ByteStream\ReadStream\DeflateReadStream;
 use WordPress\ByteStream\ReadStream\InflateReadStream;
 
-$original = 'The quick brown fox jumps over the lazy dog.';
+$original = str_repeat( "the quick brown fox. ", 50 );
 
-// Compress
-$source = new MemoryPipe( $original );
-$deflated = new DeflateReadStream( $source, ZLIB_ENCODING_DEFLATE );
+$src        = new MemoryPipe( $original );
+$src->close_writing();
+$deflated   = new DeflateReadStream( $src, ZLIB_ENCODING_DEFLATE );
 $compressed = $deflated->consume_all();
 
-// Decompress
-$compressed_source = new MemoryPipe( $compressed );
-$inflated = new InflateReadStream( $compressed_source, ZLIB_ENCODING_DEFLATE );
-echo $inflated->consume_all(); // "The quick brown fox jumps over the lazy dog."
+$src2     = new MemoryPipe( $compressed );
+$src2->close_writing();
+$inflated = new InflateReadStream( $src2, ZLIB_ENCODING_DEFLATE );
+$round    = $inflated->consume_all();
+
+printf( "original  : %d bytes\n", strlen( $original ) );
+printf( "deflated  : %d bytes (%.1f%%)\n", strlen( $compressed ), 100 * strlen( $compressed ) / strlen( $original ) );
+printf( "round-trip: %s\n", $round === $original ? 'OK' : 'BROKEN' );
 ```
 
-### Transforming Streams with Filters
-
-`TransformedReadStream` and `TransformedWriteStream` apply a chain of `ByteTransformer` filters as data flows through the stream. Built-in transformers include `ChecksumTransformer`, `DeflateTransformer`, and `InflateTransformer`.
-
-```php
-use WordPress\ByteStream\ReadStream\FileReadStream;
-use WordPress\ByteStream\ReadStream\TransformedReadStream;
-use WordPress\ByteStream\ByteTransformer\ChecksumTransformer;
-
-// Read a file and compute its SHA-1 hash as you go
-$checksum = new ChecksumTransformer( 'sha1' );
-$reader = FileReadStream::from_path( '/path/to/file.txt' );
-$stream = new TransformedReadStream( $reader, array( 'checksum' => $checksum ) );
-
-$contents = $stream->consume_all();
-echo $stream['checksum']->get_hash(); // SHA-1 hex digest
+<!-- expected-output -->
+```
+original  : 1050 bytes
+deflated  : 45 bytes (4.3%)
+round-trip: OK
 ```
 
-Compress data as you write it:
+## Line-by-line reads from a chunked source
 
+<p>Reading text by line means handling chunk boundaries that fall mid-line. Keep the trailing partial line and prepend it to the next pull. The rest of the loop pretends the data was always whole.</p>
+
+<!-- snippet:
+filename: lines.php
+runnable: true
+-->
 ```php
-use WordPress\ByteStream\WriteStream\FileWriteStream;
-use WordPress\ByteStream\WriteStream\TransformedWriteStream;
-use WordPress\ByteStream\ByteTransformer\DeflateTransformer;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$file_writer = FileWriteStream::from_path( '/path/to/output.deflate', 'truncate' );
-$writer = new TransformedWriteStream(
-    $file_writer,
-    array( new DeflateTransformer( ZLIB_ENCODING_DEFLATE ) )
-);
-$writer->append_bytes( 'Data to compress...' );
-$writer->close_writing();
-$file_writer->close_writing();
+use WordPress\ByteStream\MemoryPipe;
+
+$pipe = new MemoryPipe();
+$pipe->append_bytes( "alpha\nbravo\ncharl" );
+$pipe->append_bytes( "ie\ndelta\necho\n" );
+$pipe->close_writing();
+
+$tail = '';
+$count = 0;
+while ( ! $pipe->reached_end_of_data() ) {
+	$n = $pipe->pull( 8 );
+	if ( 0 === $n ) break;
+	$buf   = $tail . $pipe->consume( $n );
+	$lines = explode( "\n", $buf );
+	$tail  = array_pop( $lines );
+	foreach ( $lines as $line ) {
+		printf( "[%d] %s\n", ++$count, $line );
+	}
+}
+if ( '' !== $tail ) {
+	printf( "[%d] %s\n", ++$count, $tail );
+}
 ```
 
-### Limiting Read Length
+<!-- expected-output -->
+```
+[1] alpha
+[2] bravo
+[3] charlie
+[4] delta
+[5] echo
+```
 
-`LimitedByteReadStream` restricts reading to a fixed number of bytes from a larger stream. This is useful for reading structured binary formats where you know the length of each section.
+## Limit a stream to a fixed window
 
+<p><code>LimitedByteReadStream</code> exposes only the next N bytes of an underlying stream as if those were the entire stream. This is how the ZIP decoder hands you the body of one entry without letting you read into the next.</p>
+
+<!-- snippet:
+filename: limited.php
+runnable: true
+-->
 ```php
-use WordPress\ByteStream\ReadStream\FileReadStream;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
 use WordPress\ByteStream\ReadStream\LimitedByteReadStream;
 
-$reader = FileReadStream::from_path( '/path/to/archive.bin' );
+$source = new MemoryPipe( "HEADER:42|BODY:hello there|FOOTER:done" );
+$source->close_writing();
 
-// Read only the first 256 bytes
-$header_reader = new LimitedByteReadStream( $reader, 256 );
-$header = $header_reader->consume_all();
-echo $header_reader->length(); // 256
+$source->pull( 10 );
+$source->consume( 10 );
+
+$body = new LimitedByteReadStream( $source, 16 );
+echo "body sees: " . $body->consume_all() . "\n";
+echo "remaining in source: " . $source->consume_all() . "\n";
 ```
 
-### Pull Modes
-
-The `pull()` method supports two modes that control how bytes are buffered:
-
-```php
-use WordPress\ByteStream\ReadStream\ByteReadStream;
-
-// PULL_NO_MORE_THAN (default): pull up to N bytes, may return fewer
-$available = $reader->pull( 1024 );
-$chunk = $reader->consume( $available );
-
-// PULL_EXACTLY: pull exactly N bytes, throws NotEnoughDataException if
-// the stream doesn't have enough data
-$reader->pull( 100, ByteReadStream::PULL_EXACTLY );
-$chunk = $reader->consume( 100 );
+<!-- expected-output -->
 ```
-
-## API Reference
-
-### Interfaces
-
-| Interface | Methods |
-|---|---|
-| `ByteReadStream` | `pull()`, `peek()`, `consume()`, `consume_all()`, `seek()`, `tell()`, `length()`, `reached_end_of_data()`, `close_reading()` |
-| `ByteWriteStream` | `append_bytes()`, `close_writing()` |
-| `BytePipe` | Combines `ByteReadStream` and `ByteWriteStream` |
-| `ByteTransformer` | `filter_bytes()`, `flush()` |
-
-### Read Stream Classes
-
-| Class | Description |
-|---|---|
-| `FileReadStream` | Reads from a file via `from_path()` or `from_resource()` |
-| `InflateReadStream` | Decompresses a wrapped `ByteReadStream` |
-| `DeflateReadStream` | Compresses a wrapped `ByteReadStream` |
-| `TransformedReadStream` | Applies a chain of `ByteTransformer` filters while reading |
-| `LimitedByteReadStream` | Limits reading to a fixed byte count from a larger stream |
-
-### Write Stream Classes
-
-| Class | Description |
-|---|---|
-| `FileWriteStream` | Writes to a file via `from_path()` or `from_resource_handle()` |
-| `TransformedWriteStream` | Applies a chain of `ByteTransformer` filters while writing |
-
-### Other Classes
-
-| Class | Description |
-|---|---|
-| `MemoryPipe` | In-memory read/write buffer (implements `BytePipe`) |
-| `FileReadWriteStream` | File-backed read/write stream (implements `BytePipe`) |
-| `ChecksumTransformer` | Computes a hash (SHA-1, MD5, etc.) as bytes flow through |
-| `DeflateTransformer` | Compresses bytes as a write-side transformer |
-| `InflateTransformer` | Decompresses bytes as a write-side transformer |
-
-## Requirements
-
-- PHP 7.2+
-- No external dependencies
+body sees: BODY:hello there
+remaining in source: |FOOTER:done
+```

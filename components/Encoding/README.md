@@ -1,143 +1,196 @@
-# Encoding
+---
+slug: encoding
+title: Encoding
+install: wp-php-toolkit/encoding
 
-<!-- docs-site-banner -->
-> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/encoding.html](https://wordpress.github.io/php-toolkit/reference/encoding.html)
-> Open the page to edit each snippet in your browser and run it in WordPress Playground.
-<!-- /docs-site-banner -->
+see_also: html | HTML | Normalize incoming text before HTML tokenization.
+see_also: xml | XML | Keep invalid bytes out of XML streams.
+see_also: dataliberation | DataLiberation | Clean content before importing it into WordPress.
+---
 
-Pure PHP utilities for UTF-8 validation, scrubbing, and conversion. This component detects invalid byte sequences, replaces them with the Unicode Replacement Character using the maximal subpart algorithm, and provides low-level tools for working with Unicode code points -- all without requiring the `mbstring` extension. When `mbstring` is available, the library delegates to it for better performance.
+UTF-8 validation and scrubbing with a pure-PHP fallback when <code>mbstring</code> is unavailable. Detects malformed bytes and replaces them per the Unicode maximal-subpart algorithm.
 
-## Installation
+## Why this exists
 
-```bash
-composer require wp-php-toolkit/encoding
-```
+<p>Every parser in this toolkit eventually has to decide what to do with text bytes. XML rejects malformed UTF-8. JSON and databases can fail late. CSS, HTML, WXR, and Blueprint validation all need consistent answers about whether a string is well-formed Unicode.</p>
 
-## Quick Start
+<p>The Encoding component provides the small UTF-8 primitives the rest of the toolkit can share: validate bytes, scrub invalid sequences, scan code points, and detect Unicode noncharacters. When <code>mbstring</code> is available it can delegate to it; when it is not, the component uses its own byte scanner so behavior stays available in restricted PHP environments.</p>
 
+<p>Historically, this became the common foundation for Blueprint validation and CSS/XML processing, replacing ad hoc Unicode helpers with the WordPress core UTF-8 routines used here.</p>
+
+## Validating UTF-8 before storing it
+
+<p><code>wp_is_valid_utf8()</code> rejects overlong sequences, surrogate halves, and stray ISO-8859-1 bytes. Use it as a guard in front of any code path that assumes UTF-8 (database, JSON, XML).</p>
+
+<!-- snippet:
+filename: validate.php
+runnable: true
+-->
 ```php
-use function WordPress\Encoding\wp_is_valid_utf8;
-use function WordPress\Encoding\wp_scrub_utf8;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-// Validate a string
-wp_is_valid_utf8( 'Hello, world!' ); // true
-wp_is_valid_utf8( "invalid \xC0 byte" ); // false
-
-// Replace invalid bytes with the replacement character
-echo wp_scrub_utf8( "caf\xC0 latte" ); // "caf\xEF\xBF\xBD latte" (caf? latte)
-```
-
-## Usage
-
-### Validating UTF-8
-
-`wp_is_valid_utf8()` checks whether a byte string is well-formed UTF-8. It rejects overlong sequences, surrogate halves, bytes that are never valid in UTF-8, and incomplete multi-byte sequences.
-
-```php
 use function WordPress\Encoding\wp_is_valid_utf8;
 
-// Valid UTF-8
-wp_is_valid_utf8( '' );                  // true (empty string)
-wp_is_valid_utf8( 'just a test' );       // true (plain ASCII)
-wp_is_valid_utf8( "\xE2\x9C\x8F" );     // true (Pencil, U+270F)
+$samples = array(
+	'ASCII'          => 'just a test',
+	'UTF-8 pencil'   => "\xE2\x9C\x8F",
+	'latin-1 byte'   => "B\xFCch",
+	'overlong slash' => "\xC1\xBF",
+	'surrogate half' => "\xED\xB0\x80",
+);
 
-// Invalid UTF-8
-wp_is_valid_utf8( "just \xC0 test" );    // false (0xC0 is never valid)
-wp_is_valid_utf8( "\xE2\x9C" );          // false (incomplete 3-byte sequence)
-wp_is_valid_utf8( "\xC1\xBF" );          // false (overlong encoding)
-wp_is_valid_utf8( "\xED\xB0\x80" );      // false (surrogate half U+DC00)
-wp_is_valid_utf8( "B\xFCch" );           // false (ISO-8859-1 high byte)
+foreach ( $samples as $label => $bytes ) {
+	echo sprintf( "%-14s %s\n", $label . ':', wp_is_valid_utf8( $bytes ) ? 'valid' : 'invalid' );
+}
 ```
 
-### Scrubbing Invalid Bytes
+<!-- expected-output -->
+```
+ASCII:         valid
+UTF-8 pencil:  valid
+latin-1 byte:  invalid
+overlong slash: invalid
+surrogate half: invalid
+```
 
-`wp_scrub_utf8()` replaces ill-formed byte sequences with the Unicode Replacement Character (U+FFFD). It follows the "maximal subpart" algorithm recommended by the Unicode Standard for secure and interoperable string handling.
+## Scrubbing invalid bytes with U+FFFD
 
+<p>Replace each ill-formed sequence with the Unicode replacement character. Useful right before serializing to XML, JSON, or sending to an LLM that will choke on broken bytes.</p>
+
+<!-- snippet:
+filename: scrub.php
+runnable: true
+-->
 ```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
 use function WordPress\Encoding\wp_scrub_utf8;
 
-// Valid strings pass through unchanged
-wp_scrub_utf8( 'test' ); // "test"
+$broken = "the byte \xC0 should not be here.";
+echo wp_scrub_utf8( $broken ) . "\n";
 
-// Single invalid byte becomes one replacement character
-wp_scrub_utf8( ".\xC0." ); // ".\\xEF\\xBF\\xBD." (i.e., ".?.")
-
-// Incomplete multi-byte sequence
-wp_scrub_utf8( ".\xE2\x8C." ); // ".?."  (missing third byte)
-
-// Each maximal subpart gets its own replacement character
-wp_scrub_utf8( ".\xC1\xBF." ); // ".??." (overlong: two invalid subparts)
-
-// Surrogate half U+D800 encoded as three bytes -- all three are invalid
-wp_scrub_utf8( ".\xED\xA0\x80." ); // ".???."
+echo wp_scrub_utf8( ".\xE2\x8C\xE2\x8C." ) . "\n";
 ```
 
-### Detecting Noncharacters
+<!-- expected-output -->
+```
+the byte � should not be here.
+.��.
+```
 
-`wp_has_noncharacters()` checks whether a string contains Unicode noncharacters -- code points that are permanently reserved and should not appear in open data interchange.
+## Detecting noncharacters MySQL/utf8mb4 will reject
 
+<p>Code points like U+FFFE, U+FFFF, and the U+FDD0–U+FDEF block are valid Unicode but forbidden in XML and rejected by some databases. Check before inserting user-submitted content into a strict <code>utf8mb4</code> column.</p>
+
+<!-- snippet:
+filename: noncharacters.php
+runnable: true
+-->
 ```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
 use function WordPress\Encoding\wp_has_noncharacters;
 
-// U+FFFE is a noncharacter
-wp_has_noncharacters( "\xEF\xBF\xBE" ); // true
+$samples = array(
+	'normal text' => 'normal text',
+	'U+FFFE'      => "oops \u{FFFE}",
+	'U+FDD0'      => "hi \u{FDD0} bye",
+);
 
-// Normal text
-wp_has_noncharacters( 'Hello' ); // false
+foreach ( $samples as $label => $text ) {
+	echo sprintf( "%-12s %s\n", $label . ':', wp_has_noncharacters( $text ) ? 'reject' : 'ok' );
+}
 ```
 
-The noncharacter ranges are U+FDD0-U+FDEF, plus U+FFFE, U+FFFF, U+1FFFE, U+1FFFF, and so on through U+10FFFE, U+10FFFF.
+<!-- expected-output -->
+```
+normal text: ok
+U+FFFE:      reject
+U+FDD0:      reject
+```
 
-### Converting Code Points to UTF-8
+## Three-way pipeline: validate, scrub, then check noncharacters
 
-`codepoint_to_utf8_bytes()` encodes a Unicode code point number into its UTF-8 byte representation. Invalid code points (surrogate halves, values above U+10FFFF) produce the replacement character.
+<p>Real-world inputs are messy: an old WXR export, a CSV with mixed encodings, a paste from Word. Combination of validate + scrub + noncharacter-check covers the three classes of breakage that bite later.</p>
 
+<!-- snippet:
+filename: pipeline.php
+runnable: true
+-->
 ```php
-use function WordPress\Encoding\codepoint_to_utf8_bytes;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-echo codepoint_to_utf8_bytes( 0x41 );    // "A"
-echo codepoint_to_utf8_bytes( 0x270F );  // "\xE2\x9C\x8F" (Pencil)
-echo codepoint_to_utf8_bytes( 0x1F170 ); // "\xF0\x9F\x85\xB0" (Negative Squared Latin Capital Letter A)
+use function WordPress\Encoding\wp_is_valid_utf8;
+use function WordPress\Encoding\wp_scrub_utf8;
+use function WordPress\Encoding\wp_has_noncharacters;
 
-// Invalid code points produce the replacement character
-echo codepoint_to_utf8_bytes( 0xD83C );  // "\xEF\xBF\xBD" (surrogate half)
+$inputs = array(
+	'good'      => 'Café',
+	'latin1'    => "caf\xE9",
+	'overlong'  => "x\xC1\xBFy",
+	'noncharac' => "hi \u{FFFE} there",
+);
+
+foreach ( $inputs as $label => $bytes ) {
+	$valid    = wp_is_valid_utf8( $bytes );
+	$cleaned  = wp_scrub_utf8( $bytes );
+	$weird    = wp_has_noncharacters( $cleaned );
+	echo sprintf( "%-10s valid=%s noncharacter=%s -> %s\n", $label, $valid ? 'Y' : 'N', $weird ? 'Y' : 'N', $cleaned );
+}
 ```
 
-### Decoding UTF-8 to Code Points
+<!-- expected-output -->
+```
+good       valid=Y noncharacter=N -> Café
+latin1     valid=N noncharacter=N -> caf�
+overlong   valid=N noncharacter=N -> x��y
+noncharac  valid=Y noncharacter=Y -> hi ￾ there
+```
 
-`utf8_ord()` converts a single UTF-8 character (byte sequence) back to its Unicode code point number.
+## Salvaging a legacy ISO-8859-1 column inside a UTF-8 corpus
 
+<p>Old WordPress databases sometimes mix encodings: most rows are UTF-8 but a few were stored as latin-1. Detect the bad rows with <code>wp_is_valid_utf8()</code> and only re-encode those.</p>
+
+<!-- snippet:
+filename: mixed-encoding.php
+runnable: true
+-->
 ```php
-use function WordPress\Encoding\utf8_ord;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-echo utf8_ord( 'A' );                // 65 (0x41)
-echo utf8_ord( "\xE2\x9C\x8F" );    // 9999 (0x270F, Pencil)
-echo utf8_ord( "\xF0\x9F\x85\xB0" ); // 127344 (0x1F170)
+use function WordPress\Encoding\wp_is_valid_utf8;
+use function WordPress\Encoding\wp_scrub_utf8;
+
+$rows = array(
+	1 => 'Plain ASCII',
+	2 => 'Café',
+	3 => "caf\xE9",
+	4 => "weird \xC0 byte",
+);
+
+foreach ( $rows as $id => $value ) {
+	if ( wp_is_valid_utf8( $value ) ) {
+		echo "#$id ok: $value\n";
+		continue;
+	}
+	$converted = @iconv( 'ISO-8859-1', 'UTF-8', $value );
+	if ( false !== $converted && wp_is_valid_utf8( $converted ) ) {
+		echo "#$id recovered as latin1: $converted\n";
+	} else {
+		echo "#$id unrecoverable, scrubbing: " . wp_scrub_utf8( $value ) . "\n";
+	}
+}
 ```
 
-### How the Fallback Works
-
-When `mbstring` is available, `wp_is_valid_utf8()` delegates to `mb_check_encoding()` and `wp_scrub_utf8()` delegates to `mb_scrub()`. Without `mbstring`, the library uses a pure-PHP byte scanner (`_wp_scan_utf8()`) that validates byte sequences against the UTF-8 well-formedness table from the Unicode Standard. This fallback is fully conformant and handles all edge cases, including the maximal subpart algorithm for scrubbing.
-
-The PCRE-based implementation of `wp_has_noncharacters()` is preferred when `PCRE/u` is available. Otherwise, a byte-level fallback scans the string directly.
-
-## API Reference
-
-### Functions
-
-| Function | Description |
-|---|---|
-| `wp_is_valid_utf8( $bytes )` | Returns `true` if the string is well-formed UTF-8 |
-| `wp_scrub_utf8( $text )` | Replaces invalid byte sequences with U+FFFD |
-| `wp_has_noncharacters( $text )` | Returns `true` if the string contains Unicode noncharacters |
-| `codepoint_to_utf8_bytes( $codepoint )` | Encodes a code point number to its UTF-8 byte sequence |
-| `utf8_ord( $character )` | Decodes a UTF-8 character to its code point number |
-
-## Attribution
-
-The `wp_is_valid_utf8()`, `wp_scrub_utf8()`, and `wp_has_noncharacters()` functions originate from [WordPress core](https://github.com/WordPress/wordpress-develop). The pure PHP fallback scanner implements the UTF-8 well-formedness rules from the Unicode Standard. Licensed under GPL v2.
-
-## Requirements
-
-- PHP 7.2+
-- No external dependencies (`mbstring` is used when available but is not required)
+<!-- expected-output -->
+```
+#1 ok: Plain ASCII
+#2 ok: Café
+#3 recovered as latin1: café
+#4 recovered as latin1: weird À byte
+```

@@ -1,6 +1,6 @@
 name: Verify docs snippets
 
-# Runs every PHP snippet declared in bin/_docs_components/<slug>.md against
+# Runs every PHP snippet declared in components/<Name>/README.md against
 # the local toolkit and compares stdout to the expected-output block stored
 # next to the snippet in markdown. Anything that drifts fails CI; anything
 # that errors out also fails CI.
@@ -14,7 +14,6 @@ on:
     paths:
       - 'components/**'
       - 'bin/_docs_components.py'
-      - 'bin/_docs_components/**'
       - 'bin/_load_catalog.py'
       - 'bin/run-snippets.py'
       - 'composer.json'
