@@ -22,7 +22,7 @@ Bidirectional converter between Markdown and WordPress block markup. Useful for 
 
 ## Markdown to blocks
 
-<p>Feed Markdown into <code>MarkdownConsumer</code>, get block markup back. The result is a <code>BlocksWithMetadata</code> object that holds both the rendered blocks and any frontmatter parsed from the document.</p>
+<p>Feed Markdown into <code>MarkdownConsumer</code>, get block markup back. The result is a <code>BlocksWithMetadata</code> object (defined in <code>WordPress\DataLiberation\DataFormatConsumer</code> — the shared shape every <code>DataFormatConsumer</code> in the toolkit emits) that holds both the rendered blocks and any frontmatter parsed from the document.</p>
 
 <!-- snippet:
 filename: quickstart.php

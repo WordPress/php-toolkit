@@ -128,7 +128,9 @@ HTML;
 
 $tags = new WP_HTML_Tag_Processor( $untrusted );
 while ( $tags->next_tag() ) {
-	if ( 'SCRIPT' === $tags->get_tag() && ! $tags->is_tag_closer() ) {
+	// next_tag() never lands on closing tags, so no is_tag_closer() guard
+	// is needed here.
+	if ( 'SCRIPT' === $tags->get_tag() ) {
 		$tags->set_modifiable_text( '' );
 	}
 	foreach ( $tags->get_attribute_names_with_prefix( 'on' ) as $attr ) {
@@ -168,7 +170,7 @@ HTML;
 $tags = new WP_HTML_Tag_Processor( $html );
 while ( $tags->next_tag() ) {
 	$tag = $tags->get_tag();
-	if ( ( 'SCRIPT' === $tag || 'STYLE' === $tag ) && ! $tags->is_tag_closer() ) {
+	if ( 'SCRIPT' === $tag || 'STYLE' === $tag ) {
 		$tags->set_attribute( 'nonce', $nonce );
 	}
 }
@@ -237,9 +239,11 @@ require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 echo "attribute: " . WP_HTML_Decoder::decode_attribute( 'path?a=1&amp;b=2&amp;copy' ) . "\n";
 echo "text:      " . WP_HTML_Decoder::decode_text_node( 'AT&amp;T &mdash; 100&percnt; &#x1F600;' ) . "\n";
 
-// Safe URL prefix check that respects encoded colons (a classic XSS vector).
+// Safe URL prefix check that decodes character references while comparing.
+// `&#x6A;` is the letter `j`, so this string really does start with javascript:.
+// strpos() would miss it.
 $is_javascript = WP_HTML_Decoder::attribute_starts_with(
-	'java&#x09;script:alert(1)',
+	'&#x6A;avascript:alert(1)',
 	'javascript:',
 	'ascii-case-insensitive'
 );
@@ -250,7 +254,7 @@ var_dump( $is_javascript );
 ```
 attribute: path?a=1&b=2&copy
 text:      AT&T — 100% 😀
-bool(false)
+bool(true)
 ```
 
 ## Find images by ancestry with breadcrumbs
@@ -400,11 +404,11 @@ echo $tags->get_updated_html();
 <tr><td><code>WP_HTML_Tag_Processor</code></td><td>Attribute rewriting, sanitization, finding tags by name. Forward-only walks. Anything where speed and byte-honesty matter more than context.</td></tr>
 <tr><td><code>WP_HTML_Processor::create_fragment()</code></td><td>Queries by ancestry (<code>breadcrumbs</code>), heading outline extraction, anything that needs to know "is this tag inside that one."</td></tr>
 <tr><td><code>WP_HTML_Decoder::decode_text_node()</code></td><td>Turning entity-encoded text (<code>AT&amp;amp;T</code>) back into raw text correctly. Implements the HTML5 entity algorithm — don't roll your own.</td></tr>
-<tr><td><code>WP_HTML_Decoder::attribute_starts_with()</code></td><td>Safe URL-prefix checks that respect encoded characters (<code>java&amp;#x09;script:</code>). The classic <code>strpos</code> approach misses these.</td></tr>
+<tr><td><code>WP_HTML_Decoder::attribute_starts_with()</code></td><td>Safe URL-prefix checks that decode HTML character references while comparing — so <code>j&amp;#x61;vascript:</code> (where <code>&amp;#x61;</code> is the letter <code>a</code>) is correctly recognized as starting with <code>javascript:</code>. The classic <code>strpos</code> approach misses these.</td></tr>
 </table>
 
-<p>Footgun: <strong>Tag closers are visited too.</strong> <code>next_tag()</code> stops on both opening and closing tags. For most attribute-rewriting code, gate with <code>! $tags-&gt;is_tag_closer()</code> so you don't try to set attributes on a <code>&lt;/script&gt;</code>.</p>
+<p>Footgun: <strong><code>next_tag()</code> only stops on opening tags.</strong> Closers and text are skipped, so a guard like <code>! $tags-&gt;is_tag_closer()</code> inside a <code>next_tag()</code> loop is harmless but never fires. If you need to visit closing tags or text nodes, use <code>next_token()</code> instead and check <code>get_token_type()</code>.</p>
 
 <p>Footgun: <strong>Tag-name matches are uppercase.</strong> <code>get_tag()</code> always returns the tag name in uppercase (<code>'IMG'</code>, not <code>'img'</code>). Compare accordingly. The filter argument to <code>next_tag()</code> is case-insensitive in either direction.</p>
 
-<p>Footgun: <strong>Don't confuse <code>WP_HTML_Tag_Processor</code> with the full processor.</strong> The cursor is forward-only and ancestry-blind. If you call <code>get_breadcrumbs()</code> on it, you'll get a thin shape that doesn't reflect HTML5 tree construction — implicit <code>&lt;tbody&gt;</code> insertion, automatic <code>&lt;p&gt;</code> closing, and the rest live only in <code>WP_HTML_Processor</code>.</p>
+<p>Footgun: <strong>Don't confuse <code>WP_HTML_Tag_Processor</code> with the full processor.</strong> The cursor is forward-only and ancestry-blind, and it doesn't expose <code>get_breadcrumbs()</code> at all — calling that on a <code>WP_HTML_Tag_Processor</code> raises a <code>Call to undefined method</code> error. Breadcrumbs and HTML5 tree construction (implicit <code>&lt;tbody&gt;</code> insertion, automatic <code>&lt;p&gt;</code> closing, and the rest) live only on <code>WP_HTML_Processor</code>.</p>
