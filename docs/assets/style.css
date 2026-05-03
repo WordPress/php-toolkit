@@ -483,10 +483,13 @@ p code, li code, td code {
 
 php-snippet { display: block; margin: 1rem 0 1.75rem; }
 
-/* Static fallback: shows the snippet code if the cross-origin Playground
-   custom element fails to register (CSP block, slow network, adblocker,
-   no-JS reader). Hidden as soon as <php-snippet> is defined so the
-   interactive widget owns the screen when it boots. */
+/* Static fallback: shows the snippet code until the cross-origin Playground
+   custom element registers AND populates its shadow DOM. page.js hides
+   this element explicitly once shadow-DOM render is confirmed in
+   patchSnippet — we do not use a CSS `:defined` rule because that fires
+   the instant `customElements.define()` runs, before the shadow DOM has
+   any content. If the cross-origin module never loads (CSP, adblock,
+   slow network, no-JS), this fallback stays visible. */
 .snippet-fallback {
 	margin: 0;
 	padding: 0.9rem;
@@ -499,7 +502,6 @@ php-snippet { display: block; margin: 1rem 0 1.75rem; }
 	line-height: 1.55;
 }
 .snippet-fallback code { color: inherit; background: none; padding: 0; }
-php-snippet:defined .snippet-fallback { display: none; }
 
 .code-example {
 	margin: 1rem 0 1.75rem;

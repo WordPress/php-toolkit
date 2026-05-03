@@ -104,6 +104,15 @@
 		const code = root.querySelector('pre code');
 		if (!code) return;
 
+		// Shadow DOM has rendered content. Hide the static fallback now —
+		// not via a CSS `:defined` rule, which fires too early (the moment
+		// customElements.define() runs, before shadow-DOM render). See
+		// .snippet-fallback rules in style.css for context.
+		const fallback = el.querySelector(':scope > .snippet-fallback');
+		if (fallback) {
+			fallback.style.display = 'none';
+		}
+
 		// HTML emitted by build-reference.py escapes "</script" inside the
 		// <script type="application/x-php"> wrapper as "<\/script" so the
 		// outer tag isn't closed prematurely. The browser preserves that
