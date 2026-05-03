@@ -30,7 +30,7 @@ WordPress core's block parser, packaged as a standalone library. Turn block mark
 
 <p>Most code starts by checking <code>blockName</code>, then reading <code>attrs</code> or <code>innerHTML</code>. When a post has container blocks such as Group, Columns, or Navigation, look inside <code>innerBlocks</code> too.</p>
 
-<p><strong>Footgun:</strong> freeform HTML between blocks shows up as a block with <code>blockName === null</code>. Always skip that case before comparing names.</p>
+<p>Footgun: <strong>Freeform HTML between blocks shows up as a block with <code>blockName === null</code>.</strong> Always skip that case before comparing names.</p>
 
 ## Parse a document
 

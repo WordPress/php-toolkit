@@ -53,7 +53,7 @@ Read 1800 bytes in 256-byte chunks.
 
 <p><code>MemoryPipe</code> is bidirectional: you <code>append_bytes()</code> as a writer and <code>pull/consume</code> as a reader. Easiest way to wire one component's output into another's input.</p>
 
-<p>Gotcha: a producer must call <code>close_writing()</code> when done — otherwise the consumer eventually throws <code>NotEnoughDataException</code> instead of seeing EOF.</p>
+<p>Gotcha: <strong>A producer must call <code>close_writing()</code> when done — otherwise the consumer eventually throws <code>NotEnoughDataException</code> instead of seeing EOF.</strong> </p>
 
 <!-- snippet:
 filename: memory-pipe.php

@@ -63,7 +63,7 @@ Hello from inside the zip.
 
 <p>An EPUB follows one strict ZIP rule: write the <code>mimetype</code> entry first and store it without compression. Deflate the rest of the archive normally.</p>
 
-<p>Gotcha: e-readers reject EPUBs whose <code>mimetype</code> entry has compression. Use <code>COMPRESSION_NONE</code> for that single entry.</p>
+<p>Gotcha: <strong>E-readers reject EPUBs whose <code>mimetype</code> entry has compression.</strong> Use <code>COMPRESSION_NONE</code> for that single entry.</p>
 
 <!-- snippet:
 filename: epub.php
@@ -131,7 +131,7 @@ size on disk: 726 bytes
 
 <p>Calling <code>get_contents()</code> on a 500 MB CSV inside a ZIP would eat 500 MB of RAM. Use <code>open_read_stream()</code> instead and inflate-as-you-go.</p>
 
-<p>Gotcha: only one entry stream open at a time. Drain or finish the previous stream before opening the next.</p>
+<p>Gotcha: <strong>Only one entry stream open at a time.</strong> Drain or finish the previous stream before opening the next.</p>
 
 <!-- snippet:
 filename: stream-large.php
@@ -391,6 +391,8 @@ files now in memory:
 <tr><td><code>copy_between_filesystems()</code></td><td>Moving entries from a ZIP into another filesystem (memory, local, SQLite).</td></tr>
 </table>
 
-<p>Footgun: updating an entry in place is impossible. The central directory points at byte offsets — change one entry's compressed size and every later offset shifts. Repack into a new archive instead.</p>
+<p>Footgun: <strong>Updating an entry in place is impossible.</strong> The central directory points at byte offsets — change one entry's compressed size and every later offset shifts. Repack into a new archive instead.</p>
 
-<p>Footgun: encrypted archives aren't supported. If you need to read AES-encrypted ZIPs, this isn't the component. The file format technically allows encryption, but the toolkit deliberately excludes it because the implementation surface is large and the use case is rare in WordPress contexts.</p>
+<p>Footgun: <strong>Never extract entry paths verbatim.</strong> Always run paths through <code>ZipDecoder::sanitize_path()</code>. Without it, a hostile archive can write outside the destination directory.</p>
+
+<p>Footgun: <strong>Encrypted archives aren't supported.</strong> If you need to read AES-encrypted ZIPs, this isn't the component. The file format technically allows encryption, but the toolkit deliberately excludes it because the implementation surface is large and the use case is rare in WordPress contexts.</p>

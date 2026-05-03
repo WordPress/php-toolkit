@@ -603,13 +603,13 @@ echo $tags->get_updated_html();
 
 <h2 id="pitfalls">Pitfalls</h2>
 
-<aside class="callout pitfall">mutations are buffered. Nothing changes in the source string until you call <code>get_updated_html()</code>. If you read <code>get_attribute()</code> after a <code>set_attribute()</code> on the same tag, you see the new value — but downstream tooling reading the original string sees stale HTML until you serialize.</aside>
+<aside class="callout pitfall"><strong>Mutations are buffered.</strong> Nothing changes in the source string until you call <code>get_updated_html()</code>. If you read <code>get_attribute()</code> after a <code>set_attribute()</code> on the same tag, you see the new value — but downstream tooling reading the original string sees stale HTML until you serialize.</aside>
 
-<aside class="callout pitfall">tag closers are visited too. <code>next_tag()</code> stops on both opening and closing tags. For most attribute-rewriting code, gate with <code>! $tags-&gt;is_tag_closer()</code> so you don't try to set attributes on a <code>&lt;/script&gt;</code>.</aside>
+<aside class="callout pitfall"><strong>Tag closers are visited too.</strong> <code>next_tag()</code> stops on both opening and closing tags. For most attribute-rewriting code, gate with <code>! $tags-&gt;is_tag_closer()</code> so you don't try to set attributes on a <code>&lt;/script&gt;</code>.</aside>
 
-<aside class="callout pitfall">tag-name matches are uppercase. <code>get_tag()</code> always returns the tag name in uppercase (<code>'IMG'</code>, not <code>'img'</code>). Compare accordingly. The filter argument to <code>next_tag()</code> is case-insensitive in either direction.</aside>
+<aside class="callout pitfall"><strong>Tag-name matches are uppercase.</strong> <code>get_tag()</code> always returns the tag name in uppercase (<code>'IMG'</code>, not <code>'img'</code>). Compare accordingly. The filter argument to <code>next_tag()</code> is case-insensitive in either direction.</aside>
 
-<aside class="callout pitfall">don't confuse <code>WP_HTML_Tag_Processor</code> with the full processor. The cursor is forward-only and ancestry-blind. If you call <code>get_breadcrumbs()</code> on it, you'll get a thin shape that doesn't reflect HTML5 tree construction — implicit <code>&lt;tbody&gt;</code> insertion, automatic <code>&lt;p&gt;</code> closing, and the rest live only in <code>WP_HTML_Processor</code>.</aside>
+<aside class="callout pitfall"><strong>Don't confuse <code>WP_HTML_Tag_Processor</code> with the full processor.</strong> The cursor is forward-only and ancestry-blind. If you call <code>get_breadcrumbs()</code> on it, you'll get a thin shape that doesn't reflect HTML5 tree construction — implicit <code>&lt;tbody&gt;</code> insertion, automatic <code>&lt;p&gt;</code> closing, and the rest live only in <code>WP_HTML_Processor</code>.</aside>
 
 <h2 id="see-also">See also</h2>
 

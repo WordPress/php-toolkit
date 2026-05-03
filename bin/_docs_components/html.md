@@ -23,7 +23,7 @@ A pure-PHP HTML5 parser and tag rewriter mirroring WordPress core's HTML API. Tr
 
 <p>The component gives you two processors. <code>WP_HTML_Tag_Processor</code> is a forward-only cursor over tags and tokens — useful for attribute rewriting at scale. <code>WP_HTML_Processor</code> layers HTML5 tree construction on top so you can query by ancestry (breadcrumbs), serialize the parsed document, and trust that <code>&lt;p&gt;one&lt;p&gt;two</code> parses as two paragraphs the way a browser sees it.</p>
 
-<p><strong>Footgun:</strong> mutations are buffered. Nothing changes in the source string until you call <code>get_updated_html()</code>. If you read <code>get_attribute()</code> after a <code>set_attribute()</code> on the same tag, you see the new value — but downstream tooling reading the original string sees stale HTML until you serialize.</p>
+<p>Footgun: <strong>Mutations are buffered.</strong> Nothing changes in the source string until you call <code>get_updated_html()</code>. If you read <code>get_attribute()</code> after a <code>set_attribute()</code> on the same tag, you see the new value — but downstream tooling reading the original string sees stale HTML until you serialize.</p>
 
 ## Add loading="lazy" to every image
 
@@ -403,8 +403,8 @@ echo $tags->get_updated_html();
 <tr><td><code>WP_HTML_Decoder::attribute_starts_with()</code></td><td>Safe URL-prefix checks that respect encoded characters (<code>java&amp;#x09;script:</code>). The classic <code>strpos</code> approach misses these.</td></tr>
 </table>
 
-<p>Footgun: tag closers are visited too. <code>next_tag()</code> stops on both opening and closing tags. For most attribute-rewriting code, gate with <code>! $tags-&gt;is_tag_closer()</code> so you don't try to set attributes on a <code>&lt;/script&gt;</code>.</p>
+<p>Footgun: <strong>Tag closers are visited too.</strong> <code>next_tag()</code> stops on both opening and closing tags. For most attribute-rewriting code, gate with <code>! $tags-&gt;is_tag_closer()</code> so you don't try to set attributes on a <code>&lt;/script&gt;</code>.</p>
 
-<p>Footgun: tag-name matches are uppercase. <code>get_tag()</code> always returns the tag name in uppercase (<code>'IMG'</code>, not <code>'img'</code>). Compare accordingly. The filter argument to <code>next_tag()</code> is case-insensitive in either direction.</p>
+<p>Footgun: <strong>Tag-name matches are uppercase.</strong> <code>get_tag()</code> always returns the tag name in uppercase (<code>'IMG'</code>, not <code>'img'</code>). Compare accordingly. The filter argument to <code>next_tag()</code> is case-insensitive in either direction.</p>
 
-<p>Footgun: don't confuse <code>WP_HTML_Tag_Processor</code> with the full processor. The cursor is forward-only and ancestry-blind. If you call <code>get_breadcrumbs()</code> on it, you'll get a thin shape that doesn't reflect HTML5 tree construction — implicit <code>&lt;tbody&gt;</code> insertion, automatic <code>&lt;p&gt;</code> closing, and the rest live only in <code>WP_HTML_Processor</code>.</p>
+<p>Footgun: <strong>Don't confuse <code>WP_HTML_Tag_Processor</code> with the full processor.</strong> The cursor is forward-only and ancestry-blind. If you call <code>get_breadcrumbs()</code> on it, you'll get a thin shape that doesn't reflect HTML5 tree construction — implicit <code>&lt;tbody&gt;</code> insertion, automatic <code>&lt;p&gt;</code> closing, and the rest live only in <code>WP_HTML_Processor</code>.</p>

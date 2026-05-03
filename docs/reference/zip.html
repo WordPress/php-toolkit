@@ -653,13 +653,15 @@ files now in memory:
 
 <h2 id="pitfalls">Pitfalls</h2>
 
-<aside class="callout pitfall">e-readers reject EPUBs whose <code>mimetype</code> entry has compression. Use <code>COMPRESSION_NONE</code> for that single entry.</aside>
+<aside class="callout pitfall"><strong>E-readers reject EPUBs whose <code>mimetype</code> entry has compression.</strong> Use <code>COMPRESSION_NONE</code> for that single entry.</aside>
 
-<aside class="callout pitfall">only one entry stream open at a time. Drain or finish the previous stream before opening the next.</aside>
+<aside class="callout pitfall"><strong>Only one entry stream open at a time.</strong> Drain or finish the previous stream before opening the next.</aside>
 
-<aside class="callout pitfall">updating an entry in place is impossible. The central directory points at byte offsets — change one entry's compressed size and every later offset shifts. Repack into a new archive instead.</aside>
+<aside class="callout pitfall"><strong>Updating an entry in place is impossible.</strong> The central directory points at byte offsets — change one entry's compressed size and every later offset shifts. Repack into a new archive instead.</aside>
 
-<aside class="callout pitfall">encrypted archives aren't supported. If you need to read AES-encrypted ZIPs, this isn't the component. The file format technically allows encryption, but the toolkit deliberately excludes it because the implementation surface is large and the use case is rare in WordPress contexts.</aside>
+<aside class="callout pitfall"><strong>Never extract entry paths verbatim.</strong> Always run paths through <code>ZipDecoder::sanitize_path()</code>. Without it, a hostile archive can write outside the destination directory.</aside>
+
+<aside class="callout pitfall"><strong>Encrypted archives aren't supported.</strong> If you need to read AES-encrypted ZIPs, this isn't the component. The file format technically allows encryption, but the toolkit deliberately excludes it because the implementation surface is large and the use case is rare in WordPress contexts.</aside>
 
 <h2 id="see-also">See also</h2>
 

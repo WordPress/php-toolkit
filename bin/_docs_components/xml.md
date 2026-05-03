@@ -16,9 +16,9 @@ A streaming, namespace-aware XML processor in pure PHP. Read and modify huge fee
 
 <p>This design came from WordPress-scale documents such as WXR exports. A migration may only need to rewrite <code>wp:attachment_url</code> values or bump a feed attribute, so the processor optimizes for targeted cursor edits instead of a full validating XML stack.</p>
 
-<p><strong>Footgun #1:</strong> namespace-aware methods use the namespace name declared in <code>xmlns</code>, not the prefix written in the tag. In WXR, <code>get_attribute( 'wp', 'status' )</code> looks for a namespace literally named <code>wp</code>; for the usual WXR declaration you want <code>get_attribute( 'http://wordpress.org/export/1.2/', 'status' )</code>.</p>
+<p>Footgun: <strong>#1:</strong> namespace-aware methods use the namespace name declared in <code>xmlns</code>, not the prefix written in the tag.</strong> In WXR, <code>get_attribute( 'wp', 'status' )</code> looks for a namespace literally named <code>wp</code>; for the usual WXR declaration you want <code>get_attribute( 'http://wordpress.org/export/1.2/', 'status' )</code>.</p>
 
-<p><strong>Footgun #2:</strong> in streaming mode <code>next_tag()</code> can return false because input ran out, not because the document ended. Check <code>is_paused_at_incomplete_input()</code> before assuming you're done.</p>
+<p>Footgun: <strong>#2:</strong> in streaming mode <code>next_tag()</code> can return false because input ran out, not because the document ended.</strong> Check <code>is_paused_at_incomplete_input()</code> before assuming you're done.</p>
 
 ## Bump every price in a catalog
 

@@ -324,9 +324,9 @@ WordPress	https://wordpress.org/news/feed/
 
 <h2 id="pitfalls">Pitfalls</h2>
 
-<aside class="callout pitfall">namespace-aware methods use the namespace name declared in <code>xmlns</code>, not the prefix written in the tag. In WXR, <code>get_attribute( 'wp', 'status' )</code> looks for a namespace literally named <code>wp</code>; for the usual WXR declaration you want <code>get_attribute( 'http://wordpress.org/export/1.2/', 'status' )</code>.</aside>
+<aside class="callout pitfall"><strong>#1:</strong> namespace-aware methods use the namespace name declared in <code>xmlns</code>, not the prefix written in the tag.</strong> In WXR, <code>get_attribute( 'wp', 'status' )</code> looks for a namespace literally named <code>wp</code>; for the usual WXR declaration you want <code>get_attribute( 'http://wordpress.org/export/1.2/', 'status' )</code>.</aside>
 
-<aside class="callout pitfall">in streaming mode <code>next_tag()</code> can return false because input ran out, not because the document ended. Check <code>is_paused_at_incomplete_input()</code> before assuming you're done.</aside>
+<aside class="callout pitfall"><strong>#2:</strong> in streaming mode <code>next_tag()</code> can return false because input ran out, not because the document ended.</strong> Check <code>is_paused_at_incomplete_input()</code> before assuming you're done.</aside>
 
 <h2 id="see-also">See also</h2>
 
