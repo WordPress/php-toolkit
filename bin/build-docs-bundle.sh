@@ -15,6 +15,6 @@ zip -qr docs/assets/php-toolkit.zip components vendor bootstrap.php composer.jso
   -x "*/Tests/*" "*/tests/*" "*/.git/*" "*/.github/*" "*/node_modules/*"
 
 echo "==> regenerating docs/reference/*.html from markdown"
-python3 bin/build-reference.py
+php bin/build-reference.php
 
 echo "Done. docs/assets/php-toolkit.zip = $(du -h docs/assets/php-toolkit.zip | cut -f1)"

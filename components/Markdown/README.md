@@ -7,9 +7,10 @@ credit_title: Built on league/commonmark
 credit_body: |
   Markdown parsing is delegated to <a href="https://commonmark.thephpleague.com/"><code>league/commonmark</code></a>; YAML frontmatter is handled by <a href="https://github.com/webuni/front-matter"><code>webuni/front-matter</code></a>. The toolkit's own work is the bridge between CommonMark's AST and <a href="https://developer.wordpress.org/block-editor/reference-guides/block-api/">WordPress block markup</a>, in both directions.
 
-see_also: blockparser | BlockParser | Understand the block tree created from Markdown output.
-see_also: html | HTML | Rewrite rendered HTML fragments without using DOMDocument.
-see_also: dataliberation | DataLiberation | Turn Markdown folders into import/export streams.
+see_also:
+  - blockparser | BlockParser | Understand the block tree created from Markdown output.
+  - html | HTML | Rewrite rendered HTML fragments without using DOMDocument.
+  - dataliberation | DataLiberation | Turn Markdown folders into import/export streams.
 ---
 
 Bidirectional converter between Markdown and WordPress block markup. Useful for moving content between Markdown files and WordPress while preserving the structures both formats can express.

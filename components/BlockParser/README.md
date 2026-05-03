@@ -7,9 +7,10 @@ credit_title: WordPress core, packaged standalone
 credit_body: |
   <code>WP_Block_Parser</code> is WordPress core's block parser, packaged here so importers and linters can read <a href="https://developer.wordpress.org/block-editor/reference-guides/block-api/">block markup</a> without booting WordPress. Source: <a href="https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/class-wp-block-parser.php">WordPress/wordpress-develop</a>.
 
-see_also: html | HTML | Inspect or rewrite the HTML carried by parsed blocks.
-see_also: markdown | Markdown | Move between author-friendly Markdown and serialized block markup.
-see_also: dataliberation | DataLiberation | Audit and transform blocks while migrating content.
+see_also:
+  - html | HTML | Inspect or rewrite the HTML carried by parsed blocks.
+  - markdown | Markdown | Move between author-friendly Markdown and serialized block markup.
+  - dataliberation | DataLiberation | Audit and transform blocks while migrating content.
 ---
 
 WordPress core's block parser, packaged as a standalone library. Turn block markup into a structured tree, lint posts for common authoring mistakes, and audit block usage — all without booting WordPress.

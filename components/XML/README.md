@@ -3,9 +3,10 @@ slug: xml
 title: XML
 install: wp-php-toolkit/xml
 
-see_also: dataliberation | DataLiberation | Read and write WXR-sized WordPress exports as entities.
-see_also: encoding | Encoding | Validate and scrub text before strict XML processing.
-see_also: bytestream | ByteStream | Keep large XML reads incremental.
+see_also:
+  - dataliberation | DataLiberation | Read and write WXR-sized WordPress exports as entities.
+  - encoding | Encoding | Validate and scrub text before strict XML processing.
+  - bytestream | ByteStream | Keep large XML reads incremental.
 ---
 
 A streaming, namespace-aware XML processor in pure PHP. Read and modify huge feeds, WXR exports, ePub manifests, and Office Open XML parts without ever loading the document into memory and without depending on <code>libxml2</code>.

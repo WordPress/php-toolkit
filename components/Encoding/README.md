@@ -3,9 +3,10 @@ slug: encoding
 title: Encoding
 install: wp-php-toolkit/encoding
 
-see_also: html | HTML | Normalize incoming text before HTML tokenization.
-see_also: xml | XML | Keep invalid bytes out of XML streams.
-see_also: dataliberation | DataLiberation | Clean content before importing it into WordPress.
+see_also:
+  - html | HTML | Normalize incoming text before HTML tokenization.
+  - xml | XML | Keep invalid bytes out of XML streams.
+  - dataliberation | DataLiberation | Clean content before importing it into WordPress.
 ---
 
 UTF-8 validation and scrubbing with a pure-PHP fallback when <code>mbstring</code> is unavailable. Detects malformed bytes and replaces them per the Unicode maximal-subpart algorithm.

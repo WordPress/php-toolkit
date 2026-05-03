@@ -3,9 +3,10 @@ slug: blueprints
 title: Blueprints
 install: wp-php-toolkit/blueprints
 
-see_also: filesystem | Filesystem | Prepare files and fixtures before applying site setup steps.
-see_also: httpclient | HttpClient | Download packages or source data as part of provisioning workflows.
-see_also: cli | CLI | Wrap repeatable blueprint operations in a small command.
+see_also:
+  - filesystem | Filesystem | Prepare files and fixtures before applying site setup steps.
+  - httpclient | HttpClient | Download packages or source data as part of provisioning workflows.
+  - cli | CLI | Wrap repeatable blueprint operations in a small command.
 ---
 
 Declarative WordPress site provisioning. Write a JSON description of plugins, options, and content; let the runner execute it.

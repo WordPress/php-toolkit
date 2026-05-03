@@ -3,10 +3,11 @@ slug: zip
 title: Zip
 install: wp-php-toolkit/zip
 
-see_also: ../learn/02-streaming-archives.html | Tutorial — Streaming archives | Walk through ZIP and EPUB writers from the toolkit's worked example.
-see_also: filesystem | Filesystem | Treat an archive like a swappable filesystem backend.
-see_also: bytestream | ByteStream | Feed readers and writers without whole-file buffers.
-see_also: httpclient | HttpClient | Stream downloaded archives into validation or extraction workflows.
+see_also:
+  - ../learn/02-streaming-archives.html | Tutorial — Streaming archives | Walk through ZIP and EPUB writers from the toolkit's worked example.
+  - filesystem | Filesystem | Treat an archive like a swappable filesystem backend.
+  - bytestream | ByteStream | Feed readers and writers without whole-file buffers.
+  - httpclient | HttpClient | Stream downloaded archives into validation or extraction workflows.
 ---
 
 Read and write ZIP archives in pure PHP — no <code>libzip</code>, no <code>ZipArchive</code>. Streams entries one at a time, so you can build EPUBs, .docx files, and multi-gigabyte plugin bundles without buffering the archive in memory.

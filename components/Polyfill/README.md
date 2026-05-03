@@ -7,8 +7,9 @@ credit_title: WordPress-shaped behavior
 credit_body: |
   When WordPress is loaded, every function in this component defers to WordPress. The standalone implementations of <code>esc_html()</code>, <code>add_filter()</code>, <code>__()</code>, and friends match WordPress core's behavior so the same code runs inside and outside the platform.
 
-see_also: html | HTML | Run WordPress-shaped escaping and translation helpers beside HTML processors.
-see_also: blockparser | BlockParser | Keep standalone block tooling familiar outside WordPress.
+see_also:
+  - html | HTML | Run WordPress-shaped escaping and translation helpers beside HTML processors.
+  - blockparser | BlockParser | Keep standalone block tooling familiar outside WordPress.
 ---
 
 PHP 8 string functions on PHP 7.2+, WordPress hook stubs, and translation/escaping passthroughs so toolkit code runs without WordPress.

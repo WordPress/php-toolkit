@@ -3,10 +3,11 @@ slug: httpclient
 title: HttpClient
 install: wp-php-toolkit/http-client
 
-see_also: ../learn/04-talking-to-the-network.html | Tutorial — Talking to the network | Walks through a streaming downloader that resumes, fans out, and pipes bytes to disk without buffering.
-see_also: bytestream | ByteStream | Stream request and response bodies.
-see_also: filesystem | Filesystem | Persist large downloads without buffering them in memory.
-see_also: corsproxy | CORSProxy | Bridge browser-side tools to servers without CORS headers.
+see_also:
+  - ../learn/04-talking-to-the-network.html | Tutorial — Talking to the network | Walks through a streaming downloader that resumes, fans out, and pipes bytes to disk without buffering.
+  - bytestream | ByteStream | Stream request and response bodies.
+  - filesystem | Filesystem | Persist large downloads without buffering them in memory.
+  - corsproxy | CORSProxy | Bridge browser-side tools to servers without CORS headers.
 ---
 
 Async HTTP client without <code>curl</code> required. Uses sockets when curl is missing, supports concurrent requests and streaming responses.

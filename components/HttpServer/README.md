@@ -3,8 +3,9 @@ slug: httpserver
 title: HttpServer
 install: wp-php-toolkit/http-server
 
-see_also: cli | CLI | Expose a local browser UI from a command-line tool.
-see_also: httpclient | HttpClient | Test client code against a small local fixture server.
+see_also:
+  - cli | CLI | Expose a local browser UI from a command-line tool.
+  - httpclient | HttpClient | Test client code against a small local fixture server.
 ---
 
 A minimal blocking TCP HTTP server in pure PHP. For CLI tools and tests, not for production traffic.

@@ -3,9 +3,10 @@ slug: filesystem
 title: Filesystem
 install: wp-php-toolkit/filesystem
 
-see_also: bytestream | ByteStream | Open files as readers and writers instead of loading full strings.
-see_also: zip | Zip | Mount archives and copy data between archive-backed and normal filesystems.
-see_also: git | Git | Expose repository trees through a filesystem-shaped API.
+see_also:
+  - bytestream | ByteStream | Open files as readers and writers instead of loading full strings.
+  - zip | Zip | Mount archives and copy data between archive-backed and normal filesystems.
+  - git | Git | Expose repository trees through a filesystem-shaped API.
 ---
 
 One <code>Filesystem</code> interface across local disk, in-memory trees, SQLite databases, and ZIP archives. Forward-slash paths everywhere — even on Windows — so the same code runs in tests, in production, and inside read-only ZIPs.
