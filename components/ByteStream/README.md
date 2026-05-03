@@ -3,9 +3,10 @@ slug: bytestream
 title: ByteStream
 install: wp-php-toolkit/bytestream
 
-see_also: filesystem | Filesystem | Back file reads and writes with the same stream primitives.
-see_also: zip | Zip | Read and write archive entries one stream at a time.
-see_also: httpclient | HttpClient | Process request and response bodies incrementally.
+see_also:
+  - filesystem | Filesystem | Back file reads and writes with the same stream primitives.
+  - zip | Zip | Read and write archive entries one stream at a time.
+  - httpclient | HttpClient | Process request and response bodies incrementally.
 ---
 
 Composable streaming primitives for reading, writing, transforming, hashing, and compressing byte data. Pull/peek/consume semantics let parsers backtrack without copying, and deflate, inflate, and checksum filters snap together like Lego.

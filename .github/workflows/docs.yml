@@ -7,9 +7,7 @@ on:
       - 'components/**'
       - 'docs/**'
       - 'bin/build-docs-bundle.sh'
-      - 'bin/build-reference.py'
-      - 'bin/_docs_components.py'
-      - 'bin/_load_catalog.py'
+      - 'bin/build-reference.php'
       - 'composer.json'
       - 'composer.lock'
       - '.github/workflows/docs.yml'
@@ -46,7 +44,7 @@ jobs:
           rm -f docs/assets/php-toolkit.zip
           zip -qr docs/assets/php-toolkit.zip components vendor bootstrap.php composer.json \
             -x "*/Tests/*" "*/tests/*" "*/.git/*" "*/.github/*" "*/node_modules/*"
-          python3 bin/build-reference.py
+          php bin/build-reference.php
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -3,9 +3,10 @@ slug: merge
 title: Merge
 install: wp-php-toolkit/merge
 
-see_also: git | Git | Merge file contents discovered through repository history.
-see_also: markdown | Markdown | Resolve file-based editorial workflows before converting to blocks.
-see_also: dataliberation | DataLiberation | Make content synchronization conflicts visible.
+see_also:
+  - git | Git | Merge file contents discovered through repository history.
+  - markdown | Markdown | Resolve file-based editorial workflows before converting to blocks.
+  - dataliberation | DataLiberation | Make content synchronization conflicts visible.
 ---
 
 Three-way merge and diff. Pluggable differ + merger + optional validator.

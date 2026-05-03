@@ -3,9 +3,10 @@ slug: git
 title: Git
 install: wp-php-toolkit/git
 
-see_also: filesystem | Filesystem | Work with repository trees through a storage abstraction.
-see_also: merge | Merge | Resolve divergent histories with explicit three-way merge logic.
-see_also: bytestream | ByteStream | Read and write object data without accidental buffering.
+see_also:
+  - filesystem | Filesystem | Work with repository trees through a storage abstraction.
+  - merge | Merge | Resolve divergent histories with explicit three-way merge logic.
+  - bytestream | ByteStream | Read and write object data without accidental buffering.
 ---
 
 A pure-PHP Git client and server. Commits, branches, diffs, HTTP push/pull — all without shelling out to <code>git</code>.

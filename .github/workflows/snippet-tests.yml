@@ -5,17 +5,16 @@ name: Verify docs snippets
 # next to the snippet in markdown. Anything that drifts fails CI; anything
 # that errors out also fails CI.
 #
-# Snippets in run-snippets.py's NO_EXPECTED allowlist are runnable but their
-# stdout is unstable (real network traffic, timestamps), so they're verified
-# to exit 0 without an output comparison.
+# Snippets in run-snippets.php's NO_EXPECTED allowlist are runnable but
+# their stdout is unstable (real network traffic, timestamps), so they're
+# verified to exit 0 without an output comparison.
 
 on:
   pull_request:
     paths:
       - 'components/**'
-      - 'bin/_docs_components.py'
-      - 'bin/_load_catalog.py'
-      - 'bin/run-snippets.py'
+      - 'bin/build-reference.php'
+      - 'bin/run-snippets.php'
       - 'composer.json'
       - 'composer.lock'
       - '.github/workflows/snippet-tests.yml'
@@ -36,13 +35,8 @@ jobs:
           tools: composer
           coverage: none
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
       - name: Install toolkit dependencies
         run: composer install --no-dev --optimize-autoloader --no-progress
 
       - name: Run docs snippets and compare to expected output
-        run: bin/run-snippets.py --check
+        run: php bin/run-snippets.php --check

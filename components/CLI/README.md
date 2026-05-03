@@ -3,9 +3,10 @@ slug: cli
 title: CLI
 install: wp-php-toolkit/cli
 
-see_also: filesystem | Filesystem | Keep command behavior testable with in-memory storage.
-see_also: blueprints | Blueprints | Build repeatable site setup commands around parsed options.
-see_also: httpserver | HttpServer | Add a local web UI to a CLI workflow.
+see_also:
+  - filesystem | Filesystem | Keep command behavior testable with in-memory storage.
+  - blueprints | Blueprints | Build repeatable site setup commands around parsed options.
+  - httpserver | HttpServer | Add a local web UI to a CLI workflow.
 ---
 
 POSIX-style argument parser. Long options, short bundles, inline values, positional args — one static call.

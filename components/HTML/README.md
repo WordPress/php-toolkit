@@ -7,10 +7,11 @@ credit_title: Ported from WordPress core
 credit_body: |
   The HTML component is a port of WordPress core's <code>WP_HTML_Tag_Processor</code> and <code>WP_HTML_Processor</code>. Source: <a href="https://github.com/WordPress/wordpress-develop/tree/trunk/src/wp-includes/html-api">WordPress/wordpress-develop</a>. Bug fixes flow in both directions.
 
-see_also: ../learn/01-rewriting-html.html | Tutorial — Rewriting HTML safely | The chapter that introduces the cursor model and the <code>clean_post_html()</code> function reused later in the importer.
-see_also: blockparser | BlockParser | Parse block comments first, then rewrite the HTML inside each block.
-see_also: markdown | Markdown | Convert Markdown to blocks before polishing generated HTML.
-see_also: dataliberation | DataLiberation | Rewrite URLs and media references during import/export pipelines.
+see_also:
+  - ../learn/01-rewriting-html.html | Tutorial — Rewriting HTML safely | The chapter that introduces the cursor model and the <code>clean_post_html()</code> function reused later in the importer.
+  - blockparser | BlockParser | Parse block comments first, then rewrite the HTML inside each block.
+  - markdown | Markdown | Convert Markdown to blocks before polishing generated HTML.
+  - dataliberation | DataLiberation | Rewrite URLs and media references during import/export pipelines.
 ---
 
 A pure-PHP HTML5 parser and tag rewriter mirroring WordPress core's HTML API. Treat HTML the way browsers do — without <code>libxml2</code>, <code>DOMDocument</code>, or regex hacks — and rewrite attributes in a single linear pass.

@@ -3,8 +3,9 @@ slug: corsproxy
 title: CORSProxy
 install: wp-php-toolkit/corsproxy
 
-see_also: httpclient | HttpClient | Fetch upstream responses from PHP when browser CORS blocks direct access.
-see_also: httpserver | HttpServer | Understand the local-server shape before deploying a proxy endpoint.
+see_also:
+  - httpclient | HttpClient | Fetch upstream responses from PHP when browser CORS blocks direct access.
+  - httpserver | HttpServer | Understand the local-server shape before deploying a proxy endpoint.
 ---
 
 A small PHP CORS proxy intended for browser-side code that needs to reach servers without CORS headers.

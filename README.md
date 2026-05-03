@@ -133,11 +133,11 @@ composer lint-fix
 
 #### Building the docs site
 
-The docs site under `docs/` is generated from `bin/_docs_components/<slug>.md`. To rebuild and preview locally:
+The docs site under `docs/` is generated from each `components/<Name>/README.md`. To rebuild and preview locally:
 
 ```sh
 bash bin/build-docs-bundle.sh    # bundles toolkit + regenerates HTML
-python3 bin/serve-docs.py        # opens http://localhost:8787
+php bin/serve-docs.php           # opens http://localhost:8787
 ```
 
 Snippets in the markdown sources run in CI on every PR (see `.github/workflows/snippet-tests.yml`) and in WordPress Playground from the live site.

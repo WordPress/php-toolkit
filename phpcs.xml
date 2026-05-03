@@ -10,6 +10,9 @@
     <exclude-pattern>/plugins/git-repo/</exclude-pattern>
     <exclude-pattern>/plugins/url-updater/</exclude-pattern>
     <exclude-pattern>/bin/build-phar</exclude-pattern>
+    <exclude-pattern>/bin/build-reference.php</exclude-pattern>
+    <exclude-pattern>/bin/run-snippets.php</exclude-pattern>
+    <exclude-pattern>/bin/serve-docs.php</exclude-pattern>
     <exclude-pattern>/examples/</exclude-pattern>
     <exclude-pattern>/docs/</exclude-pattern>
     <exclude-pattern>rector.php</exclude-pattern>
