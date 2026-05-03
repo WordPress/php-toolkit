@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Generates docs/reference/<slug>.html for every component.
 
-The catalog comes from bin/_docs_components/<slug>.md (loaded via
-bin/_docs_components.py). Every page uses the same concept-guide shape:
-lede + install + context paragraphs + minimal example + refinements +
-pitfalls + see also. There are no hand-authored exceptions.
+The catalog comes from components/<Name>/README.md (loaded via
+bin/_load_catalog.py). Each README *is* the catalog source — frontmatter
++ lede + sections + snippets + expected-output fences. Every page uses
+the same concept-guide shape: lede + install + context paragraphs +
+minimal example + refinements + pitfalls + see also. There are no
+hand-authored exceptions.
 """
 
 import os

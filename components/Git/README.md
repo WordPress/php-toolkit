@@ -1,134 +1,273 @@
-# Git
+---
+slug: git
+title: Git
+install: wp-php-toolkit/git
 
-<!-- docs-site-banner -->
-> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/git.html](https://wordpress.github.io/php-toolkit/reference/git.html)
-> Open the page to edit each snippet in your browser and run it in WordPress Playground.
-<!-- /docs-site-banner -->
+see_also: filesystem | Filesystem | Work with repository trees through a storage abstraction.
+see_also: merge | Merge | Resolve divergent histories with explicit three-way merge logic.
+see_also: bytestream | ByteStream | Read and write object data without accidental buffering.
+---
+
+A pure-PHP Git client and server. Commits, branches, diffs, HTTP push/pull — all without shelling out to <code>git</code>.
 
 ## Why this exists
 
-Git is typically used through the `git` binary — a compiled C program that reads and writes the repository on disk. That's perfect for most development workflows, but it breaks down in a few important scenarios:
+<p>Git is a useful storage model even when a server cannot run the <code>git</code> binary: snapshots, branches, object-addressed files, diffs, merges, and sync over HTTP. That matters for WordPress tools that want revision history for generated files, content snapshots, site state, or collaborative edits in constrained runtimes.</p>
 
-- **Serverless and sandboxed environments.** WordPress Playground runs PHP entirely in the browser via WebAssembly. There is no OS, no filesystem, no ability to exec a subprocess. Yet Playground needs to clone, commit, and push WordPress installations as Git repositories.
-- **Programmatic repository manipulation.** Sometimes you want to create commits, rewrite history, or sync files between repositories entirely from PHP — without spawning a shell process or depending on the `git` binary being installed.
-- **Embedding Git into a PHP application.** Build tools, deployment systems, and migration scripts that want to produce or consume Git repositories without a compile-time dependency on libgit2 or similar native libraries.
+<p>The Git component implements the core repository operations in PHP and stores objects through the toolkit <code>Filesystem</code> interface. That means the same repository can live on disk, in memory, or in another backend, and higher-level code can commit files without knowing where objects are stored.</p>
 
-This component implements the Git object model, pack protocol, and HTTP smart transport in pure PHP. It can talk to any standard Git remote — GitHub, GitLab, Gitea, self-hosted — using only PHP's HTTP client.
+<p>The docs start with simple commits because that mental model scales: a repository is just objects plus refs. From there, branches, history walking, root commits, and merges become details you can reason about instead of magic shell behavior.</p>
 
-## How it works
+<p>Choose it for tests, browser-like sandboxes, hosted WordPress environments, and applications that need Git behavior through PHP APIs instead of shell commands.</p>
 
-Git's data model is simpler than it looks. Everything is content-addressed: the SHA-1 hash of an object's content is its name. There are four object types:
+## Commit files into an in-memory repo
 
-- **blob** — file content, nothing else.
-- **tree** — a directory listing: each entry maps a filename to either a blob hash (file) or another tree hash (subdirectory).
-- **commit** — a snapshot: it points to a tree (the root of the working directory), zero or more parent commit hashes, and metadata like the author and message.
-- **tag** — a named pointer to another object (usually a commit).
+<p>The simplest possible repository: an <code>InMemoryFilesystem</code> as object storage and one <code>commit()</code> call. Reach for this in tests, in WP-CLI snapshots, or any place you want versioning without touching disk.</p>
 
-When you commit a file, Git stores the file content as a blob, builds a tree structure from the directory layout, and creates a commit object that records which tree represents the project state at that moment. Branches are just named pointers to commit hashes stored in `refs/heads/`.
-
-`GitRepository` handles all of this. Give it a `Filesystem` object to use as backing storage, and it reads and writes Git objects directly into the `.git` directory structure. `GitRemote` handles the HTTP smart protocol — fetching a list of remote refs, downloading pack files, uploading missing objects.
-
-`GitFilesystem` wraps a `GitRepository` and exposes the contents of a specific commit through the standard `Filesystem` interface, so the rest of your code doesn't need to know it's reading from a Git object store.
-
-## Usage
-
-### Create a new repository and make a commit
-
+<!-- snippet:
+filename: commit-in-memory.php
+runnable: true
+-->
 ```php
-use WordPress\Git\GitRepository;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
 use WordPress\Filesystem\InMemoryFilesystem;
-
-$fs   = new InMemoryFilesystem();
-$repo = new GitRepository( $fs );
-$repo->init();
-
-// Stage a file by writing it to the working directory...
-$fs->put_contents( '/hello.txt', 'Hello, world.' );
-
-// ...then commit.
-$repo->stage_files( array( 'hello.txt' ) );
-$repo->commit( 'Initial commit', 'Author Name', 'author@example.com' );
-```
-
-### Read a file from a specific commit
-
-```php
-use WordPress\Git\GitFilesystem;
-
-// Mount the HEAD commit as a filesystem.
-$git_fs = new GitFilesystem( $repo, 'HEAD' );
-
-$contents = $git_fs->get_contents( '/hello.txt' );
-// "Hello, world."
-```
-
-### Clone from a remote
-
-```php
 use WordPress\Git\GitRepository;
-use WordPress\Git\GitRemote;
-use WordPress\Filesystem\LocalFilesystem;
 
-$fs   = new LocalFilesystem( '/tmp/my-clone' );
-$repo = new GitRepository( $fs );
-$repo->init();
+$repo = new GitRepository( InMemoryFilesystem::create() );
 
-$repo->add_remote( 'origin', 'https://github.com/WordPress/wordpress-develop' );
-$remote = $repo->get_remote_client( 'origin' );
+$oid = $repo->commit( array(
+	'updates' => array(
+		'README.md'           => "# My Project\n",
+		'src/hello-world.php' => '<?php echo "Hello!";',
+	),
+) );
 
-// Fetch the default branch.
-$remote->fetch( 'refs/heads/trunk' );
+echo "commit: {$oid}\n";
+echo "HEAD:   " . $repo->get_branch_tip( 'HEAD' ) . "\n";
+echo "README: " . $repo->read_object_by_path( '/README.md' )->consume_all();
 ```
 
-### Push to a remote
-
-```php
-$remote = $repo->get_remote_client( 'origin' );
-$remote->push( 'refs/heads/my-branch' );
+<!-- expected-output -->
+```
+commit: <oid>
+HEAD: <oid>
+README: # My Project
 ```
 
-### Read the commit log
+## Walk the commit history
 
+<p>Follow the parent chain from <code>HEAD</code> backwards. Building block for a WP-CLI "post revisions" log or a "what changed since release X" report.</p>
+
+<!-- snippet:
+filename: walk-history.php
+runnable: true
+-->
 ```php
-$head   = $repo->get_head();
-$commit = $repo->read_commit( $head );
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-while ( $commit !== null ) {
-    echo $commit->message . "\n";
-    echo '  by ' . $commit->author_name . ' <' . $commit->author_email . ">\n";
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Git\GitRepository;
+use WordPress\Git\Model\Commit;
 
-    $parent_hash = $commit->parent_hash;
-    $commit      = $parent_hash ? $repo->read_commit( $parent_hash ) : null;
+$repo = new GitRepository( InMemoryFilesystem::create() );
+foreach ( array( 'add intro', 'fix typo', 'expand examples' ) as $i => $msg ) {
+	$repo->commit( array(
+		'updates' => array( 'post.md' => "# Draft {$i}" ),
+		'commit'  => array( 'message' => $msg ),
+	) );
+}
+
+$oid = $repo->get_branch_tip( 'HEAD' );
+while ( ! Commit::is_null_hash( $oid ) ) {
+	$c = $repo->read_object( $oid )->as_commit();
+	echo substr( $c->hash, 0, 7 ) . '  ' . trim( $c->message ) . "\n";
+	$oid = $c->get_first_parent_hash();
+	if ( ! $oid || ! $repo->has_object( $oid ) ) break;
 }
 ```
 
-### Diff two commits
-
-```php
-$changes = $repo->diff( $commit_hash_a, $commit_hash_b );
-
-foreach ( $changes as $path => $change ) {
-    echo $change['status'] . ' ' . $path . "\n";
-    // 'A' = added, 'M' = modified, 'D' = deleted
-}
+<!-- expected-output -->
+```
+<hash>  expand examples
+<hash>  fix typo
+<hash>  add intro
 ```
 
-### Use GitFilesystem anywhere a Filesystem is expected
+## Treat a repository like a filesystem
 
-Because `GitFilesystem` implements the `Filesystem` interface, you can pass it to any code that operates on a filesystem — including `ZipEncoder` to package a commit as a ZIP file:
+<p><code>GitFilesystem</code> wraps a repository in this toolkit's <code>Filesystem</code> interface. With the default options, each <code>put_contents()</code> records a new commit.</p>
 
+<!-- snippet:
+filename: git-filesystem.php
+runnable: true
+-->
 ```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Filesystem\InMemoryFilesystem;
 use WordPress\Git\GitFilesystem;
-use WordPress\Zip\ZipEncoder;
+use WordPress\Git\GitRepository;
 
-$git_fs  = new GitFilesystem( $repo, $commit_hash );
-$encoder = new ZipEncoder( $output_stream );
-$encoder->append_from_filesystem( $git_fs, '/' );
-$encoder->finish();
+$repo = new GitRepository( InMemoryFilesystem::create() );
+$fs   = GitFilesystem::create( $repo );
+
+$fs->put_contents( '/posts/hello.md', "# Hello\nFirst draft." );
+$fs->put_contents( '/posts/about.md', "# About\nWho we are." );
+$fs->put_contents( '/posts/hello.md', "# Hello\nSecond draft." );
+
+echo "tree:\n";
+foreach ( $fs->ls( '/posts' ) as $name ) {
+	echo "  /posts/{$name}\n";
+}
+echo "\nhello.md now:\n" . $fs->get_contents( '/posts/hello.md' ) . "\n";
 ```
 
-## Architecture notes
+<!-- expected-output -->
+```
+tree:
+  /posts/about.md
+  /posts/hello.md
 
-Git object storage uses a two-level directory scheme: objects live in `.git/objects/ab/cdef...` where `ab` is the first two hex characters of the SHA-1 hash and `cdef...` is the rest. Pack files (compressed bundles of many objects) live in `.git/objects/pack/`. `GitRepository` handles both loose objects and pack file reading transparently.
+hello.md now:
+# Hello
+Second draft.
+```
 
-The HTTP smart protocol works in two round trips for a fetch: first a discovery request that returns the list of refs the remote knows about, then a pack-file negotiation that uploads a pack containing only the objects you don't already have. `GitRemote` implements this protocol using PHP's HTTP client, with no native dependencies.
+## Branch, edit, and switch back
+
+<p>Create a feature branch off the current commit, change files, flip <code>HEAD</code> back. Useful for experimental edits in collaborative tools.</p>
+
+<!-- snippet:
+filename: branches.php
+runnable: true
+-->
+```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Git\GitRepository;
+
+$repo = new GitRepository( InMemoryFilesystem::create() );
+$base = $repo->commit( array(
+	'updates' => array( 'config.json' => '{"flag":false}' ),
+	'commit'  => array( 'message' => 'baseline' ),
+) );
+
+$repo->create_branch( 'refs/heads/experiment', $base );
+$repo->checkout( 'refs/heads/experiment' );
+$repo->commit( array(
+	'updates' => array( 'config.json' => '{"flag":true}' ),
+	'commit'  => array( 'message' => 'flip the flag' ),
+) );
+
+echo "on experiment: " . $repo->read_object_by_path( '/config.json' )->consume_all() . "\n";
+
+$repo->checkout( 'refs/heads/trunk' );
+echo "on trunk:      " . $repo->read_object_by_path( '/config.json' )->consume_all() . "\n";
+```
+
+<!-- expected-output -->
+```
+on experiment: {"flag":true}
+on trunk:      {"flag":false}
+```
+
+## Three-way merge two branches
+
+<p>The classic Git workflow: branch off, edit on each side, merge. <code>$repo-&gt;merge()</code> finds the common ancestor, three-way-merges every file, and creates a merge commit.</p>
+
+<!-- snippet:
+filename: merge-branches.php
+runnable: true
+-->
+```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Git\GitRepository;
+
+$repo = new GitRepository( InMemoryFilesystem::create() );
+$base = $repo->commit( array( 'updates' => array(
+	'todo.txt' => "buy milk\nwalk dog\nread book\n",
+) ) );
+
+$repo->commit( array( 'updates' => array(
+	'todo.txt' => "buy oat milk\nwalk dog\nread book\n",
+) ) );
+
+$repo->create_branch( 'refs/heads/feature', $base );
+$repo->checkout( 'refs/heads/feature' );
+$repo->commit( array( 'updates' => array(
+	'todo.txt' => "buy milk\nwalk dog\nread book\nwrite blog post\n",
+) ) );
+
+$repo->checkout( 'refs/heads/trunk' );
+$result = $repo->merge( 'refs/heads/feature' );
+
+echo "merge head: {$result['new_head']}\n";
+echo "conflicts:  " . ( $result['conflicts'] ? implode( ',', $result['conflicts'] ) : 'none' ) . "\n";
+echo "result:\n" . $repo->read_object_by_path( '/todo.txt' )->consume_all();
+```
+
+<!-- expected-output -->
+```
+merge head: <oid>
+conflicts:  none
+result:
+buy oat milk
+walk dog
+read book
+write blog post
+```
+
+## Snapshot WordPress options into a repo
+
+<p>Serialize a chunk of WP state (options, post meta, a theme config) on every save and commit it. You get free history, diffs between snapshots, and a "rollback to last week" button.</p>
+
+<!-- snippet:
+filename: options-snapshot.php
+runnable: true
+-->
+```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Git\GitRepository;
+
+$repo = new GitRepository( InMemoryFilesystem::create() );
+
+$snapshots = array(
+	array( 'blogname' => 'My Site',  'posts_per_page' => 10, 'timezone_string' => 'UTC' ),
+	array( 'blogname' => 'My Site',  'posts_per_page' => 20, 'timezone_string' => 'UTC' ),
+	array( 'blogname' => 'New Name', 'posts_per_page' => 20, 'timezone_string' => 'Europe/Warsaw' ),
+);
+
+foreach ( $snapshots as $i => $options ) {
+	$repo->commit( array(
+		'updates' => array( 'options.json' => json_encode( $options, JSON_PRETTY_PRINT ) ),
+		'commit'  => array( 'message' => "snapshot #{$i}" ),
+	) );
+}
+
+$head    = $repo->get_branch_tip( 'HEAD' );
+$parent  = $repo->read_object( $head )->as_commit()->get_first_parent_hash();
+$diff    = $repo->diff_commits( $head, $parent );
+
+echo "Files changed in last snapshot:\n";
+foreach ( $diff as $name => $entry ) {
+	echo "  {$name}\n";
+}
+```
+
+<!-- expected-output -->
+```
+Files changed in last snapshot:
+  options.json
+```

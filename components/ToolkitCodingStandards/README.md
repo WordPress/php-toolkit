@@ -1,125 +1,66 @@
-# ToolkitCodingStandards
+---
+slug: coding-standards
+title: ToolkitCodingStandards
+install: wp-php-toolkit/toolkit-coding-standards
 
-<!-- docs-site-banner -->
-> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/coding-standards.html](https://wordpress.github.io/php-toolkit/reference/coding-standards.html)
-> Open the page to edit each snippet in your browser and run it in WordPress Playground.
-<!-- /docs-site-banner -->
+see_also: polyfill | Polyfill | Share WordPress-style compatibility expectations across standalone packages.
+---
 
-Custom PHP_CodeSniffer sniffs used internally by the PHP Toolkit project. This component provides two sniffs that enforce WordPress-style coding conventions: one requires Yoda-style comparisons (literal on the left side of `===`), and the other forbids the short ternary (Elvis) operator `?:`. Both sniffs support automatic fixing via `phpcbf`.
+PHP_CodeSniffer sniffs used by this project: enforce Yoda comparisons and ban the short ternary where it hides falsy-value bugs.
 
-This is internal tooling for the toolkit's own linter pipeline, not a general-purpose coding standard.
+## Why this exists
 
-## Installation
+<p>This package is not a general-purpose style guide. It holds project-specific PHP_CodeSniffer rules for review comments the toolkit wants automated: comparisons should follow the WordPress Yoda style, and short ternaries should not hide whether a fallback is meant for <code>null</code> only or for all falsy values.</p>
 
-```bash
-composer require wp-php-toolkit/toolkit-coding-standards
-```
+<p>Use it in this monorepo, or in a project that intentionally wants the same review tradeoffs. If your project does not follow WordPress-style comparisons, the Yoda sniff is probably the wrong rule for you.</p>
 
-In practice this component is used through the toolkit's root `composer.json` configuration. It is referenced alongside the main phpcs ruleset in `.phpcs.xml.dist`.
+## Reference the standard from your phpcs.xml
 
-## Usage
+<p>The component is a PHPCS ruleset, so the useful examples are configuration and before/after code rather than runtime snippets. Activate both sniffs at once by referencing <code>WordPressToolkitCodingStandards</code>:</p>
 
-### Adding to a PHPCS Configuration
+<pre><code>&lt;?xml version="1.0"?&gt;
+&lt;ruleset name="My Project"&gt;
+  &lt;file&gt;src/&lt;/file&gt;
 
-Reference the coding standard in your `phpcs.xml` or `.phpcs.xml.dist` file:
+  &lt;!-- Activate both toolkit sniffs --&gt;
+  &lt;rule ref="WordPressToolkitCodingStandards"/&gt;
 
-```xml
-<?xml version="1.0"?>
-<ruleset>
-    <!-- Other rules... -->
-    <rule ref="WordPressToolkitCodingStandards"/>
-</ruleset>
-```
+  &lt;!-- Or pick them individually --&gt;
+  &lt;!-- &lt;rule ref="WordPressToolkitCodingStandards.PHP.EnforceYodaComparison"/&gt; --&gt;
+  &lt;!-- &lt;rule ref="WordPressToolkitCodingStandards.PHP.DisallowShortTernary"/&gt; --&gt;
+&lt;/ruleset&gt;</code></pre>
 
-Or enable individual sniffs selectively:
+<p>Then run phpcs and phpcbf the usual way:</p>
 
-```xml
-<rule ref="WordPressToolkitCodingStandards.PHP.EnforceYodaComparison"/>
-<rule ref="WordPressToolkitCodingStandards.PHP.DisallowShortTernary"/>
-```
+<pre><code>vendor/bin/phpcs --standard=phpcs.xml .
+vendor/bin/phpcbf --standard=phpcs.xml .</code></pre>
 
-### Running the Linter
+## EnforceYodaComparison: catches accidental assignment
 
-From the toolkit root:
+<p>Yoda comparisons (<code>true === $x</code>) make typo-induced assignments easier to catch and match the WordPress style used throughout the toolkit:</p>
 
-```bash
-# Check for violations
-composer lint
+<pre><code>// Bug: single = inside a condition. Always truthy, mutates $status.
+if ( $status = 'published' ) {
+    publish_post( $post );
+}
 
-# Auto-fix violations
-composer lint-fix
-```
+// Yoda style: writing this typo would be a parse error.
+if ( 'published' === $status ) {
+    publish_post( $post );
+}</code></pre>
 
-Or directly with phpcs/phpcbf:
+<p>The sniff covers <code>===</code>, <code>!==</code>, <code>==</code>, and <code>!=</code>, and stays quiet when both sides are dynamic.</p>
 
-```bash
-vendor/bin/phpcs -d memory_limit=1G --standard=WordPressToolkitCodingStandards .
-vendor/bin/phpcbf -d memory_limit=1G --standard=WordPressToolkitCodingStandards .
-```
+## Why ban the short ternary
 
-### Sniff: EnforceYodaComparison
+<p>Developers confuse the short ternary (<code>$a ?: $b</code>) with the null-coalescing operator (<code>$a ?? $b</code>). They differ on falsy-but-not-null values: <code>0 ?: 'fallback'</code> returns <code>'fallback'</code>, but <code>0 ?? 'fallback'</code> returns <code>0</code>. The sniff bans <code>?:</code> entirely so reviewers don't have to relitigate this on every PR.</p>
 
-Requires Yoda-style comparisons where the literal or constant value is placed on the left side of a comparison operator. This prevents accidental assignment (`=` instead of `===`) and follows WordPress coding standards.
+## Review-friendly replacements
 
-```php
-// Wrong -- variable on the left:
-if ( $value === true ) { /* ... */ }
-if ( $name === 'admin' ) { /* ... */ }
-if ( $count === 0 ) { /* ... */ }
+<p>When the fallback should apply only to <code>null</code>, use <code>??</code>. When the fallback should apply to every falsy value, write the full ternary so the intent is visible in review.</p>
 
-// Correct -- literal on the left (Yoda style):
-if ( true === $value ) { /* ... */ }
-if ( 'admin' === $name ) { /* ... */ }
-if ( 0 === $count ) { /* ... */ }
-```
+<pre><code>// Only missing values fall back. 0 and "" are preserved.
+$limit = $request_limit ?? 20;
 
-When both sides are dynamic expressions (function calls, variables, etc.), the sniff does not report an error since neither side is "more constant" than the other:
-
-```php
-// Both sides are dynamic -- no error:
-if ( get_option( 'a' ) === get_option( 'b' ) ) { /* ... */ }
-```
-
-The sniff applies to `===`, `!==`, `==`, and `!=` operators.
-
-### Sniff: DisallowShortTernary
-
-Forbids the short ternary (Elvis) operator `?:` and auto-fixes it to a full ternary by duplicating the condition:
-
-```php
-// Wrong -- short ternary:
-$name = $input ?: 'default';
-
-// Auto-fixed to full ternary:
-$name = $input ? $input : 'default';
-```
-
-The WordPress coding standards discourage the short ternary because it is often used incorrectly and can reduce readability.
-
-## API Reference
-
-### Sniff Classes
-
-| Class | Code | Description |
-|-------|------|-------------|
-| `EnforceYodaComparisonSniff` | `DisallowedYodaComparison` | Enforces Yoda-style comparisons (literal on left) |
-| `DisallowShortTernarySniff` | `ShortTernaryUsed` | Forbids the Elvis operator `?:`, auto-fixes to full ternary |
-
-### Ruleset
-
-The `WordPressToolkitCodingStandards/ruleset.xml` file registers both sniffs. Including the standard by name activates both rules at once.
-
-### Dependencies
-
-These sniffs extend helpers from the `SlevomatCodingStandard` package:
-
-- `SlevomatCodingStandard\Helpers\YodaHelper` -- used by the Yoda comparison sniff for dynamism analysis and auto-fixing
-- `SlevomatCodingStandard\Helpers\TernaryOperatorHelper` -- used by the short ternary sniff to locate operand boundaries
-- `SlevomatCodingStandard\Helpers\TokenHelper` and `FixerHelper` -- token navigation and fixer utilities
-
-## Requirements
-
-- PHP 7.2+
-- PHP_CodeSniffer 3.x (dev dependency, provided by the toolkit root)
-- slevomat/coding-standard (dev dependency, provided by the toolkit root)
-- No runtime external dependencies
+// Any falsy value falls back. The duplicated condition is intentional.
+$title = $raw_title ? $raw_title : 'Untitled';</code></pre>

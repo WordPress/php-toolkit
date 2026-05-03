@@ -57,3 +57,4 @@ docs/reference/zip.html
 
 # Bundled toolkit source for WordPress Playground — regenerated on every deploy.
 docs/assets/php-toolkit.zip
+docs-changes.md

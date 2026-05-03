@@ -1,5 +1,13 @@
-"""Loads bin/_docs_components/<slug>.md into the COMPONENTS data structure
-that the build scripts and the snippet runner consume.
+"""Loads each `components/<Name>/README.md` into the COMPONENTS data
+structure the build scripts and the snippet runner consume.
+
+The README *is* the catalog source: it doubles as the GitHub/Packagist
+README and as the docs-site catalog. YAML-style frontmatter at the top
+carries the slug/title/install/credit/see-also metadata; the body is
+plain markdown with fenced PHP snippets and `<!-- expected-output -->`
+fenced blocks. GitHub's renderer hides frontmatter from the README view
+on github.com, so the metadata is invisible to readers but available to
+the build pipeline.
 
 Markdown file format (one per component):
 
@@ -53,7 +61,34 @@ import os
 import re
 
 THIS = os.path.dirname(os.path.abspath(__file__))
-COMPONENT_DIR = os.path.join(THIS, '_docs_components')
+ROOT = os.path.dirname(THIS)
+COMPONENTS_ROOT = os.path.join(ROOT, 'components')
+
+# Slug → component-directory mapping. Each component's README.md *is* the
+# catalog source: it carries the YAML-style frontmatter, lede, sections,
+# snippets, and expected-output blocks the docs site needs. The ordered
+# tuple here also defines the order components appear on the landing page
+# and in the reference sidebar.
+COMPONENT_ORDER = (
+    ('html',             'HTML'),
+    ('zip',              'Zip'),
+    ('bytestream',       'ByteStream'),
+    ('filesystem',       'Filesystem'),
+    ('blockparser',      'BlockParser'),
+    ('markdown',         'Markdown'),
+    ('xml',              'XML'),
+    ('encoding',         'Encoding'),
+    ('dataliberation',   'DataLiberation'),
+    ('git',              'Git'),
+    ('merge',            'Merge'),
+    ('httpclient',       'HttpClient'),
+    ('httpserver',       'HttpServer'),
+    ('corsproxy',        'CORSProxy'),
+    ('cli',              'CLI'),
+    ('polyfill',         'Polyfill'),
+    ('blueprints',       'Blueprints'),
+    ('coding-standards', 'ToolkitCodingStandards'),
+)
 
 _FRONTMATTER_RE = re.compile(r'\A---\n(.*?)\n---\n?', re.DOTALL)
 _SNIPPET_RE = re.compile(
@@ -290,28 +325,8 @@ def load_components_rich():
         ]
     """
     components = []
-    manifest = os.path.join(COMPONENT_DIR, '_order.txt')
-    if os.path.exists(manifest):
-        with open(manifest) as f:
-            ordered_slugs = [
-                line.strip()
-                for line in f
-                if line.strip() and not line.startswith('#')
-            ]
-    else:
-        import sys as _sys
-        print(
-            f'WARNING: {manifest} missing; loading components in filesystem order',
-            file=_sys.stderr,
-        )
-        ordered_slugs = sorted(
-            os.path.splitext(name)[0]
-            for name in os.listdir(COMPONENT_DIR)
-            if name.endswith('.md') and not name.startswith('_')
-        )
-
-    for slug in ordered_slugs:
-        path = os.path.join(COMPONENT_DIR, f'{slug}.md')
+    for slug, dir_name in COMPONENT_ORDER:
+        path = os.path.join(COMPONENTS_ROOT, dir_name, 'README.md')
         with open(path, encoding='utf-8') as f:
             text = f.read()
         fields, body = _parse_frontmatter(text)

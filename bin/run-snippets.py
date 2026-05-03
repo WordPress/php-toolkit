@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Runs every PHP snippet declared in bin/_docs_components/<slug>.md against
+"""Runs every PHP snippet declared in components/<Name>/README.md against
 the local toolkit and compares stdout to the captured expected-output that
 lives next to the snippet in markdown. Used in two ways:
 
@@ -33,7 +33,7 @@ sys.path.insert(0, THIS)
 from _load_catalog import load_components_rich  # noqa: E402
 
 VENDOR_AUTOLOAD = os.path.join(ROOT, 'vendor', 'autoload.php')
-COMPONENT_DIR = os.path.join(THIS, '_docs_components')
+COMPONENTS_ROOT = os.path.join(ROOT, 'components')
 
 # Runnable snippets whose stdout is unstable. They exit 0 but their output
 # is not pinned (real network traffic, timestamps, host-specific values).
@@ -105,9 +105,13 @@ def normalize(text):
 
 
 def write_expected_output(slug, filename, new_output):
-    """Write a new captured stdout into the slug's markdown file, creating
+    """Write a new captured stdout into the component's README.md, creating
     or updating the snippet's `<!-- expected-output -->` fence."""
-    path = os.path.join(COMPONENT_DIR, f'{slug}.md')
+    from _load_catalog import COMPONENT_ORDER
+    dir_name = dict(COMPONENT_ORDER).get(slug)
+    if not dir_name:
+        raise ValueError(f'Unknown component slug: {slug}')
+    path = os.path.join(COMPONENTS_ROOT, dir_name, 'README.md')
     with open(path, encoding='utf-8') as f:
         text = f.read()
 

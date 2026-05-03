@@ -1,258 +1,247 @@
-# Merge
+---
+slug: merge
+title: Merge
+install: wp-php-toolkit/merge
 
-<!-- docs-site-banner -->
-> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/merge.html](https://wordpress.github.io/php-toolkit/reference/merge.html)
-> Open the page to edit each snippet in your browser and run it in WordPress Playground.
-<!-- /docs-site-banner -->
+see_also: git | Git | Merge file contents discovered through repository history.
+see_also: markdown | Markdown | Resolve file-based editorial workflows before converting to blocks.
+see_also: dataliberation | DataLiberation | Make content synchronization conflicts visible.
+---
 
-A three-way merge and diff library for PHP. Given a common base version and two diverging branches, it computes diffs and merges the changes together, detecting conflicts along the way. The architecture is pluggable: swap out the differ (line-based or character-based), the merger (line-level or chunk-level), and add optional validation of the merged result.
+Three-way merge and diff. Pluggable differ + merger + optional validator.
 
-## Installation
+## Why this exists
 
-```
-composer require wp-php-toolkit/merge
-```
+<p>Content synchronization needs more than "last write wins." A Markdown file changes in Git while the same post changes in WordPress. A generated config changes through both a CLI tool and a UI. In those cases you need a common ancestor, two edited versions, and a way to explain conflicts to a human.</p>
 
-## Quick Start
+<p>The Merge component provides the diff and three-way merge primitives used by those workflows. The default examples are line-oriented because that is the most familiar shape, but the strategy is intentionally pluggable: choose the differ, choose the merger, and optionally validate the merged result before accepting it.</p>
 
+<p>Use the merge result to auto-accept independent edits and to show structured conflicts when a person must decide.</p>
+
+## Diff two strings line by line
+
+<p>Feed two strings to <code>LineDiffer</code> and inspect the operations. Every <code>get_changes()</code> entry is a <code>[op, text]</code> pair.</p>
+
+<!-- snippet:
+filename: line-diff.php
+runnable: true
+-->
 ```php
-use WordPress\Merge\Diff\LineDiffer;
-use WordPress\Merge\Merge\LineMerger;
-use WordPress\Merge\MergeStrategy;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$strategy = new MergeStrategy(
-    new LineDiffer(),
-    new LineMerger()
-);
-
-$base     = "Line 1\nLine 2\nLine 3\n";
-$branch_a = "Line 1\nLine 2 modified\nLine 3\n";
-$branch_b = "Line 1\nLine 2\nLine 3\nLine 4\n";
-
-$result = $strategy->merge( $base, $branch_a, $branch_b );
-echo $result->get_merged_content();
-// Line 1
-// Line 2 modified
-// Line 3
-// Line 4
-```
-
-## Usage
-
-### Computing Diffs
-
-The `Diff` class represents a sequence of operations: equal, insert, and delete. You can create diffs manually or through a `Differ` implementation.
-
-```php
 use WordPress\Merge\Diff\Diff;
 use WordPress\Merge\Diff\LineDiffer;
 
-$differ = new LineDiffer();
-$diff   = $differ->diff(
-    "The quick brown fox\njumps over the lazy dog.\n",
-    "The quick brown fox\njumps over the lazy cat.\nA new line.\n"
+$diff = ( new LineDiffer() )->diff(
+	"alpha\nbeta\ngamma\n",
+	"alpha\nBETA\ngamma\ndelta\n"
 );
 
-// Inspect the changes
+$labels = array( Diff::DIFF_EQUAL => '=', Diff::DIFF_DELETE => '-', Diff::DIFF_INSERT => '+' );
 foreach ( $diff->get_changes() as $change ) {
-    $op   = $change[0]; // Diff::DIFF_EQUAL, DIFF_DELETE, or DIFF_INSERT
-    $text = $change[1];
+	echo $labels[ $change[0] ] . ' ' . rtrim( $change[1] ) . "\n";
 }
-
-// Reconstruct the original and modified documents
-echo $diff->get_old_document();
-// The quick brown fox
-// jumps over the lazy dog.
-
-echo $diff->get_new_document();
-// The quick brown fox
-// jumps over the lazy cat.
-// A new line.
 ```
 
-### Delta Format
+<!-- expected-output -->
+```
+= alpha
+- beta
++ BETA
+= gamma
++ delta
+= 
+```
 
-The delta format is a compact representation of a diff. Equal spans are encoded as byte counts, deletions as negative byte counts, and insertions as literal text.
+## Render a unified patch
 
+<p><code>format_as_git_patch()</code> produces output that mirrors <code>git diff</code>, including hunk headers — handy for emails, CI annotations, or a "what changed?" panel.</p>
+
+<!-- snippet:
+filename: git-patch.php
+runnable: true
+-->
 ```php
-use WordPress\Merge\Diff\Diff;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$diff = new Diff( array(
-    array( Diff::DIFF_EQUAL, "Line 1: The quick brown fox\n" ),
-    array( Diff::DIFF_DELETE, "Line 2: jumps over the lazy dog.\n" ),
-    array( Diff::DIFF_INSERT, 'A new line' ),
+use WordPress\Merge\Diff\LineDiffer;
+
+$old = "title: Hello\nauthor: Alice\nstatus: draft\n";
+$new = "title: Hello, world\nauthor: Alice\nstatus: published\ntags: greeting\n";
+
+$diff = ( new LineDiffer() )->diff( $old, $new );
+echo $diff->format_as_git_patch( array(
+	'a_source' => 'a/post.yml',
+	'b_source' => 'b/post.yml',
 ) );
-
-echo $diff->format_as_delta();
-// =28\r-33\r+A new line
-//
-// =28 means "keep 28 bytes unchanged"
-// -33 means "delete 33 bytes"
-// +A new line means "insert this text"
 ```
 
-### Git Patch Format
-
-Generate standard unified diffs that look like `git diff` output.
-
-```php
-use WordPress\Merge\Diff\Diff;
-
-$diff = new Diff( array(
-    array( Diff::DIFF_EQUAL, "Line 1: The quick brown fox\n" ),
-    array( Diff::DIFF_DELETE, "Line 2: jumps over the lazy dog.\n" ),
-    array( Diff::DIFF_INSERT, "Line 2: jumps over the lazy cat.\n" ),
-    array( Diff::DIFF_EQUAL, "Line 3: consectetur adipiscing elit.\n" ),
-) );
-
-echo $diff->format_as_git_patch();
-// diff --git a/string b/string
-// --- a/string
-// +++ b/string
-// @@ -1,3 +1,3 @@  Line 1: The quick brown fox
-// - Line 2: jumps over the lazy dog.
-// + Line 2: jumps over the lazy cat.
-//   Line 3: consectetur adipiscing elit.
+<!-- expected-output -->
+```
+diff --git a/post.yml b/post.yml
+--- a/post.yml
++++ b/post.yml
+@@ -1,4 +1,5 @@- title: Hello
++ title: Hello, world
+  author: Alice
+- status: draft
++ status: published
++ tags: greeting
+  
 ```
 
-### Three-Way Merge
+## Three-way merge with no conflicts
 
-`MergeStrategy` orchestrates the full merge workflow. It diffs each branch against the common base and then merges the two diffs together.
+<p>The classic case: each branch changes a different region. Pass the common ancestor plus both edits to <code>MergeStrategy::merge()</code> and read the merged result.</p>
 
+<!-- snippet:
+filename: three-way.php
+runnable: true
+-->
 ```php
-use WordPress\Merge\Diff\MyersDiffer;
-use WordPress\Merge\Merge\ChunkMerger;
-use WordPress\Merge\MergeStrategy;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$strategy = new MergeStrategy(
-    new MyersDiffer(),
-    new ChunkMerger()
-);
-
-$base     = '{"level":1}';
-$branch_a = '{"newattr": "before", "level":1}';
-$branch_b = '{"level":2}';
-
-$result = $strategy->merge( $base, $branch_a, $branch_b );
-echo $result->get_merged_content();
-// {"newattr": "before", "level":2}
-```
-
-### Handling Merge Conflicts
-
-When both branches modify the same region, the merger produces a `MergeConflict`. You can inspect conflicts programmatically or render them as git-style conflict markers.
-
-```php
 use WordPress\Merge\Diff\LineDiffer;
 use WordPress\Merge\Merge\LineMerger;
 use WordPress\Merge\MergeStrategy;
 
-$strategy = new MergeStrategy(
-    new LineDiffer(),
-    new LineMerger()
-);
+$strategy = new MergeStrategy( new LineDiffer(), new LineMerger() );
 
 $result = $strategy->merge(
-    "Line 1\nLine 2\n",
-    "Line 1\nLine 2 from branch A\n",
-    "Line 1\nLine 2 from branch B\n"
+	"intro\nbody\noutro\n",
+	"intro updated\nbody\noutro\n",
+	"intro\nbody\noutro\nappendix\n"
 );
 
-if ( $result->has_conflicts() ) {
-    foreach ( $result->get_conflicts() as $conflict ) {
-        echo 'Ours:   ' . $conflict->ours . "\n";
-        echo 'Theirs: ' . $conflict->theirs . "\n";
-    }
-}
-
-// The merged content includes git-style conflict markers
+echo $result->has_conflicts() ? "conflicts!\n" : "clean merge:\n";
 echo $result->get_merged_content();
 ```
 
-### Merge Validation
+<!-- expected-output -->
+```
+clean merge:
+intro updated
+body
+outro
+appendix
+```
 
-Add a `MergeValidator` to reject merges that produce structurally invalid output, even when there are no textual conflicts. The built-in `BlockMarkupMergeValidator` validates WordPress block markup.
+## Inspect and surface conflicts
 
+<p>When both sides edit the same region, the merger produces a <code>MergeConflict</code>. The merged content carries Git-style markers, but the structured <code>get_conflicts()</code> output is what you want for a UI that lets the user pick a side.</p>
+
+<!-- snippet:
+filename: conflicts.php
+runnable: true
+-->
 ```php
-use WordPress\Merge\Diff\MyersDiffer;
-use WordPress\Merge\Merge\ChunkMerger;
-use WordPress\Merge\MergeStrategy;
-use WordPress\Merge\Validate\BlockMarkupMergeValidator;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$strategy = new MergeStrategy(
-    new MyersDiffer(),
-    new ChunkMerger(),
-    new BlockMarkupMergeValidator()
+use WordPress\Merge\Diff\LineDiffer;
+use WordPress\Merge\Merge\LineMerger;
+use WordPress\Merge\MergeStrategy;
+
+$strategy = new MergeStrategy( new LineDiffer(), new LineMerger() );
+$result = $strategy->merge(
+	"line 1\nline 2\n",
+	"line 1\nline 2 from Alice\n",
+	"line 1\nline 2 from Bob\n"
 );
 
-$result = $strategy->merge( $base, $branch_a, $branch_b );
-
 if ( $result->has_conflicts() ) {
-    // The merge produced valid text but invalid block markup,
-    // so it was converted into a conflict.
-    $message = $result->get_conflicts()[0]->get_message();
+	foreach ( $result->get_conflicts() as $c ) {
+		echo "ours:   " . trim( $c->ours ) . "\n";
+		echo "theirs: " . trim( $c->theirs ) . "\n";
+	}
+}
+echo "\n--- merged content with markers ---\n";
+echo $result->get_merged_content();
+```
+
+<!-- expected-output -->
+```
+ours:   line 2 from Alice
+theirs: line 2 from Bob
+
+--- merged content with markers ---
+line 1
+
+<<<<<<< HEAD
+line 2 from Alice
+
+=======
+line 2 from Bob
+
+>>>>>>> incoming 
+```
+
+## Sync a Markdown folder against an edited DB copy
+
+<p>A real-world scenario: posts live both in a Git-tracked Markdown folder and in WordPress, and someone edits each. Three-way-merge each post against its common ancestor.</p>
+
+<!-- snippet:
+filename: sync-folder-vs-db.php
+runnable: true
+-->
+```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Merge\Diff\LineDiffer;
+use WordPress\Merge\Merge\LineMerger;
+use WordPress\Merge\MergeStrategy;
+
+$strategy = new MergeStrategy( new LineDiffer(), new LineMerger() );
+
+$posts = array(
+	'hello.md' => array(
+		'base' => "# Hello\nDraft body.\n",
+		'disk' => "# Hello\nDraft body, expanded on disk.\n",
+		'db'   => "# Hello\nDraft body.\nNew section from the editor.\n",
+	),
+	'about.md' => array(
+		'base' => "# About\nWho we are.\n",
+		'disk' => "# About\nWho *they* are.\n",
+		'db'   => "# About\nWho we really are.\n",
+	),
+);
+
+foreach ( $posts as $name => $sides ) {
+	$result = $strategy->merge( $sides['base'], $sides['disk'], $sides['db'] );
+	echo "=== {$name} ===\n";
+	echo $result->has_conflicts() ? "(conflict — needs review)\n" : "(auto-merged)\n";
+	echo $result->get_merged_content() . "\n";
 }
 ```
 
-## API Reference
+<!-- expected-output -->
+```
+=== hello.md ===
+(conflict — needs review)
+# Hello
 
-### MergeStrategy
+<<<<<<< HEAD
+Draft body, expanded on disk.
 
-| Method | Description |
-|--------|-------------|
-| `__construct( Differ, Merger, ?MergeValidator )` | Create a strategy with pluggable components |
-| `merge( $base, $branch_a, $branch_b )` | Perform a three-way merge, returns `MergeResult` |
+=======
+New section from the editor.
 
-### Diff
+>>>>>>> incoming 
 
-| Method | Description |
-|--------|-------------|
-| `__construct( array $changes )` | Create from an array of `[op, text]` pairs |
-| `get_changes()` | Get the raw array of diff operations |
-| `get_old_document()` | Reconstruct the original document from the diff |
-| `get_new_document()` | Reconstruct the modified document from the diff |
-| `format_as_delta()` | Compact delta format (`=28`, `-33`, `+text`) |
-| `format_as_git_patch( $options )` | Unified diff format like `git diff` |
 
-### Diff Constants
+=== about.md ===
+(conflict — needs review)
+# About
 
-| Constant | Value | Meaning |
-|----------|-------|---------|
-| `Diff::DIFF_EQUAL` | `0` | Text is the same in both versions |
-| `Diff::DIFF_DELETE` | `-1` | Text was removed |
-| `Diff::DIFF_INSERT` | `1` | Text was added |
+<<<<<<< HEAD
+Who *they* are.
 
-### MergeResult
+=======
+Who we really are.
 
-| Method | Description |
-|--------|-------------|
-| `get_merged_content()` | Get the merged text, with conflict markers if applicable |
-| `has_conflicts()` | Whether the merge has unresolved conflicts |
-| `get_conflicts()` | Get an array of `MergeConflict` objects |
-
-### MergeConflict
-
-| Property/Method | Description |
-|-----------------|-------------|
-| `$ours` | Text from branch A |
-| `$theirs` | Text from branch B |
-| `get_message()` | Human-readable conflict description |
-
-### Differ Implementations
-
-| Class | Description |
-|-------|-------------|
-| `LineDiffer` | Line-by-line diff using longest common subsequence |
-| `MyersDiffer` | Character-level diff using the Myers algorithm (via diff-match-patch) |
-
-### Merger Implementations
-
-| Class | Description |
-|-------|-------------|
-| `LineMerger` | Merges line-by-line diffs |
-| `ChunkMerger` | Merges character-level chunk diffs |
-
-## Requirements
-
-- PHP 7.4+
-- `ext-mbstring`
+>>>>>>> incoming 
+```

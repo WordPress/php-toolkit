@@ -1,145 +1,200 @@
-# XML
+---
+slug: xml
+title: XML
+install: wp-php-toolkit/xml
 
-<!-- docs-site-banner -->
-> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/xml.html](https://wordpress.github.io/php-toolkit/reference/xml.html)
-> Open the page to edit each snippet in your browser and run it in WordPress Playground.
-<!-- /docs-site-banner -->
+see_also: dataliberation | DataLiberation | Read and write WXR-sized WordPress exports as entities.
+see_also: encoding | Encoding | Validate and scrub text before strict XML processing.
+see_also: bytestream | ByteStream | Keep large XML reads incremental.
+---
+
+A streaming, namespace-aware XML processor in pure PHP. Read and modify huge feeds, WXR exports, ePub manifests, and Office Open XML parts without ever loading the document into memory and without depending on <code>libxml2</code>.
 
 ## Why this exists
 
-PHP ships with excellent XML support — `SimpleXML`, `DOMDocument`, `XMLReader` — but all of them rely on `libxml2`, a native C library. In most PHP environments that's fine. In WordPress Playground, which runs PHP compiled to WebAssembly in the browser, native extensions aren't available. You get the PHP standard library and nothing else.
+<p><code>SimpleXMLElement</code> and <code>DOMDocument</code> both need <code>libxml2</code> and both build a complete in-memory tree. <code>XMLProcessor</code> walks the document forward as a cursor, keeps modifications in a side buffer, and emits the full updated XML with <code>get_updated_xml()</code> only when you ask for it.</p>
 
-WordPress Playground needs to parse and modify XML to handle OPML files, RSS feeds, WordPress export files (WXR), and configuration formats. This component provides a pure PHP XML processor — no extensions, no external libraries — that covers the practical subset of XML 1.0 that real-world documents use.
+<p>This design came from WordPress-scale documents such as WXR exports. A migration may only need to rewrite <code>wp:attachment_url</code> values or bump a feed attribute, so the processor optimizes for targeted cursor edits instead of a full validating XML stack.</p>
 
-The design mirrors `WP_HTML_Tag_Processor` from the HTML component: a streaming, forward-only cursor you advance tag by tag, reading and modifying attributes as you go. If you already know the HTML processor, you'll be immediately comfortable here.
+<p>Footgun: <strong>Namespace-aware methods use the namespace URI, not the prefix written in the tag.</strong> In WXR, <code>get_attribute( 'wp', 'status' )</code> looks for a namespace literally named <code>wp</code>; for the usual WXR declaration you want <code>get_attribute( 'http://wordpress.org/export/1.2/', 'status' )</code>.</p>
 
-## How it works
+<p>Footgun: <strong>In streaming mode <code>next_tag()</code> can return false because input ran out, not because the document ended.</strong> Check <code>is_paused_at_incomplete_input()</code> before assuming you're done.</p>
 
-`XMLProcessor` is a forward-only scanner over an XML document string. Under the hood it implements a hand-written lexer that recognizes the token types XML defines: opening tags, closing tags, self-closing tags, text content, CDATA sections, processing instructions, and comments. It doesn't build a DOM tree. It doesn't allocate node objects. It simply advances a cursor through the bytes and lets you inspect and modify the token it's currently pointing at.
+## Bump every price in a catalog
 
-**Namespaces** work the same way they do in XML 1.0: a namespace declaration like `xmlns:wp="http://wordpress.org/export/1.2/"` maps a prefix to an expanded namespace name. Many namespace names look like URLs, but they are identifiers, not URLs the processor fetches. When querying for tags, you provide the expanded namespace name and the local name (not the prefix), making queries stable across documents that use different prefix conventions.
+<p>Find each <code>&lt;book&gt;</code>, read its price, write a new one, emit the updated document.</p>
 
-**Bookmarks** let you mark positions in the document and seek back to them. This is useful for multi-pass processing: scan forward to collect information, then seek back to the marked positions to make changes.
-
-**Streaming mode** accepts input in chunks. The scanner can tell you when it needs more data, so you can process large documents without loading them entirely into memory.
-
-## Supported subset
-
-The processor handles:
-- Well-formed UTF-8 encoded XML documents
-- Namespace declarations and namespace-qualified tag queries
-- Processing instructions and comments (scannable but not modifiable)
-- CDATA sections (treated as opaque text)
-- All attribute operations: read, set, remove
-
-It explicitly does not support:
-- DTDs, DOCTYPE declarations, ATTLIST, ENTITY, or conditional sections
-- XML schemas or validation
-- Encoding declarations other than UTF-8
-
-For the XML that WordPress-ecosystem tools actually produce and consume, these constraints are rarely a limitation.
-
-## Usage
-
-### Scan tags and read attributes
-
+<!-- snippet:
+filename: bump-prices.php
+runnable: true
+-->
 ```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
 use WordPress\XML\XMLProcessor;
 
-$xml = XMLProcessor::create_from_string( $document );
+$xml = <<<'XML'
+<catalog>
+<book sku="A1" price="29.99"><title>PHP Internals</title></book>
+<book sku="A2" price="14.50"><title>WordPress at Scale</title></book>
+</catalog>
+XML;
 
-while ( $xml->next_tag() ) {
-    echo $xml->get_tag() . "\n";                    // local tag name
-    echo $xml->get_attribute( 'id' ) . "\n";        // attribute value or null
+$p = XMLProcessor::create_from_string( $xml );
+while ( $p->next_tag( 'book' ) ) {
+	$old = (float) $p->get_attribute( '', 'price' );
+	$new = number_format( $old * 1.10, 2, '.', '' );
+	$p->set_attribute( '', 'price', $new );
 }
+
+echo $p->get_updated_xml();
 ```
 
-### Query by tag name
+<!-- expected-output -->
+```
+<catalog>
+<book sku="A1" price="32.99"><title>PHP Internals</title></book>
+<book sku="A2" price="15.95"><title>WordPress at Scale</title></book>
+</catalog>
+```
 
+## Read namespaced attributes from a WXR export
+
+<p>WordPress's WXR commonly uses <code>wp:</code>, <code>dc:</code>, and <code>content:</code> prefixes bound to namespace names such as <code>http://wordpress.org/export/1.2/</code>. Pass that expanded namespace name, not the prefix; the processor handles whichever prefix the document actually uses.</p>
+
+<!-- snippet:
+filename: wxr-namespaces.php
+runnable: true
+-->
 ```php
-$xml = XMLProcessor::create_from_string( $document );
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-while ( $xml->next_tag( 'item' ) ) {
-    // Only visits <item> opening tags.
-    $title = '';
-    if ( $xml->next_tag( 'title' ) ) {
-        $xml->next_token();
-        $title = $xml->get_modifiable_text();
-    }
-    echo $title . "\n";
+use WordPress\XML\XMLProcessor;
+
+$wxr = <<<'XML'
+<?xml version="1.0"?>
+<rss xmlns:wp="http://wordpress.org/export/1.2/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<channel><item>
+<title>Hello World</title>
+<dc:creator>admin</dc:creator>
+<wp:post_id>42</wp:post_id>
+<wp:status>publish</wp:status>
+</item></channel></rss>
+XML;
+
+$WP = 'http://wordpress.org/export/1.2/';
+$DC = 'http://purl.org/dc/elements/1.1/';
+
+$p = XMLProcessor::create_from_string( $wxr );
+while ( $p->next_tag( 'item' ) ) {
+	while ( $p->next_token() ) {
+		if ( $p->is_tag_closer() && 'item' === $p->get_tag_local_name() ) break;
+		if ( ! $p->is_tag_opener() ) continue;
+		$ns = $p->get_tag_namespace();
+		$local = $p->get_tag_local_name();
+		$prefix = ( $WP === $ns ) ? 'wp/' : ( ( $DC === $ns ) ? 'dc/' : '' );
+		echo "{$prefix}{$local}: ";
+		while ( $p->next_token() && '#text' !== $p->get_token_name() ) {}
+		echo trim( $p->get_modifiable_text() ) . "\n";
+	}
 }
 ```
 
-### Query by namespace
+<!-- expected-output -->
+```
+title: Hello World
+dc/creator: admin
+wp/post_id: 42
+wp/status: publish
+```
 
-When working with namespaced XML, pass a `[namespace_name, local_name]` tuple to `next_tag()`:
+## Rewrite URLs across an entire WXR export
 
+<p>Large WXR exports can hold many URLs in <code>&lt;link&gt;</code>, <code>&lt;guid&gt;</code>, and post content. Streaming the file lets you rewrite large exports without loading the whole XML document into memory.</p>
+
+<!-- snippet:
+filename: rewrite-wxr-urls.php
+runnable: true
+-->
 ```php
-// WordPress export files use the "wp" namespace.
-$ns  = 'http://wordpress.org/export/1.2/';
-$xml = XMLProcessor::create_from_string( $wxr_document );
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-while ( $xml->next_tag( array( $ns, 'post_id' ) ) ) {
-    $xml->next_token();
-    echo $xml->get_modifiable_text() . "\n";  // the post ID value
+use WordPress\XML\XMLProcessor;
+
+$wxr = <<<'XML'
+<?xml version="1.0"?><rss xmlns:wp="http://wordpress.org/export/1.2/"><channel>
+<wp:base_site_url>https://old.example.com</wp:base_site_url>
+<item><link>https://old.example.com/2024/post-1</link>
+<guid>https://old.example.com/?p=1</guid></item>
+</channel></rss>
+XML;
+
+$from = 'https://old.example.com';
+$to   = 'https://new.example.com';
+
+$p = XMLProcessor::create_from_string( $wxr );
+$rewritten = 0;
+
+while ( $p->next_token() ) {
+	if ( '#text' !== $p->get_token_name() ) continue;
+	$text = $p->get_modifiable_text();
+	if ( false === strpos( $text, $from ) ) continue;
+	$p->set_modifiable_text( str_replace( $from, $to, $text ) );
+	$rewritten++;
 }
+
+echo "rewrote {$rewritten} text nodes\n\n";
+echo $p->get_updated_xml();
 ```
 
-### Modify attributes
+<!-- expected-output -->
+```
+rewrote 3 text nodes
 
+<?xml version="1.0"?><rss xmlns:wp="http://wordpress.org/export/1.2/"><channel>
+<wp:base_site_url>https://new.example.com</wp:base_site_url>
+<item><link>https://new.example.com/2024/post-1</link>
+<guid>https://new.example.com/?p=1</guid></item>
+</channel></rss>
+```
+
+## Parse OPML to extract feed URLs
+
+<p>OPML is the format Feedly and many readers use to import/export feed lists. Flat, attribute-heavy XML — exactly what a tag processor handles best.</p>
+
+<!-- snippet:
+filename: opml.php
+runnable: true
+-->
 ```php
-$xml = XMLProcessor::create_from_string( '<items><item id="1" status="draft"/></items>' );
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-while ( $xml->next_tag( 'item' ) ) {
-    $xml->set_attribute( 'status', 'published' );
-    $xml->remove_attribute( 'id' );
-}
+use WordPress\XML\XMLProcessor;
 
-echo $xml->get_updated_xml();
-// <items><item status="published"/></items>
-```
+$opml = <<<'XML'
+<?xml version="1.0"?><opml version="2.0"><head><title>My Feeds</title></head>
+<body>
+<outline text="Tech"><outline text="Hacker News" type="rss" xmlUrl="https://news.ycombinator.com/rss"/>
+<outline text="LWN" type="rss" xmlUrl="https://lwn.net/headlines/rss"/></outline>
+<outline text="WordPress" type="rss" xmlUrl="https://wordpress.org/news/feed/"/>
+</body></opml>
+XML;
 
-### Use bookmarks for multi-pass processing
-
-```php
-$xml = XMLProcessor::create_from_string( $document );
-$ids = array();
-
-// First pass: collect all IDs.
-while ( $xml->next_tag( 'item' ) ) {
-    $xml->set_bookmark( 'item_' . $xml->get_attribute( 'id' ) );
-    $ids[] = $xml->get_attribute( 'id' );
-}
-
-// Second pass: update specific items.
-foreach ( $ids as $id ) {
-    $xml->seek( 'item_' . $id );
-    $xml->set_attribute( 'processed', 'true' );
+$p = XMLProcessor::create_from_string( $opml );
+while ( $p->next_tag( 'outline' ) ) {
+	$url = $p->get_attribute( '', 'xmlUrl' );
+	if ( null === $url ) continue;
+	echo $p->get_attribute( '', 'text' ) . "\t" . $url . "\n";
 }
 ```
 
-### Process a document in streaming chunks
-
-For large documents, feed data in pieces:
-
-```php
-$xml = XMLProcessor::create_for_streaming();
-
-while ( $chunk = fread( $handle, 65536 ) ) {
-    $xml->append_bytes( $chunk );
-
-    while ( $xml->next_tag() ) {
-        // Process tokens as they arrive.
-    }
-}
+<!-- expected-output -->
 ```
-
-## Relationship to the HTML component
-
-`XMLProcessor` and `WP_HTML_Tag_Processor` share the same API philosophy: forward-only cursor, `next_tag()` to advance, attribute getters and setters, bookmarks for seeking, `get_updated_*()` to retrieve the modified document. The main differences are:
-
-- XML is strict and well-formed; HTML is lenient about malformed markup.
-- XML has namespaces as a first-class concept; HTML's namespace handling is implicit.
-- XML has no equivalent to HTML's implicit tag closing rules.
-
-If you're already comfortable with one, the other will feel immediately familiar.
+Hacker News	https://news.ycombinator.com/rss
+LWN	https://lwn.net/headlines/rss
+WordPress	https://wordpress.org/news/feed/
+```

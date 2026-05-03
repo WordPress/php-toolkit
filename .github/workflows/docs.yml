@@ -9,7 +9,6 @@ on:
       - 'bin/build-docs-bundle.sh'
       - 'bin/build-reference.py'
       - 'bin/_docs_components.py'
-      - 'bin/_docs_components/**'
       - 'bin/_load_catalog.py'
       - 'composer.json'
       - 'composer.lock'

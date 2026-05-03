@@ -1,159 +1,224 @@
-# Markdown
-
-<!-- docs-site-banner -->
-> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/markdown.html](https://wordpress.github.io/php-toolkit/reference/markdown.html)
-> Open the page to edit each snippet in your browser and run it in WordPress Playground.
-<!-- /docs-site-banner -->
-
-Bidirectional converter between Markdown and WordPress block markup. Use `MarkdownConsumer` to parse Markdown (with optional YAML frontmatter) into WordPress blocks, and `MarkdownProducer` to serialize supported blocks back to Markdown. Designed for content synchronization workflows where a practical, structured conversion matters, such as three-way merging of static Markdown files with a WordPress database. It is not a byte-perfect Markdown formatter, and block attributes with no Markdown representation may be lost.
-
-## Installation
-
-```
-composer require wp-php-toolkit/markdown
-```
-
-## Quick Start
-
-Convert a Markdown string into WordPress block markup:
-
-```php
-use WordPress\Markdown\MarkdownConsumer;
-
-$markdown = "# Hello World\n\nThis is a paragraph with **bold** text.";
-
-$consumer = new MarkdownConsumer( $markdown );
-$result   = $consumer->consume();
-
-$block_markup = $result->get_block_markup();
-// <!-- wp:heading {"level":1} -->
-// <h1 class="wp-block-heading" id="hello-world">Hello World</h1>
-// <!-- /wp:heading -->
-//
-// <!-- wp:paragraph -->
-// <p>This is a paragraph with <b>bold</b> text.</p>
-// <!-- /wp:paragraph -->
-```
-
-## Usage
-
-### Markdown to Blocks
-
-Pass any Markdown string to `MarkdownConsumer` and call `consume()`. The returned `BlocksWithMetadata` object gives you both the block markup and any frontmatter metadata:
-
-```php
-use WordPress\Markdown\MarkdownConsumer;
-
-$markdown = <<<MD
 ---
-post_title: "WordPress 6.8 was released"
-post_date: "2024-12-16"
-post_author: "1"
+slug: markdown
+title: Markdown
+install: wp-php-toolkit/markdown
+
+credit_title: Built on league/commonmark
+credit_body: |
+  Markdown parsing is delegated to <a href="https://commonmark.thephpleague.com/"><code>league/commonmark</code></a>; YAML frontmatter is handled by <a href="https://github.com/webuni/front-matter"><code>webuni/front-matter</code></a>. The toolkit's own work is the bridge between CommonMark's AST and <a href="https://developer.wordpress.org/block-editor/reference-guides/block-api/">WordPress block markup</a>, in both directions.
+
+see_also: blockparser | BlockParser | Understand the block tree created from Markdown output.
+see_also: html | HTML | Rewrite rendered HTML fragments without using DOMDocument.
+see_also: dataliberation | DataLiberation | Turn Markdown folders into import/export streams.
 ---
 
-## WordPress 6.8 was released
+Bidirectional converter between Markdown and WordPress block markup. Useful for moving content between Markdown files and WordPress while preserving the structures both formats can express.
 
-Last week, WordPress 6.8 was released. This release includes a new default theme.
-MD;
+## Why this exists
 
-$consumer = new MarkdownConsumer( $markdown );
-$result   = $consumer->consume();
+<p>Many publishing workflows start in Markdown: documentation sites, static-site generators, Git-backed editorial workflows, Obsidian vaults, and developer notes. WordPress stores editor content as block markup. Moving between those worlds by string replacement loses metadata and quickly breaks on lists, tables, code blocks, and frontmatter.</p>
 
-// Get YAML frontmatter as metadata.
-// Each value is wrapped in an array to match the WP_Block_Markup_Converter interface.
-$metadata = $result->get_all_metadata();
-// array(
-//     'post_title'  => array( 'WordPress 6.8 was released' ),
-//     'post_date'   => array( '2024-12-16' ),
-//     'post_author' => array( '1' ),
-// )
+<p>The Markdown component provides a structured bridge. <code>MarkdownConsumer</code> turns Markdown plus frontmatter into block markup and metadata; <code>MarkdownProducer</code> turns supported block markup back into Markdown. The conversion is meant for practical content workflows, not byte-identical round-tripping of every custom block attribute.</p>
 
-$blocks = $result->get_block_markup();
-```
+## Markdown to blocks
 
-### Supported Markdown Elements
+<p>Feed Markdown into <code>MarkdownConsumer</code>, get block markup back. The result is a <code>BlocksWithMetadata</code> object (defined in <code>WordPress\DataLiberation\DataFormatConsumer</code> — the shared shape every <code>DataFormatConsumer</code> in the toolkit emits) that holds both the rendered blocks and any frontmatter parsed from the document.</p>
 
-The consumer handles paragraphs, headings (all levels), bold, italic, inline code, links, images, ordered and unordered lists (including nested lists), blockquotes, fenced and indented code blocks, tables, horizontal rules, and raw HTML blocks.
-
+<!-- snippet:
+filename: quickstart.php
+runnable: true
+-->
 ```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
 use WordPress\Markdown\MarkdownConsumer;
 
-// Lists convert to wp:list and wp:list-item blocks.
-$consumer = new MarkdownConsumer( "- Item 1\n  - Item 1.1\n  - Item 1.2\n- Item 2" );
-$result   = $consumer->consume();
-$blocks   = $result->get_block_markup();
-// <!-- wp:list {"ordered":false} -->
-// <ul class="wp-block-list">
-//   <!-- wp:list-item --><li>Item 1
-//     <!-- wp:list {"ordered":false} -->
-//     <ul class="wp-block-list">
-//       <!-- wp:list-item --><li>Item 1.1</li><!-- /wp:list-item -->
-//       <!-- wp:list-item --><li>Item 1.2</li><!-- /wp:list-item -->
-//     </ul>
-//     <!-- /wp:list -->
-//   </li><!-- /wp:list-item -->
-//   <!-- wp:list-item --><li>Item 2</li><!-- /wp:list-item -->
-// </ul>
-// <!-- /wp:list -->
-
-// Tables convert to wp:table blocks with thead/tbody structure.
-$table_md = "| Name | Role |\n|------|------|\n| Ada  | Dev  |";
-$consumer = new MarkdownConsumer( $table_md );
-$result   = $consumer->consume();
+$result = ( new MarkdownConsumer( "# Hello\n\nWelcome to **WordPress**." ) )->consume();
+echo $result->get_block_markup();
 ```
 
-### Blocks to Markdown
+<!-- expected-output -->
+```
+<!-- wp:heading {"level":1} -->
+<h1 class="wp-block-heading" id="hello">Hello</h1>
+<!-- /wp:heading -->
 
-Convert WordPress block markup back to Markdown using `MarkdownProducer`. Pass a `BlocksWithMetadata` instance containing the block markup and any metadata to include as YAML frontmatter:
+<!-- wp:paragraph -->
+<p>Welcome to <b>WordPress</b>.</p>
+<!-- /wp:paragraph -->
+```
 
+## Round-trip: blocks back to Markdown
+
+<p>Pair <code>MarkdownProducer</code> with <code>MarkdownConsumer</code> to convert in either direction. Round-tripping is lossy for block attributes that have no Markdown representation (custom classes, alignment), so do not expect byte-perfect equality.</p>
+
+<!-- snippet:
+filename: roundtrip.php
+runnable: true
+-->
 ```php
-use WordPress\DataLiberation\DataFormatConsumer\BlocksWithMetadata;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Markdown\MarkdownConsumer;
 use WordPress\Markdown\MarkdownProducer;
 
-$blocks = '<!-- wp:paragraph --><p>A paragraph with a <a href="https://wordpress.org">link</a>.</p><!-- /wp:paragraph -->';
+$md       = "## Round trip\n\n- one\n- two\n- three\n";
+$blocks   = ( new MarkdownConsumer( $md ) )->consume();
+$markdown = ( new MarkdownProducer( $blocks ) )->produce();
 
-$metadata = array(
-    'post_title' => 'My Post',
-);
-
-$producer = new MarkdownProducer( new BlocksWithMetadata( $blocks, $metadata ) );
-$markdown = $producer->produce();
-// ---
-// post_title: "My Post"
-// ---
-//
-// A paragraph with a [link](https://wordpress.org).
+echo $markdown;
 ```
 
-The producer converts headings to `#` syntax, lists to `-` or `1.` syntax, images to `![alt](url)` syntax, bold/italic to `**`/`*`, inline code to backticks, code blocks to fenced blocks, tables to pipe tables, and blockquotes to `>` prefixed lines. Blocks that cannot be represented in Markdown are serialized as fenced code blocks with the `block` language tag, preserving them for round-trip conversion.
+<!-- expected-output -->
+```
+## Round trip
 
-## API Reference
+- one
+- two
+- three
+```
 
-### MarkdownConsumer
+## Reading YAML frontmatter as post meta
 
-| Method | Description |
-|--------|-------------|
-| `__construct( $markdown )` | Create a consumer from a Markdown string |
-| `consume()` | Parse and return a `BlocksWithMetadata` instance |
-| `get_all_metadata()` | Get frontmatter as `array( 'key' => array( value ) )` |
-| `get_meta_value( $key )` | Get a single metadata value by key |
-| `get_block_markup()` | Get the resulting block markup string |
+<p>Frontmatter keys come back as arrays so a single key can hold multiple values. Use <code>get_meta_value()</code> when you only want the first scalar.</p>
 
-### MarkdownProducer
+<!-- snippet:
+filename: frontmatter.php
+runnable: true
+-->
+```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-| Method | Description |
-|--------|-------------|
-| `__construct( BlocksWithMetadata $blocks_with_meta )` | Create a producer from blocks and metadata |
-| `produce()` | Convert to Markdown string with optional YAML frontmatter |
+use WordPress\Markdown\MarkdownConsumer;
 
-### BlocksWithMetadata
+$md = <<<MD
+---
+post_title: "The Name of the Wind"
+post_status: publish
+tags: [fantasy, kingkiller]
+---
 
-| Method | Description |
-|--------|-------------|
-| `get_block_markup()` | Get the block markup string |
-| `get_all_metadata()` | Get all metadata as an associative array |
+Once upon a time...
+MD;
 
-## Requirements
+$consumer = new MarkdownConsumer( $md );
+$consumer->consume();
 
-- PHP 7.2+
-- No external dependencies beyond other `wp-php-toolkit` components
+echo 'Title: '   . $consumer->get_meta_value( 'post_title' )  . "\n";
+echo 'Status: '  . $consumer->get_meta_value( 'post_status' ) . "\n";
+$metadata = $consumer->get_all_metadata();
+echo 'Tags: ' . implode( ', ', $metadata['tags'][0] ) . "\n";
+```
+
+<!-- expected-output -->
+```
+Title: The Name of the Wind
+Status: publish
+Tags: fantasy, kingkiller
+```
+
+## Migrating an Obsidian or Hugo folder of Markdown
+
+<p>Walk a directory of <code>.md</code> files (Obsidian vault, Hugo <code>content/</code>, Jekyll <code>_posts</code>) and emit one block-markup record per file.</p>
+
+<!-- snippet:
+filename: migrate-folder.php
+runnable: true
+-->
+```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Markdown\MarkdownConsumer;
+
+@mkdir( '/tmp/vault', 0777, true );
+file_put_contents( '/tmp/vault/welcome.md', "---\ntitle: Welcome\n---\n\nHello world." );
+file_put_contents( '/tmp/vault/roadmap.md', "# Roadmap\n\n1. Ship\n2. Iterate" );
+
+foreach ( glob( '/tmp/vault/*.md' ) as $path ) {
+	$consumer = new MarkdownConsumer( file_get_contents( $path ) );
+	$consumer->consume();
+	$title = $consumer->get_meta_value( 'title' );
+	if ( ! $title ) $title = basename( $path, '.md' );
+	echo "=== $title ($path) ===\n";
+	echo substr( $consumer->get_block_markup(), 0, 120 ) . "...\n\n";
+}
+```
+
+<!-- expected-output -->
+```
+=== roadmap (/tmp/<tempfile>/roadmap.md) ===
+<!-- wp:heading {"level":1} -->
+<h1 class="wp-block-heading" id="roadmap">Roadmap</h1>
+<!-- /wp:heading -->
+
+<!-- wp:lis...
+
+=== Welcome (/tmp/<tempfile>/welcome.md) ===
+<!-- wp:paragraph -->
+<p>Hello world.</p>
+<!-- /wp:paragraph -->
+
+...
+```
+
+## Counting blocks produced by a Markdown document
+
+<p>After conversion, the block markup is plain WordPress block markup, so <code>parse_blocks()</code> works on it directly. The standard way to introspect what the converter emitted before saving to the database.</p>
+
+<!-- snippet:
+filename: count-blocks.php
+runnable: true
+-->
+````php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\Markdown\MarkdownConsumer;
+
+$md = <<<MD
+# Title
+
+A paragraph with **bold** and *italics*.
+
+| Col A | Col B |
+|-------|-------|
+| 1     | 2     |
+
+```php
+echo 'hi';
+```
+
+> A quote.
+MD;
+
+$blocks = ( new MarkdownConsumer( $md ) )->consume()->get_block_markup();
+$counts = array();
+$queue  = parse_blocks( $blocks );
+
+while ( $queue ) {
+	$block = array_shift( $queue );
+	if ( null !== $block['blockName'] ) {
+		$name             = $block['blockName'];
+		$counts[ $name ] = isset( $counts[ $name ] ) ? $counts[ $name ] + 1 : 1;
+	}
+	foreach ( $block['innerBlocks'] as $inner_block ) {
+		$queue[] = $inner_block;
+	}
+}
+foreach ( $counts as $name => $count ) {
+	echo "{$name}: {$count}\n";
+}
+````
+
+<!-- expected-output -->
+```
+core/heading: 1
+core/paragraph: 2
+core/table: 1
+core/code: 1
+core/quote: 1
+```

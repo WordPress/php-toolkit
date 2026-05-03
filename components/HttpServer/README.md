@@ -1,21 +1,32 @@
-# HttpServer
+---
+slug: httpserver
+title: HttpServer
+install: wp-php-toolkit/http-server
 
-<!-- docs-site-banner -->
-> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/httpserver.html](https://wordpress.github.io/php-toolkit/reference/httpserver.html)
-> Open the page to edit each snippet in your browser and run it in WordPress Playground.
-<!-- /docs-site-banner -->
+see_also: cli | CLI | Expose a local browser UI from a command-line tool.
+see_also: httpclient | HttpClient | Test client code against a small local fixture server.
+---
 
-A minimal, blocking TCP-based HTTP server written in pure PHP. It is designed for CLI tools, local development servers, and test harnesses where you need a lightweight HTTP endpoint without pulling in a full web server.
+A minimal blocking TCP HTTP server in pure PHP. For CLI tools and tests, not for production traffic.
 
-## Installation
+## Why this exists
 
-```bash
-composer require wp-php-toolkit/http-server
-```
+<p>Sometimes a PHP tool needs a tiny local HTTP surface: a test fixture server, a webhook receiver during development, a CLI tool with a browser UI, or a demo endpoint for another component. Pulling in a production web framework would obscure the example and add dependencies the toolkit avoids.</p>
 
-## Quick Start
+<p>The HttpServer component is intentionally small: a blocking TCP server, incoming request objects, and response writers. It is useful for local tools and tests. It is not a replacement for nginx, Apache, php-fpm, RoadRunner, Swoole, or a production application server.</p>
 
+## Hello world on port 8080
+
+<p class="callout"><strong>Run on your machine:</strong> the Playground sandbox does not allow processes to bind listening TCP ports. Save this snippet locally and run <code>php hello-server.php</code>.</p>
+
+<!-- snippet:
+filename: hello-server.php
+runnable: false
+-->
 ```php
+<?php
+require __DIR__ . '/vendor/autoload.php';
+
 use WordPress\HttpServer\TcpServer;
 use WordPress\HttpServer\IncomingRequest;
 use WordPress\HttpServer\Response\ResponseWriteStream;
@@ -23,22 +34,30 @@ use WordPress\HttpServer\Response\ResponseWriteStream;
 $server = new TcpServer( '127.0.0.1', 8080 );
 
 $server->set_handler( function ( IncomingRequest $request, ResponseWriteStream $response ) {
-    $response->send_http_code( 200 );
-    $response->send_header( 'Content-Type', 'text/plain' );
-    $response->append_bytes( 'Hello, world!' );
+	$response->send_http_code( 200 );
+	$response->send_header( 'Content-Type', 'text/plain' );
+	$response->append_bytes( "Hello from " . $request->method . " " . $request->url . "\n" );
 } );
 
-echo "Listening on http://127.0.0.1:8080\n";
-$server->serve();
+$server->serve( function ( $host, $port ) {
+	echo "Listening on http://{$host}:{$port}\n";
+} );
 ```
 
-## Usage
+## A tiny JSON router
 
-### Routing by path
+<p class="callout"><strong>Run on your machine:</strong> needs a listening port. Once running, try <code>curl localhost:8080/api/status</code>.</p>
 
-The handler receives an `IncomingRequest` which extends the HttpClient `Request` class. You can inspect the method, URL, headers, and body to decide how to respond:
+<p>Build a CLI tool with a web UI by switching on the parsed path and method.</p>
 
+<!-- snippet:
+filename: mini-router.php
+runnable: false
+-->
 ```php
+<?php
+require __DIR__ . '/vendor/autoload.php';
+
 use WordPress\HttpServer\TcpServer;
 use WordPress\HttpServer\IncomingRequest;
 use WordPress\HttpServer\Response\ResponseWriteStream;
@@ -46,161 +65,74 @@ use WordPress\HttpServer\Response\ResponseWriteStream;
 $server = new TcpServer( '127.0.0.1', 8080 );
 
 $server->set_handler( function ( IncomingRequest $request, ResponseWriteStream $response ) {
-    $parsed = $request->get_parsed_url();
-    $path   = $parsed->pathname;
+	$path = $request->get_parsed_url()->pathname;
 
-    if ( '/api/status' === $path && 'GET' === $request->method ) {
-        $response->send_http_code( 200 );
-        $response->send_header( 'Content-Type', 'application/json' );
-        $response->append_bytes( '{"status": "ok"}' );
-        return;
-    }
+	if ( '/api/status' === $path ) {
+		$response->send_http_code( 200 );
+		$response->send_header( 'Content-Type', 'application/json' );
+		$response->append_bytes( json_encode( array(
+			'ok'     => true,
+			'pid'    => getmypid(),
+			'memory' => memory_get_usage( true ),
+		) ) );
+		return;
+	}
 
-    if ( '/api/echo' === $path && 'POST' === $request->method ) {
-        // Read the incoming request body.
-        $body = '';
-        while ( ! $request->body_stream->reached_end_of_data() ) {
-            $n = $request->body_stream->pull( 4096 );
-            if ( $n > 0 ) {
-                $body .= $request->body_stream->consume( $n );
-            }
-        }
+	if ( '/api/echo' === $path && 'POST' === $request->method ) {
+		$body = '';
+		while ( ! $request->body_stream->reached_end_of_data() ) {
+			$n = $request->body_stream->pull( 4096 );
+			if ( $n > 0 ) $body .= $request->body_stream->consume( $n );
+		}
+		$response->send_http_code( 200 );
+		$response->send_header( 'Content-Type', 'text/plain' );
+		$response->append_bytes( $body );
+		return;
+	}
 
-        $response->send_http_code( 200 );
-        $response->send_header( 'Content-Type', 'text/plain' );
-        $response->append_bytes( $body );
-        return;
-    }
-
-    $response->send_http_code( 404 );
-    $response->send_header( 'Content-Type', 'text/plain' );
-    $response->append_bytes( 'Not Found' );
+	$response->send_http_code( 404 );
+	$response->append_bytes( "Not found\n" );
 } );
 
 $server->serve();
 ```
 
-### Chunked transfer encoding
+## Buffered response with auto Content-Length
 
-For large or streaming responses, enable chunked encoding on the response writer. This sends data in chunks without needing to know the total content length upfront:
+<p>Use <code>BufferingResponseWriter</code> when you want the framework to compute <code>Content-Length</code> for you, or when the runtime is CGI-shaped and expects the full body up front. This one runs anywhere — no socket required.</p>
 
+<!-- snippet:
+filename: buffered-writer.php
+runnable: true
+-->
 ```php
-use WordPress\HttpServer\TcpServer;
-use WordPress\HttpServer\IncomingRequest;
-use WordPress\HttpServer\Response\TcpResponseWriteStream;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$server = new TcpServer( '127.0.0.1', 8080 );
-
-$server->set_handler( function ( IncomingRequest $request, TcpResponseWriteStream $response ) {
-    $response->send_http_code( 200 );
-    $response->send_header( 'Content-Type', 'text/plain' );
-    $response->use_chunked_encoding();
-
-    for ( $i = 0; $i < 10; $i++ ) {
-        $response->append_bytes( "Chunk $i\n" );
-    }
-} );
-
-$server->serve();
-```
-
-### Buffering the response
-
-`BufferingResponseWriter` collects the entire response in memory before sending it. This is useful when you need to compute `Content-Length` automatically or when using `php-cgi`:
-
-```php
 use WordPress\HttpServer\Response\BufferingResponseWriter;
 
 $writer = new BufferingResponseWriter();
 $writer->send_http_code( 200 );
 $writer->send_header( 'Content-Type', 'text/html' );
-$writer->append_bytes( '<h1>Hello</h1>' );
+$writer->append_bytes( '<!doctype html><title>Hi</title><h1>Hello</h1>' );
+$writer->append_bytes( '<p>Buffered body, sent at the end.</p>' );
 
-// Sends all headers (including Content-Length) and the body at once.
+ob_start();
 $writer->close_writing();
+$response_body = ob_get_clean();
+
+echo "headers before send:\n";
+foreach ( $writer->get_buffered_headers() as $name => $value ) {
+	echo "{$name}: {$value}\n";
+}
+echo "\nbody:\n" . $response_body;
 ```
 
-### Streaming via php://output
-
-`StreamingResponseWriter` writes directly to PHP's output stream using `http_response_code()` and `header()`. Use it when running behind Apache/nginx as a CGI script:
-
-```php
-use WordPress\HttpServer\Response\StreamingResponseWriter;
-
-$writer = new StreamingResponseWriter();
-$writer->send_http_code( 200 );
-$writer->send_header( 'Content-Type', 'text/plain' );
-$writer->append_bytes( 'streamed directly to the client' );
-$writer->close_writing();
+<!-- expected-output -->
 ```
+headers before send:
+Content-Type: text/html
 
-### Startup callback
-
-Pass a callback to `serve()` to be notified when the server is ready to accept connections. This is handy for tests or scripts that need to know the exact host and port:
-
-```php
-$server->serve( function ( $host, $port ) {
-    echo "Server ready at http://{$host}:{$port}\n";
-} );
+body:
+<!doctype html><title>Hi</title><h1>Hello</h1><p>Buffered body, sent at the end.</p>
 ```
-
-## API Reference
-
-### TcpServer
-
-| Method | Description |
-|---|---|
-| `__construct( $host, $port )` | Create a server bound to the given host and port |
-| `set_handler( callable $handler )` | Set the request handler. Receives `(IncomingRequest, ResponseWriteStream, $socket)` |
-| `serve( callable $on_accept )` | Start the blocking server loop. Optional callback fires when listening begins |
-
-### IncomingRequest
-
-Extends `WordPress\HttpClient\Request`.
-
-| Method / Property | Description |
-|---|---|
-| `IncomingRequest::from_resource( $stream )` | Parse an HTTP request from a socket resource |
-| `$method` | HTTP method (`GET`, `POST`, etc.) |
-| `$url` | Full request URL |
-| `$headers` | Associative array of request headers (lowercase keys) |
-| `$body_stream` | A `ByteReadStream` for reading the request body |
-| `get_parsed_url()` | Returns a parsed URL object with `->pathname` |
-| `get_header( $name )` | Get a single header value |
-
-### ResponseWriteStream (interface)
-
-| Method | Description |
-|---|---|
-| `send_http_code( $code )` | Set the HTTP status code (must be called before writing body) |
-| `send_header( $name, $value )` | Add a response header (must be called before writing body) |
-| `append_bytes( $bytes )` | Write bytes to the response body |
-| `close_writing()` | Finalize and close the response |
-
-### TcpResponseWriteStream
-
-Implements `ResponseWriteStream`. Writes directly to a TCP socket.
-
-| Method | Description |
-|---|---|
-| `use_chunked_encoding()` | Enable HTTP chunked transfer encoding |
-| `is_writing_closed()` | Check if the response has been finalized |
-
-### BufferingResponseWriter
-
-Implements `ResponseWriteStream`. Buffers the entire response in memory and sends it on `close_writing()` with an automatic `Content-Length` header.
-
-### StreamingResponseWriter
-
-Implements `ResponseWriteStream`. Writes headers via `header()` and body via `echo`, suitable for CGI environments.
-
-### StatusCode
-
-| Method | Description |
-|---|---|
-| `StatusCode::text( $code )` | Return the standard reason phrase for an HTTP status code (e.g., `200` -> `'OK'`) |
-
-## Requirements
-
-- PHP 7.2+
-- No external dependencies

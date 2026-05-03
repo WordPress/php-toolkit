@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Rebuilds docs/assets/php-toolkit.zip and regenerates the docs HTML pages
-# from the markdown sources in bin/_docs_components/. Run this whenever
-# components/ changes or a per-component .md file is edited.
+# from each components/<Name>/README.md. Run this whenever a component's
+# README.md or its source changes.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

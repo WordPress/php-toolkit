@@ -1,326 +1,282 @@
-# DataLiberation
+---
+slug: dataliberation
+title: DataLiberation
+install: wp-php-toolkit/data-liberation
 
-<!-- docs-site-banner -->
-> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/dataliberation.html](https://wordpress.github.io/php-toolkit/reference/dataliberation.html)
-> Open the page to edit each snippet in your browser and run it in WordPress Playground.
-<!-- /docs-site-banner -->
+see_also: ../learn/03-importing-content.html | Tutorial — Markdown to WXR | The chapter that walks through importing a folder of Markdown files into WordPress via the toolkit.
+see_also: markdown | Markdown | Use Markdown as a source or destination format.
+see_also: blockparser | BlockParser | Analyze serialized blocks inside post content.
+see_also: httpclient | HttpClient | Download media and remote source data while importing.
+---
 
-Streaming data import and export for WordPress. Reads and writes WordPress content in multiple formats -- WXR (WordPress eXtended RSS), SQL dumps, block markup, and more -- without loading everything into memory. Designed for migrating content between WordPress sites, converting between formats, and processing large exports that would otherwise exhaust PHP's memory limits.
+Streaming WordPress import/export. WXR, SQL, block markup — without loading whole datasets into memory.
 
-## Installation
+## Why this exists
 
-```
-composer require wp-php-toolkit/data-liberation
-```
+<p>WordPress content should be portable, but real migrations cross several formats. A site export might arrive as WXR, a Markdown folder, or entities from another CMS. URLs can hide in block attributes, HTML, CSS, feeds, GUIDs, and post meta. Importers must also resume after a failed media download or upload.</p>
 
-## Quick Start
+<p>The DataLiberation component streams WordPress-shaped data through readers, transformers, and writers. It models posts, terms, comments, attachments, and metadata as <code>ImportEntity</code> objects, then lets a pipeline rewrite each entity without loading the full export into memory.</p>
 
-Export a WordPress post to WXR format:
+<p>The API reflects specific migration bugs: relative URLs in known block attributes, URLs inside inline CSS, self-closing block comments that must keep their shape, and origin-only URLs whose trailing slash style should not change during a rewrite.</p>
 
+<p>Reach for it when the job combines formats: build WXR from another CMS, rewrite a staging export for production, frontload remote assets, or compose Markdown, XML, HTML, CSS, and URL rewriting into one pipeline.</p>
+
+## Write a WXR file in five lines
+
+<p>Stream a single post into a WXR document via <code>WXRWriter</code>. The writer holds no buffer beyond what is needed to close currently-open tags, so memory stays flat regardless of input size.</p>
+
+<!-- snippet:
+filename: wxr-quickstart.php
+runnable: true
+-->
 ```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\DataLiberation\EntityWriter\WXRWriter;
 use WordPress\DataLiberation\ImportEntity;
 
-$output = new MemoryPipe();
-$writer = new WXRWriter( $output );
-
-$post = new ImportEntity( 'post', array(
-    'post_title' => 'Hello World',
-    'post_date'  => '2024-01-15',
-    'guid'       => 'https://example.com/?p=1',
-    'content'    => '<p>Welcome to my site.</p>',
-    'excerpt'    => 'A short summary.',
-    'post_id'    => '1',
-    'post_name'  => 'hello-world',
-    'status'     => 'publish',
-    'post_type'  => 'post',
-) );
-
-$writer->append_entity( $post );
-$writer->finalize();
-$writer->close_writing();
-$output->close_writing();
-
-echo $output->consume_all();
-// Outputs a complete WXR XML document with the post.
-```
-
-## Usage
-
-### Writing WXR exports
-
-`WXRWriter` generates WordPress eXtended RSS (WXR) XML files. You feed it entities one at a time -- posts, metadata, terms, and comments -- and it produces valid WXR output. Entities must be appended in logical order: metadata, terms, and comments belong to the most recently appended post.
-
-```php
-use WordPress\ByteStream\MemoryPipe;
-use WordPress\DataLiberation\EntityWriter\WXRWriter;
-use WordPress\DataLiberation\ImportEntity;
-
-$output = new MemoryPipe();
-$writer = new WXRWriter( $output );
-
-// Write a post
+$pipe   = new MemoryPipe();
+$writer = new WXRWriter( $pipe );
 $writer->append_entity( new ImportEntity( 'post', array(
-    'post_title'     => 'My Article',
-    'post_date'      => '2024-03-01',
-    'guid'           => 'https://example.com/?p=42',
-    'content'        => '<!-- wp:paragraph --><p>Article body.</p><!-- /wp:paragraph -->',
-    'post_id'        => '42',
-    'post_name'      => 'my-article',
-    'status'         => 'publish',
-    'post_type'      => 'post',
-    'comment_status' => 'open',
+	'post_title' => 'Hello',
+	'content'    => 'World.',
+	'post_id'    => '1',
+	'status'     => 'publish',
 ) ) );
+$writer->finalize();
+$writer->close_writing();
+$pipe->close_writing();
+$wxr = $pipe->consume_all();
 
-// Attach metadata to that post
-$writer->append_entity( new ImportEntity( 'post_meta', array(
-    'meta_key'   => '_thumbnail_id',
-    'meta_value' => '99',
-) ) );
+echo "bytes: " . strlen( $wxr ) . "\n";
+echo false !== strpos( $wxr, '<title>Hello</title>' ) ? "title exported\n" : "title missing\n";
+echo false !== strpos( $wxr, '<wp:status>publish</wp:status>' ) ? "status exported\n" : "status missing\n";
+```
 
-// Attach a term
-$writer->append_entity( new ImportEntity( 'term', array(
-    'term_id'  => '5',
-    'taxonomy' => 'category',
-    'slug'     => 'tutorials',
-    'parent'   => '0',
-) ) );
+<!-- expected-output -->
+```
+bytes: 475
+title exported
+status exported
+```
 
-// Attach a comment
-$writer->append_entity( new ImportEntity( 'comment', array(
-    'comment_id'      => '1',
-    'comment_author'  => 'Jane',
-    'comment_content' => 'Great post!',
-    'comment_date'    => '2024-03-02',
-    'comment_approved' => '1',
-) ) );
+## Build a WXR programmatically from any source
+
+<p>The writer doesn't care where entities come from. Loop over rows from a CMS, a CSV, or a Notion API dump and emit posts plus their meta and comments.</p>
+
+<!-- snippet:
+filename: build-wxr.php
+runnable: true
+-->
+```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\DataLiberation\EntityWriter\WXRWriter;
+use WordPress\DataLiberation\ImportEntity;
+
+$rows = array(
+	array( 'id' => 10, 'title' => 'About', 'body' => '<p>About us.</p>', 'tags' => array( 'company' ) ),
+	array( 'id' => 11, 'title' => 'Blog',  'body' => '<p>Hello world.</p>', 'tags' => array( 'news', 'launch' ) ),
+);
+
+$pipe   = new MemoryPipe();
+$writer = new WXRWriter( $pipe );
+
+foreach ( $rows as $row ) {
+	$writer->append_entity( new ImportEntity( 'post', array(
+		'post_id'    => (string) $row['id'],
+		'post_title' => $row['title'],
+		'content'    => $row['body'],
+		'status'     => 'publish',
+		'post_type'  => 'post',
+	) ) );
+	foreach ( $row['tags'] as $i => $tag ) {
+		$writer->append_entity( new ImportEntity( 'term', array(
+			'term_id'  => (string) ( $row['id'] * 100 + $i ),
+			'taxonomy' => 'post_tag',
+			'slug'     => $tag,
+			'parent'   => '0',
+		) ) );
+	}
+}
 
 $writer->finalize();
 $writer->close_writing();
-$output->close_writing();
+$pipe->close_writing();
+
+$wxr = $pipe->consume_all();
+echo "items: " . substr_count( $wxr, '<item>' ) . "\n";
+echo "terms: " . substr_count( $wxr, '<wp:term>' ) . "\n";
+echo false !== strpos( $wxr, '<title>Blog</title>' ) ? "Blog post exported\n" : "Blog post missing\n";
 ```
 
-The writer supports pausing and resuming via a reentrancy cursor. This lets you split large exports across multiple PHP requests:
-
-```php
-// Save state after writing some entities
-$cursor = $writer->get_reentrancy_cursor();
-$writer->close_writing();
-
-// Later, resume from where you left off
-$writer = new WXRWriter( $output, $cursor );
-$writer->append_entity( $next_post );
+<!-- expected-output -->
+```
+items: 2
+terms: 3
+Blog post exported
 ```
 
-### Writing SQL dumps
+## Read entities from a WXR file with constant memory
 
-`MySQLDumpWriter` produces SQL INSERT statements from entity data:
+<p><code>WXREntityReader</code> emits one entity at a time. A 10 GB WXR uses the same memory as a 10 KB one.</p>
 
+<!-- snippet:
+filename: wxr-read.php
+runnable: true
+-->
 ```php
-use WordPress\ByteStream\MemoryPipe;
-use WordPress\DataLiberation\EntityWriter\MySQLDumpWriter;
-use WordPress\DataLiberation\ImportEntity;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$output = new MemoryPipe();
-$writer = new MySQLDumpWriter( $output );
-
-$writer->append_entity( new ImportEntity( 'database_row', array(
-    'table'  => 'wp_posts',
-    'record' => array(
-        'ID'           => 1,
-        'post_title'   => 'First Post',
-        'post_content' => 'Hello World',
-    ),
-) ) );
-
-$writer->close_writing();
-echo $output->consume_all();
-// INSERT INTO wp_posts (ID, post_title, post_content) VALUES (1, 'First Post', 'Hello World');
-```
-
-String values are automatically escaped. NULL values are written as SQL NULL.
-
-### Reading WXR files
-
-`WXREntityReader` streams through WXR files and emits entities as it encounters them. It never loads the full document into memory, so it can handle exports of any size:
-
-```php
 use WordPress\DataLiberation\EntityReader\WXREntityReader;
 
+$wxr = <<<XML
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:wp="http://wordpress.org/export/1.2/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<channel>
+<title>Demo</title>
+<item><title>First</title><wp:post_id>1</wp:post_id><wp:post_type>post</wp:post_type><content:encoded>Body 1</content:encoded></item>
+<item><title>Second</title><wp:post_id>2</wp:post_id><wp:post_type>post</wp:post_type><content:encoded>Body 2</content:encoded></item>
+</channel>
+</rss>
+XML;
+
 $reader = WXREntityReader::create();
-$reader->append_bytes( file_get_contents( 'export.xml' ) );
+$reader->append_bytes( $wxr );
 $reader->input_finished();
 
 while ( $reader->next_entity() ) {
-    $entity = $reader->get_entity();
-    switch ( $entity->get_type() ) {
-        case 'site_option':
-            $data = $entity->get_data();
-            // $data['option_name'], $data['option_value']
-            break;
-
-        case 'post':
-            $data = $entity->get_data();
-            // $data['post_title'], $data['post_content'], etc.
-            break;
-
-        case 'comment':
-            $data = $entity->get_data();
-            // $data['comment_author'], $data['comment_content'], etc.
-            break;
-    }
+	$entity = $reader->get_entity();
+	echo $entity->get_type() . ': ' . json_encode( $entity->get_data() ) . "\n";
 }
 ```
 
-For streaming large files without reading them entirely into memory:
+<!-- expected-output -->
+```
+site_option: {"option_name":"blogname","option_value":"Demo"}
+post: {"post_title":"First","post_id":"1","post_type":"post","post_content":"Body 1"}
+post: {"post_title":"Second","post_id":"2","post_type":"post","post_content":"Body 2"}
+```
 
+## Streaming transform: rewrite URLs while copying WXR
+
+<p>Wire reader to writer to rewrite a WXR file on the fly. This pattern is how you migrate a staging export to production: swap <code>staging.example.com</code> for <code>example.com</code> without ever loading the file into memory.</p>
+
+<!-- snippet:
+filename: rewrite-urls.php
+runnable: true
+-->
 ```php
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\DataLiberation\EntityReader\WXREntityReader;
+use WordPress\DataLiberation\EntityWriter\WXRWriter;
+use WordPress\DataLiberation\ImportEntity;
+
+$source_xml = <<<XML
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:wp="http://wordpress.org/export/1.2/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<channel>
+<item><title>Hello</title><wp:post_id>1</wp:post_id><wp:post_type>post</wp:post_type>
+<content:encoded>Visit https://staging.example.com/about for more.</content:encoded></item>
+</channel>
+</rss>
+XML;
+
 $reader = WXREntityReader::create();
-$handle = fopen( 'large-export.xml', 'r' );
+$reader->append_bytes( $source_xml );
+$reader->input_finished();
 
-while ( ! feof( $handle ) ) {
-    $reader->append_bytes( fread( $handle, 65536 ) );
+$out_pipe = new MemoryPipe();
+$writer   = new WXRWriter( $out_pipe );
 
-    while ( $reader->next_entity() ) {
-        $entity = $reader->get_entity();
-        // Process entity...
-    }
+while ( $reader->next_entity() ) {
+	$entity = $reader->get_entity();
+	$data   = $entity->get_data();
+	foreach ( array( 'post_content', 'content', 'description' ) as $field ) {
+		if ( isset( $data[ $field ] ) ) {
+			$data[ $field ] = str_replace( 'staging.example.com', 'example.com', $data[ $field ] );
+		}
+	}
+	if ( 'post' === $entity->get_type() ) {
+		$data['content'] = isset( $data['post_content'] ) ? $data['post_content'] : ( isset( $data['content'] ) ? $data['content'] : '' );
+	}
+	$writer->append_entity( new ImportEntity( $entity->get_type(), $data ) );
 }
-fclose( $handle );
+
+$writer->finalize();
+$writer->close_writing();
+$out_pipe->close_writing();
+
+$wxr = $out_pipe->consume_all();
+echo false !== strpos( $wxr, 'https://example.com/about' ) ? "new URL present\n" : "new URL missing\n";
+echo false === strpos( $wxr, 'staging.example.com' ) ? "old URL removed\n" : "old URL still present\n";
 ```
 
-### Processing block markup
+<!-- expected-output -->
+```
+new URL present
+old URL removed
+```
 
-`BlockMarkupProcessor` parses WordPress block comments (like `<!-- wp:paragraph -->`) and lets you inspect and modify block names, attributes, and content:
+## Render Markdown into a WXR import in one pipeline
 
+<p>Compose <code>MarkdownConsumer</code> with <code>WXRWriter</code> to publish a folder of Markdown directly as a WordPress import file.</p>
+
+<!-- snippet:
+filename: md-to-wxr.php
+runnable: true
+-->
 ```php
-use WordPress\DataLiberation\BlockMarkup\BlockMarkupProcessor;
+<?php
+require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$markup = '<!-- wp:image {"url": "/photo.jpg", "class": "wide"} -->'
-    . '<img src="/photo.jpg" />'
-    . '<!-- /wp:image -->';
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\DataLiberation\EntityWriter\WXRWriter;
+use WordPress\DataLiberation\ImportEntity;
+use WordPress\Markdown\MarkdownConsumer;
 
-$p = new BlockMarkupProcessor( $markup );
+@mkdir( '/tmp/md-src', 0777, true );
+file_put_contents( '/tmp/md-src/hello.md',  "---\ntitle: Hello\n---\n\n# Hello\n\nFirst post." );
+file_put_contents( '/tmp/md-src/second.md', "---\ntitle: Second\n---\n\nMore text **here**." );
 
-while ( $p->next_token() ) {
-    if ( '#block-comment' === $p->get_token_type() ) {
-        echo $p->get_block_name();       // "wp:image"
-        $attrs = $p->get_block_attributes(); // ["url" => "/photo.jpg", "class" => "wide"]
-        echo $p->is_block_closer() ? 'closer' : 'opener';
-    }
-}
-```
+$pipe   = new MemoryPipe();
+$writer = new WXRWriter( $pipe );
 
-Iterate over individual block attributes and modify them:
-
-```php
-$p = new BlockMarkupProcessor(
-    '<!-- wp:image {"class": "wp-bold", "url": "old.png"} -->'
-);
-$p->next_token();
-
-while ( $p->next_block_attribute() ) {
-    $key   = $p->get_block_attribute_key();   // "class", then "url"
-    $value = $p->get_block_attribute_value();  // "wp-bold", then "old.png"
-
-    if ( 'url' === $key ) {
-        $p->set_block_attribute_value( 'new.png' );
-    }
+$id = 1;
+foreach ( glob( '/tmp/md-src/*.md' ) as $path ) {
+	$consumer = new MarkdownConsumer( file_get_contents( $path ) );
+	$consumer->consume();
+	$writer->append_entity( new ImportEntity( 'post', array(
+		'post_id'    => (string) $id++,
+		'post_title' => $consumer->get_meta_value( 'title' ) ?: basename( $path, '.md' ),
+		'content'    => $consumer->get_block_markup(),
+		'status'     => 'publish',
+		'post_type'  => 'post',
+		'post_name'  => basename( $path, '.md' ),
+	) ) );
 }
 
-echo $p->get_updated_html();
-// <!-- wp:image {"class":"wp-bold","url":"new.png"} -->
+$writer->finalize();
+$writer->close_writing();
+$pipe->close_writing();
+
+$wxr = $pipe->consume_all();
+echo "posts: " . substr_count( $wxr, '<item>' ) . "\n";
+echo false !== strpos( $wxr, '&lt;!-- wp:heading' ) ? "block markup exported\n" : "block markup missing\n";
+echo false !== strpos( $wxr, '<title>Second</title>' ) ? "frontmatter title exported\n" : "frontmatter title missing\n";
 ```
 
-### Rewriting URLs in block markup
-
-`BlockMarkupUrlProcessor` finds and rewrites URLs across all parts of block markup -- HTML attributes, block comment attributes, text nodes, and inline CSS:
-
-```php
-use WordPress\DataLiberation\BlockMarkup\BlockMarkupUrlProcessor;
-
-$markup = '<a href="https://old-site.com/about">About</a>'
-    . '<!-- wp:image {"url": "https://old-site.com/photo.jpg"} -->';
-
-$p = new BlockMarkupUrlProcessor( $markup, 'https://old-site.com' );
-
-while ( $p->next_url() ) {
-    $raw = $p->get_raw_url();           // "https://old-site.com/about", etc.
-    $parsed = $p->get_parsed_url();     // URL object with host, path, etc.
-
-    // Rewrite to a new domain
-    $new_url = str_replace( 'old-site.com', 'new-site.com', $raw );
-    $p->set_raw_url( $new_url );
-}
-
-echo $p->get_updated_html();
+<!-- expected-output -->
 ```
-
-### CSS tokenization
-
-`CSSProcessor` tokenizes CSS according to the CSS Syntax Level 3 specification. It processes stylesheets one token at a time without building a full AST:
-
-```php
-use WordPress\DataLiberation\CSS\CSSProcessor;
-
-$css = 'body { background: url("image.png"); color: red; }';
-$processor = CSSProcessor::create( $css );
-
-while ( $processor->next_token() ) {
-    echo $processor->get_token_type() . ': ' . $processor->get_normalized_token() . "\n";
-}
+posts: 2
+block markup exported
+frontmatter title exported
 ```
-
-## API Reference
-
-### Entity types (ImportEntity)
-
-| Type | Constants | Key data fields |
-|------|-----------|----------------|
-| `post` | `ImportEntity::TYPE_POST` | `post_title`, `post_content`, `post_date`, `guid`, `post_name`, `status`, `post_type`, `post_id` |
-| `post_meta` | `ImportEntity::TYPE_POST_META` | `meta_key`, `meta_value` |
-| `comment` | `ImportEntity::TYPE_COMMENT` | `comment_id`, `comment_author`, `comment_content`, `comment_date`, `comment_approved` |
-| `term` | `ImportEntity::TYPE_TERM` | `term_id`, `taxonomy`, `slug`, `parent` |
-| `site_option` | `ImportEntity::TYPE_SITE_OPTION` | `option_name`, `option_value` |
-| `database_row` | -- | `table`, `record` (associative array of column => value) |
-
-### Writers (EntityWriter interface)
-
-| Class | Purpose |
-|-------|---------|
-| `WXRWriter` | Writes WXR XML exports. Constructor takes a `ByteWriteStream`. |
-| `MySQLDumpWriter` | Writes SQL INSERT statements. Constructor takes a `ByteWriteStream`. |
-
-Shared methods: `append_entity( ImportEntity )`, `close_writing()`, `get_reentrancy_cursor()`.
-
-### Readers (EntityReader interface)
-
-| Class | Purpose |
-|-------|---------|
-| `WXREntityReader` | Streams WXR XML files. Use `WXREntityReader::create()`. |
-| `HTMLEntityReader` | Converts an HTML file into WordPress entities. |
-| `EPubEntityReader` | Reads EPUB documents as WordPress entities. |
-| `DatabaseRowsEntityReader` | Reads database query results as entities. |
-| `FilesystemEntityReader` | Reads a directory tree as entities. |
-
-Shared methods: `next_entity()`, `get_entity()`, `is_finished()`, `get_reentrancy_cursor()`.
-
-### Block markup processors
-
-| Class | Purpose |
-|-------|---------|
-| `BlockMarkupProcessor` | Parses block comments. Key methods: `next_token()`, `get_block_name()`, `get_block_attributes()`, `is_self_closing_block()`, `is_block_closer()`, `next_block_attribute()`, `set_block_attribute_value()`. |
-| `BlockMarkupUrlProcessor` | Finds and rewrites URLs in block markup. Key methods: `next_url()`, `get_raw_url()`, `get_parsed_url()`, `set_raw_url()`. |
-
-### CSS processors
-
-| Class | Purpose |
-|-------|---------|
-| `CSSProcessor` | CSS Syntax Level 3 tokenizer. Key methods: `next_token()`, `get_token_type()`, `get_normalized_token()`. |
-| `CSSURLProcessor` | Finds and rewrites URLs inside CSS. |
-
-## Requirements
-
-- PHP 7.2+
-- No external dependencies

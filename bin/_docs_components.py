@@ -1,10 +1,12 @@
 # Component catalog for the runnable docs site.
 #
 # Per-component content (lede, sections, snippets, credit callouts,
-# see-also links, expected snippet outputs) is sourced from
-# bin/_docs_components/<slug>.md — see bin/_load_catalog.py for the format.
-# That keeps the docs source in plain markdown with code-fence snippets,
-# editable in any text editor and renderable as-is on github.com.
+# see-also links, expected snippet outputs) is sourced from each
+# components/<Name>/README.md — see bin/_load_catalog.py for the format.
+# The README *is* the catalog source: GitHub and Packagist render it as
+# a normal README (frontmatter is hidden by GitHub's renderer); the
+# build pipeline parses the frontmatter + snippet metadata blocks to
+# generate the docs site and run snippets in CI.
 #
 # This file still owns the small global metadata that doesn't belong in any
 # single component's markdown: the landing-page starter paths and the
