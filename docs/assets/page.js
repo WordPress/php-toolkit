@@ -104,6 +104,22 @@
 		const code = root.querySelector('pre code');
 		if (!code) return;
 
+		// HTML emitted by build-reference.py escapes "</script" inside the
+		// <script type="application/x-php"> wrapper as "<\/script" so the
+		// outer tag isn't closed prematurely. The browser preserves that
+		// backslash in textContent, so the component's internal _code field
+		// contains "<\/script" and PHP runs with a literal backslash where
+		// the snippet author wrote a real close tag (breaking
+		// WP_HTML_Tag_Processor among other things). Reverse the escape so
+		// the runtime sees what the author wrote.
+		if (typeof el._code === 'string' && el._code.indexOf('<\\/script') !== -1) {
+			el._code = el._code.replace(/<\\\/script/g, '</script');
+			// Refresh the highlighted view so the on-screen code matches.
+			if (typeof el._render === 'function') {
+				try { el._render(); } catch (e) {}
+			}
+		}
+
 		if (el.getAttribute('runnable') === 'false') {
 			root.querySelectorAll('button').forEach(function (button) {
 				if (/run/i.test(button.textContent || button.getAttribute('aria-label') || '')) {

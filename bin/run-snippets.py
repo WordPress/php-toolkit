@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
-"""
-Runs every PHP snippet in bin/_docs_components.py against the local
-toolkit (`composer install` first, so vendor/autoload.php exists) and
-captures stdout. Used in two ways:
+"""Runs every PHP snippet declared in bin/_docs_components/<slug>.md against
+the local toolkit and compares stdout to the captured expected-output that
+lives next to the snippet in markdown. Used in two ways:
 
-    bin/run-snippets.py --update     Regenerate bin/_expected_outputs.json
-                                     from the snippets that ran successfully.
+    bin/run-snippets.py --update     Re-run runnable snippets and write the
+                                     new stdout back into each markdown
+                                     file's expected-output fence.
     bin/run-snippets.py --check      Run every snippet, compare against the
-                                     committed JSON. Exit nonzero on drift.
-                                     Used by .github/workflows/snippet-tests.yml.
+                                     committed expected output. Exit nonzero
+                                     on drift. Used by snippet-tests.yml.
 
 Snippets reference '/wordpress/wp-content/php-toolkit/vendor/autoload.php' —
 the path that exists inside Playground. The runner rewrites that to the
 repo's local vendor/autoload.php before executing.
 
-Snippets marked non-runnable in the catalog are skipped. Snippets that need
-WordPress, network access, or a listening TCP port may run locally but avoid
-committing expected output because their stdout is environment-dependent.
+Snippets marked non-runnable in the catalog are skipped. Snippets in
+NO_EXPECTED are runnable but their stdout is environment-dependent (real
+network traffic, timestamps); they're verified to exit 0 and have no
+captured expected output.
 """
 
 import argparse
-import json
 import os
 import re
 import subprocess
@@ -30,14 +30,13 @@ import tempfile
 THIS = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(THIS)
 sys.path.insert(0, THIS)
-from _docs_components import COMPONENTS  # noqa: E402
+from _load_catalog import load_components_rich  # noqa: E402
 
 VENDOR_AUTOLOAD = os.path.join(ROOT, 'vendor', 'autoload.php')
-EXPECTED_PATH = os.path.join(THIS, '_expected_outputs.json')
+COMPONENT_DIR = os.path.join(THIS, '_docs_components')
 
-# Snippets that can run but whose output isn't stable (real network, timestamps,
-# host-specific values). They're verified to exit 0 but their stdout isn't
-# captured into the JSON, so the docs page boots Playground at click time.
+# Runnable snippets whose stdout is unstable. They exit 0 but their output
+# is not pinned (real network traffic, timestamps, host-specific values).
 NO_EXPECTED = {
     ('httpclient', 'get.php'),
     ('httpclient', 'post.php'),
@@ -52,7 +51,6 @@ NO_EXPECTED = {
 PLAYGROUND_AUTOLOAD = "/wordpress/wp-content/php-toolkit/vendor/autoload.php"
 
 # Tiny polyfill so WordPress-only globals don't break local runs.
-# Injected after the autoload require so WP_Block_Parser exists.
 LOCAL_PRELUDE = """
 if ( ! function_exists( 'parse_blocks' ) ) {
 \tfunction parse_blocks( $content ) {
@@ -91,29 +89,58 @@ def run_one(code, timeout=15):
 
 
 def normalize(text):
-    """Strip noise that varies between runs (tempfile names, timestamps)."""
-    # tempnam paths
+    """Strip noise that varies between runs (tempfile names, hashes, etc.)."""
     text = re.sub(r'/tmp/\w+\.zip', '/tmp/<tempfile>.zip', text)
     text = re.sub(r'(/tmp/\w+)(\.epub|\.tmp\.[a-f0-9]+)?', r'/tmp/<tempfile>\2', text)
     text = re.sub(r'sys_get_temp_dir\(\) \. \'/[^\']+', "sys_get_temp_dir() . '/<demo>", text)
-    # uniqid suffixes from sys_get_temp_dir paths in code
     text = re.sub(r'/(toolkit|atomic|copytree|big|orig|repacked|app|book|demo|sample|hash|gz|dl)-[a-f0-9]+', r'/\1-XXXXXX', text)
-    # Random nonces / hex strings
     text = re.sub(r'\bnonce(?:: |=")([0-9a-f]{16})"?', lambda m: m.group(0).replace(m.group(1), '<random>'), text)
     text = re.sub(r'\bcommit: [0-9a-f]{40}\b', 'commit: <oid>', text)
     text = re.sub(r'\bHEAD:\s+[0-9a-f]{40}', 'HEAD: <oid>', text)
     text = re.sub(r'\boid: [0-9a-f]{40}\b', 'oid: <oid>', text)
     text = re.sub(r'merge head: [0-9a-f]{40}', 'merge head: <oid>', text)
     text = re.sub(r'\b[a-f0-9]{7}  ', '<hash>  ', text)
-    # Memory numbers
     text = re.sub(r'Peak memory: [\d.]+ MB', 'Peak memory: <N> MB', text)
     return text
 
 
+def write_expected_output(slug, filename, new_output):
+    """Write a new captured stdout into the slug's markdown file, creating
+    or updating the snippet's `<!-- expected-output -->` fence."""
+    path = os.path.join(COMPONENT_DIR, f'{slug}.md')
+    with open(path, encoding='utf-8') as f:
+        text = f.read()
+
+    # Match the snippet block whose metadata holds `filename: <name>`. The
+    # filename is unique per component, so a non-greedy search anchored on
+    # `filename: <name>` is sufficient.
+    snippet_pattern = re.compile(
+        r'(<!--\s*snippet:\s*\nfilename:\s*' + re.escape(filename) + r'.*?\n'
+        r'(?P<fence>`{3,})php\n.*?\n(?P=fence))'
+        r'(\s*\n\s*<!--\s*expected-output\s*-->\s*\n(?P<exp_fence>`{3,})\w*\n.*?\n(?P=exp_fence))?',
+        re.DOTALL,
+    )
+    m = snippet_pattern.search(text)
+    if not m:
+        raise RuntimeError(f'Could not locate snippet {slug}::{filename} in {path}')
+
+    # Pick a fence longer than any backtick run inside the new output.
+    exp_fence = '```'
+    while exp_fence in new_output:
+        exp_fence += '`'
+    new_block = (
+        m.group(1) +
+        f'\n\n<!-- expected-output -->\n{exp_fence}\n{new_output.rstrip(chr(10))}\n{exp_fence}'
+    )
+    text = text[:m.start()] + new_block + text[m.end():]
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(text)
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--update', action='store_true', help='Regenerate _expected_outputs.json')
-    ap.add_argument('--check', action='store_true', help='Verify against _expected_outputs.json')
+    ap.add_argument('--update', action='store_true', help='Write new stdout back into the markdown files')
+    ap.add_argument('--check', action='store_true', help='Verify against expected-output blocks (default)')
     ap.add_argument('--filter', default=None, help='Only run snippets whose slug or filename match this substring')
     args = ap.parse_args()
 
@@ -124,52 +151,52 @@ def main():
         print(f'ERROR: {VENDOR_AUTOLOAD} not found. Run `composer install` first.', file=sys.stderr)
         sys.exit(2)
 
-    existing = {}
-    if os.path.exists(EXPECTED_PATH):
-        with open(EXPECTED_PATH) as f:
-            existing = {tuple(k.split('::')): v for k, v in json.load(f).items()}
+    components = load_components_rich()
 
-    new = {}
-    failures = []
-    skipped = 0
     matched = 0
+    skipped = 0
     drift = []
+    failures = []
+    pending_writes = []  # (slug, filename, new_output)
 
-    for slug, _, _, _, sections in COMPONENTS:
-        for heading, _, snippet in sections:
-            if not snippet:
+    for c in components:
+        slug = c['slug']
+        for section in c['sections']:
+            snippet = section['snippet']
+            if not snippet or not snippet['runnable']:
                 continue
-            filename, code = snippet[0], snippet[1]
-            runnable = len(snippet) < 3 or snippet[2]
-            if not runnable:
-                continue
+            filename = snippet['filename']
             if args.filter and args.filter not in slug and args.filter not in filename:
                 continue
-            rc, stdout, stderr = run_one(code)
+            rc, stdout, stderr = run_one(snippet['code'])
             if rc != 0:
-                # Snippet can't run locally — leave it out of JSON. The docs
-                # site will boot Playground for it at click time.
-                failures.append((slug, filename, stderr.strip().splitlines()[:2]))
+                failures.append((slug, filename, (stderr or '').strip().splitlines()[:2]))
                 skipped += 1
                 continue
 
             key = (slug, filename)
             if key in NO_EXPECTED:
-                # Ran successfully but we don't compare output. Don't store.
                 matched += 1
                 continue
 
             normalized = normalize(stdout)
-            new[key] = normalized
+            expected = snippet['expected_output']
 
-            if args.check:
-                expected = existing.get(key)
-                if expected is None:
-                    drift.append((slug, filename, 'NEW (run --update to add)'))
-                elif normalize(expected) != normalized:
-                    drift.append((slug, filename, 'OUTPUT CHANGED'))
-                else:
-                    matched += 1
+            # Fenced blocks in markdown don't capture the trailing newline
+            # before the closing fence, but stdout virtually always ends
+            # with one. Compare with trailing-newline normalization so the
+            # markdown round-trip doesn't trip on that convention.
+            def trim_trailing(s):
+                return s.rstrip('\n')
+
+            if expected is None:
+                drift.append((slug, filename, 'NEW (run --update to capture)'))
+                if args.update:
+                    pending_writes.append((slug, filename, normalized))
+            elif trim_trailing(normalize(expected)) != trim_trailing(normalized):
+                drift.append((slug, filename, 'OUTPUT CHANGED'))
+                if args.update:
+                    pending_writes.append((slug, filename, normalized))
             else:
                 matched += 1
 
@@ -182,11 +209,10 @@ def main():
             print(f'  DRIFT  {slug}/{filename:<32} {kind}')
 
     if args.update:
-        joined = {f'{k[0]}::{k[1]}': v for k, v in sorted(new.items())}
-        with open(EXPECTED_PATH, 'w') as f:
-            json.dump(joined, f, indent=2, sort_keys=True)
-            f.write('\n')
-        print(f'\nWrote {len(joined)} expected outputs to {EXPECTED_PATH}')
+        for slug, filename, new_output in pending_writes:
+            write_expected_output(slug, filename, new_output)
+            print(f'  wrote {slug}/{filename}')
+        print(f'\nUpdated {len(pending_writes)} expected-output blocks in markdown.')
         sys.exit(0)
 
     if drift:

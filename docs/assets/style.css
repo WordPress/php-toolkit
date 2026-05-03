@@ -483,6 +483,24 @@ p code, li code, td code {
 
 php-snippet { display: block; margin: 1rem 0 1.75rem; }
 
+/* Static fallback: shows the snippet code if the cross-origin Playground
+   custom element fails to register (CSP block, slow network, adblocker,
+   no-JS reader). Hidden as soon as <php-snippet> is defined so the
+   interactive widget owns the screen when it boots. */
+.snippet-fallback {
+	margin: 0;
+	padding: 0.9rem;
+	overflow-x: auto;
+	border-radius: 6px;
+	background: var(--code-bg, #0f172a);
+	color: var(--code-fg, #e2e8f0);
+	font-family: ui-monospace, "SF Mono", Menlo, monospace;
+	font-size: 0.85rem;
+	line-height: 1.55;
+}
+.snippet-fallback code { color: inherit; background: none; padding: 0; }
+php-snippet:defined .snippet-fallback { display: none; }
+
 .code-example {
 	margin: 1rem 0 1.75rem;
 	border: 1px solid var(--border);

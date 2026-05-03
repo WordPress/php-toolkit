@@ -1,32 +1,23 @@
 #!/usr/bin/env python3
-"""Generates docs/reference/<slug>.html for components not already hand-written.
-Pulls catalog data from _docs_components.py and emits the concept-guide shape:
-lede + install + context paragraphs + minimal example + refinements + pitfalls + see also.
+"""Generates docs/reference/<slug>.html for every component.
 
-The hand-written reference pages (html, zip) are skipped — they live as
-authored HTML files and we don't overwrite them.
+The catalog comes from bin/_docs_components/<slug>.md (loaded via
+bin/_docs_components.py). Every page uses the same concept-guide shape:
+lede + install + context paragraphs + minimal example + refinements +
+pitfalls + see also. There are no hand-authored exceptions.
 """
 
-import json
 import os
 import re
 import sys
-from html import escape as h, unescape
+from html import escape as h
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from _docs_components import COMPONENTS, COMPONENT_RELATIONS, CREDITS
+from _load_catalog import load_components_rich
 
 DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', 'reference')
-EXPECTED_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_expected_outputs.json')
-ASSET_VERSION = '20260429-rewrite'
+ASSET_VERSION = '20260503-script-unescape'
 
-EXPECTED = {}
-if os.path.exists(EXPECTED_PATH):
-    with open(EXPECTED_PATH) as f:
-        EXPECTED = {tuple(k.split('::')): v for k, v in json.load(f).items()}
-
-# Skip the hand-written ones.
-SKIP = {'html', 'zip'}
 
 PAGE_HEAD = '''<!doctype html>
 <html lang="en">
@@ -69,25 +60,54 @@ def slugify(text):
 
 
 def split_pitfalls(body_html):
-    """Pull out paragraphs that begin with 'Footgun:' or 'Gotcha:' and return them
-    as separate pitfall callouts. Return (rest_html, [pitfall_html, ...])."""
+    """Pull paragraphs that begin with 'Footgun:' or 'Gotcha:' out of a body
+    and return them as separate pitfall callouts.
+
+    Returns ``(rest_html, [pitfall_html, ...])`` where ``rest_html`` is the
+    original body with only the matching ``<p>...</p>`` chunks removed —
+    tables, lists, ``<pre>`` blocks, and any other markup are preserved
+    verbatim. Earlier versions accidentally dropped non-``<p>`` content
+    because they walked the body via a ``<p>`` regex and re-emitted only
+    the matched chunks.
+    """
     pitfalls = []
-    rest = []
-    for chunk in re.findall(r'<p>.*?</p>', body_html, flags=re.DOTALL):
+    def replace(match):
+        chunk = match.group(0)
         plain = re.sub(r'<[^>]+>', '', chunk).strip()
         if plain.lower().startswith(('footgun', 'gotcha')):
             inner = chunk[3:-4]  # strip <p>...</p>
             inner = re.sub(r'^<strong>(Footgun|Gotcha)[^<]*</strong>\s*[—:.\s]*', '', inner)
             inner = re.sub(r'^(Footgun|Gotcha)[^a-z<]*', '', inner)
             pitfalls.append(inner.strip())
-        else:
-            rest.append(chunk)
-    return ''.join(rest), pitfalls
+            return ''
+        return chunk
+    rest = re.sub(r'<p>.*?</p>', replace, body_html, flags=re.DOTALL)
+    return rest, pitfalls
 
 
-def snippet_block(slug, name, code, runnable=True):
+def snippet_block(snippet):
+    """Render a snippet dict as a <php-snippet> custom-element block.
+
+    Includes the captured expected-output (when present) so the docs page
+    paints the result before WordPress Playground finishes booting, and
+    emits a static <pre><code> fallback inside the same element so readers
+    see the snippet code even if Playground's JS module fails to load
+    (cross-origin block, slow network, adblocker, no-JS clients).
+
+    CSS hides the fallback when the custom element is :defined, so the
+    interactive widget owns the screen as soon as it registers.
+    """
+    name = snippet['filename']
+    code = snippet['code']
+    runnable = snippet['runnable']
+    expected = snippet['expected_output'] if runnable else None
+
     safe = code.rstrip().replace('</script', '<\\/script')
-    expected = EXPECTED.get((slug, name)) if runnable else None
+    fallback = (
+        '<pre class="snippet-fallback"><code class="language-php">'
+        f'{h(code.rstrip())}'
+        '</code></pre>\n'
+    )
     expected_block = ''
     if expected is not None:
         expected_safe = expected.rstrip().replace('</script', '<\\/script')
@@ -97,30 +117,19 @@ def snippet_block(slug, name, code, runnable=True):
     runnable_attr = '' if runnable else ' runnable="false"'
     return (
         f'<php-snippet blueprint="toolkit-setup" name="{h(name)}"{runnable_attr}>\n'
+        f'{fallback}'
         f'<script type="application/x-php">\n{safe}\n</script>\n'
         f'{expected_block}'
         f'</php-snippet>\n'
     )
 
 
-def render_example(slug, snippet):
-    name, code = snippet[0], snippet[1]
-    runnable = len(snippet) < 3 or snippet[2]
-    return snippet_block(slug, name, code, runnable)
-
-
-def sidebar(current_slug):
+def sidebar(components, current_slug):
     items = []
-    for slug, title, _, _, _ in COMPONENTS:
-        is_legacy = slug in SKIP or slug in {
-            'bytestream', 'filesystem', 'blockparser', 'markdown', 'xml', 'encoding',
-            'dataliberation', 'git', 'merge', 'httpclient', 'httpserver', 'corsproxy',
-            'cli', 'polyfill', 'blueprints', 'coding-standards',
-        }
-        # Reference page exists for skipped (handwritten) and the ones we generate here.
-        href = f'{slug}.html'
-        cls = ' class="current"' if slug == current_slug else ''
-        items.append(f'\t\t\t<li{cls}><a href="{href}">{h(title)}</a></li>')
+    for c in components:
+        href = f'{c["slug"]}.html'
+        cls = ' class="current"' if c['slug'] == current_slug else ''
+        items.append(f'\t\t\t<li{cls}><a href="{href}">{h(c["title"])}</a></li>')
     return (
         '\t<aside class="sidebar" aria-label="Reference navigation">\n'
         '\t\t<button class="sidebar-toggle" type="button" aria-expanded="false">'
@@ -136,43 +145,46 @@ def sidebar(current_slug):
     )
 
 
-def render_component(slug, title, lede, install, sections):
+def render_component(components, c):
     # Separate the "Why this exists" intro from the worked sections.
     purpose_html = ''
     pitfalls_from_purpose = []
+    sections = c['sections']
     usage = sections
-    if sections and sections[0][0].lower() == 'why this exists':
-        _, body, _ = sections[0]
-        purpose_html, pitfalls_from_purpose = split_pitfalls(unescape(body or ''))
+    if sections and sections[0]['heading'].lower() == 'why this exists':
+        body = sections[0]['body'] or ''
+        purpose_html, pitfalls_from_purpose = split_pitfalls(body)
         usage = sections[1:]
 
     out = [PAGE_HEAD.format(
-        title=h(title),
-        description=h(re.sub(r'<[^>]+>', '', lede)),
+        title=h(c['title']),
+        description=h(re.sub(r'<[^>]+>', '', c['lede'])),
         asset_version=ASSET_VERSION,
     )]
-    out.append(sidebar(slug))
+    out.append(sidebar(components, c['slug']))
     out.append('\t<article class="content">\n\n')
-    out.append(f'<h1>{h(title)}</h1>\n\n')
-    out.append(f'<p class="lede">{lede}</p>\n\n')
-    if install:
-        out.append(f'<pre><code class="install">composer require {h(install)}</code></pre>\n\n')
-    if slug in CREDITS:
-        title_credit, body_credit = CREDITS[slug]
+    out.append(f'<h1>{h(c["title"])}</h1>\n\n')
+    out.append(f'<p class="lede">{c["lede"]}</p>\n\n')
+    if c['install']:
+        out.append(f'<pre><code class="install">composer require {h(c["install"])}</code></pre>\n\n')
+    if c['credit']:
+        title_credit, body_credit = c['credit']
         out.append(
             '<aside class="callout credit">\n'
             f'\t<strong>{h(title_credit)}.</strong> {body_credit}\n'
             '</aside>\n\n'
         )
     if purpose_html:
-        out.append(unescape(purpose_html) + '\n\n')
+        out.append(purpose_html + '\n\n')
 
     # Worked examples + accumulated pitfalls.
     pitfalls = list(pitfalls_from_purpose)
     minimal_emitted = False
-    for heading, body_html, snippet in usage:
-        # Pull pitfalls out of section body too.
-        rest, found = split_pitfalls(unescape(body_html or ''))
+    for section in usage:
+        heading = section['heading']
+        body_html = section['body'] or ''
+        snippet = section['snippet']
+        rest, found = split_pitfalls(body_html)
         pitfalls.extend(found)
         h2 = heading
         if not minimal_emitted and snippet:
@@ -184,19 +196,17 @@ def render_component(slug, title, lede, install, sections):
         if rest:
             out.append(rest + '\n\n')
         if snippet:
-            out.append(render_example(slug, snippet) + '\n')
+            out.append(snippet_block(snippet) + '\n')
 
     if pitfalls:
         out.append('<h2 id="pitfalls">Pitfalls</h2>\n\n')
         for p in pitfalls:
             out.append(f'<aside class="callout pitfall">{p}</aside>\n\n')
 
-    related = COMPONENT_RELATIONS.get(slug, ())
-    if related:
+    if c['see_also']:
         out.append('<h2 id="see-also">See also</h2>\n\n')
         out.append('<ul class="related-components">\n')
-        for rel_slug, rel_title, reason in related:
-            href = f'{rel_slug}.html'
+        for href, rel_title, reason in c['see_also']:
             out.append(
                 f'\t<li><a href="{href}"><strong>{h(rel_title)}</strong></a>'
                 f'<span>{reason}</span></li>\n'
@@ -209,14 +219,13 @@ def render_component(slug, title, lede, install, sections):
 
 def main():
     os.makedirs(DOCS, exist_ok=True)
-    for slug, title, lede, install, sections in COMPONENTS:
-        if slug in SKIP:
-            continue
-        out = render_component(slug, title, lede, install, sections)
-        path = os.path.join(DOCS, f'{slug}.html')
+    components = load_components_rich()
+    for c in components:
+        out = render_component(components, c)
+        path = os.path.join(DOCS, f'{c["slug"]}.html')
         with open(path, 'w') as f:
             f.write(out)
-        print(f'wrote reference/{slug}.html')
+        print(f'wrote reference/{c["slug"]}.html')
 
 
 if __name__ == '__main__':
