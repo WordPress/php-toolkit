@@ -1,5 +1,10 @@
 # ToolkitCodingStandards
 
+<!-- docs-site-banner -->
+> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/coding-standards.html](https://wordpress.github.io/php-toolkit/reference/coding-standards.html)
+> Open the page to edit each snippet in your browser and run it in WordPress Playground.
+<!-- /docs-site-banner -->
+
 Custom PHP_CodeSniffer sniffs used internally by the PHP Toolkit project. This component provides two sniffs that enforce WordPress-style coding conventions: one requires Yoda-style comparisons (literal on the left side of `===`), and the other forbids the short ternary (Elvis) operator `?:`. Both sniffs support automatic fixing via `phpcbf`.
 
 This is internal tooling for the toolkit's own linter pipeline, not a general-purpose coding standard.

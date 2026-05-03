@@ -1,12 +1,18 @@
 {
 	"name": "wp-php-toolkit/php-toolkit",
 	"type": "library",
-	"description": "WordPress Components",
+	"description": "Standalone, dependency-free PHP libraries for WordPress and PHP projects — XML, ZIP, Git, HTTP, Markdown, Filesystem, and more. Browse runnable examples at https://wordpress.github.io/php-toolkit/",
 	"keywords": [
 		"wordpress",
+		"php-toolkit",
 		"components"
 	],
-	"homepage": "https://wordpress.org",
+	"homepage": "https://wordpress.github.io/php-toolkit/",
+	"support": {
+		"issues": "https://github.com/WordPress/php-toolkit/issues",
+		"source": "https://github.com/WordPress/php-toolkit",
+		"docs": "https://wordpress.github.io/php-toolkit/"
+	},
 	"license": "GPL-2.0-or-later",
 	"authors": [
 		{

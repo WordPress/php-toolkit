@@ -3,16 +3,21 @@
     "description": "Merge component for WordPress with configurable diffing and merging strategies.",
     "type": "library",
     "license": "GPL-2.0-or-later",
-    "autoload": {
-        "classmap": [
-            "./"
-        ]
-    },
+    "keywords": [
+        "wordpress",
+        "php-toolkit"
+    ],
+    "homepage": "https://wordpress.github.io/php-toolkit/reference/merge.html",
     "authors": [
         {
             "name": "WordPress Contributors"
         }
     ],
+    "support": {
+        "issues": "https://github.com/WordPress/php-toolkit/issues",
+        "source": "https://github.com/WordPress/php-toolkit",
+        "docs": "https://wordpress.github.io/php-toolkit/reference/merge.html"
+    },
     "require": {
         "php": ">=7.4",
         "yetanotherape/diff-match-patch": "^1.0",
@@ -25,12 +30,17 @@
         "wp-coding-standards/wpcs": "^2.3",
         "phpstan/phpstan": "^1.0"
     },
+    "autoload": {
+        "classmap": [
+            "./"
+        ]
+    },
+    "config": {
+        "sort-packages": true
+    },
     "scripts": {
         "test": "phpunit",
         "cs": "phpcs",
         "cs-fix": "phpcbf"
-    },
-    "config": {
-        "sort-packages": true
     }
 }

@@ -1,5 +1,10 @@
 # Encoding
 
+<!-- docs-site-banner -->
+> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/encoding.html](https://wordpress.github.io/php-toolkit/reference/encoding.html)
+> Open the page to edit each snippet in your browser and run it in WordPress Playground.
+<!-- /docs-site-banner -->
+
 Pure PHP utilities for UTF-8 validation, scrubbing, and conversion. This component detects invalid byte sequences, replaces them with the Unicode Replacement Character using the maximal subpart algorithm, and provides low-level tools for working with Unicode code points -- all without requiring the `mbstring` extension. When `mbstring` is available, the library delegates to it for better performance.
 
 ## Installation
