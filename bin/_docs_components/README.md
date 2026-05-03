@@ -105,10 +105,16 @@ hello
 ## Workflow
 
 - Edit a `.md` file. Snippet code, prose, expected outputs — all live here.
-- Run `python3 bin/build-reference.py` to regenerate the HTML pages.
+- Run `python3 bin/build-reference.py` to regenerate the local HTML pages.
 - Run `bin/run-snippets.py --check` to verify that snippets still produce
   the captured stdout. If a change is intentional, `--update` rewrites the
   expected-output blocks in place.
+
+The generated `docs/reference/<slug>.html` files are **not** checked in —
+they regenerate from these markdown sources on every deploy and are
+listed in the repo `.gitignore`. Treat them as a build artifact, not as
+content. Same for `docs/assets/php-toolkit.zip`, which
+`bin/build-docs-bundle.sh` rebuilds from the toolkit source.
 
 CI runs `bin/run-snippets.py --check` on every PR
 (`.github/workflows/snippet-tests.yml`) and `bin/build-reference.py` on

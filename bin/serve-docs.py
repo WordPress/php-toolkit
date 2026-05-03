@@ -26,5 +26,19 @@ class CorsHandler(http.server.SimpleHTTPRequestHandler):
 
 
 os.chdir(DOCS)
+
+# Reference pages and the Playground bundle are build artifacts (gitignored).
+# Remind the user to regenerate them if they're missing.
+missing = []
+if not os.path.exists('reference/html.html'):
+    missing.append('python3 bin/build-reference.py')
+if not os.path.exists('assets/php-toolkit.zip'):
+    missing.append('bash bin/build-docs-bundle.sh')
+if missing:
+    print('Missing build artifacts. Run from the repo root first:')
+    for cmd in missing:
+        print(f'  {cmd}')
+    print()
+
 print(f'Serving {DOCS} on http://localhost:{PORT}/')
 http.server.ThreadingHTTPServer(('', PORT), CorsHandler).serve_forever()
