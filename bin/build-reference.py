@@ -188,12 +188,13 @@ def render_component(components, c):
         snippet = section['snippet']
         rest, found = split_pitfalls(body_html)
         pitfalls.extend(found)
+        # Use the section's own heading verbatim — no synthetic prefixes.
+        # The first section in a component that ships a snippet doubles as
+        # the "minimal example" by convention; readers can tell it from
+        # later sections by its position, not by an editorial label.
         h2 = heading
         if not minimal_emitted and snippet:
-            h2 = 'A minimal example'
             minimal_emitted = True
-        elif snippet:
-            h2 = f'Refinement: {heading[0].lower() + heading[1:]}' if heading else heading
         out.append(f'<h2 id="{slugify(h2)}">{h(h2)}</h2>\n\n')
         if rest:
             out.append(rest + '\n\n')
