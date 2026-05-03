@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _load_catalog import load_components_rich
 
 DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', 'reference')
-ASSET_VERSION = '20260503-script-unescape'
+ASSET_VERSION = '20260503-fallback-explicit-hide'
 
 
 PAGE_HEAD = '''<!doctype html>
