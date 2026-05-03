@@ -1,5 +1,10 @@
 # BlockParser
 
+<!-- docs-site-banner -->
+> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/blockparser.html](https://wordpress.github.io/php-toolkit/reference/blockparser.html)
+> Open the page to edit each snippet in your browser and run it in WordPress Playground.
+<!-- /docs-site-banner -->
+
 ## Why this exists
 
 WordPress stores post content as annotated HTML. Instead of inventing a separate file format, it embeds block boundaries directly inside HTML comments:

@@ -1,5 +1,10 @@
 # Markdown
 
+<!-- docs-site-banner -->
+> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/markdown.html](https://wordpress.github.io/php-toolkit/reference/markdown.html)
+> Open the page to edit each snippet in your browser and run it in WordPress Playground.
+<!-- /docs-site-banner -->
+
 Bidirectional converter between Markdown and WordPress block markup. Use `MarkdownConsumer` to parse Markdown (with optional YAML frontmatter) into WordPress blocks, and `MarkdownProducer` to serialize supported blocks back to Markdown. Designed for content synchronization workflows where a practical, structured conversion matters, such as three-way merging of static Markdown files with a WordPress database. It is not a byte-perfect Markdown formatter, and block attributes with no Markdown representation may be lost.
 
 ## Installation

@@ -1,5 +1,10 @@
 # Git
 
+<!-- docs-site-banner -->
+> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/git.html](https://wordpress.github.io/php-toolkit/reference/git.html)
+> Open the page to edit each snippet in your browser and run it in WordPress Playground.
+<!-- /docs-site-banner -->
+
 ## Why this exists
 
 Git is typically used through the `git` binary — a compiled C program that reads and writes the repository on disk. That's perfect for most development workflows, but it breaks down in a few important scenarios:

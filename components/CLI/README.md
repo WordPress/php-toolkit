@@ -1,5 +1,10 @@
 # CLI
 
+<!-- docs-site-banner -->
+> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/cli.html](https://wordpress.github.io/php-toolkit/reference/cli.html)
+> Open the page to edit each snippet in your browser and run it in WordPress Playground.
+<!-- /docs-site-banner -->
+
 A POSIX-style command-line argument parser for PHP. It handles long options (`--verbose`), short options (`-v`), bundled short options (`-abc`), inline values (`--port=8080`, `-p=8080`), and positional arguments -- all in a single static method call with no external dependencies.
 
 ## Installation

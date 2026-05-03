@@ -1,5 +1,10 @@
 # Polyfill
 
+<!-- docs-site-banner -->
+> 📚 **Runnable examples:** [https://wordpress.github.io/php-toolkit/reference/polyfill.html](https://wordpress.github.io/php-toolkit/reference/polyfill.html)
+> Open the page to edit each snippet in your browser and run it in WordPress Playground.
+<!-- /docs-site-banner -->
+
 Provides polyfills for PHP functions and WordPress core APIs so that WordPress-adjacent code can run in standalone PHP applications without a full WordPress installation. It backports PHP 8.0 string functions to PHP 7.2, stubs common WordPress escaping and translation functions, and implements a minimal but functional WordPress hook system (`add_filter`/`apply_filters`/`add_action`/`do_action`).
 
 ## Installation
