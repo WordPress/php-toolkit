@@ -274,9 +274,11 @@ runnable: true
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$document = '<!-- wp:embed {"url":"https://twitter.com/wordpress/status/1","providerNameSlug":"twitter"} /-->'
-	. '<!-- wp:embed {"url":"https://youtube.com/watch?v=abc","providerNameSlug":"youtube"} /-->'
-	. '<!-- wp:embed {"url":"https://vine.co/v/xyz","providerNameSlug":"vine"} /-->';
+$document = <<<'HTML'
+<!-- wp:embed {"url":"https://twitter.com/wordpress/status/1","providerNameSlug":"twitter"} /-->
+<!-- wp:embed {"url":"https://youtube.com/watch?v=abc","providerNameSlug":"youtube"} /-->
+<!-- wp:embed {"url":"https://vine.co/v/xyz","providerNameSlug":"vine"} /-->
+HTML;
 
 $retired = array( 'vine.co', 'plus.google.com' );
 

@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zip — PHP Toolkit reference</title>
 <meta name="description" content="Read and write ZIP archives in pure PHP — no libzip, no ZipArchive. Streams entries one at a time, so you can build EPUBs, .docx files, and multi-gigabyte plugin bundles without buffering the archive in memory.">
-<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<link rel="stylesheet" href="../assets/style.css?v=20260503-script-unescape">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
-<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+<script src="../assets/page.js?v=20260503-script-unescape" defer></script>
 </head>
 <body>
 <header class="site">
@@ -60,9 +60,33 @@
 
 <h2 id="a-minimal-example">A minimal example</h2>
 
-<p><code>ZipFilesystem</code> implements this toolkit's <code>Filesystem</code> interface, so once you wrap the byte reader you can call <code>get_contents()</code>, <code>ls()</code>, and <code>is_dir()</code> just like the other filesystem backends.</p><p><strong>Try this:</strong> after <em>Run</em>, add a second <code>append_file()</code> call before <code>$enc->close()</code> for a <code>notes.md</code> entry, then call <code>print_r( $zip->ls( '/' ) )</code> at the end. The directory listing reflects the new entry without re-reading the file.</p>
+<p><code>ZipFilesystem</code> implements this toolkit's <code>Filesystem</code> interface, so once you wrap the byte reader you can call <code>get_contents()</code>, <code>ls()</code>, and <code>is_dir()</code> just like the other filesystem backends.</p><p><strong>Try this:</strong> after <em>Run</em>, add a second <code>append_file()</code> call before <code>$enc-&gt;close()</code> for a <code>notes.md</code> entry, then call <code>print_r( $zip-&gt;ls( '/' ) )</code> at the end. The directory listing reflects the new entry without re-reading the file.</p>
 
 <php-snippet blueprint="toolkit-setup" name="teaser-read.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\ByteStream\ReadStream\FileReadStream;
+use WordPress\ByteStream\WriteStream\FileWriteStream;
+use WordPress\Zip\FileEntry;
+use WordPress\Zip\ZipDecoder;
+use WordPress\Zip\ZipEncoder;
+use WordPress\Zip\ZipFilesystem;
+
+$path = tempnam( sys_get_temp_dir(), &#x27;demo&#x27; ) . &#x27;.zip&#x27;;
+$out  = FileWriteStream::from_path( $path, &#x27;truncate&#x27; );
+$enc  = new ZipEncoder( $out );
+$enc-&gt;append_file( new FileEntry( array(
+	&#x27;path&#x27;               =&gt; &#x27;readme.txt&#x27;,
+	&#x27;compression_method&#x27; =&gt; ZipDecoder::COMPRESSION_NONE,
+	&#x27;body_reader&#x27;        =&gt; new MemoryPipe( &#x27;Hello from inside the zip.&#x27; ),
+) ) );
+$enc-&gt;close();
+$out-&gt;close_writing();
+
+$zip = ZipFilesystem::create( FileReadStream::from_path( $path ) );
+echo $zip-&gt;get_contents( &#x27;readme.txt&#x27; );</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -99,6 +123,55 @@ Hello from inside the zip.
 <p>An EPUB follows one strict ZIP rule: write the <code>mimetype</code> entry first and store it without compression. Deflate the rest of the archive normally.</p>
 
 <php-snippet blueprint="toolkit-setup" name="epub.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\ByteStream\ReadStream\FileReadStream;
+use WordPress\ByteStream\WriteStream\FileWriteStream;
+use WordPress\Zip\FileEntry;
+use WordPress\Zip\ZipDecoder;
+use WordPress\Zip\ZipEncoder;
+use WordPress\Zip\ZipFilesystem;
+
+$path = tempnam( sys_get_temp_dir(), &#x27;book&#x27; ) . &#x27;.epub&#x27;;
+$out  = FileWriteStream::from_path( $path, &#x27;truncate&#x27; );
+$enc  = new ZipEncoder( $out );
+
+// 1) The mimetype entry MUST be first and stored uncompressed.
+$enc-&gt;append_file( new FileEntry( array(
+	&#x27;path&#x27;               =&gt; &#x27;mimetype&#x27;,
+	&#x27;compression_method&#x27; =&gt; ZipDecoder::COMPRESSION_NONE,
+	&#x27;body_reader&#x27;        =&gt; new MemoryPipe( &#x27;application/epub+zip&#x27; ),
+) ) );
+
+$container = &lt;&lt;&lt;&#x27;XML&#x27;
+&lt;?xml version=&quot;1.0&quot;?&gt;
+&lt;container version=&quot;1.0&quot; xmlns=&quot;urn:oasis:names:tc:opendocument:xmlns:container&quot;&gt;
+&lt;rootfiles&gt;&lt;rootfile full-path=&quot;EPUB/package.opf&quot; media-type=&quot;application/oebps-package+xml&quot;/&gt;&lt;/rootfiles&gt;
+&lt;/container&gt;
+XML;
+
+foreach ( array(
+	&#x27;META-INF/container.xml&#x27; =&gt; $container,
+	&#x27;EPUB/package.opf&#x27;       =&gt; &lt;&lt;&lt;&#x27;XML&#x27;
+&lt;package version=&quot;3.0&quot; xmlns=&quot;http://www.idpf.org/2007/opf&quot;&gt;&lt;metadata/&gt;&lt;manifest/&gt;&lt;spine/&gt;&lt;/package&gt;&#x27;,
+	&#x27;EPUB/chapter1.xhtml&#x27;    =&gt; &lt;&lt;&lt;&#x27;XML&#x27;
+&lt;html xmlns=&quot;http://www.w3.org/1999/xhtml&quot;&gt;&lt;body&gt;&lt;h1&gt;Chapter 1&lt;/h1&gt;&lt;p&gt;It was a dark and stormy night.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;
+XML,
+) as $name =&gt; $body ) {
+	$enc-&gt;append_file( new FileEntry( array(
+		&#x27;path&#x27;               =&gt; $name,
+		&#x27;compression_method&#x27; =&gt; ZipDecoder::COMPRESSION_DEFLATE,
+		&#x27;body_reader&#x27;        =&gt; new MemoryPipe( $body ),
+	) ) );
+}
+$enc-&gt;close();
+$out-&gt;close_writing();
+
+$zip = ZipFilesystem::create( FileReadStream::from_path( $path ) );
+printf( &quot;mimetype: %s\n&quot;, $zip-&gt;get_contents( &#x27;mimetype&#x27; ) );
+printf( &quot;size on disk: %d bytes\n&quot;, filesize( $path ) );</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -122,15 +195,20 @@ $enc->append_file( new FileEntry( array(
 	'body_reader'        => new MemoryPipe( 'application/epub+zip' ),
 ) ) );
 
-$container = '<?xml version="1.0"?>'
-	. '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">'
-	. '<rootfiles><rootfile full-path="EPUB/package.opf" media-type="application/oebps-package+xml"/></rootfiles>'
-	. '</container>';
+$container = <<<'XML'
+<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+<rootfiles><rootfile full-path="EPUB/package.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>
+XML;
 
 foreach ( array(
 	'META-INF/container.xml' => $container,
-	'EPUB/package.opf'       => '<package version="3.0" xmlns="http://www.idpf.org/2007/opf"><metadata/><manifest/><spine/></package>',
-	'EPUB/chapter1.xhtml'    => '<html xmlns="http://www.w3.org/1999/xhtml"><body><h1>Chapter 1</h1><p>It was a dark and stormy night.</p></body></html>',
+	'EPUB/package.opf'       => <<<'XML'
+<package version="3.0" xmlns="http://www.idpf.org/2007/opf"><metadata/><manifest/><spine/></package>',
+	'EPUB/chapter1.xhtml'    => <<<'XML'
+<html xmlns="http://www.w3.org/1999/xhtml"><body><h1>Chapter 1</h1><p>It was a dark and stormy night.</p></body></html>
+XML,
 ) as $name => $body ) {
 	$enc->append_file( new FileEntry( array(
 		'path'               => $name,
@@ -147,7 +225,7 @@ printf( "size on disk: %d bytes\n", filesize( $path ) );
 </script>
 <script type="text/expected-output">
 mimetype: application/epub+zip
-size on disk: 839 bytes
+size on disk: 726 bytes
 </script>
 </php-snippet>
 
@@ -156,6 +234,44 @@ size on disk: 839 bytes
 <p>Calling <code>get_contents()</code> on a 500 MB CSV inside a ZIP would eat 500 MB of RAM. Use <code>open_read_stream()</code> instead and inflate-as-you-go.</p>
 
 <php-snippet blueprint="toolkit-setup" name="stream-large.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\ByteStream\ReadStream\FileReadStream;
+use WordPress\ByteStream\WriteStream\FileWriteStream;
+use WordPress\Zip\FileEntry;
+use WordPress\Zip\ZipDecoder;
+use WordPress\Zip\ZipEncoder;
+use WordPress\Zip\ZipFilesystem;
+
+$path = tempnam( sys_get_temp_dir(), &#x27;big&#x27; ) . &#x27;.zip&#x27;;
+$out  = FileWriteStream::from_path( $path, &#x27;truncate&#x27; );
+$enc  = new ZipEncoder( $out );
+$enc-&gt;append_file( new FileEntry( array(
+	&#x27;path&#x27;               =&gt; &#x27;data.csv&#x27;,
+	&#x27;compression_method&#x27; =&gt; ZipDecoder::COMPRESSION_DEFLATE,
+	&#x27;body_reader&#x27;        =&gt; new MemoryPipe( str_repeat( &quot;id,value,timestamp\n1,foo,2024\n2,bar,2024\n&quot;, 5000 ) ),
+) ) );
+$enc-&gt;close();
+$out-&gt;close_writing();
+
+$zip    = ZipFilesystem::create( FileReadStream::from_path( $path ) );
+$stream = $zip-&gt;open_read_stream( &#x27;data.csv&#x27; );
+
+$rows  = 0;
+$bytes = 0;
+$tail  = &#x27;&#x27;;
+while ( ! $stream-&gt;reached_end_of_data() ) {
+	$n = $stream-&gt;pull( 8192 );
+	if ( 0 === $n ) break;
+	$chunk  = $tail . $stream-&gt;consume( $n );
+	$lines  = explode( &quot;\n&quot;, $chunk );
+	$tail   = array_pop( $lines );
+	$rows  += count( $lines );
+	$bytes += $n;
+}
+printf( &quot;Inflated %d bytes in 8 KB chunks, parsed %d rows.\n&quot;, $bytes, $rows );</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -206,6 +322,68 @@ Inflated 205000 bytes in 8 KB chunks, parsed 15000 rows.
 <p>Updating one file in a ZIP without rewriting the others is impossible at the format level — the central directory points at byte offsets. The pragmatic answer is repack: stream the source archive into a new one, swapping the file you care about.</p>
 
 <php-snippet blueprint="toolkit-setup" name="repack.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\ByteStream\ReadStream\FileReadStream;
+use WordPress\ByteStream\WriteStream\FileWriteStream;
+use WordPress\Zip\FileEntry;
+use WordPress\Zip\ZipDecoder;
+use WordPress\Zip\ZipEncoder;
+use WordPress\Zip\ZipFilesystem;
+
+$src_path = tempnam( sys_get_temp_dir(), &#x27;orig&#x27; ) . &#x27;.zip&#x27;;
+$src_out  = FileWriteStream::from_path( $src_path, &#x27;truncate&#x27; );
+$src_enc  = new ZipEncoder( $src_out );
+foreach ( array(
+	&#x27;config.json&#x27;   =&gt; &#x27;{&quot;debug&quot;:false,&quot;version&quot;:&quot;1.0&quot;}&#x27;,
+	&#x27;app/index.php&#x27; =&gt; &lt;&lt;&lt;&#x27;HTML&#x27;
+&lt;?php echo &quot;hello&quot;;
+XML,
+	&#x27;app/style.css&#x27; =&gt; &#x27;body{color:#333}
+HTML,
+) as $name =&gt; $body ) {
+	$src_enc-&gt;append_file( new FileEntry( array(
+		&#x27;path&#x27;               =&gt; $name,
+		&#x27;compression_method&#x27; =&gt; ZipDecoder::COMPRESSION_DEFLATE,
+		&#x27;body_reader&#x27;        =&gt; new MemoryPipe( $body ),
+	) ) );
+}
+$src_enc-&gt;close();
+$src_out-&gt;close_writing();
+
+$source   = ZipFilesystem::create( FileReadStream::from_path( $src_path ) );
+$dst_path = tempnam( sys_get_temp_dir(), &#x27;repacked&#x27; ) . &#x27;.zip&#x27;;
+$dst_out  = FileWriteStream::from_path( $dst_path, &#x27;truncate&#x27; );
+$dst_enc  = new ZipEncoder( $dst_out );
+
+$dirs = array( &#x27;/&#x27; );
+while ( $dirs ) {
+	$dir = array_shift( $dirs );
+	foreach ( $source-&gt;ls( $dir ) as $name ) {
+		$path = rtrim( $dir, &#x27;/&#x27; ) . &#x27;/&#x27; . $name;
+		if ( $source-&gt;is_dir( $path ) ) {
+			$dirs[] = $path;
+			continue;
+		}
+		$rel  = ltrim( $path, &#x27;/&#x27; );
+		$body = ( &#x27;config.json&#x27; === $rel )
+			? &#x27;{&quot;debug&quot;:true,&quot;version&quot;:&quot;1.0.1&quot;}&#x27;
+			: $source-&gt;get_contents( $rel );
+		$dst_enc-&gt;append_file( new FileEntry( array(
+			&#x27;path&#x27;               =&gt; $rel,
+			&#x27;compression_method&#x27; =&gt; ZipDecoder::COMPRESSION_DEFLATE,
+			&#x27;body_reader&#x27;        =&gt; new MemoryPipe( $body ),
+		) ) );
+	}
+}
+$dst_enc-&gt;close();
+$dst_out-&gt;close_writing();
+
+$repacked = ZipFilesystem::create( FileReadStream::from_path( $dst_path ) );
+echo &quot;new config.json: &quot; . $repacked-&gt;get_contents( &#x27;config.json&#x27; ) . &quot;\n&quot;;
+echo &quot;untouched: &quot; . $repacked-&gt;get_contents( &#x27;app/index.php&#x27; ) . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -223,8 +401,11 @@ $src_out  = FileWriteStream::from_path( $src_path, 'truncate' );
 $src_enc  = new ZipEncoder( $src_out );
 foreach ( array(
 	'config.json'   => '{"debug":false,"version":"1.0"}',
-	'app/index.php' => '<?php echo "hello";',
-	'app/style.css' => 'body{color:#333}',
+	'app/index.php' => <<<'HTML'
+<?php echo "hello";
+XML,
+	'app/style.css' => 'body{color:#333}
+HTML,
 ) as $name => $body ) {
 	$src_enc->append_file( new FileEntry( array(
 		'path'               => $name,
@@ -270,6 +451,8 @@ echo "untouched: " . $repacked->get_contents( 'app/index.php' ) . "\n";
 <script type="text/expected-output">
 new config.json: {"debug":true,"version":"1.0.1"}
 untouched: <?php echo "hello";
+XML,
+	'app/style.css' => 'body{color:#333}
 </script>
 </php-snippet>
 
@@ -278,6 +461,21 @@ untouched: <?php echo "hello";
 <p>A malicious archive can name an entry <code>../../etc/passwd</code> and trick a naive extractor into clobbering files outside the destination. <code>ZipDecoder::sanitize_path()</code> strips leading <code>../</code> segments and collapses internal <code>/../</code> sequences before exposing the path.</p>
 
 <php-snippet blueprint="toolkit-setup" name="zip-slip.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Zip\ZipDecoder;
+
+$evil_inputs = array(
+	&#x27;../../etc/passwd&#x27;,
+	&#x27;./safe/path.txt&#x27;,
+	&#x27;a/../../b/secret&#x27;,
+	&#x27;a//b///c.txt&#x27;,
+	&#x27;../../../../root/.ssh/authorized_keys&#x27;,
+);
+foreach ( $evil_inputs as $name ) {
+	printf( &quot;%-45s =&gt; %s\n&quot;, $name, ZipDecoder::sanitize_path( $name ) );
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -309,6 +507,67 @@ a//b///c.txt                                  => a/b/c.txt
 <p>Real-world recipe: take an uploaded plugin ZIP, expand it into an <code>InMemoryFilesystem</code> so you can validate, edit, or scan it before it ever touches disk. Three components compose into something you couldn't build with <code>ZipArchive</code> alone.</p>
 
 <php-snippet blueprint="toolkit-setup" name="zip-to-memfs.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\ByteStream\ReadStream\FileReadStream;
+use WordPress\ByteStream\WriteStream\FileWriteStream;
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Zip\FileEntry;
+use WordPress\Zip\ZipDecoder;
+use WordPress\Zip\ZipEncoder;
+use WordPress\Zip\ZipFilesystem;
+use function WordPress\Filesystem\copy_between_filesystems;
+
+$path = tempnam( sys_get_temp_dir(), &#x27;app&#x27; ) . &#x27;.zip&#x27;;
+$out  = FileWriteStream::from_path( $path, &#x27;truncate&#x27; );
+$enc  = new ZipEncoder( $out );
+foreach ( array(
+	&#x27;app/index.php&#x27;        =&gt; &lt;&lt;&lt;&#x27;HTML&#x27;
+&lt;?php echo &quot;ok&quot;;&#x27;,
+	&#x27;app/lib/util.php&#x27;     =&gt; &#x27;&lt;?php // util
+HTML,
+	&#x27;app/assets/style.css&#x27; =&gt; &#x27;body{margin:0}&#x27;,
+	&#x27;app/README.md&#x27;        =&gt; &#x27;# App&#x27;,
+) as $name =&gt; $body ) {
+	$enc-&gt;append_file( new FileEntry( array(
+		&#x27;path&#x27;               =&gt; $name,
+		&#x27;compression_method&#x27; =&gt; ZipDecoder::COMPRESSION_DEFLATE,
+		&#x27;body_reader&#x27;        =&gt; new MemoryPipe( $body ),
+	) ) );
+}
+$enc-&gt;close();
+$out-&gt;close_writing();
+
+$zip = ZipFilesystem::create( FileReadStream::from_path( $path ) );
+$mem = InMemoryFilesystem::create();
+copy_between_filesystems( array(
+	&#x27;source_filesystem&#x27; =&gt; $zip,
+	&#x27;source_path&#x27;       =&gt; &#x27;/&#x27;,
+	&#x27;target_filesystem&#x27; =&gt; $mem,
+	&#x27;target_path&#x27;       =&gt; &#x27;/&#x27;,
+) );
+
+$mem-&gt;put_contents( &#x27;/app/VERSION&#x27;, &#x27;1.0.0&#x27; );
+echo &quot;files now in memory:\n&quot;;
+$dirs = array( &#x27;/&#x27; );
+$files = array();
+while ( $dirs ) {
+	$dir = array_shift( $dirs );
+	foreach ( $mem-&gt;ls( $dir ) as $name ) {
+		$p = rtrim( $dir, &#x27;/&#x27; ) . &#x27;/&#x27; . $name;
+		if ( $mem-&gt;is_dir( $p ) ) {
+			$dirs[] = $p;
+			continue;
+		}
+		$files[] = $p;
+	}
+}
+sort( $files );
+foreach ( $files as $path ) {
+	echo &quot;  &quot; . $path . &quot;\n&quot;;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -327,8 +586,10 @@ $path = tempnam( sys_get_temp_dir(), 'app' ) . '.zip';
 $out  = FileWriteStream::from_path( $path, 'truncate' );
 $enc  = new ZipEncoder( $out );
 foreach ( array(
-	'app/index.php'        => '<?php echo "ok";',
-	'app/lib/util.php'     => '<?php // util',
+	'app/index.php'        => <<<'HTML'
+<?php echo "ok";',
+	'app/lib/util.php'     => '<?php // util
+HTML,
 	'app/assets/style.css' => 'body{margin:0}',
 	'app/README.md'        => '# App',
 ) as $name => $body ) {
@@ -376,11 +637,19 @@ files now in memory:
   /app/VERSION
   /app/assets/style.css
   /app/index.php
-  /app/lib/util.php
 </script>
 </php-snippet>
 
 <h2 id="when-to-use-which-type">When to use which type</h2>
+
+<table class="api-table">
+<tr><th>Use</th><th>For</th></tr>
+<tr><td><code>ZipFilesystem::create()</code></td><td>Reading. You want <code>get_contents()</code>, <code>ls()</code>, <code>is_dir()</code> over a ZIP. The most common case.</td></tr>
+<tr><td><code>ZipEncoder</code></td><td>Writing. Stream entries into any <code>ByteWriteStream</code> sink. Required when format rules matter (EPUB, .docx).</td></tr>
+<tr><td><code>ZipDecoder</code></td><td>Low-level read access to the central directory and individual entry headers. Most code reaches for <code>ZipFilesystem</code> instead.</td></tr>
+<tr><td><code>open_read_stream()</code> on a ZipFilesystem</td><td>Inflating a single large entry without buffering it whole in memory.</td></tr>
+<tr><td><code>copy_between_filesystems()</code></td><td>Moving entries from a ZIP into another filesystem (memory, local, SQLite).</td></tr>
+</table>
 
 <h2 id="pitfalls">Pitfalls</h2>
 
@@ -388,9 +657,14 @@ files now in memory:
 
 <aside class="callout pitfall">only one entry stream open at a time. Drain or finish the previous stream before opening the next.</aside>
 
+<aside class="callout pitfall">updating an entry in place is impossible. The central directory points at byte offsets — change one entry's compressed size and every later offset shifts. Repack into a new archive instead.</aside>
+
+<aside class="callout pitfall">encrypted archives aren't supported. If you need to read AES-encrypted ZIPs, this isn't the component. The file format technically allows encryption, but the toolkit deliberately excludes it because the implementation surface is large and the use case is rare in WordPress contexts.</aside>
+
 <h2 id="see-also">See also</h2>
 
 <ul class="related-components">
+	<li><a href="../learn/02-streaming-archives.html"><strong>Tutorial — Streaming archives</strong></a><span>Walk through ZIP and EPUB writers from the toolkit's worked example.</span></li>
 	<li><a href="filesystem.html"><strong>Filesystem</strong></a><span>Treat an archive like a swappable filesystem backend.</span></li>
 	<li><a href="bytestream.html"><strong>ByteStream</strong></a><span>Feed readers and writers without whole-file buffers.</span></li>
 	<li><a href="httpclient.html"><strong>HttpClient</strong></a><span>Stream downloaded archives into validation or extraction workflows.</span></li>

@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CORSProxy — PHP Toolkit reference</title>
 <meta name="description" content="A small PHP CORS proxy intended for browser-side code that needs to reach servers without CORS headers.">
-<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<link rel="stylesheet" href="../assets/style.css?v=20260503-script-unescape">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
-<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+<script src="../assets/page.js?v=20260503-script-unescape" defer></script>
 </head>
 <body>
 <header class="site">
@@ -60,11 +60,49 @@
 
 <h2 id="run-the-proxy-locally">Run the proxy locally</h2>
 
+<p class="callout"><strong>Run on your machine:</strong> the proxy needs to listen on a port. Start PHP's built-in server and request any HTTPS URL through it.</p><pre><code>PLAYGROUND_CORS_PROXY_DISABLE_RATE_LIMIT=1 \
+  php -S 127.0.0.1:5263 vendor/wp-php-toolkit/corsproxy/cors-proxy.php
+
+# In another terminal:
+curl -s "http://127.0.0.1:5263/cors-proxy.php/https://api.github.com/repos/WordPress/php-toolkit" | head
+</code></pre>
+
 <h2 id="a-minimal-example">A minimal example</h2>
 
 <p>Drop a <code>cors-proxy-config.php</code> next to <code>cors-proxy.php</code>. If that file defines a <code>playground_cors_proxy_maybe_rate_limit()</code> function, the proxy calls it before forwarding any request — your one chance to reject early. Without the file, the proxy applies its default rate limiter, which is fine for development but should be replaced for any deployment that gets real traffic.</p><p>This example uses a per-IP token bucket stored on disk. Replace with Redis or memcached for multi-host deployments.</p>
 
 <php-snippet blueprint="toolkit-setup" name="cors-proxy-config.php" runnable="false">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+// cors-proxy-config.php — placed next to cors-proxy.php.
+
+function playground_cors_proxy_maybe_rate_limit() {
+	$ip      = isset( $_SERVER[&#x27;REMOTE_ADDR&#x27;] ) ? $_SERVER[&#x27;REMOTE_ADDR&#x27;] : &#x27;0.0.0.0&#x27;;
+	$bucket  = sys_get_temp_dir() . &#x27;/cors-rl-&#x27; . md5( $ip );
+	$now     = time();
+	$window  = 60;
+	$max_req = 30;
+
+	$hits = array();
+	if ( file_exists( $bucket ) ) {
+		$hits = json_decode( file_get_contents( $bucket ), true );
+		if ( ! is_array( $hits ) ) $hits = array();
+	}
+	$hits = array_filter( $hits, function ( $t ) use ( $now, $window ) {
+		return $t &gt; $now - $window;
+	} );
+
+	if ( count( $hits ) &gt;= $max_req ) {
+		header( &#x27;Retry-After: &#x27; . $window );
+		http_response_code( 429 );
+		echo &#x27;Rate limit exceeded&#x27;;
+		exit;
+	}
+
+	$hits[] = $now;
+	file_put_contents( $bucket, json_encode( array_values( $hits ) ) );
+}
+
+echo &quot;Config loaded — rate limiter armed.\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 // cors-proxy-config.php — placed next to cors-proxy.php.
@@ -105,6 +143,32 @@ echo "Config loaded — rate limiter armed.\n";
 <p>Out of the box the proxy will fetch any public URL. Most real deployments want a fixed list of upstreams — GitHub, Packagist, wp.org. Both the rate-limit logic and the allowlist live in the same hook, since <code>cors-proxy.php</code> only calls <code>playground_cors_proxy_maybe_rate_limit()</code> once. The example below shows just the allowlist concern; in practice you stack both in one function inside <code>cors-proxy-config.php</code>.</p>
 
 <php-snippet blueprint="toolkit-setup" name="cors-proxy-config-allowlist.php" runnable="false">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+// cors-proxy-config.php — combine with the rate-limit example above.
+
+function playground_cors_proxy_maybe_rate_limit() {
+	$allow = array(
+		&#x27;api.github.com&#x27;,
+		&#x27;raw.githubusercontent.com&#x27;,
+		&#x27;codeload.github.com&#x27;,
+		&#x27;repo.packagist.org&#x27;,
+		&#x27;downloads.wordpress.org&#x27;,
+		&#x27;api.wordpress.org&#x27;,
+	);
+
+	$target = isset( $_SERVER[&#x27;PATH_INFO&#x27;] ) ? $_SERVER[&#x27;PATH_INFO&#x27;] : ( &#x27;/&#x27; . ( isset( $_SERVER[&#x27;QUERY_STRING&#x27;] ) ? $_SERVER[&#x27;QUERY_STRING&#x27;] : &#x27;&#x27; ) );
+	$target = ltrim( $target, &#x27;/&#x27; );
+	$host   = parse_url( $target, PHP_URL_HOST );
+
+	if ( ! $host || ! in_array( strtolower( $host ), $allow, true ) ) {
+		http_response_code( 403 );
+		header( &#x27;Content-Type: text/plain&#x27; );
+		echo &quot;Upstream not allowed: &quot; . ( $host ? $host : &#x27;(none)&#x27; );
+		exit;
+	}
+}
+
+echo &quot;Allowlist config active.\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 // cors-proxy-config.php — combine with the rate-limit example above.
@@ -137,11 +201,42 @@ echo "Allowlist config active.\n";
 
 <h2 id="browser-side-fetch-through-the-proxy">Browser-side fetch through the proxy</h2>
 
-<p>Once deployed, the client side is just <code>fetch()</code> with the proxy URL. Drop this into any HTML page.</p>
+<p>Once deployed, the client side is just <code>fetch()</code> with the proxy URL. Drop this into any HTML page.</p><pre><code>const PROXY = "https://cors.example.com/cors-proxy.php";
+
+async function viaProxy(url, init = {}) {
+  const res = await fetch(`${PROXY}/${url}`, {
+    ...init,
+    headers: {
+      ...(init.headers || {}),
+      "X-Cors-Proxy-Allowed-Request-Headers": "Authorization",
+    },
+  });
+  if (!res.ok) throw new Error(`Proxy returned ${res.status}`);
+  return res;
+}
+
+const repo = await viaProxy("https://api.github.com/repos/WordPress/php-toolkit").then(r =&gt; r.json());
+console.log(repo.full_name, repo.stargazers_count);
+</code></pre>
 
 <h2 id="deploy-behind-nginx">Deploy behind nginx</h2>
 
-<p>The proxy is a single PHP script — any SAPI works. nginx + php-fpm is a common production setup. <code>PATH_INFO</code> is what the proxy reads to learn the target URL.</p>
+<p>The proxy is a single PHP script — any SAPI works. nginx + php-fpm is a common production setup. <code>PATH_INFO</code> is what the proxy reads to learn the target URL.</p><pre><code>server {
+  listen 443 ssl http2;
+  server_name cors.example.com;
+
+  root /var/www/cors-proxy;
+  index cors-proxy.php;
+
+  location ~ ^/cors-proxy\.php(/.*)?$ {
+    fastcgi_pass unix:/run/php/php8.1-fpm.sock;
+    fastcgi_split_path_info ^(.+\.php)(/.*)$;
+    fastcgi_param SCRIPT_FILENAME $document_root/cors-proxy.php;
+    fastcgi_param PATH_INFO $fastcgi_path_info;
+    include fastcgi_params;
+  }
+}
+</code></pre>
 
 <h2 id="see-also">See also</h2>
 

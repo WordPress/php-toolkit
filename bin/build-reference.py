@@ -10,13 +10,13 @@ pitfalls + see also. There are no hand-authored exceptions.
 import os
 import re
 import sys
-from html import escape as h, unescape
+from html import escape as h
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _load_catalog import load_components_rich
 
 DOCS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', 'reference')
-ASSET_VERSION = '20260429-rewrite'
+ASSET_VERSION = '20260503-script-unescape'
 
 
 PAGE_HEAD = '''<!doctype html>
@@ -60,27 +60,42 @@ def slugify(text):
 
 
 def split_pitfalls(body_html):
-    """Pull out paragraphs that begin with 'Footgun:' or 'Gotcha:' and return them
-    as separate pitfall callouts. Return (rest_html, [pitfall_html, ...])."""
+    """Pull paragraphs that begin with 'Footgun:' or 'Gotcha:' out of a body
+    and return them as separate pitfall callouts.
+
+    Returns ``(rest_html, [pitfall_html, ...])`` where ``rest_html`` is the
+    original body with only the matching ``<p>...</p>`` chunks removed —
+    tables, lists, ``<pre>`` blocks, and any other markup are preserved
+    verbatim. Earlier versions accidentally dropped non-``<p>`` content
+    because they walked the body via a ``<p>`` regex and re-emitted only
+    the matched chunks.
+    """
     pitfalls = []
-    rest = []
-    for chunk in re.findall(r'<p>.*?</p>', body_html, flags=re.DOTALL):
+    def replace(match):
+        chunk = match.group(0)
         plain = re.sub(r'<[^>]+>', '', chunk).strip()
         if plain.lower().startswith(('footgun', 'gotcha')):
             inner = chunk[3:-4]  # strip <p>...</p>
             inner = re.sub(r'^<strong>(Footgun|Gotcha)[^<]*</strong>\s*[—:.\s]*', '', inner)
             inner = re.sub(r'^(Footgun|Gotcha)[^a-z<]*', '', inner)
             pitfalls.append(inner.strip())
-        else:
-            rest.append(chunk)
-    return ''.join(rest), pitfalls
+            return ''
+        return chunk
+    rest = re.sub(r'<p>.*?</p>', replace, body_html, flags=re.DOTALL)
+    return rest, pitfalls
 
 
 def snippet_block(snippet):
     """Render a snippet dict as a <php-snippet> custom-element block.
 
     Includes the captured expected-output (when present) so the docs page
-    paints the result before WordPress Playground finishes booting.
+    paints the result before WordPress Playground finishes booting, and
+    emits a static <pre><code> fallback inside the same element so readers
+    see the snippet code even if Playground's JS module fails to load
+    (cross-origin block, slow network, adblocker, no-JS clients).
+
+    CSS hides the fallback when the custom element is :defined, so the
+    interactive widget owns the screen as soon as it registers.
     """
     name = snippet['filename']
     code = snippet['code']
@@ -88,6 +103,11 @@ def snippet_block(snippet):
     expected = snippet['expected_output'] if runnable else None
 
     safe = code.rstrip().replace('</script', '<\\/script')
+    fallback = (
+        '<pre class="snippet-fallback"><code class="language-php">'
+        f'{h(code.rstrip())}'
+        '</code></pre>\n'
+    )
     expected_block = ''
     if expected is not None:
         expected_safe = expected.rstrip().replace('</script', '<\\/script')
@@ -97,6 +117,7 @@ def snippet_block(snippet):
     runnable_attr = '' if runnable else ' runnable="false"'
     return (
         f'<php-snippet blueprint="toolkit-setup" name="{h(name)}"{runnable_attr}>\n'
+        f'{fallback}'
         f'<script type="application/x-php">\n{safe}\n</script>\n'
         f'{expected_block}'
         f'</php-snippet>\n'
@@ -132,7 +153,7 @@ def render_component(components, c):
     usage = sections
     if sections and sections[0]['heading'].lower() == 'why this exists':
         body = sections[0]['body'] or ''
-        purpose_html, pitfalls_from_purpose = split_pitfalls(unescape(body))
+        purpose_html, pitfalls_from_purpose = split_pitfalls(body)
         usage = sections[1:]
 
     out = [PAGE_HEAD.format(
@@ -154,7 +175,7 @@ def render_component(components, c):
             '</aside>\n\n'
         )
     if purpose_html:
-        out.append(unescape(purpose_html) + '\n\n')
+        out.append(purpose_html + '\n\n')
 
     # Worked examples + accumulated pitfalls.
     pitfalls = list(pitfalls_from_purpose)
@@ -163,7 +184,7 @@ def render_component(components, c):
         heading = section['heading']
         body_html = section['body'] or ''
         snippet = section['snippet']
-        rest, found = split_pitfalls(unescape(body_html))
+        rest, found = split_pitfalls(body_html)
         pitfalls.extend(found)
         h2 = heading
         if not minimal_emitted and snippet:
@@ -185,8 +206,7 @@ def render_component(components, c):
     if c['see_also']:
         out.append('<h2 id="see-also">See also</h2>\n\n')
         out.append('<ul class="related-components">\n')
-        for rel_slug, rel_title, reason in c['see_also']:
-            href = f'{rel_slug}.html'
+        for href, rel_title, reason in c['see_also']:
             out.append(
                 f'\t<li><a href="{href}"><strong>{h(rel_title)}</strong></a>'
                 f'<span>{reason}</span></li>\n'

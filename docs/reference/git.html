@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Git — PHP Toolkit reference</title>
 <meta name="description" content="A pure-PHP Git client and server. Commits, branches, diffs, HTTP push/pull — all without shelling out to git.">
-<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<link rel="stylesheet" href="../assets/style.css?v=20260503-script-unescape">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
-<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+<script src="../assets/page.js?v=20260503-script-unescape" defer></script>
 </head>
 <body>
 <header class="site">
@@ -63,6 +63,24 @@
 <p>The simplest possible repository: an <code>InMemoryFilesystem</code> as object storage and one <code>commit()</code> call. Reach for this in tests, in WP-CLI snapshots, or any place you want versioning without touching disk.</p>
 
 <php-snippet blueprint="toolkit-setup" name="commit-in-memory.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Git\GitRepository;
+
+$repo = new GitRepository( InMemoryFilesystem::create() );
+
+$oid = $repo-&gt;commit( array(
+	&#x27;updates&#x27; =&gt; array(
+		&#x27;README.md&#x27;           =&gt; &quot;# My Project\n&quot;,
+		&#x27;src/hello-world.php&#x27; =&gt; &#x27;&lt;?php echo &quot;Hello!&quot;;&#x27;,
+	),
+) );
+
+echo &quot;commit: {$oid}\n&quot;;
+echo &quot;HEAD:   &quot; . $repo-&gt;get_branch_tip( &#x27;HEAD&#x27; ) . &quot;\n&quot;;
+echo &quot;README: &quot; . $repo-&gt;read_object_by_path( &#x27;/README.md&#x27; )-&gt;consume_all();</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -95,6 +113,28 @@ README: # My Project
 <p>Follow the parent chain from <code>HEAD</code> backwards. Building block for a WP-CLI "post revisions" log or a "what changed since release X" report.</p>
 
 <php-snippet blueprint="toolkit-setup" name="walk-history.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Git\GitRepository;
+use WordPress\Git\Model\Commit;
+
+$repo = new GitRepository( InMemoryFilesystem::create() );
+foreach ( array( &#x27;add intro&#x27;, &#x27;fix typo&#x27;, &#x27;expand examples&#x27; ) as $i =&gt; $msg ) {
+	$repo-&gt;commit( array(
+		&#x27;updates&#x27; =&gt; array( &#x27;post.md&#x27; =&gt; &quot;# Draft {$i}&quot; ),
+		&#x27;commit&#x27;  =&gt; array( &#x27;message&#x27; =&gt; $msg ),
+	) );
+}
+
+$oid = $repo-&gt;get_branch_tip( &#x27;HEAD&#x27; );
+while ( ! Commit::is_null_hash( $oid ) ) {
+	$c = $repo-&gt;read_object( $oid )-&gt;as_commit();
+	echo substr( $c-&gt;hash, 0, 7 ) . &#x27;  &#x27; . trim( $c-&gt;message ) . &quot;\n&quot;;
+	$oid = $c-&gt;get_first_parent_hash();
+	if ( ! $oid || ! $repo-&gt;has_object( $oid ) ) break;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -131,6 +171,25 @@ while ( ! Commit::is_null_hash( $oid ) ) {
 <p><code>GitFilesystem</code> wraps a repository in this toolkit's <code>Filesystem</code> interface. With the default options, each <code>put_contents()</code> records a new commit.</p>
 
 <php-snippet blueprint="toolkit-setup" name="git-filesystem.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Git\GitFilesystem;
+use WordPress\Git\GitRepository;
+
+$repo = new GitRepository( InMemoryFilesystem::create() );
+$fs   = GitFilesystem::create( $repo );
+
+$fs-&gt;put_contents( &#x27;/posts/hello.md&#x27;, &quot;# Hello\nFirst draft.&quot; );
+$fs-&gt;put_contents( &#x27;/posts/about.md&#x27;, &quot;# About\nWho we are.&quot; );
+$fs-&gt;put_contents( &#x27;/posts/hello.md&#x27;, &quot;# Hello\nSecond draft.&quot; );
+
+echo &quot;tree:\n&quot;;
+foreach ( $fs-&gt;ls( &#x27;/posts&#x27; ) as $name ) {
+	echo &quot;  /posts/{$name}\n&quot;;
+}
+echo &quot;\nhello.md now:\n&quot; . $fs-&gt;get_contents( &#x27;/posts/hello.md&#x27; ) . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -168,6 +227,29 @@ Second draft.
 <p>Create a feature branch off the current commit, change files, flip <code>HEAD</code> back. Useful for experimental edits in collaborative tools.</p>
 
 <php-snippet blueprint="toolkit-setup" name="branches.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Git\GitRepository;
+
+$repo = new GitRepository( InMemoryFilesystem::create() );
+$base = $repo-&gt;commit( array(
+	&#x27;updates&#x27; =&gt; array( &#x27;config.json&#x27; =&gt; &#x27;{&quot;flag&quot;:false}&#x27; ),
+	&#x27;commit&#x27;  =&gt; array( &#x27;message&#x27; =&gt; &#x27;baseline&#x27; ),
+) );
+
+$repo-&gt;create_branch( &#x27;refs/heads/experiment&#x27;, $base );
+$repo-&gt;checkout( &#x27;refs/heads/experiment&#x27; );
+$repo-&gt;commit( array(
+	&#x27;updates&#x27; =&gt; array( &#x27;config.json&#x27; =&gt; &#x27;{&quot;flag&quot;:true}&#x27; ),
+	&#x27;commit&#x27;  =&gt; array( &#x27;message&#x27; =&gt; &#x27;flip the flag&#x27; ),
+) );
+
+echo &quot;on experiment: &quot; . $repo-&gt;read_object_by_path( &#x27;/config.json&#x27; )-&gt;consume_all() . &quot;\n&quot;;
+
+$repo-&gt;checkout( &#x27;refs/heads/trunk&#x27; );
+echo &quot;on trunk:      &quot; . $repo-&gt;read_object_by_path( &#x27;/config.json&#x27; )-&gt;consume_all() . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -201,9 +283,36 @@ on trunk:      {"flag":false}
 
 <h2 id="refinement-three-way-merge-two-branches">Refinement: three-way merge two branches</h2>
 
-<p>The classic Git workflow: branch off, edit on each side, merge. <code>$repo->merge()</code> finds the common ancestor, three-way-merges every file, and creates a merge commit.</p>
+<p>The classic Git workflow: branch off, edit on each side, merge. <code>$repo-&gt;merge()</code> finds the common ancestor, three-way-merges every file, and creates a merge commit.</p>
 
 <php-snippet blueprint="toolkit-setup" name="merge-branches.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Git\GitRepository;
+
+$repo = new GitRepository( InMemoryFilesystem::create() );
+$base = $repo-&gt;commit( array( &#x27;updates&#x27; =&gt; array(
+	&#x27;todo.txt&#x27; =&gt; &quot;buy milk\nwalk dog\nread book\n&quot;,
+) ) );
+
+$repo-&gt;commit( array( &#x27;updates&#x27; =&gt; array(
+	&#x27;todo.txt&#x27; =&gt; &quot;buy oat milk\nwalk dog\nread book\n&quot;,
+) ) );
+
+$repo-&gt;create_branch( &#x27;refs/heads/feature&#x27;, $base );
+$repo-&gt;checkout( &#x27;refs/heads/feature&#x27; );
+$repo-&gt;commit( array( &#x27;updates&#x27; =&gt; array(
+	&#x27;todo.txt&#x27; =&gt; &quot;buy milk\nwalk dog\nread book\nwrite blog post\n&quot;,
+) ) );
+
+$repo-&gt;checkout( &#x27;refs/heads/trunk&#x27; );
+$result = $repo-&gt;merge( &#x27;refs/heads/feature&#x27; );
+
+echo &quot;merge head: {$result[&#x27;new_head&#x27;]}\n&quot;;
+echo &quot;conflicts:  &quot; . ( $result[&#x27;conflicts&#x27;] ? implode( &#x27;,&#x27;, $result[&#x27;conflicts&#x27;] ) : &#x27;none&#x27; ) . &quot;\n&quot;;
+echo &quot;result:\n&quot; . $repo-&gt;read_object_by_path( &#x27;/todo.txt&#x27; )-&gt;consume_all();</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -249,6 +358,35 @@ write blog post
 <p>Serialize a chunk of WP state (options, post meta, a theme config) on every save and commit it. You get free history, diffs between snapshots, and a "rollback to last week" button.</p>
 
 <php-snippet blueprint="toolkit-setup" name="options-snapshot.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Git\GitRepository;
+
+$repo = new GitRepository( InMemoryFilesystem::create() );
+
+$snapshots = array(
+	array( &#x27;blogname&#x27; =&gt; &#x27;My Site&#x27;,  &#x27;posts_per_page&#x27; =&gt; 10, &#x27;timezone_string&#x27; =&gt; &#x27;UTC&#x27; ),
+	array( &#x27;blogname&#x27; =&gt; &#x27;My Site&#x27;,  &#x27;posts_per_page&#x27; =&gt; 20, &#x27;timezone_string&#x27; =&gt; &#x27;UTC&#x27; ),
+	array( &#x27;blogname&#x27; =&gt; &#x27;New Name&#x27;, &#x27;posts_per_page&#x27; =&gt; 20, &#x27;timezone_string&#x27; =&gt; &#x27;Europe/Warsaw&#x27; ),
+);
+
+foreach ( $snapshots as $i =&gt; $options ) {
+	$repo-&gt;commit( array(
+		&#x27;updates&#x27; =&gt; array( &#x27;options.json&#x27; =&gt; json_encode( $options, JSON_PRETTY_PRINT ) ),
+		&#x27;commit&#x27;  =&gt; array( &#x27;message&#x27; =&gt; &quot;snapshot #{$i}&quot; ),
+	) );
+}
+
+$head    = $repo-&gt;get_branch_tip( &#x27;HEAD&#x27; );
+$parent  = $repo-&gt;read_object( $head )-&gt;as_commit()-&gt;get_first_parent_hash();
+$diff    = $repo-&gt;diff_commits( $head, $parent );
+
+echo &quot;Files changed in last snapshot:\n&quot;;
+foreach ( $diff as $name =&gt; $entry ) {
+	echo &quot;  {$name}\n&quot;;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';

@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ToolkitCodingStandards — PHP Toolkit reference</title>
 <meta name="description" content="PHP_CodeSniffer sniffs used by this project: enforce Yoda comparisons and ban the short ternary where it hides falsy-value bugs.">
-<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<link rel="stylesheet" href="../assets/style.css?v=20260503-script-unescape">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
-<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+<script src="../assets/page.js?v=20260503-script-unescape" defer></script>
 </head>
 <body>
 <header class="site">
@@ -60,11 +60,30 @@
 
 <h2 id="reference-the-standard-from-your-phpcsxml">Reference the standard from your phpcs.xml</h2>
 
-<p>The component is a PHPCS ruleset, so the useful examples are configuration and before/after code rather than runtime snippets. Activate both sniffs at once by referencing <code>WordPressToolkitCodingStandards</code>:</p><p>Then run phpcs and phpcbf the usual way:</p>
+<p>The component is a PHPCS ruleset, so the useful examples are configuration and before/after code rather than runtime snippets. Activate both sniffs at once by referencing <code>WordPressToolkitCodingStandards</code>:</p><pre><code>&lt;?xml version="1.0"?&gt;
+&lt;ruleset name="My Project"&gt;
+  &lt;file&gt;src/&lt;/file&gt;
+
+  &lt;!-- Activate both toolkit sniffs --&gt;
+  &lt;rule ref="WordPressToolkitCodingStandards"/&gt;
+
+  &lt;!-- Or pick them individually --&gt;
+  &lt;!-- &lt;rule ref="WordPressToolkitCodingStandards.PHP.EnforceYodaComparison"/&gt; --&gt;
+  &lt;!-- &lt;rule ref="WordPressToolkitCodingStandards.PHP.DisallowShortTernary"/&gt; --&gt;
+&lt;/ruleset&gt;</code></pre><p>Then run phpcs and phpcbf the usual way:</p><pre><code>vendor/bin/phpcs --standard=phpcs.xml .
+vendor/bin/phpcbf --standard=phpcs.xml .</code></pre>
 
 <h2 id="enforceyodacomparison-catches-accidental-assignment">EnforceYodaComparison: catches accidental assignment</h2>
 
-<p>Yoda comparisons (<code>true === $x</code>) make typo-induced assignments easier to catch and match the WordPress style used throughout the toolkit:</p><p>The sniff covers <code>===</code>, <code>!==</code>, <code>==</code>, and <code>!=</code>, and stays quiet when both sides are dynamic.</p>
+<p>Yoda comparisons (<code>true === $x</code>) make typo-induced assignments easier to catch and match the WordPress style used throughout the toolkit:</p><pre><code>// Bug: single = inside a condition. Always truthy, mutates $status.
+if ( $status = 'published' ) {
+    publish_post( $post );
+}
+
+// Yoda style: writing this typo would be a parse error.
+if ( 'published' === $status ) {
+    publish_post( $post );
+}</code></pre><p>The sniff covers <code>===</code>, <code>!==</code>, <code>==</code>, and <code>!=</code>, and stays quiet when both sides are dynamic.</p>
 
 <h2 id="why-ban-the-short-ternary">Why ban the short ternary</h2>
 
@@ -72,7 +91,11 @@
 
 <h2 id="review-friendly-replacements">Review-friendly replacements</h2>
 
-<p>When the fallback should apply only to <code>null</code>, use <code>??</code>. When the fallback should apply to every falsy value, write the full ternary so the intent is visible in review.</p>
+<p>When the fallback should apply only to <code>null</code>, use <code>??</code>. When the fallback should apply to every falsy value, write the full ternary so the intent is visible in review.</p><pre><code>// Only missing values fall back. 0 and "" are preserved.
+$limit = $request_limit ?? 20;
+
+// Any falsy value falls back. The duplicated condition is intentional.
+$title = $raw_title ? $raw_title : 'Untitled';</code></pre>
 
 <h2 id="see-also">See also</h2>
 

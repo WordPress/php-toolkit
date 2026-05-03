@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Blueprints — PHP Toolkit reference</title>
 <meta name="description" content="Declarative WordPress site provisioning. Write a JSON description of plugins, options, and content; let the runner execute it.">
-<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<link rel="stylesheet" href="../assets/style.css?v=20260503-script-unescape">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
-<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+<script src="../assets/page.js?v=20260503-script-unescape" defer></script>
 </head>
 <body>
 <header class="site">
@@ -63,6 +63,20 @@
 <p><code>RunnerConfiguration</code> is a fluent builder. The minimum: target site root, target site URL, execution mode.</p>
 
 <php-snippet blueprint="toolkit-setup" name="configure.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Blueprints\Runner;
+use WordPress\Blueprints\RunnerConfiguration;
+
+$config = ( new RunnerConfiguration() )
+	-&gt;set_execution_mode( Runner::EXECUTION_MODE_APPLY_TO_EXISTING_SITE )
+	-&gt;set_target_site_root( &#x27;/wordpress&#x27; )
+	-&gt;set_target_site_url( &#x27;http://playground.test/&#x27; );
+
+echo &quot;mode: &quot; . $config-&gt;get_execution_mode() . &quot;\n&quot;;
+echo &quot;root: &quot; . $config-&gt;get_target_site_root() . &quot;\n&quot;;
+echo &quot;url:  &quot; . $config-&gt;get_target_site_url() . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -91,6 +105,38 @@ url:  http://playground.test/
 <p>CI jobs and tests stay clearer when PHP builds the blueprint from data instead of hand-writing JSON. Keep the structure plain: <code>version</code>, then a list of step arrays.</p>
 
 <php-snippet blueprint="toolkit-setup" name="build-json.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$site_name = &#x27;Demo Site&#x27;;
+$plugins   = array( &#x27;gutenberg&#x27;, &#x27;classic-editor&#x27; );
+
+$blueprint = array(
+	&#x27;version&#x27; =&gt; 2,
+	&#x27;steps&#x27;   =&gt; array(
+		array(
+			&#x27;step&#x27;    =&gt; &#x27;setSiteOptions&#x27;,
+			&#x27;options&#x27; =&gt; array(
+				&#x27;blogname&#x27;              =&gt; $site_name,
+				&#x27;permalink_structure&#x27;   =&gt; &#x27;/%postname%/&#x27;,
+				&#x27;show_on_front&#x27;         =&gt; &#x27;page&#x27;,
+			),
+		),
+	),
+);
+
+foreach ( $plugins as $slug ) {
+	$blueprint[&#x27;steps&#x27;][] = array(
+		&#x27;step&#x27;       =&gt; &#x27;installPlugin&#x27;,
+		&#x27;pluginData&#x27; =&gt; &quot;https://downloads.wordpress.org/plugin/{$slug}.zip&quot;,
+	);
+	$blueprint[&#x27;steps&#x27;][] = array(
+		&#x27;step&#x27;   =&gt; &#x27;activatePlugin&#x27;,
+		&#x27;plugin&#x27; =&gt; &quot;{$slug}/{$slug}.php&quot;,
+	);
+}
+
+echo json_encode( $blueprint, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -163,6 +209,42 @@ echo json_encode( $blueprint, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n
 <p>The schema validator returns a human-readable <code>ValidationError</code> instead of a generic "does not match schema" failure. Use it before handing user-authored JSON to a runner.</p>
 
 <php-snippet blueprint="toolkit-setup" name="validate.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Blueprints\Validator\HumanFriendlySchemaValidator;
+
+$schema = array(
+	&#x27;type&#x27;       =&gt; &#x27;object&#x27;,
+	&#x27;required&#x27;   =&gt; array( &#x27;version&#x27;, &#x27;steps&#x27; ),
+	&#x27;properties&#x27; =&gt; array(
+		&#x27;version&#x27; =&gt; array( &#x27;type&#x27; =&gt; &#x27;integer&#x27; ),
+		&#x27;steps&#x27;   =&gt; array(
+			&#x27;type&#x27;  =&gt; &#x27;array&#x27;,
+			&#x27;items&#x27; =&gt; array(
+				&#x27;type&#x27;       =&gt; &#x27;object&#x27;,
+				&#x27;required&#x27;   =&gt; array( &#x27;step&#x27; ),
+				&#x27;properties&#x27; =&gt; array(
+					&#x27;step&#x27; =&gt; array( &#x27;type&#x27; =&gt; &#x27;string&#x27; ),
+				),
+			),
+		),
+	),
+);
+
+$blueprint = array(
+	&#x27;version&#x27; =&gt; 2,
+	&#x27;steps&#x27;   =&gt; array(
+		array( &#x27;pluginData&#x27; =&gt; &#x27;https://downloads.wordpress.org/plugin/gutenberg.zip&#x27; ),
+	),
+);
+
+$error = ( new HumanFriendlySchemaValidator( $schema ) )-&gt;validate( $blueprint );
+if ( null === $error ) {
+	echo &quot;valid\n&quot;;
+} else {
+	echo $error-&gt;get_pretty_path() . &quot;: &quot; . $error-&gt;message . &quot;\n&quot;;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -208,7 +290,20 @@ Blueprint root["steps"][0]: Missing required field: step.
 
 <h2 id="the-blueprint-json-shape">The Blueprint JSON shape</h2>
 
-<p>A blueprint is a JSON document with a <code>version</code> field and a <code>steps</code> array. Each step has a <code>"step"</code> discriminator and step-specific fields. This is the same shape used by <a href="https://playground.wordpress.net/">WordPress Playground</a>.</p>
+<p>A blueprint is a JSON document with a <code>version</code> field and a <code>steps</code> array. Each step has a <code>"step"</code> discriminator and step-specific fields. This is the same shape used by <a href="https://playground.wordpress.net/">WordPress Playground</a>.</p><pre><code>{
+  "version": 2,
+  "steps": [
+    { "step": "setSiteOptions",
+      "options": {
+        "blogname": "Demo Site",
+        "permalink_structure": "/%postname%/"
+      } },
+    { "step": "installPlugin",
+      "pluginData": "https://downloads.wordpress.org/plugin/gutenberg.zip" },
+    { "step": "activatePlugin",
+      "plugin": "gutenberg/gutenberg.php" }
+  ]
+}</code></pre>
 
 <h2 id="see-also">See also</h2>
 

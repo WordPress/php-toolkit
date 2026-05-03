@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Polyfill — PHP Toolkit reference</title>
 <meta name="description" content="PHP 8 string functions on PHP 7.2+, WordPress hook stubs, and translation/escaping passthroughs so toolkit code runs without WordPress.">
-<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<link rel="stylesheet" href="../assets/style.css?v=20260503-script-unescape">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
-<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+<script src="../assets/page.js?v=20260503-script-unescape" defer></script>
 </head>
 <body>
 <header class="site">
@@ -67,6 +67,15 @@
 <p>The polyfills define <code>str_contains</code>, <code>str_starts_with</code>, <code>str_ends_with</code>, and <code>array_key_first</code> only when missing.</p>
 
 <php-snippet blueprint="toolkit-setup" name="php8-strings.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+var_dump( str_starts_with( &#x27;/var/www/html&#x27;, &#x27;/var&#x27; ) );
+var_dump( str_ends_with( &#x27;image.png&#x27;, &#x27;.png&#x27; ) );
+var_dump( str_contains( &#x27;WordPress Toolkit&#x27;, &#x27;Toolkit&#x27; ) );
+
+$first_key = array_key_first( array( &#x27;alpha&#x27; =&gt; 1, &#x27;beta&#x27; =&gt; 2 ) );
+echo &quot;first key: {$first_key}\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -91,6 +100,13 @@ first key: alpha
 <p>Pass-through implementations let you write code that looks WordPressy and runs anywhere.</p>
 
 <php-snippet blueprint="toolkit-setup" name="wp-stubs.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+echo __( &#x27;Hello, world&#x27; ) . &quot;\n&quot;;
+echo esc_html( &#x27;&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;&#x27; ) . &quot;\n&quot;;
+echo esc_attr( &#x27;a &quot;quoted&quot; value&#x27; ) . &quot;\n&quot;;
+echo esc_url( &#x27;https://example.com/?a=1&amp;b=2&#x27; ) . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -113,6 +129,16 @@ https://example.com/?a=1&amp;b=2
 <p>The hook system is a real implementation of the WordPress filter API: registered callbacks get applied in priority order, and each one transforms the running value.</p>
 
 <php-snippet blueprint="toolkit-setup" name="filter-chain.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+add_filter( &#x27;sanitize_title&#x27;, &#x27;trim&#x27; );
+add_filter( &#x27;sanitize_title&#x27;, &#x27;strtolower&#x27; );
+add_filter( &#x27;sanitize_title&#x27;, function ( $title ) {
+	return preg_replace( &#x27;/\s+/&#x27;, &#x27;-&#x27;, $title );
+} );
+
+echo apply_filters( &#x27;sanitize_title&#x27;, &#x27;  My Post Title  &#x27; ) . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -135,6 +161,23 @@ my-post-title
 <p>Lower priority numbers run first. The fourth argument to <code>add_filter</code> controls how many context values get passed to the callback.</p>
 
 <php-snippet blueprint="toolkit-setup" name="priority-args.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+add_filter( &#x27;render_price&#x27;, function ( $html, $price, $currency ) {
+	return $html . &quot; ({$currency} markup)&quot;;
+}, 30, 3 );
+
+add_filter( &#x27;render_price&#x27;, function ( $html, $price ) {
+	return &quot;&lt;strong&gt;{$html}&lt;/strong&gt;&quot;;
+}, 10, 2 );
+
+add_filter( &#x27;render_price&#x27;, function ( $html, $price, $currency ) {
+	if ( &#x27;EUR&#x27; === $currency ) return $html . &#x27; EUR&#x27;;
+	return $html . &quot; {$currency}&quot;;
+}, 20, 3 );
+
+echo apply_filters( &#x27;render_price&#x27;, &#x27;19.99&#x27;, 19.99, &#x27;EUR&#x27; ) . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -164,6 +207,32 @@ echo apply_filters( 'render_price', '19.99', 19.99, 'EUR' ) . "\n";
 <p>Use <code>do_action</code> and <code>apply_filters</code> as cheap extension points in your own code, without depending on WordPress.</p>
 
 <php-snippet blueprint="toolkit-setup" name="library-hooks.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+class ImportPipeline {
+	public function process( array $row ) {
+		$row = apply_filters( &#x27;import_pipeline_normalize&#x27;, $row );
+		do_action( &#x27;import_pipeline_row_processed&#x27;, $row );
+		return $row;
+	}
+}
+
+add_filter( &#x27;import_pipeline_normalize&#x27;, function ( $row ) {
+	$row[&#x27;email&#x27;] = strtolower( trim( $row[&#x27;email&#x27;] ) );
+	return $row;
+} );
+
+$log = array();
+add_action( &#x27;import_pipeline_row_processed&#x27;, function ( $row ) use ( &amp;$log ) {
+	$log[] = $row[&#x27;email&#x27;];
+} );
+
+$pipeline = new ImportPipeline();
+$pipeline-&gt;process( array( &#x27;email&#x27; =&gt; &#x27;  USER@EXAMPLE.COM  &#x27; ) );
+$pipeline-&gt;process( array( &#x27;email&#x27; =&gt; &#x27;OTHER@example.com&#x27; ) );
+
+echo implode( &quot;\n&quot;, $log ) . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';

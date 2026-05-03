@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HttpClient — PHP Toolkit reference</title>
 <meta name="description" content="Async HTTP client without curl required. Uses sockets when curl is missing, supports concurrent requests and streaming responses.">
-<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<link rel="stylesheet" href="../assets/style.css?v=20260503-script-unescape">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
-<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+<script src="../assets/page.js?v=20260503-script-unescape" defer></script>
 </head>
 <body>
 <header class="site">
@@ -60,9 +60,21 @@
 
 <h2 id="a-minimal-example">A minimal example</h2>
 
-<p>The smallest flow has three steps: create a request, wait until headers arrive, then consume the body stream. This is intentionally close to the Fetch API shape, but the body is a toolkit byte stream instead of a buffered string.</p>
+<p class="callout"><strong>Network access in the demo runtime.</strong> Live request examples show the real API, but outbound HTTP in browser sandboxes may require a CORS proxy.</p><p>The smallest flow has three steps: create a request, wait until headers arrive, then consume the body stream. This is intentionally close to the Fetch API shape, but the body is a toolkit byte stream instead of a buffered string.</p>
 
 <php-snippet blueprint="toolkit-setup" name="get.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$client  = new Client();
+$stream  = $client-&gt;fetch( new Request( &#x27;https://example.com/&#x27; ) );
+
+$response = $stream-&gt;await_response();
+echo &quot;status: &quot; . $response-&gt;status_code . &quot;\n&quot;;
+echo &quot;first 80 bytes: &quot; . substr( $stream-&gt;consume_all(), 0, 80 ) . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -84,6 +96,34 @@ echo "first 80 bytes: " . substr( $stream->consume_all(), 0, 80 ) . "\n";
 <p>Uploads use the same shape. The only difference is that the request declares a method, request headers, and an upload body stream. Here the body is form-encoded text wrapped in <code>MemoryPipe</code>; a file upload could provide a file-backed read stream instead.</p>
 
 <php-snippet blueprint="toolkit-setup" name="post.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+use WordPress\ByteStream\MemoryPipe;
+
+$payload = http_build_query(
+	array(
+		&#x27;title&#x27; =&gt; &#x27;Hello&#x27;,
+		&#x27;tags&#x27;  =&gt; &#x27;http,php&#x27;,
+	),
+	&#x27;&#x27;,
+	&#x27;&amp;&#x27;
+);
+
+$client  = new Client();
+$request = new Request( &#x27;https://httpbin.org/post&#x27;, array(
+	&#x27;method&#x27;      =&gt; &#x27;POST&#x27;,
+	&#x27;headers&#x27;     =&gt; array(
+		&#x27;content-type&#x27;   =&gt; &#x27;application/x-www-form-urlencoded&#x27;,
+		&#x27;content-length&#x27; =&gt; (string) strlen( $payload ),
+	),
+	&#x27;body_stream&#x27; =&gt; new MemoryPipe( $payload ),
+) );
+
+$response = $client-&gt;fetch( $request )-&gt;json();
+echo &quot;Server saw form title: &quot; . $response[&#x27;form&#x27;][&#x27;title&#x27;] . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -121,6 +161,28 @@ echo "Server saw form title: " . $response['form']['title'] . "\n";
 <p>A <code>Request</code> is just data until a client enqueues it. That makes it easy to test request construction without network access. The constructor normalizes headers, calculates <code>content-length</code> when the body stream has a known length, and moves URL credentials into an Authorization header.</p>
 
 <php-snippet blueprint="toolkit-setup" name="request-object.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\ByteStream\MemoryPipe;
+use WordPress\HttpClient\Request;
+
+$body = new MemoryPipe( json_encode( array(
+	&#x27;title&#x27; =&gt; &#x27;Hello&#x27;,
+	&#x27;tags&#x27;  =&gt; array( &#x27;docs&#x27;, &#x27;php&#x27; ),
+) ) );
+$body-&gt;close_writing();
+
+$request = new Request( &#x27;https://user:secret@api.example.test/posts&#x27;, array(
+	&#x27;method&#x27;      =&gt; &#x27;POST&#x27;,
+	&#x27;headers&#x27;     =&gt; array( &#x27;content-type&#x27; =&gt; &#x27;application/json&#x27; ),
+	&#x27;body_stream&#x27; =&gt; $body,
+) );
+
+echo $request-&gt;method . &#x27; &#x27; . $request-&gt;url . &quot;\n&quot;;
+echo &quot;content-type: &quot; . $request-&gt;get_header( &#x27;content-type&#x27; ) . &quot;\n&quot;;
+echo &quot;content-length: &quot; . $request-&gt;get_header( &#x27;content-length&#x27; ) . &quot;\n&quot;;
+echo &quot;authorization: &quot; . substr( $request-&gt;get_header( &#x27;authorization&#x27; ), 0, 10 ) . &quot;...\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -158,6 +220,24 @@ authorization: Basic dXNl...
 <p>Most applications receive <code>Response</code> objects from <code>await_response()</code>. Transports, middleware, and tests sometimes need the lower-level parser: <code>Response::from_http_headers()</code> turns raw HTTP header bytes into normalized status and case-insensitive headers.</p>
 
 <php-snippet blueprint="toolkit-setup" name="parse-response.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpClient\Request;
+use WordPress\HttpClient\Response;
+
+$request = new Request( &#x27;https://api.example.test/posts/42&#x27; );
+$raw = &quot;HTTP/1.1 201 Created\r\n&quot;
+	. &quot;Content-Type: application/json\r\n&quot;
+	. &quot;Location: /posts/42\r\n&quot;
+	. &quot;Content-Length: 27\r\n\r\n&quot;;
+
+$response = Response::from_http_headers( $raw, $request );
+
+echo &quot;status: &quot; . $response-&gt;status_code . &#x27; &#x27; . $response-&gt;get_reason_phrase() . &quot;\n&quot;;
+echo &quot;ok:     &quot; . ( $response-&gt;ok() ? &#x27;yes&#x27; : &#x27;no&#x27; ) . &quot;\n&quot;;
+echo &quot;type:   &quot; . $response-&gt;get_header( &#x27;CONTENT-TYPE&#x27; ) . &quot;\n&quot;;
+echo &quot;size:   &quot; . $response-&gt;total_bytes . &quot; bytes\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -188,13 +268,29 @@ size:   27 bytes
 
 <h2 id="pick-the-right-reading-style">Pick the right reading style</h2>
 
-<p>There are three common ways to consume a response. Start simple, then move down the table only when the workflow demands it.</p>
+<p>There are three common ways to consume a response. Start simple, then move down the table only when the workflow demands it.</p><table><thead><tr><th>Style</th><th>Use when</th><th>Tradeoff</th></tr></thead><tbody><tr><td><code>consume_all()</code> or <code>json()</code></td><td>Small HTML, JSON, or API responses.</td><td>Buffers the full body.</td></tr><tr><td><code>Client::await_next_event()</code></td><td>Progress bars, streaming to disk, queues, failure handling.</td><td>You own the event loop.</td></tr><tr><td>Filesystem and parser composition</td><td>Remote ZIPs, WXR files, import pipelines.</td><td>Requires a stream-aware consumer.</td></tr></tbody></table>
 
 <h2 id="refinement-choose-a-transport">Refinement: choose a transport</h2>
 
-<p>The transport is the I/O backend. It should not change your request, response, redirect, cache, or stream code; it only changes how bytes move across the network.</p><p><code>concurrency</code>, <code>timeout_ms</code>, <code>cache_dir</code>, redirects, and response streaming sit above the transport, so the examples later on work with either backend.</p>
+<p>The transport is the I/O backend. It should not change your request, response, redirect, cache, or stream code; it only changes how bytes move across the network.</p><table><thead><tr><th>Transport</th><th>What it does</th><th>When to choose it</th></tr></thead><tbody><tr><td><code>auto</code></td><td>Uses curl when loaded, otherwise sockets.</td><td>Application default. Best when you want portability and the fastest available backend.</td></tr><tr><td><code>sockets</code></td><td>Uses PHP stream sockets, no curl extension.</td><td>Tests, Playground-style runtimes, hosts where curl is unavailable, or proving the dependency-free path works.</td></tr><tr><td><code>curl</code></td><td>Uses the curl extension.</td><td>Hosts where curl is available and you want to compare behavior or performance explicitly.</td></tr></tbody></table><p><code>concurrency</code>, <code>timeout_ms</code>, <code>cache_dir</code>, redirects, and response streaming sit above the transport, so the examples later on work with either backend.</p>
 
 <php-snippet blueprint="toolkit-setup" name="transports.php" runnable="false">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpClient\Client;
+
+$default = new Client(); // Same as array( &#x27;transport&#x27; =&gt; &#x27;auto&#x27; ).
+
+$portable = new Client( array(
+	&#x27;transport&#x27; =&gt; &#x27;sockets&#x27;,
+) );
+
+if ( extension_loaded( &#x27;curl&#x27; ) ) {
+	$curl = new Client( array(
+		&#x27;transport&#x27; =&gt; &#x27;curl&#x27;,
+	) );
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -220,6 +316,22 @@ if ( extension_loaded( 'curl' ) ) {
 <p>Redirects are middleware, not transport behavior. The client follows up to five redirects by default. The original <code>Request</code> keeps a chain to the final request, so importers can log where a source URL actually landed.</p>
 
 <php-snippet blueprint="toolkit-setup" name="redirects.php" runnable="false">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$client   = new Client();
+$request  = new Request( &#x27;https://httpbin.org/redirect-to?url=https://example.com/&#x27; );
+$stream   = $client-&gt;fetch( $request );
+$response = $stream-&gt;await_response();
+$stream-&gt;consume_all();
+
+$final = $request-&gt;latest_redirect();
+echo &quot;original: &quot; . $request-&gt;url . &quot;\n&quot;;
+echo &quot;final:    &quot; . $final-&gt;url . &quot;\n&quot;;
+echo &quot;status:   &quot; . $response-&gt;status_code . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -245,6 +357,26 @@ echo "status:   " . $response->status_code . "\n";
 <p>Pass <code>cache_dir</code> to add disk caching for cacheable GET and HEAD responses. Fresh cached responses replay the same header/body events as a network response, so crawlers and importers do not need a separate cache code path. Non-GET requests invalidate matching cache entries instead of being cached.</p>
 
 <php-snippet blueprint="toolkit-setup" name="cache.php" runnable="false">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$cache_dir = sys_get_temp_dir() . &#x27;/http-cache-&#x27; . uniqid();
+mkdir( $cache_dir );
+
+$client = new Client( array( &#x27;cache_dir&#x27; =&gt; $cache_dir ) );
+$url    = &#x27;https://httpbin.org/cache/60&#x27;;
+
+for ( $i = 1; $i &lt;= 2; $i++ ) {
+	$stream   = $client-&gt;fetch( new Request( $url ) );
+	$response = $stream-&gt;await_response();
+	$body     = $stream-&gt;consume_all();
+	echo &quot;request {$i}: HTTP &quot; . $response-&gt;status_code . &#x27;, body=&#x27; . strlen( $body ) . &quot; bytes\n&quot;;
+}
+
+echo &quot;cache files: &quot; . count( glob( $cache_dir . &#x27;/*&#x27; ) ) . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -274,6 +406,30 @@ echo "cache files: " . count( glob( $cache_dir . '/*' ) ) . "\n";
 <p>Failures arrive as events. That lets a crawler, importer, package installer, or media frontloader log one bad URL and keep processing the rest of the queue. Treat failure handling as part of the event loop, not as one global try/catch around the whole batch.</p>
 
 <php-snippet blueprint="toolkit-setup" name="failures.php" runnable="false">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$client = new Client( array( &#x27;timeout_ms&#x27; =&gt; 5000 ) );
+$client-&gt;enqueue( array(
+	new Request( &#x27;https://example.com/&#x27;, array( &#x27;method&#x27; =&gt; &#x27;HEAD&#x27; ) ),
+	new Request( &#x27;https://example.invalid/missing&#x27; ),
+) );
+
+while ( $client-&gt;await_next_event() ) {
+	$request = $client-&gt;get_request();
+	$event   = $client-&gt;get_event();
+
+	if ( Client::EVENT_GOT_HEADERS === $event ) {
+		echo &quot;ok: &quot; . $request-&gt;url . &quot; HTTP &quot; . $request-&gt;response-&gt;status_code . &quot;\n&quot;;
+	} elseif ( Client::EVENT_FAILED === $event ) {
+		echo &quot;failed: &quot; . $request-&gt;url . &quot;\n&quot;;
+	} elseif ( Client::EVENT_FINISHED === $event ) {
+		echo &quot;finished: &quot; . $request-&gt;url . &quot;\n&quot;;
+	}
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -307,6 +463,56 @@ while ( $client->await_next_event() ) {
 <p>When you care about progress, use the event loop directly. Count bytes from each <code>EVENT_BODY_CHUNK_AVAILABLE</code> event and compare them with <code>Content-Length</code> when the server provides one.</p>
 
 <php-snippet blueprint="toolkit-setup" name="progress.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$url  = &#x27;https://raw.githubusercontent.com/WordPress/php-toolkit/trunk/components/Zip/Tests/fixtures/childrens-literature.zip&#x27;;
+$dest = sys_get_temp_dir() . &#x27;/progress-&#x27; . uniqid() . &#x27;.zip&#x27;;
+
+$client  = new Client();
+$request = new Request( $url );
+$client-&gt;enqueue( array( $request ) );
+
+$downloaded = 0;
+$last_step  = -1;
+@unlink( $dest );
+
+while ( $client-&gt;await_next_event() ) {
+	$event   = $client-&gt;get_event();
+	$request = $client-&gt;get_request();
+
+	if ( Client::EVENT_GOT_HEADERS === $event ) {
+		echo &quot;status: &quot; . $request-&gt;response-&gt;status_code . &quot;\n&quot;;
+		continue;
+	}
+
+	if ( Client::EVENT_BODY_CHUNK_AVAILABLE === $event ) {
+		$chunk       = $client-&gt;get_response_body_chunk();
+		$downloaded += strlen( $chunk );
+		file_put_contents( $dest, $chunk, FILE_APPEND );
+
+		$total = $request-&gt;response-&gt;total_bytes;
+		if ( $total ) {
+			$step = min( 100, (int) floor( $downloaded / $total * 100 ) );
+			if ( $step &gt;= $last_step + 25 || 100 === $step ) {
+				echo &quot;progress: {$step}% ({$downloaded}/{$total} bytes)\n&quot;;
+				$last_step = $step;
+			}
+		} else {
+			echo &quot;downloaded: {$downloaded} bytes\n&quot;;
+		}
+		continue;
+	}
+
+	if ( Client::EVENT_FINISHED === $event ) {
+		echo &quot;saved: {$dest}\n&quot;;
+	} elseif ( Client::EVENT_FAILED === $event ) {
+		echo &quot;failed: &quot; . $request-&gt;error-&gt;message . &quot;\n&quot;;
+	}
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -366,6 +572,52 @@ while ( $client->await_next_event() ) {
 <p>For large queues, do not enqueue everything at once. Keep at most ten active requests, enqueue another as each one finishes, and let the client multiplex only that window.</p>
 
 <php-snippet blueprint="toolkit-setup" name="sliding-window.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$urls = array();
+for ( $i = 1; $i &lt;= 25; $i++ ) {
+	$urls[] = &#x27;https://example.com/?request=&#x27; . $i;
+}
+
+$client  = new Client( array( &#x27;concurrency&#x27; =&gt; 10 ) );
+$pending = $urls;
+$active  = array();
+$done    = 0;
+
+$enqueue_next = function () use ( &amp;$pending, &amp;$active, $client ) {
+	if ( ! $pending ) {
+		return;
+	}
+	$url     = array_shift( $pending );
+	$request = new Request( $url, array( &#x27;method&#x27; =&gt; &#x27;HEAD&#x27; ) );
+	$active[ $request-&gt;id ] = $request;
+	$client-&gt;enqueue( array( $request ) );
+};
+
+for ( $i = 0; $i &lt; 10; $i++ ) {
+	$enqueue_next();
+}
+
+while ( $active &amp;&amp; $client-&gt;await_next_event() ) {
+	$request = $client-&gt;get_request();
+	$event   = $client-&gt;get_event();
+
+	if ( Client::EVENT_GOT_HEADERS === $event ) {
+		echo &quot;headers {$request-&gt;id}: &quot; . $request-&gt;response-&gt;status_code . &quot;\n&quot;;
+		continue;
+	}
+
+	if ( Client::EVENT_FINISHED === $event || Client::EVENT_FAILED === $event ) {
+		unset( $active[ $request-&gt;id ] );
+		$done++;
+		echo &quot;finished {$done}/25, active=&quot; . count( $active ) . &quot;\n&quot;;
+		$enqueue_next();
+	}
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -421,6 +673,54 @@ while ( $active && $client->await_next_event() ) {
 <p>Resuming is an HTTP contract between you and the server. Save what you already have, send a <code>Range</code> request for the remaining bytes, and append only if the server returns <code>206 Partial Content</code>.</p>
 
 <php-snippet blueprint="toolkit-setup" name="resume-download.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$url  = &#x27;https://raw.githubusercontent.com/WordPress/php-toolkit/trunk/components/Zip/Tests/fixtures/childrens-literature.zip&#x27;;
+$dest = sys_get_temp_dir() . &#x27;/resume-&#x27; . uniqid() . &#x27;.zip&#x27;;
+
+$client = new Client();
+
+// Simulate an interrupted first attempt by downloading only the first 32 KB.
+$first = new Request( $url, array(
+	&#x27;headers&#x27; =&gt; array( &#x27;range&#x27; =&gt; &#x27;bytes=0-32767&#x27; ),
+) );
+$stream   = $client-&gt;fetch( $first );
+$response = $stream-&gt;await_response();
+file_put_contents( $dest, $stream-&gt;consume_all() );
+
+if ( 206 !== $response-&gt;status_code ) {
+	echo &quot;Server did not honor Range; start over with a full download.\n&quot;;
+	exit;
+}
+
+$downloaded = filesize( $dest );
+echo &quot;partial file: {$downloaded} bytes\n&quot;;
+
+$resume = new Request( $url, array(
+	&#x27;headers&#x27; =&gt; array( &#x27;range&#x27; =&gt; &#x27;bytes=&#x27; . $downloaded . &#x27;-&#x27; ),
+) );
+$stream   = $client-&gt;fetch( $resume );
+$response = $stream-&gt;await_response();
+
+if ( 206 !== $response-&gt;status_code ) {
+	echo &quot;Server did not resume; discard partial file and retry from byte 0.\n&quot;;
+	exit;
+}
+
+while ( ! $stream-&gt;reached_end_of_data() ) {
+	$n = $stream-&gt;pull( 8192 );
+	if ( 0 === $n ) {
+		break;
+	}
+	file_put_contents( $dest, $stream-&gt;consume( $n ), FILE_APPEND );
+}
+
+echo &quot;complete file: &quot; . filesize( $dest ) . &quot; bytes\n&quot;;
+echo &quot;saved: {$dest}\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -478,6 +778,53 @@ echo "saved: {$dest}\n";
 <p>Mount the remote archive with <code>ZipFilesystem</code>, then copy it into any writable filesystem. <code>SeekableRequestReadStream</code> caches received bytes to a temporary file so <code>ZipFilesystem</code> can read the central directory and seek to entries without first writing the ZIP yourself.</p>
 
 <php-snippet blueprint="toolkit-setup" name="stream-unzip.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\ByteStream\SeekableRequestReadStream;
+use WordPress\HttpClient\Request;
+use WordPress\Filesystem\LocalFilesystem;
+use WordPress\Zip\ZipFilesystem;
+use function WordPress\Filesystem\copy_between_filesystems;
+use function WordPress\Filesystem\ls_recursive;
+
+$url  = &#x27;https://raw.githubusercontent.com/WordPress/php-toolkit/trunk/components/Zip/Tests/fixtures/childrens-literature.zip&#x27;;
+$root = sys_get_temp_dir() . &#x27;/remote-zip-&#x27; . uniqid();
+mkdir( $root );
+
+$client = new Client();
+$reader = new SeekableRequestReadStream(
+	new Request( $url ),
+	array( &#x27;client&#x27; =&gt; $client )
+);
+
+$response = $reader-&gt;await_response();
+if ( ! $response-&gt;ok() ) {
+	echo &quot;HTTP &quot; . $response-&gt;status_code . &quot;\n&quot;;
+	exit;
+}
+
+$zip   = ZipFilesystem::create( $reader );
+$local = LocalFilesystem::create( $root );
+
+copy_between_filesystems( array(
+	&#x27;source_filesystem&#x27; =&gt; $zip,
+	&#x27;source_path&#x27;       =&gt; &#x27;/&#x27;,
+	&#x27;target_filesystem&#x27; =&gt; $local,
+	&#x27;target_path&#x27;       =&gt; &#x27;/&#x27;,
+) );
+
+$tree  = ls_recursive( $local, &#x27;/&#x27; );
+$files = 0;
+array_walk_recursive( $tree, function ( $value, $key ) use ( &amp;$files ) {
+	if ( &#x27;type&#x27; === $key &amp;&amp; &#x27;file&#x27; === $value ) {
+		$files++;
+	}
+} );
+
+echo &quot;extracted {$files} files\n&quot;;
+echo &quot;root: {$root}\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -534,6 +881,36 @@ echo "root: {$root}\n";
 <p>Enqueue a batch of requests and react to events as they fire. The client multiplexes them — total wall time is roughly the slowest request, not the sum.</p>
 
 <php-snippet blueprint="toolkit-setup" name="fan-out.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$urls = array(
+	&#x27;https://wordpress.org/&#x27;,
+	&#x27;https://make.wordpress.org/&#x27;,
+	&#x27;https://developer.wordpress.org/&#x27;,
+);
+
+$client = new Client();
+$client-&gt;enqueue( array_map( function ( $url ) {
+	return new Request( $url, array( &#x27;method&#x27; =&gt; &#x27;HEAD&#x27; ) );
+}, $urls ) );
+
+$results = array();
+while ( $client-&gt;await_next_event() ) {
+	$request = $client-&gt;get_request();
+	if ( Client::EVENT_GOT_HEADERS === $client-&gt;get_event() ) {
+		$results[ $request-&gt;url ] = $request-&gt;response-&gt;status_code;
+	} elseif ( Client::EVENT_FAILED === $client-&gt;get_event() ) {
+		$results[ $request-&gt;url ] = &#x27;ERR &#x27; . $request-&gt;error-&gt;message;
+	}
+}
+
+foreach ( $results as $url =&gt; $status ) {
+	printf( &quot;%-40s %s\n&quot;, $url, $status );
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -573,6 +950,33 @@ foreach ( $results as $url => $status ) {
 <p>Process the body chunk-by-chunk via the event loop. Memory stays flat regardless of file size.</p>
 
 <php-snippet blueprint="toolkit-setup" name="stream-to-disk.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$dest   = sys_get_temp_dir() . &#x27;/wp-readme.html&#x27;;
+$client = new Client();
+$client-&gt;enqueue( array( new Request( &#x27;https://wordpress.org/&#x27; ) ) );
+
+$bytes = 0;
+@unlink( $dest );
+
+while ( $client-&gt;await_next_event() ) {
+	switch ( $client-&gt;get_event() ) {
+		case Client::EVENT_BODY_CHUNK_AVAILABLE:
+			$chunk  = $client-&gt;get_response_body_chunk();
+			$bytes += strlen( $chunk );
+			file_put_contents( $dest, $chunk, FILE_APPEND );
+			break;
+		case Client::EVENT_FINISHED:
+			echo &quot;Wrote {$bytes} bytes to {$dest}\n&quot;;
+			break;
+	}
+}
+
+echo &quot;Peak memory: &quot; . round( memory_get_peak_usage( true ) / 1024 / 1024, 2 ) . &quot; MB\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -607,6 +1011,7 @@ echo "Peak memory: " . round( memory_get_peak_usage( true ) / 1024 / 1024, 2 ) .
 <h2 id="see-also">See also</h2>
 
 <ul class="related-components">
+	<li><a href="../learn/04-talking-to-the-network.html"><strong>Tutorial — Talking to the network</strong></a><span>Walks through a streaming downloader that resumes, fans out, and pipes bytes to disk without buffering.</span></li>
 	<li><a href="bytestream.html"><strong>ByteStream</strong></a><span>Stream request and response bodies.</span></li>
 	<li><a href="filesystem.html"><strong>Filesystem</strong></a><span>Persist large downloads without buffering them in memory.</span></li>
 	<li><a href="corsproxy.html"><strong>CORSProxy</strong></a><span>Bridge browser-side tools to servers without CORS headers.</span></li>

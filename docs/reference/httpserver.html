@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HttpServer — PHP Toolkit reference</title>
 <meta name="description" content="A minimal blocking TCP HTTP server in pure PHP. For CLI tools and tests, not for production traffic.">
-<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<link rel="stylesheet" href="../assets/style.css?v=20260503-script-unescape">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
-<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+<script src="../assets/page.js?v=20260503-script-unescape" defer></script>
 </head>
 <body>
 <header class="site">
@@ -60,7 +60,27 @@
 
 <h2 id="a-minimal-example">A minimal example</h2>
 
+<p class="callout"><strong>Run on your machine:</strong> the Playground sandbox does not allow processes to bind listening TCP ports. Save this snippet locally and run <code>php hello-server.php</code>.</p>
+
 <php-snippet blueprint="toolkit-setup" name="hello-server.php" runnable="false">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require __DIR__ . &#x27;/vendor/autoload.php&#x27;;
+
+use WordPress\HttpServer\TcpServer;
+use WordPress\HttpServer\IncomingRequest;
+use WordPress\HttpServer\Response\ResponseWriteStream;
+
+$server = new TcpServer( &#x27;127.0.0.1&#x27;, 8080 );
+
+$server-&gt;set_handler( function ( IncomingRequest $request, ResponseWriteStream $response ) {
+	$response-&gt;send_http_code( 200 );
+	$response-&gt;send_header( &#x27;Content-Type&#x27;, &#x27;text/plain&#x27; );
+	$response-&gt;append_bytes( &quot;Hello from &quot; . $request-&gt;method . &quot; &quot; . $request-&gt;url . &quot;\n&quot; );
+} );
+
+$server-&gt;serve( function ( $host, $port ) {
+	echo &quot;Listening on http://{$host}:{$port}\n&quot;;
+} );</code></pre>
 <script type="application/x-php">
 <?php
 require __DIR__ . '/vendor/autoload.php';
@@ -85,9 +105,49 @@ $server->serve( function ( $host, $port ) {
 
 <h2 id="refinement-a-tiny-json-router">Refinement: a tiny JSON router</h2>
 
-<p>Build a CLI tool with a web UI by switching on the parsed path and method.</p>
+<p class="callout"><strong>Run on your machine:</strong> needs a listening port. Once running, try <code>curl localhost:8080/api/status</code>.</p><p>Build a CLI tool with a web UI by switching on the parsed path and method.</p>
 
 <php-snippet blueprint="toolkit-setup" name="mini-router.php" runnable="false">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require __DIR__ . &#x27;/vendor/autoload.php&#x27;;
+
+use WordPress\HttpServer\TcpServer;
+use WordPress\HttpServer\IncomingRequest;
+use WordPress\HttpServer\Response\ResponseWriteStream;
+
+$server = new TcpServer( &#x27;127.0.0.1&#x27;, 8080 );
+
+$server-&gt;set_handler( function ( IncomingRequest $request, ResponseWriteStream $response ) {
+	$path = $request-&gt;get_parsed_url()-&gt;pathname;
+
+	if ( &#x27;/api/status&#x27; === $path ) {
+		$response-&gt;send_http_code( 200 );
+		$response-&gt;send_header( &#x27;Content-Type&#x27;, &#x27;application/json&#x27; );
+		$response-&gt;append_bytes( json_encode( array(
+			&#x27;ok&#x27;     =&gt; true,
+			&#x27;pid&#x27;    =&gt; getmypid(),
+			&#x27;memory&#x27; =&gt; memory_get_usage( true ),
+		) ) );
+		return;
+	}
+
+	if ( &#x27;/api/echo&#x27; === $path &amp;&amp; &#x27;POST&#x27; === $request-&gt;method ) {
+		$body = &#x27;&#x27;;
+		while ( ! $request-&gt;body_stream-&gt;reached_end_of_data() ) {
+			$n = $request-&gt;body_stream-&gt;pull( 4096 );
+			if ( $n &gt; 0 ) $body .= $request-&gt;body_stream-&gt;consume( $n );
+		}
+		$response-&gt;send_http_code( 200 );
+		$response-&gt;send_header( &#x27;Content-Type&#x27;, &#x27;text/plain&#x27; );
+		$response-&gt;append_bytes( $body );
+		return;
+	}
+
+	$response-&gt;send_http_code( 404 );
+	$response-&gt;append_bytes( &quot;Not found\n&quot; );
+} );
+
+$server-&gt;serve();</code></pre>
 <script type="application/x-php">
 <?php
 require __DIR__ . '/vendor/autoload.php';
@@ -137,6 +197,26 @@ $server->serve();
 <p>Use <code>BufferingResponseWriter</code> when you want the framework to compute <code>Content-Length</code> for you, or when the runtime is CGI-shaped and expects the full body up front. This one runs anywhere — no socket required.</p>
 
 <php-snippet blueprint="toolkit-setup" name="buffered-writer.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\HttpServer\Response\BufferingResponseWriter;
+
+$writer = new BufferingResponseWriter();
+$writer-&gt;send_http_code( 200 );
+$writer-&gt;send_header( &#x27;Content-Type&#x27;, &#x27;text/html&#x27; );
+$writer-&gt;append_bytes( &#x27;&lt;!doctype html&gt;&lt;title&gt;Hi&lt;/title&gt;&lt;h1&gt;Hello&lt;/h1&gt;&#x27; );
+$writer-&gt;append_bytes( &#x27;&lt;p&gt;Buffered body, sent at the end.&lt;/p&gt;&#x27; );
+
+ob_start();
+$writer-&gt;close_writing();
+$response_body = ob_get_clean();
+
+echo &quot;headers before send:\n&quot;;
+foreach ( $writer-&gt;get_buffered_headers() as $name =&gt; $value ) {
+	echo &quot;{$name}: {$value}\n&quot;;
+}
+echo &quot;\nbody:\n&quot; . $response_body;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';

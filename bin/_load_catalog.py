@@ -228,8 +228,15 @@ def _join_blocks(text):
 
 
 def _parse_see_also(value):
-    """Convert a `slug | Title | reason` (or list thereof) into structured
-    triples. Returns a list of (slug, title, reason)."""
+    """Convert ``<target> | Title | reason`` lines into (href, title, reason).
+
+    ``<target>`` is either a component slug (rendered as ``<slug>.html``) or
+    a relative URL / absolute URL passed through verbatim. The detection is
+    naive: anything containing ``/`` or ``.`` is treated as a URL,
+    everything else is a slug. This lets entries point at sibling reference
+    pages (``see_also: blockparser | BlockParser | …``) or at learn-path
+    tutorials (``see_also: ../learn/01-rewriting-html.html | Tutorial — … | …``).
+    """
     if value is None:
         return []
     items = value if isinstance(value, list) else [value]
@@ -240,7 +247,12 @@ def _parse_see_also(value):
         parts = [p.strip() for p in item.split('|')]
         if len(parts) != 3:
             raise ValueError(f'see_also must have three pipe-separated fields, got {item!r}')
-        out.append(tuple(parts))
+        target, title, reason = parts
+        if '/' in target or '.' in target:
+            href = target
+        else:
+            href = f'{target}.html'
+        out.append((href, title, reason))
     return out
 
 

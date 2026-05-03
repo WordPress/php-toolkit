@@ -7,6 +7,7 @@ credit_title: Ported from WordPress core
 credit_body: |
   The HTML component is a port of WordPress core's <code>WP_HTML_Tag_Processor</code> and <code>WP_HTML_Processor</code>. Source: <a href="https://github.com/WordPress/wordpress-develop/tree/trunk/src/wp-includes/html-api">WordPress/wordpress-develop</a>. Bug fixes flow in both directions.
 
+see_also: ../learn/01-rewriting-html.html | Tutorial — Rewriting HTML safely | The chapter that introduces the cursor model and the <code>clean_post_html()</code> function reused later in the importer.
 see_also: blockparser | BlockParser | Parse block comments first, then rewrite the HTML inside each block.
 see_also: markdown | Markdown | Convert Markdown to blocks before polishing generated HTML.
 see_also: dataliberation | DataLiberation | Rewrite URLs and media references during import/export pipelines.
@@ -38,11 +39,13 @@ runnable: true
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = '<article>
+$html = <<<'HTML'
+<article>
 	<img src="hero.jpg" alt="Hero">
 	<p>Intro copy.</p>
 	<img src="inline.jpg" alt="Inline">
-</article>';
+</article>
+HTML;
 
 $tags = new WP_HTML_Tag_Processor( $html );
 while ( $tags->next_tag( 'img' ) ) {
@@ -77,8 +80,10 @@ runnable: true
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = '<p>See <a href="/about">about</a>, <a href="https://example.com/x">x</a>, '
-	. 'and <a href="contact.html">contact</a>.</p>';
+$html = <<<'HTML'
+<p>See <a href="/about">about</a>, <a href="https://example.com/x">x</a>, 
+and <a href="contact.html">contact</a>.</p>
+HTML;
 
 $base = 'https://my-site.test/';
 
@@ -99,7 +104,8 @@ echo $tags->get_updated_html();
 
 <!-- expected-output -->
 ```
-<p>See <a href="https://my-site.test/about">about</a>, <a href="https://example.com/x">x</a>, and <a href="https://my-site.test/contact.html">contact</a>.</p>
+<p>See <a href="https://my-site.test/about">about</a>, <a href="https://example.com/x">x</a>, 
+and <a href="https://my-site.test/contact.html">contact</a>.</p>
 ```
 
 ## Strip every script and inline event handler
@@ -114,20 +120,19 @@ runnable: true
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$untrusted = '<p>Hi <b onclick="steal()">friend</b>!</p>'
-	. '<script>alert("xss")</script>'
-	. '<img src=x onerror="boom()">';
+$untrusted = <<<'HTML'
+<p onclick="x()">hi</p>
+<script>evil()</script>
+<img src="x" onerror="boom()">
+HTML;
 
 $tags = new WP_HTML_Tag_Processor( $untrusted );
 while ( $tags->next_tag() ) {
 	if ( 'SCRIPT' === $tags->get_tag() && ! $tags->is_tag_closer() ) {
 		$tags->set_modifiable_text( '' );
 	}
-	$on_handlers = $tags->get_attribute_names_with_prefix( 'on' );
-	if ( $on_handlers ) {
-		foreach ( $on_handlers as $name ) {
-			$tags->remove_attribute( $name );
-		}
+	foreach ( $tags->get_attribute_names_with_prefix( 'on' ) as $attr ) {
+		$tags->remove_attribute( $attr );
 	}
 }
 
@@ -136,7 +141,9 @@ echo $tags->get_updated_html();
 
 <!-- expected-output -->
 ```
-<p>Hi <b >friend</b>!</p><script></script><img src=x >
+<p >hi</p>
+<script></script>
+<img src="x" >
 ```
 
 ## Stamp a CSP nonce on inline scripts and styles
@@ -153,8 +160,10 @@ require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 $nonce = bin2hex( random_bytes( 8 ) );
 
-$html = '<head><style>body{font:16px sans-serif}</style></head>'
-	. '<body><script>console.log("hi")</script><script src="vendor.js"></script></body>';
+$html = <<<'HTML'
+<head><style>body{font:16px sans-serif}</style></head>
+<body><script>console.log("hi")</script><script src="vendor.js"></script></body>
+HTML;
 
 $tags = new WP_HTML_Tag_Processor( $html );
 while ( $tags->next_tag() ) {
@@ -172,7 +181,8 @@ echo $tags->get_updated_html();
 ```
 nonce: <random>
 
-<head><style nonce="<random>">body{font:16px sans-serif}</style></head><body><script nonce="<random>">console.log("hi")</script><script nonce="<random>" src="vendor.js"></script></body>
+<head><style nonce="<random>">body{font:16px sans-serif}</style></head>
+<body><script nonce="<random>">console.log("hi")</script><script nonce="<random>" src="vendor.js"></script></body>
 ```
 
 ## Build a srcset from a single src
@@ -255,11 +265,13 @@ runnable: true
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = '<article>'
-	. '<figure><img src="hero.jpg" alt="Hero"><figcaption>Hero shot</figcaption></figure>'
-	. '<p>Body copy <img src="emoji.png" alt=""> mid-paragraph.</p>'
-	. '<figure><img src="diagram.png" alt="Diagram"></figure>'
-	. '</article>';
+$html = <<<'HTML'
+<article>
+<figure><img src="hero.jpg" alt="Hero"><figcaption>Hero shot</figcaption></figure>
+<p>Body copy <img src="emoji.png" alt=""> mid-paragraph.</p>
+<figure><img src="diagram.png" alt="Diagram"></figure>
+</article>
+HTML;
 
 $p = WP_HTML_Processor::create_fragment( $html );
 $figure_images = 0;
@@ -275,7 +287,11 @@ echo $p->get_updated_html();
 <!-- expected-output -->
 ```
 found 2 figure images
-<article><figure><img class="figure-image" src="hero.jpg" alt="Hero"><figcaption>Hero shot</figcaption></figure><p>Body copy <img src="emoji.png" alt=""> mid-paragraph.</p><figure><img class="figure-image" src="diagram.png" alt="Diagram"></figure></article>
+<article>
+<figure><img class="figure-image" src="hero.jpg" alt="Hero"><figcaption>Hero shot</figcaption></figure>
+<p>Body copy <img src="emoji.png" alt=""> mid-paragraph.</p>
+<figure><img class="figure-image" src="diagram.png" alt="Diagram"></figure>
+</article>
 ```
 
 ## Outline a document by walking tokens with depth
@@ -290,10 +306,12 @@ runnable: true
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = '<section><h1>Title</h1>'
-	. '<section><h2>Chapter 1</h2><p>Body</p></section>'
-	. '<section><h2>Chapter 2</h2><p>More body</p></section>'
-	. '</section>';
+$html = <<<'HTML'
+<section><h1>Title</h1>
+<section><h2>Chapter 1</h2><p>Body</p></section>
+<section><h2>Chapter 2</h2><p>More body</p></section>
+</section>
+HTML;
 
 $p = WP_HTML_Processor::create_fragment( $html );
 while ( $p->next_token() ) {
@@ -338,11 +356,13 @@ runnable: true
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = '<ul>'
-	. '<li><input type="checkbox" checked> Buy milk</li>'
-	. '<li><input type="checkbox"> Walk the dog</li>'
-	. '<li><input type="checkbox" checked> Read book</li>'
-	. '</ul>';
+$html = <<<'HTML'
+<ul>
+<li><input type="checkbox" checked> Buy milk</li>
+<li><input type="checkbox"> Walk the dog</li>
+<li><input type="checkbox" checked> Read book</li>
+</ul>
+HTML;
 
 $tags = new WP_HTML_Tag_Processor( $html );
 $tags->next_tag( 'ul' );
@@ -366,7 +386,11 @@ echo $tags->get_updated_html();
 
 <!-- expected-output -->
 ```
-<ul data-progress="2/3"><li><input type="checkbox" checked> Buy milk</li><li><input type="checkbox"> Walk the dog</li><li><input type="checkbox" checked> Read book</li></ul>
+<ul data-progress="2/3">
+<li><input type="checkbox" checked> Buy milk</li>
+<li><input type="checkbox"> Walk the dog</li>
+<li><input type="checkbox" checked> Read book</li>
+</ul>
 ```
 
 ## When to use which
@@ -378,3 +402,9 @@ echo $tags->get_updated_html();
 <tr><td><code>WP_HTML_Decoder::decode_text_node()</code></td><td>Turning entity-encoded text (<code>AT&amp;amp;T</code>) back into raw text correctly. Implements the HTML5 entity algorithm — don't roll your own.</td></tr>
 <tr><td><code>WP_HTML_Decoder::attribute_starts_with()</code></td><td>Safe URL-prefix checks that respect encoded characters (<code>java&amp;#x09;script:</code>). The classic <code>strpos</code> approach misses these.</td></tr>
 </table>
+
+<p>Footgun: tag closers are visited too. <code>next_tag()</code> stops on both opening and closing tags. For most attribute-rewriting code, gate with <code>! $tags-&gt;is_tag_closer()</code> so you don't try to set attributes on a <code>&lt;/script&gt;</code>.</p>
+
+<p>Footgun: tag-name matches are uppercase. <code>get_tag()</code> always returns the tag name in uppercase (<code>'IMG'</code>, not <code>'img'</code>). Compare accordingly. The filter argument to <code>next_tag()</code> is case-insensitive in either direction.</p>
+
+<p>Footgun: don't confuse <code>WP_HTML_Tag_Processor</code> with the full processor. The cursor is forward-only and ancestry-blind. If you call <code>get_breadcrumbs()</code> on it, you'll get a thin shape that doesn't reflect HTML5 tree construction — implicit <code>&lt;tbody&gt;</code> insertion, automatic <code>&lt;p&gt;</code> closing, and the rest live only in <code>WP_HTML_Processor</code>.</p>

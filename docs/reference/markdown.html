@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Markdown — PHP Toolkit reference</title>
 <meta name="description" content="Bidirectional converter between Markdown and WordPress block markup. Useful for moving content between Markdown files and WordPress while preserving the structures both formats can express.">
-<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<link rel="stylesheet" href="../assets/style.css?v=20260503-script-unescape">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
-<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+<script src="../assets/page.js?v=20260503-script-unescape" defer></script>
 </head>
 <body>
 <header class="site">
@@ -67,6 +67,13 @@
 <p>Feed Markdown into <code>MarkdownConsumer</code>, get block markup back. The result is a <code>BlocksWithMetadata</code> object that holds both the rendered blocks and any frontmatter parsed from the document.</p>
 
 <php-snippet blueprint="toolkit-setup" name="quickstart.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Markdown\MarkdownConsumer;
+
+$result = ( new MarkdownConsumer( &quot;# Hello\n\nWelcome to **WordPress**.&quot; ) )-&gt;consume();
+echo $result-&gt;get_block_markup();</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -92,6 +99,17 @@ echo $result->get_block_markup();
 <p>Pair <code>MarkdownProducer</code> with <code>MarkdownConsumer</code> to convert in either direction. Round-tripping is lossy for block attributes that have no Markdown representation (custom classes, alignment), so do not expect byte-perfect equality.</p>
 
 <php-snippet blueprint="toolkit-setup" name="roundtrip.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Markdown\MarkdownConsumer;
+use WordPress\Markdown\MarkdownProducer;
+
+$md       = &quot;## Round trip\n\n- one\n- two\n- three\n&quot;;
+$blocks   = ( new MarkdownConsumer( $md ) )-&gt;consume();
+$markdown = ( new MarkdownProducer( $blocks ) )-&gt;produce();
+
+echo $markdown;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -119,6 +137,28 @@ echo $markdown;
 <p>Frontmatter keys come back as arrays so a single key can hold multiple values. Use <code>get_meta_value()</code> when you only want the first scalar.</p>
 
 <php-snippet blueprint="toolkit-setup" name="frontmatter.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Markdown\MarkdownConsumer;
+
+$md = &lt;&lt;&lt;MD
+---
+post_title: &quot;The Name of the Wind&quot;
+post_status: publish
+tags: [fantasy, kingkiller]
+---
+
+Once upon a time...
+MD;
+
+$consumer = new MarkdownConsumer( $md );
+$consumer-&gt;consume();
+
+echo &#x27;Title: &#x27;   . $consumer-&gt;get_meta_value( &#x27;post_title&#x27; )  . &quot;\n&quot;;
+echo &#x27;Status: &#x27;  . $consumer-&gt;get_meta_value( &#x27;post_status&#x27; ) . &quot;\n&quot;;
+$metadata = $consumer-&gt;get_all_metadata();
+echo &#x27;Tags: &#x27; . implode( &#x27;, &#x27;, $metadata[&#x27;tags&#x27;][0] ) . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -155,6 +195,23 @@ Tags: fantasy, kingkiller
 <p>Walk a directory of <code>.md</code> files (Obsidian vault, Hugo <code>content/</code>, Jekyll <code>_posts</code>) and emit one block-markup record per file.</p>
 
 <php-snippet blueprint="toolkit-setup" name="migrate-folder.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Markdown\MarkdownConsumer;
+
+@mkdir( &#x27;/tmp/vault&#x27;, 0777, true );
+file_put_contents( &#x27;/tmp/vault/welcome.md&#x27;, &quot;---\ntitle: Welcome\n---\n\nHello world.&quot; );
+file_put_contents( &#x27;/tmp/vault/roadmap.md&#x27;, &quot;# Roadmap\n\n1. Ship\n2. Iterate&quot; );
+
+foreach ( glob( &#x27;/tmp/vault/*.md&#x27; ) as $path ) {
+	$consumer = new MarkdownConsumer( file_get_contents( $path ) );
+	$consumer-&gt;consume();
+	$title = $consumer-&gt;get_meta_value( &#x27;title&#x27; );
+	if ( ! $title ) $title = basename( $path, &#x27;.md&#x27; );
+	echo &quot;=== $title ($path) ===\n&quot;;
+	echo substr( $consumer-&gt;get_block_markup(), 0, 120 ) . &quot;...\n\n&quot;;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -196,6 +253,44 @@ foreach ( glob( '/tmp/vault/*.md' ) as $path ) {
 <p>After conversion, the block markup is plain WordPress block markup, so <code>parse_blocks()</code> works on it directly. The standard way to introspect what the converter emitted before saving to the database.</p>
 
 <php-snippet blueprint="toolkit-setup" name="count-blocks.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Markdown\MarkdownConsumer;
+
+$md = &lt;&lt;&lt;MD
+# Title
+
+A paragraph with **bold** and *italics*.
+
+| Col A | Col B |
+|-------|-------|
+| 1     | 2     |
+
+```php
+echo &#x27;hi&#x27;;
+```
+
+&gt; A quote.
+MD;
+
+$blocks = ( new MarkdownConsumer( $md ) )-&gt;consume()-&gt;get_block_markup();
+$counts = array();
+$queue  = parse_blocks( $blocks );
+
+while ( $queue ) {
+	$block = array_shift( $queue );
+	if ( null !== $block[&#x27;blockName&#x27;] ) {
+		$name             = $block[&#x27;blockName&#x27;];
+		$counts[ $name ] = isset( $counts[ $name ] ) ? $counts[ $name ] + 1 : 1;
+	}
+	foreach ( $block[&#x27;innerBlocks&#x27;] as $inner_block ) {
+		$queue[] = $inner_block;
+	}
+}
+foreach ( $counts as $name =&gt; $count ) {
+	echo &quot;{$name}: {$count}\n&quot;;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';

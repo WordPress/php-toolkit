@@ -3,6 +3,7 @@ slug: dataliberation
 title: DataLiberation
 install: wp-php-toolkit/data-liberation
 
+see_also: ../learn/03-importing-content.html | Tutorial — Markdown to WXR | The chapter that walks through importing a folder of Markdown files into WordPress via the toolkit.
 see_also: markdown | Markdown | Use Markdown as a source or destination format.
 see_also: blockparser | BlockParser | Analyze serialized blocks inside post content.
 see_also: httpclient | HttpClient | Download media and remote source data while importing.

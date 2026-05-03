@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CLI — PHP Toolkit reference</title>
 <meta name="description" content="POSIX-style argument parser. Long options, short bundles, inline values, positional args — one static call.">
-<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<link rel="stylesheet" href="../assets/style.css?v=20260503-script-unescape">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
-<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+<script src="../assets/page.js?v=20260503-script-unescape" defer></script>
 </head>
 <body>
 <header class="site">
@@ -63,6 +63,22 @@
 <p>The smallest useful invocation: one boolean flag, one positional. Each option is a four-tuple of <code>[ short, has_value, default, description ]</code>.</p>
 
 <php-snippet blueprint="toolkit-setup" name="parse-flag.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\CLI\CLI;
+
+$option_defs = array(
+	&#x27;verbose&#x27; =&gt; array( &#x27;v&#x27;, false, false, &#x27;Enable verbose output&#x27; ),
+);
+
+list( $positionals, $options ) = CLI::parse_command_args_and_options(
+	array( &#x27;-v&#x27;, &#x27;input.txt&#x27; ),
+	$option_defs
+);
+
+echo &quot;verbose: &quot; . ( $options[&#x27;verbose&#x27;] ? &#x27;yes&#x27; : &#x27;no&#x27; ) . &quot;\n&quot;;
+echo &quot;input:   &quot; . $positionals[0] . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -92,6 +108,30 @@ input:   input.txt
 <p>The parser accepts <code>--port 8080</code>, <code>--port=8080</code>, <code>-p 8080</code>, and <code>-p=8080</code>. It also expands bundled boolean shorts such as <code>-afv</code>.</p>
 
 <php-snippet blueprint="toolkit-setup" name="mix-shapes.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\CLI\CLI;
+
+$option_defs = array(
+	&#x27;all&#x27;     =&gt; array( &#x27;a&#x27;, false, false, &#x27;Process everything&#x27; ),
+	&#x27;force&#x27;   =&gt; array( &#x27;f&#x27;, false, false, &#x27;Overwrite existing files&#x27; ),
+	&#x27;verbose&#x27; =&gt; array( &#x27;v&#x27;, false, false, &#x27;Verbose output&#x27; ),
+	&#x27;output&#x27;  =&gt; array( &#x27;o&#x27;, true,  null,  &#x27;Output path&#x27; ),
+	&#x27;port&#x27;    =&gt; array( &#x27;p&#x27;, true,  &#x27;3000&#x27;, &#x27;Server port&#x27; ),
+);
+
+$argv = array( &#x27;-afv&#x27;, &#x27;--port=8080&#x27;, &#x27;-o&#x27;, &#x27;/tmp/result.txt&#x27;, &#x27;input.json&#x27; );
+list( $positionals, $options ) = CLI::parse_command_args_and_options( $argv, $option_defs );
+
+echo &quot;input:   &quot; . $positionals[0] . &quot;\n&quot;;
+echo &quot;flags:   &quot; . implode( &#x27;, &#x27;, array_keys( array_filter( array(
+	&#x27;all&#x27;     =&gt; $options[&#x27;all&#x27;],
+	&#x27;force&#x27;   =&gt; $options[&#x27;force&#x27;],
+	&#x27;verbose&#x27; =&gt; $options[&#x27;verbose&#x27;],
+) ) ) ) . &quot;\n&quot;;
+echo &quot;output:  &quot; . $options[&#x27;output&#x27;] . &quot;\n&quot;;
+echo &quot;port:    &quot; . $options[&#x27;port&#x27;] . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -131,6 +171,29 @@ port:    8080
 <p>The parser fills in defaults but never enforces "required". Check for <code>null</code> after parsing — full control over the error message.</p>
 
 <php-snippet blueprint="toolkit-setup" name="require-options.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\CLI\CLI;
+
+$option_defs = array(
+	&#x27;site-url&#x27;  =&gt; array( &#x27;u&#x27;, true, null, &#x27;Public site URL (required)&#x27; ),
+	&#x27;site-path&#x27; =&gt; array( null, true, null, &#x27;Target directory (required)&#x27; ),
+);
+
+$argv = array( &#x27;--site-url&#x27;, &#x27;https://mysite.test&#x27; );
+
+try {
+	list( , $options ) = CLI::parse_command_args_and_options( $argv, $option_defs );
+	foreach ( array( &#x27;site-url&#x27;, &#x27;site-path&#x27; ) as $name ) {
+		if ( null === $options[ $name ] ) {
+			throw new RuntimeException( &quot;Missing required option --{$name}&quot; );
+		}
+	}
+	echo &quot;All good.\n&quot;;
+} catch ( Exception $e ) {
+	echo &quot;error: &quot; . $e-&gt;getMessage() . &quot;\n&quot;;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -166,6 +229,30 @@ error: Missing required option --site-path
 <p>Because each option carries its own description, you can render help text by walking the same definitions you parse with. No second source of truth.</p>
 
 <php-snippet blueprint="toolkit-setup" name="help-text.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\CLI\CLI;
+
+$option_defs = array(
+	&#x27;output&#x27;  =&gt; array( &#x27;o&#x27;, true,  null,  &#x27;Write result to FILE&#x27; ),
+	&#x27;force&#x27;   =&gt; array( &#x27;f&#x27;, false, false, &#x27;Overwrite existing files&#x27; ),
+	&#x27;verbose&#x27; =&gt; array( &#x27;v&#x27;, false, false, &#x27;Verbose output&#x27; ),
+	&#x27;help&#x27;    =&gt; array( &#x27;h&#x27;, false, false, &#x27;Show this help and exit&#x27; ),
+);
+
+function render_help( array $defs ) {
+	echo &quot;Usage: mytool [options] &lt;input&gt;\n\nOptions:\n&quot;;
+	foreach ( $defs as $long =&gt; $def ) {
+		list( $short, $has_value, $default, $desc ) = $def;
+		$flag = ( $short ? &quot;-{$short}, &quot; : &#x27;    &#x27; ) . &quot;--{$long}&quot;;
+		if ( $has_value ) $flag .= &#x27;=VALUE&#x27;;
+		echo sprintf( &quot;  %-28s %s\n&quot;, $flag, $desc );
+	}
+}
+
+list( , $options ) = CLI::parse_command_args_and_options( array( &#x27;-h&#x27; ), $option_defs );
+if ( $options[&#x27;help&#x27;] ) render_help( $option_defs );</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -208,6 +295,40 @@ Options:
 <p>To build a tool with subcommands like <code>mytool deploy</code>, peel the first positional off <code>argv</code>, dispatch, and parse the rest with a per-command option set.</p>
 
 <php-snippet blueprint="toolkit-setup" name="subcommands.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\CLI\CLI;
+
+$commands = array(
+	&#x27;deploy&#x27; =&gt; array(
+		&#x27;env&#x27;     =&gt; array( &#x27;e&#x27;, true, &#x27;staging&#x27;, &#x27;Target environment&#x27; ),
+		&#x27;dry-run&#x27; =&gt; array( &#x27;n&#x27;, false, false, &#x27;Preview without applying&#x27; ),
+	),
+	&#x27;rollback&#x27; =&gt; array(
+		&#x27;to&#x27; =&gt; array( &#x27;t&#x27;, true, null, &#x27;Revision to roll back to&#x27; ),
+	),
+);
+
+function run( array $argv, array $commands ) {
+	if ( empty( $argv ) ) {
+		echo &quot;Usage: mytool &lt;command&gt; [options]\nCommands: &quot; . implode( &#x27;, &#x27;, array_keys( $commands ) ) . &quot;\n&quot;;
+		return;
+	}
+	$command = array_shift( $argv );
+	if ( ! isset( $commands[ $command ] ) ) {
+		echo &quot;Unknown command: {$command}\n&quot;;
+		return;
+	}
+	list( $positionals, $options ) = CLI::parse_command_args_and_options( $argv, $commands[ $command ] );
+	echo &quot;command={$command}\n&quot;;
+	echo &quot;options: &quot; . json_encode( $options ) . &quot;\n&quot;;
+	echo &quot;positionals: &quot; . json_encode( $positionals ) . &quot;\n&quot;;
+}
+
+run( array( &#x27;deploy&#x27;, &#x27;--env=production&#x27;, &#x27;-n&#x27;, &#x27;web-01&#x27;, &#x27;web-02&#x27; ), $commands );
+echo &quot;---\n&quot;;
+run( array( &#x27;rollback&#x27;, &#x27;-t&#x27;, &#x27;abc123&#x27; ), $commands );</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';

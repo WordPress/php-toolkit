@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HTML — PHP Toolkit reference</title>
 <meta name="description" content="A pure-PHP HTML5 parser and tag rewriter mirroring WordPress core&#x27;s HTML API. Treat HTML the way browsers do — without libxml2, DOMDocument, or regex hacks — and rewrite attributes in a single linear pass.">
-<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<link rel="stylesheet" href="../assets/style.css?v=20260503-script-unescape">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
-<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+<script src="../assets/page.js?v=20260503-script-unescape" defer></script>
 </head>
 <body>
 <header class="site">
@@ -60,22 +60,45 @@
 	<strong>Ported from WordPress core.</strong> The HTML component is a port of WordPress core's <code>WP_HTML_Tag_Processor</code> and <code>WP_HTML_Processor</code>. Source: <a href="https://github.com/WordPress/wordpress-develop/tree/trunk/src/wp-includes/html-api">WordPress/wordpress-develop</a>. Bug fixes flow in both directions.
 </aside>
 
-<p>WordPress runs HTML fragments through filters every time a request renders: post content, block markup, comments, excerpts, widgets, feeds, imported documents. Those fragments can omit <code><html></code> and <code><body></code>, close tags implicitly, or mix browser-correct markup with author mistakes that <code>DOMDocument</code> and regular expressions do not model well.</p><p>The HTML component gives WordPress-style code the same parsing model WordPress core uses: a browser-compatible tokenizer and tree-aware processor that run in pure PHP. Choose it for exact-byte rewrites, imperfect fragments, and post-content filters where a full DOM would do too much work.</p><p>The component gives you two processors. <code>WP_HTML_Tag_Processor</code> is a forward-only cursor over tags and tokens — useful for attribute rewriting at scale. <code>WP_HTML_Processor</code> layers HTML5 tree construction on top so you can query by ancestry (breadcrumbs), serialize the parsed document, and trust that <code><p>one<p>two</code> parses as two paragraphs the way a browser sees it.</p>
+<p>WordPress runs HTML fragments through filters every time a request renders: post content, block markup, comments, excerpts, widgets, feeds, imported documents. Those fragments can omit <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code>, close tags implicitly, or mix browser-correct markup with author mistakes that <code>DOMDocument</code> and regular expressions do not model well.</p><p>The HTML component gives WordPress-style code the same parsing model WordPress core uses: a browser-compatible tokenizer and tree-aware processor that run in pure PHP. Choose it for exact-byte rewrites, imperfect fragments, and post-content filters where a full DOM would do too much work.</p><p>The component gives you two processors. <code>WP_HTML_Tag_Processor</code> is a forward-only cursor over tags and tokens — useful for attribute rewriting at scale. <code>WP_HTML_Processor</code> layers HTML5 tree construction on top so you can query by ancestry (breadcrumbs), serialize the parsed document, and trust that <code>&lt;p&gt;one&lt;p&gt;two</code> parses as two paragraphs the way a browser sees it.</p>
 
 <h2 id="a-minimal-example">A minimal example</h2>
 
-<p>The "hello world" of tag rewriting. One linear pass, no DOM, no reserialization cost beyond the bytes you actually changed.</p><p><strong>Try this:</strong> click <em>Run</em>, then change <code>'lazy'</code> to <code>'eager'</code> on the first image only by guarding it with <code>$tags->get_attribute( 'src' ) === 'hero.jpg'</code>. Run again and notice that <code>get_updated_html()</code> only rewrites the bytes for that one tag.</p>
+<p>The "hello world" of tag rewriting. One linear pass, no DOM, no reserialization cost beyond the bytes you actually changed.</p><p><strong>Try this:</strong> click <em>Run</em>, then change <code>'lazy'</code> to <code>'eager'</code> on the first image only by guarding it with <code>$tags-&gt;get_attribute( 'src' ) === 'hero.jpg'</code>. Run again and notice that <code>get_updated_html()</code> only rewrites the bytes for that one tag.</p>
 
 <php-snippet blueprint="toolkit-setup" name="lazy-load-images.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$html = &lt;&lt;&lt;&#x27;HTML&#x27;
+&lt;article&gt;
+	&lt;img src=&quot;hero.jpg&quot; alt=&quot;Hero&quot;&gt;
+	&lt;p&gt;Intro copy.&lt;/p&gt;
+	&lt;img src=&quot;inline.jpg&quot; alt=&quot;Inline&quot;&gt;
+&lt;/article&gt;
+HTML;
+
+$tags = new WP_HTML_Tag_Processor( $html );
+while ( $tags-&gt;next_tag( &#x27;img&#x27; ) ) {
+	// Don&#x27;t clobber an explicit eager hint the author already set.
+	if ( null === $tags-&gt;get_attribute( &#x27;loading&#x27; ) ) {
+		$tags-&gt;set_attribute( &#x27;loading&#x27;, &#x27;lazy&#x27; );
+	}
+	$tags-&gt;set_attribute( &#x27;decoding&#x27;, &#x27;async&#x27; );
+}
+
+echo $tags-&gt;get_updated_html();</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = '<article>
+$html = <<<'HTML'
+<article>
 	<img src="hero.jpg" alt="Hero">
 	<p>Intro copy.</p>
 	<img src="inline.jpg" alt="Inline">
-</article>';
+</article>
+HTML;
 
 $tags = new WP_HTML_Tag_Processor( $html );
 while ( $tags->next_tag( 'img' ) ) {
@@ -102,12 +125,37 @@ echo $tags->get_updated_html();
 <p>Use this before sending post content to an RSS feed, an email template, or a CDN-backed copy of a site. The processor rewrites only the changed bytes, so untouched markup stays byte-identical.</p>
 
 <php-snippet blueprint="toolkit-setup" name="absolute-links.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$html = &lt;&lt;&lt;&#x27;HTML&#x27;
+&lt;p&gt;See &lt;a href=&quot;/about&quot;&gt;about&lt;/a&gt;, &lt;a href=&quot;https://example.com/x&quot;&gt;x&lt;/a&gt;, 
+and &lt;a href=&quot;contact.html&quot;&gt;contact&lt;/a&gt;.&lt;/p&gt;
+HTML;
+
+$base = &#x27;https://my-site.test/&#x27;;
+
+$tags = new WP_HTML_Tag_Processor( $html );
+while ( $tags-&gt;next_tag( &#x27;a&#x27; ) ) {
+	$href = $tags-&gt;get_attribute( &#x27;href&#x27; );
+	if ( null === $href || &#x27;&#x27; === $href ) {
+		continue;
+	}
+	if ( preg_match( &#x27;#^[a-z][a-z0-9+.-]*:#i&#x27;, $href ) || 0 === strpos( $href, &#x27;//&#x27; ) || 0 === strpos( $href, &#x27;#&#x27; ) ) {
+		continue;
+	}
+	$tags-&gt;set_attribute( &#x27;href&#x27;, rtrim( $base, &#x27;/&#x27; ) . &#x27;/&#x27; . ltrim( $href, &#x27;/&#x27; ) );
+}
+
+echo $tags-&gt;get_updated_html();</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = '<p>See <a href="/about">about</a>, <a href="https://example.com/x">x</a>, '
-	. 'and <a href="contact.html">contact</a>.</p>';
+$html = <<<'HTML'
+<p>See <a href="/about">about</a>, <a href="https://example.com/x">x</a>, 
+and <a href="contact.html">contact</a>.</p>
+HTML;
 
 $base = 'https://my-site.test/';
 
@@ -126,7 +174,8 @@ while ( $tags->next_tag( 'a' ) ) {
 echo $tags->get_updated_html();
 </script>
 <script type="text/expected-output">
-<p>See <a href="https://my-site.test/about">about</a>, <a href="https://example.com/x">x</a>, and <a href="https://my-site.test/contact.html">contact</a>.</p>
+<p>See <a href="https://my-site.test/about">about</a>, <a href="https://example.com/x">x</a>, 
+and <a href="https://my-site.test/contact.html">contact</a>.</p>
 </script>
 </php-snippet>
 
@@ -135,47 +184,90 @@ echo $tags->get_updated_html();
 <p>A common sanitization step: neutralize untrusted HTML before display. Blank a script's body with <code>set_modifiable_text()</code> and strip every <code>on*</code> attribute via <code>get_attribute_names_with_prefix()</code>.</p>
 
 <php-snippet blueprint="toolkit-setup" name="sanitize-html.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$untrusted = &lt;&lt;&lt;&#x27;HTML&#x27;
+&lt;p onclick=&quot;x()&quot;&gt;hi&lt;/p&gt;
+&lt;script&gt;evil()&lt;/script&gt;
+&lt;img src=&quot;x&quot; onerror=&quot;boom()&quot;&gt;
+HTML;
+
+$tags = new WP_HTML_Tag_Processor( $untrusted );
+while ( $tags-&gt;next_tag() ) {
+	if ( &#x27;SCRIPT&#x27; === $tags-&gt;get_tag() &amp;&amp; ! $tags-&gt;is_tag_closer() ) {
+		$tags-&gt;set_modifiable_text( &#x27;&#x27; );
+	}
+	foreach ( $tags-&gt;get_attribute_names_with_prefix( &#x27;on&#x27; ) as $attr ) {
+		$tags-&gt;remove_attribute( $attr );
+	}
+}
+
+echo $tags-&gt;get_updated_html();</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$untrusted = '<p>Hi <b onclick="steal()">friend</b>!</p>'
-	. '<script>alert("xss")<\/script>'
-	. '<img src=x onerror="boom()">';
+$untrusted = <<<'HTML'
+<p onclick="x()">hi</p>
+<script>evil()<\/script>
+<img src="x" onerror="boom()">
+HTML;
 
 $tags = new WP_HTML_Tag_Processor( $untrusted );
 while ( $tags->next_tag() ) {
 	if ( 'SCRIPT' === $tags->get_tag() && ! $tags->is_tag_closer() ) {
 		$tags->set_modifiable_text( '' );
 	}
-	$on_handlers = $tags->get_attribute_names_with_prefix( 'on' );
-	if ( $on_handlers ) {
-		foreach ( $on_handlers as $name ) {
-			$tags->remove_attribute( $name );
-		}
+	foreach ( $tags->get_attribute_names_with_prefix( 'on' ) as $attr ) {
+		$tags->remove_attribute( $attr );
 	}
 }
 
 echo $tags->get_updated_html();
 </script>
 <script type="text/expected-output">
-<p>Hi <b >friend</b>!</p><script><\/script><img src=x >
+<p >hi</p>
+<script><\/script>
+<img src="x" >
 </script>
 </php-snippet>
 
 <h2 id="refinement-stamp-a-csp-nonce-on-inline-scripts-and-styles">Refinement: stamp a CSP nonce on inline scripts and styles</h2>
 
-<p>Content Security Policy in <code>nonce-</code> mode requires every inline <code><script></code> and <code><style></code> to carry a matching nonce attribute. Tag-by-tag is exactly the right granularity.</p>
+<p>Content Security Policy in <code>nonce-</code> mode requires every inline <code>&lt;script&gt;</code> and <code>&lt;style&gt;</code> to carry a matching nonce attribute. Tag-by-tag is exactly the right granularity.</p>
 
 <php-snippet blueprint="toolkit-setup" name="csp-nonce.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$nonce = bin2hex( random_bytes( 8 ) );
+
+$html = &lt;&lt;&lt;&#x27;HTML&#x27;
+&lt;head&gt;&lt;style&gt;body{font:16px sans-serif}&lt;/style&gt;&lt;/head&gt;
+&lt;body&gt;&lt;script&gt;console.log(&quot;hi&quot;)&lt;/script&gt;&lt;script src=&quot;vendor.js&quot;&gt;&lt;/script&gt;&lt;/body&gt;
+HTML;
+
+$tags = new WP_HTML_Tag_Processor( $html );
+while ( $tags-&gt;next_tag() ) {
+	$tag = $tags-&gt;get_tag();
+	if ( ( &#x27;SCRIPT&#x27; === $tag || &#x27;STYLE&#x27; === $tag ) &amp;&amp; ! $tags-&gt;is_tag_closer() ) {
+		$tags-&gt;set_attribute( &#x27;nonce&#x27;, $nonce );
+	}
+}
+
+echo &quot;nonce: {$nonce}\n\n&quot;;
+echo $tags-&gt;get_updated_html();</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 $nonce = bin2hex( random_bytes( 8 ) );
 
-$html = '<head><style>body{font:16px sans-serif}</style></head>'
-	. '<body><script>console.log("hi")<\/script><script src="vendor.js"><\/script></body>';
+$html = <<<'HTML'
+<head><style>body{font:16px sans-serif}</style></head>
+<body><script>console.log("hi")<\/script><script src="vendor.js"><\/script></body>
+HTML;
 
 $tags = new WP_HTML_Tag_Processor( $html );
 while ( $tags->next_tag() ) {
@@ -191,7 +283,8 @@ echo $tags->get_updated_html();
 <script type="text/expected-output">
 nonce: <random>
 
-<head><style nonce="<random>">body{font:16px sans-serif}</style></head><body><script nonce="<random>">console.log("hi")<\/script><script nonce="<random>" src="vendor.js"><\/script></body>
+<head><style nonce="<random>">body{font:16px sans-serif}</style></head>
+<body><script nonce="<random>">console.log("hi")<\/script><script nonce="<random>" src="vendor.js"><\/script></body>
 </script>
 </php-snippet>
 
@@ -200,6 +293,27 @@ nonce: <random>
 <p>Generate responsive image markup at render time without touching the editor data model. Read the existing <code>src</code>, derive a <code>srcset</code> with width descriptors, add a <code>sizes</code> hint.</p>
 
 <php-snippet blueprint="toolkit-setup" name="srcset-rewrite.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$html = &#x27;&lt;figure&gt;&lt;img src=&quot;https://cdn.test/uploads/photo.jpg&quot; alt=&quot;Sunset&quot;&gt;&lt;/figure&gt;&#x27;;
+$widths = array( 480, 768, 1200 );
+
+$tags = new WP_HTML_Tag_Processor( $html );
+while ( $tags-&gt;next_tag( &#x27;img&#x27; ) ) {
+	$src = $tags-&gt;get_attribute( &#x27;src&#x27; );
+	if ( null === $src || $tags-&gt;get_attribute( &#x27;srcset&#x27; ) !== null ) {
+		continue;
+	}
+	$variants = array();
+	foreach ( $widths as $w ) {
+		$variants[] = $src . &#x27;?w=&#x27; . $w . &#x27; &#x27; . $w . &#x27;w&#x27;;
+	}
+	$tags-&gt;set_attribute( &#x27;srcset&#x27;, implode( &#x27;, &#x27;, $variants ) );
+	$tags-&gt;set_attribute( &#x27;sizes&#x27;, &#x27;(max-width: 768px) 100vw, 768px&#x27; );
+}
+
+echo $tags-&gt;get_updated_html();</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -233,6 +347,19 @@ echo $tags->get_updated_html();
 <p>The HTML5 entity table has roughly 2,200 named references and a long list of edge cases. <code>WP_HTML_Decoder</code> implements the algorithm — don't roll your own.</p>
 
 <php-snippet blueprint="toolkit-setup" name="decode-entities.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+echo &quot;attribute: &quot; . WP_HTML_Decoder::decode_attribute( &#x27;path?a=1&amp;amp;b=2&amp;amp;copy&#x27; ) . &quot;\n&quot;;
+echo &quot;text:      &quot; . WP_HTML_Decoder::decode_text_node( &#x27;AT&amp;amp;T &amp;mdash; 100&amp;percnt; &amp;#x1F600;&#x27; ) . &quot;\n&quot;;
+
+// Safe URL prefix check that respects encoded colons (a classic XSS vector).
+$is_javascript = WP_HTML_Decoder::attribute_starts_with(
+	&#x27;java&amp;#x09;script:alert(1)&#x27;,
+	&#x27;javascript:&#x27;,
+	&#x27;ascii-case-insensitive&#x27;
+);
+var_dump( $is_javascript );</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -257,18 +384,40 @@ bool(false)
 
 <h2 id="refinement-find-images-by-ancestry-with-breadcrumbs">Refinement: find images by ancestry with breadcrumbs</h2>
 
-<p>The full <code>WP_HTML_Processor</code> understands HTML5 tree construction, so you can ask "find every <code><img></code> directly inside a <code><figure></code>" without writing your own DOM walker.</p>
+<p>The full <code>WP_HTML_Processor</code> understands HTML5 tree construction, so you can ask "find every <code>&lt;img&gt;</code> directly inside a <code>&lt;figure&gt;</code>" without writing your own DOM walker.</p>
 
 <php-snippet blueprint="toolkit-setup" name="breadcrumbs.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$html = &lt;&lt;&lt;&#x27;HTML&#x27;
+&lt;article&gt;
+&lt;figure&gt;&lt;img src=&quot;hero.jpg&quot; alt=&quot;Hero&quot;&gt;&lt;figcaption&gt;Hero shot&lt;/figcaption&gt;&lt;/figure&gt;
+&lt;p&gt;Body copy &lt;img src=&quot;emoji.png&quot; alt=&quot;&quot;&gt; mid-paragraph.&lt;/p&gt;
+&lt;figure&gt;&lt;img src=&quot;diagram.png&quot; alt=&quot;Diagram&quot;&gt;&lt;/figure&gt;
+&lt;/article&gt;
+HTML;
+
+$p = WP_HTML_Processor::create_fragment( $html );
+$figure_images = 0;
+while ( $p-&gt;next_tag( array( &#x27;breadcrumbs&#x27; =&gt; array( &#x27;FIGURE&#x27;, &#x27;IMG&#x27; ) ) ) ) {
+	$p-&gt;add_class( &#x27;figure-image&#x27; );
+	$figure_images++;
+}
+
+echo &quot;found {$figure_images} figure images\n&quot;;
+echo $p-&gt;get_updated_html();</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = '<article>'
-	. '<figure><img src="hero.jpg" alt="Hero"><figcaption>Hero shot</figcaption></figure>'
-	. '<p>Body copy <img src="emoji.png" alt=""> mid-paragraph.</p>'
-	. '<figure><img src="diagram.png" alt="Diagram"></figure>'
-	. '</article>';
+$html = <<<'HTML'
+<article>
+<figure><img src="hero.jpg" alt="Hero"><figcaption>Hero shot</figcaption></figure>
+<p>Body copy <img src="emoji.png" alt=""> mid-paragraph.</p>
+<figure><img src="diagram.png" alt="Diagram"></figure>
+</article>
+HTML;
 
 $p = WP_HTML_Processor::create_fragment( $html );
 $figure_images = 0;
@@ -282,7 +431,11 @@ echo $p->get_updated_html();
 </script>
 <script type="text/expected-output">
 found 2 figure images
-<article><figure><img class="figure-image" src="hero.jpg" alt="Hero"><figcaption>Hero shot</figcaption></figure><p>Body copy <img src="emoji.png" alt=""> mid-paragraph.</p><figure><img class="figure-image" src="diagram.png" alt="Diagram"></figure></article>
+<article>
+<figure><img class="figure-image" src="hero.jpg" alt="Hero"><figcaption>Hero shot</figcaption></figure>
+<p>Body copy <img src="emoji.png" alt=""> mid-paragraph.</p>
+<figure><img class="figure-image" src="diagram.png" alt="Diagram"></figure>
+</article>
 </script>
 </php-snippet>
 
@@ -291,14 +444,48 @@ found 2 figure images
 <p>The full processor exposes <code>get_current_depth()</code> and <code>get_breadcrumbs()</code>. Combine with <code>next_token()</code> to print a structural outline.</p>
 
 <php-snippet blueprint="toolkit-setup" name="outline.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$html = &lt;&lt;&lt;&#x27;HTML&#x27;
+&lt;section&gt;&lt;h1&gt;Title&lt;/h1&gt;
+&lt;section&gt;&lt;h2&gt;Chapter 1&lt;/h2&gt;&lt;p&gt;Body&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2&gt;Chapter 2&lt;/h2&gt;&lt;p&gt;More body&lt;/p&gt;&lt;/section&gt;
+&lt;/section&gt;
+HTML;
+
+$p = WP_HTML_Processor::create_fragment( $html );
+while ( $p-&gt;next_token() ) {
+	if ( &#x27;#tag&#x27; !== $p-&gt;get_token_type() || $p-&gt;is_tag_closer() ) {
+		continue;
+	}
+	$tag = $p-&gt;get_tag();
+	if ( ! preg_match( &#x27;/^H[1-6]$/&#x27;, $tag ) ) {
+		continue;
+	}
+	$indent = str_repeat( &#x27;  &#x27;, max( 0, $p-&gt;get_current_depth() - 2 ) );
+	$text = &#x27;&#x27;;
+	while ( $p-&gt;next_token() ) {
+		if ( &#x27;#text&#x27; === $p-&gt;get_token_type() ) {
+			$text .= $p-&gt;get_modifiable_text();
+			continue;
+		}
+		if ( &#x27;#tag&#x27; === $p-&gt;get_token_type() &amp;&amp; $tag === $p-&gt;get_tag() &amp;&amp; $p-&gt;is_tag_closer() ) {
+			break;
+		}
+	}
+	echo &quot;{$indent}{$tag}  {$text}\n&quot;;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = '<section><h1>Title</h1>'
-	. '<section><h2>Chapter 1</h2><p>Body</p></section>'
-	. '<section><h2>Chapter 2</h2><p>More body</p></section>'
-	. '</section>';
+$html = <<<'HTML'
+<section><h1>Title</h1>
+<section><h2>Chapter 1</h2><p>Body</p></section>
+<section><h2>Chapter 2</h2><p>More body</p></section>
+</section>
+HTML;
 
 $p = WP_HTML_Processor::create_fragment( $html );
 while ( $p->next_token() ) {
@@ -335,15 +522,46 @@ while ( $p->next_token() ) {
 <p>Bookmarks are the one escape from forward-only scanning. Save a position, scan ahead, decide what to do, then <code>seek()</code> back and rewrite the earlier tag.</p>
 
 <php-snippet blueprint="toolkit-setup" name="bookmarks.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$html = &lt;&lt;&lt;&#x27;HTML&#x27;
+&lt;ul&gt;
+&lt;li&gt;&lt;input type=&quot;checkbox&quot; checked&gt; Buy milk&lt;/li&gt;
+&lt;li&gt;&lt;input type=&quot;checkbox&quot;&gt; Walk the dog&lt;/li&gt;
+&lt;li&gt;&lt;input type=&quot;checkbox&quot; checked&gt; Read book&lt;/li&gt;
+&lt;/ul&gt;
+HTML;
+
+$tags = new WP_HTML_Tag_Processor( $html );
+$tags-&gt;next_tag( &#x27;ul&#x27; );
+$tags-&gt;set_bookmark( &#x27;list&#x27; );
+
+$total = 0;
+$done = 0;
+while ( $tags-&gt;next_tag( &#x27;input&#x27; ) ) {
+	$total++;
+	if ( null !== $tags-&gt;get_attribute( &#x27;checked&#x27; ) ) {
+		$done++;
+	}
+}
+
+$tags-&gt;seek( &#x27;list&#x27; );
+$tags-&gt;set_attribute( &#x27;data-progress&#x27;, $done . &#x27;/&#x27; . $total );
+$tags-&gt;release_bookmark( &#x27;list&#x27; );
+
+echo $tags-&gt;get_updated_html();</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$html = '<ul>'
-	. '<li><input type="checkbox" checked> Buy milk</li>'
-	. '<li><input type="checkbox"> Walk the dog</li>'
-	. '<li><input type="checkbox" checked> Read book</li>'
-	. '</ul>';
+$html = <<<'HTML'
+<ul>
+<li><input type="checkbox" checked> Buy milk</li>
+<li><input type="checkbox"> Walk the dog</li>
+<li><input type="checkbox" checked> Read book</li>
+</ul>
+HTML;
 
 $tags = new WP_HTML_Tag_Processor( $html );
 $tags->next_tag( 'ul' );
@@ -365,19 +583,38 @@ $tags->release_bookmark( 'list' );
 echo $tags->get_updated_html();
 </script>
 <script type="text/expected-output">
-<ul data-progress="2/3"><li><input type="checkbox" checked> Buy milk</li><li><input type="checkbox"> Walk the dog</li><li><input type="checkbox" checked> Read book</li></ul>
+<ul data-progress="2/3">
+<li><input type="checkbox" checked> Buy milk</li>
+<li><input type="checkbox"> Walk the dog</li>
+<li><input type="checkbox" checked> Read book</li>
+</ul>
 </script>
 </php-snippet>
 
 <h2 id="when-to-use-which">When to use which</h2>
 
+<table class="api-table">
+<tr><th>Use</th><th>For</th></tr>
+<tr><td><code>WP_HTML_Tag_Processor</code></td><td>Attribute rewriting, sanitization, finding tags by name. Forward-only walks. Anything where speed and byte-honesty matter more than context.</td></tr>
+<tr><td><code>WP_HTML_Processor::create_fragment()</code></td><td>Queries by ancestry (<code>breadcrumbs</code>), heading outline extraction, anything that needs to know "is this tag inside that one."</td></tr>
+<tr><td><code>WP_HTML_Decoder::decode_text_node()</code></td><td>Turning entity-encoded text (<code>AT&amp;amp;T</code>) back into raw text correctly. Implements the HTML5 entity algorithm — don't roll your own.</td></tr>
+<tr><td><code>WP_HTML_Decoder::attribute_starts_with()</code></td><td>Safe URL-prefix checks that respect encoded characters (<code>java&amp;#x09;script:</code>). The classic <code>strpos</code> approach misses these.</td></tr>
+</table>
+
 <h2 id="pitfalls">Pitfalls</h2>
 
 <aside class="callout pitfall">mutations are buffered. Nothing changes in the source string until you call <code>get_updated_html()</code>. If you read <code>get_attribute()</code> after a <code>set_attribute()</code> on the same tag, you see the new value — but downstream tooling reading the original string sees stale HTML until you serialize.</aside>
 
+<aside class="callout pitfall">tag closers are visited too. <code>next_tag()</code> stops on both opening and closing tags. For most attribute-rewriting code, gate with <code>! $tags-&gt;is_tag_closer()</code> so you don't try to set attributes on a <code>&lt;/script&gt;</code>.</aside>
+
+<aside class="callout pitfall">tag-name matches are uppercase. <code>get_tag()</code> always returns the tag name in uppercase (<code>'IMG'</code>, not <code>'img'</code>). Compare accordingly. The filter argument to <code>next_tag()</code> is case-insensitive in either direction.</aside>
+
+<aside class="callout pitfall">don't confuse <code>WP_HTML_Tag_Processor</code> with the full processor. The cursor is forward-only and ancestry-blind. If you call <code>get_breadcrumbs()</code> on it, you'll get a thin shape that doesn't reflect HTML5 tree construction — implicit <code>&lt;tbody&gt;</code> insertion, automatic <code>&lt;p&gt;</code> closing, and the rest live only in <code>WP_HTML_Processor</code>.</aside>
+
 <h2 id="see-also">See also</h2>
 
 <ul class="related-components">
+	<li><a href="../learn/01-rewriting-html.html"><strong>Tutorial — Rewriting HTML safely</strong></a><span>The chapter that introduces the cursor model and the <code>clean_post_html()</code> function reused later in the importer.</span></li>
 	<li><a href="blockparser.html"><strong>BlockParser</strong></a><span>Parse block comments first, then rewrite the HTML inside each block.</span></li>
 	<li><a href="markdown.html"><strong>Markdown</strong></a><span>Convert Markdown to blocks before polishing generated HTML.</span></li>
 	<li><a href="dataliberation.html"><strong>DataLiberation</strong></a><span>Rewrite URLs and media references during import/export pipelines.</span></li>

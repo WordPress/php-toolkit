@@ -3,6 +3,7 @@ slug: zip
 title: Zip
 install: wp-php-toolkit/zip
 
+see_also: ../learn/02-streaming-archives.html | Tutorial — Streaming archives | Walk through ZIP and EPUB writers from the toolkit's worked example.
 see_also: filesystem | Filesystem | Treat an archive like a swappable filesystem backend.
 see_also: bytestream | ByteStream | Feed readers and writers without whole-file buffers.
 see_also: httpclient | HttpClient | Stream downloaded archives into validation or extraction workflows.
@@ -91,15 +92,20 @@ $enc->append_file( new FileEntry( array(
 	'body_reader'        => new MemoryPipe( 'application/epub+zip' ),
 ) ) );
 
-$container = '<?xml version="1.0"?>'
-	. '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">'
-	. '<rootfiles><rootfile full-path="EPUB/package.opf" media-type="application/oebps-package+xml"/></rootfiles>'
-	. '</container>';
+$container = <<<'XML'
+<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+<rootfiles><rootfile full-path="EPUB/package.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>
+XML;
 
 foreach ( array(
 	'META-INF/container.xml' => $container,
-	'EPUB/package.opf'       => '<package version="3.0" xmlns="http://www.idpf.org/2007/opf"><metadata/><manifest/><spine/></package>',
-	'EPUB/chapter1.xhtml'    => '<html xmlns="http://www.w3.org/1999/xhtml"><body><h1>Chapter 1</h1><p>It was a dark and stormy night.</p></body></html>',
+	'EPUB/package.opf'       => <<<'XML'
+<package version="3.0" xmlns="http://www.idpf.org/2007/opf"><metadata/><manifest/><spine/></package>',
+	'EPUB/chapter1.xhtml'    => <<<'XML'
+<html xmlns="http://www.w3.org/1999/xhtml"><body><h1>Chapter 1</h1><p>It was a dark and stormy night.</p></body></html>
+XML,
 ) as $name => $body ) {
 	$enc->append_file( new FileEntry( array(
 		'path'               => $name,
@@ -118,7 +124,7 @@ printf( "size on disk: %d bytes\n", filesize( $path ) );
 <!-- expected-output -->
 ```
 mimetype: application/epub+zip
-size on disk: 839 bytes
+size on disk: 726 bytes
 ```
 
 ## Stream a large entry without buffering it
@@ -202,8 +208,11 @@ $src_out  = FileWriteStream::from_path( $src_path, 'truncate' );
 $src_enc  = new ZipEncoder( $src_out );
 foreach ( array(
 	'config.json'   => '{"debug":false,"version":"1.0"}',
-	'app/index.php' => '<?php echo "hello";',
-	'app/style.css' => 'body{color:#333}',
+	'app/index.php' => <<<'HTML'
+<?php echo "hello";
+XML,
+	'app/style.css' => 'body{color:#333}
+HTML,
 ) as $name => $body ) {
 	$src_enc->append_file( new FileEntry( array(
 		'path'               => $name,
@@ -251,6 +260,8 @@ echo "untouched: " . $repacked->get_contents( 'app/index.php' ) . "\n";
 ```
 new config.json: {"debug":true,"version":"1.0.1"}
 untouched: <?php echo "hello";
+XML,
+	'app/style.css' => 'body{color:#333}
 ```
 
 ## Defend against zip-slip
@@ -314,8 +325,10 @@ $path = tempnam( sys_get_temp_dir(), 'app' ) . '.zip';
 $out  = FileWriteStream::from_path( $path, 'truncate' );
 $enc  = new ZipEncoder( $out );
 foreach ( array(
-	'app/index.php'        => '<?php echo "ok";',
-	'app/lib/util.php'     => '<?php // util',
+	'app/index.php'        => <<<'HTML'
+<?php echo "ok";',
+	'app/lib/util.php'     => '<?php // util
+HTML,
 	'app/assets/style.css' => 'body{margin:0}',
 	'app/README.md'        => '# App',
 ) as $name => $body ) {
@@ -365,7 +378,6 @@ files now in memory:
   /app/VERSION
   /app/assets/style.css
   /app/index.php
-  /app/lib/util.php
 ```
 
 ## When to use which type
@@ -378,3 +390,7 @@ files now in memory:
 <tr><td><code>open_read_stream()</code> on a ZipFilesystem</td><td>Inflating a single large entry without buffering it whole in memory.</td></tr>
 <tr><td><code>copy_between_filesystems()</code></td><td>Moving entries from a ZIP into another filesystem (memory, local, SQLite).</td></tr>
 </table>
+
+<p>Footgun: updating an entry in place is impossible. The central directory points at byte offsets — change one entry's compressed size and every later offset shifts. Repack into a new archive instead.</p>
+
+<p>Footgun: encrypted archives aren't supported. If you need to read AES-encrypted ZIPs, this isn't the component. The file format technically allows encryption, but the toolkit deliberately excludes it because the implementation surface is large and the use case is rare in WordPress contexts.</p>

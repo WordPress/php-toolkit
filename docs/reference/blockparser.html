@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BlockParser — PHP Toolkit reference</title>
 <meta name="description" content="WordPress core&#x27;s block parser, packaged as a standalone library. Turn block markup into a structured tree, lint posts for common authoring mistakes, and audit block usage — all without booting WordPress.">
-<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<link rel="stylesheet" href="../assets/style.css?v=20260503-script-unescape">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
-<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+<script src="../assets/page.js?v=20260503-script-unescape" defer></script>
 </head>
 <body>
 <header class="site">
@@ -71,6 +71,19 @@
 <p>The simplest possible use. Pass a string, get back a tree.</p>
 
 <php-snippet blueprint="toolkit-setup" name="parse.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$document = &quot;&lt;!-- wp:heading {\&quot;level\&quot;:2} --&gt;\n&lt;h2&gt;Welcome&lt;/h2&gt;\n&lt;!-- /wp:heading --&gt;\n\n&quot;
+	. &quot;&lt;!-- wp:paragraph --&gt;\n&lt;p&gt;Hello from the block editor.&lt;/p&gt;\n&lt;!-- /wp:paragraph --&gt;&quot;;
+
+$blocks = ( new WP_Block_Parser() )-&gt;parse( $document );
+foreach ( $blocks as $block ) {
+	if ( null === $block[&#x27;blockName&#x27;] ) {
+		continue;
+	}
+	echo $block[&#x27;blockName&#x27;] . &#x27;: &#x27; . trim( strip_tags( $block[&#x27;innerHTML&#x27;] ) ) . &quot;\n&quot;;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -97,6 +110,38 @@ core/paragraph: Hello from the block editor.
 <p>A common audit task: "How many Paragraph, Image, and Gallery blocks does this post use?" A small queue keeps the example readable while still visiting nested blocks.</p>
 
 <php-snippet blueprint="toolkit-setup" name="count-blocks.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$document = &quot;&lt;!-- wp:group --&gt;&lt;div class=\&quot;wp-block-group\&quot;&gt;&quot;
+	. &quot;&lt;!-- wp:heading --&gt;&lt;h2&gt;Title&lt;/h2&gt;&lt;!-- /wp:heading --&gt;&quot;
+	. &quot;&lt;!-- wp:paragraph --&gt;&lt;p&gt;One.&lt;/p&gt;&lt;!-- /wp:paragraph --&gt;&quot;
+	. &quot;&lt;!-- wp:paragraph --&gt;&lt;p&gt;Two.&lt;/p&gt;&lt;!-- /wp:paragraph --&gt;&quot;
+	. &quot;&lt;!-- wp:image {\&quot;id\&quot;:1} --&gt;&lt;figure&gt;&lt;img src=\&quot;a.jpg\&quot;/&gt;&lt;/figure&gt;&lt;!-- /wp:image --&gt;&quot;
+	. &quot;&lt;/div&gt;&lt;!-- /wp:group --&gt;&quot;;
+
+$blocks = ( new WP_Block_Parser() )-&gt;parse( $document );
+
+$counts = array();
+$queue  = $blocks;
+
+while ( ! empty( $queue ) ) {
+	$block = array_shift( $queue );
+
+	if ( null !== $block[&#x27;blockName&#x27;] ) {
+		$name             = $block[&#x27;blockName&#x27;];
+		$counts[ $name ] = isset( $counts[ $name ] ) ? $counts[ $name ] + 1 : 1;
+	}
+
+	foreach ( $block[&#x27;innerBlocks&#x27;] as $inner_block ) {
+		$queue[] = $inner_block;
+	}
+}
+
+arsort( $counts );
+foreach ( $counts as $name =&gt; $n ) {
+	echo str_pad( (string) $n, 4, &#x27; &#x27;, STR_PAD_LEFT ) . &#x27;  &#x27; . $name . &quot;\n&quot;;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -144,6 +189,36 @@ foreach ( $counts as $name => $n ) {
 <p>Useful for templates, audits, and migrations: answer one yes/no question without caring where the block appears in the tree.</p>
 
 <php-snippet blueprint="toolkit-setup" name="has-block.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$document = &quot;&lt;!-- wp:group --&gt;&lt;div class=\&quot;wp-block-group\&quot;&gt;&quot;
+	. &quot;&lt;!-- wp:buttons --&gt;&lt;div class=\&quot;wp-block-buttons\&quot;&gt;&quot;
+	. &quot;&lt;!-- wp:button --&gt;&lt;div class=\&quot;wp-block-button\&quot;&gt;&lt;a&gt;Buy now&lt;/a&gt;&lt;/div&gt;&lt;!-- /wp:button --&gt;&quot;
+	. &quot;&lt;/div&gt;&lt;!-- /wp:buttons --&gt;&quot;
+	. &quot;&lt;/div&gt;&lt;!-- /wp:group --&gt;&quot;;
+
+$blocks = ( new WP_Block_Parser() )-&gt;parse( $document );
+
+function post_has_block( $blocks, $name ) {
+	$queue = $blocks;
+
+	while ( ! empty( $queue ) ) {
+		$block = array_shift( $queue );
+		if ( $name === $block[&#x27;blockName&#x27;] ) {
+			return true;
+		}
+
+		foreach ( $block[&#x27;innerBlocks&#x27;] as $inner_block ) {
+			$queue[] = $inner_block;
+		}
+	}
+
+	return false;
+}
+
+echo post_has_block( $blocks, &#x27;core/button&#x27; ) ? &quot;has button\n&quot; : &quot;missing button\n&quot;;
+echo post_has_block( $blocks, &#x27;core/gallery&#x27; ) ? &quot;has gallery\n&quot; : &quot;missing gallery\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -187,6 +262,43 @@ missing gallery
 <p>"Don't skip from H2 to H4" is a real accessibility rule. The helper below keeps headings in document order, including headings nested inside Group, Column, and Cover blocks.</p>
 
 <php-snippet blueprint="toolkit-setup" name="lint-headings.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$document = &quot;&lt;!-- wp:heading --&gt;\n&lt;h2&gt;Intro&lt;/h2&gt;\n&lt;!-- /wp:heading --&gt;&quot;
+	. &quot;&lt;!-- wp:heading {\&quot;level\&quot;:4} --&gt;\n&lt;h4&gt;Subsection&lt;/h4&gt;\n&lt;!-- /wp:heading --&gt;&quot;
+	. &quot;&lt;!-- wp:heading {\&quot;level\&quot;:3} --&gt;\n&lt;h3&gt;Body&lt;/h3&gt;\n&lt;!-- /wp:heading --&gt;&quot;;
+
+$blocks = ( new WP_Block_Parser() )-&gt;parse( $document );
+
+function collect_headings( $blocks, &amp;$headings ) {
+	foreach ( $blocks as $block ) {
+		if ( &#x27;core/heading&#x27; === $block[&#x27;blockName&#x27;] ) {
+			$headings[] = array(
+				&#x27;level&#x27; =&gt; isset( $block[&#x27;attrs&#x27;][&#x27;level&#x27;] ) ? (int) $block[&#x27;attrs&#x27;][&#x27;level&#x27;] : 2,
+				&#x27;text&#x27;  =&gt; trim( strip_tags( $block[&#x27;innerHTML&#x27;] ) ),
+			);
+		}
+
+		collect_headings( $block[&#x27;innerBlocks&#x27;], $headings );
+	}
+}
+
+$headings = array();
+collect_headings( $blocks, $headings );
+
+$last = 1;
+foreach ( $headings as $heading ) {
+	$level = $heading[&#x27;level&#x27;];
+	$label = $heading[&#x27;text&#x27;];
+
+	if ( $level &gt; $last + 1 ) {
+		echo &quot;WARN {$label}: jumped from H{$last} to H{$level}\n&quot;;
+	} else {
+		echo &quot;ok   {$label}: H{$level}\n&quot;;
+	}
+	$last = $level;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -238,6 +350,36 @@ ok   Body: H3
 <p>When auditing an export for a block your plugin owns, collect every match and print the fields a human cares about.</p>
 
 <php-snippet blueprint="toolkit-setup" name="find-custom-block.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$document = &quot;&lt;!-- wp:paragraph --&gt;&lt;p&gt;Reviews&lt;/p&gt;&lt;!-- /wp:paragraph --&gt;&quot;
+	. &quot;&lt;!-- wp:my-plugin/testimonial {\&quot;author\&quot;:\&quot;Jane\&quot;,\&quot;rating\&quot;:5} --&gt;&quot;
+	. &quot;&lt;blockquote&gt;Loved it.&lt;/blockquote&gt;&quot;
+	. &quot;&lt;!-- /wp:my-plugin/testimonial --&gt;&quot;
+	. &quot;&lt;!-- wp:my-plugin/testimonial {\&quot;author\&quot;:\&quot;Joe\&quot;,\&quot;rating\&quot;:4} --&gt;&quot;
+	. &quot;&lt;blockquote&gt;Pretty good.&lt;/blockquote&gt;&quot;
+	. &quot;&lt;!-- /wp:my-plugin/testimonial --&gt;&quot;;
+
+$blocks = ( new WP_Block_Parser() )-&gt;parse( $document );
+
+function find_blocks_by_name( $blocks, $name, &amp;$matches ) {
+	foreach ( $blocks as $block ) {
+		if ( $name === $block[&#x27;blockName&#x27;] ) {
+			$matches[] = $block;
+		}
+
+		find_blocks_by_name( $block[&#x27;innerBlocks&#x27;], $name, $matches );
+	}
+}
+
+$testimonials = array();
+find_blocks_by_name( $blocks, &#x27;my-plugin/testimonial&#x27;, $testimonials );
+
+foreach ( $testimonials as $i =&gt; $b ) {
+	echo ( $i + 1 ) . &#x27;. &#x27; . $b[&#x27;attrs&#x27;][&#x27;author&#x27;] . &#x27; (&#x27; . $b[&#x27;attrs&#x27;][&#x27;rating&#x27;] . &#x27;/5): &#x27;
+		. trim( strip_tags( $b[&#x27;innerHTML&#x27;] ) ) . &quot;\n&quot;;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -281,13 +423,35 @@ foreach ( $testimonials as $i => $b ) {
 <p>A real-world content audit: find every <code>core/embed</code> whose URL points at a domain you have retired.</p>
 
 <php-snippet blueprint="toolkit-setup" name="audit-embeds.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+$document = &lt;&lt;&lt;&#x27;HTML&#x27;
+&lt;!-- wp:embed {&quot;url&quot;:&quot;https://twitter.com/wordpress/status/1&quot;,&quot;providerNameSlug&quot;:&quot;twitter&quot;} /--&gt;
+&lt;!-- wp:embed {&quot;url&quot;:&quot;https://youtube.com/watch?v=abc&quot;,&quot;providerNameSlug&quot;:&quot;youtube&quot;} /--&gt;
+&lt;!-- wp:embed {&quot;url&quot;:&quot;https://vine.co/v/xyz&quot;,&quot;providerNameSlug&quot;:&quot;vine&quot;} /--&gt;
+HTML;
+
+$retired = array( &#x27;vine.co&#x27;, &#x27;plus.google.com&#x27; );
+
+foreach ( ( new WP_Block_Parser() )-&gt;parse( $document ) as $b ) {
+	if ( &#x27;core/embed&#x27; !== $b[&#x27;blockName&#x27;] ) {
+		continue;
+	}
+	$url  = isset( $b[&#x27;attrs&#x27;][&#x27;url&#x27;] ) ? $b[&#x27;attrs&#x27;][&#x27;url&#x27;] : &#x27;&#x27;;
+	$host = parse_url( $url, PHP_URL_HOST );
+	$bad  = $host &amp;&amp; in_array( $host, $retired, true );
+	echo ( $bad ? &#x27;STALE  &#x27; : &#x27;ok     &#x27; ) . $url . &quot;\n&quot;;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
-$document = '<!-- wp:embed {"url":"https://twitter.com/wordpress/status/1","providerNameSlug":"twitter"} /-->'
-	. '<!-- wp:embed {"url":"https://youtube.com/watch?v=abc","providerNameSlug":"youtube"} /-->'
-	. '<!-- wp:embed {"url":"https://vine.co/v/xyz","providerNameSlug":"vine"} /-->';
+$document = <<<'HTML'
+<!-- wp:embed {"url":"https://twitter.com/wordpress/status/1","providerNameSlug":"twitter"} /-->
+<!-- wp:embed {"url":"https://youtube.com/watch?v=abc","providerNameSlug":"youtube"} /-->
+<!-- wp:embed {"url":"https://vine.co/v/xyz","providerNameSlug":"vine"} /-->
+HTML;
 
 $retired = array( 'vine.co', 'plus.google.com' );
 

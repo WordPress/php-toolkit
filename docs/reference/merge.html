@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Merge — PHP Toolkit reference</title>
 <meta name="description" content="Three-way merge and diff. Pluggable differ + merger + optional validator.">
-<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<link rel="stylesheet" href="../assets/style.css?v=20260503-script-unescape">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
-<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+<script src="../assets/page.js?v=20260503-script-unescape" defer></script>
 </head>
 <body>
 <header class="site">
@@ -63,6 +63,21 @@
 <p>Feed two strings to <code>LineDiffer</code> and inspect the operations. Every <code>get_changes()</code> entry is a <code>[op, text]</code> pair.</p>
 
 <php-snippet blueprint="toolkit-setup" name="line-diff.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Merge\Diff\Diff;
+use WordPress\Merge\Diff\LineDiffer;
+
+$diff = ( new LineDiffer() )-&gt;diff(
+	&quot;alpha\nbeta\ngamma\n&quot;,
+	&quot;alpha\nBETA\ngamma\ndelta\n&quot;
+);
+
+$labels = array( Diff::DIFF_EQUAL =&gt; &#x27;=&#x27;, Diff::DIFF_DELETE =&gt; &#x27;-&#x27;, Diff::DIFF_INSERT =&gt; &#x27;+&#x27; );
+foreach ( $diff-&gt;get_changes() as $change ) {
+	echo $labels[ $change[0] ] . &#x27; &#x27; . rtrim( $change[1] ) . &quot;\n&quot;;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -95,6 +110,19 @@ foreach ( $diff->get_changes() as $change ) {
 <p><code>format_as_git_patch()</code> produces output that mirrors <code>git diff</code>, including hunk headers — handy for emails, CI annotations, or a "what changed?" panel.</p>
 
 <php-snippet blueprint="toolkit-setup" name="git-patch.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Merge\Diff\LineDiffer;
+
+$old = &quot;title: Hello\nauthor: Alice\nstatus: draft\n&quot;;
+$new = &quot;title: Hello, world\nauthor: Alice\nstatus: published\ntags: greeting\n&quot;;
+
+$diff = ( new LineDiffer() )-&gt;diff( $old, $new );
+echo $diff-&gt;format_as_git_patch( array(
+	&#x27;a_source&#x27; =&gt; &#x27;a/post.yml&#x27;,
+	&#x27;b_source&#x27; =&gt; &#x27;b/post.yml&#x27;,
+) );</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -128,6 +156,23 @@ diff --git a/post.yml b/post.yml
 <p>The classic case: each branch changes a different region. Pass the common ancestor plus both edits to <code>MergeStrategy::merge()</code> and read the merged result.</p>
 
 <php-snippet blueprint="toolkit-setup" name="three-way.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Merge\Diff\LineDiffer;
+use WordPress\Merge\Merge\LineMerger;
+use WordPress\Merge\MergeStrategy;
+
+$strategy = new MergeStrategy( new LineDiffer(), new LineMerger() );
+
+$result = $strategy-&gt;merge(
+	&quot;intro\nbody\noutro\n&quot;,
+	&quot;intro updated\nbody\noutro\n&quot;,
+	&quot;intro\nbody\noutro\nappendix\n&quot;
+);
+
+echo $result-&gt;has_conflicts() ? &quot;conflicts!\n&quot; : &quot;clean merge:\n&quot;;
+echo $result-&gt;get_merged_content();</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -161,6 +206,28 @@ appendix
 <p>When both sides edit the same region, the merger produces a <code>MergeConflict</code>. The merged content carries Git-style markers, but the structured <code>get_conflicts()</code> output is what you want for a UI that lets the user pick a side.</p>
 
 <php-snippet blueprint="toolkit-setup" name="conflicts.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Merge\Diff\LineDiffer;
+use WordPress\Merge\Merge\LineMerger;
+use WordPress\Merge\MergeStrategy;
+
+$strategy = new MergeStrategy( new LineDiffer(), new LineMerger() );
+$result = $strategy-&gt;merge(
+	&quot;line 1\nline 2\n&quot;,
+	&quot;line 1\nline 2 from Alice\n&quot;,
+	&quot;line 1\nline 2 from Bob\n&quot;
+);
+
+if ( $result-&gt;has_conflicts() ) {
+	foreach ( $result-&gt;get_conflicts() as $c ) {
+		echo &quot;ours:   &quot; . trim( $c-&gt;ours ) . &quot;\n&quot;;
+		echo &quot;theirs: &quot; . trim( $c-&gt;theirs ) . &quot;\n&quot;;
+	}
+}
+echo &quot;\n--- merged content with markers ---\n&quot;;
+echo $result-&gt;get_merged_content();</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -207,6 +274,34 @@ line 2 from Bob
 <p>A real-world scenario: posts live both in a Git-tracked Markdown folder and in WordPress, and someone edits each. Three-way-merge each post against its common ancestor.</p>
 
 <php-snippet blueprint="toolkit-setup" name="sync-folder-vs-db.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Merge\Diff\LineDiffer;
+use WordPress\Merge\Merge\LineMerger;
+use WordPress\Merge\MergeStrategy;
+
+$strategy = new MergeStrategy( new LineDiffer(), new LineMerger() );
+
+$posts = array(
+	&#x27;hello.md&#x27; =&gt; array(
+		&#x27;base&#x27; =&gt; &quot;# Hello\nDraft body.\n&quot;,
+		&#x27;disk&#x27; =&gt; &quot;# Hello\nDraft body, expanded on disk.\n&quot;,
+		&#x27;db&#x27;   =&gt; &quot;# Hello\nDraft body.\nNew section from the editor.\n&quot;,
+	),
+	&#x27;about.md&#x27; =&gt; array(
+		&#x27;base&#x27; =&gt; &quot;# About\nWho we are.\n&quot;,
+		&#x27;disk&#x27; =&gt; &quot;# About\nWho *they* are.\n&quot;,
+		&#x27;db&#x27;   =&gt; &quot;# About\nWho we really are.\n&quot;,
+	),
+);
+
+foreach ( $posts as $name =&gt; $sides ) {
+	$result = $strategy-&gt;merge( $sides[&#x27;base&#x27;], $sides[&#x27;disk&#x27;], $sides[&#x27;db&#x27;] );
+	echo &quot;=== {$name} ===\n&quot;;
+	echo $result-&gt;has_conflicts() ? &quot;(conflict — needs review)\n&quot; : &quot;(auto-merged)\n&quot;;
+	echo $result-&gt;get_merged_content() . &quot;\n&quot;;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';

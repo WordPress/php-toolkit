@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Filesystem — PHP Toolkit reference</title>
 <meta name="description" content="One Filesystem interface across local disk, in-memory trees, SQLite databases, and ZIP archives. Forward-slash paths everywhere — even on Windows — so the same code runs in tests, in production, and inside read-only ZIPs.">
-<link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
+<link rel="stylesheet" href="../assets/style.css?v=20260503-script-unescape">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
-<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+<script src="../assets/page.js?v=20260503-script-unescape" defer></script>
 </head>
 <body>
 <header class="site">
@@ -63,6 +63,14 @@
 <p>The fastest backend. No disk I/O, no cleanup, no test-isolation problems.</p>
 
 <php-snippet blueprint="toolkit-setup" name="teaser-memory.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Filesystem\InMemoryFilesystem;
+
+$fs = InMemoryFilesystem::create();
+$fs-&gt;put_contents( &#x27;/hello.txt&#x27;, &#x27;Hello, world!&#x27; );
+echo $fs-&gt;get_contents( &#x27;/hello.txt&#x27; );</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -83,6 +91,24 @@ Hello, world!
 <p>Code that takes a <code>Filesystem</code> parameter, instead of calling <code>file_get_contents()</code> directly, can be tested against an <code>InMemoryFilesystem</code>. The test sets up files in memory, exercises the function, and asserts on what got written — no temp directories, no cleanup.</p>
 
 <php-snippet blueprint="toolkit-setup" name="test-without-disk.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Filesystem\Filesystem;
+use WordPress\Filesystem\InMemoryFilesystem;
+
+function bump_version( Filesystem $fs, $path ) {
+	$json = json_decode( $fs-&gt;get_contents( $path ), true );
+	list( $maj, $min, $patch ) = explode( &#x27;.&#x27;, $json[&#x27;version&#x27;] );
+	$json[&#x27;version&#x27;] = $maj . &#x27;.&#x27; . $min . &#x27;.&#x27; . ( (int) $patch + 1 );
+	$fs-&gt;put_contents( $path, json_encode( $json ) );
+}
+
+$fs = InMemoryFilesystem::create();
+$fs-&gt;put_contents( &#x27;/package.json&#x27;, &#x27;{&quot;version&quot;:&quot;1.2.3&quot;}&#x27; );
+bump_version( $fs, &#x27;/package.json&#x27; );
+
+echo $fs-&gt;get_contents( &#x27;/package.json&#x27; ) . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -113,6 +139,21 @@ echo $fs->get_contents( '/package.json' ) . "\n";
 <p><code>LocalFilesystem::create($root)</code> is implicitly chrooted: every path resolves relative to <code>$root</code> and a <code>../</code> cannot escape. Reach for it when a request path or CLI argument names a file inside one project directory.</p>
 
 <php-snippet blueprint="toolkit-setup" name="local-chroot.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Filesystem\LocalFilesystem;
+
+$root = sys_get_temp_dir() . &#x27;/toolkit-&#x27; . uniqid();
+$fs   = LocalFilesystem::create( $root );
+
+$fs-&gt;mkdir( &#x27;/uploads&#x27;, array( &#x27;recursive&#x27; =&gt; true ) );
+$fs-&gt;put_contents( &#x27;/uploads/note.txt&#x27;, &#x27;Hi from local disk.&#x27; );
+
+echo $fs-&gt;get_contents( &#x27;/uploads/../uploads/note.txt&#x27; ) . &quot;\n&quot;;
+
+$fs-&gt;rmdir( &#x27;/&#x27;, array( &#x27;recursive&#x27; =&gt; true ) );
+echo &quot;exists after cleanup? &quot; . ( is_dir( $root ) ? &#x27;yes&#x27; : &#x27;no&#x27; ) . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -141,6 +182,21 @@ exists after cleanup? no
 <p>The whole tree lives in one SQLite database file. Use it for self-contained scratch storage that survives process boundaries without leaving loose files behind.</p>
 
 <php-snippet blueprint="toolkit-setup" name="sqlite.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Filesystem\SQLiteFilesystem;
+
+$fs = SQLiteFilesystem::create( &#x27;:memory:&#x27; );
+$fs-&gt;mkdir( &#x27;/posts&#x27;, array( &#x27;recursive&#x27; =&gt; true ) );
+for ( $i = 1; $i &lt;= 3; $i++ ) {
+	$fs-&gt;put_contents( &quot;/posts/post-{$i}.md&quot;, &quot;# Post {$i}\n\nBody {$i}.&quot; );
+}
+
+foreach ( $fs-&gt;ls( &#x27;/posts&#x27; ) as $name ) {
+	$first = strtok( $fs-&gt;get_contents( &#x27;/posts/&#x27; . $name ), &quot;\n&quot; );
+	echo &quot;{$name}: {$first}\n&quot;;
+}</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -170,6 +226,41 @@ post-3.md: # Post 3
 <p>The killer composability move: <code>copy_between_filesystems()</code> streams files chunk-by-chunk from any source to any target. Pull a ZIP into SQLite, snapshot SQLite to disk, mirror disk into RAM — all the same call.</p>
 
 <php-snippet blueprint="toolkit-setup" name="cross-backend-copy.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\Filesystem\LocalFilesystem;
+use WordPress\Filesystem\SQLiteFilesystem;
+use function WordPress\Filesystem\copy_between_filesystems;
+
+$root  = sys_get_temp_dir() . &#x27;/copytree-&#x27; . uniqid();
+$local = LocalFilesystem::create( $root );
+$local-&gt;mkdir( &#x27;/site/posts&#x27;, array( &#x27;recursive&#x27; =&gt; true ) );
+$local-&gt;put_contents( &#x27;/site/posts/2024-01.md&#x27;, &#x27;# Hello 2024&#x27; );
+$local-&gt;put_contents( &#x27;/site/index.html&#x27;, &#x27;&lt;h1&gt;Home&lt;/h1&gt;&#x27; );
+
+$sqlite = SQLiteFilesystem::create( &#x27;:memory:&#x27; );
+copy_between_filesystems( array(
+	&#x27;source_filesystem&#x27; =&gt; $local,
+	&#x27;source_path&#x27;       =&gt; &#x27;/site&#x27;,
+	&#x27;target_filesystem&#x27; =&gt; $sqlite,
+	&#x27;target_path&#x27;       =&gt; &#x27;/snapshot&#x27;,
+) );
+
+$mem = InMemoryFilesystem::create();
+copy_between_filesystems( array(
+	&#x27;source_filesystem&#x27; =&gt; $sqlite,
+	&#x27;source_path&#x27;       =&gt; &#x27;/snapshot&#x27;,
+	&#x27;target_filesystem&#x27; =&gt; $mem,
+	&#x27;target_path&#x27;       =&gt; &#x27;/copy&#x27;,
+) );
+
+echo &quot;in memory after two copies:\n&quot;;
+echo &quot;  posts: &quot; . implode( &#x27;, &#x27;, $mem-&gt;ls( &#x27;/copy/posts&#x27; ) ) . &quot;\n&quot;;
+echo &quot;  index: &quot; . $mem-&gt;get_contents( &#x27;/copy/index.html&#x27; ) . &quot;\n&quot;;
+
+$local-&gt;rmdir( &#x27;/&#x27;, array( &#x27;recursive&#x27; =&gt; true ) );</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -219,6 +310,28 @@ in memory after two copies:
 <p>Write to a sibling tempfile, then rename — that's how you avoid leaving a half-written file on crash. <code>rename()</code> is atomic within a single filesystem.</p>
 
 <php-snippet blueprint="toolkit-setup" name="atomic-write.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use WordPress\Filesystem\Filesystem;
+use WordPress\Filesystem\LocalFilesystem;
+
+function atomic_put_contents( Filesystem $fs, $path, $bytes ) {
+	$tmp = $path . &#x27;.tmp.&#x27; . bin2hex( random_bytes( 4 ) );
+	$fs-&gt;put_contents( $tmp, $bytes );
+	$fs-&gt;rename( $tmp, $path );
+}
+
+$root = sys_get_temp_dir() . &#x27;/atomic-&#x27; . uniqid();
+$fs   = LocalFilesystem::create( $root );
+
+$fs-&gt;put_contents( &#x27;/config.json&#x27;, &#x27;{&quot;v&quot;:1}&#x27; );
+atomic_put_contents( $fs, &#x27;/config.json&#x27;, &#x27;{&quot;v&quot;:2}&#x27; );
+
+echo &quot;config: &quot; . $fs-&gt;get_contents( &#x27;/config.json&#x27; ) . &quot;\n&quot;;
+echo &quot;no .tmp leftovers: &quot; . count( $fs-&gt;ls( &#x27;/&#x27; ) ) . &quot; entries in root\n&quot;;
+
+$fs-&gt;rmdir( &#x27;/&#x27;, array( &#x27;recursive&#x27; =&gt; true ) );</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
@@ -254,6 +367,16 @@ no .tmp leftovers: 1 entries in root
 <p>Unix path semantics apply on every host OS. This matters for abstract paths such as a SQLite key or a ZIP entry name because those paths do not live on a real drive.</p>
 
 <php-snippet blueprint="toolkit-setup" name="path-helpers.php">
+<pre class="snippet-fallback"><code class="language-php">&lt;?php
+require &#x27;/wordpress/wp-content/php-toolkit/vendor/autoload.php&#x27;;
+
+use function WordPress\Filesystem\wp_join_unix_paths;
+use function WordPress\Filesystem\wp_unix_dirname;
+use function WordPress\Filesystem\wp_unix_path_resolve_dots;
+
+echo wp_join_unix_paths( &#x27;/var/www&#x27;, &#x27;/site/&#x27;, &#x27;/index.php&#x27; ) . &quot;\n&quot;;
+echo wp_unix_dirname( &#x27;/a/b/c/d.txt&#x27;, 2 ) . &quot;\n&quot;;
+echo wp_unix_path_resolve_dots( &#x27;/a/b/../c/./d/../e&#x27; ) . &quot;\n&quot;;</code></pre>
 <script type="application/x-php">
 <?php
 require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
