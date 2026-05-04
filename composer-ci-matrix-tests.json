@@ -31,6 +31,7 @@
 			"components/Blueprints/",
 			"components/Blueprints/vendor-patched/",
 			"components/CLI/",
+			"components/CORSProxy/",
 			"components/DataLiberation/",
 			"components/DataLiberation/vendor-patched/",
 			"components/Filesystem/",
@@ -43,10 +44,12 @@
 			"components/Merge/",
 			"components/Merge/vendor-patched",
 			"components/ByteStream/",
+			"components/Polyfill/",
 			"components/XML/",
 			"components/Zip/"
 		],
 		"files": [
+			"components/CORSProxy/cors-proxy-functions.php",
 			"components/DataLiberation/URL/functions.php",
 			"components/Encoding/utf8.php",
 			"components/Encoding/compat-utf8.php",
@@ -55,12 +58,12 @@
 			"components/Zip/functions.php",
 			"components/Polyfill/wordpress.php",
 			"components/Polyfill/mbstring.php",
+			"components/Polyfill/php-functions.php",
 			"components/Git/functions.php"
 		],
 		"psr-4": {
 			"Rowbot\\": "components/DataLiberation/vendor-patched/",
-			"Brick\\": "components/DataLiberation/vendor-patched/",
-			"WordPress\\CORSProxy\\": "components/CORSProxy/"
+			"Brick\\": "components/DataLiberation/vendor-patched/"
 		}
 	},
 	"scripts": {
