@@ -5,32 +5,17 @@
 
  // phpcs:disable
 
-if ( ! class_exists( 'WP_Error' ) ) {
-	class WP_Error {
-		public $code;
-		public $message;
-		public $data;
-
-		public function __construct( $code = '', $message = '', $data = '' ) {
-			if ( empty( $code ) ) {
-				return;
-			}
-			$this->code = $code;
-			$this->message = $message;
-			$this->data = $data;
-		}
-	}
-}
+// `WP_Error` and `WP_Exception` are deliberately NOT declared in this
+// file: declaring WordPress-core class names at composer-bootstrap time
+// fatals as soon as a downstream consumer loads WordPress, because WP
+// core re-declares the same names without a guard. Those polyfills live
+// in class-wp-error.php / class-wp-exception.php and are picked up by
+// the autoloader's classmap on demand.
 
 if ( ! function_exists( '_doing_it_wrong' ) ) {
 	$GLOBALS['_doing_it_wrong_messages'] = array();
 	function _doing_it_wrong( $method, $message, $version ) {
 		$GLOBALS['_doing_it_wrong_messages'][] = $message;
-	}
-}
-
-if ( ! class_exists( 'WP_Exception' ) ) {
-	class WP_Exception extends Exception {
 	}
 }
 

@@ -30,10 +30,14 @@
         "phpunit/phpunit": "^9.5"
     },
     "autoload": {
-        "psr-4": {
-            "WordPress\\CORSProxy\\": ""
-        },
+        "classmap": [
+            "./"
+        ],
+        "files": [
+            "cors-proxy-functions.php"
+        ],
         "exclude-from-classmap": [
+            "/tests/",
             "/Tests/"
         ]
     }

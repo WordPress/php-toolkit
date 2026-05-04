@@ -36,7 +36,11 @@
             "./"
         ],
         "exclude-from-classmap": [
-            "/Tests/"
+            "/Tests/",
+            "/bin/",
+            "/Steps/scripts/",
+            "/vendor-patched/symfony/event-dispatcher/DependencyInjection/",
+            "/vendor-patched/symfony/event-dispatcher/ContainerAwareEventDispatcher.php"
         ]
     }
 }

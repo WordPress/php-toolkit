@@ -35,7 +35,23 @@
  * ✅ @TODO: Prevent remote resources from using local bundle paths
  */
 
-require __DIR__ . '/../../../vendor/autoload.php';
+if ( ! class_exists( 'Composer\\Autoload\\ClassLoader', false ) ) {
+	$_blueprint_autoload_candidates = array(
+		// Installed as a dependency: vendor/wp-php-toolkit/blueprints/bin/.
+		__DIR__ . '/../../../autoload.php',
+		// Standalone clone of the wp-php-toolkit/blueprints repo.
+		__DIR__ . '/../vendor/autoload.php',
+		// Inside the php-toolkit monorepo.
+		__DIR__ . '/../../../vendor/autoload.php',
+	);
+	foreach ( $_blueprint_autoload_candidates as $_blueprint_autoload ) {
+		if ( file_exists( $_blueprint_autoload ) ) {
+			require $_blueprint_autoload;
+			break;
+		}
+	}
+	unset( $_blueprint_autoload_candidates, $_blueprint_autoload );
+}
 
 use WordPress\CLI\CLI;
 use WordPress\Blueprints\DataReference\AbsoluteLocalPath;

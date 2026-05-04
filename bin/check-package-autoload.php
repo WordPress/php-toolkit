@@ -40,7 +40,7 @@ if ( ! is_dir( $pkg_dir ) ) {
 	exit( 2 );
 }
 
-$declared = collect_declared_symbols( $pkg_dir );
+$declared = collect_declared_symbols( $pkg_dir, load_classmap_excludes( $pkg_dir ) );
 if ( empty( $declared ) ) {
 	echo "NOTE: {$pkg} declares no class/interface/trait symbols (file-only package)\n";
 	exit( 0 );
@@ -66,19 +66,45 @@ foreach ( $missing as $fqn => $file ) {
 exit( 1 );
 
 /**
- * Walks every PHP file under $dir (skipping Tests, vendor, fixtures) and
- * extracts the fully-qualified name of each top-level class, interface, and
- * trait. Uses PHP's tokenizer so we never execute the package code.
+ * Walks every PHP file under $dir and extracts the fully-qualified name of
+ * each top-level class, interface, and trait. Uses PHP's tokenizer so we
+ * never execute the package code.
+ *
+ * Skips standard non-autoloaded directories (Tests, fixtures, vendor) and
+ * any path the package itself excluded from its classmap via the
+ * exclude-from-classmap directive in composer.json. We honour that
+ * directive because anything excluded there is, by definition, not part of
+ * the autoload surface — checking that those classes are reachable would
+ * be a false positive.
  */
-function collect_declared_symbols( $dir ) {
-	$out      = array();
-	$iterator = new RecursiveIteratorIterator(
+function collect_declared_symbols( $dir, array $excluded_paths = array() ) {
+	$out         = array();
+	$dir_norm    = rtrim( str_replace( DIRECTORY_SEPARATOR, '/', $dir ), '/' );
+	$skipped_dir = array( 'Tests', 'tests', 'fixtures', 'vendor' );
+	$iterator    = new RecursiveIteratorIterator(
 		new RecursiveCallbackFilterIterator(
 			new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ),
-			function ( $current ) {
+			function ( $current ) use ( $dir_norm, $excluded_paths, $skipped_dir ) {
 				$name = $current->getFilename();
-				if ( $current->isDir() && in_array( $name, array( 'Tests', 'tests', 'fixtures', 'vendor' ), true ) ) {
+				if ( $current->isDir() && in_array( $name, $skipped_dir, true ) ) {
 					return false;
+				}
+				if ( $excluded_paths ) {
+					// Build a leading-slash, forward-slash path relative to
+					// the package root so substring matching against entries
+					// like "/Tests/" or "/vendor-patched/foo/bar/" behaves
+					// the way composer's classmap exclusion does.
+					$path = str_replace( DIRECTORY_SEPARATOR, '/', $current->getPathname() );
+					if ( 0 === strpos( $path, $dir_norm . '/' ) ) {
+						$path = substr( $path, strlen( $dir_norm ) );
+					}
+					$rel      = '/' . ltrim( $path, '/' );
+					$haystack = $current->isDir() ? rtrim( $rel, '/' ) . '/' : $rel;
+					foreach ( $excluded_paths as $excluded ) {
+						if ( false !== strpos( $haystack, $excluded ) ) {
+							return false;
+						}
+					}
 				}
 				return true;
 			}
@@ -91,6 +117,39 @@ function collect_declared_symbols( $dir ) {
 		foreach ( extract_symbols( file_get_contents( $file->getPathname() ) ) as $fqn ) {
 			$out[ $fqn ] = $file->getPathname();
 		}
+	}
+	return $out;
+}
+
+/**
+ * Reads the package's composer.json and returns its
+ * autoload.exclude-from-classmap entries, normalised to paths that start
+ * with a leading "/". Returns an empty array if the file is missing or
+ * unreadable.
+ */
+function load_classmap_excludes( $pkg_dir ) {
+	$composer_json = $pkg_dir . '/composer.json';
+	if ( ! is_file( $composer_json ) ) {
+		return array();
+	}
+	$decoded = json_decode( file_get_contents( $composer_json ), true );
+	if ( ! is_array( $decoded ) ) {
+		return array();
+	}
+	$raw = $decoded['autoload']['exclude-from-classmap'] ?? array();
+	if ( ! is_array( $raw ) ) {
+		return array();
+	}
+	$out = array();
+	foreach ( $raw as $entry ) {
+		if ( ! is_string( $entry ) || '' === $entry ) {
+			continue;
+		}
+		$entry = str_replace( '\\', '/', $entry );
+		if ( '/' !== $entry[0] ) {
+			$entry = '/' . $entry;
+		}
+		$out[] = $entry;
 	}
 	return $out;
 }

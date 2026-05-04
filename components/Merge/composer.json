@@ -19,10 +19,9 @@
         "docs": "https://wordpress.github.io/php-toolkit/reference/merge.html"
     },
     "require": {
-        "php": ">=7.4",
-        "yetanotherape/diff-match-patch": "^1.0",
-        "wordpress/data-liberation": "dev-trunk",
-        "ext-mbstring": "*"
+        "php": ">=7.2",
+        "ext-mbstring": "*",
+        "wp-php-toolkit/data-liberation": "^0.8"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5",
