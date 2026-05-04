@@ -34,7 +34,12 @@
             "vendor-patched"
         ],
         "exclude-from-classmap": [
-            "/Tests/"
+            "/Tests/",
+            "/bin/",
+            "/vendor-patched/symfony/yaml/Command/",
+            "/vendor-patched/webuni/front-matter/src/Haml/",
+            "/vendor-patched/webuni/front-matter/src/Pug/",
+            "/vendor-patched/webuni/front-matter/src/Twig/"
         ]
     }
 }

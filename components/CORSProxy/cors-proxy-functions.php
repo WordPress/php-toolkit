@@ -391,7 +391,7 @@ function rewrite_relative_redirect(
 	}
 
 	if ( ! parse_url( $redirect_location, PHP_URL_SCHEME ) ) {
-		$target_scheme     = parse_url( $request_url, PHP_URL_SCHEME ) ? PHP_URL_SCHEME ) : 'https';
+		$target_scheme     = parse_url( $request_url, PHP_URL_SCHEME ) ?: 'https';
 		$redirect_location = "$target_scheme://$redirect_location";
 	}
 
