@@ -219,7 +219,13 @@ class Runtime {
 		$process = $this->create_php_sub_process( $code, $env, $input, $timeout );
 		$process->mustRun();
 
-		$output = $process->getOutputStream( Process::OUTPUT_FILE )->consume_all();
+		$output_stream = $process->getOutputStream( Process::OUTPUT_FILE );
+		try {
+			$output = $output_stream->consume_all();
+		} finally {
+			$output_stream->close_reading();
+		}
+
 		return new EvalResult(
 			$output,
 			$process
