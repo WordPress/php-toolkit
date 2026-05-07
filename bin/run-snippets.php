@@ -186,7 +186,7 @@ function write_expected_output( string $slug, string $filename, string $new_outp
 
 	$parser = new \League\CommonMark\Parser\MarkdownParser( commonmark_env() );
 	$tree   = $parser->parse( $body );
-	$kids   = iterator_to_array( $tree->children() );
+	$kids   = node_children( $tree );
 
 	// Find the snippet metadata HtmlBlock whose meta names this filename.
 	$snippet_idx = null;
