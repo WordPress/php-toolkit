@@ -21,7 +21,7 @@
     "require": {
         "php": ">=7.2",
         "ext-mbstring": "*",
-        "wp-php-toolkit/data-liberation": "^0.8"
+        "wp-php-toolkit/data-liberation": "^0.7.4"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5",
