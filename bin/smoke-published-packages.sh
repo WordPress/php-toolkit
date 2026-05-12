@@ -96,10 +96,21 @@ for pkg in "${PACKAGES[@]}"; do
 
   composer init --no-interaction --name="smoke/${pkg}" --stability=stable --quiet
 
-  # Some packages depend on `dev-trunk` of related repos that don't exist
-  # post-split. Allow stable resolution to fail so we at least report it
-  # rather than aborting the whole sweep.
-  if ! composer require --no-interaction --quiet "wp-php-toolkit/${pkg}:${VERSION}" 2>"${scratch}/install.err"; then
+  installed=0
+  for attempt in 1 2 3 4 5; do
+    # Packagist can expose the package being checked before Composer sees all
+    # of its freshly-tagged sibling dependencies from the same release.
+    if composer require --no-interaction --quiet "wp-php-toolkit/${pkg}:${VERSION}" 2>"${scratch}/install.err"; then
+      installed=1
+      break
+    fi
+
+    echo "  composer require attempt ${attempt}/5 failed for wp-php-toolkit/${pkg}, retrying..."
+    composer clear-cache --quiet || true
+    sleep "$(( attempt * 6 ))"
+  done
+
+  if [[ "$installed" -ne 1 ]]; then
     echo "  FAIL: composer require"
     sed 's/^/    /' "${scratch}/install.err"
     failed+=( "${pkg}" )
