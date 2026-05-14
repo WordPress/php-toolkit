@@ -21,17 +21,17 @@
 
 <h1>Reference</h1>
 
-<p class="lede">One concept guide per component. Each page assumes you know what HTML is, what a ZIP file is, what a stream is — and explains how this particular component models that thing in pure PHP. If a concept appears for the first time in <a href="../learn/">the tutorial</a>, the reference page links back.</p>
+<p class="lede">One concept guide per component. Each page assumes you know what HTML is, what a ZIP file is, what a stream is — and explains how this particular component models that thing in PHP. If a concept appears for the first time in <a href="../learn/">the tutorial</a>, the reference page links back.</p>
 
 <section class="ref-group">
 	<h2>Content and migration</h2>
 	<ul class="ref-grid">
-		<li><a href="html.html"><strong>HTML</strong><span>Browser-grade HTML5 parser and tag rewriter. Cursor model, byte-for-byte edits, breadcrumb queries.</span></a></li>
+		<li><a href="html.html"><strong>HTML</strong><span>WordPress core HTML parser and tag rewriter. Cursor model, byte-for-byte edits, breadcrumb queries.</span></a></li>
 		<li><a href="blockparser.html"><strong>BlockParser</strong><span>Parse WordPress block markup into the array shape WordPress core returns. No <code>block.json</code>, no rendering.</span></a></li>
 		<li><a href="markdown.html"><strong>Markdown</strong><span>Convert between Markdown and WordPress block markup, with frontmatter for metadata.</span></a></li>
 		<li><a href="xml.html"><strong>XML</strong><span>A cursor-based XML processor that reads, edits, and emits export-sized files without building a tree.</span></a></li>
 		<li><a href="encoding.html"><strong>Encoding</strong><span>Validate, classify, and repair UTF-8 bytes before they reach a strict parser.</span></a></li>
-		<li><a href="dataliberation.html"><strong>DataLiberation</strong><span>Stream WordPress-shaped entities between sites. URL rewriting, attachment frontloading, resumable migration.</span></a></li>
+		<li><a href="dataliberation.html"><strong>DataLiberation</strong><span>Stream WordPress-shaped entities between sites. URL rewriting, attachment frontloading, cursor-aware imports.</span></a></li>
 	</ul>
 </section>
 
@@ -39,8 +39,8 @@
 	<h2>Streams and storage</h2>
 	<ul class="ref-grid">
 		<li><a href="bytestream.html"><strong>ByteStream</strong><span>Pull / peek / consume read streams and chunked write streams. Composable filters: gzip, hash, limit, window.</span></a></li>
-		<li><a href="filesystem.html"><strong>Filesystem</strong><span>One filesystem interface, multiple backends: local disk, memory, SQLite, ZIP-backed.</span></a></li>
-		<li><a href="zip.html"><strong>Zip</strong><span>Read and write ZIP archives one entry at a time, in pure PHP. EPUB, .docx, plugin bundles.</span></a></li>
+		<li><a href="filesystem.html"><strong>Filesystem</strong><span>One filesystem interface, multiple backends: local disk, memory, SQLite, ZIP-backed reads.</span></a></li>
+		<li><a href="zip.html"><strong>Zip</strong><span>Read and write ZIP archives one entry at a time without ZipArchive. EPUB, .docx, plugin bundles.</span></a></li>
 		<li><a href="git.html"><strong>Git</strong><span>Read and write Git objects, refs, and trees in memory. Mount a commit as a filesystem.</span></a></li>
 		<li><a href="merge.html"><strong>Merge</strong><span>Three-way diffs and merges with explicit conflict records.</span></a></li>
 	</ul>

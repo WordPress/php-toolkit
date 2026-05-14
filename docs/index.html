@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PHP Toolkit — pure-PHP libraries for WordPress and the open web</title>
-<meta name="description" content="A pure-PHP toolkit for parsing HTML, reading and writing ZIP archives, streaming bytes, importing content, and a dozen other jobs that PHP normally outsources to extensions. No libxml2, no libzip, no curl, no database. Runs on PHP 7.2 through 8.3 and inside the browser via WordPress Playground.">
+<title>PHP Toolkit — PHP libraries for WordPress and the open web</title>
+<meta name="description" content="A PHP toolkit for parsing HTML, reading and writing ZIP archives, streaming bytes, importing content, and a dozen other jobs that PHP often outsources to extensions. Runs on PHP 7.2+ and inside the browser via WordPress Playground.">
 <link rel="stylesheet" href="assets/style.css?v=20260429-credits">
 </head>
 <body>
@@ -21,7 +21,7 @@
 
 <section class="hero">
 	<h1>The pieces of WordPress, without the dependencies.</h1>
-	<p class="lede">PHP Toolkit is a set of small, pure-PHP libraries for the work that WordPress core does every day — parsing HTML, reading ZIP archives, streaming bytes, importing content, making HTTP requests. No <code>libxml2</code>. No <code>libzip</code>. No <code>curl</code>. No database. Runs on PHP 7.2 through 8.3, on Linux, macOS, Windows, and inside the browser via WordPress Playground.</p>
+	<p class="lede">PHP Toolkit is a set of small PHP libraries for the work that WordPress core does every day — parsing HTML, reading ZIP archives, streaming bytes, importing content, making HTTP requests. No <code>libxml2</code>. No <code>libzip</code>. HttpClient does not require <code>curl</code>. Runs on PHP 7.2+, on Linux, macOS, Windows, and inside the browser via WordPress Playground.</p>
 
 	<div class="cta-row">
 		<a class="cta primary" href="learn/quickstart.html">Quickstart →</a>
@@ -36,7 +36,7 @@
 	<div class="doors">
 		<a class="door" href="learn/">
 			<strong>I want to learn the toolkit.</strong>
-			<span>Build a real content importer across four short chapters. We'll start with one HTML rewrite and finish with a ZIP-packaged WXR export. Every code block runs in the browser; every chapter ends with something you can keep.</span>
+			<span>Build a real content importer across four short chapters. We'll start with one HTML rewrite and finish with a ZIP-packaged WXR export. Most examples run in the browser; network-bound snippets are marked as local-only.</span>
 			<em>~45 minutes →</em>
 		</a>
 
@@ -63,7 +63,7 @@
 <section class="insight">
 	<h2>The shape of it</h2>
 
-	<p>Eighteen components. Each is a small library focused on one job, distributable as its own Composer package, depending only on PHP itself plus other toolkit components — no Composer packages outside the <code>wp-php-toolkit/*</code> family, no PHP extensions beyond <code>json</code> and <code>mbstring</code>.</p>
+	<p>Eighteen components. Each is a small library focused on one job, distributable as its own Composer package, depending mainly on PHP itself plus other toolkit components. Some optional workflows need platform extensions: compression needs <code>zlib</code>, the SQLite filesystem needs <code>sqlite3</code>, and CORSProxy currently needs <code>curl</code>.</p>
 </section>
 
 <section class="all-components" id="components">
@@ -71,7 +71,7 @@
 
 	<h3>Content and migration</h3>
 	<ul class="ref-grid">
-		<li><a href="reference/html.html"><strong>HTML</strong><span>Browser-grade HTML5 parser and tag rewriter. Cursor model, byte-for-byte edits.</span></a></li>
+		<li><a href="reference/html.html"><strong>HTML</strong><span>WordPress core HTML parser and tag rewriter. Cursor model, byte-for-byte edits.</span></a></li>
 		<li><a href="reference/blockparser.html"><strong>BlockParser</strong><span>Parse WordPress block markup into a structured tree.</span></a></li>
 		<li><a href="reference/markdown.html"><strong>Markdown</strong><span>Bidirectional Markdown ↔ block markup with frontmatter as metadata.</span></a></li>
 		<li><a href="reference/xml.html"><strong>XML</strong><span>Streaming, namespace-aware XML processor. Edit WXR exports without a tree.</span></a></li>
@@ -84,7 +84,7 @@
 		<li><a href="reference/bytestream.html"><strong>ByteStream</strong><span>Pull / peek / consume primitives. Gzip, hash, limit, window filters compose.</span></a></li>
 		<li><a href="reference/filesystem.html"><strong>Filesystem</strong><span>One interface across disk, memory, SQLite, and ZIP-backed storage.</span></a></li>
 		<li><a href="reference/zip.html"><strong>Zip</strong><span>Read and write ZIP archives one entry at a time. EPUB, .docx, plugin bundles.</span></a></li>
-		<li><a href="reference/git.html"><strong>Git</strong><span>Pure-PHP Git: commits, branches, merges, HTTP push/pull, no shelling out.</span></a></li>
+		<li><a href="reference/git.html"><strong>Git</strong><span>Pure-PHP Git primitives: commits, branches, trees, and a subset of HTTP push/pull.</span></a></li>
 		<li><a href="reference/merge.html"><strong>Merge</strong><span>Three-way diff and merge with explicit conflict records.</span></a></li>
 	</ul>
 
@@ -108,10 +108,10 @@
 	<h2>The toolkit in one line each</h2>
 	<table class="proof-table">
 	<tr><td><code>preg_replace</code> for HTML</td><td>→</td><td>HTML's <code>WP_HTML_Tag_Processor</code> rewrites attributes byte-for-byte without re-serializing. Untouched markup stays byte-identical.</td></tr>
-	<tr><td><code>ZipArchive::open()</code></td><td>→</td><td>Zip's <code>ZipFilesystem</code> opens a 2 GB archive using memory proportional to the central directory's size, not the archive's.</td></tr>
+	<tr><td><code>ZipArchive::open()</code></td><td>→</td><td>Zip's <code>ZipFilesystem</code> reads archive entries without <code>ZipArchive</code>; practical limits still apply to central-directory size and ZIP64 support.</td></tr>
 	<tr><td><code>file_get_contents</code> on a URL</td><td>→</td><td>HttpClient streams the response body, supports <code>Range</code> resume, reports progress, and uses curl when available or PHP stream sockets when it isn't.</td></tr>
-	<tr><td><code>DOMDocument::loadHTML</code></td><td>→</td><td>HTML's <code>WP_HTML_Processor</code> parses HTML5 the way browsers do — fragments, implicit tags, the works.</td></tr>
-	<tr><td><code>simplexml_load_string</code></td><td>→</td><td>XML's <code>XMLProcessor</code> walks WXR exports as a cursor and rewrites attributes byte-for-byte, never building a full tree.</td></tr>
+	<tr><td><code>DOMDocument::loadHTML</code></td><td>→</td><td>HTML's <code>WP_HTML_Processor</code> follows WordPress core's browser-aligned parser for supported markup and bails on unsupported cases.</td></tr>
+	<tr><td><code>simplexml_load_string</code></td><td>→</td><td>XML's <code>XMLProcessor</code> walks WXR exports as a cursor and rewrites attributes byte-for-byte without building a DOM tree.</td></tr>
 	</table>
 </section>
 
@@ -124,10 +124,10 @@
 		<li><strong>HTML</strong> is a port of WordPress core's <code>WP_HTML_Tag_Processor</code> and <code>WP_HTML_Processor</code>. The toolkit version tracks core; bug fixes and improvements flow in both directions. Source: <a href="https://github.com/WordPress/wordpress-develop/tree/trunk/src/wp-includes/html-api">WordPress/wordpress-develop</a>.</li>
 		<li><strong>BlockParser</strong> is WordPress core's block parser (<code>WP_Block_Parser</code>) packaged as a standalone library so importers and linters can read <a href="https://developer.wordpress.org/block-editor/reference-guides/block-api/">block markup</a> without booting WordPress. Source: <a href="https://github.com/WordPress/wordpress-develop/blob/trunk/src/wp-includes/class-wp-block-parser.php">WordPress/wordpress-develop</a>.</li>
 		<li><strong>Markdown</strong> wraps <a href="https://commonmark.thephpleague.com/"><code>league/commonmark</code></a> for the Markdown parsing itself and <a href="https://github.com/webuni/front-matter"><code>webuni/front-matter</code></a> for the YAML frontmatter handling. The toolkit's own work is the bridge from CommonMark's AST into WordPress block markup, plus the reverse direction.</li>
-		<li><strong>Polyfill</strong>'s WordPress-shaped helpers (<code>esc_html</code>, <code>add_filter</code>, <code>__</code>) defer to WordPress when WordPress is loaded. The standalone implementations match WordPress's behavior so the same code runs both inside and outside the platform.</li>
+		<li><strong>Polyfill</strong>'s WordPress-shaped helpers (<code>esc_html</code>, <code>add_filter</code>, <code>__</code>) defer to WordPress when WordPress is loaded. The standalone implementations are minimal compatibility stubs so toolkit code can run outside the platform.</li>
 	</ul>
 
-	<p>The remaining components — Zip, ByteStream, Filesystem, XML, Encoding, DataLiberation, Git, Merge, HttpClient, HttpServer, CORSProxy, CLI, Blueprints, ToolkitCodingStandards — are toolkit originals, written for this project to fill gaps the PHP ecosystem leaves to extensions.</p>
+	<p>The remaining components — Zip, ByteStream, Filesystem, XML, Encoding, DataLiberation, Git, Merge, HttpClient, HttpServer, CORSProxy, CLI, Blueprints, ToolkitCodingStandards — expose toolkit-authored APIs. Some include vendored or patched third-party code where that keeps the package self-contained.</p>
 </section>
 
 <section class="how-runnable">

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chapter 1 — Rewriting HTML safely · PHP Toolkit</title>
-<meta name="description" content="Rewrite real-world HTML — lazy-load images, fix relative URLs, strip script tags — using WP_HTML_Tag_Processor's cursor model. Chapter 1 of a tutorial that builds a content importer.">
+<meta name="description" content="Rewrite real-world HTML — lazy-load images, fix relative URLs, neutralize scripts and inline event handlers — using WP_HTML_Tag_Processor's cursor model. Chapter 1 of a tutorial that builds a content importer.">
 <link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
@@ -43,7 +43,7 @@
 <p class="breadcrumb">Chapter 1 of 4</p>
 <h1>Rewriting HTML safely</h1>
 
-<p class="lede">In the quickstart you added a single attribute to a single tag. In this chapter we'll do the work the importer actually needs to do on real-world post content: add lazy loading to every image, rewrite relative links to absolute URLs, and strip the script tags and inline event handlers that creep into pasted HTML. By the end you'll have a <code>clean_post_html()</code> function the next chapter will plug into the importer.</p>
+<p class="lede">In the quickstart you added a single attribute to a single tag. In this chapter we'll do the work the importer actually needs to do on real-world post content: add lazy loading to every image, rewrite relative links to absolute URLs, and neutralize script tags and inline event handlers that creep into pasted HTML. By the end you'll have a <code>clean_post_html()</code> function the next chapter will plug into the importer.</p>
 
 <aside class="callout you-will-learn">
 	<strong>You will learn to:</strong>
@@ -86,7 +86,7 @@ HTML;
 <ol>
 	<li>The <code>&lt;img&gt;</code> has no <code>loading</code> hint, so it'll fetch eagerly even when it's far below the fold.</li>
 	<li>Two of the four <code>&lt;a&gt;</code> tags use relative URLs. They were correct on the source site; on the destination site they'll point to nothing.</li>
-	<li>There's a <code>&lt;script&gt;</code> tag and an <code>onmouseover</code> handler. They have to go.</li>
+	<li>There's a <code>&lt;script&gt;</code> tag and an <code>onmouseover</code> handler. They have to be neutralized.</li>
 </ol>
 
 <p>Each of the next three sections fixes one of these. They all use the same component — <code>WP_HTML_Tag_Processor</code> — and the same shape: open a processor over the HTML, walk it, ask the cursor to make edits, then call <code>get_updated_html()</code> for the result.</p>
@@ -186,7 +186,7 @@ echo $tags->get_updated_html();
 	<strong>Note.</strong> Real-world URL resolution has corners (relative paths with <code>..</code>, query-string-only URLs like <code>?page=2</code>, base elements). The toolkit ships a focused URL handling utility under DataLiberation that does the full job. We'll meet it in chapter 3. For now the simple classifier is good enough for the inputs the importer actually sees.
 </aside>
 
-<h2 id="strip-scripts">Strip script tags and inline event handlers</h2>
+<h2 id="strip-scripts">Neutralize scripts and inline event handlers</h2>
 
 <p>This is the security-shaped fix. A user pasted some HTML, and an <code>onmouseover</code> handler came along with it. Maybe a <code>&lt;script&gt;</code> tag too. The importer needs to neutralize both before the content lands in a database that will later be rendered into someone else's browser.</p>
 

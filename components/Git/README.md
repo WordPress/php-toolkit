@@ -9,13 +9,15 @@ see_also:
   - bytestream | ByteStream | Read and write object data without accidental buffering.
 ---
 
-A pure-PHP Git client and server. Commits, branches, diffs, HTTP push/pull — all without shelling out to <code>git</code>.
+A PHP implementation of core Git repository operations plus HTTP protocol helpers. Commits, branches, diffs, and selected push/pull workflows run without shelling out to <code>git</code>.
 
 ## Why this exists
 
 <p>Git is a useful storage model even when a server cannot run the <code>git</code> binary: snapshots, branches, object-addressed files, diffs, merges, and sync over HTTP. That matters for WordPress tools that want revision history for generated files, content snapshots, site state, or collaborative edits in constrained runtimes.</p>
 
-<p>The Git component implements the core repository operations in PHP and stores objects through the toolkit <code>Filesystem</code> interface. That means the same repository can live on disk, in memory, or in another backend, and higher-level code can commit files without knowing where objects are stored.</p>
+<p>The Git component implements the core repository operations in PHP and stores objects through the toolkit <code>Filesystem</code> interface. That means the same repository can live on disk, in memory, or in another backend, and higher-level code can commit files without knowing where objects are stored. It is a toolkit implementation for supported workflows, not a complete replacement for every <code>git</code> command and protocol edge case.</p>
+
+<p>Git object storage and pack processing use zlib compression through the ByteStream compression filters.</p>
 
 <p>The docs start with simple commits because that mental model scales: a repository is just objects plus refs. From there, branches, history walking, root commits, and merges become details you can reason about instead of magic shell behavior.</p>
 

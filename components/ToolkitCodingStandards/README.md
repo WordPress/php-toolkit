@@ -1,7 +1,6 @@
 ---
 slug: coding-standards
 title: ToolkitCodingStandards
-install: wp-php-toolkit/toolkit-coding-standards
 
 see_also:
   - polyfill | Polyfill | Share WordPress-style compatibility expectations across standalone packages.
@@ -11,9 +10,9 @@ PHP_CodeSniffer sniffs used by this project: enforce Yoda comparisons and ban th
 
 ## Why this exists
 
-<p>This package is not a general-purpose style guide. It holds project-specific PHP_CodeSniffer rules for review comments the toolkit wants automated: comparisons should follow the WordPress Yoda style, and short ternaries should not hide whether a fallback is meant for <code>null</code> only or for all falsy values.</p>
+<p>This component is not currently published as a separate Composer package and is not a general-purpose style guide. It holds project-specific PHP_CodeSniffer rules for review comments the toolkit wants automated: comparisons should follow the WordPress Yoda style, and short ternaries should not hide whether a fallback is meant for <code>null</code> only or for all falsy values.</p>
 
-<p>Use it in this monorepo, or in a project that intentionally wants the same review tradeoffs. If your project does not follow WordPress-style comparisons, the Yoda sniff is probably the wrong rule for you.</p>
+<p>Use it in this monorepo, or vendor/copy it into a project that intentionally wants the same review tradeoffs. If your project does not follow WordPress-style comparisons, the Yoda sniff is probably the wrong rule for you.</p>
 
 ## Reference the standard from your phpcs.xml
 

@@ -16,7 +16,7 @@ Async HTTP client without <code>curl</code> required. Uses sockets when curl is 
 
 <p>A plugin installer starts with one request to download <code>plugin.zip</code>. A migration then adds progress reporting, a ten-request media window, resumable downloads, and a remote ZIP reader that feeds ZipFilesystem directly. Those workflows need the same request API from the first GET to the final streamed archive.</p>
 
-<p>The HttpClient component gives the toolkit a small request/response model, middleware for redirects and caching, concurrent fetches, and response bodies exposed as byte streams. It runs through curl when PHP provides curl and through pure PHP sockets when it does not. Callers keep the same code path.</p>
+<p>The HttpClient component gives the toolkit a small request/response model, middleware for redirects and caching, concurrent fetches, and response bodies exposed as byte streams. It runs through curl when PHP provides curl and through PHP sockets when it does not. Callers keep the same request and response model while the transport changes underneath.</p>
 
 <p>Use it to fetch plugin metadata, submit import callbacks, mirror a media library, read a WXR export, or pipe a remote archive into Zip and Filesystem code.</p>
 
@@ -202,6 +202,8 @@ if ( extension_loaded( 'curl' ) ) {
 ## Follow redirects and inspect the final request
 
 <p>Redirects are middleware, not transport behavior. The client follows up to five redirects by default. The original <code>Request</code> keeps a chain to the final request, so importers can log where a source URL actually landed.</p>
+
+<p>Current caveat: followed redirects are reissued as <code>GET</code> requests. That matches common browser behavior for <code>303</code> and many simple downloads, but do not rely on it for preserving non-GET methods across <code>307</code> or <code>308</code> responses.</p>
 
 <!-- snippet:
 filename: redirects.php

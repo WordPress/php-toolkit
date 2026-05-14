@@ -57,7 +57,7 @@ foreach ( $diff->get_changes() as $change ) {
 
 ## Render a unified patch
 
-<p><code>format_as_git_patch()</code> produces output that mirrors <code>git diff</code>, including hunk headers — handy for emails, CI annotations, or a "what changed?" panel.</p>
+<p><code>format_as_git_patch()</code> produces unified-patch-style output, including hunk headers — handy for emails, CI annotations, or a "what changed?" panel.</p>
 
 <!-- snippet:
 filename: git-patch.php
