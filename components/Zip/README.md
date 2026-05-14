@@ -10,17 +10,17 @@ see_also:
   - httpclient | HttpClient | Stream downloaded archives into validation or extraction workflows.
 ---
 
-Read and write ZIP archives in pure PHP — no <code>libzip</code>, no <code>ZipArchive</code>. Streams entries one at a time, so you can build EPUBs, .docx files, and multi-gigabyte plugin bundles without buffering the archive in memory.
+Read and write ZIP archives without <code>libzip</code> or <code>ZipArchive</code>. Stored entries are pure PHP; Deflate entries use PHP's <code>zlib</code> functions. Entries stream one at a time, while ZIP metadata such as the central directory is still held in memory.
 
 ## Why this exists
 
 <p>Common PHP ZIP workflows rely on the <code>ZipArchive</code> extension or shelling out to <code>zip</code>. Those are awkward in hosts without libzip, WebAssembly builds, and code paths that need to stream archive data through toolkit byte streams.</p>
 
-<p>The Zip component reads and writes Stored and Deflate archives in pure PHP. The decoder is pull-based, so listing the central directory of a 2 GB ZIP costs roughly the size of the directory itself. The encoder accepts any <code>ByteWriteStream</code> as a sink and writes one entry at a time.</p>
+<p>The Zip component reads and writes Stored and Deflate archives without <code>ZipArchive</code>. The decoder is pull-based for entry bodies, but <code>ZipFilesystem</code> indexes the central directory in memory and currently rejects archives whose central directory exceeds 2 MB. The encoder accepts any <code>ByteWriteStream</code> as a sink and writes one entry at a time.</p>
 
 ## Read a file out of a ZIP
 
-<p><code>ZipFilesystem</code> implements this toolkit's <code>Filesystem</code> interface, so once you wrap the byte reader you can call <code>get_contents()</code>, <code>ls()</code>, and <code>is_dir()</code> just like the other filesystem backends.</p>
+<p><code>ZipFilesystem</code> implements this toolkit's <code>Filesystem</code> interface, so once you wrap the byte reader you can call <code>get_contents()</code>, <code>ls()</code>, and <code>is_dir()</code> just like the other read backends.</p>
 
 <p><strong>Try this:</strong> after <em>Run</em>, add a second <code>append_file()</code> call before <code>$enc-&gt;close()</code> for a <code>notes.md</code> entry, then call <code>print_r( $zip-&gt;ls( '/' ) )</code> at the end. The directory listing reflects the new entry without re-reading the file.</p>
 
@@ -267,7 +267,7 @@ XML,
 
 ## Defend against zip-slip
 
-<p>A malicious archive can name an entry <code>../../etc/passwd</code> and trick a naive extractor into clobbering files outside the destination. <code>ZipDecoder::sanitize_path()</code> strips leading <code>../</code> segments and collapses internal <code>/../</code> sequences before exposing the path.</p>
+<p>A malicious archive can name an entry <code>../../etc/passwd</code> and trick a naive extractor into clobbering files outside the destination. <code>ZipDecoder::sanitize_path()</code> normalizes slashes and strips leading traversal segments before exposing the path. Treat it as one layer of defense; still extract through a chrooted filesystem target.</p>
 
 <!-- snippet:
 filename: zip-slip.php
@@ -394,6 +394,8 @@ files now in memory:
 
 <p>Footgun: <strong>Updating an entry in place is impossible.</strong> The central directory points at byte offsets — change one entry's compressed size and every later offset shifts. Repack into a new archive instead.</p>
 
-<p>Footgun: <strong>Never extract entry paths verbatim.</strong> Always run paths through <code>ZipDecoder::sanitize_path()</code>. Without it, a hostile archive can write outside the destination directory.</p>
+<p>Footgun: <strong>Never extract entry paths verbatim.</strong> Always run paths through <code>ZipDecoder::sanitize_path()</code> and write through a filesystem layer that prevents path escape. Without those checks, a hostile archive can write outside the destination directory.</p>
 
 <p>Footgun: <strong>Encrypted archives aren't supported.</strong> If you need to read AES-encrypted ZIPs, this isn't the component. The file format technically allows encryption, but the toolkit deliberately excludes it because the implementation surface is large and the use case is rare in WordPress contexts.</p>
+
+<p>Footgun: <strong>ZIP64 and very large central directories aren't supported by <code>ZipFilesystem</code>.</strong> Entry bodies can stream, but the archive index is bounded by <code>MAX_CENTRAL_DIRECTORY_SIZE</code>.</p>

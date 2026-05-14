@@ -165,7 +165,7 @@ printf( "parsed %d CSV rows in 8 KB chunks; peak memory ~%d KB\n",
 </script>
 </php-snippet>
 
-<p>That pull-loop is the same shape every byte stream in the toolkit uses. <code>pull(8192)</code> means "buffer up to 8 KB"; <code>consume($n)</code> reads and advances. The trailing partial line gets carried into the next iteration. Memory used is the chunk size plus one partial line — the same regardless of whether the file is 50 KB or 5 GB.</p>
+<p>That pull-loop is the same shape every byte stream in the toolkit uses. <code>pull(8192)</code> means "buffer up to 8 KB"; <code>consume($n)</code> reads and advances. The trailing partial line gets carried into the next iteration. Memory used is the chunk size plus one partial line, so it stays bounded as long as individual lines are bounded.</p>
 
 <aside class="callout note">
 	<strong>Note.</strong> The reference page for ByteStream covers the same loop pattern in more detail, plus the filters that wrap streams: gzip, hash, limit, window. See <a href="../reference/bytestream.html">reference/bytestream.html</a>.
@@ -264,7 +264,7 @@ foreach ( $inputs as $name ) {
 </script>
 </php-snippet>
 
-<p>Run any entry path through <code>ZipDecoder::sanitize_path()</code> before using it as a key in your destination filesystem. <code>copy_between_filesystems()</code> already does this; if you build your own loop you must too.</p>
+<p><code>ZipDecoder</code> sanitizes ZIP entry names before <code>ZipFilesystem</code> exposes them, so the standard copy path sees normalized archive paths. If you parse ZIP records yourself or accept path strings from another source, run those names through <code>ZipDecoder::sanitize_path()</code> before using them as destination keys.</p>
 
 <h2 id="combine">Folding it into the importer</h2>
 
@@ -327,7 +327,7 @@ function each_post( Filesystem $stage ) {
 	<li>Stream a large entry with <code>open_read_stream()</code>, the <code>pull()</code> / <code>consume()</code> loop, and a trailing-partial-line carry.</li>
 	<li>Stage data in <code>InMemoryFilesystem</code> for in-process work, and swap to a different backend without changing the calling code.</li>
 	<li>Compose source and destination filesystems with <code>copy_between_filesystems()</code> in one helper call.</li>
-	<li>Defend against zip-slip with <code>ZipDecoder::sanitize_path()</code>.</li>
+	<li>Understand where ZIP entry names are normalized, and when to call <code>ZipDecoder::sanitize_path()</code> yourself.</li>
 </ul>
 
 <p>The stage is now ready to feed chapter 3, where the Markdown-to-blocks conversion actually happens.</p>
@@ -337,7 +337,7 @@ function each_post( Filesystem $stage ) {
 	<a class="next" href="03-importing-content.html">Next: Markdown to WXR →</a>
 </nav>
 
-<p class="next-preview">In chapter 3 we'll turn each Markdown post into WordPress block markup, run it through <code>clean_post_html()</code>, and stream the whole thing into a WXR file the WordPress importer plugin will accept. Three more components — Markdown, BlockParser, and DataLiberation — finally meet the importer.</p>
+<p class="next-preview">In chapter 3 we'll turn each Markdown post into WordPress block markup, run it through <code>clean_post_html()</code>, and stream the whole thing into a WXR-style export. Three more components — Markdown, BlockParser, and DataLiberation — finally meet the importer.</p>
 
 </article>
 </div>

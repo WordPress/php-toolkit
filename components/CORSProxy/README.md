@@ -29,7 +29,7 @@ curl -s "http://127.0.0.1:5263/cors-proxy.php/https://api.github.com/repos/WordP
 
 ## Production rate limiting
 
-<p>Drop a <code>cors-proxy-config.php</code> next to <code>cors-proxy.php</code>. If that file defines a <code>playground_cors_proxy_maybe_rate_limit()</code> function, the proxy calls it before forwarding any request — your one chance to reject early. Without the file, the proxy applies its default rate limiter, which is fine for development but should be replaced for any deployment that gets real traffic.</p>
+<p>Drop a <code>cors-proxy-config.php</code> next to <code>cors-proxy.php</code>. If that file defines a <code>playground_cors_proxy_maybe_rate_limit()</code> function, the proxy calls it before forwarding any request — your one chance to reject early. Without that function the proxy relies only on its coarse built-in safeguards, so production deployments should provide their own rate limiting.</p>
 
 <p>This example uses a per-IP token bucket stored on disk. Replace with Redis or memcached for multi-host deployments.</p>
 

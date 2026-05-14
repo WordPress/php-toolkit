@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Learn — PHP Toolkit</title>
-<meta name="description" content="A four-chapter tutorial that builds a real WordPress content importer using HTML, ZIP, Markdown, and DataLiberation. Every code block runs in the browser.">
+<meta name="description" content="A four-chapter tutorial that builds a WordPress content importer using HTML, ZIP, Markdown, and DataLiberation. Most snippets run in the browser.">
 <link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
 </head>
 <body>
@@ -21,12 +21,12 @@
 
 <h1>Learn the toolkit by building a content importer</h1>
 
-<p class="lede">Across four chapters and roughly forty-five minutes, you'll build a small WordPress content importer in pure PHP. It reads a folder of Markdown posts, rewrites the HTML inside them, packages everything as a ZIP-backed staging filesystem, and finally emits a WXR file ready to feed to WordPress's importer. Every snippet runs in your browser. You finish with code you can keep.</p>
+<p class="lede">Across four chapters and roughly forty-five minutes, you'll build a small WordPress content importer in PHP. It reads a folder of Markdown posts, rewrites the HTML inside them, packages everything as a ZIP-backed staging filesystem, and finally emits a WXR-style export stream. Most snippets run in your browser; network-bound examples are marked local-only. You finish with code you can keep.</p>
 
 <section class="prereqs">
 	<h2>Before you start</h2>
 	<p>You should be comfortable reading and writing PHP. You don't need to know WordPress internals — we'll explain the WordPress-specific bits as they come up. You don't need anything installed locally; the runnable snippets execute via WordPress Playground in the page.</p>
-	<p>If you want to run the same code on your own machine afterwards, every example works under PHP 7.2 or newer with <code>composer require wp-php-toolkit/&lt;component&gt;</code>.</p>
+	<p>If you want to run the same code on your own machine afterwards, the examples target PHP 7.2 or newer with <code>composer require wp-php-toolkit/&lt;component&gt;</code>, plus any optional extension used by the chosen component.</p>
 </section>
 
 <section class="path">
@@ -42,7 +42,7 @@
 		<li>
 			<a href="01-rewriting-html.html">
 				<strong>Chapter 1 — Rewriting HTML safely</strong>
-				<span>Add <code>loading="lazy"</code> to images, rewrite relative links, strip script tags. Meet the cursor model that underlies every later chapter.</span>
+				<span>Add <code>loading="lazy"</code> to images, rewrite relative links, and neutralize scripts and inline handlers. Meet the cursor model that underlies every later chapter.</span>
 			</a>
 		</li>
 		<li>
@@ -60,7 +60,7 @@
 		<li>
 			<a href="04-talking-to-the-network.html">
 				<strong>Chapter 4 — Talking to the network</strong>
-				<span>Frontload the images referenced from the imported posts using HttpClient with progress, redirects, and resumable downloads.</span>
+				<span>Frontload images before import using HttpClient with progress, redirects, and resumable downloads.</span>
 			</a>
 		</li>
 		<li>
@@ -81,9 +81,9 @@
 parsed 12 posts, 8 images
 rewrote 47 inline links
 fetched 8 image attachments (2.3 MB)
-wrote export.xml (94 KB, valid WXR 1.2)</code></pre>
+wrote export.xml (94 KB)</code></pre>
 
-	<p>It's a real tool — the WordPress importer plugin will accept the output. You'll write it in pieces, one component per chapter, and the canonical example file grows with each chapter. By chapter 4 it's a hundred lines of pure PHP that depends on no extension beyond <code>json</code> and <code>mbstring</code>.</p>
+	<p>It's a real tool, but the tutorial keeps the export writer deliberately small: if you're targeting the WordPress importer plugin directly, add the importer-required channel metadata such as <code>wp:wxr_version</code>. You'll write it in pieces, one component per chapter, and the canonical example file grows with each chapter. By chapter 4 it's a hundred lines of PHP using toolkit components that avoid <code>libxml2</code>, <code>libzip</code>, and mandatory <code>curl</code>.</p>
 
 	<p>The actual content — twelve Markdown posts about cooking, with embedded images and frontmatter — is part of the tutorial's example data and ships pre-loaded into every snippet. You'll see it in chapter 1.</p>
 </section>

@@ -10,7 +10,7 @@ see_also:
   - httpclient | HttpClient | Download media and remote source data while importing.
 ---
 
-Streaming WordPress import/export. WXR, SQL, block markup — without loading whole datasets into memory.
+Streaming WordPress import/export. WXR, SQL, block markup — process entities one at a time instead of building whole-dataset object graphs.
 
 ## Why this exists
 
@@ -24,7 +24,7 @@ Streaming WordPress import/export. WXR, SQL, block markup — without loading wh
 
 ## Write a WXR file in five lines
 
-<p>Stream a single post into a WXR document via <code>WXRWriter</code>. The writer holds no buffer beyond what is needed to close currently-open tags, so memory stays flat regardless of input size.</p>
+<p>Stream a single post into a WXR document via <code>WXRWriter</code>. The writer emits each entity to the output stream and only keeps the small amount of state needed for the current document.</p>
 
 <!-- snippet:
 filename: wxr-quickstart.php
@@ -122,9 +122,9 @@ terms: 3
 Blog post exported
 ```
 
-## Read entities from a WXR file with constant memory
+## Read entities from a WXR file incrementally
 
-<p><code>WXREntityReader</code> emits one entity at a time. A 10 GB WXR uses the same memory as a 10 KB one.</p>
+<p><code>WXREntityReader</code> emits one entity at a time. Memory use is driven by the current entity and parser buffers rather than the total file size.</p>
 
 <!-- snippet:
 filename: wxr-read.php
@@ -166,7 +166,7 @@ post: {"post_title":"Second","post_id":"2","post_type":"post","post_content":"Bo
 
 ## Streaming transform: rewrite URLs while copying WXR
 
-<p>Wire reader to writer to rewrite a WXR file on the fly. This pattern is how you migrate a staging export to production: swap <code>staging.example.com</code> for <code>example.com</code> without ever loading the file into memory.</p>
+<p>Wire reader to writer to rewrite a WXR file on the fly. This pattern is how you migrate a staging export to production: swap <code>staging.example.com</code> for <code>example.com</code> while holding only the current entity and output buffers.</p>
 
 <!-- snippet:
 filename: rewrite-urls.php

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chapter 4 — Talking to the network · PHP Toolkit</title>
-<meta name="description" content="Frontload images, run a sliding window of concurrent downloads, and stream-unzip a remote archive — all without curl. Chapter 4 of the importer tutorial.">
+<meta name="description" content="Frontload images, run a sliding window of concurrent downloads, and stream-unzip a remote archive — all without a mandatory curl dependency. Chapter 4 of the importer tutorial.">
 <link rel="stylesheet" href="../assets/style.css?v=20260429-rewrite">
 <script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
 <script id="toolkit-setup" type="application/json"></script>
@@ -43,7 +43,7 @@
 <p class="breadcrumb">Chapter 4 of 4</p>
 <h1>Talking to the network</h1>
 
-<p class="lede">By the end of chapter 3 the importer produces a valid WXR from a folder of Markdown. There's one loose thread: when a post references <code>![](https://cdn.example.com/bread.jpg)</code>, the destination site has no <code>bread.jpg</code> in its media library. The WordPress importer plugin will try to fetch each remote image as it runs, but that's a fragile thing to do during an import — slow, easy to rate-limit, easy to leave behind half-fetched media. The robust answer is to fetch the images <em>before</em> the import and stage them locally so the import can reference local paths. This chapter covers the fetch side of that work using HttpClient. We'll also see how the same client mounts a remote ZIP for streaming, which means in some workflows you don't need chapter 2's local archive at all.</p>
+<p class="lede">By the end of chapter 3 the importer produces a WXR-style export stream from a folder of Markdown. There's one loose thread: when a post references <code>![](https://cdn.example.com/bread.jpg)</code>, the destination site has no <code>bread.jpg</code> in its media library. The WordPress importer plugin downloads files for attachment entities, but it does not scan arbitrary post content and import every remote image URL for you. The robust answer is to fetch the images <em>before</em> the import and stage them locally so the import can reference local paths. This chapter covers the fetch side of that work using HttpClient. We'll also see how the same client mounts a remote ZIP for streaming, which means in some workflows you don't need chapter 2's local archive at all.</p>
 
 <aside class="callout you-will-learn">
 	<strong>You will learn to:</strong>
@@ -60,7 +60,7 @@
 
 <p>The instinct is <code>file_get_contents( $url )</code> or <code>curl_exec()</code>. Both work — until they don't. <code>file_get_contents</code> on a URL needs <code>allow_url_fopen</code>, which security-conscious hosts disable. <code>curl_exec</code> needs the curl extension, which WebAssembly builds of PHP don't ship. And the simplest forms of both — no <code>CURLOPT_FILE</code>, no chunked stream wrapper — buffer the whole response into one PHP string, which is fatal for a 50 MB media file on a host with a 64 MB memory limit.</p>
 
-<p>HttpClient gives you the same shape regardless of host capabilities: an event loop, response objects with status codes and headers, response bodies as <code>ByteReadStream</code>s you can pipe somewhere instead of buffering. Under the hood it picks curl when available and PHP stream sockets otherwise. From your code's perspective those two transports are identical.</p>
+<p>HttpClient gives you the same request/response shape regardless of host capabilities: an event loop, response objects with status codes and headers, response bodies as <code>ByteReadStream</code>s you can pipe somewhere instead of buffering. Under the hood it picks curl when available and PHP stream sockets otherwise. The public API stays the same, though low-level transport errors and edge-case protocol behavior can still differ.</p>
 
 <h2 id="fetch-one">Fetch one URL</h2>
 
@@ -341,7 +341,7 @@ $reader->close_reading();
 	<li>Stream the whole thing into a WXR document with <code>WXRWriter</code>, with the cleaned post markup as <code>content</code> and rewritten image references pointing at the local paths under the staged uploads tree.</li>
 </ol>
 
-<p>The full importer is roughly a hundred lines of PHP. It depends on no extension beyond <code>json</code> and <code>mbstring</code>. It runs in browser-side WebAssembly, on PHP 7.2 through 8.3, and on every shared host that's kept up with PHP releases. That's the toolkit's whole pitch — pure-PHP libraries that handle the work the platform usually outsources to extensions.</p>
+<p>The full importer is roughly a hundred lines of PHP. It avoids <code>libxml2</code>, <code>libzip</code>, and a mandatory <code>curl</code> dependency. It runs in browser-side WebAssembly and on PHP 7.2+ when the features you choose have their optional platform extensions available. That's the toolkit's whole pitch — PHP libraries that handle much of the work the platform usually outsources to extensions.</p>
 
 <h2 id="recap">Recap</h2>
 

@@ -81,9 +81,9 @@ the byte � should not be here.
 .��.
 ```
 
-## Detecting noncharacters MySQL/utf8mb4 will reject
+## Detecting Unicode noncharacters
 
-<p>Code points like U+FFFE, U+FFFF, and the U+FDD0–U+FDEF block are valid Unicode but forbidden in XML and rejected by some databases. Check before inserting user-submitted content into a strict <code>utf8mb4</code> column.</p>
+<p>Code points like U+FFFE, U+FFFF, and the U+FDD0–U+FDEF block are valid Unicode scalar values but forbidden in XML and unwelcome in many interchange formats. Check for them before serializing user-submitted content into strict XML, WXR, or other systems that reject noncharacters.</p>
 
 <!-- snippet:
 filename: noncharacters.php

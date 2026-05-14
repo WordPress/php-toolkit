@@ -9,7 +9,7 @@ see_also:
   - cli | CLI | Wrap repeatable blueprint operations in a small command.
 ---
 
-Declarative WordPress site provisioning. Write a JSON description of plugins, options, and content; let the runner execute it.
+Declarative WordPress site provisioning. Write a Blueprint JSON document for plugins, options, content, and setup steps; let the runner execute it.
 
 ## Why this exists
 
@@ -23,7 +23,7 @@ Declarative WordPress site provisioning. Write a JSON description of plugins, op
 
 ## Configure a runner for an existing site
 
-<p><code>RunnerConfiguration</code> is a fluent builder. The minimum: target site root, target site URL, execution mode.</p>
+<p><code>RunnerConfiguration</code> is a fluent builder. A real run also needs a blueprint reference; this snippet shows the site-target fields in isolation.</p>
 
 <!-- snippet:
 filename: configure.php
@@ -55,7 +55,7 @@ url:  http://playground.test/
 
 ## Generate blueprint JSON from PHP
 
-<p>CI jobs and tests stay clearer when PHP builds the blueprint from data instead of hand-writing JSON. Keep the structure plain: <code>version</code>, then a list of step arrays.</p>
+<p>CI jobs and tests stay clearer when PHP builds the blueprint from data instead of hand-writing JSON. Keep the structure plain: <code>version</code>, top-level collections such as <code>plugins</code>, and any imperative steps under the schema's step lists.</p>
 
 <!-- snippet:
 filename: build-json.php
@@ -70,26 +70,23 @@ $plugins   = array( 'gutenberg', 'classic-editor' );
 
 $blueprint = array(
 	'version' => 2,
-	'steps'   => array(
+	'plugins' => array(),
+	'additionalStepsAfterExecution' => array(
 		array(
 			'step'    => 'setSiteOptions',
 			'options' => array(
-				'blogname'              => $site_name,
-				'permalink_structure'   => '/%postname%/',
-				'show_on_front'         => 'page',
+				'blogname'            => $site_name,
+				'permalink_structure' => '/%postname%/',
+				'show_on_front'       => 'page',
 			),
 		),
 	),
 );
 
 foreach ( $plugins as $slug ) {
-	$blueprint['steps'][] = array(
-		'step'       => 'installPlugin',
-		'pluginData' => "https://downloads.wordpress.org/plugin/{$slug}.zip",
-	);
-	$blueprint['steps'][] = array(
-		'step'   => 'activatePlugin',
-		'plugin' => "{$slug}/{$slug}.php",
+	$blueprint['plugins'][] = array(
+		'source' => $slug,
+		'active' => true,
 	);
 }
 
@@ -100,7 +97,17 @@ echo json_encode( $blueprint, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n
 ```
 {
     "version": 2,
-    "steps": [
+    "plugins": [
+        {
+            "source": "gutenberg",
+            "active": true
+        },
+        {
+            "source": "classic-editor",
+            "active": true
+        }
+    ],
+    "additionalStepsAfterExecution": [
         {
             "step": "setSiteOptions",
             "options": {
@@ -108,22 +115,6 @@ echo json_encode( $blueprint, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n
                 "permalink_structure": "/%postname%/",
                 "show_on_front": "page"
             }
-        },
-        {
-            "step": "installPlugin",
-            "pluginData": "https://downloads.wordpress.org/plugin/gutenberg.zip"
-        },
-        {
-            "step": "activatePlugin",
-            "plugin": "gutenberg/gutenberg.php"
-        },
-        {
-            "step": "installPlugin",
-            "pluginData": "https://downloads.wordpress.org/plugin/classic-editor.zip"
-        },
-        {
-            "step": "activatePlugin",
-            "plugin": "classic-editor/classic-editor.php"
         }
     ]
 }
@@ -164,7 +155,7 @@ $schema = array(
 $blueprint = array(
 	'version' => 2,
 	'steps'   => array(
-		array( 'pluginData' => 'https://downloads.wordpress.org/plugin/gutenberg.zip' ),
+		array( 'source' => 'https://downloads.wordpress.org/plugin/gutenberg.zip' ),
 	),
 );
 
@@ -183,19 +174,22 @@ Blueprint root["steps"][0]: Missing required field: step.
 
 ## The Blueprint JSON shape
 
-<p>A blueprint is a JSON document with a <code>version</code> field and a <code>steps</code> array. Each step has a <code>"step"</code> discriminator and step-specific fields. This is the same shape used by <a href="https://playground.wordpress.net/">WordPress Playground</a>.</p>
+<p>A Blueprint v2 document starts with a <code>version</code> field, then uses top-level declarations such as <code>plugins</code>, <code>themes</code>, <code>content</code>, and the schema's step lists. Imperative steps use a <code>"step"</code> discriminator plus step-specific fields.</p>
 
 <pre><code>{
   "version": 2,
-  "steps": [
+  "plugins": [
+    { "source": "gutenberg", "active": true }
+  ],
+  "additionalStepsAfterExecution": [
     { "step": "setSiteOptions",
       "options": {
         "blogname": "Demo Site",
         "permalink_structure": "/%postname%/"
       } },
     { "step": "installPlugin",
-      "pluginData": "https://downloads.wordpress.org/plugin/gutenberg.zip" },
+      "source": "https://downloads.wordpress.org/plugin/classic-editor.zip" },
     { "step": "activatePlugin",
-      "plugin": "gutenberg/gutenberg.php" }
+      "pluginPath": "classic-editor/classic-editor.php" }
   ]
 }</code></pre>

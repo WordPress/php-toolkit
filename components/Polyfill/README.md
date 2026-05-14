@@ -3,20 +3,20 @@ slug: polyfill
 title: Polyfill
 install: wp-php-toolkit/polyfill
 
-credit_title: WordPress-shaped behavior
+credit_title: WordPress-shaped compatibility
 credit_body: |
-  When WordPress is loaded, every function in this component defers to WordPress. The standalone implementations of <code>esc_html()</code>, <code>add_filter()</code>, <code>__()</code>, and friends match WordPress core's behavior so the same code runs inside and outside the platform.
+  When WordPress is loaded, every function in this component defers to WordPress. Outside WordPress, the standalone implementations cover the subset toolkit components need from <code>esc_html()</code>, <code>add_filter()</code>, <code>__()</code>, and related helpers.
 
 see_also:
   - html | HTML | Run WordPress-shaped escaping and translation helpers beside HTML processors.
   - blockparser | BlockParser | Keep standalone block tooling familiar outside WordPress.
 ---
 
-PHP 8 string functions on PHP 7.2+, WordPress hook stubs, and translation/escaping passthroughs so toolkit code runs without WordPress.
+PHP 8 string functions on PHP 7.2+, WordPress hook stubs, and translation/escaping passthroughs so toolkit code runs without booting WordPress.
 
 ## Why this exists
 
-<p>A lot of WordPress-adjacent code wants to call <code>esc_html()</code>, <code>__()</code>, or <code>apply_filters()</code> without booting WordPress. The polyfill component provides minimal but real implementations so that code runs unchanged outside WordPress, and stays out of the way when WordPress is loaded (every function uses <code>function_exists()</code> guards).</p>
+<p>A lot of WordPress-adjacent code wants to call <code>esc_html()</code>, <code>__()</code>, or <code>apply_filters()</code> without booting WordPress. The polyfill component provides minimal implementations for the subset used by the toolkit, and stays out of the way when WordPress is loaded (every function uses <code>function_exists()</code> guards).</p>
 
 ## PHP 8 string functions on PHP 7.2
 
@@ -74,7 +74,7 @@ https://example.com/?a=1&amp;b=2
 
 ## A simple filter chain
 
-<p>The hook system is a real implementation of the WordPress filter API: registered callbacks get applied in priority order, and each one transforms the running value.</p>
+<p>The hook system implements the common filter path: registered callbacks get applied in priority order, and each one transforms the running value.</p>
 
 <!-- snippet:
 filename: filter-chain.php

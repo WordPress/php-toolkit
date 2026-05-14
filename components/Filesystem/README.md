@@ -9,11 +9,11 @@ see_also:
   - git | Git | Expose repository trees through a filesystem-shaped API.
 ---
 
-One <code>Filesystem</code> interface across local disk, in-memory trees, SQLite databases, and ZIP archives. Forward-slash paths everywhere — even on Windows — so the same code runs in tests, in production, and inside read-only ZIPs.
+One <code>Filesystem</code> interface across local disk, in-memory trees, SQLite databases, and ZIP archives. Forward-slash paths everywhere — even on Windows — so the same code runs in tests, in production, and inside read-only ZIP-backed trees.
 
 ## Why this exists
 
-<p>Code that touches the filesystem is hard to test, hard to port to Windows, and impossible to point at non-disk storage without rewriting it. Swap <code>LocalFilesystem</code> for <code>InMemoryFilesystem</code> in tests and your suite stops touching <code>/tmp</code>; swap it for <code>SQLiteFilesystem</code> and your "files" become rows in a portable database; swap it for <code>ZipFilesystem</code> and you can read inside an archive with the same calls.</p>
+<p>Code that touches the filesystem is hard to test, hard to port to Windows, and impossible to point at non-disk storage without rewriting it. Swap <code>LocalFilesystem</code> for <code>InMemoryFilesystem</code> in tests and your suite stops touching <code>/tmp</code>; swap it for <code>SQLiteFilesystem</code> when the <code>sqlite3</code> extension is available and your "files" become rows in a portable database; swap it for <code>ZipFilesystem</code> and you can read inside an archive with the same calls.</p>
 
 <p>Every backend uses forward slashes regardless of host OS. No <code>DIRECTORY_SEPARATOR</code> juggling, no Windows-only test failures, no surprises when a path moves between backends.</p>
 
@@ -109,7 +109,7 @@ exists after cleanup? no
 
 ## SQLite as a portable file store
 
-<p>The whole tree lives in one SQLite database file. Use it for self-contained scratch storage that survives process boundaries without leaving loose files behind.</p>
+<p>The whole tree lives in one SQLite database file. Use it for self-contained scratch storage that survives process boundaries without leaving loose files behind. This backend requires PHP's <code>sqlite3</code> extension.</p>
 
 <!-- snippet:
 filename: sqlite.php
@@ -142,7 +142,7 @@ post-3.md: # Post 3
 
 ## Copy a tree across backends
 
-<p>The killer composability move: <code>copy_between_filesystems()</code> streams files chunk-by-chunk from any source to any target. Pull a ZIP into SQLite, snapshot SQLite to disk, mirror disk into RAM — all the same call.</p>
+<p>The killer composability move: <code>copy_between_filesystems()</code> streams files chunk-by-chunk from any source to any target. Pull a ZIP into SQLite, snapshot SQLite to disk, mirror disk into RAM — all the same call, with the relevant backend extensions available.</p>
 
 <!-- snippet:
 filename: cross-backend-copy.php

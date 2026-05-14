@@ -9,13 +9,13 @@ see_also:
   - httpclient | HttpClient | Process request and response bodies incrementally.
 ---
 
-Composable streaming primitives for reading, writing, transforming, hashing, and compressing byte data. Pull/peek/consume semantics let parsers backtrack without copying, and deflate, inflate, and checksum filters snap together like Lego.
+Composable streaming primitives for reading, writing, transforming, hashing, and compressing byte data. Pull/peek/consume semantics let parsers look ahead with bounded buffering, and deflate, inflate, and checksum filters snap together like Lego.
 
 ## Why this exists
 
 <p>PHP's native streams are powerful but inconsistent. <code>fread</code> on a socket may return short reads with no warning; <code>stream_filter_append</code> is awkward to compose; gzip helpers and file handles expose different APIs. The ByteStream component normalizes these behind one small interface — <code>pull / peek / consume</code> — so a parser, a hash function, and a deflate filter all see the same shape.</p>
 
-<p>The split between <em>pull</em> (buffer up to N bytes) and <em>consume</em> (advance past N bytes) is the secret. Parsers can <code>peek</code> ahead to detect a record boundary and decide whether to <code>consume</code>, without copying or allocating.</p>
+<p>The split between <em>pull</em> (buffer up to N bytes) and <em>consume</em> (advance past N bytes) is the secret. Parsers can <code>peek</code> ahead to detect a record boundary and decide whether to <code>consume</code>, while keeping buffer ownership inside the stream.</p>
 
 ## Read a file in chunks
 
@@ -88,7 +88,7 @@ third chunk
 
 ## Compress on the way in, decompress on the way out
 
-<p>Wrap a stream in <code>DeflateReadStream</code> to get compressed bytes out; wrap it in <code>InflateReadStream</code> to get decompressed bytes out. Both are full <code>ByteReadStream</code> implementations, so they nest into anything else that takes a stream.</p>
+<p>Wrap a stream in <code>DeflateReadStream</code> to get compressed bytes out; wrap it in <code>InflateReadStream</code> to get decompressed bytes out. Both are full <code>ByteReadStream</code> implementations, so they nest into anything else that takes a stream. These filters use PHP's <code>zlib</code> functions.</p>
 
 <!-- snippet:
 filename: deflate-roundtrip.php

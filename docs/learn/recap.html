@@ -21,13 +21,13 @@
 
 <h1>Recap and where to go next</h1>
 
-<p class="lede">Across four chapters you built a working content importer. It reads a ZIP of Markdown posts, cleans the HTML inside each one, frontloads referenced images over HTTP, and streams a WXR file the WordPress importer plugin will accept. None of it required curl, libzip, libxml2, or DOMDocument; all of it runs on PHP 7.2 through 8.3 and inside a browser via WordPress Playground.</p>
+<p class="lede">Across four chapters you built a working content importer. It reads a ZIP of Markdown posts, cleans the HTML inside each one, frontloads referenced images over HTTP, and streams a WXR-style export. Direct WordPress importer compatibility requires the importer-required channel metadata around that stream. The path avoids <code>libzip</code>, <code>libxml2</code>, and a mandatory <code>curl</code> dependency, and runs on PHP 7.2+ when the optional features you choose are available.</p>
 
 <section class="what-you-built">
 	<h2>What you built</h2>
 
 	<table class="proof-table">
-	<tr><td>Chapter 1</td><td>→</td><td><code>clean_post_html()</code> using <code>WP_HTML_Tag_Processor</code>: lazy-load images, rewrite URLs, strip scripts, all in one pass.</td></tr>
+	<tr><td>Chapter 1</td><td>→</td><td><code>clean_post_html()</code> using <code>WP_HTML_Tag_Processor</code>: lazy-load images, rewrite URLs, neutralize scripts, all in one pass.</td></tr>
 	<tr><td>Chapter 2</td><td>→</td><td>Read the input ZIP through <code>ZipFilesystem</code>, stage it in <code>InMemoryFilesystem</code>, defend against zip-slip with <code>ZipDecoder::sanitize_path()</code>.</td></tr>
 	<tr><td>Chapter 3</td><td>→</td><td>Convert each post with <code>MarkdownConsumer</code>, audit the output with <code>WP_Block_Parser</code>, stream the WXR with <code>WXRWriter</code>.</td></tr>
 	<tr><td>Chapter 4</td><td>→</td><td>Frontload images with <code>HttpClient</code> through a sliding-window event loop; mount remote archives with <code>SeekableRequestReadStream</code>.</td></tr>
@@ -40,7 +40,7 @@
 	<p>The importer used eight components. The toolkit ships eighteen. Here's what's left, with the use case each one shows up in:</p>
 
 	<ul class="component-summary">
-		<li><strong>Git</strong> — snapshot your importer's runs into a pure-PHP Git repository for revision history. Useful for "what changed between last week's import and this week's." <a href="../reference/git.html">Reference →</a></li>
+		<li><strong>Git</strong> — snapshot your importer's runs into a PHP-backed Git repository for revision history. Useful for "what changed between last week's import and this week's." <a href="../reference/git.html">Reference →</a></li>
 		<li><strong>Merge</strong> — three-way diff and merge for content sync. If posts edit on both the source and the destination side, this is how you reconcile them. <a href="../reference/merge.html">Reference →</a></li>
 		<li><strong>HttpServer</strong> — a tiny local listening port for OAuth callbacks during a CLI workflow, fixture servers for HttpClient tests, or a status page during a long import. Not for production traffic. <a href="../reference/httpserver.html">Reference →</a></li>
 		<li><strong>CORSProxy</strong> — when you ship the importer as a browser tool, a server-side proxy to fetch URLs that don't send the right CORS headers. <a href="../reference/corsproxy.html">Reference →</a></li>
@@ -62,7 +62,7 @@
 	<p><code>WP_HTML_Tag_Processor</code> walks a string forward, records edits as a side-buffer of byte-range replacements, and emits the modified string only when you call <code>get_updated_html()</code>. The result is byte-honest — bytes you didn't edit come through bit-identical. When you need to make small changes to large markup, that property is gold. The XML component's <code>XMLProcessor</code> applies the same pattern to XML.</p>
 
 	<h3>Pull / consume streams</h3>
-	<p><code>ZipFilesystem::open_read_stream()</code>, <code>HttpClient</code> response bodies, <code>InflateReadStream</code>, and the rest all share the same shape: <code>pull(N)</code> reads up to <code>N</code> bytes from the underlying source into an internal buffer and returns how many ended up there; <code>consume(N)</code> reads <code>N</code> bytes from that buffer and advances past them. Memory used is bounded by the chunk size, never by the file size. Once you internalize this loop you can compose any byte source with any byte sink.</p>
+	<p><code>ZipFilesystem::open_read_stream()</code>, <code>HttpClient</code> response bodies, <code>InflateReadStream</code>, and the rest all share the same shape: <code>pull(N)</code> reads up to <code>N</code> bytes from the underlying source into an internal buffer and returns how many ended up there; <code>consume(N)</code> reads <code>N</code> bytes from that buffer and advances past them. Memory is governed by the stream buffers and chunk sizes you choose, not by a requirement to load the whole file. Once you internalize this loop you can compose any byte source with any byte sink.</p>
 
 	<h3>One interface, multiple backends</h3>
 	<p>Code that takes a <code>Filesystem</code> rather than a path doesn't care if the filesystem is on disk, in memory, in a SQLite database, or inside a ZIP. That's how the importer's stage works for both production (memory) and debugging (local disk) without a code change. Same pattern shows up in HttpClient (curl vs sockets transport) and ByteStream (file, memory, deflate, hash all implementing the same byte-stream interface).</p>

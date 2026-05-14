@@ -43,14 +43,14 @@
 <p class="breadcrumb">Chapter 3 of 4</p>
 <h1>Markdown to blocks to WXR</h1>
 
-<p class="lede">Chapter 1 cleaned a single HTML string. Chapter 2 staged a folder of Markdown files in memory. This chapter turns each of those files into the actual format the WordPress importer plugin reads: WXR, an extended-RSS export. Along the way we meet three more components — Markdown, BlockParser, and DataLiberation — and watch them compose into something none of them could do alone.</p>
+<p class="lede">Chapter 1 cleaned a single HTML string. Chapter 2 staged a folder of Markdown files in memory. This chapter turns each of those files into a WXR-style extended-RSS export stream. Along the way we meet three more components — Markdown, BlockParser, and DataLiberation — and watch them compose into something none of them could do alone.</p>
 
 <aside class="callout you-will-learn">
 	<strong>You will learn to:</strong>
 	<ul>
 		<li>Convert a Markdown document into WordPress block markup with <code>MarkdownConsumer</code>, including frontmatter as post metadata.</li>
 		<li>Inspect the produced blocks with <code>WP_Block_Parser</code> to count, audit, or rewrite them.</li>
-		<li>Stream a WXR export with <code>WXRWriter</code>, one entity at a time, with constant memory.</li>
+		<li>Stream a WXR export with <code>WXRWriter</code>, one entity at a time, without keeping the whole export in memory.</li>
 		<li>Combine those components into a single end-to-end pipeline: Markdown in, WXR out.</li>
 	</ul>
 </aside>
@@ -214,7 +214,7 @@ echo $cleaned;
 
 <h2 id="wxr">Stream a WXR file with DataLiberation</h2>
 
-<p>We have post titles, post content (clean block markup), post metadata. The format the WordPress importer reads is WXR — WordPress eXtended RSS — an XML dialect with a fixed shape. <code>DataLiberation</code>'s <code>WXRWriter</code> takes <code>ImportEntity</code> objects and streams them into a byte sink, one entity at a time, without ever holding the whole export in memory:</p>
+<p>We have post titles, post content (clean block markup), post metadata. WXR — WordPress eXtended RSS — is an XML dialect with a fixed shape. <code>DataLiberation</code>'s <code>WXRWriter</code> takes <code>ImportEntity</code> objects and streams them into a byte sink, one entity at a time. If you need direct compatibility with the WordPress importer plugin, include its required channel metadata such as <code>wp:wxr_version</code> around this stream.</p>
 
 <php-snippet blueprint="toolkit-setup" wp="none" name="wxr-stream.php">
 <script type="application/x-php">
@@ -256,7 +256,7 @@ echo "first 600 chars:\n" . substr( $wxr, 0, 600 ) . "...\n";
 </script>
 </php-snippet>
 
-<p>The writer holds only what it needs to close currently-open XML tags — fewer than ten kilobytes of state for any reasonable pipeline. Every <code>append_entity()</code> writes one item to the underlying byte sink and forgets it. You can build a WXR from twenty thousand posts on a host with sixty-four megabytes of RAM and the importer code looks no different from the two-post version above.</p>
+<p>The writer holds only what it needs to close currently-open XML tags and emit the current entity. Every <code>append_entity()</code> writes one item to the underlying byte sink and forgets it, so large exports should write to a file-backed stream instead of accumulating the final XML in memory.</p>
 
 <aside class="callout note">
 	<strong>Note.</strong> The byte sink here is <code>MemoryPipe</code> for the example. In the real importer you'd pass <code>FileWriteStream::from_path( 'export.xml', 'truncate' )</code> and the WXR would stream straight to disk without ever existing as a single in-memory string.
@@ -415,7 +415,7 @@ echo strpos( $out, 'staging.example.com' ) === false ? "old URL gone\n" : "old U
 </script>
 </php-snippet>
 
-<p>The same pattern handles every "transform an export between sites" job — staging-to-production URL rewrites, theme migrations, slug normalization. Reader on the left, writer on the right, your transformation in the middle. Feed the reader bytes incrementally (instead of <code>append_bytes( $source )</code> all at once) and pipe the writer to a file sink (instead of <code>MemoryPipe</code>), and the same code processes a 10 GB export with the memory footprint of one entity at a time.</p>
+<p>The same pattern handles every "transform an export between sites" job — staging-to-production URL rewrites, theme migrations, slug normalization. Reader on the left, writer on the right, your transformation in the middle. Feed the reader bytes incrementally (instead of <code>append_bytes( $source )</code> all at once) and pipe the writer to a file sink (instead of <code>MemoryPipe</code>), and the same code can process large exports with memory dominated by the current entity and the buffers you choose.</p>
 
 <aside class="callout note">
 	<strong>Note — asymmetric field names.</strong> <code>WXREntityReader</code> emits the post body under <code>post_content</code> (matching WordPress's database column); <code>WXRWriter</code> reads it under <code>content</code> (matching its own internal mapping). Pipelines that read on one side and write on the other have to copy the value across, as the example does.
@@ -429,7 +429,7 @@ echo strpos( $out, 'staging.example.com' ) === false ? "old URL gone\n" : "old U
 	<li>Convert Markdown plus YAML frontmatter into block markup with <code>MarkdownConsumer</code>.</li>
 	<li>Walk the produced block tree with <code>WP_Block_Parser</code> to count, audit, or rewrite blocks.</li>
 	<li>Apply HTML rewrites to block markup without breaking the surrounding block comments.</li>
-	<li>Stream a WXR document with <code>WXRWriter</code> in constant memory regardless of input size.</li>
+	<li>Stream a WXR document with <code>WXRWriter</code> while holding only the current entity and writer state.</li>
 	<li>Read an existing WXR with <code>WXREntityReader</code> and pipe its entities through a transformation into a new WXR.</li>
 </ul>
 
