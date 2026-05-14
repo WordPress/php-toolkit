@@ -115,6 +115,11 @@ function render_nodes( array $nodes ): string {
 	return rtrim( (string) $renderer->renderNodes( $nodes ) );
 }
 
+function node_children_array( Node $node ): array {
+	$children = $node->children();
+	return is_array( $children ) ? $children : iterator_to_array( $children );
+}
+
 /**
  * Render the lede as inline HTML, without an outer `<p>`. If the lede
  * is a single Paragraph (the catalog convention), render its inline
@@ -123,7 +128,7 @@ function render_nodes( array $nodes ): string {
 function render_lede( array $nodes ): string {
 	$renderer = new HtmlRenderer( commonmark_env() );
 	if ( 1 === count( $nodes ) && $nodes[0] instanceof Paragraph ) {
-		$inline = iterator_to_array( $nodes[0]->children() );
+		$inline = node_children_array( $nodes[0] );
 		return rtrim( (string) $renderer->renderNodes( $inline ) );
 	}
 	return rtrim( (string) $renderer->renderNodes( $nodes ) );
@@ -148,7 +153,7 @@ function parse_body( string $md ): array {
 	/** @var Document $doc */
 	$doc = $parser->parse( $md );
 
-	$children = iterator_to_array( $doc->children() );
+	$children = node_children_array( $doc );
 
 	// Find section boundaries (top-level H2 headings).
 	$boundaries = array();
