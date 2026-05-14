@@ -27,7 +27,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\ReadStream\FileReadStream;
 
@@ -62,7 +62,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\MemoryPipe;
 
@@ -96,7 +96,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\ByteStream\ReadStream\DeflateReadStream;
@@ -136,7 +136,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\MemoryPipe;
 
@@ -181,7 +181,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\ByteStream\ReadStream\LimitedByteReadStream;

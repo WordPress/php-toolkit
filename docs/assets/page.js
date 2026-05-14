@@ -21,7 +21,7 @@
 				{
 					step: 'unzip',
 					zipFile: { resource: 'url', url: zipUrl },
-					extractToPath: '/wordpress/wp-content/php-toolkit',
+					extractToPath: '/php-toolkit',
 				},
 			],
 		});

@@ -31,7 +31,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Blueprints\Runner;
 use WordPress\Blueprints\RunnerConfiguration;
@@ -63,7 +63,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $site_name = 'Demo Site';
 $plugins   = array( 'gutenberg', 'classic-editor' );
@@ -139,7 +139,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Blueprints\Validator\HumanFriendlySchemaValidator;
 

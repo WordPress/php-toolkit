@@ -28,7 +28,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 var_dump( str_starts_with( '/var/www/html', '/var' ) );
 var_dump( str_ends_with( 'image.png', '.png' ) );
@@ -56,7 +56,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 echo __( 'Hello, world' ) . "\n";
 echo esc_html( '<script>alert("xss")</script>' ) . "\n";
@@ -82,7 +82,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 add_filter( 'sanitize_title', 'trim' );
 add_filter( 'sanitize_title', 'strtolower' );
@@ -108,7 +108,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 add_filter( 'render_price', function ( $html, $price, $currency ) {
 	return $html . " ({$currency} markup)";
@@ -141,7 +141,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 class ImportPipeline {
 	public function process( array $row ) {

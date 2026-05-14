@@ -38,7 +38,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $html = <<<'HTML'
 <article>
@@ -79,7 +79,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $html = <<<'HTML'
 <p>See <a href="/about">about</a>, <a href="https://example.com/x">x</a>, 
@@ -119,7 +119,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $untrusted = <<<'HTML'
 <p onclick="x()">hi</p>
@@ -159,7 +159,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $nonce = bin2hex( random_bytes( 8 ) );
 
@@ -198,7 +198,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $html = '<figure><img src="https://cdn.test/uploads/photo.jpg" alt="Sunset"></figure>';
 $widths = array( 480, 768, 1200 );
@@ -235,7 +235,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 echo "attribute: " . WP_HTML_Decoder::decode_attribute( 'path?a=1&amp;b=2&amp;copy' ) . "\n";
 echo "text:      " . WP_HTML_Decoder::decode_text_node( 'AT&amp;T &mdash; 100&percnt; &#x1F600;' ) . "\n";
@@ -268,7 +268,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $html = <<<'HTML'
 <article>
@@ -309,7 +309,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $html = <<<'HTML'
 <section><h1>Title</h1>
@@ -359,7 +359,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $html = <<<'HTML'
 <ul>

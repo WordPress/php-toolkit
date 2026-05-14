@@ -65,10 +65,10 @@
 
 <p>The ZIP component's highest-level type is <code>ZipFilesystem</code> — an archive presented through the same <code>Filesystem</code> interface that <code>InMemoryFilesystem</code> and <code>LocalFilesystem</code> implement. Once you've wrapped it, you call <code>get_contents()</code>, <code>ls()</code>, and <code>is_dir()</code> the same way you would on disk:</p>
 
-<php-snippet blueprint="toolkit-setup" name="open-zip.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="open-zip.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\ByteStream\ReadStream\FileReadStream;
@@ -123,10 +123,10 @@ entries in /posts:
 
 <p>For our small Markdown posts <code>get_contents()</code> is fine. But the importer might also include a <code>data.csv</code> with twenty thousand rows of metadata, or a large JSON file describing categories. <code>open_read_stream()</code> returns a pull-based byte reader instead of a buffered string, so you can process the entry chunk-by-chunk:</p>
 
-<php-snippet blueprint="toolkit-setup" name="stream-large.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="stream-large.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\ByteStream\ReadStream\FileReadStream;
@@ -175,10 +175,10 @@ printf( "parsed %d CSV rows in 8 KB chunks; peak memory ~%d KB\n",
 
 <p>Now we connect the two halves. The input is the ZIP we just opened. The staging area is an <code>InMemoryFilesystem</code> — same interface, no disk. Walking the input and copying into the stage is one helper:</p>
 
-<php-snippet blueprint="toolkit-setup" name="stage-imports.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="stage-imports.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\ByteStream\ReadStream\FileReadStream;
@@ -244,10 +244,10 @@ echo "manifest: " . $stage->get_contents( '/MANIFEST' ) . "\n";
 
 <p>Every importer that accepts external ZIPs needs to defend against <em>zip-slip</em>: an archive containing an entry named <code>../../etc/passwd</code> that, if extracted naively, writes outside the intended destination. The toolkit ships a one-line defense:</p>
 
-<php-snippet blueprint="toolkit-setup" name="zip-slip-defense.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="zip-slip-defense.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Zip\ZipDecoder;
 
@@ -270,10 +270,10 @@ foreach ( $inputs as $name ) {
 
 <p>The importer so far has chapter 1's <code>clean_post_html()</code> and chapter 2's stage. Combine them: open the input ZIP, copy it into the stage, then iterate the stage's <code>posts/</code> directory and remember to apply <code>clean_post_html()</code> when we render in chapter 3. We're not invoking it yet because the Markdown-to-HTML conversion is chapter 3's job — but we can already see the shape:</p>
 
-<php-snippet blueprint="toolkit-setup" name="importer-step-2.php" runnable="false">
+<php-snippet blueprint="toolkit-setup" wp="none" name="importer-step-2.php" runnable="false">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\Filesystem\Filesystem;

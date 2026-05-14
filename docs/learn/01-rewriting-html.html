@@ -59,7 +59,7 @@
 
 <p>The importer's job is to read a folder of Markdown posts. Each post has frontmatter, prose, and inline HTML that survived from a previous CMS — a mix of helpful markup, sloppy markup, and the occasional <code>&lt;script&gt;</code> tag someone pasted from Stack Overflow. Here's a representative example:</p>
 
-<php-snippet blueprint="toolkit-setup" name="raw-post.php" runnable="false">
+<php-snippet blueprint="toolkit-setup" wp="none" name="raw-post.php" runnable="false">
 <script type="application/x-php">
 <?php
 // Slightly abridged. Real posts can be 5–10 KB of HTML.
@@ -95,10 +95,10 @@ HTML;
 
 <p>Start with the most ergonomic fix: add <code>loading="lazy"</code> to every image that doesn't already have a <code>loading</code> attribute. The processor's filter argument lets us skip everything that isn't an <code>&lt;img&gt;</code>:</p>
 
-<php-snippet blueprint="toolkit-setup" name="lazy-images.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="lazy-images.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $post_html = <<<HTML
 <figure>
@@ -141,10 +141,10 @@ echo $tags->get_updated_html();
 
 <p>The importer needs every link in a post to be addressable from the destination site. <code>/recipes/sauces</code> meant something on the source site; on the destination it points to nothing. We'll resolve every relative <code>href</code> against a base URL — and leave protocol-relative URLs, fragments, and absolute URLs alone.</p>
 
-<php-snippet blueprint="toolkit-setup" name="absolute-urls.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="absolute-urls.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $post_html = '<p>See <a href="/recipes/sauces">our sauce primer</a>, '
 	. 'or <a href="https://other.test/x">the canonical version</a>, '
@@ -194,10 +194,10 @@ echo $tags->get_updated_html();
 
 <p>For <code>&lt;script&gt;</code> tags, <code>set_modifiable_text('')</code> blanks the script's body without disturbing the surrounding markup. Combined with stripping its attributes, the result is an inert <code>&lt;script&gt;&lt;/script&gt;</code> shell — readable, valid HTML, but executable as a no-op.</p>
 
-<php-snippet blueprint="toolkit-setup" name="strip-scripts.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="strip-scripts.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $untrusted = '<p>Hi <b onclick="steal()">friend</b>!</p>'
 	. '<figure><img src="x" onerror="boom()">'
@@ -247,10 +247,10 @@ echo $tags->get_updated_html();
 
 <p>This is also the function chapter 2 will import and reuse. Save the shape:</p>
 
-<php-snippet blueprint="toolkit-setup" name="clean-post-html.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="clean-post-html.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 function clean_post_html( $html, $base_url ) {
 	$tags = new WP_HTML_Tag_Processor( $html );

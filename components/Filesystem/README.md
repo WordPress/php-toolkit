@@ -27,7 +27,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Filesystem\InMemoryFilesystem;
 
@@ -51,7 +51,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Filesystem\Filesystem;
 use WordPress\Filesystem\InMemoryFilesystem;
@@ -85,7 +85,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Filesystem\LocalFilesystem;
 
@@ -117,7 +117,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Filesystem\SQLiteFilesystem;
 
@@ -150,7 +150,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Filesystem\InMemoryFilesystem;
 use WordPress\Filesystem\LocalFilesystem;
@@ -203,7 +203,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Filesystem\Filesystem;
 use WordPress\Filesystem\LocalFilesystem;
@@ -242,7 +242,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use function WordPress\Filesystem\wp_join_unix_paths;
 use function WordPress\Filesystem\wp_unix_dirname;

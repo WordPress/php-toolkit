@@ -59,10 +59,10 @@
 
 <p>The <code>Markdown</code> component does one thing well: it bridges Markdown and <a href="https://developer.wordpress.org/block-editor/reference-guides/block-api/">WordPress block markup</a>, in either direction. The <code>MarkdownConsumer</code> class takes a Markdown string and returns a result object containing both the rendered block markup and any frontmatter parsed from the document's leading YAML.</p>
 
-<php-snippet blueprint="toolkit-setup" name="md-to-blocks.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="md-to-blocks.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Markdown\MarkdownConsumer;
 
@@ -106,10 +106,10 @@ echo substr( $result->get_block_markup(), 0, 400 ) . "...\n";
 
 <p>Before we ship the converted post into a WXR file, the importer should sanity-check what came out. Did Markdown conversion produce blocks the destination site can render? Are there headings out of order? Are there blocks the importer doesn't know how to handle? <code>WP_Block_Parser</code> walks the same block markup WordPress core uses and gives us a structured tree:</p>
 
-<php-snippet blueprint="toolkit-setup" name="audit-blocks.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="audit-blocks.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Markdown\MarkdownConsumer;
 
@@ -156,10 +156,10 @@ foreach ( $tree as $b ) {
 
 <p>Block markup is HTML embedded in HTML comments. Chapter 1's <code>clean_post_html()</code> takes an HTML string and returns a clean one — we can run it on the whole block-markup string in one pass, because <code>WP_HTML_Tag_Processor</code> is happy to walk the HTML between the block-comment delimiters. The block comments themselves don't look like tags to the processor, so they pass through untouched:</p>
 
-<php-snippet blueprint="toolkit-setup" name="clean-blocks.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="clean-blocks.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Markdown\MarkdownConsumer;
 
@@ -216,10 +216,10 @@ echo $cleaned;
 
 <p>We have post titles, post content (clean block markup), post metadata. The format the WordPress importer reads is WXR — WordPress eXtended RSS — an XML dialect with a fixed shape. <code>DataLiberation</code>'s <code>WXRWriter</code> takes <code>ImportEntity</code> objects and streams them into a byte sink, one entity at a time, without ever holding the whole export in memory:</p>
 
-<php-snippet blueprint="toolkit-setup" name="wxr-stream.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="wxr-stream.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\DataLiberation\EntityWriter\WXRWriter;
@@ -266,10 +266,10 @@ echo "first 600 chars:\n" . substr( $wxr, 0, 600 ) . "...\n";
 
 <p>Now we wire it all together. The pipeline reads the staged Markdown files from chapter 2, converts each to block markup, cleans the HTML inside it, builds an <code>ImportEntity</code> with title and slug from frontmatter, and streams the whole thing into a WXR document. This is the importer's first complete end-to-end run:</p>
 
-<php-snippet blueprint="toolkit-setup" name="importer-step-3.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="importer-step-3.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\DataLiberation\EntityWriter\WXRWriter;
@@ -363,10 +363,10 @@ echo substr( $wxr, $start, 800 ) . "...\n";
 
 <p>The pattern above (build WXR from sources) is one half of DataLiberation. The other half is reading and transforming an existing WXR. <code>WXREntityReader</code> emits one entity at a time from a WXR document, and you can wire it to a <code>WXRWriter</code> to produce a transformed copy:</p>
 
-<php-snippet blueprint="toolkit-setup" name="wxr-rewrite.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="wxr-rewrite.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\DataLiberation\EntityReader\WXREntityReader;

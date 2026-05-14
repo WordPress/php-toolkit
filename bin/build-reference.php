@@ -500,7 +500,7 @@ function snippet_block( array $snippet ): string {
 	$expected   = $snippet['runnable'] ? $snippet['expected_output'] : null;
 	$has_output = null !== $expected;
 
-	$skeleton  = '<php-snippet blueprint="toolkit-setup" name=""><pre class="snippet-fallback">';
+	$skeleton  = '<php-snippet blueprint="toolkit-setup" wp="none" name=""><pre class="snippet-fallback">';
 	$skeleton .= '<code class="language-php"></code></pre>';
 	$skeleton .= '<script type="application/x-php"></script>';
 	if ( $has_output ) {

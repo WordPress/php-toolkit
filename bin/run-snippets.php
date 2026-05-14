@@ -29,8 +29,9 @@ if ( ! is_file( __DIR__ . '/../vendor/autoload.php' ) ) {
 require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/build-reference.php';
 
-const VENDOR_AUTOLOAD     = ROOT . '/vendor/autoload.php';
-const PLAYGROUND_AUTOLOAD = '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+const VENDOR_AUTOLOAD            = ROOT . '/vendor/autoload.php';
+const PLAYGROUND_AUTOLOAD        = '/php-toolkit/vendor/autoload.php';
+const LEGACY_PLAYGROUND_AUTOLOAD = '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
 
 const NO_EXPECTED = array(
 	'httpclient::get.php',
@@ -52,7 +53,11 @@ if ( ! function_exists( 'parse_blocks' ) ) {
 ";
 
 function rewrite_for_local( string $code ): string {
-	$code = str_replace( PLAYGROUND_AUTOLOAD, VENDOR_AUTOLOAD, $code );
+	$code = str_replace(
+		array( PLAYGROUND_AUTOLOAD, LEGACY_PLAYGROUND_AUTOLOAD ),
+		VENDOR_AUTOLOAD,
+		$code
+	);
 	if ( preg_match( "/require\s+'[^']*vendor\/autoload\.php';/", $code, $m, PREG_OFFSET_CAPTURE ) ) {
 		$insert_at = $m[0][1] + strlen( $m[0][0] );
 		$code = substr( $code, 0, $insert_at ) . LOCAL_PRELUDE . substr( $code, $insert_at );

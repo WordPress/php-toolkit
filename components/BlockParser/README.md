@@ -43,7 +43,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $document = "<!-- wp:heading {\"level\":2} -->\n<h2>Welcome</h2>\n<!-- /wp:heading -->\n\n"
 	. "<!-- wp:paragraph -->\n<p>Hello from the block editor.</p>\n<!-- /wp:paragraph -->";
@@ -73,7 +73,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $document = "<!-- wp:group --><div class=\"wp-block-group\">"
 	. "<!-- wp:heading --><h2>Title</h2><!-- /wp:heading -->"
@@ -124,7 +124,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $document = "<!-- wp:group --><div class=\"wp-block-group\">"
 	. "<!-- wp:buttons --><div class=\"wp-block-buttons\">"
@@ -171,7 +171,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $document = "<!-- wp:heading -->\n<h2>Intro</h2>\n<!-- /wp:heading -->"
 	. "<!-- wp:heading {\"level\":4} -->\n<h4>Subsection</h4>\n<!-- /wp:heading -->"
@@ -226,7 +226,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $document = "<!-- wp:paragraph --><p>Reviews</p><!-- /wp:paragraph -->"
 	. "<!-- wp:my-plugin/testimonial {\"author\":\"Jane\",\"rating\":5} -->"
@@ -273,7 +273,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $document = <<<'HTML'
 <!-- wp:embed {"url":"https://twitter.com/wordpress/status/1","providerNameSlug":"twitter"} /-->

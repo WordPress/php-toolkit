@@ -29,7 +29,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use function WordPress\Encoding\wp_is_valid_utf8;
 
@@ -65,7 +65,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use function WordPress\Encoding\wp_scrub_utf8;
 
@@ -91,7 +91,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use function WordPress\Encoding\wp_has_noncharacters;
 
@@ -123,7 +123,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use function WordPress\Encoding\wp_is_valid_utf8;
 use function WordPress\Encoding\wp_scrub_utf8;
@@ -162,7 +162,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use function WordPress\Encoding\wp_is_valid_utf8;
 use function WordPress\Encoding\wp_scrub_utf8;

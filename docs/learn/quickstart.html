@@ -58,10 +58,10 @@
 
 <p>Click <em>Run</em>. The first run on this page boots a PHP runtime in WebAssembly and unzips the toolkit into it; later runs reuse the same runtime, so they're instant.</p>
 
-<php-snippet blueprint="toolkit-setup" name="quickstart.php">
+<php-snippet blueprint="toolkit-setup" wp="none" name="quickstart.php">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 $html = '<article>
 	<img src="hero.jpg" alt="Hero shot">

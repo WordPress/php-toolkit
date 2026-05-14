@@ -29,7 +29,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Merge\Diff\Diff;
 use WordPress\Merge\Diff\LineDiffer;
@@ -65,7 +65,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Merge\Diff\LineDiffer;
 
@@ -103,7 +103,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Merge\Diff\LineDiffer;
 use WordPress\Merge\Merge\LineMerger;
@@ -140,7 +140,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Merge\Diff\LineDiffer;
 use WordPress\Merge\Merge\LineMerger;
@@ -190,7 +190,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Merge\Diff\LineDiffer;
 use WordPress\Merge\Merge\LineMerger;

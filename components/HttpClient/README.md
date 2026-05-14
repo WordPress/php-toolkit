@@ -32,7 +32,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
@@ -55,7 +55,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
@@ -94,7 +94,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\ByteStream\MemoryPipe;
 use WordPress\HttpClient\Request;
@@ -135,7 +135,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Request;
 use WordPress\HttpClient\Response;
@@ -182,7 +182,7 @@ runnable: false
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 
@@ -209,7 +209,7 @@ runnable: false
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
@@ -236,7 +236,7 @@ runnable: false
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
@@ -267,7 +267,7 @@ runnable: false
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
@@ -302,7 +302,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
@@ -363,7 +363,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
@@ -420,7 +420,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
@@ -479,7 +479,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\ByteStream\SeekableRequestReadStream;
@@ -537,7 +537,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
@@ -578,7 +578,7 @@ runnable: true
 -->
 ```php
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;

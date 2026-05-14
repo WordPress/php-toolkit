@@ -66,12 +66,12 @@
 
 <p>The smallest possible request: create a <code>Request</code>, hand it to <code>Client::fetch()</code>, wait for the response, read the body. The result of <code>fetch()</code> is a stream — the response headers arrive at <code>await_response()</code>, and the body bytes come through <code>consume_all()</code> or chunk-by-chunk via <code>pull()</code>/<code>consume()</code>:</p>
 
-<php-snippet blueprint="toolkit-setup" name="fetch-one.php" runnable="false">
+<php-snippet blueprint="toolkit-setup" wp="none" name="fetch-one.php" runnable="false">
 <script type="application/x-php">
 <?php
 // Snippets that talk to the open internet are static here because the in-page
 // runtime can't always reach external hosts. Run locally.
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
@@ -92,10 +92,10 @@ echo "body:   " . strlen( $stream->consume_all() ) . " bytes\n";
 
 <p>The importer's job in this chapter is to take an image URL, fetch it, and place the bytes into the staging filesystem under a deterministic local path. We'll write the bytes incrementally so the response never has to fit into memory:</p>
 
-<php-snippet blueprint="toolkit-setup" name="frontload-one.php" runnable="false">
+<php-snippet blueprint="toolkit-setup" wp="none" name="frontload-one.php" runnable="false">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Filesystem\Filesystem;
 use WordPress\Filesystem\InMemoryFilesystem;
@@ -130,10 +130,10 @@ echo "staged: " . implode( ', ', $stage->ls( '/uploads' ) ) . "\n";
 
 <p>For files small enough that you don't care about memory, <code>consume_all()</code> is fine. For big ones, you want to know how the download is going and write bytes as they arrive. Drop down a layer: <code>Client::enqueue()</code> + <code>await_next_event()</code> exposes every stage of the request as an event you can react to:</p>
 
-<php-snippet blueprint="toolkit-setup" name="progress.php" runnable="false">
+<php-snippet blueprint="toolkit-setup" wp="none" name="progress.php" runnable="false">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
@@ -187,10 +187,10 @@ while ( $client->await_next_event() ) {
 
 <p>The importer might reference dozens of images. Doing them one at a time would be unnecessarily slow; firing all of them at once would hammer the upstream and risk being rate-limited. The polite move is a fixed-size window: keep ten requests in flight, and as each one finishes, enqueue the next:</p>
 
-<php-snippet blueprint="toolkit-setup" name="sliding-window.php" runnable="false">
+<php-snippet blueprint="toolkit-setup" wp="none" name="sliding-window.php" runnable="false">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
@@ -238,10 +238,10 @@ while ( $active && $client->await_next_event() ) {
 
 <p>Long downloads fail. Sometimes the network drops, sometimes the host runs out of execution time. The importer should be able to resume rather than redownload. HTTP's contract for that is <code>Range: bytes=N-</code>. Sending it to a cooperating server returns a <code>206 Partial Content</code> response with the missing bytes:</p>
 
-<php-snippet blueprint="toolkit-setup" name="resume.php" runnable="false">
+<php-snippet blueprint="toolkit-setup" wp="none" name="resume.php" runnable="false">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\Request;
@@ -281,10 +281,10 @@ echo "saved {$bytes} bytes\n";
 
 <p>The importer's input is a ZIP — chapter 2 read it from disk. But what if the ZIP lives on a URL? Downloading it whole, opening it with <code>ZipFilesystem</code>, then deleting the file afterwards works, but it asks you to coordinate a temp path the toolkit could manage for you. <code>SeekableRequestReadStream</code> wraps a <code>Request</code> as a seekable byte stream that <code>ZipFilesystem</code> can read directly: bytes are downloaded sequentially as the consumer reads, the class caches them in an internal temp file (cleaned up when you call <code>close_reading()</code>), and seeks back into already-downloaded ranges hit the cache instead of re-fetching:</p>
 
-<php-snippet blueprint="toolkit-setup" name="remote-zip.php" runnable="false">
+<php-snippet blueprint="toolkit-setup" wp="none" name="remote-zip.php" runnable="false">
 <script type="application/x-php">
 <?php
-require '/wordpress/wp-content/php-toolkit/vendor/autoload.php';
+require '/php-toolkit/vendor/autoload.php';
 
 use WordPress\Filesystem\InMemoryFilesystem;
 use WordPress\HttpClient\Client;
