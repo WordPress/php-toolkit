@@ -827,6 +827,321 @@ class WP_HTML_Tag_Processor {
 	private $skip_newline_at = null;
 
 	/**
+	 * Native implementation used when the Rust extension is loaded.
+	 *
+	 * The native implementation currently covers the read-only streaming API.
+	 * Public object identity stays on WP_HTML_Tag_Processor so existing callers
+	 * continue to interact with the userland class.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var object|null
+	 */
+	protected $native_processor = null;
+
+	/**
+	 * Cached token metadata from the native tag processor for the current token.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var string|null
+	 */
+	private $native_tag_token_type = null;
+
+	/**
+	 * Cached native tag token name.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var string|null
+	 */
+	private $native_tag_token_name = null;
+
+	/**
+	 * Cached native tag-closer state.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_tag_token_is_closer = false;
+
+	/**
+	 * Whether the loaded native tag processor can batch current-token metadata.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_tag_metadata = false;
+
+	/**
+	 * Whether the loaded native tag processor can return compact tag-kind rows.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_tag_kind = false;
+
+	/**
+	 * Whether the loaded native tag processor can return compact tag-kind rows
+	 * with an attribute-name initial bitmask.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_tag_kind_with_attribute_initials = false;
+
+	/**
+	 * Whether the loaded native tag processor can return compact tag-kind rows
+	 * for unrestricted `next_tag()` queries without argument marshaling.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_tag_kind_with_attribute_initials_fast = false;
+
+	/**
+	 * Whether the loaded native tag processor can return prefix-name strings.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_prefix_name_string = false;
+
+	/**
+	 * Whether the loaded native tag processor can count prefix-name matches.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_prefix_name_count = false;
+
+	/**
+	 * Whether the loaded native tag processor can remove prefix-name matches.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_prefix_name_removal = false;
+
+	/**
+	 * Whether the loaded native tag processor can summarize prefix-name matches
+	 * across the remaining document in a single call.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_prefix_name_summary = false;
+
+	/**
+	 * Whether the loaded native tag processor can return chunked prefix-name
+	 * summaries across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_prefix_name_summary_batch = false;
+
+	/**
+	 * Whether the loaded native tag processor can return chunked prefix-name
+	 * count summaries across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_prefix_name_count_batch = false;
+
+	/**
+	 * Whether the loaded native tag processor can return chunked tag summaries
+	 * across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_tag_summary_batch = false;
+
+	/**
+	 * Whether the loaded native tag processor can summarize tag inventory
+	 * across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_tag_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native tag processor can summarize attribute
+	 * inventory across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_attribute_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native tag processor can summarize heading inventory
+	 * across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_heading_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native tag processor can summarize ID inventory
+	 * across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_id_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native tag processor can summarize data-attribute
+	 * inventory across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_data_attribute_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native tag processor can summarize ARIA attribute
+	 * inventory across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_aria_attribute_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native tag processor can summarize class inventory
+	 * across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_class_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native tag processor can summarize resource
+	 * inventory across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_resource_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native tag processor can summarize image inventory
+	 * across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_image_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native tag processor can summarize script inventory
+	 * across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_script_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native tag processor can summarize form inventory
+	 * across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_form_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native tag processor can return chunked tag-name
+	 * summaries across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_matching_tag_summary_batch = false;
+
+	/**
+	 * Whether the loaded native tag processor can return chunked tag-name and
+	 * attribute summaries across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_matching_tag_attribute_summary_batch = false;
+
+	/**
+	 * Whether the loaded native tag processor can return chunked tag-name and
+	 * multi-attribute summaries across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_matching_tag_attributes_summary_batch = false;
+
+	/**
+	 * Whether the loaded native tag processor can summarize tag-name and
+	 * multi-attribute matches across the remaining document.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_matching_tag_attributes_summary = false;
+
+	/**
+	 * Whether the loaded native tag processor can remove prefix-name matches
+	 * across the remaining document in a single call.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_prefix_name_document_removal = false;
+
+	/**
+	 * Cached lowercase ASCII attribute-name initial bitmask for the current
+	 * native tag, or null when unavailable.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var int|null
+	 */
+	private $native_tag_attribute_name_initials = null;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param  string $html  HTML to process.
@@ -835,6 +1150,244 @@ class WP_HTML_Tag_Processor {
 	 */
 	public function __construct( $html ) {
 		$this->html = $html;
+
+		if (
+			self::should_use_native_processors() &&
+			class_exists( 'WP_HTML_Native_Tag_Processor', false )
+		) {
+			$this->set_native_processor( new WP_HTML_Native_Tag_Processor( $html ) );
+		}
+	}
+
+	/**
+	 * Determines whether native HTML processors should back public classes.
+	 *
+	 * Define WP_NATIVE_APIS_DISABLE_DEFAULTS before loading the component to
+	 * force the PHP implementation even when the extension is loaded.
+	 *
+	 * Define WP_NATIVE_APIS_ENABLE_HTML_DEFAULTS as false, or set the matching
+	 * environment variable to 0, false, no, or off, to keep the HTML public
+	 * classes on PHP fallback.
+	 *
+	 * @return bool Whether to use native processors when available.
+	 */
+	protected static function should_use_native_processors(): bool {
+		if ( defined( 'WP_NATIVE_APIS_DISABLE_DEFAULTS' ) && WP_NATIVE_APIS_DISABLE_DEFAULTS ) {
+			return false;
+		}
+
+		if ( defined( 'WP_NATIVE_APIS_ENABLE_HTML_DEFAULTS' ) ) {
+			return (bool) WP_NATIVE_APIS_ENABLE_HTML_DEFAULTS;
+		}
+
+		$enable_html_defaults = getenv( 'WP_NATIVE_APIS_ENABLE_HTML_DEFAULTS' );
+		if ( false !== $enable_html_defaults ) {
+			return ! in_array( strtolower( $enable_html_defaults ), array( '0', 'false', 'no', 'off' ), true );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Replaces the native delegate used by this public wrapper.
+	 *
+	 * @param object|null $native_processor Native processor object.
+	 */
+	protected function set_native_processor( $native_processor ) {
+		$this->native_processor = $native_processor;
+		$this->clear_native_tag_metadata();
+		$this->native_supports_tag_metadata                          = is_object( $native_processor )
+			&& method_exists( $native_processor, 'next_tag_any_metadata' )
+			&& method_exists( $native_processor, 'current_token_metadata' );
+		$this->native_supports_tag_kind                              = is_object( $native_processor )
+			&& method_exists( $native_processor, 'next_tag_any_kind' );
+		$this->native_supports_tag_kind_with_attribute_initials      = is_object( $native_processor )
+			&& method_exists( $native_processor, 'next_tag_any_kind_and_attribute_name_initials' );
+		$this->native_supports_tag_kind_with_attribute_initials_fast = is_object( $native_processor )
+			&& method_exists( $native_processor, 'next_tag_any_kind_and_attribute_name_initials_skip' )
+			&& method_exists( $native_processor, 'next_tag_any_kind_and_attribute_name_initials_visit' );
+		$this->native_supports_prefix_name_string                    = is_object( $native_processor )
+			&& method_exists( $native_processor, 'get_attribute_names_with_prefix_string' );
+		$this->native_supports_prefix_name_count                     = is_object( $native_processor )
+			&& method_exists( $native_processor, 'count_attribute_names_with_prefix' );
+		$this->native_supports_prefix_name_removal                   = is_object( $native_processor )
+			&& method_exists( $native_processor, 'remove_attributes_with_prefix' );
+		$this->native_supports_prefix_name_summary                   = is_object( $native_processor )
+			&& method_exists( $native_processor, 'summarize_attribute_names_with_prefix' );
+		$this->native_supports_prefix_name_summary_batch             = is_object( $native_processor )
+			&& method_exists( $native_processor, 'next_tag_prefix_summary_batch' );
+		$this->native_supports_prefix_name_count_batch               = is_object( $native_processor )
+			&& method_exists( $native_processor, 'next_tag_prefix_count_compact_batch' );
+		$this->native_supports_tag_summary_batch                     = is_object( $native_processor )
+			&& method_exists( $native_processor, 'next_tag_compact_summary_batch' );
+		$this->native_supports_tag_inventory_summary                 = is_object( $native_processor )
+			&& method_exists( $native_processor, 'summarize_tag_inventory' );
+		$this->native_supports_attribute_inventory_summary           = is_object( $native_processor )
+			&& method_exists( $native_processor, 'summarize_attribute_inventory' );
+		$this->native_supports_heading_inventory_summary             = is_object( $native_processor )
+			&& method_exists( $native_processor, 'summarize_heading_inventory' );
+		$this->native_supports_id_inventory_summary                  = is_object( $native_processor )
+			&& method_exists( $native_processor, 'summarize_id_inventory' );
+		$this->native_supports_data_attribute_inventory_summary      = is_object( $native_processor )
+			&& method_exists( $native_processor, 'summarize_data_attribute_inventory' );
+		$this->native_supports_aria_attribute_inventory_summary      = is_object( $native_processor )
+			&& method_exists( $native_processor, 'summarize_aria_attribute_inventory' );
+		$this->native_supports_class_inventory_summary               = is_object( $native_processor )
+			&& method_exists( $native_processor, 'summarize_class_inventory' );
+		$this->native_supports_resource_inventory_summary            = is_object( $native_processor )
+			&& method_exists( $native_processor, 'summarize_resource_inventory' );
+		$this->native_supports_image_inventory_summary               = is_object( $native_processor )
+			&& method_exists( $native_processor, 'summarize_image_inventory' );
+		$this->native_supports_script_inventory_summary              = is_object( $native_processor )
+			&& method_exists( $native_processor, 'summarize_script_inventory' );
+		$this->native_supports_form_inventory_summary                = is_object( $native_processor )
+			&& method_exists( $native_processor, 'summarize_form_inventory' );
+		$this->native_supports_matching_tag_summary_batch            = is_object( $native_processor )
+			&& method_exists( $native_processor, 'next_matching_tag_compact_summary_batch' );
+		$this->native_supports_matching_tag_attribute_summary_batch  = is_object( $native_processor )
+			&& method_exists( $native_processor, 'next_matching_tag_attribute_compact_summary_batch' );
+		$this->native_supports_matching_tag_attributes_summary_batch = is_object( $native_processor )
+			&& method_exists( $native_processor, 'next_matching_tag_attributes_compact_summary_batch' );
+		$this->native_supports_matching_tag_attributes_summary       = is_object( $native_processor )
+			&& method_exists( $native_processor, 'summarize_matching_tag_attributes' );
+		$this->native_supports_prefix_name_document_removal          = is_object( $native_processor )
+			&& method_exists( $native_processor, 'remove_attributes_with_prefix_from_document' );
+	}
+
+	/**
+	 * Checks whether this processor is backed by a native implementation.
+	 *
+	 * @return bool Whether a native processor is active.
+	 */
+	protected function has_native_processor(): bool {
+		return null !== $this->native_processor;
+	}
+
+	/**
+	 * Clears cached native tag metadata for the current token.
+	 */
+	private function clear_native_tag_metadata() {
+		$this->native_tag_token_type              = null;
+		$this->native_tag_token_name              = null;
+		$this->native_tag_token_is_closer         = false;
+		$this->native_tag_attribute_name_initials = null;
+	}
+
+	/**
+	 * Caches a metadata row exported by the native tag processor.
+	 *
+	 * The native row is exported as a unit-separator-delimited string:
+	 * token type, token name, closer marker, then optional breadcrumbs.
+	 *
+	 * @param string[]|string|null $metadata Native metadata row.
+	 * @return bool Whether metadata was cached.
+	 */
+	private function cache_native_tag_metadata( $metadata ) {
+		if ( is_string( $metadata ) ) {
+			$metadata = explode( "\x1f", $metadata );
+		}
+
+		if ( ! is_array( $metadata ) || count( $metadata ) < 3 ) {
+			$this->clear_native_tag_metadata();
+
+			return false;
+		}
+
+		$this->native_tag_token_type              = (string) $metadata[0];
+		$this->native_tag_token_name              = (string) $metadata[1];
+		$this->native_tag_token_is_closer         = '1' === (string) $metadata[2];
+		$this->native_tag_attribute_name_initials = null;
+
+		return true;
+	}
+
+	/**
+	 * Maps the current native token type to the public parser state.
+	 */
+	private function update_parser_state_from_native_token() {
+		$token_type = null !== $this->native_tag_token_type
+			? $this->native_tag_token_type
+			: $this->native_processor->get_token_type();
+
+		switch ( $token_type ) {
+			case '#tag':
+				$this->parser_state = self::STATE_MATCHED_TAG;
+				return;
+
+			case '#text':
+				$this->parser_state = self::STATE_TEXT_NODE;
+				return;
+
+			case '#comment':
+				$this->parser_state = self::STATE_COMMENT;
+				return;
+
+			case '#doctype':
+				$this->parser_state = self::STATE_DOCTYPE;
+				return;
+
+			case '#cdata-section':
+				$this->parser_state = self::STATE_CDATA_NODE;
+				return;
+
+			case '#funky-comment':
+				$this->parser_state = self::STATE_FUNKY_COMMENT;
+				return;
+
+			case '#presumptuous-tag':
+				$this->parser_state = self::STATE_PRESUMPTUOUS_TAG;
+				return;
+		}
+
+		$this->parser_state = self::STATE_READY;
+	}
+
+	/**
+	 * Maps native exhaustion or pause status to the public parser state.
+	 */
+	private function update_parser_state_after_native_no_match() {
+		$this->parser_state = (
+			method_exists( $this->native_processor, 'paused_at_incomplete_token' ) &&
+			$this->native_processor->paused_at_incomplete_token()
+		)
+			? self::STATE_INCOMPLETE_INPUT
+			: self::STATE_COMPLETE;
+	}
+
+	/**
+	 * Caches the final compact tag-summary row as the current native tag.
+	 *
+	 * @param string $batch Compact tag-summary batch.
+	 * @return void
+	 */
+	private function cache_native_final_compact_tag_summary( $batch ) {
+		$last_record_at = strrpos( $batch, "\x1e" );
+		$last_record    = false === $last_record_at ? $batch : substr( $batch, $last_record_at + 1 );
+		$parts          = explode( "\x1f", $last_record, 3 );
+
+		if ( count( $parts ) < 2 ) {
+			$this->clear_native_tag_metadata();
+			$this->parser_state = self::STATE_READY;
+
+			return;
+		}
+
+		$this->native_tag_token_type              = '#tag';
+		$this->native_tag_token_name              = $parts[0];
+		$this->native_tag_token_is_closer         = '1' === $parts[1];
+		$this->native_tag_attribute_name_initials = null;
+		$this->parser_state                       = self::STATE_MATCHED_TAG;
+	}
+
+	/**
+	 * Checks whether a native compact row batch ended before reaching the limit.
+	 *
+	 * @param string $batch    Compact row batch.
+	 * @param int    $max_rows Maximum requested rows.
+	 * @return bool Whether the native scan reached the end of input.
+	 */
+	private function native_compact_batch_reached_end( $batch, $max_rows ) {
+		return substr_count( $batch, "\x1e" ) + 1 < $max_rows;
 	}
 
 	/**
@@ -875,6 +1428,35 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.5.0 No longer processes incomplete tokens at end of document; pauses the processor at start of token.
 	 */
 	public function next_tag( $query = null ): bool {
+		if ( null !== $this->native_processor ) {
+			if (
+				$this->native_supports_tag_kind_with_attribute_initials &&
+				array( 'tag_closers' => 'visit' ) === $query
+			) {
+				$tag_kind_row = $this->native_supports_tag_kind_with_attribute_initials_fast
+					? $this->native_processor->next_tag_any_kind_and_attribute_name_initials_visit()
+					: $this->native_processor->next_tag_any_kind_and_attribute_name_initials( true, 1 );
+
+				$tag_kind = $tag_kind_row & 3;
+				if ( 0 === $tag_kind ) {
+					$this->clear_native_tag_metadata();
+					$this->update_parser_state_after_native_no_match();
+
+					return false;
+				}
+
+				$this->native_tag_token_type              = '#tag';
+				$this->native_tag_token_name              = null;
+				$this->native_tag_token_is_closer         = 2 === $tag_kind;
+				$this->native_tag_attribute_name_initials = $tag_kind_row >> 2;
+				$this->parser_state                       = self::STATE_MATCHED_TAG;
+
+				return true;
+			}
+
+			return $this->native_next_tag( $query );
+		}
+
 		$this->parse_query( $query );
 		$already_found = 0;
 
@@ -893,6 +1475,240 @@ class WP_HTML_Tag_Processor {
 		} while ( $already_found < $this->sought_match_offset );
 
 		return true;
+	}
+
+	/**
+	 * Finds the next tag using the native delegate.
+	 *
+	 * This supports the same first-slice query fields covered by the native
+	 * conformance suite: tag name, class name, match offset, and tag closers.
+	 *
+	 * @param  array|string|null $query Which tag to find.
+	 * @return bool Whether a tag was matched.
+	 */
+	private function native_next_tag( $query = null ): bool {
+		if ( $this->native_supports_tag_kind_with_attribute_initials ) {
+			if ( null === $query ) {
+				$tag_kind_row = $this->native_supports_tag_kind_with_attribute_initials_fast
+					? $this->native_processor->next_tag_any_kind_and_attribute_name_initials_skip()
+					: $this->native_processor->next_tag_any_kind_and_attribute_name_initials( false, 1 );
+
+				$tag_kind = $tag_kind_row & 3;
+				if ( 0 === $tag_kind ) {
+					$this->clear_native_tag_metadata();
+					$this->update_parser_state_after_native_no_match();
+
+					return false;
+				}
+
+				$this->native_tag_token_type              = '#tag';
+				$this->native_tag_token_name              = null;
+				$this->native_tag_token_is_closer         = 2 === $tag_kind;
+				$this->native_tag_attribute_name_initials = $tag_kind_row >> 2;
+				$this->parser_state                       = self::STATE_MATCHED_TAG;
+
+				return true;
+			}
+
+			if (
+				is_array( $query ) &&
+				isset( $query['tag_closers'] ) &&
+				'visit' === $query['tag_closers'] &&
+				! isset( $query['tag_name'] ) &&
+				! isset( $query['class_name'] ) &&
+				! isset( $query['match_offset'] )
+			) {
+				$tag_kind_row = $this->native_supports_tag_kind_with_attribute_initials_fast
+					? $this->native_processor->next_tag_any_kind_and_attribute_name_initials_visit()
+					: $this->native_processor->next_tag_any_kind_and_attribute_name_initials( true, 1 );
+
+				$tag_kind = $tag_kind_row & 3;
+				if ( 0 === $tag_kind ) {
+					$this->clear_native_tag_metadata();
+					$this->update_parser_state_after_native_no_match();
+
+					return false;
+				}
+
+				$this->native_tag_token_type              = '#tag';
+				$this->native_tag_token_name              = null;
+				$this->native_tag_token_is_closer         = 2 === $tag_kind;
+				$this->native_tag_attribute_name_initials = $tag_kind_row >> 2;
+				$this->parser_state                       = self::STATE_MATCHED_TAG;
+
+				return true;
+			}
+
+			if ( is_array( $query ) ) {
+				$has_tag_name     = isset( $query['tag_name'] ) && is_string( $query['tag_name'] );
+				$has_class_name   = isset( $query['class_name'] ) && is_string( $query['class_name'] );
+				$has_match_offset = isset( $query['match_offset'] ) && is_int( $query['match_offset'] ) && 0 < $query['match_offset'];
+
+				if ( ! $has_tag_name && ! $has_class_name && ! $has_match_offset ) {
+					$visit_closers = isset( $query['tag_closers'] ) && 'visit' === $query['tag_closers'];
+					$tag_kind_row  = $this->native_supports_tag_kind_with_attribute_initials_fast && ! $visit_closers
+						? $this->native_processor->next_tag_any_kind_and_attribute_name_initials_skip()
+						: $this->native_processor->next_tag_any_kind_and_attribute_name_initials( $visit_closers, 1 );
+
+					$tag_kind = $tag_kind_row & 3;
+					if ( 0 === $tag_kind ) {
+						$this->clear_native_tag_metadata();
+						$this->update_parser_state_after_native_no_match();
+
+						return false;
+					}
+
+					$this->native_tag_token_type              = '#tag';
+					$this->native_tag_token_name              = null;
+					$this->native_tag_token_is_closer         = 2 === $tag_kind;
+					$this->native_tag_attribute_name_initials = $tag_kind_row >> 2;
+					$this->parser_state                       = self::STATE_MATCHED_TAG;
+
+					return true;
+				}
+			}
+		}
+
+		$this->clear_native_tag_metadata();
+
+		if ( is_string( $query ) ) {
+			$query = array( 'tag_name' => $query );
+		}
+
+		if ( null === $query ) {
+			$query = array();
+		}
+
+		if ( ! is_array( $query ) ) {
+			_doing_it_wrong(
+				__METHOD__,
+				__( 'Please pass a query array to this function.' ),
+				'6.2.0'
+			);
+			$query = array();
+		}
+
+		$tag_name      = isset( $query['tag_name'] ) && is_string( $query['tag_name'] ) ? strtoupper( $query['tag_name'] ) : null;
+		$class_name    = isset( $query['class_name'] ) && is_string( $query['class_name'] ) ? $query['class_name'] : null;
+		$match_offset  = isset( $query['match_offset'] ) && is_int( $query['match_offset'] ) && 0 < $query['match_offset'] ? $query['match_offset'] : 1;
+		$visit_closers = isset( $query['tag_closers'] ) && 'visit' === $query['tag_closers'];
+
+		if ( null === $tag_name && null === $class_name && $this->native_supports_tag_kind_with_attribute_initials ) {
+			$tag_kind_row = $this->native_processor->next_tag_any_kind_and_attribute_name_initials( $visit_closers, $match_offset );
+			$tag_kind     = $tag_kind_row & 3;
+			if ( 0 === $tag_kind ) {
+				$this->update_parser_state_after_native_no_match();
+
+				return false;
+			}
+
+			$this->native_tag_token_type              = '#tag';
+			$this->native_tag_token_name              = null;
+			$this->native_tag_token_is_closer         = 2 === $tag_kind;
+			$this->native_tag_attribute_name_initials = $tag_kind_row >> 2;
+			$this->parser_state                       = self::STATE_MATCHED_TAG;
+
+			return true;
+		}
+
+		if ( null === $tag_name && null === $class_name && $this->native_supports_tag_kind ) {
+			$tag_kind = $this->native_processor->next_tag_any_kind( $visit_closers, $match_offset );
+			if ( 0 === $tag_kind ) {
+				$this->update_parser_state_after_native_no_match();
+
+				return false;
+			}
+
+			$this->native_tag_token_type              = '#tag';
+			$this->native_tag_token_name              = null;
+			$this->native_tag_token_is_closer         = 2 === $tag_kind;
+			$this->native_tag_attribute_name_initials = null;
+			$this->parser_state                       = self::STATE_MATCHED_TAG;
+
+			return true;
+		}
+
+		if ( null === $tag_name && null === $class_name && $this->native_supports_tag_metadata ) {
+			$matched = $this->cache_native_tag_metadata(
+				$this->native_processor->next_tag_any_metadata( $visit_closers, $match_offset )
+			);
+
+			if ( ! $matched ) {
+				$this->update_parser_state_after_native_no_match();
+
+				return false;
+			}
+
+			$this->parser_state = self::STATE_MATCHED_TAG;
+
+			return true;
+		}
+
+		if ( null === $tag_name && null === $class_name && method_exists( $this->native_processor, 'next_tag_any' ) ) {
+			$matched = $this->native_processor->next_tag_any( $visit_closers, $match_offset );
+			if ( ! $matched ) {
+				$this->update_parser_state_after_native_no_match();
+
+				return false;
+			}
+
+			$this->parser_state = self::STATE_MATCHED_TAG;
+
+			return true;
+		}
+
+		while ( $this->native_processor->next_token() ) {
+			if ( '#tag' !== $this->native_processor->get_token_type() ) {
+				continue;
+			}
+
+			if ( ! $visit_closers && $this->native_processor->is_tag_closer() ) {
+				continue;
+			}
+
+			if ( null !== $tag_name && $tag_name !== $this->native_processor->get_tag() ) {
+				continue;
+			}
+
+			if ( null !== $class_name && ! $this->native_has_class( $class_name ) ) {
+				continue;
+			}
+
+			if ( 0 === --$match_offset ) {
+				if ( $this->native_supports_tag_metadata ) {
+					$this->cache_native_tag_metadata( $this->native_processor->current_token_metadata() );
+				}
+
+				$this->parser_state = self::STATE_MATCHED_TAG;
+
+				return true;
+			}
+		}
+
+		$this->clear_native_tag_metadata();
+		$this->update_parser_state_after_native_no_match();
+
+		return false;
+	}
+
+	/**
+	 * Checks for a class name on the current native token.
+	 *
+	 * @param string $wanted_class Class name to find.
+	 * @return bool Whether the class is present.
+	 */
+	private function native_has_class( $wanted_class ): bool {
+		$class_attribute = $this->native_processor->get_attribute( 'class' );
+		if ( ! is_string( $class_attribute ) ) {
+			return false;
+		}
+
+		$classes = preg_split( '/[\t\n\f\r ]+/', $class_attribute, -1, PREG_SPLIT_NO_EMPTY );
+		if ( false === $classes ) {
+			return false;
+		}
+
+		return in_array( $wanted_class, $classes, true );
 	}
 
 	/**
@@ -924,6 +1740,21 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.5.0
 	 */
 	public function next_token(): bool {
+		if ( $this->has_native_processor() ) {
+			$this->clear_native_tag_metadata();
+
+			$matched = $this->native_processor->next_token();
+			if ( $matched ) {
+				$this->update_parser_state_from_native_token();
+
+				return true;
+			}
+
+			$this->update_parser_state_after_native_no_match();
+
+			return false;
+		}
+
 		return $this->base_class_next_token();
 	}
 
@@ -1228,6 +2059,32 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.4.0
 	 */
 	public function has_class( $wanted_class ): ?bool {
+		if ( $this->has_native_processor() ) {
+			if (
+				null !== $this->native_tag_token_type &&
+				'#tag' !== $this->native_tag_token_type
+			) {
+				return null;
+			}
+
+			if ( null !== $this->native_tag_token_type && $this->native_tag_token_is_closer ) {
+				return false;
+			}
+
+			if (
+				null === $this->native_tag_token_type &&
+				'#tag' !== $this->native_processor->get_token_type()
+			) {
+				return null;
+			}
+
+			if ( null === $this->native_tag_token_type && $this->native_processor->is_tag_closer() ) {
+				return false;
+			}
+
+			return $this->native_has_class( $wanted_class );
+		}
+
 		if ( self::STATE_MATCHED_TAG !== $this->parser_state ) {
 			return null;
 		}
@@ -1347,6 +2204,19 @@ class WP_HTML_Tag_Processor {
 			return false;
 		}
 
+		if (
+			$this->has_native_processor() &&
+			method_exists( $this->native_processor, 'set_bookmark' )
+		) {
+			if ( ! $this->native_processor->set_bookmark( $name ) ) {
+				return false;
+			}
+
+			$this->bookmarks[ $name ] = new WP_HTML_Span( 0, 0 );
+
+			return true;
+		}
+
 		$this->bookmarks[ $name ] = new WP_HTML_Span( $this->token_starts_at, $this->token_length );
 
 		return true;
@@ -1364,6 +2234,18 @@ class WP_HTML_Tag_Processor {
 	 * @return bool Whether the bookmark already existed before removal.
 	 */
 	public function release_bookmark( $name ): bool {
+		if (
+			$this->has_native_processor() &&
+			method_exists( $this->native_processor, 'release_bookmark' )
+		) {
+			$released = $this->native_processor->release_bookmark( $name );
+			if ( $released ) {
+				unset( $this->bookmarks[ $name ] );
+			}
+
+			return $released;
+		}
+
 		if ( ! array_key_exists( $name, $this->bookmarks ) ) {
 			return false;
 		}
@@ -2546,6 +3428,13 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.3.0
 	 */
 	public function has_bookmark( $bookmark_name ): bool {
+		if (
+			$this->has_native_processor() &&
+			method_exists( $this->native_processor, 'has_bookmark' )
+		) {
+			return $this->native_processor->has_bookmark( $bookmark_name );
+		}
+
 		return array_key_exists( $bookmark_name, $this->bookmarks );
 	}
 
@@ -2561,7 +3450,7 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.2.0
 	 */
 	public function seek( $bookmark_name ): bool {
-		if ( ! array_key_exists( $bookmark_name, $this->bookmarks ) ) {
+		if ( ! $this->has_bookmark( $bookmark_name ) ) {
 			_doing_it_wrong(
 				__METHOD__,
 				__( 'Unknown bookmark name.' ),
@@ -2583,6 +3472,27 @@ class WP_HTML_Tag_Processor {
 
 		// Flush out any pending updates to the document.
 		$this->get_updated_html();
+
+		if (
+			$this->has_native_processor() &&
+			method_exists( $this->native_processor, 'seek' )
+		) {
+			if ( ! $this->native_processor->seek( $bookmark_name ) ) {
+				return false;
+			}
+
+			$this->clear_native_tag_metadata();
+			if (
+				method_exists( $this->native_processor, 'current_token_metadata' ) &&
+				$this->cache_native_tag_metadata( $this->native_processor->current_token_metadata() )
+			) {
+				$this->update_parser_state_from_native_token();
+			} else {
+				$this->update_parser_state_from_native_token();
+			}
+
+			return true;
+		}
 
 		// Point this tag processor before the sought tag opener and consume it.
 		$this->bytes_already_parsed = $this->bookmarks[ $bookmark_name ]->start;
@@ -2706,6 +3616,10 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.2.0
 	 */
 	public function get_attribute( $name ) {
+		if ( $this->has_native_processor() ) {
+			return $this->native_processor->get_attribute( $name );
+		}
+
 		if ( self::STATE_MATCHED_TAG !== $this->parser_state ) {
 			return null;
 		}
@@ -2786,6 +3700,49 @@ class WP_HTML_Tag_Processor {
 	 * @see https://html.spec.whatwg.org/multipage/syntax.html#attributes-2:ascii-case-insensitive
 	 */
 	public function get_attribute_names_with_prefix( $prefix ): ?array {
+		if ( null !== $this->native_processor ) {
+			if (
+				null !== $this->native_tag_token_type &&
+				( '#tag' !== $this->native_tag_token_type || $this->native_tag_token_is_closer )
+			) {
+				return null;
+			}
+
+			if (
+				null !== $this->native_tag_attribute_name_initials &&
+				is_string( $prefix )
+			) {
+				if ( 0 === $this->native_tag_attribute_name_initials ) {
+					return array();
+				}
+
+				if ( '' !== $prefix ) {
+					$first_prefix_byte = ord( $prefix[0] );
+					if ( $first_prefix_byte >= 65 && $first_prefix_byte <= 90 ) {
+						$first_prefix_byte += 32;
+					}
+
+					if ( $first_prefix_byte >= 97 && $first_prefix_byte <= 122 ) {
+						$prefix_initial_bit = 1 << ( $first_prefix_byte - 97 );
+						if ( 0 === ( $this->native_tag_attribute_name_initials & $prefix_initial_bit ) ) {
+							return array();
+						}
+					}
+				}
+			}
+
+			if ( $this->native_supports_prefix_name_string ) {
+				$attribute_names = $this->native_processor->get_attribute_names_with_prefix_string( $prefix );
+				if ( null === $attribute_names ) {
+					return null;
+				}
+
+				return '' === $attribute_names ? array() : explode( "\x1f", $attribute_names );
+			}
+
+			return $this->native_processor->get_attribute_names_with_prefix( $prefix );
+		}
+
 		if (
 			self::STATE_MATCHED_TAG !== $this->parser_state ||
 			$this->is_closing_tag
@@ -2806,12 +3763,1903 @@ class WP_HTML_Tag_Processor {
 	}
 
 	/**
+	 * Counts lowercase names of all attributes matching a given prefix in the current tag.
+	 *
+	 * @param  string $prefix Prefix of requested attribute names.
+	 *
+	 * @return int|null Number of matching attribute names, or `null` when no tag opener is matched.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function count_attribute_names_with_prefix( $prefix ): ?int {
+		if ( null !== $this->native_processor ) {
+			if (
+				null !== $this->native_tag_token_type &&
+				( '#tag' !== $this->native_tag_token_type || $this->native_tag_token_is_closer )
+			) {
+				return null;
+			}
+
+			if (
+				null !== $this->native_tag_attribute_name_initials &&
+				is_string( $prefix )
+			) {
+				if ( 0 === $this->native_tag_attribute_name_initials ) {
+					return 0;
+				}
+
+				if ( '' !== $prefix ) {
+					$first_prefix_byte = ord( $prefix[0] );
+					if ( $first_prefix_byte >= 65 && $first_prefix_byte <= 90 ) {
+						$first_prefix_byte += 32;
+					}
+
+					if ( $first_prefix_byte >= 97 && $first_prefix_byte <= 122 ) {
+						$prefix_initial_bit = 1 << ( $first_prefix_byte - 97 );
+						if ( 0 === ( $this->native_tag_attribute_name_initials & $prefix_initial_bit ) ) {
+							return 0;
+						}
+					}
+				}
+			}
+
+			if ( $this->native_supports_prefix_name_count ) {
+				return $this->native_processor->count_attribute_names_with_prefix( $prefix );
+			}
+		}
+
+		$attribute_names = $this->get_attribute_names_with_prefix( $prefix );
+		if ( null === $attribute_names ) {
+			return null;
+		}
+
+		return count( $attribute_names );
+	}
+
+	/**
+	 * Summarizes tags and prefixed attributes across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` and
+	 * `count_attribute_names_with_prefix()`, but native implementations may
+	 * process the remaining document in one call.
+	 *
+	 * @param string $prefix        Prefix of requested attribute names.
+	 * @param bool   $visit_closers Whether closing tags should count as tags.
+	 * @return array Summary with `tag_count` and `attribute_count`.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function summarize_attribute_names_with_prefix( $prefix, bool $visit_closers = false ): array {
+		if ( $this->has_native_processor() && $this->native_supports_prefix_name_summary ) {
+			$this->clear_native_tag_metadata();
+
+			$summary = $this->native_processor->summarize_attribute_names_with_prefix( $prefix, $visit_closers );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 2 );
+				if ( 2 === count( $parts ) ) {
+					$this->update_parser_state_after_native_no_match();
+
+					return array(
+						'tag_count'       => (int) $parts[0],
+						'attribute_count' => (int) $parts[1],
+					);
+				}
+			}
+		}
+
+		$tag_count       = 0;
+		$attribute_count = 0;
+		$query           = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+
+		while ( $this->next_tag( $query ) ) {
+			++$tag_count;
+
+			$count = $this->count_attribute_names_with_prefix( $prefix );
+			if ( is_int( $count ) ) {
+				$attribute_count += $count;
+			}
+		}
+
+		return array(
+			'tag_count'       => $tag_count,
+			'attribute_count' => $attribute_count,
+		);
+	}
+
+	/**
+	 * Returns summaries for the next chunk of tags and matching attributes.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` and
+	 * `count_attribute_names_with_prefix()`, but native implementations may
+	 * amortize PHP/native crossings across a chunk while preserving incremental
+	 * consumption.
+	 *
+	 * Each row contains `tag_name`, `is_tag_closer`, and `attribute_count`.
+	 *
+	 * @param string $prefix        Prefix of requested attribute names.
+	 * @param int    $max_tags      Maximum number of tag summaries to return.
+	 * @param bool   $visit_closers Whether closing tags should be included.
+	 * @return array[] Tag summary rows.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function next_tag_prefix_summary_batch( $prefix, $max_tags = 64, bool $visit_closers = false ): array {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 ) {
+			return array();
+		}
+
+		$max_tags = min( 256, $max_tags );
+		$batch    = $this->next_tag_prefix_compact_summary_batch( $prefix, $max_tags, $visit_closers );
+		if ( ! is_string( $batch ) || '' === $batch ) {
+			return array();
+		}
+
+		$rows         = array();
+		$offset       = 0;
+		$batch_length = strlen( $batch );
+
+		while ( $offset < $batch_length && count( $rows ) < $max_tags ) {
+			$row_end = strpos( $batch, "\x1e", $offset );
+			if ( false === $row_end ) {
+				$row_end = $batch_length;
+			}
+
+			$parts = explode( "\x1f", substr( $batch, $offset, $row_end - $offset ), 3 );
+			if ( 3 !== count( $parts ) ) {
+				break;
+			}
+
+			$rows[] = array(
+				'tag_name'        => $parts[0],
+				'is_tag_closer'   => '1' === $parts[1],
+				'attribute_count' => (int) $parts[2],
+			);
+			$offset = $row_end + 1;
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Returns compact summaries for the next chunk of tags and matching attributes.
+	 *
+	 * This is the compact-string form of `next_tag_prefix_summary_batch()`,
+	 * using unit separators between fields and record separators between rows.
+	 * It is intended for high-throughput read-only scans where callers can
+	 * aggregate tag metadata without allocating one PHP array per tag.
+	 *
+	 * @param string $prefix        Prefix of requested attribute names.
+	 * @param int    $max_tags      Maximum number of tag summaries to return.
+	 * @param bool   $visit_closers Whether closing tags should be included.
+	 * @return string|null Compact tag summary batch, or null when exhausted.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function next_tag_prefix_compact_summary_batch( $prefix, $max_tags = 64, bool $visit_closers = false ) {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 ) {
+			return null;
+		}
+
+		$max_tags = min( 256, $max_tags );
+
+		if ( $this->has_native_processor() && $this->native_supports_prefix_name_summary_batch ) {
+			$batch = $this->native_processor->next_tag_prefix_summary_batch( $prefix, $max_tags, $visit_closers );
+			if ( ! is_string( $batch ) || '' === $batch ) {
+				$this->clear_native_tag_metadata();
+				$this->update_parser_state_after_native_no_match();
+
+				return null;
+			}
+
+			if ( $this->native_compact_batch_reached_end( $batch, $max_tags ) ) {
+				$this->clear_native_tag_metadata();
+				$this->update_parser_state_after_native_no_match();
+			} else {
+				$this->cache_native_final_compact_tag_summary( $batch );
+			}
+
+			return $batch;
+		}
+
+		$rows  = '';
+		$query = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+		$count = 0;
+
+		while ( $count < $max_tags && $this->next_tag( $query ) ) {
+			$attribute_count = $this->count_attribute_names_with_prefix( $prefix );
+			if ( '' !== $rows ) {
+				$rows .= "\x1e";
+			}
+
+			$rows .= implode(
+				"\x1f",
+				array(
+					$this->get_tag(),
+					$this->is_tag_closer() ? '1' : '0',
+					is_int( $attribute_count ) ? (string) $attribute_count : '0',
+				)
+			);
+			++$count;
+		}
+
+		return '' === $rows ? null : $rows;
+	}
+
+	/**
+	 * Returns summaries for the next chunk of tags.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` and reading
+	 * `get_tag()`/`is_tag_closer()`, but native implementations may amortize
+	 * PHP/native crossings across a chunk while preserving incremental
+	 * consumption.
+	 *
+	 * Each row contains `tag_name` and `is_tag_closer`.
+	 *
+	 * @param int  $max_tags      Maximum number of tag summaries to return.
+	 * @param bool $visit_closers Whether closing tags should be included.
+	 * @return array[] Tag summary rows.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function next_tag_summary_batch( $max_tags = 64, bool $visit_closers = false ): array {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 ) {
+			return array();
+		}
+
+		$max_tags = min( 256, $max_tags );
+		$batch    = $this->next_tag_compact_summary_batch( $max_tags, $visit_closers );
+		if ( ! is_string( $batch ) || '' === $batch ) {
+			return array();
+		}
+
+		$rows         = array();
+		$offset       = 0;
+		$batch_length = strlen( $batch );
+
+		while ( $offset < $batch_length && count( $rows ) < $max_tags ) {
+			$row_end = strpos( $batch, "\x1e", $offset );
+			if ( false === $row_end ) {
+				$row_end = $batch_length;
+			}
+
+			$parts = explode( "\x1f", substr( $batch, $offset, $row_end - $offset ), 2 );
+			if ( 2 !== count( $parts ) ) {
+				break;
+			}
+
+			$rows[] = array(
+				'tag_name'      => $parts[0],
+				'is_tag_closer' => '1' === $parts[1],
+			);
+			$offset = $row_end + 1;
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Returns compact summaries for the next chunk of tags.
+	 *
+	 * This is the compact-string form of `next_tag_summary_batch()`, using
+	 * unit separators between fields and record separators between rows. It is
+	 * intended for high-throughput read-only scans where callers can aggregate
+	 * tag metadata without allocating one PHP array per tag.
+	 *
+	 * @param int  $max_tags      Maximum number of tag summaries to return.
+	 * @param bool $visit_closers Whether closing tags should be included.
+	 * @return string|null Compact tag summary batch, or null when exhausted.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function next_tag_compact_summary_batch( $max_tags = 64, bool $visit_closers = false ) {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 ) {
+			return null;
+		}
+
+		$max_tags = min( 256, $max_tags );
+
+		if ( $this->has_native_processor() && $this->native_supports_tag_summary_batch ) {
+			$batch = $this->native_processor->next_tag_compact_summary_batch( $max_tags, $visit_closers );
+			if ( ! is_string( $batch ) || '' === $batch ) {
+				$this->clear_native_tag_metadata();
+				$this->update_parser_state_after_native_no_match();
+
+				return null;
+			}
+
+			if ( $this->native_compact_batch_reached_end( $batch, $max_tags ) ) {
+				$this->clear_native_tag_metadata();
+				$this->update_parser_state_after_native_no_match();
+			} else {
+				$this->cache_native_final_compact_tag_summary( $batch );
+			}
+
+			return $batch;
+		}
+
+		$rows  = '';
+		$query = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+		$count = 0;
+
+		while ( $count < $max_tags && $this->next_tag( $query ) ) {
+			if ( '' !== $rows ) {
+				$rows .= "\x1e";
+			}
+
+			$rows .= implode(
+				"\x1f",
+				array(
+					$this->get_tag(),
+					$this->is_tag_closer() ? '1' : '0',
+				)
+			);
+			++$count;
+		}
+
+		return '' === $rows ? null : $rows;
+	}
+
+	/**
+	 * Returns aggregate tag and matching-attribute counts for the next chunk of tags.
+	 *
+	 * This is the count-only compact form of `next_tag_prefix_summary_batch()`.
+	 * It preserves incremental consumption but avoids returning one row per tag
+	 * when callers only need aggregate counts.
+	 *
+	 * @param string $prefix        Prefix of requested attribute names.
+	 * @param int    $max_tags      Maximum number of tags to consume.
+	 * @param bool   $visit_closers Whether closing tags should be included.
+	 * @return string|null Compact `tag_count` and `attribute_count`, or null when exhausted.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function next_tag_prefix_count_compact_batch( $prefix, $max_tags = 64, bool $visit_closers = false ) {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 ) {
+			return null;
+		}
+
+		$max_tags = min( 256, $max_tags );
+
+		if ( $this->has_native_processor() && $this->native_supports_prefix_name_count_batch ) {
+			$summary = $this->native_processor->next_tag_prefix_count_compact_batch( $prefix, $max_tags, $visit_closers );
+			if ( ! is_string( $summary ) || '' === $summary ) {
+				$this->clear_native_tag_metadata();
+				$this->update_parser_state_after_native_no_match();
+
+				return null;
+			}
+
+			$parts = explode( "\x1f", $summary, 2 );
+			$this->clear_native_tag_metadata();
+			if ( isset( $parts[0] ) && (int) $parts[0] < $max_tags ) {
+				$this->update_parser_state_after_native_no_match();
+			} else {
+				$this->update_parser_state_from_native_token();
+			}
+
+			return $summary;
+		}
+
+		$tag_count       = 0;
+		$attribute_count = 0;
+		$query           = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+
+		while ( $tag_count < $max_tags && $this->next_tag( $query ) ) {
+			++$tag_count;
+
+			$count = $this->count_attribute_names_with_prefix( $prefix );
+			if ( is_int( $count ) ) {
+				$attribute_count += $count;
+			}
+		}
+
+		return 0 === $tag_count ? null : $tag_count . "\x1f" . $attribute_count;
+	}
+
+	/**
+	 * Summarizes tag inventory counts across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` and reading tag
+	 * names, closer state, and attribute names, but native implementations may
+	 * aggregate the remaining document in one call.
+	 *
+	 * @param bool $visit_closers Whether closing tags should count as tags.
+	 * @return array Summary with tag, opener, closer, attribute, and unique-name counts.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function summarize_tag_inventory( bool $visit_closers = false ): array {
+		if ( $this->has_native_processor() && $this->native_supports_tag_inventory_summary ) {
+			$this->clear_native_tag_metadata();
+
+			$summary = $this->native_processor->summarize_tag_inventory( $visit_closers );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 5 );
+				if ( 5 === count( $parts ) ) {
+					$this->update_parser_state_after_native_no_match();
+
+					return array(
+						'tag_count'             => (int) $parts[0],
+						'open_tag_count'        => (int) $parts[1],
+						'closing_tag_count'     => (int) $parts[2],
+						'attribute_count'       => (int) $parts[3],
+						'unique_tag_name_count' => (int) $parts[4],
+					);
+				}
+			}
+		}
+
+		$tag_count         = 0;
+		$open_tag_count    = 0;
+		$closing_tag_count = 0;
+		$attribute_count   = 0;
+		$tag_names         = array();
+		$query             = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+
+		while ( $this->next_tag( $query ) ) {
+			++$tag_count;
+			$tag_names[ $this->get_tag() ] = true;
+
+			if ( $this->is_tag_closer() ) {
+				++$closing_tag_count;
+				continue;
+			}
+
+			++$open_tag_count;
+			$attribute_names = $this->get_attribute_names_with_prefix( '' );
+			if ( is_array( $attribute_names ) ) {
+				$attribute_count += count( $attribute_names );
+			}
+		}
+
+		return array(
+			'tag_count'             => $tag_count,
+			'open_tag_count'        => $open_tag_count,
+			'closing_tag_count'     => $closing_tag_count,
+			'attribute_count'       => $attribute_count,
+			'unique_tag_name_count' => count( $tag_names ),
+		);
+	}
+
+	/**
+	 * Summarizes heading tag usage across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` and `get_tag()`,
+	 * but native implementations may aggregate the remaining document in one
+	 * call.
+	 *
+	 * @param bool $visit_closers Whether closing tags should count as tags.
+	 * @return array Summary with tag, heading, and per-level heading counts.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function summarize_heading_inventory( bool $visit_closers = false ): array {
+		if ( $this->has_native_processor() && $this->native_supports_heading_inventory_summary ) {
+			$this->clear_native_tag_metadata();
+
+			$summary = $this->native_processor->summarize_heading_inventory( $visit_closers );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 8 );
+				if ( 8 === count( $parts ) ) {
+					$this->update_parser_state_after_native_no_match();
+
+					return array(
+						'tag_count'     => (int) $parts[0],
+						'heading_count' => (int) $parts[1],
+						'h1_count'      => (int) $parts[2],
+						'h2_count'      => (int) $parts[3],
+						'h3_count'      => (int) $parts[4],
+						'h4_count'      => (int) $parts[5],
+						'h5_count'      => (int) $parts[6],
+						'h6_count'      => (int) $parts[7],
+					);
+				}
+			}
+		}
+
+		$tag_count     = 0;
+		$heading_count = 0;
+		$h1_count      = 0;
+		$h2_count      = 0;
+		$h3_count      = 0;
+		$h4_count      = 0;
+		$h5_count      = 0;
+		$h6_count      = 0;
+		$query         = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+
+		while ( $this->next_tag( $query ) ) {
+			++$tag_count;
+
+			if ( $this->is_tag_closer() ) {
+				continue;
+			}
+
+			switch ( $this->get_tag() ) {
+				case 'H1':
+					++$heading_count;
+					++$h1_count;
+					break;
+				case 'H2':
+					++$heading_count;
+					++$h2_count;
+					break;
+				case 'H3':
+					++$heading_count;
+					++$h3_count;
+					break;
+				case 'H4':
+					++$heading_count;
+					++$h4_count;
+					break;
+				case 'H5':
+					++$heading_count;
+					++$h5_count;
+					break;
+				case 'H6':
+					++$heading_count;
+					++$h6_count;
+					break;
+			}
+		}
+
+		return array(
+			'tag_count'     => $tag_count,
+			'heading_count' => $heading_count,
+			'h1_count'      => $h1_count,
+			'h2_count'      => $h2_count,
+			'h3_count'      => $h3_count,
+			'h4_count'      => $h4_count,
+			'h5_count'      => $h5_count,
+			'h6_count'      => $h6_count,
+		);
+	}
+
+	/**
+	 * Summarizes ID attribute usage across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` and
+	 * `get_attribute( 'id' )`, but native implementations may aggregate the
+	 * remaining document in one call.
+	 *
+	 * Boolean ID attributes count as ID-bearing tags with zero value bytes and
+	 * no unique ID value.
+	 *
+	 * @param bool $visit_closers Whether closing tags should count as tags.
+	 * @return array Summary with tag, ID-bearing tag, unique ID, duplicate ID, and value-byte counts.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function summarize_id_inventory( bool $visit_closers = false ): array {
+		if ( $this->has_native_processor() && $this->native_supports_id_inventory_summary ) {
+			$this->clear_native_tag_metadata();
+
+			$summary = $this->native_processor->summarize_id_inventory( $visit_closers );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 5 );
+				if ( 5 === count( $parts ) ) {
+					$this->update_parser_state_after_native_no_match();
+
+					return array(
+						'tag_count'          => (int) $parts[0],
+						'id_tag_count'       => (int) $parts[1],
+						'unique_id_count'    => (int) $parts[2],
+						'duplicate_id_count' => (int) $parts[3],
+						'id_value_bytes'     => (int) $parts[4],
+					);
+				}
+			}
+		}
+
+		$tag_count          = 0;
+		$id_tag_count       = 0;
+		$duplicate_id_count = 0;
+		$id_value_bytes     = 0;
+		$ids                = array();
+		$query              = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+
+		while ( $this->next_tag( $query ) ) {
+			++$tag_count;
+
+			if ( $this->is_tag_closer() ) {
+				continue;
+			}
+
+			$id = $this->get_attribute( 'id' );
+			if ( null === $id ) {
+				continue;
+			}
+
+			++$id_tag_count;
+
+			if ( is_string( $id ) ) {
+				$id_value_bytes += strlen( $id );
+				if ( isset( $ids[ $id ] ) ) {
+					++$duplicate_id_count;
+				} else {
+					$ids[ $id ] = true;
+				}
+			}
+		}
+
+		return array(
+			'tag_count'          => $tag_count,
+			'id_tag_count'       => $id_tag_count,
+			'unique_id_count'    => count( $ids ),
+			'duplicate_id_count' => $duplicate_id_count,
+			'id_value_bytes'     => $id_value_bytes,
+		);
+	}
+
+	/**
+	 * Summarizes attribute usage across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()`,
+	 * `get_attribute_names_with_prefix( '' )`, and `get_attribute()`, but
+	 * native implementations may aggregate the remaining document in one call.
+	 *
+	 * The `attribute_count` count follows `get_attribute_names_with_prefix( '' )`
+	 * semantics and counts each unique attribute name once per tag.
+	 * `attribute_value_bytes` uses decoded attribute values. Boolean
+	 * attributes count as present with zero value bytes.
+	 *
+	 * @param bool $visit_closers Whether closing tags should count as tags.
+	 * @return array Summary with tag, attribute, unique-attribute, and value-byte counts.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function summarize_attribute_inventory( bool $visit_closers = false ): array {
+		if ( $this->has_native_processor() && $this->native_supports_attribute_inventory_summary ) {
+			$this->clear_native_tag_metadata();
+
+			$summary = $this->native_processor->summarize_attribute_inventory( $visit_closers );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 4 );
+				if ( 4 === count( $parts ) ) {
+					$this->update_parser_state_after_native_no_match();
+
+					return array(
+						'tag_count'                   => (int) $parts[0],
+						'attribute_count'             => (int) $parts[1],
+						'unique_attribute_name_count' => (int) $parts[2],
+						'attribute_value_bytes'       => (int) $parts[3],
+					);
+				}
+			}
+		}
+
+		$tag_count             = 0;
+		$attribute_count       = 0;
+		$attribute_value_bytes = 0;
+		$attribute_names       = array();
+		$query                 = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+
+		while ( $this->next_tag( $query ) ) {
+			++$tag_count;
+
+			if ( $this->is_tag_closer() ) {
+				continue;
+			}
+
+			$current_attribute_names = $this->get_attribute_names_with_prefix( '' );
+			if ( ! is_array( $current_attribute_names ) ) {
+				continue;
+			}
+
+			foreach ( $current_attribute_names as $attribute_name ) {
+				++$attribute_count;
+				$attribute_names[ $attribute_name ] = true;
+
+				$attribute_value = $this->get_attribute( $attribute_name );
+				if ( null !== $attribute_value && true !== $attribute_value ) {
+					$attribute_value_bytes += strlen( $attribute_value );
+				}
+			}
+		}
+
+		return array(
+			'tag_count'                   => $tag_count,
+			'attribute_count'             => $attribute_count,
+			'unique_attribute_name_count' => count( $attribute_names ),
+			'attribute_value_bytes'       => $attribute_value_bytes,
+		);
+	}
+
+	/**
+	 * Summarizes `data-*` attribute usage across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()`,
+	 * `get_attribute_names_with_prefix( 'data-' )`, and `get_attribute()` for
+	 * each matching attribute, but native implementations may aggregate the
+	 * remaining document in one call.
+	 *
+	 * @param bool $visit_closers Whether closing tags should count as tags.
+	 * @return array Summary with tag, data-tag, attribute, unique-name, and value-byte counts.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function summarize_data_attribute_inventory( bool $visit_closers = false ): array {
+		if ( $this->has_native_processor() && $this->native_supports_data_attribute_inventory_summary ) {
+			$this->clear_native_tag_metadata();
+
+			$summary = $this->native_processor->summarize_data_attribute_inventory( $visit_closers );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 5 );
+				if ( 5 === count( $parts ) ) {
+					$this->update_parser_state_after_native_no_match();
+
+					return array(
+						'tag_count'                        => (int) $parts[0],
+						'data_attribute_tag_count'         => (int) $parts[1],
+						'data_attribute_count'             => (int) $parts[2],
+						'unique_data_attribute_name_count' => (int) $parts[3],
+						'data_attribute_value_bytes'       => (int) $parts[4],
+					);
+				}
+			}
+		}
+
+		$tag_count                  = 0;
+		$data_attribute_tag_count   = 0;
+		$data_attribute_count       = 0;
+		$data_attribute_value_bytes = 0;
+		$data_attribute_names       = array();
+		$query                      = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+
+		while ( $this->next_tag( $query ) ) {
+			++$tag_count;
+
+			if ( $this->is_tag_closer() ) {
+				continue;
+			}
+
+			$attribute_names = $this->get_attribute_names_with_prefix( 'data-' );
+			if ( ! is_array( $attribute_names ) || array() === $attribute_names ) {
+				continue;
+			}
+
+			++$data_attribute_tag_count;
+			foreach ( $attribute_names as $attribute_name ) {
+				++$data_attribute_count;
+				$data_attribute_names[ $attribute_name ] = true;
+
+				$attribute_value = $this->get_attribute( $attribute_name );
+				if ( is_string( $attribute_value ) ) {
+					$data_attribute_value_bytes += strlen( $attribute_value );
+				}
+			}
+		}
+
+		return array(
+			'tag_count'                        => $tag_count,
+			'data_attribute_tag_count'         => $data_attribute_tag_count,
+			'data_attribute_count'             => $data_attribute_count,
+			'unique_data_attribute_name_count' => count( $data_attribute_names ),
+			'data_attribute_value_bytes'       => $data_attribute_value_bytes,
+		);
+	}
+
+	/**
+	 * Summarizes `aria-*` attribute usage across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()`,
+	 * `get_attribute_names_with_prefix( 'aria-' )`, and `get_attribute()` for
+	 * each matching attribute, but native implementations may aggregate the
+	 * remaining document in one call.
+	 *
+	 * @param bool $visit_closers Whether closing tags should count as tags.
+	 * @return array Summary with tag, ARIA-tag, attribute, unique-name, and value-byte counts.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function summarize_aria_attribute_inventory( bool $visit_closers = false ): array {
+		if ( $this->has_native_processor() && $this->native_supports_aria_attribute_inventory_summary ) {
+			$this->clear_native_tag_metadata();
+
+			$summary = $this->native_processor->summarize_aria_attribute_inventory( $visit_closers );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 5 );
+				if ( 5 === count( $parts ) ) {
+					$this->update_parser_state_after_native_no_match();
+
+					return array(
+						'tag_count'                        => (int) $parts[0],
+						'aria_attribute_tag_count'         => (int) $parts[1],
+						'aria_attribute_count'             => (int) $parts[2],
+						'unique_aria_attribute_name_count' => (int) $parts[3],
+						'aria_attribute_value_bytes'       => (int) $parts[4],
+					);
+				}
+			}
+		}
+
+		$tag_count                  = 0;
+		$aria_attribute_tag_count   = 0;
+		$aria_attribute_count       = 0;
+		$aria_attribute_value_bytes = 0;
+		$aria_attribute_names       = array();
+		$query                      = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+
+		while ( $this->next_tag( $query ) ) {
+			++$tag_count;
+
+			if ( $this->is_tag_closer() ) {
+				continue;
+			}
+
+			$attribute_names = $this->get_attribute_names_with_prefix( 'aria-' );
+			if ( ! is_array( $attribute_names ) || array() === $attribute_names ) {
+				continue;
+			}
+
+			++$aria_attribute_tag_count;
+			foreach ( $attribute_names as $attribute_name ) {
+				++$aria_attribute_count;
+				$aria_attribute_names[ $attribute_name ] = true;
+
+				$attribute_value = $this->get_attribute( $attribute_name );
+				if ( is_string( $attribute_value ) ) {
+					$aria_attribute_value_bytes += strlen( $attribute_value );
+				}
+			}
+		}
+
+		return array(
+			'tag_count'                        => $tag_count,
+			'aria_attribute_tag_count'         => $aria_attribute_tag_count,
+			'aria_attribute_count'             => $aria_attribute_count,
+			'unique_aria_attribute_name_count' => count( $aria_attribute_names ),
+			'aria_attribute_value_bytes'       => $aria_attribute_value_bytes,
+		);
+	}
+
+	/**
+	 * Summarizes class attribute usage across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()`, `get_attribute( 'class' )`,
+	 * and `class_list()`, but native implementations may aggregate the
+	 * remaining document in one call.
+	 *
+	 * The `class_name_count` count follows `class_list()` semantics and
+	 * counts each unique class name once per tag. `class_value_bytes` uses the
+	 * decoded class attribute value. Boolean class attributes count as present
+	 * with zero value bytes and zero class names.
+	 *
+	 * @param bool $visit_closers Whether closing tags should count as tags.
+	 * @return array Summary with tag, class-attribute, class-name, and unique-class counts.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function summarize_class_inventory( bool $visit_closers = false ): array {
+		if ( $this->has_native_processor() && $this->native_supports_class_inventory_summary ) {
+			$this->clear_native_tag_metadata();
+
+			$summary = $this->native_processor->summarize_class_inventory( $visit_closers );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 5 );
+				if ( 5 === count( $parts ) ) {
+					$this->update_parser_state_after_native_no_match();
+
+					return array(
+						'tag_count'                => (int) $parts[0],
+						'class_attribute_count'    => (int) $parts[1],
+						'class_name_count'         => (int) $parts[2],
+						'unique_class_name_count'  => (int) $parts[3],
+						'class_value_bytes'        => (int) $parts[4],
+					);
+				}
+			}
+		}
+
+		$tag_count             = 0;
+		$class_attribute_count = 0;
+		$class_name_count      = 0;
+		$class_value_bytes     = 0;
+		$class_names           = array();
+		$query                 = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+
+		while ( $this->next_tag( $query ) ) {
+			++$tag_count;
+
+			if ( $this->is_tag_closer() ) {
+				continue;
+			}
+
+			$class_attribute = $this->get_attribute( 'class' );
+			if ( null === $class_attribute ) {
+				continue;
+			}
+
+			++$class_attribute_count;
+			if ( true !== $class_attribute ) {
+				$class_value_bytes += strlen( $class_attribute );
+			}
+
+			foreach ( $this->class_list() as $class_name ) {
+				++$class_name_count;
+				$class_names[ $class_name ] = true;
+			}
+		}
+
+		return array(
+			'tag_count'                => $tag_count,
+			'class_attribute_count'    => $class_attribute_count,
+			'class_name_count'         => $class_name_count,
+			'unique_class_name_count'  => count( $class_names ),
+			'class_value_bytes'        => $class_value_bytes,
+		);
+	}
+
+	/**
+	 * Summarizes resource-link usage across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` and reading
+	 * resource-bearing attributes from `a[href]`, `img[src]`, `script[src]`,
+	 * `link[href]`, and `source[src]`, but native implementations may
+	 * aggregate the remaining document in one call.
+	 *
+	 * @param bool $visit_closers Whether closing tags should count as tags.
+	 * @return array Summary with tag, resource tag, attribute, unique resource tag, and value-byte counts.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function summarize_resource_inventory( bool $visit_closers = false ): array {
+		if ( $this->has_native_processor() && $this->native_supports_resource_inventory_summary ) {
+			$this->clear_native_tag_metadata();
+
+			$summary = $this->native_processor->summarize_resource_inventory( $visit_closers );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 5 );
+				if ( 5 === count( $parts ) ) {
+					$this->update_parser_state_after_native_no_match();
+
+					return array(
+						'tag_count'                      => (int) $parts[0],
+						'resource_tag_count'             => (int) $parts[1],
+						'resource_attribute_count'       => (int) $parts[2],
+						'unique_resource_tag_name_count' => (int) $parts[3],
+						'resource_value_bytes'           => (int) $parts[4],
+					);
+				}
+			}
+		}
+
+		$tag_count                      = 0;
+		$resource_tag_count             = 0;
+		$resource_attribute_count       = 0;
+		$resource_value_bytes           = 0;
+		$unique_resource_tag_name_count = array();
+		$query                          = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+
+		while ( $this->next_tag( $query ) ) {
+			++$tag_count;
+
+			if ( $this->is_tag_closer() ) {
+				continue;
+			}
+
+			$tag_name       = $this->get_tag();
+			$attribute_name = null;
+			switch ( $tag_name ) {
+				case 'A':
+				case 'LINK':
+					$attribute_name = 'href';
+					break;
+				case 'IMG':
+				case 'SCRIPT':
+				case 'SOURCE':
+					$attribute_name = 'src';
+					break;
+			}
+
+			if ( null === $attribute_name ) {
+				continue;
+			}
+
+			$attribute_value = $this->get_attribute( $attribute_name );
+			if ( null === $attribute_value ) {
+				continue;
+			}
+
+			++$resource_tag_count;
+			++$resource_attribute_count;
+			$unique_resource_tag_name_count[ $tag_name ] = true;
+			if ( true !== $attribute_value ) {
+				$resource_value_bytes += strlen( $attribute_value );
+			}
+		}
+
+		return array(
+			'tag_count'                      => $tag_count,
+			'resource_tag_count'             => $resource_tag_count,
+			'resource_attribute_count'       => $resource_attribute_count,
+			'unique_resource_tag_name_count' => count( $unique_resource_tag_name_count ),
+			'resource_value_bytes'           => $resource_value_bytes,
+		);
+	}
+
+	/**
+	 * Summarizes image usage across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` and reading `src`,
+	 * `alt`, `width`, and `height` attributes from `img` elements, but native
+	 * implementations may aggregate the remaining document in one call.
+	 *
+	 * @param bool $visit_closers Whether closing tags should count as tags.
+	 * @return array Summary with tag, image, src, alt, empty-alt, dimension, and value-byte counts.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function summarize_image_inventory( bool $visit_closers = false ): array {
+		if ( $this->has_native_processor() && $this->native_supports_image_inventory_summary ) {
+			$this->clear_native_tag_metadata();
+
+			$summary = $this->native_processor->summarize_image_inventory( $visit_closers );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 8 );
+				if ( 8 === count( $parts ) ) {
+					$this->update_parser_state_after_native_no_match();
+
+					return array(
+						'tag_count'        => (int) $parts[0],
+						'image_count'      => (int) $parts[1],
+						'src_count'        => (int) $parts[2],
+						'alt_count'        => (int) $parts[3],
+						'empty_alt_count'  => (int) $parts[4],
+						'dimension_count'  => (int) $parts[5],
+						'src_value_bytes'  => (int) $parts[6],
+						'alt_value_bytes'  => (int) $parts[7],
+					);
+				}
+			}
+		}
+
+		$tag_count       = 0;
+		$image_count     = 0;
+		$src_count       = 0;
+		$alt_count       = 0;
+		$empty_alt_count = 0;
+		$dimension_count = 0;
+		$src_value_bytes = 0;
+		$alt_value_bytes = 0;
+		$query           = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+
+		while ( $this->next_tag( $query ) ) {
+			++$tag_count;
+
+			if ( $this->is_tag_closer() || 'IMG' !== $this->get_tag() ) {
+				continue;
+			}
+
+			++$image_count;
+
+			$src = $this->get_attribute( 'src' );
+			if ( null !== $src ) {
+				++$src_count;
+				if ( true !== $src ) {
+					$src_value_bytes += strlen( $src );
+				}
+			}
+
+			$alt = $this->get_attribute( 'alt' );
+			if ( null !== $alt ) {
+				++$alt_count;
+				if ( true === $alt || '' === $alt ) {
+					++$empty_alt_count;
+				}
+
+				if ( true !== $alt ) {
+					$alt_value_bytes += strlen( $alt );
+				}
+			}
+
+			if ( null !== $this->get_attribute( 'width' ) && null !== $this->get_attribute( 'height' ) ) {
+				++$dimension_count;
+			}
+		}
+
+		return array(
+			'tag_count'        => $tag_count,
+			'image_count'      => $image_count,
+			'src_count'        => $src_count,
+			'alt_count'        => $alt_count,
+			'empty_alt_count'  => $empty_alt_count,
+			'dimension_count'  => $dimension_count,
+			'src_value_bytes'  => $src_value_bytes,
+			'alt_value_bytes'  => $alt_value_bytes,
+		);
+	}
+
+	/**
+	 * Summarizes script usage across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` and reading `src`,
+	 * `type`, `async`, and `defer` attributes from `script` elements, but
+	 * native implementations may aggregate the remaining document in one call.
+	 * Inline script bytes count text content for scripts without a `src`
+	 * attribute.
+	 *
+	 * @param bool $visit_closers Whether closing tags should count as tags.
+	 * @return array Summary with tag, script, src, module, async, defer, inline byte, and src byte counts.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function summarize_script_inventory( bool $visit_closers = false ): array {
+		if ( $this->has_native_processor() && $this->native_supports_script_inventory_summary ) {
+			$this->clear_native_tag_metadata();
+
+			$summary = $this->native_processor->summarize_script_inventory( $visit_closers );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 8 );
+				if ( 8 === count( $parts ) ) {
+					$this->update_parser_state_after_native_no_match();
+
+					return array(
+						'tag_count'           => (int) $parts[0],
+						'script_count'        => (int) $parts[1],
+						'src_count'           => (int) $parts[2],
+						'module_count'        => (int) $parts[3],
+						'async_count'         => (int) $parts[4],
+						'defer_count'         => (int) $parts[5],
+						'inline_script_bytes' => (int) $parts[6],
+						'src_value_bytes'     => (int) $parts[7],
+					);
+				}
+			}
+		}
+
+		$tag_count           = 0;
+		$script_count        = 0;
+		$src_count           = 0;
+		$module_count        = 0;
+		$async_count         = 0;
+		$defer_count         = 0;
+		$inline_script_bytes = 0;
+		$src_value_bytes     = 0;
+		$query               = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+
+		while ( $this->next_tag( $query ) ) {
+			++$tag_count;
+
+			if ( $this->is_tag_closer() || 'SCRIPT' !== $this->get_tag() ) {
+				continue;
+			}
+
+			++$script_count;
+
+			$src = $this->get_attribute( 'src' );
+			if ( null !== $src ) {
+				++$src_count;
+				if ( true !== $src ) {
+					$src_value_bytes += strlen( $src );
+				}
+			} else {
+				$inline_script_bytes += strlen( $this->get_modifiable_text() );
+			}
+
+			$type = $this->get_attribute( 'type' );
+			if ( is_string( $type ) && 'module' === strtolower( $type ) ) {
+				++$module_count;
+			}
+
+			if ( null !== $this->get_attribute( 'async' ) ) {
+				++$async_count;
+			}
+
+			if ( null !== $this->get_attribute( 'defer' ) ) {
+				++$defer_count;
+			}
+		}
+
+		return array(
+			'tag_count'           => $tag_count,
+			'script_count'        => $script_count,
+			'src_count'           => $src_count,
+			'module_count'        => $module_count,
+			'async_count'         => $async_count,
+			'defer_count'         => $defer_count,
+			'inline_script_bytes' => $inline_script_bytes,
+			'src_value_bytes'     => $src_value_bytes,
+		);
+	}
+
+	/**
+	 * Summarizes form/control usage across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` and reading
+	 * control `name` attributes from `input`, `select`, `textarea`, and
+	 * `button` elements, but native implementations may aggregate the
+	 * remaining document in one call.
+	 *
+	 * @param bool $visit_closers Whether closing tags should count as tags.
+	 * @return array Summary with tag, form, control, named-control, unique-name, and name-byte counts.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function summarize_form_inventory( bool $visit_closers = false ): array {
+		if ( $this->has_native_processor() && $this->native_supports_form_inventory_summary ) {
+			$this->clear_native_tag_metadata();
+
+			$summary = $this->native_processor->summarize_form_inventory( $visit_closers );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 6 );
+				if ( 6 === count( $parts ) ) {
+					$this->update_parser_state_after_native_no_match();
+
+					return array(
+						'tag_count'                 => (int) $parts[0],
+						'form_count'                => (int) $parts[1],
+						'control_count'             => (int) $parts[2],
+						'named_control_count'       => (int) $parts[3],
+						'unique_control_name_count' => (int) $parts[4],
+						'control_name_value_bytes'  => (int) $parts[5],
+					);
+				}
+			}
+		}
+
+		$tag_count                = 0;
+		$form_count               = 0;
+		$control_count            = 0;
+		$named_control_count      = 0;
+		$control_name_value_bytes = 0;
+		$control_names            = array();
+		$query                    = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+
+		while ( $this->next_tag( $query ) ) {
+			++$tag_count;
+
+			if ( $this->is_tag_closer() ) {
+				continue;
+			}
+
+			switch ( $this->get_tag() ) {
+				case 'FORM':
+					++$form_count;
+					continue 2;
+				case 'INPUT':
+				case 'SELECT':
+				case 'TEXTAREA':
+				case 'BUTTON':
+					++$control_count;
+					break;
+				default:
+					continue 2;
+			}
+
+			$control_name = $this->get_attribute( 'name' );
+			if ( null === $control_name ) {
+				continue;
+			}
+
+			++$named_control_count;
+			if ( true !== $control_name ) {
+				$control_name_value_bytes      += strlen( $control_name );
+				$control_names[ $control_name ] = true;
+			} else {
+				$control_names[''] = true;
+			}
+		}
+
+		return array(
+			'tag_count'                 => $tag_count,
+			'form_count'                => $form_count,
+			'control_count'             => $control_count,
+			'named_control_count'       => $named_control_count,
+			'unique_control_name_count' => count( $control_names ),
+			'control_name_value_bytes'  => $control_name_value_bytes,
+		);
+	}
+
+	/**
+	 * Returns summaries for the next chunk of tags matching a tag name.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` with a tag-name
+	 * query and reading `get_tag()`/`is_tag_closer()`, but native
+	 * implementations may skip non-matching tags without crossing back into
+	 * PHP for each one.
+	 *
+	 * Each row contains `tag_name` and `is_tag_closer`.
+	 *
+	 * @param string $tag_name      Tag name to match.
+	 * @param int    $max_tags      Maximum number of tag summaries to return.
+	 * @param bool   $visit_closers Whether closing tags should be included.
+	 * @return array[] Tag summary rows.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function next_matching_tag_summary_batch( $tag_name, $max_tags = 64, bool $visit_closers = false ): array {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 ) {
+			return array();
+		}
+
+		$max_tags = min( 256, $max_tags );
+		$batch    = $this->next_matching_tag_compact_summary_batch( $tag_name, $max_tags, $visit_closers );
+		if ( ! is_string( $batch ) || '' === $batch ) {
+			return array();
+		}
+
+		$rows         = array();
+		$offset       = 0;
+		$batch_length = strlen( $batch );
+
+		while ( $offset < $batch_length && count( $rows ) < $max_tags ) {
+			$row_end = strpos( $batch, "\x1e", $offset );
+			if ( false === $row_end ) {
+				$row_end = $batch_length;
+			}
+
+			$parts = explode( "\x1f", substr( $batch, $offset, $row_end - $offset ), 2 );
+			if ( 2 !== count( $parts ) ) {
+				break;
+			}
+
+			$rows[] = array(
+				'tag_name'      => $parts[0],
+				'is_tag_closer' => '1' === $parts[1],
+			);
+			$offset = $row_end + 1;
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Returns compact summaries for the next chunk of tags matching a tag name.
+	 *
+	 * This is the compact-string form of `next_matching_tag_summary_batch()`,
+	 * using unit separators between fields and record separators between rows.
+	 *
+	 * @param string $tag_name      Tag name to match.
+	 * @param int    $max_tags      Maximum number of tag summaries to return.
+	 * @param bool   $visit_closers Whether closing tags should be included.
+	 * @return string|null Compact tag summary batch, or null when exhausted.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function next_matching_tag_compact_summary_batch( $tag_name, $max_tags = 64, bool $visit_closers = false ) {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 ) {
+			return null;
+		}
+
+		$max_tags = min( 256, $max_tags );
+
+		if ( $this->has_native_processor() && $this->native_supports_matching_tag_summary_batch ) {
+			$batch = $this->native_processor->next_matching_tag_compact_summary_batch( $tag_name, $max_tags, $visit_closers );
+			if ( ! is_string( $batch ) || '' === $batch ) {
+				$this->clear_native_tag_metadata();
+				$this->update_parser_state_after_native_no_match();
+
+				return null;
+			}
+
+			if ( $this->native_compact_batch_reached_end( $batch, $max_tags ) ) {
+				$this->clear_native_tag_metadata();
+				$this->update_parser_state_after_native_no_match();
+			} else {
+				$this->cache_native_final_compact_tag_summary( $batch );
+			}
+
+			return $batch;
+		}
+
+		$rows  = '';
+		$query = array( 'tag_name' => $tag_name );
+		if ( $visit_closers ) {
+			$query['tag_closers'] = 'visit';
+		}
+		$count = 0;
+
+		while ( $count < $max_tags && $this->next_tag( $query ) ) {
+			if ( '' !== $rows ) {
+				$rows .= "\x1e";
+			}
+
+			$rows .= implode(
+				"\x1f",
+				array(
+					$this->get_tag(),
+					$this->is_tag_closer() ? '1' : '0',
+				)
+			);
+			++$count;
+		}
+
+		return '' === $rows ? null : $rows;
+	}
+
+	/**
+	 * Returns summaries for the next chunk of tags matching a tag name and one attribute.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` with a tag-name
+	 * query and then reading `get_tag()`, `is_tag_closer()`, and
+	 * `get_attribute()`, but native implementations may skip non-matching tags
+	 * and read the requested attribute without crossing back into PHP for each
+	 * matching tag.
+	 *
+	 * Each row contains `tag_name`, `is_tag_closer`, and `attribute_value`.
+	 * Missing attributes are represented as `null`.
+	 *
+	 * @param string $tag_name       Tag name to match.
+	 * @param string $attribute_name Attribute name to read from matching tags.
+	 * @param int    $max_tags       Maximum number of tag summaries to return.
+	 * @param bool   $visit_closers  Whether closing tags should be included.
+	 * @return array[] Tag summary rows.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function next_matching_tag_attribute_summary_batch( $tag_name, $attribute_name, $max_tags = 64, bool $visit_closers = false ): array {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 ) {
+			return array();
+		}
+
+		$max_tags = min( 256, $max_tags );
+		$batch    = $this->next_matching_tag_attribute_compact_summary_batch( $tag_name, $attribute_name, $max_tags, $visit_closers );
+		if ( ! is_string( $batch ) || '' === $batch ) {
+			return array();
+		}
+
+		$rows         = array();
+		$offset       = 0;
+		$batch_length = strlen( $batch );
+
+		while ( $offset < $batch_length && count( $rows ) < $max_tags ) {
+			$row_end = strpos( $batch, "\x1e", $offset );
+			if ( false === $row_end ) {
+				$row_end = $batch_length;
+			}
+
+			$parts = explode( "\x1f", substr( $batch, $offset, $row_end - $offset ), 3 );
+			if ( 3 !== count( $parts ) ) {
+				break;
+			}
+
+			$rows[] = array(
+				'tag_name'        => $parts[0],
+				'is_tag_closer'   => '1' === $parts[1],
+				'attribute_value' => '1' === substr( $parts[2], 0, 1 ) ? substr( $parts[2], 1 ) : null,
+			);
+			$offset = $row_end + 1;
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Returns compact summaries for the next chunk of tags matching a tag name and one attribute.
+	 *
+	 * This is the compact-string form of
+	 * `next_matching_tag_attribute_summary_batch()`, using unit separators
+	 * between fields and record separators between rows. The attribute field is
+	 * `0` when missing and `1<value>` when present.
+	 *
+	 * @param string $tag_name       Tag name to match.
+	 * @param string $attribute_name Attribute name to read from matching tags.
+	 * @param int    $max_tags       Maximum number of tag summaries to return.
+	 * @param bool   $visit_closers  Whether closing tags should be included.
+	 * @return string|null Compact tag summary batch, or null when exhausted.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function next_matching_tag_attribute_compact_summary_batch( $tag_name, $attribute_name, $max_tags = 64, bool $visit_closers = false ) {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 ) {
+			return null;
+		}
+
+		$max_tags = min( 256, $max_tags );
+
+		if ( $this->has_native_processor() && $this->native_supports_matching_tag_attribute_summary_batch ) {
+			$batch = $this->native_processor->next_matching_tag_attribute_compact_summary_batch( $tag_name, $attribute_name, $max_tags, $visit_closers );
+			if ( ! is_string( $batch ) || '' === $batch ) {
+				$this->clear_native_tag_metadata();
+				$this->update_parser_state_after_native_no_match();
+
+				return null;
+			}
+
+			if ( $this->native_compact_batch_reached_end( $batch, $max_tags ) ) {
+				$this->clear_native_tag_metadata();
+				$this->update_parser_state_after_native_no_match();
+			} else {
+				$this->cache_native_final_compact_tag_summary( $batch );
+			}
+
+			return $batch;
+		}
+
+		$rows  = '';
+		$query = array( 'tag_name' => $tag_name );
+		if ( $visit_closers ) {
+			$query['tag_closers'] = 'visit';
+		}
+		$count = 0;
+
+		while ( $count < $max_tags && $this->next_tag( $query ) ) {
+			$attribute_value = $this->get_attribute( $attribute_name );
+			if ( '' !== $rows ) {
+				$rows .= "\x1e";
+			}
+
+			$rows .= implode(
+				"\x1f",
+				array(
+					$this->get_tag(),
+					$this->is_tag_closer() ? '1' : '0',
+					null === $attribute_value ? '0' : '1' . ( true === $attribute_value ? '' : $attribute_value ),
+				)
+			);
+			++$count;
+		}
+
+		return '' === $rows ? null : $rows;
+	}
+
+	/**
+	 * Returns summaries for the next chunk of tags matching a tag name and attributes.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` with a tag-name
+	 * query and then reading `get_tag()`, `is_tag_closer()`, and several
+	 * attributes, but native implementations may skip non-matching tags and
+	 * read requested attributes without crossing back into PHP for each
+	 * matching tag.
+	 *
+	 * Each row contains `tag_name`, `is_tag_closer`, and `attribute_values`.
+	 * Missing attributes are represented as `null`.
+	 *
+	 * @param string $tag_name        Tag name to match.
+	 * @param array  $attribute_names Attribute names to read from matching tags.
+	 * @param int    $max_tags        Maximum number of tag summaries to return.
+	 * @param bool   $visit_closers   Whether closing tags should be included.
+	 * @return array[] Tag summary rows.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function next_matching_tag_attributes_summary_batch( $tag_name, $attribute_names, $max_tags = 64, bool $visit_closers = false ): array {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 ) {
+			return array();
+		}
+
+		$max_tags        = min( 256, $max_tags );
+		$attribute_names = $this->normalize_batch_attribute_names( $attribute_names );
+		$batch           = $this->next_matching_tag_attributes_compact_summary_batch( $tag_name, $attribute_names, $max_tags, $visit_closers );
+		if ( ! is_string( $batch ) || '' === $batch ) {
+			return array();
+		}
+
+		$rows         = array();
+		$offset       = 0;
+		$batch_length = strlen( $batch );
+
+		while ( $offset < $batch_length && count( $rows ) < $max_tags ) {
+			$row_end = strpos( $batch, "\x1e", $offset );
+			if ( false === $row_end ) {
+				$row_end = $batch_length;
+			}
+
+			$parts = explode( "\x1f", substr( $batch, $offset, $row_end - $offset ), count( $attribute_names ) + 3 );
+			if ( count( $parts ) < 2 + count( $attribute_names ) ) {
+				break;
+			}
+
+			$attribute_values = array();
+			foreach ( $attribute_names as $index => $attribute_name ) {
+				$field                               = $parts[ $index + 2 ];
+				$attribute_values[ $attribute_name ] = '1' === substr( $field, 0, 1 ) ? substr( $field, 1 ) : null;
+			}
+
+			$rows[] = array(
+				'tag_name'         => $parts[0],
+				'is_tag_closer'    => '1' === $parts[1],
+				'attribute_values' => $attribute_values,
+			);
+			$offset = $row_end + 1;
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Returns compact summaries for the next chunk of tags matching a tag name and attributes.
+	 *
+	 * This is the compact-string form of
+	 * `next_matching_tag_attributes_summary_batch()`, using unit separators
+	 * between fields and record separators between rows. Each attribute field
+	 * is `0` when missing and `1<value>` when present.
+	 *
+	 * @param string $tag_name        Tag name to match.
+	 * @param array  $attribute_names Attribute names to read from matching tags.
+	 * @param int    $max_tags        Maximum number of tag summaries to return.
+	 * @param bool   $visit_closers   Whether closing tags should be included.
+	 * @return string|null Compact tag summary batch, or null when exhausted.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function next_matching_tag_attributes_compact_summary_batch( $tag_name, $attribute_names, $max_tags = 64, bool $visit_closers = false ) {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 ) {
+			return null;
+		}
+
+		$max_tags        = min( 256, $max_tags );
+		$attribute_names = $this->normalize_batch_attribute_names( $attribute_names );
+
+		if ( $this->has_native_processor() && $this->native_supports_matching_tag_attributes_summary_batch ) {
+			$batch = $this->native_processor->next_matching_tag_attributes_compact_summary_batch( $tag_name, implode( "\x1f", $attribute_names ), $max_tags, $visit_closers );
+			if ( ! is_string( $batch ) || '' === $batch ) {
+				$this->clear_native_tag_metadata();
+				$this->update_parser_state_after_native_no_match();
+
+				return null;
+			}
+
+			if ( $this->native_compact_batch_reached_end( $batch, $max_tags ) ) {
+				$this->clear_native_tag_metadata();
+				$this->update_parser_state_after_native_no_match();
+			} else {
+				$this->cache_native_final_compact_tag_summary( $batch );
+			}
+
+			return $batch;
+		}
+
+		$rows  = '';
+		$query = array( 'tag_name' => $tag_name );
+		if ( $visit_closers ) {
+			$query['tag_closers'] = 'visit';
+		}
+		$count = 0;
+
+		while ( $count < $max_tags && $this->next_tag( $query ) ) {
+			if ( '' !== $rows ) {
+				$rows .= "\x1e";
+			}
+
+			$fields = array(
+				$this->get_tag(),
+				$this->is_tag_closer() ? '1' : '0',
+			);
+			foreach ( $attribute_names as $attribute_name ) {
+				$attribute_value = $this->get_attribute( $attribute_name );
+				$fields[]        = null === $attribute_value ? '0' : '1' . ( true === $attribute_value ? '' : $attribute_value );
+			}
+
+			$rows .= implode( "\x1f", $fields );
+			++$count;
+		}
+
+		return '' === $rows ? null : $rows;
+	}
+
+	/**
+	 * Summarizes matching tags and selected attributes across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` with a tag-name
+	 * query and then reading several attributes, but native implementations may
+	 * aggregate the remaining document in one call.
+	 *
+	 * The `attribute_value_bytes` count uses decoded attribute values. Boolean
+	 * attributes count as present with zero value bytes.
+	 *
+	 * @param string $tag_name        Tag name to match.
+	 * @param array  $attribute_names Attribute names to read from matching tags.
+	 * @param bool   $visit_closers   Whether closing tags should count as matching tags.
+	 * @return array Summary with `tag_count`, `attribute_count`, and `attribute_value_bytes`.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function summarize_matching_tag_attributes( $tag_name, $attribute_names, bool $visit_closers = false ): array {
+		$attribute_names = $this->normalize_batch_attribute_names( $attribute_names );
+
+		if ( $this->has_native_processor() && $this->native_supports_matching_tag_attributes_summary ) {
+			$this->clear_native_tag_metadata();
+
+			$summary = $this->native_processor->summarize_matching_tag_attributes( $tag_name, implode( "\x1f", $attribute_names ), $visit_closers );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 3 );
+				if ( 3 === count( $parts ) ) {
+					$this->update_parser_state_after_native_no_match();
+
+					return array(
+						'tag_count'             => (int) $parts[0],
+						'attribute_count'       => (int) $parts[1],
+						'attribute_value_bytes' => (int) $parts[2],
+					);
+				}
+			}
+		}
+
+		$tag_count             = 0;
+		$attribute_count       = 0;
+		$attribute_value_bytes = 0;
+		$query                 = array( 'tag_name' => $tag_name );
+		if ( $visit_closers ) {
+			$query['tag_closers'] = 'visit';
+		}
+
+		while ( $this->next_tag( $query ) ) {
+			++$tag_count;
+
+			if ( $this->is_tag_closer() ) {
+				continue;
+			}
+
+			foreach ( $attribute_names as $attribute_name ) {
+				$attribute_value = $this->get_attribute( $attribute_name );
+				if ( null === $attribute_value ) {
+					continue;
+				}
+
+				++$attribute_count;
+				if ( true !== $attribute_value ) {
+					$attribute_value_bytes += strlen( (string) $attribute_value );
+				}
+			}
+		}
+
+		return array(
+			'tag_count'             => $tag_count,
+			'attribute_count'       => $attribute_count,
+			'attribute_value_bytes' => $attribute_value_bytes,
+		);
+	}
+
+	/**
+	 * Normalizes attribute names used by compact batch helpers.
+	 *
+	 * @param array $attribute_names Attribute names to normalize.
+	 * @return array Normalized attribute names.
+	 */
+	private function normalize_batch_attribute_names( $attribute_names ) {
+		if ( ! is_array( $attribute_names ) ) {
+			$attribute_names = array( $attribute_names );
+		}
+
+		$normalized = array();
+		foreach ( $attribute_names as $attribute_name ) {
+			$attribute_name = strtolower( (string) $attribute_name );
+			if ( '' === $attribute_name || in_array( $attribute_name, $normalized, true ) ) {
+				continue;
+			}
+
+			$normalized[] = $attribute_name;
+		}
+
+		return $normalized;
+	}
+
+	/**
+	 * Removes all attributes whose lowercase names match a given prefix.
+	 *
+	 * @param  string $prefix Prefix of attribute names to remove.
+	 *
+	 * @return int|null Number of removed attribute names, or `null` when no tag opener is matched.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function remove_attributes_with_prefix( $prefix ): ?int {
+		if ( $this->has_native_processor() ) {
+			if (
+				null !== $this->native_tag_token_type &&
+				( '#tag' !== $this->native_tag_token_type || $this->native_tag_token_is_closer )
+			) {
+				return null;
+			}
+
+			if (
+				null !== $this->native_tag_attribute_name_initials &&
+				is_string( $prefix ) &&
+				'' !== $prefix
+			) {
+				$first_prefix_byte = ord( $prefix[0] );
+				if ( $first_prefix_byte >= 65 && $first_prefix_byte <= 90 ) {
+					$first_prefix_byte += 32;
+				}
+
+				if ( $first_prefix_byte >= 97 && $first_prefix_byte <= 122 ) {
+					$prefix_initial_bit = 1 << ( $first_prefix_byte - 97 );
+					if ( 0 === ( $this->native_tag_attribute_name_initials & $prefix_initial_bit ) ) {
+						return 0;
+					}
+				}
+			}
+
+			if ( $this->native_supports_prefix_name_removal ) {
+				return $this->native_processor->remove_attributes_with_prefix( $prefix );
+			}
+		}
+
+		$attribute_names = $this->get_attribute_names_with_prefix( $prefix );
+		if ( null === $attribute_names ) {
+			return null;
+		}
+
+		$removed_count = 0;
+		foreach ( $attribute_names as $attribute_name ) {
+			if ( null === $this->get_attribute( $attribute_name ) ) {
+				continue;
+			}
+
+			if ( $this->remove_attribute( $attribute_name ) ) {
+				++$removed_count;
+			}
+		}
+
+		return $removed_count;
+	}
+
+	/**
+	 * Removes all prefixed attributes across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()`,
+	 * `remove_attributes_with_prefix()`, and `get_updated_html()`, but native
+	 * implementations may process the remaining document and produce updated
+	 * HTML in one call.
+	 *
+	 * @param string $prefix        Prefix of attribute names to remove.
+	 * @param bool   $visit_closers Whether closing tags should count as tags.
+	 * @return array Summary with `tag_count`, `removed_count`, and `html`.
+	 *
+	 * @since WP_VERSION
+	 */
+	public function remove_attributes_with_prefix_from_document( $prefix, bool $visit_closers = false ): array {
+		if ( $this->has_native_processor() && $this->native_supports_prefix_name_document_removal ) {
+			$this->clear_native_tag_metadata();
+
+			$summary = $this->native_processor->remove_attributes_with_prefix_from_document( $prefix, $visit_closers );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 3 );
+				if ( 3 === count( $parts ) ) {
+					$this->update_parser_state_after_native_no_match();
+
+					return array(
+						'tag_count'     => (int) $parts[0],
+						'removed_count' => (int) $parts[1],
+						'html'          => $parts[2],
+					);
+				}
+			}
+		}
+
+		$tag_count     = 0;
+		$removed_count = 0;
+		$query         = $visit_closers ? array( 'tag_closers' => 'visit' ) : null;
+
+		while ( $this->next_tag( $query ) ) {
+			++$tag_count;
+
+			$count = $this->remove_attributes_with_prefix( $prefix );
+			if ( is_int( $count ) ) {
+				$removed_count += $count;
+			}
+		}
+
+		return array(
+			'tag_count'     => $tag_count,
+			'removed_count' => $removed_count,
+			'html'          => $this->get_updated_html(),
+		);
+	}
+
+	/**
 	 * Returns the namespace of the matched token.
 	 *
 	 * @return string One of 'html', 'math', or 'svg'.
 	 * @since 6.7.0
 	 */
 	public function get_namespace(): string {
+		if ( $this->has_native_processor() ) {
+			return 'html';
+		}
+
 		return $this->parsing_namespace;
 	}
 
@@ -2831,6 +5679,20 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.2.0
 	 */
 	public function get_tag(): ?string {
+		if ( $this->has_native_processor() ) {
+			if ( null !== $this->native_tag_token_type ) {
+				if ( '#tag' !== $this->native_tag_token_type ) {
+					return $this->native_processor->get_tag();
+				}
+
+				return null !== $this->native_tag_token_name
+					? $this->native_tag_token_name
+					: $this->native_processor->get_tag();
+			}
+
+			return $this->native_processor->get_tag();
+		}
+
 		if ( null === $this->tag_name_starts_at ) {
 			return null;
 		}
@@ -3285,6 +6147,14 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.2.0
 	 */
 	public function is_tag_closer(): bool {
+		if ( $this->has_native_processor() ) {
+			if ( null !== $this->native_tag_token_type ) {
+				return $this->native_tag_token_is_closer;
+			}
+
+			return $this->native_processor->is_tag_closer();
+		}
+
 		return (
 			self::STATE_MATCHED_TAG === $this->parser_state &&
 			$this->is_closing_tag &&
@@ -3322,6 +6192,14 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.5.0
 	 */
 	public function get_token_type(): ?string {
+		if ( $this->has_native_processor() ) {
+			if ( null !== $this->native_tag_token_type ) {
+				return $this->native_tag_token_type;
+			}
+
+			return $this->native_processor->get_token_type();
+		}
+
 		switch ( $this->parser_state ) {
 			case self::STATE_MATCHED_TAG:
 				return '#tag';
@@ -3354,6 +6232,14 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.5.0
 	 */
 	public function get_token_name(): ?string {
+		if ( $this->has_native_processor() ) {
+			if ( null !== $this->native_tag_token_name ) {
+				return $this->native_tag_token_name;
+			}
+
+			return $this->native_processor->get_token_name();
+		}
+
 		switch ( $this->parser_state ) {
 			case self::STATE_MATCHED_TAG:
 				return $this->get_tag();
@@ -3400,6 +6286,10 @@ class WP_HTML_Tag_Processor {
 	 * @see self::COMMENT_AS_ABRUPTLY_CLOSED_COMMENT
 	 */
 	public function get_comment_type(): ?string {
+		if ( $this->has_native_processor() ) {
+			return $this->native_processor->get_comment_type();
+		}
+
 		if ( self::STATE_COMMENT !== $this->parser_state ) {
 			return null;
 		}
@@ -3425,6 +6315,10 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.7.0
 	 */
 	public function get_full_comment_text(): ?string {
+		if ( $this->has_native_processor() ) {
+			return $this->native_processor->get_full_comment_text();
+		}
+
 		if ( self::STATE_FUNKY_COMMENT === $this->parser_state ) {
 			return $this->get_modifiable_text();
 		}
@@ -3490,6 +6384,10 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.7.0
 	 */
 	public function subdivide_text_appropriately(): bool {
+		if ( $this->has_native_processor() ) {
+			return $this->native_processor->subdivide_text_appropriately();
+		}
+
 		if ( self::STATE_TEXT_NODE !== $this->parser_state ) {
 			return false;
 		}
@@ -3575,6 +6473,10 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.5.0
 	 */
 	public function get_modifiable_text(): string {
+		if ( $this->has_native_processor() ) {
+			return $this->native_processor->get_modifiable_text();
+		}
+
 		$has_enqueued_update = isset( $this->lexical_updates['modifiable text'] );
 
 		if ( ! $has_enqueued_update && ( null === $this->text_starts_at || 0 === $this->text_length ) ) {
@@ -3701,6 +6603,10 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.7.0
 	 */
 	public function set_modifiable_text( string $plaintext_content ): bool {
+		if ( $this->has_native_processor() ) {
+			return $this->native_processor->set_modifiable_text( $plaintext_content );
+		}
+
 		if ( self::STATE_TEXT_NODE === $this->parser_state ) {
 			$this->lexical_updates['modifiable text'] = new WP_HTML_Text_Replacement(
 				$this->text_starts_at,
@@ -3874,6 +6780,12 @@ class WP_HTML_Tag_Processor {
 			return false;
 		}
 
+		if ( $this->has_native_processor() ) {
+			return method_exists( $this->native_processor, 'set_attribute' )
+				? $this->native_processor->set_attribute( $name, $value )
+				: false;
+		}
+
 		/*
 		 * > The values "true" and "false" are not allowed on boolean attributes.
 		 * > To represent a false value, the attribute has to be omitted altogether.
@@ -3972,6 +6884,12 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.2.0
 	 */
 	public function remove_attribute( $name ): bool {
+		if ( $this->has_native_processor() ) {
+			return method_exists( $this->native_processor, 'remove_attribute' )
+				? $this->native_processor->remove_attribute( $name )
+				: false;
+		}
+
 		if (
 			self::STATE_MATCHED_TAG !== $this->parser_state ||
 			$this->is_closing_tag
@@ -4058,6 +6976,12 @@ class WP_HTML_Tag_Processor {
 			return false;
 		}
 
+		if ( $this->has_native_processor() ) {
+			return method_exists( $this->native_processor, 'add_class' )
+				? $this->native_processor->add_class( $class_name )
+				: false;
+		}
+
 		if ( self::QUIRKS_MODE !== $this->compat_mode ) {
 			$this->classname_updates[ $class_name ] = self::ADD_CLASS;
 
@@ -4101,6 +7025,12 @@ class WP_HTML_Tag_Processor {
 			$this->is_closing_tag
 		) {
 			return false;
+		}
+
+		if ( $this->has_native_processor() ) {
+			return method_exists( $this->native_processor, 'remove_class' )
+				? $this->native_processor->remove_class( $class_name )
+				: false;
 		}
 
 		if ( self::QUIRKS_MODE !== $this->compat_mode ) {
@@ -4154,6 +7084,13 @@ class WP_HTML_Tag_Processor {
 	 * @since 6.2.0
 	 */
 	public function get_updated_html(): string {
+		if (
+			$this->has_native_processor() &&
+			method_exists( $this->native_processor, 'get_updated_html' )
+		) {
+			return $this->native_processor->get_updated_html();
+		}
+
 		$requires_no_updating = 0 === count( $this->classname_updates ) && 0 === count( $this->lexical_updates );
 
 		/*

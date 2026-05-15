@@ -7,6 +7,10 @@ use WP_HTML_Tag_Processor;
 
 class DataLiberationHTMLProcessor extends WP_HTML_Processor {
 
+	protected static function should_use_native_processors(): bool {
+		return false;
+	}
+
 	public function get_inner_html() {
 		if ( '#tag' !== $this->get_token_type() ) {
 			return false;

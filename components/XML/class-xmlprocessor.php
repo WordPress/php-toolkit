@@ -752,14 +752,516 @@ class XMLProcessor {
 	 */
 	private $stack_of_open_elements = array();
 
+	/**
+	 * Native implementation used when the Rust extension is loaded.
+	 *
+	 * The native implementation currently covers complete, in-memory,
+	 * read-only XML token streams. Because full XML parity is still in
+	 * progress, XML native defaults are guarded behind an explicit opt-in.
+	 * Streaming, cursor resumption, custom document namespaces, and edits
+	 * continue to use the PHP implementation.
+	 *
+	 * @var object|null
+	 */
+	protected $native_processor = null;
+
+	/**
+	 * Cached native feature probes keyed by native processor class.
+	 *
+	 * @var array
+	 */
+	private static $native_processor_feature_cache = array();
+
+	/**
+	 * Number of tokens consumed from the native implementation.
+	 *
+	 * This lets read-only native scans fall back to the PHP parser when callers
+	 * later use editing APIs that require PHP parser state.
+	 *
+	 * @var int
+	 */
+	private $native_tokens_parsed = 0;
+
+	/**
+	 * Native token counts captured for native-backed bookmarks.
+	 *
+	 * Native bookmark seeks restore the native cursor directly. If a later edit
+	 * needs PHP parser state, this count replays PHP to the same bookmarked token.
+	 *
+	 * @var array
+	 */
+	private $native_bookmark_token_counts = array();
+
+	/**
+	 * Cached current native token type.
+	 *
+	 * @var string|null
+	 */
+	private $native_token_type = null;
+
+	/**
+	 * Cached current native token name.
+	 *
+	 * @var string|null
+	 */
+	private $native_token_name = null;
+
+	/**
+	 * Whether the cached current native token is a tag.
+	 *
+	 * @var bool
+	 */
+	private $native_token_is_tag = false;
+
+	/**
+	 * Cached current native tag local name.
+	 *
+	 * @var string|null
+	 */
+	private $native_tag_local_name = null;
+
+	/**
+	 * Cached current native tag namespace.
+	 *
+	 * @var string|null
+	 */
+	private $native_tag_namespace = null;
+
+	/**
+	 * Cached current native tag namespace/local-name string.
+	 *
+	 * @var string|null
+	 */
+	private $native_tag_namespace_and_local_name = null;
+
+	/**
+	 * Whether the current native token is a tag closer.
+	 *
+	 * @var bool
+	 */
+	private $native_token_is_tag_closer = false;
+
+	/**
+	 * Whether the current native token is an empty element.
+	 *
+	 * @var bool
+	 */
+	private $native_token_is_empty_element = false;
+
+	/**
+	 * Cached current native token depth.
+	 *
+	 * @var int
+	 */
+	private $native_token_current_depth = 0;
+
+	/**
+	 * Whether the current native token was loaded from a batched summary row.
+	 *
+	 * When true, the native delegate may have advanced past the public current
+	 * token, so uncached accessors must replay into the PHP parser first.
+	 *
+	 * @var bool
+	 */
+	private $native_token_from_compact_summary_batch = false;
+
+	/**
+	 * Cached current native token attributes, or null when not included in the native metadata row.
+	 *
+	 * @var array|null
+	 */
+	private $native_token_attributes = null;
+
+	/**
+	 * Cached attribute name included in the compact native token summary.
+	 *
+	 * @var string|null
+	 */
+	private $native_token_cached_attribute_name = null;
+
+	/**
+	 * Cached attribute value included in the compact native token summary.
+	 *
+	 * @var string|null
+	 */
+	private $native_token_cached_attribute_value = null;
+
+	/**
+	 * Whether the compact native token summary found the cached attribute.
+	 *
+	 * @var bool
+	 */
+	private $native_token_cached_attribute_found = false;
+
+	/**
+	 * Queued compact native token summary rows fetched in one extension call.
+	 *
+	 * @var string
+	 */
+	private $native_token_compact_summary_batch = '';
+
+	/**
+	 * Current byte offset in the queued compact native token summary rows.
+	 *
+	 * @var int
+	 */
+	private $native_token_compact_summary_batch_offset = 0;
+
+	/**
+	 * Compact native token summary row backing lazy cached fields.
+	 *
+	 * @var string|null
+	 */
+	private $native_token_compact_summary_metadata = null;
+
+	/**
+	 * Byte offset where the current compact token flags begin.
+	 *
+	 * @var int
+	 */
+	private $native_token_compact_flags_start = 0;
+
+	/**
+	 * Byte offset where the current compact token flags end.
+	 *
+	 * @var int
+	 */
+	private $native_token_compact_flags_end = 0;
+
+	/**
+	 * Byte offset where the current compact token depth begins.
+	 *
+	 * @var int
+	 */
+	private $native_token_compact_depth_start = 0;
+
+	/**
+	 * Byte offset where the current compact token depth ends.
+	 *
+	 * @var int
+	 */
+	private $native_token_compact_depth_end = 0;
+
+	/**
+	 * Byte offset where the current compact token cached attribute begins.
+	 *
+	 * @var int
+	 */
+	private $native_token_compact_attribute_start = 0;
+
+	/**
+	 * Byte offset where the current compact token cached attribute ends.
+	 *
+	 * @var int
+	 */
+	private $native_token_compact_attribute_end = 0;
+
+	/**
+	 * Byte offset where the current compact token row begins.
+	 *
+	 * @var int
+	 */
+	private $native_token_compact_row_start = 0;
+
+	/**
+	 * Byte offset where the current compact token row ends.
+	 *
+	 * @var int
+	 */
+	private $native_token_compact_row_end = 0;
+
+	/**
+	 * Whether lazy flag/depth fields have been read from the compact row.
+	 *
+	 * @var bool
+	 */
+	private $native_token_compact_flags_loaded = false;
+
+	/**
+	 * Whether the cached attribute has been read from the compact row.
+	 *
+	 * @var bool
+	 */
+	private $native_token_cached_attribute_loaded = false;
+
+	/**
+	 * Whether the loaded native processor can batch compact token summaries.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_token_compact_summary_batch = false;
+
+	/**
+	 * Whether the loaded native processor can batch compact token summaries without full token materialization.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_token_fast_compact_summary_batch = false;
+
+	/**
+	 * Whether the loaded native processor can batch hot-path compact token summaries.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_token_hot_compact_summary_batch = false;
+
+	/**
+	 * Whether the loaded native processor can return a compact fixed token summary.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_token_compact_summary = false;
+
+	/**
+	 * Whether the loaded native processor can batch current-token metadata.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_token_metadata = false;
+
+	/**
+	 * Whether the loaded native processor can return compact token summaries.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_token_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize a read-only token stream.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_token_stream_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize document inventory.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_document_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize element depth usage.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_depth_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize element-name usage.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_element_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize document attributes.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_attribute_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize ID attribute usage.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_id_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize namespace usage.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_namespace_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize text usage.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_text_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize processing instruction usage.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_processing_instruction_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize comment usage.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_comment_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize payload token usage.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_payload_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize content usage.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_content_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize leaf element usage.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_leaf_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize structural element usage.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_structural_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize import inventory usage.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_import_inventory_summary = false;
+
+	/**
+	 * Whether the loaded native processor can return compact token-summary batches.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_token_summary_batch = false;
+
+	/**
+	 * Whether the loaded native processor can summarize a read-only tag stream.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_tag_stream_summary = false;
+
+	/**
+	 * Whether the loaded native processor can return compact tag-summary batches.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_tag_summary_batch = false;
+
+	/**
+	 * Whether the loaded native processor can return tag-count batches.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_tag_count_batch = false;
+
+	/**
+	 * Whether the loaded native processor can return matching tag-summary batches.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_matching_tag_summary_batch = false;
+
+	/**
+	 * Whether the loaded native processor can return matching tag-count batches.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_matching_tag_count_batch = false;
+
+	/**
+	 * Whether the loaded native processor can summarize matching tags.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_matching_tag_stream_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize matching tags and attributes.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_matching_tag_attributes_stream_summary = false;
+
+	/**
+	 * Whether the loaded native processor can summarize prefixed attributes.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_attribute_prefix_summary = false;
+
+	/**
+	 * Whether the loaded native processor can remove prefixed attributes across a document.
+	 *
+	 * @var bool
+	 */
+	private $native_supports_attribute_prefix_document_removal = false;
+
 	public static function create_from_string( $xml, $cursor = null, $known_definite_encoding = 'UTF-8', $document_namespaces = array() ) {
+		if (
+			self::class === static::class &&
+			null === $cursor &&
+			'UTF-8' === $known_definite_encoding &&
+			empty( $document_namespaces ) &&
+			static::is_ascii_or_valid_utf8( $xml ) &&
+			false === strpos( $xml, '<!DOCTYPE' ) &&
+			! static::has_native_namespace_edge_case( $xml ) &&
+			static::should_use_native_processors() &&
+			class_exists( 'WordPress\\XML\\NativeXMLProcessor', false )
+		) {
+			if ( ! class_exists( 'WordPress\\XML\\XMLNativeCursorProcessor', false ) ) {
+				require_once __DIR__ . '/class-xmlnativecursorprocessor.php';
+			}
+
+			if ( class_exists( 'WordPress\\XML\\XMLNativeCursorProcessor', false ) ) {
+				$class_name = 'WordPress\\XML\\NativeXMLProcessor';
+				return new XMLNativeCursorProcessor( $xml, $class_name::create_from_string( $xml ) );
+			}
+		}
+
 		$processor = static::create_for_streaming( $xml, $cursor, $known_definite_encoding, $document_namespaces );
 		if ( null === $processor ) {
 			return false;
 		}
 		$processor->input_finished();
 
+		if (
+			self::class === static::class &&
+			null === $cursor &&
+			empty( $document_namespaces ) &&
+			static::is_ascii_or_valid_utf8( $xml ) &&
+			false === strpos( $xml, '<!DOCTYPE' ) &&
+			! static::has_native_namespace_edge_case( $xml ) &&
+			static::should_use_native_processors() &&
+			class_exists( 'WordPress\\XML\\NativeXMLProcessor', false )
+		) {
+			$class_name = 'WordPress\\XML\\NativeXMLProcessor';
+			$processor->set_native_processor( $class_name::create_from_string( $xml ) );
+		}
+
 		return $processor;
+	}
+
+	/**
+	 * Checks whether XML bytes are safe to pass into native UTF-8 parsers.
+	 *
+	 * ASCII documents are valid UTF-8 and can skip the heavier mbstring scan.
+	 * Non-ASCII documents still use mb_check_encoding() to preserve the PHP
+	 * fallback for invalid byte sequences.
+	 *
+	 * @param string $xml XML input.
+	 * @return bool Whether the input is valid UTF-8.
+	 */
+	private static function is_ascii_or_valid_utf8( $xml ) {
+		if ( ! preg_match( '/[\x80-\xFF]/', $xml ) ) {
+			return true;
+		}
+
+		return mb_check_encoding( $xml, 'UTF-8' );
 	}
 
 	public static function create_for_streaming( $xml = '', $cursor = null, $known_definite_encoding = 'UTF-8', $document_namespaces = array() ) {
@@ -772,6 +1274,1042 @@ class XMLProcessor {
 		}
 
 		return $processor;
+	}
+
+	/**
+	 * Determines whether native XML processors should back public classes.
+	 *
+	 * Define WP_NATIVE_APIS_DISABLE_DEFAULTS before loading the component to
+	 * force the PHP implementation even when the extension is loaded.
+	 *
+	 * Define WP_NATIVE_APIS_ENABLE_XML_DEFAULTS as false, or set the matching
+	 * environment variable to 0, false, no, or off, to keep the XML public
+	 * class on PHP fallback.
+	 *
+	 * @return bool Whether to use native processors when available.
+	 */
+	protected static function should_use_native_processors() {
+		if ( defined( 'WP_NATIVE_APIS_DISABLE_DEFAULTS' ) && WP_NATIVE_APIS_DISABLE_DEFAULTS ) {
+			return false;
+		}
+
+		if ( defined( 'WP_NATIVE_APIS_ENABLE_XML_DEFAULTS' ) ) {
+			return (bool) WP_NATIVE_APIS_ENABLE_XML_DEFAULTS;
+		}
+
+		$enable_xml_defaults = getenv( 'WP_NATIVE_APIS_ENABLE_XML_DEFAULTS' );
+		if ( false !== $enable_xml_defaults ) {
+			return ! in_array( strtolower( $enable_xml_defaults ), array( '0', 'false', 'no', 'off' ), true );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Detects namespace cases whose PHP parser side effects are not native-backed yet.
+	 *
+	 * The native parser can reject these documents, but the public XMLProcessor
+	 * tests also expect PHP parser side effects such as partial current-token
+	 * state and stored exception details.
+	 *
+	 * @param string $xml XML input.
+	 * @return bool Whether PHP should handle the document.
+	 */
+	private static function has_native_namespace_edge_case( $xml ) {
+		if ( false === strpos( $xml, ':' ) ) {
+			return false;
+		}
+
+		static $last_xml    = null;
+		static $last_result = null;
+		if ( null !== $last_xml && $xml === $last_xml ) {
+			return $last_result;
+		}
+
+		$has_edge_case     = false;
+		$declared_prefixes = array( 'xml' => true );
+		$namespace_uris    = array();
+		if ( preg_match_all( '/\sxmlns:([A-Za-z_][A-Za-z0-9_.-]*)\s*=\s*([\'"])(.*?)\2/s', $xml, $namespace_matches, PREG_SET_ORDER ) ) {
+			foreach ( $namespace_matches as $namespace_match ) {
+				$prefix = $namespace_match[1];
+				$uri    = $namespace_match[3];
+				if ( 'xmlns' === $prefix || ( 'xml' === $prefix && 'http://www.w3.org/XML/1998/namespace' !== $uri ) ) {
+					$has_edge_case = true;
+					break;
+				}
+
+				if ( isset( $namespace_uris[ $uri ] ) && $namespace_uris[ $uri ] !== $prefix ) {
+					$has_edge_case = true;
+					break;
+				}
+
+				$declared_prefixes[ $prefix ] = true;
+				$namespace_uris[ $uri ]       = $prefix;
+			}
+		}
+
+		if ( ! $has_edge_case && preg_match_all( '/<\/?\s*([A-Za-z_][A-Za-z0-9_.-]*):/s', $xml, $tag_prefix_matches ) ) {
+			foreach ( $tag_prefix_matches[1] as $prefix ) {
+				if ( ! isset( $declared_prefixes[ $prefix ] ) ) {
+					$has_edge_case = true;
+					break;
+				}
+			}
+		}
+
+		if ( ! $has_edge_case && preg_match_all( '/\s([A-Za-z_][A-Za-z0-9_.-]*):[A-Za-z_][A-Za-z0-9_.-]*\s*=/s', $xml, $attribute_prefix_matches ) ) {
+			foreach ( $attribute_prefix_matches[1] as $prefix ) {
+				if ( 'xmlns' !== $prefix && ! isset( $declared_prefixes[ $prefix ] ) ) {
+					$has_edge_case = true;
+					break;
+				}
+			}
+		}
+
+		$last_xml    = $xml;
+		$last_result = $has_edge_case;
+
+		return $has_edge_case;
+	}
+
+	/**
+	 * Returns cached feature probes for a native XML processor instance.
+	 *
+	 * @param object|null $native_processor Native processor object.
+	 * @return array Native feature support flags.
+	 */
+	private static function get_native_processor_features( $native_processor ) {
+		if ( ! is_object( $native_processor ) ) {
+			return array();
+		}
+
+		$class_name = get_class( $native_processor );
+		if ( isset( self::$native_processor_feature_cache[ $class_name ] ) ) {
+			return self::$native_processor_feature_cache[ $class_name ];
+		}
+
+		self::$native_processor_feature_cache[ $class_name ] = array(
+			'token_metadata'                             => method_exists( $native_processor, 'next_token_metadata' ) && method_exists( $native_processor, 'current_token_metadata' ),
+			'token_compact_summary_batch'                => method_exists( $native_processor, 'next_token_compact_summary_batch' ),
+			'token_fast_compact_summary_batch'           => method_exists( $native_processor, 'next_token_fast_compact_summary_batch' ),
+			'token_hot_compact_summary_batch'            => method_exists( $native_processor, 'next_token_hot_compact_summary_batch' ),
+			'token_compact_summary'                      => method_exists( $native_processor, 'next_token_compact_summary' ),
+			'token_summary'                              => method_exists( $native_processor, 'next_token_summary' ),
+			'token_stream_summary'                       => method_exists( $native_processor, 'summarize_token_stream' ),
+			'document_inventory_summary'                 => method_exists( $native_processor, 'summarize_document_inventory' ),
+			'depth_inventory_summary'                    => method_exists( $native_processor, 'summarize_depth_inventory' ),
+			'element_inventory_summary'                  => method_exists( $native_processor, 'summarize_element_inventory' ),
+			'attribute_inventory_summary'                => method_exists( $native_processor, 'summarize_attribute_inventory' ),
+			'id_inventory_summary'                       => method_exists( $native_processor, 'summarize_id_inventory' ),
+			'namespace_inventory_summary'                => method_exists( $native_processor, 'summarize_namespace_inventory' ),
+			'text_inventory_summary'                     => method_exists( $native_processor, 'summarize_text_inventory' ),
+			'processing_instruction_inventory_summary'   => method_exists( $native_processor, 'summarize_processing_instruction_inventory' ),
+			'comment_inventory_summary'                  => method_exists( $native_processor, 'summarize_comment_inventory' ),
+			'payload_inventory_summary'                  => method_exists( $native_processor, 'summarize_payload_inventory' ),
+			'content_inventory_summary'                  => method_exists( $native_processor, 'summarize_content_inventory' ),
+			'leaf_inventory_summary'                     => method_exists( $native_processor, 'summarize_leaf_inventory' ),
+			'structural_inventory_summary'               => method_exists( $native_processor, 'summarize_structural_inventory' ),
+			'import_inventory_summary'                   => method_exists( $native_processor, 'summarize_import_inventory' ),
+			'token_summary_batch'                        => method_exists( $native_processor, 'next_token_compact_summary_batch' ),
+			'tag_stream_summary'                         => method_exists( $native_processor, 'summarize_tag_stream' ),
+			'tag_summary_batch'                          => method_exists( $native_processor, 'next_tag_compact_summary_batch' ),
+			'tag_count_batch'                            => method_exists( $native_processor, 'next_tag_count_batch' ),
+			'matching_tag_summary_batch'                 => method_exists( $native_processor, 'next_matching_tag_compact_summary_batch' ),
+			'matching_tag_count_batch'                   => method_exists( $native_processor, 'next_matching_tag_count_batch' ),
+			'matching_tag_stream_summary'                => method_exists( $native_processor, 'summarize_matching_tag_stream' ),
+			'matching_tag_attributes_stream_summary'     => method_exists( $native_processor, 'summarize_matching_tag_attributes_stream' ),
+			'attribute_prefix_summary'                   => method_exists( $native_processor, 'summarize_attribute_names_with_prefix' ),
+			'attribute_prefix_document_removal'          => method_exists( $native_processor, 'remove_attributes_with_prefix_from_document' ),
+		);
+
+		return self::$native_processor_feature_cache[ $class_name ];
+	}
+
+	/**
+	 * Replaces the native delegate used by this public wrapper.
+	 *
+	 * @param object|null $native_processor Native processor object.
+	 */
+	protected function set_native_processor( $native_processor ) {
+		$this->native_processor                          = $native_processor;
+		$this->native_tokens_parsed                      = 0;
+		$this->native_bookmark_token_counts              = array();
+		$this->native_token_compact_summary_batch        = '';
+		$this->native_token_compact_summary_batch_offset = 0;
+		$this->clear_native_token_metadata();
+
+		$features = self::get_native_processor_features( $native_processor );
+
+		$this->native_supports_token_metadata                           = ! empty( $features['token_metadata'] );
+		$this->native_supports_token_compact_summary_batch              = ! empty( $features['token_compact_summary_batch'] );
+		$this->native_supports_token_fast_compact_summary_batch         = ! empty( $features['token_fast_compact_summary_batch'] );
+		$this->native_supports_token_hot_compact_summary_batch          = ! empty( $features['token_hot_compact_summary_batch'] );
+		$this->native_supports_token_compact_summary                    = ! empty( $features['token_compact_summary'] );
+		$this->native_supports_token_summary                            = ! empty( $features['token_summary'] );
+		$this->native_supports_token_stream_summary                     = ! empty( $features['token_stream_summary'] );
+		$this->native_supports_document_inventory_summary               = ! empty( $features['document_inventory_summary'] );
+		$this->native_supports_depth_inventory_summary                  = ! empty( $features['depth_inventory_summary'] );
+		$this->native_supports_element_inventory_summary                = ! empty( $features['element_inventory_summary'] );
+		$this->native_supports_attribute_inventory_summary              = ! empty( $features['attribute_inventory_summary'] );
+		$this->native_supports_id_inventory_summary                     = ! empty( $features['id_inventory_summary'] );
+		$this->native_supports_namespace_inventory_summary              = ! empty( $features['namespace_inventory_summary'] );
+		$this->native_supports_text_inventory_summary                   = ! empty( $features['text_inventory_summary'] );
+		$this->native_supports_processing_instruction_inventory_summary = ! empty( $features['processing_instruction_inventory_summary'] );
+		$this->native_supports_comment_inventory_summary                = ! empty( $features['comment_inventory_summary'] );
+		$this->native_supports_payload_inventory_summary                = ! empty( $features['payload_inventory_summary'] );
+		$this->native_supports_content_inventory_summary                = ! empty( $features['content_inventory_summary'] );
+		$this->native_supports_leaf_inventory_summary                   = ! empty( $features['leaf_inventory_summary'] );
+		$this->native_supports_structural_inventory_summary             = ! empty( $features['structural_inventory_summary'] );
+		$this->native_supports_import_inventory_summary                 = ! empty( $features['import_inventory_summary'] );
+		$this->native_supports_token_summary_batch                      = ! empty( $features['token_summary_batch'] );
+		$this->native_supports_tag_stream_summary                       = ! empty( $features['tag_stream_summary'] );
+		$this->native_supports_tag_summary_batch                        = ! empty( $features['tag_summary_batch'] );
+		$this->native_supports_tag_count_batch                          = ! empty( $features['tag_count_batch'] );
+		$this->native_supports_matching_tag_summary_batch               = ! empty( $features['matching_tag_summary_batch'] );
+		$this->native_supports_matching_tag_count_batch                 = ! empty( $features['matching_tag_count_batch'] );
+		$this->native_supports_matching_tag_stream_summary              = ! empty( $features['matching_tag_stream_summary'] );
+		$this->native_supports_matching_tag_attributes_stream_summary   = ! empty( $features['matching_tag_attributes_stream_summary'] );
+		$this->native_supports_attribute_prefix_summary                 = ! empty( $features['attribute_prefix_summary'] );
+		$this->native_supports_attribute_prefix_document_removal        = ! empty( $features['attribute_prefix_document_removal'] );
+	}
+
+	/**
+	 * Checks whether this processor is backed by a native implementation.
+	 *
+	 * @return bool Whether a native processor is active.
+	 */
+	protected function has_native_processor() {
+		return null !== $this->native_processor;
+	}
+
+	/**
+	 * Clears cached native token metadata for the current token.
+	 */
+	private function clear_native_token_metadata() {
+		$this->native_token_type                       = null;
+		$this->native_token_name                       = null;
+		$this->native_token_is_tag                     = false;
+		$this->native_tag_local_name                   = null;
+		$this->native_tag_namespace                    = null;
+		$this->native_tag_namespace_and_local_name     = null;
+		$this->native_token_is_tag_closer              = false;
+		$this->native_token_is_empty_element           = false;
+		$this->native_token_current_depth              = 0;
+		$this->native_token_from_compact_summary_batch = false;
+		$this->native_token_attributes                 = null;
+		$this->native_token_cached_attribute_name      = null;
+		$this->native_token_cached_attribute_value     = null;
+		$this->native_token_cached_attribute_found     = false;
+		$this->native_token_cached_attribute_loaded    = false;
+		$this->native_token_compact_summary_metadata   = null;
+		$this->native_token_compact_flags_start        = 0;
+		$this->native_token_compact_flags_end          = 0;
+		$this->native_token_compact_depth_start        = 0;
+		$this->native_token_compact_depth_end          = 0;
+		$this->native_token_compact_attribute_start    = 0;
+		$this->native_token_compact_attribute_end      = 0;
+		$this->native_token_compact_row_start          = 0;
+		$this->native_token_compact_row_end            = 0;
+		$this->native_token_compact_flags_loaded       = false;
+	}
+
+	/**
+	 * Caches lazy compact row flags and depth when a public accessor needs them.
+	 */
+	private function cache_native_compact_token_flags() {
+		if ( $this->native_token_compact_flags_loaded || null === $this->native_token_compact_summary_metadata ) {
+			return;
+		}
+
+		$metadata = $this->native_token_compact_summary_metadata;
+		if (
+			0 === $this->native_token_compact_flags_start &&
+			$this->native_token_compact_row_start < $this->native_token_compact_row_end
+		) {
+			$separator = "\x1f";
+			$first     = strpos( $metadata, $separator, $this->native_token_compact_row_start );
+			$second    = false === $first ? false : strpos( $metadata, $separator, $first + 1 );
+			$third     = false === $second ? false : strpos( $metadata, $separator, $second + 1 );
+			$fourth    = false === $third ? false : strpos( $metadata, $separator, $third + 1 );
+
+			if ( false === $fourth || $fourth >= $this->native_token_compact_row_end ) {
+				$this->native_token_compact_flags_loaded = true;
+				return;
+			}
+
+			$this->native_token_compact_attribute_start = $third + 1;
+			$this->native_token_compact_attribute_end   = $fourth;
+			$this->native_token_compact_flags_start     = $fourth + 1;
+		}
+
+		if ( $this->native_token_compact_flags_start > 0 && 0 === $this->native_token_compact_flags_end ) {
+			$separator = strpos( $metadata, "\x1f", $this->native_token_compact_flags_start );
+			if ( false === $separator ) {
+				$separator = strlen( $metadata );
+			}
+
+			$this->native_token_compact_flags_end   = $separator;
+			$this->native_token_compact_depth_start = $separator + 1;
+		}
+
+		$this->native_token_is_tag_closer        = $this->native_token_compact_flags_start < $this->native_token_compact_flags_end && '1' === $metadata[ $this->native_token_compact_flags_start ];
+		$this->native_token_is_empty_element     = $this->native_token_compact_flags_start + 1 < $this->native_token_compact_flags_end && '1' === $metadata[ $this->native_token_compact_flags_start + 1 ];
+		$this->native_token_current_depth        = 0;
+		$this->native_token_compact_flags_loaded = true;
+
+		for ( $i = $this->native_token_compact_depth_start; $i < $this->native_token_compact_depth_end; ++$i ) {
+			$byte = ord( $metadata[ $i ] );
+			if ( $byte < 48 || $byte > 57 ) {
+				$this->native_token_current_depth = 0;
+				return;
+			}
+
+			$this->native_token_current_depth = ( $this->native_token_current_depth * 10 ) + ( $byte - 48 );
+		}
+	}
+
+	/**
+	 * Caches a lazily-read compact row attribute when a public accessor needs it.
+	 */
+	private function cache_native_compact_token_cached_attribute() {
+		if ( $this->native_token_cached_attribute_loaded || null === $this->native_token_compact_summary_metadata ) {
+			return;
+		}
+
+		$metadata                                   = $this->native_token_compact_summary_metadata;
+		$this->native_token_cached_attribute_loaded = true;
+		$this->native_token_cached_attribute_found  = $this->native_token_compact_attribute_start < $this->native_token_compact_attribute_end && '1' === $metadata[ $this->native_token_compact_attribute_start ];
+		$this->native_token_cached_attribute_value  = $this->native_token_cached_attribute_found ? substr( $metadata, $this->native_token_compact_attribute_start + 1, $this->native_token_compact_attribute_end - $this->native_token_compact_attribute_start - 1 ) : null;
+	}
+
+	/**
+	 * Maps native remaining-stream exhaustion to the public parser state.
+	 *
+	 * @return void
+	 */
+	private function update_parser_state_after_native_remaining_summary() {
+		$this->parser_state = (
+			method_exists( $this->native_processor, 'is_paused_at_incomplete_input' ) &&
+			$this->native_processor->is_paused_at_incomplete_input()
+		)
+			? self::STATE_INCOMPLETE_INPUT
+			: self::STATE_COMPLETE;
+	}
+
+	/**
+	 * Maps the current native token type to the public parser state.
+	 *
+	 * @return void
+	 */
+	private function update_parser_state_from_native_token() {
+		$token_type = null !== $this->native_token_type
+			? $this->native_token_type
+			: $this->native_processor->get_token_type();
+
+		switch ( $token_type ) {
+			case '#tag':
+				$this->parser_state = self::STATE_MATCHED_TAG;
+				return;
+
+			case '#text':
+				$this->parser_state = self::STATE_TEXT_NODE;
+				return;
+
+			case '#cdata-section':
+				$this->parser_state = self::STATE_CDATA_NODE;
+				return;
+
+			case '#doctype':
+				$this->parser_state = self::STATE_DOCTYPE_NODE;
+				return;
+
+			case '#processing-instructions':
+				$this->parser_state = self::STATE_PI_NODE;
+				return;
+
+			case '#xml-declaration':
+				$this->parser_state = self::STATE_XML_DECLARATION;
+				return;
+
+			case '#comment':
+				$this->parser_state = self::STATE_COMMENT;
+				return;
+		}
+
+		$this->parser_state = self::STATE_READY;
+	}
+
+	/**
+	 * Exposes the public `#complete` token when a native read-only scan exhausts.
+	 *
+	 * The PHP processor reports a final synthetic token for complete documents.
+	 * Native scans do not have a real token for that state, so the public wrapper
+	 * synthesizes the same observable state once after the delegate is exhausted.
+	 *
+	 * @return bool Whether a synthetic complete token was exposed.
+	 */
+	private function maybe_finish_native_token_stream() {
+		if (
+			method_exists( $this->native_processor, 'is_paused_at_incomplete_input' ) &&
+			$this->native_processor->is_paused_at_incomplete_input()
+		) {
+			$this->parser_state = self::STATE_INCOMPLETE_INPUT;
+			return false;
+		}
+
+		if (
+			! method_exists( $this->native_processor, 'is_finished' ) ||
+			! $this->native_processor->is_finished()
+		) {
+			return false;
+		}
+
+		$this->native_token_type                       = '#complete';
+		$this->native_token_name                       = '#complete';
+		$this->native_token_is_tag                     = false;
+		$this->native_tag_local_name                   = '';
+		$this->native_tag_namespace                    = '';
+		$this->native_tag_namespace_and_local_name     = '';
+		$this->native_token_is_tag_closer              = false;
+		$this->native_token_is_empty_element           = false;
+		$this->native_token_current_depth              = 0;
+		$this->native_token_from_compact_summary_batch = false;
+		$this->native_token_attributes                 = null;
+		$this->native_token_cached_attribute_name      = null;
+		$this->native_token_cached_attribute_value     = null;
+		$this->native_token_cached_attribute_found     = false;
+		$this->native_token_cached_attribute_loaded    = true;
+		$this->native_token_compact_summary_metadata   = null;
+		$this->native_token_compact_flags_loaded       = true;
+		$this->parser_state                            = self::STATE_COMPLETE;
+
+		return true;
+	}
+
+	/**
+	 * Advances the native processor and records consumed token count.
+	 *
+	 * @return bool Whether a native token was parsed.
+	 */
+	private function native_next_token( $allow_batch = true ) {
+		if ( self::STATE_COMPLETE === $this->parser_state ) {
+			return false;
+		}
+
+		$parsed = false;
+		if ( $allow_batch && $this->native_supports_token_compact_summary_batch ) {
+			$parsed = $this->cache_native_compact_token_batch_summary();
+		} elseif ( $this->native_supports_token_compact_summary ) {
+			$parsed = $this->cache_native_compact_token_summary( $this->native_processor->next_token_compact_summary() );
+		} elseif ( $this->native_supports_token_metadata ) {
+			$parsed = $this->cache_native_token_metadata( $this->native_processor->next_token_metadata() );
+		} elseif ( $this->native_supports_token_summary ) {
+			$parsed = $this->cache_native_token_metadata( $this->native_processor->next_token_summary() );
+		} else {
+			$parsed = $this->native_processor->next_token();
+			if ( ! $parsed ) {
+				$this->clear_native_token_metadata();
+			}
+		}
+
+		if ( ! $parsed ) {
+			return $this->maybe_finish_native_token_stream();
+		}
+
+		++$this->native_tokens_parsed;
+
+		return true;
+	}
+
+	/**
+	 * Caches the next compact metadata row from a batched native export.
+	 *
+	 * The native batch is exported as record-separator-delimited compact rows.
+	 * This keeps normal `next_token()` semantics while amortizing PHP/native
+	 * crossings over multiple read-only XML tokens.
+	 *
+	 * @return bool Whether metadata was cached.
+	 */
+	private function cache_native_compact_token_batch_summary() {
+		$batch_length = strlen( $this->native_token_compact_summary_batch );
+		if ( $this->native_token_compact_summary_batch_offset >= $batch_length ) {
+			if ( $this->native_supports_token_hot_compact_summary_batch ) {
+				$batch = $this->native_processor->next_token_hot_compact_summary_batch( 1024 );
+			} else {
+				$batch = $this->native_supports_token_fast_compact_summary_batch
+					? $this->native_processor->next_token_fast_compact_summary_batch( 1024 )
+					: $this->native_processor->next_token_compact_summary_batch( 1024 );
+			}
+			if ( ! is_string( $batch ) || '' === $batch ) {
+				$this->native_token_compact_summary_batch        = '';
+				$this->native_token_compact_summary_batch_offset = 0;
+				$this->clear_native_token_metadata();
+
+				return false;
+			}
+
+			$this->native_token_compact_summary_batch        = $batch;
+			$this->native_token_compact_summary_batch_offset = 0;
+			$batch_length                                    = strlen( $batch );
+		}
+
+		$row_start = $this->native_token_compact_summary_batch_offset;
+		$row_end   = strpos( $this->native_token_compact_summary_batch, "\x1e", $row_start );
+		if ( false === $row_end ) {
+			$row_end = $batch_length;
+		}
+
+		$this->native_token_compact_summary_batch_offset = $row_end + 1;
+		$cached = $this->native_supports_token_hot_compact_summary_batch
+			? $this->cache_native_hot_compact_token_summary_range( $this->native_token_compact_summary_batch, $row_start, $row_end )
+			: $this->cache_native_compact_token_summary_range( $this->native_token_compact_summary_batch, $row_start, $row_end );
+		if ( ! $cached ) {
+			$this->native_token_compact_summary_batch        = '';
+			$this->native_token_compact_summary_batch_offset = 0;
+
+			return false;
+		}
+
+		$this->native_token_from_compact_summary_batch = true;
+
+		return true;
+	}
+
+	/**
+	 * Caches a hot-path compact metadata row from a substring range.
+	 *
+	 * Hot rows order fields by the common public cursor access pattern:
+	 * token kind, local name, namespace, cached `id`, flags, and depth.
+	 *
+	 * @param string $metadata    Native compact metadata batch or row.
+	 * @param int    $row_start   Offset where the row begins.
+	 * @param int    $row_end     Offset where the row ends.
+	 * @return bool Whether metadata was cached.
+	 */
+	private function cache_native_hot_compact_token_summary_range( $metadata, $row_start, $row_end ) {
+		$token_kind = $metadata[ $row_start ];
+		if ( 't' !== $token_kind ) {
+			switch ( $token_kind ) {
+				case 'x':
+					$token_type = '#xml-declaration';
+					break;
+				case 'd':
+					$token_type = '#doctype';
+					break;
+				case 'p':
+					$token_type = '#processing-instructions';
+					break;
+				case 'c':
+					$token_type = '#comment';
+					break;
+				case 'a':
+					$token_type = '#cdata-section';
+					break;
+				default:
+					$token_type = '#text';
+					break;
+			}
+
+			$this->native_token_type                       = $token_type;
+			$this->native_token_name                       = null;
+			$this->native_token_is_tag                     = false;
+			$this->native_tag_local_name                   = '';
+			$this->native_tag_namespace                    = '';
+			$this->native_tag_namespace_and_local_name     = '';
+			$this->native_token_from_compact_summary_batch = false;
+			$this->native_token_attributes                 = null;
+			$this->native_token_cached_attribute_name      = 'id';
+			$this->native_token_cached_attribute_loaded    = true;
+			$this->native_token_cached_attribute_found     = false;
+			$this->native_token_cached_attribute_value     = null;
+			$this->native_token_compact_summary_metadata   = $metadata;
+			$this->native_token_compact_attribute_start    = 0;
+			$this->native_token_compact_attribute_end      = 0;
+			$this->native_token_compact_flags_start        = 0;
+			$this->native_token_compact_depth_end          = $row_end;
+			$this->native_token_compact_row_start          = $row_start;
+			$this->native_token_compact_row_end            = $row_end;
+			if ( $this->native_token_compact_flags_loaded || 0 !== $this->native_token_compact_flags_end ) {
+				$this->native_token_compact_flags_end    = 0;
+				$this->native_token_compact_flags_loaded = false;
+			}
+
+			return true;
+		}
+
+		$separator = "\x1f";
+		$first     = strpos( $metadata, $separator, $row_start );
+		if ( false === $first || $first >= $row_end ) {
+			$this->clear_native_token_metadata();
+
+			return false;
+		}
+
+		$second = strpos( $metadata, $separator, $first + 1 );
+		if ( false === $second || $second >= $row_end ) {
+			$this->clear_native_token_metadata();
+
+			return false;
+		}
+
+		$third = strpos( $metadata, $separator, $second + 1 );
+		if ( false === $third || $third >= $row_end ) {
+			$this->clear_native_token_metadata();
+
+			return false;
+		}
+
+		$fourth = strpos( $metadata, $separator, $third + 1 );
+		if ( false === $fourth || $fourth >= $row_end ) {
+			$this->clear_native_token_metadata();
+
+			return false;
+		}
+
+		$local_name = substr( $metadata, $first + 1, $second - $first - 1 );
+		$namespace  = substr( $metadata, $second + 1, $third - $second - 1 );
+		$token_type = '#tag';
+		$token_name = $local_name;
+		$is_tag     = true;
+
+		$this->native_token_type                       = $token_type;
+		$this->native_token_name                       = $token_name;
+		$this->native_token_is_tag                     = $is_tag;
+		$this->native_tag_local_name                   = $is_tag ? $local_name : '';
+		$this->native_tag_namespace                    = $is_tag ? $namespace : '';
+		$this->native_tag_namespace_and_local_name     = $is_tag ? ( '' === $namespace ? $local_name : '{' . $namespace . '}' . $local_name ) : '';
+		$this->native_token_from_compact_summary_batch = false;
+		$this->native_token_attributes                 = null;
+		$this->native_token_cached_attribute_name      = 'id';
+		$this->native_token_cached_attribute_loaded    = $is_tag;
+		$this->native_token_cached_attribute_found     = $is_tag && $third + 1 < $fourth && '1' === $metadata[ $third + 1 ];
+		$this->native_token_cached_attribute_value     = $this->native_token_cached_attribute_found ? substr( $metadata, $third + 2, $fourth - $third - 2 ) : null;
+		$this->native_token_compact_summary_metadata   = $metadata;
+		$this->native_token_compact_attribute_start    = $third + 1;
+		$this->native_token_compact_attribute_end      = $fourth;
+		$this->native_token_compact_flags_start        = $fourth + 1;
+		$this->native_token_compact_depth_end          = $row_end;
+		$this->native_token_compact_row_start          = $row_start;
+		$this->native_token_compact_row_end            = $row_end;
+		if ( $this->native_token_compact_flags_loaded || 0 !== $this->native_token_compact_flags_end ) {
+			$this->native_token_compact_flags_end    = 0;
+			$this->native_token_compact_flags_loaded = false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Caches a fixed compact metadata row exported by the native processor.
+	 *
+	 * The native row is exported as a unit-separator-delimited string:
+	 * token kind, local name, namespace, flags, depth, and cached `id`
+	 * attribute marker/value. It avoids the larger dynamic metadata row in the
+	 * common read-only token stream and keeps the common `id` lookup local.
+	 *
+	 * @param string|null $metadata Native metadata row.
+	 * @return bool Whether metadata was cached.
+	 */
+	private function cache_native_compact_token_summary( $metadata ) {
+		if ( ! is_string( $metadata ) ) {
+			$this->clear_native_token_metadata();
+
+			return false;
+		}
+
+		return $this->cache_native_compact_token_summary_range( $metadata, 0, strlen( $metadata ) );
+	}
+
+	/**
+	 * Caches a fixed compact metadata row from a substring range.
+	 *
+	 * @param string $metadata    Native metadata batch or row.
+	 * @param int    $row_start   Offset where the row begins.
+	 * @param int    $row_end     Offset where the row ends.
+	 * @return bool Whether metadata was cached.
+	 */
+	private function cache_native_compact_token_summary_range( $metadata, $row_start, $row_end ) {
+		$separator = "\x1f";
+		$first     = strpos( $metadata, $separator, $row_start );
+		if ( false === $first || $first >= $row_end ) {
+			$this->clear_native_token_metadata();
+
+			return false;
+		}
+
+		$second = strpos( $metadata, $separator, $first + 1 );
+		if ( false === $second || $second >= $row_end ) {
+			$this->clear_native_token_metadata();
+
+			return false;
+		}
+
+		$third = strpos( $metadata, $separator, $second + 1 );
+		if ( false === $third || $third >= $row_end ) {
+			$this->clear_native_token_metadata();
+
+			return false;
+		}
+
+		$fourth = strpos( $metadata, $separator, $third + 1 );
+		if ( false === $fourth || $fourth >= $row_end ) {
+			$this->clear_native_token_metadata();
+
+			return false;
+		}
+
+		$fifth = strpos( $metadata, $separator, $fourth + 1 );
+		if ( false === $fifth || $fifth >= $row_end ) {
+			$this->clear_native_token_metadata();
+
+			return false;
+		}
+
+		$local_name         = '';
+		$namespace          = '';
+		$id_attribute_start = $fifth + 1;
+
+		switch ( $metadata[ $row_start ] ) {
+			case 't':
+				$local_name = substr( $metadata, $first + 1, $second - $first - 1 );
+				$namespace  = substr( $metadata, $second + 1, $third - $second - 1 );
+				$token_type = '#tag';
+				$token_name = $local_name;
+				$is_tag     = true;
+				break;
+			case 'x':
+				$token_type = '#xml-declaration';
+				$token_name = '#xml-declaration';
+				$is_tag     = false;
+				break;
+			case 'd':
+				$token_type = '#doctype';
+				$token_name = '#doctype';
+				$is_tag     = false;
+				break;
+			case 'p':
+				$token_type = '#processing-instructions';
+				$token_name = '#processing-instructions';
+				$is_tag     = false;
+				break;
+			case 'c':
+				$token_type = '#comment';
+				$token_name = '#comment';
+				$is_tag     = false;
+				break;
+			case 'a':
+				$token_type = '#cdata-section';
+				$token_name = '#cdata-section';
+				$is_tag     = false;
+				break;
+			default:
+				$token_type = '#text';
+				$token_name = '#text';
+				$is_tag     = false;
+				break;
+		}
+
+		$this->native_token_type                       = $token_type;
+		$this->native_token_name                       = $token_name;
+		$this->native_token_is_tag                     = $is_tag;
+		$this->native_tag_local_name                   = $is_tag ? $local_name : '';
+		$this->native_tag_namespace                    = $is_tag ? $namespace : '';
+		$this->native_tag_namespace_and_local_name     = $is_tag ? ( '' === $namespace ? $local_name : '{' . $namespace . '}' . $local_name ) : '';
+		$this->native_token_is_tag_closer              = false;
+		$this->native_token_is_empty_element           = false;
+		$this->native_token_current_depth              = 0;
+		$this->native_token_from_compact_summary_batch = false;
+		$this->native_token_attributes                 = null;
+		$this->native_token_cached_attribute_name      = 'id';
+		$this->native_token_cached_attribute_found     = false;
+		$this->native_token_cached_attribute_value     = null;
+		$this->native_token_cached_attribute_loaded    = false;
+		$this->native_token_compact_summary_metadata   = $metadata;
+		$this->native_token_compact_flags_start        = $third + 1;
+		$this->native_token_compact_flags_end          = $fourth;
+		$this->native_token_compact_depth_start        = $fourth + 1;
+		$this->native_token_compact_depth_end          = $fifth;
+		$this->native_token_compact_attribute_start    = $id_attribute_start;
+		$this->native_token_compact_attribute_end      = $row_end;
+		$this->native_token_compact_flags_loaded       = false;
+
+		return true;
+	}
+
+	/**
+	 * Parses a compact metadata row exported by the native processor.
+	 *
+	 * @param string $metadata Native compact metadata row.
+	 * @return array|null Parsed token summary, or null for invalid rows.
+	 */
+	private function parse_native_compact_token_summary( $metadata ) {
+		if ( ! is_string( $metadata ) ) {
+			return null;
+		}
+
+		$separator = "\x1f";
+		$first     = strpos( $metadata, $separator );
+		if ( false === $first ) {
+			return null;
+		}
+
+		$second = strpos( $metadata, $separator, $first + 1 );
+		if ( false === $second ) {
+			return null;
+		}
+
+		$third = strpos( $metadata, $separator, $second + 1 );
+		if ( false === $third ) {
+			return null;
+		}
+
+		$fourth = strpos( $metadata, $separator, $third + 1 );
+		if ( false === $fourth ) {
+			return null;
+		}
+
+		$fifth = strpos( $metadata, $separator, $fourth + 1 );
+		if ( false === $fifth ) {
+			return null;
+		}
+
+		$local_name   = substr( $metadata, $first + 1, $second - $first - 1 );
+		$namespace    = substr( $metadata, $second + 1, $third - $second - 1 );
+		$flags        = substr( $metadata, $third + 1, $fourth - $third - 1 );
+		$depth        = substr( $metadata, $fourth + 1, $fifth - $fourth - 1 );
+		$id_attribute = substr( $metadata, $fifth + 1 );
+
+		switch ( $metadata[0] ) {
+			case 't':
+				$token_type = '#tag';
+				$token_name = $local_name;
+				break;
+			case 'x':
+				$token_type = '#xml-declaration';
+				$token_name = '#xml-declaration';
+				break;
+			case 'd':
+				$token_type = '#doctype';
+				$token_name = '#doctype';
+				break;
+			case 'p':
+				$token_type = '#processing-instructions';
+				$token_name = '#processing-instructions';
+				break;
+			case 'c':
+				$token_type = '#comment';
+				$token_name = '#comment';
+				break;
+			case 'a':
+				$token_type = '#cdata-section';
+				$token_name = '#cdata-section';
+				break;
+			default:
+				$token_type = '#text';
+				$token_name = '#text';
+				break;
+		}
+
+		$tag_namespace_and_local_name = '';
+		if ( '#tag' === $token_type ) {
+			$tag_namespace_and_local_name = '' === $namespace ? $local_name : '{' . $namespace . '}' . $local_name;
+		}
+
+		$id_found = isset( $id_attribute[0] ) && '1' === $id_attribute[0];
+
+		return array(
+			'token_type'                   => $token_type,
+			'token_name'                   => $token_name,
+			'tag_local_name'               => '#tag' === $token_type ? $local_name : '',
+			'tag_namespace'                => '#tag' === $token_type ? $namespace : '',
+			'tag_namespace_and_local_name' => $tag_namespace_and_local_name,
+			'is_tag_closer'                => isset( $flags[0] ) && '1' === $flags[0],
+			'is_empty_element'             => isset( $flags[1] ) && '1' === $flags[1],
+			'current_depth'                => (int) $depth,
+			'id'                           => $id_found ? substr( $id_attribute, 1 ) : null,
+			'id_found'                     => $id_found,
+		);
+	}
+
+	/**
+	 * Caches a metadata row exported by the native processor.
+	 *
+	 * The native row is exported as a unit-separator-delimited string:
+	 * token type, token name, tag local name, tag namespace, namespace/local
+	 * name, closer marker, empty-element marker, and current depth.
+	 *
+	 * @param string[]|string|null $metadata Native metadata row.
+	 * @return bool Whether metadata was cached.
+	 */
+	private function cache_native_token_metadata( $metadata ) {
+		if ( is_string( $metadata ) ) {
+			$metadata = explode( "\x1f", $metadata );
+		}
+
+		if ( ! is_array( $metadata ) || count( $metadata ) < 8 ) {
+			$this->clear_native_token_metadata();
+
+			return false;
+		}
+
+		$this->native_token_type                       = (string) $metadata[0];
+		$this->native_token_name                       = (string) $metadata[1];
+		$this->native_token_is_tag                     = '#tag' === $this->native_token_type;
+		$this->native_tag_local_name                   = (string) $metadata[2];
+		$this->native_tag_namespace                    = (string) $metadata[3];
+		$this->native_tag_namespace_and_local_name     = (string) $metadata[4];
+		$this->native_token_is_tag_closer              = '1' === (string) $metadata[5];
+		$this->native_token_is_empty_element           = '1' === (string) $metadata[6];
+		$this->native_token_current_depth              = (int) $metadata[7];
+		$this->native_token_from_compact_summary_batch = false;
+		$this->native_token_attributes                 = null;
+		$this->native_token_cached_attribute_name      = null;
+		$this->native_token_cached_attribute_value     = null;
+		$this->native_token_cached_attribute_found     = false;
+		$this->native_token_cached_attribute_loaded    = true;
+		$this->native_token_compact_summary_metadata   = null;
+		$this->native_token_compact_flags_loaded       = true;
+
+		$metadata_count = count( $metadata );
+		if ( $metadata_count > 8 ) {
+			$this->native_token_attributes = array();
+		}
+		for ( $i = 8; $i + 1 < $metadata_count; $i += 2 ) {
+			$this->native_token_attributes[ (string) $metadata[ $i ] ] = (string) $metadata[ $i + 1 ];
+		}
+
+		return true;
+	}
+
+	/**
+	 * Converts native-backed bookmark token counts to PHP parser spans.
+	 *
+	 * Native bookmarks are tracked by the extension while the delegate is active.
+	 * Once a write forces PHP fallback, future seeks need the normal PHP byte
+	 * spans for every existing bookmark, not only the current token.
+	 *
+	 * @param int[] $native_bookmark_token_counts Native token counts keyed by bookmark name.
+	 * @return bool Whether all native-backed bookmarks were materialized.
+	 */
+	private function materialize_native_bookmarks_to_php_spans( $native_bookmark_token_counts ) {
+		if ( empty( $native_bookmark_token_counts ) ) {
+			return true;
+		}
+
+		$bookmark_names_by_token_count = array();
+		$max_token_count               = 0;
+		foreach ( $native_bookmark_token_counts as $bookmark_name => $token_count ) {
+			if ( ! array_key_exists( $bookmark_name, $this->bookmarks ) ) {
+				continue;
+			}
+
+			$token_count = (int) $token_count;
+			if ( $token_count <= 0 ) {
+				continue;
+			}
+
+			if ( ! isset( $bookmark_names_by_token_count[ $token_count ] ) ) {
+				$bookmark_names_by_token_count[ $token_count ] = array();
+			}
+
+			$bookmark_names_by_token_count[ $token_count ][] = $bookmark_name;
+			$max_token_count                                 = max( $max_token_count, $token_count );
+		}
+
+		if ( 0 === $max_token_count ) {
+			return true;
+		}
+
+		$bookmark_processor = new static( $this->xml, $this->document_namespaces, self::CONSTRUCTOR_UNLOCK_CODE );
+		$bookmark_processor->input_finished();
+
+		for ( $token_count = 1; $token_count <= $max_token_count; ++$token_count ) {
+			if ( ! $bookmark_processor->step() ) {
+				return false;
+			}
+
+			if ( ! isset( $bookmark_names_by_token_count[ $token_count ] ) ) {
+				continue;
+			}
+
+			foreach ( $bookmark_names_by_token_count[ $token_count ] as $bookmark_name ) {
+				$this->bookmarks[ $bookmark_name ] = new WP_HTML_Span(
+					$bookmark_processor->token_starts_at,
+					$bookmark_processor->token_length
+				);
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Disables the native delegate after replaying its cursor in PHP.
+	 *
+	 * Native XML currently only covers read-only scanning. If callers later
+	 * mutate the document, PHP parser state must be advanced to the same token
+	 * before applying the edit.
+	 *
+	 * @return bool Whether the PHP parser reached the same token.
+	 */
+	private function synchronize_native_processor_to_php() {
+		if ( ! $this->has_native_processor() ) {
+			return true;
+		}
+
+		$tokens_to_replay             = $this->native_tokens_parsed;
+		$native_bookmark_token_counts = $this->native_bookmark_token_counts;
+		if ( ! $this->materialize_native_bookmarks_to_php_spans( $native_bookmark_token_counts ) ) {
+			return false;
+		}
+
+		$this->native_processor                          = null;
+		$this->native_tokens_parsed                      = 0;
+		$this->native_bookmark_token_counts              = array();
+		$this->native_token_compact_summary_batch        = '';
+		$this->native_token_compact_summary_batch_offset = 0;
+		$this->clear_native_token_metadata();
+		$this->native_supports_token_metadata                           = false;
+		$this->native_supports_token_compact_summary_batch              = false;
+		$this->native_supports_token_fast_compact_summary_batch         = false;
+		$this->native_supports_token_hot_compact_summary_batch          = false;
+		$this->native_supports_token_compact_summary                    = false;
+		$this->native_supports_token_summary                            = false;
+		$this->native_supports_token_stream_summary                     = false;
+		$this->native_supports_document_inventory_summary               = false;
+		$this->native_supports_depth_inventory_summary                  = false;
+		$this->native_supports_element_inventory_summary                = false;
+		$this->native_supports_attribute_inventory_summary              = false;
+		$this->native_supports_id_inventory_summary                     = false;
+		$this->native_supports_namespace_inventory_summary              = false;
+		$this->native_supports_text_inventory_summary                   = false;
+		$this->native_supports_processing_instruction_inventory_summary = false;
+		$this->native_supports_comment_inventory_summary                = false;
+		$this->native_supports_payload_inventory_summary                = false;
+		$this->native_supports_content_inventory_summary                = false;
+		$this->native_supports_leaf_inventory_summary                   = false;
+		$this->native_supports_structural_inventory_summary             = false;
+		$this->native_supports_import_inventory_summary                 = false;
+		$this->native_supports_token_summary_batch                      = false;
+		$this->native_supports_tag_stream_summary                       = false;
+		$this->native_supports_tag_summary_batch                        = false;
+		$this->native_supports_tag_count_batch                          = false;
+		$this->native_supports_matching_tag_summary_batch               = false;
+		$this->native_supports_matching_tag_count_batch                 = false;
+		$this->native_supports_matching_tag_stream_summary              = false;
+		$this->native_supports_matching_tag_attributes_stream_summary   = false;
+		$this->native_supports_attribute_prefix_summary                 = false;
+		$this->native_supports_attribute_prefix_document_removal        = false;
+
+		while ( $tokens_to_replay > 0 ) {
+			if ( ! $this->step() ) {
+				return false;
+			}
+
+			--$tokens_to_replay;
+		}
+
+		return true;
 	}
 
 	/**
@@ -1468,6 +3006,26 @@ class XMLProcessor {
 			return false;
 		}
 
+		if ( $this->has_native_processor() && $this->native_token_from_compact_summary_batch ) {
+			if ( ! $this->synchronize_native_processor_to_php() ) {
+				return false;
+			}
+		}
+
+		if (
+			$this->has_native_processor() &&
+			method_exists( $this->native_processor, 'set_bookmark' )
+		) {
+			if ( ! $this->native_processor->set_bookmark( $name ) ) {
+				return false;
+			}
+
+			$this->bookmarks[ $name ]                    = new WP_HTML_Span( 0, 0 );
+			$this->native_bookmark_token_counts[ $name ] = $this->native_tokens_parsed;
+
+			return true;
+		}
+
 		$this->bookmarks[ $name ] = new WP_HTML_Span( $this->token_starts_at, $this->token_length );
 
 		return true;
@@ -1485,6 +3043,19 @@ class XMLProcessor {
 	 * @return bool Whether the bookmark already existed before removal.
 	 */
 	public function release_bookmark( $name ) {
+		if (
+			$this->has_native_processor() &&
+			method_exists( $this->native_processor, 'release_bookmark' )
+		) {
+			$released = $this->native_processor->release_bookmark( $name );
+			if ( $released ) {
+				unset( $this->bookmarks[ $name ] );
+				unset( $this->native_bookmark_token_counts[ $name ] );
+			}
+
+			return $released;
+		}
+
 		if ( ! array_key_exists( $name, $this->bookmarks ) ) {
 			return false;
 		}
@@ -1517,6 +3088,10 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function get_last_error(): ?string {
+		if ( $this->has_native_processor() ) {
+			return null === $this->native_processor->get_last_error() ? null : self::ERROR_SYNTAX;
+		}
+
 		return $this->last_error;
 	}
 
@@ -1541,6 +3116,10 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function next_tag( $query_or_ns = null, $null_or_local_name = null ) {
+		if ( $this->has_native_processor() ) {
+			return $this->native_next_tag( $query_or_ns, $null_or_local_name );
+		}
+
 		if ( null === $query_or_ns && null === $null_or_local_name ) {
 			while ( $this->step() ) {
 				if ( '#tag' !== $this->get_token_type() ) {
@@ -1626,6 +3205,141 @@ class XMLProcessor {
 			}
 
 			if ( $this->matches_breadcrumbs( $breadcrumbs ) && 0 === --$match_offset ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Finds the next tag using the native delegate.
+	 *
+	 * This supports the same query slice as the shared native conformance
+	 * tests: local-name shorthands, namespace/local-name tuples,
+	 * breadcrumbs, and match offsets.
+	 *
+	 * @param array|string|null $query_or_ns          Which tag to find.
+	 * @param string|null       $null_or_local_name   Local name when the first argument is a namespace.
+	 * @return bool Whether a tag was matched.
+	 */
+	private function native_next_tag( $query_or_ns = null, $null_or_local_name = null ) {
+		if ( is_string( $query_or_ns ) && false !== strpos( $query_or_ns, ':' ) && ! is_string( $null_or_local_name ) ) {
+			if ( ! $this->synchronize_native_processor_to_php() ) {
+				return false;
+			}
+
+			return $this->next_tag( $query_or_ns, $null_or_local_name );
+		}
+
+		if ( null === $query_or_ns && null === $null_or_local_name ) {
+			while ( $this->native_next_token( false ) ) {
+				$token_type = null !== $this->native_token_type ? $this->native_token_type : $this->native_processor->get_token_type();
+				if ( null !== $this->native_token_type ) {
+					$this->cache_native_compact_token_flags();
+					$is_tag_closer = $this->native_token_is_tag_closer;
+				} else {
+					$is_tag_closer = $this->native_processor->is_tag_closer();
+				}
+				if (
+					'#tag' === $token_type &&
+					! $is_tag_closer
+				) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		if ( is_string( $query_or_ns ) ) {
+			if ( is_string( $null_or_local_name ) ) {
+				$query = array( 'breadcrumbs' => array( array( $query_or_ns, $null_or_local_name ) ) );
+			} else {
+				$query = array( 'breadcrumbs' => array( array( '', $query_or_ns ) ) );
+			}
+		} else {
+			$query = $query_or_ns;
+		}
+
+		if ( ! is_array( $query ) ) {
+			_doing_it_wrong(
+				__METHOD__,
+				__( 'Please pass a query array to this function.' ),
+				'WP_VERSION'
+			);
+
+			return false;
+		}
+
+		if ( array( 0, 1 ) === array_keys( $query ) && is_string( $query[0] ) && is_string( $query[1] ) ) {
+			$query = array( 'breadcrumbs' => array( $query ) );
+		}
+
+		if ( ! ( array_key_exists( 'breadcrumbs', $query ) && is_array( $query['breadcrumbs'] ) ) ) {
+			while ( $this->native_next_token( false ) ) {
+				$token_type = null !== $this->native_token_type ? $this->native_token_type : $this->native_processor->get_token_type();
+				if ( null !== $this->native_token_type ) {
+					$this->cache_native_compact_token_flags();
+					$is_tag_closer = $this->native_token_is_tag_closer;
+				} else {
+					$is_tag_closer = $this->native_processor->is_tag_closer();
+				}
+				if (
+					'#tag' === $token_type &&
+					! $is_tag_closer
+				) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		if ( isset( $query['tag_closers'] ) && 'visit' === $query['tag_closers'] ) {
+			_doing_it_wrong(
+				__METHOD__,
+				__( 'Cannot visit tag closers in XML Processor.' ),
+				'WP_VERSION'
+			);
+
+			return false;
+		}
+
+		$namespaced_breadcrumbs = array();
+		foreach ( $query['breadcrumbs'] as $breadcrumb ) {
+			if ( is_array( $breadcrumb ) && 2 === count( $breadcrumb ) ) {
+				$namespaced_breadcrumbs[] = $breadcrumb;
+			} elseif ( is_string( $breadcrumb ) ) {
+				$namespaced_breadcrumbs[] = array( '', $breadcrumb );
+			} else {
+				_doing_it_wrong(
+					__METHOD__,
+					__( 'Breadcrumbs must be an array of strings or two-tuples of (namespace, local name).' ),
+					'WP_VERSION'
+				);
+			}
+		}
+
+		$match_offset = isset( $query['match_offset'] ) ? (int) $query['match_offset'] : 1;
+
+		while ( $match_offset > 0 && $this->native_next_token( false ) ) {
+			$token_type = null !== $this->native_token_type ? $this->native_token_type : $this->native_processor->get_token_type();
+			if ( '#tag' !== $token_type ) {
+				continue;
+			}
+
+			if ( null !== $this->native_token_type ) {
+				$this->cache_native_compact_token_flags();
+				$is_tag_closer = $this->native_token_is_tag_closer;
+			} else {
+				$is_tag_closer = $this->native_processor->is_tag_closer();
+			}
+			if ( $is_tag_closer ) {
+				continue;
+			}
+
+			if ( $this->native_matches_breadcrumbs( $namespaced_breadcrumbs ) && 0 === --$match_offset ) {
 				return true;
 			}
 		}
@@ -2646,6 +4360,13 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function has_bookmark( $bookmark_name ) {
+		if (
+			$this->has_native_processor() &&
+			method_exists( $this->native_processor, 'has_bookmark' )
+		) {
+			return $this->native_processor->has_bookmark( $bookmark_name );
+		}
+
 		return array_key_exists( $bookmark_name, $this->bookmarks );
 	}
 
@@ -2665,7 +4386,7 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function seek( $bookmark_name ) {
-		if ( ! array_key_exists( $bookmark_name, $this->bookmarks ) ) {
+		if ( ! $this->has_bookmark( $bookmark_name ) ) {
 			_doing_it_wrong(
 				__METHOD__,
 				__( 'Unknown bookmark name.' ),
@@ -2687,6 +4408,32 @@ class XMLProcessor {
 
 		// Flush out any pending updates to the document.
 		$this->get_updated_xml();
+
+		if (
+			$this->has_native_processor() &&
+			method_exists( $this->native_processor, 'seek' )
+		) {
+			if ( ! $this->native_processor->seek( $bookmark_name ) ) {
+				return false;
+			}
+
+			$this->native_tokens_parsed                      = isset( $this->native_bookmark_token_counts[ $bookmark_name ] )
+				? $this->native_bookmark_token_counts[ $bookmark_name ]
+				: $this->native_tokens_parsed;
+			$this->native_token_compact_summary_batch        = '';
+			$this->native_token_compact_summary_batch_offset = 0;
+			$this->clear_native_token_metadata();
+			if (
+				method_exists( $this->native_processor, 'current_token_metadata' ) &&
+				$this->cache_native_token_metadata( $this->native_processor->current_token_metadata() )
+			) {
+				$this->update_parser_state_from_native_token();
+			} else {
+				$this->update_parser_state_from_native_token();
+			}
+
+			return true;
+		}
 
 		// Point this tag processor before the sought tag opener and consume it.
 		$this->bytes_already_parsed = $this->bookmarks[ $bookmark_name ]->start;
@@ -2822,6 +4569,65 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function get_attribute( $namespace_reference, $local_name ) {
+		if ( null !== $this->native_processor ) {
+			if ( null !== $this->native_token_type ) {
+				if (
+					! $this->native_token_is_tag &&
+					'#xml-declaration' !== $this->native_token_type
+				) {
+					return null;
+				}
+
+				if ( '' === $namespace_reference && $local_name === $this->native_token_cached_attribute_name ) {
+					if ( ! $this->native_token_cached_attribute_loaded ) {
+						if ( null !== $this->native_token_compact_summary_metadata ) {
+							$metadata                                   = $this->native_token_compact_summary_metadata;
+							$this->native_token_cached_attribute_loaded = true;
+							$this->native_token_cached_attribute_found  = $this->native_token_compact_attribute_start < $this->native_token_compact_attribute_end && '1' === $metadata[ $this->native_token_compact_attribute_start ];
+							$this->native_token_cached_attribute_value  = $this->native_token_cached_attribute_found ? substr( $metadata, $this->native_token_compact_attribute_start + 1, $this->native_token_compact_attribute_end - $this->native_token_compact_attribute_start - 1 ) : null;
+						} else {
+							$this->cache_native_compact_token_cached_attribute();
+						}
+					}
+
+					return $this->native_token_cached_attribute_found ? $this->native_token_cached_attribute_value : null;
+				}
+
+				$full_name = $namespace_reference ? '{' . $namespace_reference . '}' . $local_name : $local_name;
+
+				if ( is_array( $this->native_token_attributes ) ) {
+					return isset( $this->native_token_attributes[ $full_name ] ) ? $this->native_token_attributes[ $full_name ] : null;
+				}
+
+				if ( $full_name === $this->native_token_cached_attribute_name ) {
+					if ( ! $this->native_token_cached_attribute_loaded ) {
+						if ( null !== $this->native_token_compact_summary_metadata ) {
+							$metadata                                   = $this->native_token_compact_summary_metadata;
+							$this->native_token_cached_attribute_loaded = true;
+							$this->native_token_cached_attribute_found  = $this->native_token_compact_attribute_start < $this->native_token_compact_attribute_end && '1' === $metadata[ $this->native_token_compact_attribute_start ];
+							$this->native_token_cached_attribute_value  = $this->native_token_cached_attribute_found ? substr( $metadata, $this->native_token_compact_attribute_start + 1, $this->native_token_compact_attribute_end - $this->native_token_compact_attribute_start - 1 ) : null;
+						} else {
+							$this->cache_native_compact_token_cached_attribute();
+						}
+					}
+
+					return $this->native_token_cached_attribute_found ? $this->native_token_cached_attribute_value : null;
+				}
+
+				if ( $this->native_token_from_compact_summary_batch ) {
+					if ( ! $this->synchronize_native_processor_to_php() ) {
+						return null;
+					}
+
+					return $this->get_attribute( $namespace_reference, $local_name );
+				}
+			} else {
+				$full_name = $namespace_reference ? '{' . $namespace_reference . '}' . $local_name : $local_name;
+			}
+
+			return $this->native_processor->get_attribute( $full_name );
+		}
+
 		if (
 			self::STATE_MATCHED_TAG !== $this->parser_state &&
 			self::STATE_XML_DECLARATION !== $this->parser_state
@@ -2945,6 +4751,18 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function get_attribute_names_with_prefix( $full_namespace_prefix, $local_name_prefix ) {
+		if ( $this->has_native_processor() ) {
+			if ( $this->native_token_from_compact_summary_batch ) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return null;
+				}
+
+				return $this->get_attribute_names_with_prefix( $full_namespace_prefix, $local_name_prefix );
+			}
+
+			return $this->native_processor->get_attribute_names_with_prefix( $full_namespace_prefix, $local_name_prefix );
+		}
+
 		if (
 			self::STATE_MATCHED_TAG !== $this->parser_state ||
 			$this->is_closing_tag
@@ -2969,6 +4787,3167 @@ class XMLProcessor {
 	}
 
 	/**
+	 * Summarizes tags and prefixed attributes across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` and
+	 * `get_attribute_names_with_prefix()`, but native implementations may
+	 * process the remaining document in one call.
+	 *
+	 * @param string|null $full_namespace_prefix Prefix of the fully qualified namespace to match, or null for no namespace.
+	 * @param string      $local_name_prefix     Local name prefix to match.
+	 * @return array Summary with `tag_count` and `attribute_count`.
+	 * @since WP_VERSION
+	 */
+	public function summarize_attribute_names_with_prefix( $full_namespace_prefix, $local_name_prefix ) {
+		if ( $this->has_native_processor() && $this->native_supports_attribute_prefix_summary ) {
+			if ( $this->native_token_from_compact_summary_batch && ! $this->synchronize_native_processor_to_php() ) {
+				return array(
+					'tag_count'       => 0,
+					'attribute_count' => 0,
+				);
+			}
+
+			$summary = $this->native_processor->summarize_attribute_names_with_prefix( $full_namespace_prefix, $local_name_prefix );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 3 );
+				if ( 3 === count( $parts ) ) {
+					$this->native_tokens_parsed += (int) $parts[0];
+					$this->clear_native_token_metadata();
+					$this->update_parser_state_after_native_remaining_summary();
+
+					return array(
+						'tag_count'       => (int) $parts[1],
+						'attribute_count' => (int) $parts[2],
+					);
+				}
+			}
+		}
+
+		$tag_count       = 0;
+		$attribute_count = 0;
+
+		while ( $this->next_tag() ) {
+			++$tag_count;
+
+			$attribute_names = $this->get_attribute_names_with_prefix( $full_namespace_prefix, $local_name_prefix );
+			if ( is_array( $attribute_names ) ) {
+				$attribute_count += count( $attribute_names );
+			}
+		}
+
+		return array(
+			'tag_count'       => $tag_count,
+			'attribute_count' => $attribute_count,
+		);
+	}
+
+	/**
+	 * Summarizes a read-only XML token stream.
+	 *
+	 * This is equivalent to repeatedly calling `next_token()`,
+	 * `get_token_type()`, `get_token_name()`, and `get_attribute()` for one
+	 * attribute name, but native implementations may process the remaining
+	 * document in one call.
+	 *
+	 * @param string $attribute_name Attribute name to count when present on tokens.
+	 * @return array Summary with `token_count`, `tag_count`, and `attribute_count`.
+	 * @since WP_VERSION
+	 */
+	public function summarize_token_stream( $attribute_name = 'id' ) {
+		if ( $this->has_native_processor() && $this->native_supports_token_stream_summary ) {
+			if ( $this->native_token_from_compact_summary_batch && ! $this->synchronize_native_processor_to_php() ) {
+				return array(
+					'token_count'     => 0,
+					'tag_count'       => 0,
+					'attribute_count' => 0,
+				);
+			}
+
+			$summary = $this->native_processor->summarize_token_stream( $attribute_name );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 3 );
+				if ( 3 === count( $parts ) ) {
+					$this->native_tokens_parsed += (int) $parts[0];
+					$this->clear_native_token_metadata();
+					$this->update_parser_state_after_native_remaining_summary();
+
+					return array(
+						'token_count'     => (int) $parts[0],
+						'tag_count'       => (int) $parts[1],
+						'attribute_count' => (int) $parts[2],
+					);
+				}
+			}
+		}
+
+		$token_count     = 0;
+		$tag_count       = 0;
+		$attribute_count = 0;
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			$this->get_token_name();
+
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$token_count;
+
+			if ( '#tag' === $token_type && ! $this->is_tag_closer() ) {
+				++$tag_count;
+			}
+
+			if ( null !== $this->get_attribute( '', $attribute_name ) ) {
+				++$attribute_count;
+			}
+		}
+
+		return array(
+			'token_count'     => $token_count,
+			'tag_count'       => $tag_count,
+			'attribute_count' => $attribute_count,
+		);
+	}
+
+	/**
+	 * Summarizes the remaining XML document structure in one pass.
+	 *
+	 * This is equivalent to repeatedly calling `next_token()` and reading token
+	 * type, tag closer, empty-element, and depth metadata. Native
+	 * implementations may process the remaining document in one call.
+	 *
+	 * @return array Summary with token category counts and maximum depth.
+	 * @since WP_VERSION
+	 */
+	public function summarize_document_inventory() {
+		if ( $this->has_native_processor() && $this->native_supports_document_inventory_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return $this->empty_document_inventory_summary();
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->summarize_document_inventory();
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_document_inventory_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$summary = $this->empty_document_inventory_summary();
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$summary['token_count'];
+
+			if ( '#tag' === $token_type ) {
+				if ( $this->is_tag_closer() ) {
+					++$summary['closing_tag_count'];
+				} else {
+					++$summary['tag_count'];
+				}
+
+				if ( $this->is_empty_element() ) {
+					++$summary['empty_element_count'];
+				}
+			} elseif ( '#text' === $token_type ) {
+				++$summary['text_token_count'];
+			} elseif ( '#comment' === $token_type ) {
+				++$summary['comment_count'];
+			} elseif ( '#cdata-section' === $token_type ) {
+				++$summary['cdata_count'];
+			}
+
+			$summary['max_depth'] = max( $summary['max_depth'], $this->get_current_depth() );
+		}
+
+		return $summary;
+	}
+
+	/**
+	 * Returns an empty document inventory summary.
+	 *
+	 * @return array Empty summary.
+	 */
+	private function empty_document_inventory_summary() {
+		return array(
+			'token_count'         => 0,
+			'tag_count'           => 0,
+			'closing_tag_count'   => 0,
+			'text_token_count'    => 0,
+			'comment_count'       => 0,
+			'cdata_count'         => 0,
+			'max_depth'           => 0,
+			'empty_element_count' => 0,
+		);
+	}
+
+	/**
+	 * Parses a compact document inventory summary.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_document_inventory_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 8 );
+		if ( 8 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'         => (int) $parts[0],
+			'tag_count'           => (int) $parts[1],
+			'closing_tag_count'   => (int) $parts[2],
+			'text_token_count'    => (int) $parts[3],
+			'comment_count'       => (int) $parts[4],
+			'cdata_count'         => (int) $parts[5],
+			'max_depth'           => (int) $parts[6],
+			'empty_element_count' => (int) $parts[7],
+		);
+	}
+
+	/**
+	 * Summarizes element names across the remaining XML document in one pass.
+	 *
+	 * This is equivalent to repeatedly calling `next_token()` and inspecting
+	 * expanded tag names, closer state, and empty-element metadata. Native
+	 * implementations may process the remaining document in one call.
+	 *
+	 * @return array Summary with element-name inventory counts.
+	 * @since WP_VERSION
+	 */
+	public function summarize_element_inventory() {
+		if ( $this->has_native_processor() && $this->native_supports_element_inventory_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return $this->empty_element_inventory_summary();
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->summarize_element_inventory();
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_element_inventory_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$summary        = $this->empty_element_inventory_summary();
+		$seen_tag_names = array();
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$summary['token_count'];
+
+			if ( '#tag' !== $token_type ) {
+				continue;
+			}
+
+			if ( $this->is_tag_closer() ) {
+				++$summary['closing_tag_count'];
+				continue;
+			}
+
+			++$summary['tag_count'];
+
+			$expanded_name = $this->get_tag_namespace_and_local_name();
+			if ( isset( $seen_tag_names[ $expanded_name ] ) ) {
+				++$summary['duplicate_tag_name_count'];
+			} else {
+				$seen_tag_names[ $expanded_name ] = true;
+				++$summary['unique_tag_name_count'];
+			}
+
+			if ( '' !== $this->get_tag_namespace() ) {
+				++$summary['namespaced_tag_count'];
+			}
+
+			if ( $this->is_empty_element() ) {
+				++$summary['empty_element_count'];
+			}
+		}
+
+		return $summary;
+	}
+
+	/**
+	 * Returns an empty element inventory summary.
+	 *
+	 * @return array Empty summary.
+	 */
+	private function empty_element_inventory_summary() {
+		return array(
+			'token_count'              => 0,
+			'tag_count'                => 0,
+			'closing_tag_count'        => 0,
+			'unique_tag_name_count'    => 0,
+			'duplicate_tag_name_count' => 0,
+			'namespaced_tag_count'     => 0,
+			'empty_element_count'      => 0,
+		);
+	}
+
+	/**
+	 * Parses a compact element inventory summary.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_element_inventory_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 7 );
+		if ( 7 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'              => (int) $parts[0],
+			'tag_count'                => (int) $parts[1],
+			'closing_tag_count'        => (int) $parts[2],
+			'unique_tag_name_count'    => (int) $parts[3],
+			'duplicate_tag_name_count' => (int) $parts[4],
+			'namespaced_tag_count'     => (int) $parts[5],
+			'empty_element_count'      => (int) $parts[6],
+		);
+	}
+
+	/**
+	 * Summarizes element nesting depth across the remaining XML document in one pass.
+	 *
+	 * This is equivalent to repeatedly calling `next_token()` and inspecting tag
+	 * depth, closer, and empty-element metadata. Native implementations may
+	 * process the remaining document in one call.
+	 *
+	 * @return array Summary with tag depth distribution counts.
+	 * @since WP_VERSION
+	 */
+	public function summarize_depth_inventory() {
+		if ( $this->has_native_processor() && $this->native_supports_depth_inventory_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return $this->empty_depth_inventory_summary();
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->summarize_depth_inventory();
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_depth_inventory_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$summary = $this->empty_depth_inventory_summary();
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$summary['token_count'];
+			$depth                = $this->get_current_depth();
+			$summary['max_depth'] = max( $summary['max_depth'], $depth );
+
+			if ( '#tag' !== $token_type ) {
+				continue;
+			}
+
+			if ( $this->is_tag_closer() ) {
+				++$summary['closing_tag_count'];
+				continue;
+			}
+
+			++$summary['tag_count'];
+			$summary['total_tag_depth'] += $depth;
+
+			if ( $this->is_empty_element() ) {
+				++$summary['empty_element_count'];
+			}
+
+			if ( 1 === $depth ) {
+				++$summary['root_level_tag_count'];
+			} elseif ( $depth > 2 ) {
+				++$summary['nested_tag_count'];
+			}
+		}
+
+		return $summary;
+	}
+
+	/**
+	 * Returns an empty depth inventory summary.
+	 *
+	 * @return array Empty summary.
+	 */
+	private function empty_depth_inventory_summary() {
+		return array(
+			'token_count'          => 0,
+			'tag_count'            => 0,
+			'closing_tag_count'    => 0,
+			'empty_element_count'  => 0,
+			'root_level_tag_count' => 0,
+			'nested_tag_count'     => 0,
+			'total_tag_depth'      => 0,
+			'max_depth'            => 0,
+		);
+	}
+
+	/**
+	 * Parses a compact depth inventory summary.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_depth_inventory_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 8 );
+		if ( 8 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'          => (int) $parts[0],
+			'tag_count'            => (int) $parts[1],
+			'closing_tag_count'    => (int) $parts[2],
+			'empty_element_count'  => (int) $parts[3],
+			'root_level_tag_count' => (int) $parts[4],
+			'nested_tag_count'     => (int) $parts[5],
+			'total_tag_depth'      => (int) $parts[6],
+			'max_depth'            => (int) $parts[7],
+		);
+	}
+
+	/**
+	 * Summarizes attributes across the remaining XML document in one pass.
+	 *
+	 * This is equivalent to repeatedly calling `next_token()` and inspecting
+	 * opening-tag attributes, but native implementations may process the
+	 * remaining document in one call.
+	 *
+	 * @return array Summary with attribute inventory counts.
+	 * @since WP_VERSION
+	 */
+	public function summarize_attribute_inventory() {
+		if ( $this->has_native_processor() && $this->native_supports_attribute_inventory_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return $this->empty_attribute_inventory_summary();
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				if ( method_exists( $this->native_processor, 'summarize_attribute_inventory_array' ) ) {
+					$summary = $this->native_processor->summarize_attribute_inventory_array();
+					if (
+						is_array( $summary ) &&
+						isset(
+							$summary['token_count'],
+							$summary['tag_count'],
+							$summary['attribute_count'],
+							$summary['namespaced_attribute_count'],
+							$summary['tags_with_attributes_count'],
+							$summary['max_attribute_count']
+						)
+					) {
+						$this->native_tokens_parsed += (int) $summary['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $summary;
+					}
+				}
+
+				$summary = $this->native_processor->summarize_attribute_inventory();
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_attribute_inventory_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$summary = $this->empty_attribute_inventory_summary();
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$summary['token_count'];
+
+			if ( '#tag' !== $token_type || $this->is_tag_closer() ) {
+				continue;
+			}
+
+			++$summary['tag_count'];
+
+			$attribute_count = 0;
+			foreach ( $this->attributes as $attribute ) {
+				if ( 'xmlns' === $attribute->qualified_name || 'xmlns' === $attribute->namespace_prefix ) {
+					continue;
+				}
+
+				++$attribute_count;
+				if ( '' !== $attribute->namespace ) {
+					++$summary['namespaced_attribute_count'];
+				}
+			}
+
+			if ( 0 === $attribute_count ) {
+				continue;
+			}
+
+			$summary['attribute_count']            += $attribute_count;
+			$summary['tags_with_attributes_count'] += 1;
+			$summary['max_attribute_count']         = max( $summary['max_attribute_count'], $attribute_count );
+		}
+
+		return $summary;
+	}
+
+	/**
+	 * Returns an empty attribute inventory summary.
+	 *
+	 * @return array Empty summary.
+	 */
+	private function empty_attribute_inventory_summary() {
+		return array(
+			'token_count'                  => 0,
+			'tag_count'                    => 0,
+			'attribute_count'              => 0,
+			'namespaced_attribute_count'   => 0,
+			'tags_with_attributes_count'   => 0,
+			'max_attribute_count'          => 0,
+		);
+	}
+
+	/**
+	 * Parses a compact attribute inventory summary.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_attribute_inventory_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 6 );
+		if ( 6 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'                  => (int) $parts[0],
+			'tag_count'                    => (int) $parts[1],
+			'attribute_count'              => (int) $parts[2],
+			'namespaced_attribute_count'   => (int) $parts[3],
+			'tags_with_attributes_count'   => (int) $parts[4],
+			'max_attribute_count'          => (int) $parts[5],
+		);
+	}
+
+	/**
+	 * Summarizes ID attribute usage across the remaining XML document in one pass.
+	 *
+	 * This is equivalent to repeatedly calling `next_token()` and reading the
+	 * no-namespace `id` attribute from each opening tag, but native
+	 * implementations may process the remaining document in one call.
+	 *
+	 * @return array Summary with ID attribute inventory counts.
+	 * @since WP_VERSION
+	 */
+	public function summarize_id_inventory() {
+		if ( $this->has_native_processor() && $this->native_supports_id_inventory_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return $this->empty_id_inventory_summary();
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				if ( method_exists( $this->native_processor, 'summarize_id_inventory_array' ) ) {
+					$summary = $this->native_processor->summarize_id_inventory_array();
+					if (
+						is_array( $summary ) &&
+						isset(
+							$summary['token_count'],
+							$summary['tag_count'],
+							$summary['id_attribute_count'],
+							$summary['unique_id_count'],
+							$summary['duplicate_id_count'],
+							$summary['id_value_bytes']
+						)
+					) {
+						$this->native_tokens_parsed += (int) $summary['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $summary;
+					}
+				}
+
+				$summary = $this->native_processor->summarize_id_inventory();
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_id_inventory_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$summary       = $this->empty_id_inventory_summary();
+		$seen_ids      = array();
+		$duplicate_ids = array();
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$summary['token_count'];
+
+			if ( '#tag' !== $token_type || $this->is_tag_closer() ) {
+				continue;
+			}
+
+			++$summary['tag_count'];
+
+			$id = $this->get_attribute( '', 'id' );
+			if ( null === $id ) {
+				continue;
+			}
+
+			++$summary['id_attribute_count'];
+			$summary['id_value_bytes'] += strlen( $id );
+
+			if ( isset( $seen_ids[ $id ] ) ) {
+				if ( ! isset( $duplicate_ids[ $id ] ) ) {
+					$duplicate_ids[ $id ] = true;
+					++$summary['duplicate_id_count'];
+				}
+				continue;
+			}
+
+			$seen_ids[ $id ] = true;
+			++$summary['unique_id_count'];
+		}
+
+		return $summary;
+	}
+
+	/**
+	 * Returns an empty ID inventory summary.
+	 *
+	 * @return array Empty summary.
+	 */
+	private function empty_id_inventory_summary() {
+		return array(
+			'token_count'        => 0,
+			'tag_count'          => 0,
+			'id_attribute_count' => 0,
+			'unique_id_count'    => 0,
+			'duplicate_id_count' => 0,
+			'id_value_bytes'     => 0,
+		);
+	}
+
+	/**
+	 * Parses a compact ID inventory summary.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_id_inventory_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 6 );
+		if ( 6 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'        => (int) $parts[0],
+			'tag_count'          => (int) $parts[1],
+			'id_attribute_count' => (int) $parts[2],
+			'unique_id_count'    => (int) $parts[3],
+			'duplicate_id_count' => (int) $parts[4],
+			'id_value_bytes'     => (int) $parts[5],
+		);
+	}
+
+	/**
+	 * Summarizes namespace usage across the remaining XML document in one pass.
+	 *
+	 * This is equivalent to repeatedly calling `next_token()` and inspecting
+	 * tag namespaces and resolved attribute namespaces, but native
+	 * implementations may process the remaining document in one call.
+	 *
+	 * @return array Summary with namespace inventory counts.
+	 * @since WP_VERSION
+	 */
+	public function summarize_namespace_inventory() {
+		if ( $this->has_native_processor() && $this->native_supports_namespace_inventory_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return $this->empty_namespace_inventory_summary();
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->summarize_namespace_inventory();
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_namespace_inventory_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$summary    = $this->empty_namespace_inventory_summary();
+		$namespaces = array();
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$summary['token_count'];
+
+			if ( '#tag' !== $token_type || $this->is_tag_closer() ) {
+				continue;
+			}
+
+			++$summary['tag_count'];
+
+			if ( '' !== $this->element->namespace ) {
+				++$summary['namespaced_tag_count'];
+				$namespaces[ $this->element->namespace ] = true;
+			}
+
+			foreach ( $this->attributes as $attribute ) {
+				if ( 'xmlns' === $attribute->qualified_name || 'xmlns' === $attribute->namespace_prefix ) {
+					continue;
+				}
+
+				++$summary['attribute_count'];
+				if ( '' !== $attribute->namespace ) {
+					++$summary['namespaced_attribute_count'];
+					$namespaces[ $attribute->namespace ] = true;
+				}
+			}
+		}
+
+		$summary['unique_namespace_count'] = count( $namespaces );
+
+		return $summary;
+	}
+
+	/**
+	 * Returns an empty namespace inventory summary.
+	 *
+	 * @return array Empty summary.
+	 */
+	private function empty_namespace_inventory_summary() {
+		return array(
+			'token_count'                  => 0,
+			'tag_count'                    => 0,
+			'namespaced_tag_count'         => 0,
+			'attribute_count'              => 0,
+			'namespaced_attribute_count'   => 0,
+			'unique_namespace_count'       => 0,
+		);
+	}
+
+	/**
+	 * Parses a compact namespace inventory summary.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_namespace_inventory_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 6 );
+		if ( 6 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'                  => (int) $parts[0],
+			'tag_count'                    => (int) $parts[1],
+			'namespaced_tag_count'         => (int) $parts[2],
+			'attribute_count'              => (int) $parts[3],
+			'namespaced_attribute_count'   => (int) $parts[4],
+			'unique_namespace_count'       => (int) $parts[5],
+		);
+	}
+
+	/**
+	 * Summarizes text and CDATA usage across the remaining XML document in one pass.
+	 *
+	 * This is equivalent to repeatedly calling `next_token()` and inspecting
+	 * `#text` and `#cdata-section` token contents, but native implementations
+	 * may process the remaining document in one call.
+	 *
+	 * @return array Summary with text and CDATA inventory counts.
+	 * @since WP_VERSION
+	 */
+	public function summarize_text_inventory() {
+		if ( $this->has_native_processor() && $this->native_supports_text_inventory_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return $this->empty_text_inventory_summary();
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->summarize_text_inventory();
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_text_inventory_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$summary = $this->empty_text_inventory_summary();
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$summary['token_count'];
+
+			if ( '#text' !== $token_type && '#cdata-section' !== $token_type ) {
+				continue;
+			}
+
+			if ( '#text' === $token_type ) {
+				++$summary['text_token_count'];
+			} else {
+				++$summary['cdata_count'];
+			}
+
+			$text       = (string) $this->get_modifiable_text();
+			$text_bytes = strlen( $text );
+
+			$summary['total_text_bytes'] += $text_bytes;
+			$summary['max_text_bytes']    = max( $summary['max_text_bytes'], $text_bytes );
+
+			if ( '' === trim( $text ) ) {
+				++$summary['whitespace_text_count'];
+			} else {
+				++$summary['non_empty_text_count'];
+			}
+		}
+
+		return $summary;
+	}
+
+	/**
+	 * Returns an empty text inventory summary.
+	 *
+	 * @return array Empty summary.
+	 */
+	private function empty_text_inventory_summary() {
+		return array(
+			'token_count'           => 0,
+			'text_token_count'      => 0,
+			'cdata_count'           => 0,
+			'non_empty_text_count'  => 0,
+			'whitespace_text_count' => 0,
+			'total_text_bytes'      => 0,
+			'max_text_bytes'        => 0,
+		);
+	}
+
+	/**
+	 * Parses a compact text inventory summary.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_text_inventory_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 7 );
+		if ( 7 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'           => (int) $parts[0],
+			'text_token_count'      => (int) $parts[1],
+			'cdata_count'           => (int) $parts[2],
+			'non_empty_text_count'  => (int) $parts[3],
+			'whitespace_text_count' => (int) $parts[4],
+			'total_text_bytes'      => (int) $parts[5],
+			'max_text_bytes'        => (int) $parts[6],
+		);
+	}
+
+	/**
+	 * Summarizes XML declaration and processing instruction usage in one pass.
+	 *
+	 * This is equivalent to repeatedly calling `next_token()` and inspecting
+	 * `#xml-declaration` and `#processing-instructions` tokens, but native
+	 * implementations may process the remaining document in one call.
+	 *
+	 * @return array Summary with processing instruction inventory counts.
+	 * @since WP_VERSION
+	 */
+	public function summarize_processing_instruction_inventory() {
+		if ( $this->has_native_processor() && $this->native_supports_processing_instruction_inventory_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return $this->empty_processing_instruction_inventory_summary();
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->summarize_processing_instruction_inventory();
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_processing_instruction_inventory_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$summary = $this->empty_processing_instruction_inventory_summary();
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$summary['token_count'];
+
+			if ( '#xml-declaration' !== $token_type && '#processing-instructions' !== $token_type ) {
+				continue;
+			}
+
+			if ( '#xml-declaration' === $token_type ) {
+				++$summary['xml_declaration_count'];
+			} else {
+				++$summary['processing_instruction_count'];
+			}
+
+			$text       = (string) $this->get_modifiable_text();
+			$text_bytes = strlen( $text );
+
+			$summary['total_instruction_bytes'] += $text_bytes;
+			$summary['max_instruction_bytes']    = max( $summary['max_instruction_bytes'], $text_bytes );
+
+			if ( '' !== trim( $text ) ) {
+				++$summary['non_empty_instruction_count'];
+			}
+		}
+
+		return $summary;
+	}
+
+	/**
+	 * Returns an empty processing instruction inventory summary.
+	 *
+	 * @return array Empty summary.
+	 */
+	private function empty_processing_instruction_inventory_summary() {
+		return array(
+			'token_count'                    => 0,
+			'processing_instruction_count'   => 0,
+			'xml_declaration_count'          => 0,
+			'non_empty_instruction_count'    => 0,
+			'total_instruction_bytes'        => 0,
+			'max_instruction_bytes'          => 0,
+		);
+	}
+
+	/**
+	 * Parses a compact processing instruction inventory summary.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_processing_instruction_inventory_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 6 );
+		if ( 6 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'                    => (int) $parts[0],
+			'processing_instruction_count'   => (int) $parts[1],
+			'xml_declaration_count'          => (int) $parts[2],
+			'non_empty_instruction_count'    => (int) $parts[3],
+			'total_instruction_bytes'        => (int) $parts[4],
+			'max_instruction_bytes'          => (int) $parts[5],
+		);
+	}
+
+	/**
+	 * Summarizes XML comment usage in one pass.
+	 *
+	 * This is equivalent to repeatedly calling `next_token()` and inspecting
+	 * `#comment` token contents, but native implementations may process the
+	 * remaining document in one call.
+	 *
+	 * @return array Summary with comment inventory counts.
+	 * @since WP_VERSION
+	 */
+	public function summarize_comment_inventory() {
+		if ( $this->has_native_processor() && $this->native_supports_comment_inventory_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return $this->empty_comment_inventory_summary();
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->summarize_comment_inventory();
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_comment_inventory_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$summary = $this->empty_comment_inventory_summary();
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$summary['token_count'];
+
+			if ( '#comment' !== $token_type ) {
+				continue;
+			}
+
+			++$summary['comment_count'];
+
+			$text       = (string) $this->get_modifiable_text();
+			$text_bytes = strlen( $text );
+
+			$summary['total_comment_bytes'] += $text_bytes;
+			$summary['max_comment_bytes']    = max( $summary['max_comment_bytes'], $text_bytes );
+
+			if ( '' === trim( $text ) ) {
+				++$summary['empty_comment_count'];
+			} else {
+				++$summary['non_empty_comment_count'];
+			}
+		}
+
+		return $summary;
+	}
+
+	/**
+	 * Returns an empty comment inventory summary.
+	 *
+	 * @return array Empty summary.
+	 */
+	private function empty_comment_inventory_summary() {
+		return array(
+			'token_count'             => 0,
+			'comment_count'           => 0,
+			'non_empty_comment_count' => 0,
+			'empty_comment_count'     => 0,
+			'total_comment_bytes'     => 0,
+			'max_comment_bytes'       => 0,
+		);
+	}
+
+	/**
+	 * Parses a compact comment inventory summary.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_comment_inventory_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 6 );
+		if ( 6 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'             => (int) $parts[0],
+			'comment_count'           => (int) $parts[1],
+			'non_empty_comment_count' => (int) $parts[2],
+			'empty_comment_count'     => (int) $parts[3],
+			'total_comment_bytes'     => (int) $parts[4],
+			'max_comment_bytes'       => (int) $parts[5],
+		);
+	}
+
+	/**
+	 * Summarizes payload-bearing XML tokens in one pass.
+	 *
+	 * This is equivalent to repeatedly calling `next_token()` and inspecting
+	 * text, CDATA, comment, and processing-instruction token contents, but
+	 * native implementations may process the remaining document in one call.
+	 *
+	 * @return array Summary with payload token counts and byte totals.
+	 * @since WP_VERSION
+	 */
+	public function summarize_payload_inventory() {
+		if ( $this->has_native_processor() && $this->native_supports_payload_inventory_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return $this->empty_payload_inventory_summary();
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->summarize_payload_inventory();
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_payload_inventory_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$summary = $this->empty_payload_inventory_summary();
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$summary['token_count'];
+
+			if (
+				'#text' !== $token_type &&
+				'#cdata-section' !== $token_type &&
+				'#comment' !== $token_type &&
+				'#processing-instructions' !== $token_type
+			) {
+				continue;
+			}
+
+			if ( '#text' === $token_type ) {
+				++$summary['text_token_count'];
+			} elseif ( '#cdata-section' === $token_type ) {
+				++$summary['cdata_count'];
+			} elseif ( '#comment' === $token_type ) {
+				++$summary['comment_count'];
+			} else {
+				++$summary['processing_instruction_count'];
+			}
+
+			$text          = (string) $this->get_modifiable_text();
+			$payload_bytes = strlen( $text );
+
+			$summary['total_payload_bytes'] += $payload_bytes;
+			$summary['max_payload_bytes']    = max( $summary['max_payload_bytes'], $payload_bytes );
+		}
+
+		return $summary;
+	}
+
+	/**
+	 * Returns an empty payload inventory summary.
+	 *
+	 * @return array Empty summary.
+	 */
+	private function empty_payload_inventory_summary() {
+		return array(
+			'token_count'                  => 0,
+			'text_token_count'             => 0,
+			'cdata_count'                  => 0,
+			'comment_count'                => 0,
+			'processing_instruction_count' => 0,
+			'total_payload_bytes'          => 0,
+			'max_payload_bytes'            => 0,
+		);
+	}
+
+	/**
+	 * Parses a compact payload inventory summary.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_payload_inventory_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 7 );
+		if ( 7 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'                  => (int) $parts[0],
+			'text_token_count'             => (int) $parts[1],
+			'cdata_count'                  => (int) $parts[2],
+			'comment_count'                => (int) $parts[3],
+			'processing_instruction_count' => (int) $parts[4],
+			'total_payload_bytes'          => (int) $parts[5],
+			'max_payload_bytes'            => (int) $parts[6],
+		);
+	}
+
+	/**
+	 * Summarizes XML content and metadata payloads in one pass.
+	 *
+	 * This is equivalent to combining attribute and payload inventories over the
+	 * remaining document. Native implementations may process the remaining
+	 * document in one call.
+	 *
+	 * @return array Summary with tag, attribute, and payload byte counts.
+	 * @since WP_VERSION
+	 */
+	public function summarize_content_inventory() {
+		if ( $this->has_native_processor() && $this->native_supports_content_inventory_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return $this->empty_content_inventory_summary();
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->summarize_content_inventory();
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_content_inventory_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$summary = $this->empty_content_inventory_summary();
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$summary['token_count'];
+
+			if ( '#tag' === $token_type && ! $this->is_tag_closer() ) {
+				++$summary['tag_count'];
+
+				foreach ( $this->attributes as $attribute ) {
+					if ( 'xmlns' === $attribute->qualified_name || 'xmlns' === $attribute->namespace_prefix ) {
+						continue;
+					}
+
+					$value = $this->get_attribute( $attribute->namespace, $attribute->local_name );
+					if ( false === $value ) {
+						continue;
+					}
+
+					++$summary['attribute_count'];
+
+					$value_bytes                             = strlen( (string) $value );
+					$summary['total_attribute_value_bytes'] += $value_bytes;
+					$summary['max_attribute_value_bytes']    = max( $summary['max_attribute_value_bytes'], $value_bytes );
+				}
+
+				continue;
+			}
+
+			if (
+				'#text' !== $token_type &&
+				'#cdata-section' !== $token_type &&
+				'#comment' !== $token_type &&
+				'#processing-instructions' !== $token_type
+			) {
+				continue;
+			}
+
+			if ( '#text' === $token_type ) {
+				++$summary['text_token_count'];
+			} elseif ( '#cdata-section' === $token_type ) {
+				++$summary['cdata_count'];
+			} elseif ( '#comment' === $token_type ) {
+				++$summary['comment_count'];
+			} else {
+				++$summary['processing_instruction_count'];
+			}
+
+			$text          = (string) $this->get_modifiable_text();
+			$payload_bytes = strlen( $text );
+
+			$summary['total_payload_bytes'] += $payload_bytes;
+			$summary['max_payload_bytes']    = max( $summary['max_payload_bytes'], $payload_bytes );
+		}
+
+		return $summary;
+	}
+
+	/**
+	 * Returns an empty content inventory summary.
+	 *
+	 * @return array Empty summary.
+	 */
+	private function empty_content_inventory_summary() {
+		return array(
+			'token_count'                   => 0,
+			'tag_count'                     => 0,
+			'attribute_count'               => 0,
+			'text_token_count'              => 0,
+			'cdata_count'                   => 0,
+			'comment_count'                 => 0,
+			'processing_instruction_count'  => 0,
+			'total_attribute_value_bytes'   => 0,
+			'max_attribute_value_bytes'     => 0,
+			'total_payload_bytes'           => 0,
+			'max_payload_bytes'             => 0,
+		);
+	}
+
+	/**
+	 * Parses a compact content inventory summary.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_content_inventory_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 11 );
+		if ( 11 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'                   => (int) $parts[0],
+			'tag_count'                     => (int) $parts[1],
+			'attribute_count'               => (int) $parts[2],
+			'text_token_count'              => (int) $parts[3],
+			'cdata_count'                   => (int) $parts[4],
+			'comment_count'                 => (int) $parts[5],
+			'processing_instruction_count'  => (int) $parts[6],
+			'total_attribute_value_bytes'   => (int) $parts[7],
+			'max_attribute_value_bytes'     => (int) $parts[8],
+			'total_payload_bytes'           => (int) $parts[9],
+			'max_payload_bytes'             => (int) $parts[10],
+		);
+	}
+
+	/**
+	 * Summarizes leaf and branch elements in one pass.
+	 *
+	 * This is equivalent to repeatedly calling `next_token()` and tracking
+	 * direct child element counts for each opening tag. Native implementations
+	 * may process the remaining document in one call.
+	 *
+	 * @return array Summary with leaf and branch element counts.
+	 * @since WP_VERSION
+	 */
+	public function summarize_leaf_inventory() {
+		if ( $this->has_native_processor() && $this->native_supports_leaf_inventory_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return $this->empty_leaf_inventory_summary();
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->summarize_leaf_inventory();
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_leaf_inventory_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$summary           = $this->empty_leaf_inventory_summary();
+		$open_child_counts = array();
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$summary['token_count'];
+
+			if ( '#tag' !== $token_type ) {
+				continue;
+			}
+
+			if ( $this->is_tag_closer() ) {
+				++$summary['closing_tag_count'];
+
+				if ( empty( $open_child_counts ) ) {
+					continue;
+				}
+
+				$child_count = array_pop( $open_child_counts );
+				if ( 0 === $child_count ) {
+					++$summary['leaf_element_count'];
+				} else {
+					++$summary['branch_element_count'];
+				}
+
+				$summary['max_child_element_count'] = max( $summary['max_child_element_count'], $child_count );
+				continue;
+			}
+
+			++$summary['tag_count'];
+
+			if ( ! empty( $open_child_counts ) ) {
+				++$open_child_counts[ count( $open_child_counts ) - 1 ];
+			}
+
+			if ( $this->is_empty_element() ) {
+				++$summary['empty_element_count'];
+				++$summary['leaf_element_count'];
+				continue;
+			}
+
+			$open_child_counts[] = 0;
+		}
+
+		return $summary;
+	}
+
+	/**
+	 * Returns an empty leaf inventory summary.
+	 *
+	 * @return array Empty summary.
+	 */
+	private function empty_leaf_inventory_summary() {
+		return array(
+			'token_count'             => 0,
+			'tag_count'               => 0,
+			'closing_tag_count'       => 0,
+			'empty_element_count'     => 0,
+			'leaf_element_count'      => 0,
+			'branch_element_count'    => 0,
+			'max_child_element_count' => 0,
+		);
+	}
+
+	/**
+	 * Parses a compact leaf inventory summary.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_leaf_inventory_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 7 );
+		if ( 7 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'             => (int) $parts[0],
+			'tag_count'               => (int) $parts[1],
+			'closing_tag_count'       => (int) $parts[2],
+			'empty_element_count'     => (int) $parts[3],
+			'leaf_element_count'      => (int) $parts[4],
+			'branch_element_count'    => (int) $parts[5],
+			'max_child_element_count' => (int) $parts[6],
+		);
+	}
+
+	/**
+	 * Summarizes structural element metadata in one pass.
+	 *
+	 * This is equivalent to combining `summarize_element_inventory()`,
+	 * `summarize_depth_inventory()`, and `summarize_leaf_inventory()` over the
+	 * remaining document. Native implementations may process the remaining
+	 * document in one call.
+	 *
+	 * @return array Summary with element-name, depth, leaf, and branch counts.
+	 * @since WP_VERSION
+	 */
+	public function summarize_structural_inventory() {
+		if ( $this->has_native_processor() && $this->native_supports_structural_inventory_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return $this->empty_structural_inventory_summary();
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->summarize_structural_inventory();
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_structural_inventory_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$summary           = $this->empty_structural_inventory_summary();
+		$seen_tag_names    = array();
+		$open_child_counts = array();
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$summary['token_count'];
+			$depth                = $this->get_current_depth();
+			$summary['max_depth'] = max( $summary['max_depth'], $depth );
+
+			if ( '#tag' !== $token_type ) {
+				continue;
+			}
+
+			if ( $this->is_tag_closer() ) {
+				++$summary['closing_tag_count'];
+
+				if ( empty( $open_child_counts ) ) {
+					continue;
+				}
+
+				$child_count = array_pop( $open_child_counts );
+				if ( 0 === $child_count ) {
+					++$summary['leaf_element_count'];
+				} else {
+					++$summary['branch_element_count'];
+				}
+
+				$summary['max_child_element_count'] = max( $summary['max_child_element_count'], $child_count );
+				continue;
+			}
+
+			++$summary['tag_count'];
+			$summary['total_tag_depth'] += $depth;
+
+			if ( 1 === $depth ) {
+				++$summary['root_level_tag_count'];
+			} elseif ( $depth > 2 ) {
+				++$summary['nested_tag_count'];
+			}
+
+			$expanded_name = $this->get_tag_namespace_and_local_name();
+			if ( isset( $seen_tag_names[ $expanded_name ] ) ) {
+				++$summary['duplicate_tag_name_count'];
+			} else {
+				$seen_tag_names[ $expanded_name ] = true;
+				++$summary['unique_tag_name_count'];
+			}
+
+			if ( '' !== $this->get_tag_namespace() ) {
+				++$summary['namespaced_tag_count'];
+			}
+
+			if ( ! empty( $open_child_counts ) ) {
+				++$open_child_counts[ count( $open_child_counts ) - 1 ];
+			}
+
+			if ( $this->is_empty_element() ) {
+				++$summary['empty_element_count'];
+				++$summary['leaf_element_count'];
+				continue;
+			}
+
+			$open_child_counts[] = 0;
+		}
+
+		return $summary;
+	}
+
+	/**
+	 * Returns an empty structural inventory summary.
+	 *
+	 * @return array Empty summary.
+	 */
+	private function empty_structural_inventory_summary() {
+		return array(
+			'token_count'              => 0,
+			'tag_count'                => 0,
+			'closing_tag_count'        => 0,
+			'unique_tag_name_count'    => 0,
+			'duplicate_tag_name_count' => 0,
+			'namespaced_tag_count'     => 0,
+			'empty_element_count'      => 0,
+			'root_level_tag_count'     => 0,
+			'nested_tag_count'         => 0,
+			'total_tag_depth'          => 0,
+			'max_depth'                => 0,
+			'leaf_element_count'       => 0,
+			'branch_element_count'     => 0,
+			'max_child_element_count'  => 0,
+		);
+	}
+
+	/**
+	 * Parses a compact structural inventory summary.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_structural_inventory_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 14 );
+		if ( 14 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'              => (int) $parts[0],
+			'tag_count'                => (int) $parts[1],
+			'closing_tag_count'        => (int) $parts[2],
+			'unique_tag_name_count'    => (int) $parts[3],
+			'duplicate_tag_name_count' => (int) $parts[4],
+			'namespaced_tag_count'     => (int) $parts[5],
+			'empty_element_count'      => (int) $parts[6],
+			'root_level_tag_count'     => (int) $parts[7],
+			'nested_tag_count'         => (int) $parts[8],
+			'total_tag_depth'          => (int) $parts[9],
+			'max_depth'                => (int) $parts[10],
+			'leaf_element_count'       => (int) $parts[11],
+			'branch_element_count'     => (int) $parts[12],
+			'max_child_element_count'  => (int) $parts[13],
+		);
+	}
+
+	/**
+	 * Summarizes importer-facing XML structure and content usage in one pass.
+	 *
+	 * This is equivalent to combining `summarize_structural_inventory()` and
+	 * `summarize_content_inventory()` over the remaining document. Native
+	 * implementations may process the remaining document in one call.
+	 *
+	 * @return array Summary with element structure, attribute, and payload counts.
+	 * @since WP_VERSION
+	 */
+	public function summarize_import_inventory() {
+		if ( $this->has_native_processor() && $this->native_supports_import_inventory_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return $this->empty_import_inventory_summary();
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->summarize_import_inventory();
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_import_inventory_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$summary           = $this->empty_import_inventory_summary();
+		$seen_tag_names    = array();
+		$open_child_counts = array();
+
+		while ( $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			++$summary['token_count'];
+			$depth                = $this->get_current_depth();
+			$summary['max_depth'] = max( $summary['max_depth'], $depth );
+
+			if ( '#tag' === $token_type ) {
+				if ( $this->is_tag_closer() ) {
+					++$summary['closing_tag_count'];
+
+					if ( empty( $open_child_counts ) ) {
+						continue;
+					}
+
+					$child_count = array_pop( $open_child_counts );
+					if ( 0 === $child_count ) {
+						++$summary['leaf_element_count'];
+					} else {
+						++$summary['branch_element_count'];
+					}
+
+					$summary['max_child_element_count'] = max( $summary['max_child_element_count'], $child_count );
+					continue;
+				}
+
+				++$summary['tag_count'];
+				$summary['total_tag_depth'] += $depth;
+
+				if ( 1 === $depth ) {
+					++$summary['root_level_tag_count'];
+				} elseif ( $depth > 2 ) {
+					++$summary['nested_tag_count'];
+				}
+
+				$expanded_name = $this->get_tag_namespace_and_local_name();
+				if ( isset( $seen_tag_names[ $expanded_name ] ) ) {
+					++$summary['duplicate_tag_name_count'];
+				} else {
+					$seen_tag_names[ $expanded_name ] = true;
+					++$summary['unique_tag_name_count'];
+				}
+
+				if ( '' !== $this->get_tag_namespace() ) {
+					++$summary['namespaced_tag_count'];
+				}
+
+				if ( ! empty( $open_child_counts ) ) {
+					++$open_child_counts[ count( $open_child_counts ) - 1 ];
+				}
+
+				foreach ( $this->attributes as $attribute ) {
+					if ( 'xmlns' === $attribute->qualified_name || 'xmlns' === $attribute->namespace_prefix ) {
+						continue;
+					}
+
+					$value = $this->get_attribute( $attribute->namespace, $attribute->local_name );
+					if ( false === $value ) {
+						continue;
+					}
+
+					++$summary['attribute_count'];
+
+					$value_bytes                             = strlen( (string) $value );
+					$summary['total_attribute_value_bytes'] += $value_bytes;
+					$summary['max_attribute_value_bytes']    = max( $summary['max_attribute_value_bytes'], $value_bytes );
+				}
+
+				if ( $this->is_empty_element() ) {
+					++$summary['empty_element_count'];
+					++$summary['leaf_element_count'];
+					continue;
+				}
+
+				$open_child_counts[] = 0;
+				continue;
+			}
+
+			if (
+				'#text' !== $token_type &&
+				'#cdata-section' !== $token_type &&
+				'#comment' !== $token_type &&
+				'#processing-instructions' !== $token_type
+			) {
+				continue;
+			}
+
+			if ( '#text' === $token_type ) {
+				++$summary['text_token_count'];
+			} elseif ( '#cdata-section' === $token_type ) {
+				++$summary['cdata_count'];
+			} elseif ( '#comment' === $token_type ) {
+				++$summary['comment_count'];
+			} else {
+				++$summary['processing_instruction_count'];
+			}
+
+			$text          = (string) $this->get_modifiable_text();
+			$payload_bytes = strlen( $text );
+
+			$summary['total_payload_bytes'] += $payload_bytes;
+			$summary['max_payload_bytes']    = max( $summary['max_payload_bytes'], $payload_bytes );
+		}
+
+		return $summary;
+	}
+
+	/**
+	 * Returns an empty import inventory summary.
+	 *
+	 * @return array Empty summary.
+	 */
+	private function empty_import_inventory_summary() {
+		return array(
+			'token_count'                  => 0,
+			'tag_count'                    => 0,
+			'closing_tag_count'            => 0,
+			'unique_tag_name_count'        => 0,
+			'duplicate_tag_name_count'     => 0,
+			'namespaced_tag_count'         => 0,
+			'empty_element_count'          => 0,
+			'root_level_tag_count'         => 0,
+			'nested_tag_count'             => 0,
+			'total_tag_depth'              => 0,
+			'max_depth'                    => 0,
+			'leaf_element_count'           => 0,
+			'branch_element_count'         => 0,
+			'max_child_element_count'      => 0,
+			'attribute_count'              => 0,
+			'text_token_count'             => 0,
+			'cdata_count'                  => 0,
+			'comment_count'                => 0,
+			'processing_instruction_count' => 0,
+			'total_attribute_value_bytes'  => 0,
+			'max_attribute_value_bytes'    => 0,
+			'total_payload_bytes'          => 0,
+			'max_payload_bytes'            => 0,
+		);
+	}
+
+	/**
+	 * Parses a compact import inventory summary.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_import_inventory_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 23 );
+		if ( 23 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'                  => (int) $parts[0],
+			'tag_count'                    => (int) $parts[1],
+			'closing_tag_count'            => (int) $parts[2],
+			'unique_tag_name_count'        => (int) $parts[3],
+			'duplicate_tag_name_count'     => (int) $parts[4],
+			'namespaced_tag_count'         => (int) $parts[5],
+			'empty_element_count'          => (int) $parts[6],
+			'root_level_tag_count'         => (int) $parts[7],
+			'nested_tag_count'             => (int) $parts[8],
+			'total_tag_depth'              => (int) $parts[9],
+			'max_depth'                    => (int) $parts[10],
+			'leaf_element_count'           => (int) $parts[11],
+			'branch_element_count'         => (int) $parts[12],
+			'max_child_element_count'      => (int) $parts[13],
+			'attribute_count'              => (int) $parts[14],
+			'text_token_count'             => (int) $parts[15],
+			'cdata_count'                  => (int) $parts[16],
+			'comment_count'                => (int) $parts[17],
+			'processing_instruction_count' => (int) $parts[18],
+			'total_attribute_value_bytes'  => (int) $parts[19],
+			'max_attribute_value_bytes'    => (int) $parts[20],
+			'total_payload_bytes'          => (int) $parts[21],
+			'max_payload_bytes'            => (int) $parts[22],
+		);
+	}
+
+	/**
+	 * Returns compact summaries for the next chunk of XML tokens.
+	 *
+	 * This is equivalent to repeatedly calling `next_token()` and reading the
+	 * common token metadata accessors, but native implementations may return
+	 * the chunk in one extension call. The batch excludes the terminal
+	 * `#complete` marker for parity with `summarize_token_stream()`.
+	 *
+	 * Each row contains `token_type`, `token_name`, `tag_local_name`,
+	 * `tag_namespace`, `tag_namespace_and_local_name`, `is_tag_closer`,
+	 * `is_empty_element`, `current_depth`, and cached `id`.
+	 *
+	 * @param int $max_tokens Maximum number of token summaries to return.
+	 * @return array[] Token summary rows.
+	 * @since WP_VERSION
+	 */
+	public function next_token_summary_batch( $max_tokens = 64 ) {
+		$max_tokens = (int) $max_tokens;
+		if ( $max_tokens <= 0 ) {
+			return array();
+		}
+
+		$max_tokens = min( 256, $max_tokens );
+		$batch      = $this->next_token_compact_summary_batch( $max_tokens );
+		if ( ! is_string( $batch ) || '' === $batch ) {
+			return array();
+		}
+
+		$rows         = array();
+		$offset       = 0;
+		$batch_length = strlen( $batch );
+
+		while ( $offset < $batch_length && count( $rows ) < $max_tokens ) {
+			$row_end = strpos( $batch, "\x1e", $offset );
+			if ( false === $row_end ) {
+				$row_end = $batch_length;
+			}
+
+			$parsed = $this->parse_native_compact_token_summary( substr( $batch, $offset, $row_end - $offset ) );
+			if ( null === $parsed ) {
+				break;
+			}
+
+			$rows[] = $this->public_token_summary_row( $parsed );
+			$offset = $row_end + 1;
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Returns compact summaries for the next chunk of XML tokens.
+	 *
+	 * This is the compact-string form of `next_token_summary_batch()`, using
+	 * unit separators between fields and record separators between rows. It is
+	 * intended for high-throughput read-only scans where callers can aggregate
+	 * token metadata without allocating one PHP array per token.
+	 *
+	 * @param int $max_tokens Maximum number of token summaries to return.
+	 * @return string|null Compact token summary batch, or null when exhausted.
+	 * @since WP_VERSION
+	 */
+	public function next_token_compact_summary_batch( $max_tokens = 64 ) {
+		$max_tokens = (int) $max_tokens;
+		if ( $max_tokens <= 0 ) {
+			return null;
+		}
+
+		$max_tokens = min( 256, $max_tokens );
+
+		if ( $this->has_native_processor() && $this->native_supports_token_summary_batch ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return null;
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$batch = $this->native_supports_token_fast_compact_summary_batch
+					? $this->native_processor->next_token_fast_compact_summary_batch( $max_tokens )
+					: $this->native_processor->next_token_compact_summary_batch( $max_tokens );
+				if ( is_string( $batch ) && '' !== $batch ) {
+					$offset        = 0;
+					$batch_length  = strlen( $batch );
+					$last_metadata = null;
+					$token_count   = 0;
+
+					while ( $offset < $batch_length && $token_count < $max_tokens ) {
+						$row_end = strpos( $batch, "\x1e", $offset );
+						if ( false === $row_end ) {
+							$row_end = $batch_length;
+						}
+
+						$last_metadata = substr( $batch, $offset, $row_end - $offset );
+						$offset        = $row_end + 1;
+						++$token_count;
+					}
+
+					if ( $token_count > 0 ) {
+						$this->native_tokens_parsed += $token_count;
+						$this->cache_native_compact_token_summary( $last_metadata );
+						if ( $token_count < $max_tokens ) {
+							$this->update_parser_state_after_native_remaining_summary();
+						}
+
+						return $batch;
+					}
+				}
+
+				$this->clear_native_token_metadata();
+				$this->update_parser_state_after_native_remaining_summary();
+
+				return null;
+			}
+		}
+
+		$rows  = '';
+		$count = 0;
+		while ( $count < $max_tokens && $this->next_token() ) {
+			$token_type = $this->get_token_type();
+			if ( '#complete' === $token_type ) {
+				continue;
+			}
+
+			if ( '' !== $rows ) {
+				$rows .= "\x1e";
+			}
+
+			$rows .= $this->compact_summary_for_current_token();
+			++$count;
+		}
+
+		return '' === $rows ? null : $rows;
+	}
+
+	/**
+	 * Builds a compact summary row for the current PHP token.
+	 *
+	 * @return string Compact token summary row.
+	 */
+	private function compact_summary_for_current_token() {
+		$token_type = $this->get_token_type();
+		switch ( $token_type ) {
+			case '#tag':
+				$token_kind = 't';
+				break;
+			case '#xml-declaration':
+				$token_kind = 'x';
+				break;
+			case '#doctype':
+				$token_kind = 'd';
+				break;
+			case '#processing-instructions':
+				$token_kind = 'p';
+				break;
+			case '#comment':
+				$token_kind = 'c';
+				break;
+			case '#cdata-section':
+				$token_kind = 'a';
+				break;
+			default:
+				$token_kind = 's';
+				break;
+		}
+
+		$tag_namespace = '#tag' === $token_type ? $this->get_tag_namespace() : '';
+		$id_attribute  = $this->get_attribute( '', 'id' );
+
+		return implode(
+			"\x1f",
+			array(
+				$token_kind,
+				$this->get_token_name(),
+				null === $tag_namespace ? '' : $tag_namespace,
+				( $this->is_tag_closer() ? '1' : '0' ) . ( $this->is_empty_element() ? '1' : '0' ),
+				(string) $this->get_current_depth(),
+				null === $id_attribute ? '0' : '1' . $id_attribute,
+			)
+		);
+	}
+
+	/**
+	 * Converts parsed native compact metadata to a public batch row.
+	 *
+	 * @param array $parsed Parsed compact token summary.
+	 * @return array Public token summary row.
+	 */
+	private function public_token_summary_row( $parsed ) {
+		return array(
+			'token_type'                   => $parsed['token_type'],
+			'token_name'                   => $parsed['token_name'],
+			'tag_local_name'               => $parsed['tag_local_name'],
+			'tag_namespace'                => $parsed['tag_namespace'],
+			'tag_namespace_and_local_name' => $parsed['tag_namespace_and_local_name'],
+			'is_tag_closer'                => $parsed['is_tag_closer'],
+			'is_empty_element'             => $parsed['is_empty_element'],
+			'current_depth'                => $parsed['current_depth'],
+			'id'                           => $parsed['id'],
+		);
+	}
+
+	/**
+	 * Counts the next chunk of XML tags and one requested attribute.
+	 *
+	 * This is the count-only form of `next_tag_summary_batch()`. It advances
+	 * through at most `$max_tags` opening tags, skips non-tag tokens and closing
+	 * tags like `next_tag()`, and avoids allocating per-tag metadata rows.
+	 *
+	 * @param int    $max_tags       Maximum number of opening tags to count.
+	 * @param string $attribute_name Attribute name to count when present.
+	 * @return array Summary with `token_count`, `tag_count`, and `attribute_count`.
+	 * @since WP_VERSION
+	 */
+	public function next_tag_count_batch( $max_tags = 64, $attribute_name = 'id' ) {
+		$summary = $this->next_tag_count_compact_batch( $max_tags, $attribute_name );
+		if ( ! is_string( $summary ) ) {
+			return array(
+				'token_count'     => 0,
+				'tag_count'       => 0,
+				'attribute_count' => 0,
+			);
+		}
+
+		$parsed = $this->parse_compact_count_summary( $summary );
+		if ( null === $parsed ) {
+			return array(
+				'token_count'     => 0,
+				'tag_count'       => 0,
+				'attribute_count' => 0,
+			);
+		}
+
+		return $parsed;
+	}
+
+	/**
+	 * Counts the next chunk of XML tags and one requested attribute.
+	 *
+	 * This is the compact-string form of `next_tag_count_batch()`, using unit
+	 * separators between `token_count`, `tag_count`, and `attribute_count`.
+	 *
+	 * @param int    $max_tags       Maximum number of opening tags to count.
+	 * @param string $attribute_name Attribute name to count when present.
+	 * @return string|null Compact count summary, or null when exhausted.
+	 * @since WP_VERSION
+	 */
+	public function next_tag_count_compact_batch( $max_tags = 64, $attribute_name = 'id' ) {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 ) {
+			return null;
+		}
+
+		$max_tags       = min( 256, $max_tags );
+		$attribute_name = (string) $attribute_name;
+
+		if ( $this->has_native_processor() && $this->native_supports_tag_count_batch ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return null;
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->next_tag_count_batch( $max_tags, $attribute_name );
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_count_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						if ( $parsed['tag_count'] < $max_tags ) {
+							$this->update_parser_state_after_native_remaining_summary();
+						}
+
+						return $summary;
+					}
+				}
+
+				$this->clear_native_token_metadata();
+				$this->update_parser_state_after_native_remaining_summary();
+
+				return null;
+			}
+		}
+
+		$token_count     = 0;
+		$tag_count       = 0;
+		$attribute_count = 0;
+		while ( $tag_count < $max_tags && $this->next_token() ) {
+			if ( '#complete' === $this->get_token_type() ) {
+				continue;
+			}
+
+			++$token_count;
+
+			if ( '#tag' !== $this->get_token_type() || $this->is_tag_closer() ) {
+				continue;
+			}
+
+			++$tag_count;
+			if ( null !== $this->get_attribute( '', $attribute_name ) ) {
+				++$attribute_count;
+			}
+		}
+
+		if ( 0 === $token_count ) {
+			return null;
+		}
+
+		return $token_count . "\x1f" . $tag_count . "\x1f" . $attribute_count;
+	}
+
+	/**
+	 * Parses a compact count summary row.
+	 *
+	 * @param string $summary Compact summary.
+	 * @return array|null Parsed summary, or null for invalid input.
+	 */
+	private function parse_compact_count_summary( $summary ) {
+		$parts = explode( "\x1f", $summary, 3 );
+		if ( 3 !== count( $parts ) ) {
+			return null;
+		}
+
+		return array(
+			'token_count'     => (int) $parts[0],
+			'tag_count'       => (int) $parts[1],
+			'attribute_count' => (int) $parts[2],
+		);
+	}
+
+	/**
+	 * Returns compact summaries for the next chunk of XML tags.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` and reading common
+	 * tag metadata, but native implementations may return the chunk in one
+	 * extension call. Closing tags are skipped, matching `next_tag()`.
+	 *
+	 * Each row contains tokens consumed in the current batch, tag local name, tag namespace,
+	 * empty-element flag, current depth, and the requested attribute.
+	 *
+	 * @param int    $max_tags       Maximum number of tag summaries to return.
+	 * @param string $attribute_name Attribute name to include when present.
+	 * @return array[] Tag summary rows.
+	 * @since WP_VERSION
+	 */
+	public function next_tag_summary_batch( $max_tags = 64, $attribute_name = 'id' ) {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 ) {
+			return array();
+		}
+
+		$max_tags = min( 256, $max_tags );
+		$batch    = $this->next_tag_compact_summary_batch( $max_tags, $attribute_name );
+		if ( ! is_string( $batch ) || '' === $batch ) {
+			return array();
+		}
+
+		$rows         = array();
+		$offset       = 0;
+		$batch_length = strlen( $batch );
+
+		while ( $offset < $batch_length && count( $rows ) < $max_tags ) {
+			$row_end = strpos( $batch, "\x1e", $offset );
+			if ( false === $row_end ) {
+				$row_end = $batch_length;
+			}
+
+			$parsed = $this->parse_compact_tag_summary( substr( $batch, $offset, $row_end - $offset ), $attribute_name );
+			if ( null === $parsed ) {
+				break;
+			}
+
+			$rows[] = $this->public_tag_summary_row( $parsed, $attribute_name );
+			$offset = $row_end + 1;
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Returns compact summaries for the next chunk of XML tags.
+	 *
+	 * This is the compact-string form of `next_tag_summary_batch()`, using
+	 * unit separators between fields and record separators between rows. It is
+	 * intended for high-throughput read-only scans where callers can aggregate
+	 * tag metadata without allocating one PHP array per tag.
+	 *
+	 * @param int    $max_tags       Maximum number of tag summaries to return.
+	 * @param string $attribute_name Attribute name to include when present.
+	 * @return string|null Compact tag summary batch, or null when exhausted.
+	 * @since WP_VERSION
+	 */
+	public function next_tag_compact_summary_batch( $max_tags = 64, $attribute_name = 'id' ) {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 ) {
+			return null;
+		}
+
+		$max_tags       = min( 256, $max_tags );
+		$attribute_name = (string) $attribute_name;
+
+		if ( $this->has_native_processor() && $this->native_supports_tag_summary_batch ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return null;
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$batch = $this->native_processor->next_tag_compact_summary_batch( $max_tags, $attribute_name );
+				if ( is_string( $batch ) && '' !== $batch ) {
+					$offset       = 0;
+					$batch_length = strlen( $batch );
+					$last_start   = 0;
+					$tag_count    = 0;
+
+					while ( $offset < $batch_length && $tag_count < $max_tags ) {
+						$last_start = $offset;
+						$row_end    = strpos( $batch, "\x1e", $offset );
+						if ( false === $row_end ) {
+							$row_end = $batch_length;
+						}
+
+						$offset = $row_end + 1;
+						++$tag_count;
+					}
+
+					if ( $tag_count > 0 ) {
+						$first = strpos( $batch, "\x1f", $last_start );
+						if ( false === $first ) {
+							$this->clear_native_token_metadata();
+
+							return null;
+						}
+
+						$this->native_tokens_parsed += (int) substr( $batch, $last_start, $first - $last_start );
+						$this->clear_native_token_metadata();
+						if ( $tag_count < $max_tags ) {
+							$this->update_parser_state_after_native_remaining_summary();
+						}
+
+						return $batch;
+					}
+				}
+
+				$this->clear_native_token_metadata();
+				$this->update_parser_state_after_native_remaining_summary();
+
+				return null;
+			}
+		}
+
+		$rows        = '';
+		$tag_count   = 0;
+		$token_delta = 0;
+		while ( $tag_count < $max_tags && $this->next_token() ) {
+			++$token_delta;
+
+			if ( '#tag' !== $this->get_token_type() || $this->is_tag_closer() ) {
+				continue;
+			}
+
+			if ( '' !== $rows ) {
+				$rows .= "\x1e";
+			}
+
+			$rows .= $this->compact_summary_for_current_tag( $token_delta, $attribute_name );
+			++$tag_count;
+		}
+
+		return '' === $rows ? null : $rows;
+	}
+
+	/**
+	 * Returns compact summaries for the next chunk of matching XML tags.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag( array( $namespace, $local_name ) )`
+	 * and reading common tag metadata, but native implementations may skip
+	 * non-matching tags and return the chunk in one extension call.
+	 *
+	 * @param int    $max_tags       Maximum number of matching tag summaries to return.
+	 * @param string $tag_namespace  Namespace URI to match, or empty string for no namespace.
+	 * @param string $tag_local_name Local tag name to match.
+	 * @param string $attribute_name Attribute name to include when present.
+	 * @return array[] Tag summary rows.
+	 * @since WP_VERSION
+	 */
+	public function next_matching_tag_summary_batch( $max_tags = 64, $tag_namespace = '', $tag_local_name = '', $attribute_name = 'id' ) {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 || '' === (string) $tag_local_name ) {
+			return array();
+		}
+
+		$max_tags = min( 256, $max_tags );
+		$batch    = $this->next_matching_tag_compact_summary_batch( $max_tags, $tag_namespace, $tag_local_name, $attribute_name );
+		if ( ! is_string( $batch ) || '' === $batch ) {
+			return array();
+		}
+
+		$rows         = array();
+		$offset       = 0;
+		$batch_length = strlen( $batch );
+
+		while ( $offset < $batch_length && count( $rows ) < $max_tags ) {
+			$row_end = strpos( $batch, "\x1e", $offset );
+			if ( false === $row_end ) {
+				$row_end = $batch_length;
+			}
+
+			$parsed = $this->parse_compact_tag_summary( substr( $batch, $offset, $row_end - $offset ), $attribute_name );
+			if ( null === $parsed ) {
+				break;
+			}
+
+			$rows[] = $this->public_tag_summary_row( $parsed, $attribute_name );
+			$offset = $row_end + 1;
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Returns compact summaries for the next chunk of matching XML tags.
+	 *
+	 * This is the compact-string form of `next_matching_tag_summary_batch()`,
+	 * using unit separators between fields and record separators between rows.
+	 *
+	 * @param int    $max_tags       Maximum number of matching tag summaries to return.
+	 * @param string $tag_namespace  Namespace URI to match, or empty string for no namespace.
+	 * @param string $tag_local_name Local tag name to match.
+	 * @param string $attribute_name Attribute name to include when present.
+	 * @return string|null Compact tag summary batch, or null when exhausted.
+	 * @since WP_VERSION
+	 */
+	public function next_matching_tag_compact_summary_batch( $max_tags = 64, $tag_namespace = '', $tag_local_name = '', $attribute_name = 'id' ) {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 || '' === (string) $tag_local_name ) {
+			return null;
+		}
+
+		$max_tags       = min( 256, $max_tags );
+		$tag_namespace  = (string) $tag_namespace;
+		$tag_local_name = (string) $tag_local_name;
+		$attribute_name = (string) $attribute_name;
+
+		if ( $this->has_native_processor() && $this->native_supports_matching_tag_summary_batch ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return null;
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$batch = $this->native_processor->next_matching_tag_compact_summary_batch( $max_tags, $tag_namespace, $tag_local_name, $attribute_name );
+				if ( is_string( $batch ) && '' !== $batch ) {
+					$offset        = 0;
+					$batch_length  = strlen( $batch );
+					$last_metadata = null;
+					$tag_count     = 0;
+
+					while ( $offset < $batch_length && $tag_count < $max_tags ) {
+						$row_end = strpos( $batch, "\x1e", $offset );
+						if ( false === $row_end ) {
+							$row_end = $batch_length;
+						}
+
+						$last_metadata = substr( $batch, $offset, $row_end - $offset );
+						$offset        = $row_end + 1;
+						++$tag_count;
+					}
+
+					if ( $tag_count > 0 && null !== $last_metadata ) {
+						$parsed = $this->parse_compact_tag_summary( $last_metadata, $attribute_name );
+						if ( null === $parsed ) {
+							$this->clear_native_token_metadata();
+
+							return null;
+						}
+
+						$this->native_tokens_parsed += $parsed['tokens_consumed'];
+						$this->cache_parsed_native_compact_tag_summary( $parsed );
+						if ( $tag_count < $max_tags ) {
+							$this->update_parser_state_after_native_remaining_summary();
+						}
+
+						return $batch;
+					}
+				}
+
+				$this->clear_native_token_metadata();
+				$this->update_parser_state_after_native_remaining_summary();
+
+				return null;
+			}
+		}
+
+		$rows        = '';
+		$tag_count   = 0;
+		$token_delta = 0;
+		while ( $tag_count < $max_tags && $this->next_token() ) {
+			++$token_delta;
+
+			if ( '#tag' !== $this->get_token_type() || $this->is_tag_closer() ) {
+				continue;
+			}
+
+			if ( $this->get_tag_local_name() !== $tag_local_name || $this->get_tag_namespace() !== $tag_namespace ) {
+				continue;
+			}
+
+			if ( '' !== $rows ) {
+				$rows .= "\x1e";
+			}
+
+			$rows .= $this->compact_summary_for_current_tag( $token_delta, $attribute_name );
+			++$tag_count;
+		}
+
+		return '' === $rows ? null : $rows;
+	}
+
+	/**
+	 * Counts the next chunk of matching XML tags and one requested attribute.
+	 *
+	 * This is the count-only form of `next_matching_tag_summary_batch()`.
+	 *
+	 * @param int    $max_tags       Maximum number of matching tags to count.
+	 * @param string $tag_namespace  Namespace URI to match, or empty string for no namespace.
+	 * @param string $tag_local_name Local tag name to match.
+	 * @param string $attribute_name Attribute name to count when present.
+	 * @return array Summary with `token_count`, `tag_count`, and `attribute_count`.
+	 * @since WP_VERSION
+	 */
+	public function next_matching_tag_count_batch( $max_tags = 64, $tag_namespace = '', $tag_local_name = '', $attribute_name = 'id' ) {
+		$summary = $this->next_matching_tag_count_compact_batch( $max_tags, $tag_namespace, $tag_local_name, $attribute_name );
+		if ( ! is_string( $summary ) ) {
+			return array(
+				'token_count'     => 0,
+				'tag_count'       => 0,
+				'attribute_count' => 0,
+			);
+		}
+
+		$parsed = $this->parse_compact_count_summary( $summary );
+		if ( null === $parsed ) {
+			return array(
+				'token_count'     => 0,
+				'tag_count'       => 0,
+				'attribute_count' => 0,
+			);
+		}
+
+		return $parsed;
+	}
+
+	/**
+	 * Counts the next chunk of matching XML tags and one requested attribute.
+	 *
+	 * This is the compact-string form of `next_matching_tag_count_batch()`, using
+	 * unit separators between `token_count`, `tag_count`, and `attribute_count`.
+	 *
+	 * @param int    $max_tags       Maximum number of matching tags to count.
+	 * @param string $tag_namespace  Namespace URI to match, or empty string for no namespace.
+	 * @param string $tag_local_name Local tag name to match.
+	 * @param string $attribute_name Attribute name to count when present.
+	 * @return string|null Compact count summary, or null when exhausted.
+	 * @since WP_VERSION
+	 */
+	public function next_matching_tag_count_compact_batch( $max_tags = 64, $tag_namespace = '', $tag_local_name = '', $attribute_name = 'id' ) {
+		$max_tags = (int) $max_tags;
+		if ( $max_tags <= 0 || '' === (string) $tag_local_name ) {
+			return null;
+		}
+
+		$max_tags       = min( 256, $max_tags );
+		$tag_namespace  = (string) $tag_namespace;
+		$tag_local_name = (string) $tag_local_name;
+		$attribute_name = (string) $attribute_name;
+
+		if ( $this->has_native_processor() && $this->native_supports_matching_tag_count_batch ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return null;
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->next_matching_tag_count_batch( $max_tags, $tag_namespace, $tag_local_name, $attribute_name );
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_count_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						if ( $parsed['tag_count'] < $max_tags ) {
+							$this->update_parser_state_after_native_remaining_summary();
+						}
+
+						return $summary;
+					}
+				}
+
+				$this->clear_native_token_metadata();
+				$this->update_parser_state_after_native_remaining_summary();
+
+				return null;
+			}
+		}
+
+		$token_count     = 0;
+		$tag_count       = 0;
+		$attribute_count = 0;
+		while ( $tag_count < $max_tags && $this->next_token() ) {
+			if ( '#complete' === $this->get_token_type() ) {
+				continue;
+			}
+
+			++$token_count;
+
+			if ( '#tag' !== $this->get_token_type() || $this->is_tag_closer() ) {
+				continue;
+			}
+
+			if ( $this->get_tag_local_name() !== $tag_local_name || $this->get_tag_namespace() !== $tag_namespace ) {
+				continue;
+			}
+
+			++$tag_count;
+			if ( null !== $this->get_attribute( '', $attribute_name ) ) {
+				++$attribute_count;
+			}
+		}
+
+		if ( 0 === $token_count ) {
+			return null;
+		}
+
+		return $token_count . "\x1f" . $tag_count . "\x1f" . $attribute_count;
+	}
+
+	/**
+	 * Summarizes matching XML tags and one requested attribute.
+	 *
+	 * This is equivalent to scanning the remaining token stream for opening
+	 * tags matching a namespace URI and local name, then counting one
+	 * requested attribute on those tags. Native implementations may process
+	 * the remaining document in one call.
+	 *
+	 * @param string $tag_namespace  Namespace URI to match, or empty string for no namespace.
+	 * @param string $tag_local_name Local tag name to match.
+	 * @param string $attribute_name Attribute name to count when present.
+	 * @return array Summary with `token_count`, `tag_count`, and `attribute_count`.
+	 * @since WP_VERSION
+	 */
+	public function summarize_matching_tag_stream( $tag_namespace = '', $tag_local_name = '', $attribute_name = 'id' ) {
+		$tag_namespace  = (string) $tag_namespace;
+		$tag_local_name = (string) $tag_local_name;
+		$attribute_name = (string) $attribute_name;
+
+		if ( '' === $tag_local_name ) {
+			return array(
+				'token_count'     => 0,
+				'tag_count'       => 0,
+				'attribute_count' => 0,
+			);
+		}
+
+		if ( $this->has_native_processor() && $this->native_supports_matching_tag_stream_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return array(
+						'token_count'     => 0,
+						'tag_count'       => 0,
+						'attribute_count' => 0,
+					);
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->summarize_matching_tag_stream( $tag_namespace, $tag_local_name, $attribute_name );
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_count_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$token_count     = 0;
+		$tag_count       = 0;
+		$attribute_count = 0;
+		while ( $this->next_token() ) {
+			if ( '#complete' === $this->get_token_type() ) {
+				continue;
+			}
+
+			++$token_count;
+
+			if ( '#tag' !== $this->get_token_type() || $this->is_tag_closer() ) {
+				continue;
+			}
+
+			if ( $this->get_tag_local_name() !== $tag_local_name || $this->get_tag_namespace() !== $tag_namespace ) {
+				continue;
+			}
+
+			++$tag_count;
+			if ( null !== $this->get_attribute( '', $attribute_name ) ) {
+				++$attribute_count;
+			}
+		}
+
+		return array(
+			'token_count'     => $token_count,
+			'tag_count'       => $tag_count,
+			'attribute_count' => $attribute_count,
+		);
+	}
+
+	/**
+	 * Summarizes matching XML tags and several requested attributes.
+	 *
+	 * This is equivalent to scanning the remaining token stream for opening
+	 * tags matching a namespace URI and local name, then counting all requested
+	 * attributes on those tags. Native implementations may process the
+	 * remaining document in one call.
+	 *
+	 * Attribute names may be plain local names or resolved names in the
+	 * `{namespace}local` form used internally by the processor.
+	 *
+	 * @param string       $tag_namespace   Namespace URI to match, or empty string for no namespace.
+	 * @param string       $tag_local_name  Local tag name to match.
+	 * @param array|string $attribute_names Attribute names to count when present.
+	 * @return array Summary with `token_count`, `tag_count`, and `attribute_count`.
+	 * @since WP_VERSION
+	 */
+	public function summarize_matching_tag_attributes_stream( $tag_namespace = '', $tag_local_name = '', $attribute_names = array( 'id' ) ) {
+		$tag_namespace   = (string) $tag_namespace;
+		$tag_local_name  = (string) $tag_local_name;
+		$attribute_names = $this->normalize_summary_attribute_names( $attribute_names );
+
+		if ( '' === $tag_local_name ) {
+			return array(
+				'token_count'     => 0,
+				'tag_count'       => 0,
+				'attribute_count' => 0,
+			);
+		}
+
+		if ( $this->has_native_processor() && $this->native_supports_matching_tag_attributes_stream_summary ) {
+			if (
+				$this->native_token_from_compact_summary_batch ||
+				$this->native_token_compact_summary_batch_offset < strlen( $this->native_token_compact_summary_batch )
+			) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return array(
+						'token_count'     => 0,
+						'tag_count'       => 0,
+						'attribute_count' => 0,
+					);
+				}
+			}
+
+			if ( $this->has_native_processor() ) {
+				$summary = $this->native_processor->summarize_matching_tag_attributes_stream(
+					$tag_namespace,
+					$tag_local_name,
+					implode( "\x1f", $attribute_names )
+				);
+				if ( is_string( $summary ) ) {
+					$parsed = $this->parse_compact_count_summary( $summary );
+					if ( null !== $parsed ) {
+						$this->native_tokens_parsed += $parsed['token_count'];
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return $parsed;
+					}
+				}
+			}
+		}
+
+		$token_count     = 0;
+		$tag_count       = 0;
+		$attribute_count = 0;
+		while ( $this->next_token() ) {
+			if ( '#complete' === $this->get_token_type() ) {
+				continue;
+			}
+
+			++$token_count;
+
+			if ( '#tag' !== $this->get_token_type() || $this->is_tag_closer() ) {
+				continue;
+			}
+
+			if ( $this->get_tag_local_name() !== $tag_local_name || $this->get_tag_namespace() !== $tag_namespace ) {
+				continue;
+			}
+
+			++$tag_count;
+			foreach ( $attribute_names as $attribute_name ) {
+				list( $attribute_namespace, $attribute_local_name ) = $this->split_summary_attribute_name( $attribute_name );
+				if ( null !== $this->get_attribute( $attribute_namespace, $attribute_local_name ) ) {
+					++$attribute_count;
+				}
+			}
+		}
+
+		return array(
+			'token_count'     => $token_count,
+			'tag_count'       => $tag_count,
+			'attribute_count' => $attribute_count,
+		);
+	}
+
+	/**
+	 * Normalizes attribute names for summary helpers.
+	 *
+	 * @param array|string $attribute_names Attribute names.
+	 * @return string[] Normalized unique non-empty names.
+	 */
+	private function normalize_summary_attribute_names( $attribute_names ) {
+		if ( ! is_array( $attribute_names ) ) {
+			$attribute_names = array( $attribute_names );
+		}
+
+		$normalized = array();
+		foreach ( $attribute_names as $attribute_name ) {
+			$attribute_name = (string) $attribute_name;
+			if ( '' === $attribute_name ) {
+				continue;
+			}
+
+			$normalized[ $attribute_name ] = $attribute_name;
+		}
+
+		return array_values( $normalized );
+	}
+
+	/**
+	 * Splits a resolved `{namespace}local` attribute name.
+	 *
+	 * @param string $attribute_name Attribute name.
+	 * @return array Namespace reference and local name.
+	 */
+	private function split_summary_attribute_name( $attribute_name ) {
+		if ( isset( $attribute_name[0] ) && '{' === $attribute_name[0] ) {
+			$namespace_end = strpos( $attribute_name, '}' );
+			if ( false !== $namespace_end ) {
+				return array(
+					substr( $attribute_name, 1, $namespace_end - 1 ),
+					substr( $attribute_name, $namespace_end + 1 ),
+				);
+			}
+		}
+
+		return array( '', $attribute_name );
+	}
+
+	/**
+	 * Builds a compact summary row for the current PHP tag.
+	 *
+	 * @param int    $token_delta    Number of tokens consumed in the current batch through this row.
+	 * @param string $attribute_name Attribute name to include when present.
+	 * @return string Compact tag summary row.
+	 */
+	private function compact_summary_for_current_tag( $token_delta, $attribute_name ) {
+		$tag_namespace = $this->get_tag_namespace();
+		$attribute     = $this->get_attribute( '', $attribute_name );
+
+		return implode(
+			"\x1f",
+			array(
+				(string) $token_delta,
+				$this->get_tag_local_name(),
+				null === $tag_namespace ? '' : $tag_namespace,
+				$this->is_empty_element() ? '1' : '0',
+				(string) $this->get_current_depth(),
+				null === $attribute ? '0' : '1' . $attribute,
+			)
+		);
+	}
+
+	/**
+	 * Parses a compact XML tag summary row.
+	 *
+	 * @param string $metadata       Compact metadata row.
+	 * @param string $attribute_name Attribute name included in the row.
+	 * @return array|null Parsed tag summary, or null for invalid rows.
+	 */
+	private function parse_compact_tag_summary( $metadata, $attribute_name ) {
+		if ( ! is_string( $metadata ) ) {
+			return null;
+		}
+
+		$parts = explode( "\x1f", $metadata, 6 );
+		if ( 6 !== count( $parts ) ) {
+			return null;
+		}
+
+		$attribute_found = isset( $parts[5][0] ) && '1' === $parts[5][0];
+
+		return array(
+			'tokens_consumed'              => (int) $parts[0],
+			'tag_local_name'               => $parts[1],
+			'tag_namespace'                => $parts[2],
+			'tag_namespace_and_local_name' => '' === $parts[2] ? $parts[1] : '{' . $parts[2] . '}' . $parts[1],
+			'is_empty_element'             => isset( $parts[3][0] ) && '1' === $parts[3][0],
+			'current_depth'                => (int) $parts[4],
+			'attribute_name'               => $attribute_name,
+			'attribute_value'              => $attribute_found ? substr( $parts[5], 1 ) : null,
+			'attribute_found'              => $attribute_found,
+		);
+	}
+
+	/**
+	 * Caches a parsed compact tag metadata row exported by the native processor.
+	 *
+	 * @param array $parsed Parsed compact tag summary.
+	 */
+	private function cache_parsed_native_compact_tag_summary( $parsed ) {
+		$this->native_token_type                       = '#tag';
+		$this->native_token_name                       = $parsed['tag_local_name'];
+		$this->native_token_is_tag                     = true;
+		$this->native_tag_local_name                   = $parsed['tag_local_name'];
+		$this->native_tag_namespace                    = $parsed['tag_namespace'];
+		$this->native_tag_namespace_and_local_name     = $parsed['tag_namespace_and_local_name'];
+		$this->native_token_is_tag_closer              = false;
+		$this->native_token_is_empty_element           = $parsed['is_empty_element'];
+		$this->native_token_current_depth              = $parsed['current_depth'];
+		$this->native_token_from_compact_summary_batch = false;
+		$this->native_token_attributes                 = null;
+		$this->native_token_cached_attribute_name      = $parsed['attribute_name'];
+		$this->native_token_cached_attribute_found     = $parsed['attribute_found'];
+		$this->native_token_cached_attribute_value     = $parsed['attribute_value'];
+		$this->native_token_cached_attribute_loaded    = true;
+		$this->native_token_compact_summary_metadata   = null;
+		$this->native_token_compact_flags_loaded       = true;
+	}
+
+	/**
+	 * Converts parsed compact tag metadata to a public batch row.
+	 *
+	 * @param array  $parsed         Parsed compact tag summary.
+	 * @param string $attribute_name Attribute name included in the row.
+	 * @return array Public tag summary row.
+	 */
+	private function public_tag_summary_row( $parsed, $attribute_name ) {
+		return array(
+			'tag_local_name'               => $parsed['tag_local_name'],
+			'tag_namespace'                => $parsed['tag_namespace'],
+			'tag_namespace_and_local_name' => $parsed['tag_namespace_and_local_name'],
+			'is_empty_element'             => $parsed['is_empty_element'],
+			'current_depth'                => $parsed['current_depth'],
+			$attribute_name                => $parsed['attribute_value'],
+		);
+	}
+
+	/**
+	 * Summarizes a read-only XML tag stream.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()` and
+	 * `get_attribute()` for one attribute name, but native implementations may
+	 * process the remaining document in one call.
+	 *
+	 * @param string $attribute_name Attribute name to count when present on tags.
+	 * @return array Summary with `tag_count` and `attribute_count`.
+	 * @since WP_VERSION
+	 */
+	public function summarize_tag_stream( $attribute_name = 'id' ) {
+		if ( $this->has_native_processor() && $this->native_supports_tag_stream_summary ) {
+			if ( $this->native_token_from_compact_summary_batch && ! $this->synchronize_native_processor_to_php() ) {
+				return array(
+					'tag_count'       => 0,
+					'attribute_count' => 0,
+				);
+			}
+
+			$summary = $this->native_processor->summarize_tag_stream( $attribute_name );
+			if ( is_string( $summary ) ) {
+				$parts = explode( "\x1f", $summary, 3 );
+				if ( 3 === count( $parts ) ) {
+					$this->native_tokens_parsed += (int) $parts[0];
+					$this->clear_native_token_metadata();
+					$this->update_parser_state_after_native_remaining_summary();
+
+					return array(
+						'tag_count'       => (int) $parts[1],
+						'attribute_count' => (int) $parts[2],
+					);
+				}
+			}
+		}
+
+		$tag_count       = 0;
+		$attribute_count = 0;
+
+		while ( $this->next_tag() ) {
+			++$tag_count;
+
+			if ( null !== $this->get_attribute( '', $attribute_name ) ) {
+				++$attribute_count;
+			}
+		}
+
+		return array(
+			'tag_count'       => $tag_count,
+			'attribute_count' => $attribute_count,
+		);
+	}
+
+	/**
+	 * Removes prefixed attributes across the remaining document.
+	 *
+	 * This is equivalent to repeatedly calling `next_tag()`,
+	 * `get_attribute_names_with_prefix()`, `remove_attribute()`, and
+	 * `get_updated_xml()`, but native implementations may process the remaining
+	 * document and produce updated XML in one call.
+	 *
+	 * @param string|null $full_namespace_prefix Prefix of the fully qualified namespace to match, or null for no namespace.
+	 * @param string      $local_name_prefix     Local name prefix to match.
+	 * @return array Summary with `tag_count`, `removed_count`, and `xml`.
+	 * @since WP_VERSION
+	 */
+	public function remove_attributes_with_prefix_from_document( $full_namespace_prefix, $local_name_prefix ) {
+		if ( $this->has_native_processor() && $this->native_supports_attribute_prefix_document_removal ) {
+			if ( 0 === $this->native_tokens_parsed ) {
+				$summary = $this->native_processor->remove_attributes_with_prefix_from_document( $full_namespace_prefix, $local_name_prefix );
+				if ( is_string( $summary ) ) {
+					$parts = explode( "\x1f", $summary, 3 );
+					if ( 3 === count( $parts ) ) {
+						$this->native_tokens_parsed = 0;
+						$this->clear_native_token_metadata();
+						$this->update_parser_state_after_native_remaining_summary();
+
+						return array(
+							'tag_count'     => (int) $parts[0],
+							'removed_count' => (int) $parts[1],
+							'xml'           => $parts[2],
+						);
+					}
+				}
+			}
+
+			if ( ! $this->synchronize_native_processor_to_php() ) {
+				return array(
+					'tag_count'     => 0,
+					'removed_count' => 0,
+					'xml'           => $this->xml,
+				);
+			}
+		}
+
+		$tag_count     = 0;
+		$removed_count = 0;
+
+		while ( $this->next_tag() ) {
+			++$tag_count;
+
+			$attribute_names = $this->get_attribute_names_with_prefix( $full_namespace_prefix, $local_name_prefix );
+			if ( ! is_array( $attribute_names ) ) {
+				continue;
+			}
+
+			foreach ( $attribute_names as $attribute_name ) {
+				if ( ! is_array( $attribute_name ) || 2 !== count( $attribute_name ) ) {
+					continue;
+				}
+
+				if ( $this->remove_attribute( $attribute_name[0], $attribute_name[1] ) ) {
+					++$removed_count;
+				}
+			}
+		}
+
+		return array(
+			'tag_count'     => $tag_count,
+			'removed_count' => $removed_count,
+			'xml'           => $this->get_updated_xml(),
+		);
+	}
+
+	/**
 	 * Returns the local name of the matched tag.
 	 *
 	 * Example without namespaces:
@@ -2987,6 +7966,14 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function get_tag_local_name() {
+		if ( null !== $this->native_processor ) {
+			if ( null !== $this->native_token_type ) {
+				return $this->native_token_is_tag ? $this->native_tag_local_name : null;
+			}
+
+			return $this->native_processor->get_tag_local_name();
+		}
+
 		if ( null !== $this->element ) {
 			// Return cached name if we already have it.
 			return $this->element->local_name;
@@ -3050,6 +8037,14 @@ class XMLProcessor {
 	 * @return string|null The namespace and local name of the matched tag, or null if not available.
 	 */
 	public function get_tag_namespace_and_local_name() {
+		if ( null !== $this->native_processor ) {
+			if ( null !== $this->native_token_type ) {
+				return $this->native_token_is_tag ? $this->native_tag_namespace_and_local_name : null;
+			}
+
+			return $this->native_processor->get_tag_namespace_and_local_name();
+		}
+
 		$namespace = $this->get_tag_namespace();
 		if ( ! $namespace ) {
 			return $this->get_tag_local_name();
@@ -3071,6 +8066,14 @@ class XMLProcessor {
 	 * @return string|null The namespace reference of the matched tag, or null if not available.
 	 */
 	public function get_tag_namespace() {
+		if ( null !== $this->native_processor ) {
+			if ( null !== $this->native_token_type ) {
+				return $this->native_token_is_tag ? $this->native_tag_namespace : null;
+			}
+
+			return $this->native_processor->get_tag_namespace();
+		}
+
 		if ( self::STATE_MATCHED_TAG !== $this->parser_state ) {
 			return null;
 		}
@@ -3149,6 +8152,23 @@ class XMLProcessor {
 	 * @return bool Whether the tag is expected to be closed.
 	 */
 	public function expects_closer() {
+		if ( $this->has_native_processor() ) {
+			if ( null !== $this->native_token_type ) {
+				$this->cache_native_compact_token_flags();
+				return (
+					$this->native_token_is_tag &&
+					! $this->native_token_is_tag_closer &&
+					! $this->native_token_is_empty_element
+				);
+			}
+
+			return (
+				'#tag' === $this->native_processor->get_token_type() &&
+				! $this->native_processor->is_tag_closer() &&
+				! $this->native_processor->is_empty_element()
+			);
+		}
+
 		if ( self::STATE_MATCHED_TAG !== $this->parser_state ) {
 			return false;
 		}
@@ -3166,6 +8186,15 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function is_empty_element() {
+		if ( $this->has_native_processor() ) {
+			if ( null !== $this->native_token_type ) {
+				$this->cache_native_compact_token_flags();
+				return $this->native_token_is_empty_element;
+			}
+
+			return $this->native_processor->is_empty_element();
+		}
+
 		if ( self::STATE_MATCHED_TAG !== $this->parser_state ) {
 			return false;
 		}
@@ -3198,6 +8227,15 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function is_tag_closer() {
+		if ( $this->has_native_processor() ) {
+			if ( null !== $this->native_token_type ) {
+				$this->cache_native_compact_token_flags();
+				return $this->native_token_is_tag_closer;
+			}
+
+			return $this->native_processor->is_tag_closer();
+		}
+
 		return (
 			self::STATE_MATCHED_TAG === $this->parser_state &&
 			$this->is_closing_tag
@@ -3220,6 +8258,23 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function is_tag_opener() {
+		if ( $this->has_native_processor() ) {
+			if ( null !== $this->native_token_type ) {
+				$this->cache_native_compact_token_flags();
+				return (
+					$this->native_token_is_tag &&
+					! $this->native_token_is_tag_closer &&
+					! $this->native_token_is_empty_element
+				);
+			}
+
+			return (
+				'#tag' === $this->native_processor->get_token_type() &&
+				! $this->native_processor->is_tag_closer() &&
+				! $this->native_processor->is_empty_element()
+			);
+		}
+
 		return (
 			self::STATE_MATCHED_TAG === $this->parser_state &&
 			! $this->is_closing_tag &&
@@ -3247,6 +8302,14 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function get_token_type() {
+		if ( null !== $this->native_processor ) {
+			if ( null !== $this->native_token_type ) {
+				return $this->native_token_type;
+			}
+
+			return $this->native_processor->get_token_type();
+		}
+
 		switch ( $this->parser_state ) {
 			case self::STATE_MATCHED_TAG:
 				return '#tag';
@@ -3275,6 +8338,14 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function get_token_name() {
+		if ( null !== $this->native_processor ) {
+			if ( null !== $this->native_token_type ) {
+				return $this->native_token_is_tag ? $this->native_token_name : $this->native_token_type;
+			}
+
+			return $this->native_processor->get_token_name();
+		}
+
 		switch ( $this->parser_state ) {
 			case self::STATE_MATCHED_TAG:
 				return $this->get_tag_local_name();
@@ -3325,6 +8396,27 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function get_modifiable_text() {
+		if ( $this->has_native_processor() ) {
+			if ( $this->native_token_from_compact_summary_batch ) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return '';
+				}
+
+				return $this->get_modifiable_text();
+			}
+
+			$token_type = null !== $this->native_token_type ? $this->native_token_type : $this->native_processor->get_token_type();
+			if ( '#tag' === $token_type ) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return '';
+				}
+
+				return $this->get_modifiable_text();
+			}
+
+			return $this->native_processor->get_modifiable_text();
+		}
+
 		if ( null === $this->text_starts_at ) {
 			return '';
 		}
@@ -3386,6 +8478,12 @@ class XMLProcessor {
 	 * @return string
 	 */
 	public function set_modifiable_text( $new_value ) {
+		if ( $this->has_native_processor() ) {
+			if ( ! $this->synchronize_native_processor_to_php() ) {
+				return false;
+			}
+		}
+
 		switch ( $this->parser_state ) {
 			case self::STATE_TEXT_NODE:
 			case self::STATE_COMMENT:
@@ -3435,6 +8533,12 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function set_attribute( $xml_namespace, $local_name, $value ) {
+		if ( $this->has_native_processor() ) {
+			if ( ! $this->synchronize_native_processor_to_php() ) {
+				return false;
+			}
+		}
+
 		if ( ! is_string( $value ) ) {
 			_doing_it_wrong(
 				__METHOD__,
@@ -3535,6 +8639,12 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function remove_attribute( $xml_namespace, $local_name ) {
+		if ( $this->has_native_processor() ) {
+			if ( ! $this->synchronize_native_processor_to_php() ) {
+				return false;
+			}
+		}
+
 		if (
 			self::STATE_MATCHED_TAG !== $this->parser_state ||
 			$this->is_closing_tag
@@ -3599,6 +8709,10 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function get_updated_xml() {
+		if ( $this->has_native_processor() ) {
+			return $this->xml;
+		}
+
 		$requires_no_updating = 0 === count( $this->lexical_updates );
 
 		/*
@@ -3671,6 +8785,36 @@ class XMLProcessor {
 	 * @return bool Whether a token was parsed.
 	 */
 	public function next_token() {
+		if ( null !== $this->native_processor ) {
+			if ( self::STATE_COMPLETE === $this->parser_state ) {
+				return false;
+			}
+
+			$parsed = false;
+			if ( $this->native_supports_token_compact_summary_batch ) {
+				$parsed = $this->cache_native_compact_token_batch_summary();
+			} elseif ( $this->native_supports_token_compact_summary ) {
+				$parsed = $this->cache_native_compact_token_summary( $this->native_processor->next_token_compact_summary() );
+			} elseif ( $this->native_supports_token_metadata ) {
+				$parsed = $this->cache_native_token_metadata( $this->native_processor->next_token_metadata() );
+			} elseif ( $this->native_supports_token_summary ) {
+				$parsed = $this->cache_native_token_metadata( $this->native_processor->next_token_summary() );
+			} else {
+				$parsed = $this->native_processor->next_token();
+				if ( ! $parsed ) {
+					$this->clear_native_token_metadata();
+				}
+			}
+
+			if ( ! $parsed ) {
+				return $this->maybe_finish_native_token_stream();
+			}
+
+			++$this->native_tokens_parsed;
+
+			return true;
+		}
+
 		return $this->step();
 	}
 
@@ -3932,6 +9076,18 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function get_breadcrumbs() {
+		if ( $this->has_native_processor() ) {
+			if ( $this->native_token_from_compact_summary_batch ) {
+				if ( ! $this->synchronize_native_processor_to_php() ) {
+					return null;
+				}
+
+				return $this->get_breadcrumbs();
+			}
+
+			return $this->native_processor->get_breadcrumbs();
+		}
+
 		return array_map(
 			function ( $element ) {
 				return array( $element->namespace, $element->local_name );
@@ -3966,6 +9122,10 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function matches_breadcrumbs( $breadcrumbs ) {
+		if ( $this->has_native_processor() ) {
+			return $this->native_matches_breadcrumbs( $breadcrumbs );
+		}
+
 		// Everything matches when there are zero constraints.
 		if ( 0 === count( $breadcrumbs ) ) {
 			return true;
@@ -4015,6 +9175,63 @@ class XMLProcessor {
 	}
 
 	/**
+	 * Indicates if the current native tag token matches the given breadcrumbs.
+	 *
+	 * @param array $breadcrumbs DOM sub-path at which element is found.
+	 * @return bool Whether the current native token is found at the given nested structure.
+	 */
+	private function native_matches_breadcrumbs( $breadcrumbs ) {
+		if ( 0 === count( $breadcrumbs ) ) {
+			return true;
+		}
+
+		$token_type = null !== $this->native_token_type ? $this->native_token_type : $this->native_processor->get_token_type();
+		if ( '#tag' !== $token_type ) {
+			return false;
+		}
+
+		if ( $this->native_token_from_compact_summary_batch ) {
+			if ( ! $this->synchronize_native_processor_to_php() ) {
+				return false;
+			}
+
+			return $this->matches_breadcrumbs( $breadcrumbs );
+		}
+
+		$open_elements = $this->native_processor->get_breadcrumbs();
+		$crumb_count   = count( $breadcrumbs );
+		$elem_count    = count( $open_elements );
+
+		for ( $j = 1; $j <= $crumb_count; $j++ ) {
+			$crumb   = $breadcrumbs[ $crumb_count - $j ];
+			$element = isset( $open_elements[ $elem_count - $j ] ) ? $open_elements[ $elem_count - $j ] : null;
+
+			if ( ! $element ) {
+				return false;
+			}
+
+			if ( ! is_array( $crumb ) ) {
+				if ( '*' === $crumb ) {
+					$crumb = array( '*', '*' );
+				} else {
+					$crumb = array( '*', $crumb );
+				}
+			}
+			list( $namespace, $local_name ) = $crumb;
+
+			if ( '*' !== $local_name && $local_name !== $element[1] ) {
+				return false;
+			}
+
+			if ( '*' !== $namespace && $namespace !== $element[0] ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Returns the nesting depth of the current location in the document.
 	 *
 	 * Example:
@@ -4038,6 +9255,15 @@ class XMLProcessor {
 	 * @since WP_VERSION
 	 */
 	public function get_current_depth() {
+		if ( $this->has_native_processor() ) {
+			if ( null !== $this->native_token_type ) {
+				$this->cache_native_compact_token_flags();
+				return $this->native_token_current_depth;
+			}
+
+			return $this->native_processor->get_current_depth();
+		}
+
 		return count( $this->stack_of_open_elements );
 	}
 
@@ -4121,6 +9347,39 @@ class XMLProcessor {
 	 * @return XMLUnsupportedException|null
 	 */
 	public function get_exception() {
+		if ( $this->has_native_processor() && method_exists( $this->native_processor, 'get_exception' ) ) {
+			$message = $this->native_processor->get_exception();
+			if ( is_string( $message ) ) {
+				switch ( $message ) {
+					case 'Expected `=` after XML attribute name.':
+						$message = 'Unquoted attribute value encountered.';
+						break;
+
+					case 'Duplicate XML attribute encountered.':
+						$message = 'Duplicate attribute found in an XML tag.';
+						break;
+
+					case 'Unexpected UTF-8 BOM byte sequence.':
+						$message = 'Unexpected non-whitespace text token in prolog stage.';
+						break;
+				}
+
+				if ( 0 === strpos( $message, 'Invalid XML namespace declaration for `' ) ) {
+					$attribute_name = substr( $message, strlen( 'Invalid XML namespace declaration for `' ), -2 );
+					$message        = sprintf(
+						'Attribute "%s" has an invalid namespace prefix "xmlns".',
+						$attribute_name
+					);
+				}
+
+				if ( null === $this->exception || $this->exception->getMessage() !== $message ) {
+					$this->exception = new XMLUnsupportedException( $message, '#error', 0, '', array() );
+				}
+
+				return $this->exception;
+			}
+		}
+
 		return $this->exception;
 	}
 

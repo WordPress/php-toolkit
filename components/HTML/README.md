@@ -14,7 +14,18 @@ see_also:
   - dataliberation | DataLiberation | Rewrite URLs and media references during import/export pipelines.
 ---
 
-A pure-PHP HTML parser and tag rewriter mirroring WordPress core's HTML API. Handle browser-style HTML fragments for supported markup — without <code>libxml2</code>, <code>DOMDocument</code>, or regex hacks — and rewrite attributes in a single linear pass.
+A pure-PHP HTML5 parser and tag rewriter mirroring WordPress core's HTML API. Treat HTML the way browsers do — without <code>libxml2</code>, <code>DOMDocument</code>, or regex hacks — and rewrite attributes in a single linear pass.
+
+When the native API extension is loaded, tag and fragment processors can use
+native delegates by default while preserving PHP fallback behavior. Define
+<code>WP_NATIVE_APIS_DISABLE_DEFAULTS</code> or set
+<code>WP_NATIVE_APIS_ENABLE_HTML_DEFAULTS</code> to <code>0</code>,
+<code>false</code>, <code>no</code>, or <code>off</code> to force the pure PHP
+fallback. Full-document parsing through
+<code>WP_HTML_Processor::create_full_parser()</code> remains PHP-backed for
+now. Fragment processors, including covered table, list, description-list,
+select/option/optgroup, omitted-paragraph, and ruby tree-builder cases, can use
+native delegates when enabled.
 
 ## Why this exists
 
@@ -23,8 +34,6 @@ A pure-PHP HTML parser and tag rewriter mirroring WordPress core's HTML API. Han
 <p>The HTML component gives WordPress-style code the same parsing model WordPress core uses: a browser-compatible tokenizer and tree-aware processor that run in pure PHP. Choose it for exact-byte rewrites, imperfect fragments, and post-content filters where a full DOM would do too much work.</p>
 
 <p>The component gives you two processors. <code>WP_HTML_Tag_Processor</code> is a forward-only cursor over tags and tokens — useful for attribute rewriting at scale. <code>WP_HTML_Processor</code> layers HTML5 tree construction on top so you can query by ancestry (breadcrumbs), serialize the parsed document, and trust that <code>&lt;p&gt;one&lt;p&gt;two</code> parses as two paragraphs the way a browser sees it.</p>
-
-<p>Scope: <code>WP_HTML_Processor</code> intentionally supports WordPress core's current subset of HTML5. It aborts on markup it cannot safely model, including table-internal content, foreign content such as SVG/MathML, and content outside the supported body parsing modes. Use <code>get_unsupported_exception()</code> when you need to explain why processing stopped.</p>
 
 <p>Footgun: <strong>Mutations are buffered.</strong> Nothing changes in the source string until you call <code>get_updated_html()</code>. If you read <code>get_attribute()</code> after a <code>set_attribute()</code> on the same tag, you see the new value — but downstream tooling reading the original string sees stale HTML until you serialize.</p>
 

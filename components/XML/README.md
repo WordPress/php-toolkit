@@ -9,11 +9,18 @@ see_also:
   - bytestream | ByteStream | Keep large XML reads incremental.
 ---
 
-A streaming, namespace-aware XML processor in pure PHP. Read huge feeds, WXR exports, ePub manifests, and Office Open XML parts incrementally, then emit edited XML without depending on <code>libxml2</code>.
+A streaming, namespace-aware XML processor in pure PHP. Read and modify huge feeds, WXR exports, ePub manifests, and Office Open XML parts without ever loading the document into memory and without depending on <code>libxml2</code>.
+
+When the native API extension is loaded, <code>XMLProcessor</code> can use a
+native delegate by default while preserving PHP fallback behavior. Define
+<code>WP_NATIVE_APIS_DISABLE_DEFAULTS</code> or set
+<code>WP_NATIVE_APIS_ENABLE_XML_DEFAULTS</code> to <code>0</code>,
+<code>false</code>, <code>no</code>, or <code>off</code> to force the pure PHP
+fallback.
 
 ## Why this exists
 
-<p><code>SimpleXMLElement</code> and <code>DOMDocument</code> both need <code>libxml2</code> and both build a complete in-memory tree. <code>XMLProcessor</code> walks the document forward as a cursor, keeps modifications in a side buffer, and emits the full updated XML with <code>get_updated_xml()</code> only when you ask for it. Reading stays incremental; materializing the updated XML still allocates the resulting document.</p>
+<p><code>SimpleXMLElement</code> and <code>DOMDocument</code> both need <code>libxml2</code> and both build a complete in-memory tree. <code>XMLProcessor</code> walks the document forward as a cursor, keeps modifications in a side buffer, and emits the full updated XML with <code>get_updated_xml()</code> only when you ask for it.</p>
 
 <p>This design came from WordPress-scale documents such as WXR exports. A migration may only need to rewrite <code>wp:attachment_url</code> values or bump a feed attribute, so the processor optimizes for targeted cursor edits instead of a full validating XML stack.</p>
 
@@ -113,7 +120,7 @@ wp/status: publish
 
 ## Rewrite URLs across an entire WXR export
 
-<p>Large WXR exports can hold many URLs in <code>&lt;link&gt;</code>, <code>&lt;guid&gt;</code>, and post content. The cursor can find and rewrite matching text nodes incrementally; calling <code>get_updated_xml()</code> returns the complete rewritten document.</p>
+<p>Large WXR exports can hold many URLs in <code>&lt;link&gt;</code>, <code>&lt;guid&gt;</code>, and post content. Streaming the file lets you rewrite large exports without loading the whole XML document into memory.</p>
 
 <!-- snippet:
 filename: rewrite-wxr-urls.php

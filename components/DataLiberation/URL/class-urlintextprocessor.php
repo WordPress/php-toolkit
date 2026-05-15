@@ -129,6 +129,12 @@ class URLInTextProcessor {
 	 */
 	private $base_url;
 	private $base_protocol;
+	/**
+	 * Native thick-sieve candidate processor, when loaded and safe for this input.
+	 *
+	 * @var object|null
+	 */
+	private $native_processor;
 
 	/**
 	 * The regular expression pattern used for the matchin URL candidates
@@ -155,6 +161,10 @@ class URLInTextProcessor {
 		$this->text          = $text;
 		$this->base_url      = $base_url;
 		$this->base_protocol = $base_url ? parse_url( $base_url, PHP_URL_SCHEME ) : null;
+		if ( self::should_use_native_processor( $text ) ) {
+			$native_processor_class = 'WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor';
+			$this->native_processor = new $native_processor_class( $text );
+		}
 
 		$prefix = $this->strict ? '^' : '';
 		$suffix = $this->strict ? '$' : '';
@@ -222,28 +232,41 @@ class URLInTextProcessor {
 			$this->url_length           = null;
 			$this->did_prepend_protocol = false;
 
-			/**
-			 * Thick sieve – eagerly match things that look like URLs but turn out to not be URLs in the end.
-			 */
-			$matches = array();
-			$found   = preg_match( $this->regex, $this->text, $matches, PREG_OFFSET_CAPTURE, $this->bytes_already_parsed );
-			if ( 1 !== $found ) {
-				return false;
-			}
+			if ( $this->native_processor ) {
+				if ( ! $this->native_processor->next_url() ) {
+					$this->native_processor = null;
+					continue;
+				}
 
-			$this->matched_url = $matches[0][0];
-			// Do not consider just :: as a URL.
-			if ( '::' === $this->matched_url ) {
-				continue;
+				$this->matched_url          = $this->native_processor->get_raw_url();
+				$url_starts_at              = $this->native_processor->get_url_starts_at();
+				$this->bytes_already_parsed = $url_starts_at + $this->native_processor->get_url_length();
+				$matched_url_length         = $this->native_processor->get_url_length();
+			} else {
+				/**
+				 * Thick sieve – eagerly match things that look like URLs but turn out to not be URLs in the end.
+				 */
+				$matches = array();
+				$found   = preg_match( $this->regex, $this->text, $matches, PREG_OFFSET_CAPTURE, $this->bytes_already_parsed );
+				if ( 1 !== $found ) {
+					return false;
+				}
+
+				$this->matched_url = $matches[0][0];
+				// Do not consider just :: as a URL.
+				if ( '::' === $this->matched_url ) {
+					continue;
+				}
+				if (
+					')' === $this->matched_url[ strlen( $this->matched_url ) - 1 ] ||
+					'.' === $this->matched_url[ strlen( $this->matched_url ) - 1 ]
+				) {
+					$this->matched_url = substr( $this->matched_url, 0, - 1 );
+				}
+				$url_starts_at              = $matches[0][1];
+				$matched_url_length         = strlen( $matches[0][0] );
+				$this->bytes_already_parsed = $url_starts_at + strlen( $this->matched_url );
 			}
-			if (
-				')' === $this->matched_url[ strlen( $this->matched_url ) - 1 ] ||
-				'.' === $this->matched_url[ strlen( $this->matched_url ) - 1 ]
-			) {
-				$this->matched_url = substr( $this->matched_url, 0, - 1 );
-			}
-			$url_starts_at              = $matches[0][1];
-			$this->bytes_already_parsed = $url_starts_at + strlen( $this->matched_url );
 
 			$had_protocol = WPURL::has_http_https_protocol( $this->matched_url );
 
@@ -300,10 +323,50 @@ class URLInTextProcessor {
 
 			$this->parsed_url    = $parsed_url;
 			$this->url_starts_at = $url_starts_at;
-			$this->url_length    = strlen( $matches[0][0] );
+			$this->url_length    = $matched_url_length;
 
 			return true;
 		}
+	}
+
+	/**
+	 * Determines whether the native URL-in-text candidate processor may be used.
+	 *
+	 * Define WP_NATIVE_APIS_DISABLE_DEFAULTS before loading the component to
+	 * force the PHP implementation even when the extension is loaded.
+	 *
+	 * Define WP_NATIVE_APIS_ENABLE_URL_DEFAULTS as false, or set the matching
+	 * environment variable to 0, false, no, or off, to keep URL-in-text scans on
+	 * PHP fallback.
+	 *
+	 * @param mixed $text Text being scanned.
+	 * @return bool Whether to use the native processor when available.
+	 */
+	private static function should_use_native_processor( $text ) {
+		if (
+			defined( 'WP_NATIVE_APIS_DISABLE_DEFAULTS' ) &&
+			WP_NATIVE_APIS_DISABLE_DEFAULTS
+		) {
+			return false;
+		}
+
+		if ( defined( 'WP_NATIVE_APIS_ENABLE_URL_DEFAULTS' ) && ! WP_NATIVE_APIS_ENABLE_URL_DEFAULTS ) {
+			return false;
+		}
+
+		$enable_url_defaults = getenv( 'WP_NATIVE_APIS_ENABLE_URL_DEFAULTS' );
+		if (
+			false !== $enable_url_defaults &&
+			in_array( strtolower( $enable_url_defaults ), array( '0', 'false', 'no', 'off' ), true )
+		) {
+			return false;
+		}
+
+		if ( ! is_string( $text ) || preg_match( '/[^\x00-\x7F]/', $text ) ) {
+			return false;
+		}
+
+		return class_exists( 'WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor', false );
 	}
 
 	public function get_raw_url() {

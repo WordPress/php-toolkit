@@ -250,6 +250,63 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	private $current_element = null;
 
 	/**
+	 * Cached token metadata from the native processor for the current token.
+	 *
+	 * This avoids repeated PHP/Rust calls for hot read-only accessors while
+	 * preserving the public PHP class surface.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var string|null
+	 */
+	private $native_token_type = null;
+
+	/**
+	 * Cached native token name.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var string|null
+	 */
+	private $native_token_name = null;
+
+	/**
+	 * Cached native tag-closer state.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_token_is_closer = false;
+
+	/**
+	 * Cached native breadcrumbs for the current token.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var string[]|null
+	 */
+	private $native_token_breadcrumbs = null;
+
+	/**
+	 * Whether the loaded native processor can batch current-token metadata.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_token_metadata = false;
+
+	/**
+	 * Whether the loaded native processor can return compact token-summary batches.
+	 *
+	 * @since WP_VERSION
+	 *
+	 * @var bool
+	 */
+	private $native_supports_token_summary_batch = false;
+
+	/**
 	 * Context node if created as a fragment parser.
 	 *
 	 * @var WP_HTML_Token|null
@@ -324,6 +381,13 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 		$processor->context_node = $context_node;
 		$processor->breadcrumbs  = array( 'HTML', $context_node->node_name );
 
+		if (
+			static::should_use_native_processors() &&
+			class_exists( 'WP_HTML_Native_Processor', false )
+		) {
+			$processor->set_native_processor( WP_HTML_Native_Processor::create_fragment( $html ) );
+		}
+
 		return $processor;
 	}
 
@@ -372,6 +436,7 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 */
 	public function __construct( $html, $use_the_static_create_methods_instead = null ) {
 		parent::__construct( $html );
+		$this->set_native_processor( null );
 
 		if ( self::CONSTRUCTOR_UNLOCK_CODE !== $use_the_static_create_methods_instead ) {
 			_doing_it_wrong(
@@ -423,6 +488,321 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 		$this->release_internal_bookmark_on_destruct = function ( string $name ): void {
 			parent::release_bookmark( $name );
 		};
+	}
+
+	/**
+	 * Replaces the native delegate used by this public wrapper.
+	 *
+	 * @param object|null $native_processor Native processor object.
+	 */
+	protected function set_native_processor( $native_processor ) {
+		parent::set_native_processor( $native_processor );
+
+		$this->clear_native_token_metadata();
+		$this->native_supports_token_metadata      = is_object( $native_processor )
+			&& method_exists( $native_processor, 'next_token_metadata' )
+			&& method_exists( $native_processor, 'current_token_metadata' );
+		$this->native_supports_token_summary_batch = is_object( $native_processor )
+			&& method_exists( $native_processor, 'next_token_compact_summary_batch' );
+	}
+
+	/**
+	 * Clears cached native metadata for the current token.
+	 */
+	private function clear_native_token_metadata() {
+		$this->native_token_type        = null;
+		$this->native_token_name        = null;
+		$this->native_token_is_closer   = false;
+		$this->native_token_breadcrumbs = null;
+	}
+
+	/**
+	 * Caches a metadata row exported by the native processor.
+	 *
+	 * The native row is exported as a unit-separator-delimited string:
+	 * token type, token name, closer marker, then breadcrumbs. Older
+	 * development builds may still return the equivalent array shape.
+	 *
+	 * @param string[]|string|null $metadata Native metadata row.
+	 * @return bool Whether metadata was cached.
+	 */
+	private function cache_native_token_metadata( $metadata ) {
+		if ( is_string( $metadata ) ) {
+			$metadata = explode( "\x1f", $metadata );
+		}
+
+		if ( ! is_array( $metadata ) || count( $metadata ) < 3 ) {
+			$this->clear_native_token_metadata();
+
+			return false;
+		}
+
+		$this->native_token_type        = (string) $metadata[0];
+		$this->native_token_name        = (string) $metadata[1];
+		$this->native_token_is_closer   = '1' === (string) $metadata[2];
+		$this->native_token_breadcrumbs = array_slice( $metadata, 3 );
+
+		return true;
+	}
+
+	/**
+	 * Caches a compact token-summary row exported by the native processor.
+	 *
+	 * The native row is exported as a unit-separator-delimited string:
+	 * token kind, token name, closer marker, current depth, then breadcrumbs
+	 * joined with group separators.
+	 *
+	 * @param string|null $metadata Native compact metadata row.
+	 * @return bool Whether metadata was cached.
+	 */
+	private function cache_native_compact_token_summary( $metadata ) {
+		if ( ! is_string( $metadata ) ) {
+			$this->clear_native_token_metadata();
+
+			return false;
+		}
+
+		$parts = explode( "\x1f", $metadata, 5 );
+		if ( 5 !== count( $parts ) ) {
+			$this->clear_native_token_metadata();
+
+			return false;
+		}
+
+		$this->native_token_type        = $this->token_type_from_compact_kind( $parts[0] );
+		$this->native_token_name        = $parts[1];
+		$this->native_token_is_closer   = '1' === $parts[2];
+		$this->native_token_breadcrumbs = '' === $parts[4] ? array() : explode( "\x1d", $parts[4] );
+
+		return true;
+	}
+
+	/**
+	 * Advances the native processor and caches current-token metadata.
+	 *
+	 * @return bool Whether a token was matched.
+	 */
+	private function native_next_token() {
+		if ( $this->native_supports_token_metadata ) {
+			$matched = $this->cache_native_token_metadata( $this->native_processor->next_token_metadata() );
+		} else {
+			$this->clear_native_token_metadata();
+			$matched = $this->native_processor->next_token();
+		}
+
+		$this->parser_state = $matched
+			? $this->native_parser_state_for_current_token()
+			: $this->native_parser_state_after_no_match();
+
+		return $matched;
+	}
+
+	/**
+	 * Maps the current native token type to the public parser state.
+	 *
+	 * @return string Parser state.
+	 */
+	private function native_parser_state_for_current_token() {
+		$token_type = $this->get_token_type();
+		switch ( $token_type ) {
+			case '#tag':
+				return WP_HTML_Tag_Processor::STATE_MATCHED_TAG;
+
+			case '#text':
+				return WP_HTML_Tag_Processor::STATE_TEXT_NODE;
+
+			case '#comment':
+				return WP_HTML_Tag_Processor::STATE_COMMENT;
+
+			case '#doctype':
+				return WP_HTML_Tag_Processor::STATE_DOCTYPE;
+
+			case '#cdata-section':
+				return WP_HTML_Tag_Processor::STATE_CDATA_NODE;
+
+			case '#funky-comment':
+				return WP_HTML_Tag_Processor::STATE_FUNKY_COMMENT;
+
+			case '#presumptuous-tag':
+				return WP_HTML_Tag_Processor::STATE_PRESUMPTUOUS_TAG;
+		}
+
+		return WP_HTML_Tag_Processor::STATE_READY;
+	}
+
+	/**
+	 * Maps native exhaustion or pause status to the public parser state.
+	 *
+	 * @return string Parser state.
+	 */
+	private function native_parser_state_after_no_match() {
+		if (
+			method_exists( $this->native_processor, 'paused_at_incomplete_token' ) &&
+			$this->native_processor->paused_at_incomplete_token()
+		) {
+			return WP_HTML_Tag_Processor::STATE_INCOMPLETE_INPUT;
+		}
+
+		return WP_HTML_Tag_Processor::STATE_COMPLETE;
+	}
+
+	/**
+	 * Returns structured summaries for the next chunk of HTML processor tokens.
+	 *
+	 * This is equivalent to repeatedly calling `next_token()` and reading the
+	 * common token metadata accessors, but native implementations may return
+	 * the chunk in one extension call.
+	 *
+	 * @param int $max_tokens Maximum number of token summaries to return.
+	 * @return array[] Token summary rows.
+	 * @since WP_VERSION
+	 */
+	public function next_token_summary_batch( $max_tokens = 64 ) {
+		$max_tokens = (int) $max_tokens;
+		if ( $max_tokens <= 0 ) {
+			return array();
+		}
+
+		$max_tokens = min( 256, $max_tokens );
+		$batch      = $this->next_token_compact_summary_batch( $max_tokens );
+		if ( ! is_string( $batch ) || '' === $batch ) {
+			return array();
+		}
+
+		$rows = array();
+		foreach ( explode( "\x1e", $batch ) as $metadata ) {
+			$parts = explode( "\x1f", $metadata, 5 );
+			if ( 5 !== count( $parts ) ) {
+				continue;
+			}
+
+			$rows[] = array(
+				'token_type'     => $this->token_type_from_compact_kind( $parts[0] ),
+				'token_name'     => $parts[1],
+				'is_tag_closer'  => '1' === $parts[2],
+				'current_depth'  => (int) $parts[3],
+				'breadcrumbs'    => '' === $parts[4] ? array() : explode( "\x1d", $parts[4] ),
+			);
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Returns compact summaries for the next chunk of HTML processor tokens.
+	 *
+	 * The compact string uses unit separators between fields and record
+	 * separators between rows. It is intended for high-throughput read-only
+	 * scans where callers can aggregate token metadata without allocating one
+	 * PHP array per token.
+	 *
+	 * @param int $max_tokens Maximum number of token summaries to return.
+	 * @return string|null Compact token summary batch, or null when exhausted.
+	 * @since WP_VERSION
+	 */
+	public function next_token_compact_summary_batch( $max_tokens = 64 ) {
+		$max_tokens = (int) $max_tokens;
+		if ( $max_tokens <= 0 ) {
+			return null;
+		}
+
+		$max_tokens = min( 256, $max_tokens );
+
+		if ( $this->has_native_processor() && $this->native_supports_token_summary_batch ) {
+			$batch = $this->native_processor->next_token_compact_summary_batch( $max_tokens );
+			if ( is_string( $batch ) && '' !== $batch ) {
+				$rows = explode( "\x1e", $batch );
+				if ( count( $rows ) < $max_tokens ) {
+					$this->clear_native_token_metadata();
+					$this->parser_state = $this->native_parser_state_after_no_match();
+				} else {
+					$this->cache_native_compact_token_summary( end( $rows ) );
+					$this->parser_state = $this->native_parser_state_for_current_token();
+				}
+
+				return $batch;
+			}
+
+			$this->clear_native_token_metadata();
+			$this->parser_state = $this->native_parser_state_after_no_match();
+
+			return null;
+		}
+
+		$rows  = '';
+		$count = 0;
+		while ( $count < $max_tokens && $this->next_token() ) {
+			if ( '' !== $rows ) {
+				$rows .= "\x1e";
+			}
+
+			$rows .= $this->compact_summary_for_current_token();
+			++$count;
+		}
+
+		return '' === $rows ? null : $rows;
+	}
+
+	/**
+	 * Builds a compact summary row for the current PHP token.
+	 *
+	 * @return string Compact token summary row.
+	 */
+	private function compact_summary_for_current_token() {
+		$breadcrumbs = $this->get_breadcrumbs();
+
+		return implode(
+			"\x1f",
+			array(
+				$this->compact_kind_from_token_type( $this->get_token_type() ),
+				(string) $this->get_token_name(),
+				$this->is_tag_closer() ? '1' : '0',
+				(string) $this->get_current_depth(),
+				implode( "\x1d", is_array( $breadcrumbs ) ? $breadcrumbs : array() ),
+			)
+		);
+	}
+
+	/**
+	 * Converts a public token type to its compact kind.
+	 *
+	 * @param string|null $token_type Token type.
+	 * @return string Compact token kind.
+	 */
+	private function compact_kind_from_token_type( $token_type ) {
+		switch ( $token_type ) {
+			case '#tag':
+				return 't';
+			case '#comment':
+				return 'c';
+			case '#doctype':
+				return 'd';
+			case '#text':
+				return 's';
+		}
+
+		return 'o';
+	}
+
+	/**
+	 * Converts a compact token kind to the public token type.
+	 *
+	 * @param string $token_kind Compact token kind.
+	 * @return string Token type.
+	 */
+	private function token_type_from_compact_kind( $token_kind ) {
+		switch ( $token_kind ) {
+			case 't':
+				return '#tag';
+			case 'c':
+				return '#comment';
+			case 'd':
+				return '#doctype';
+			case 's':
+				return '#text';
+		}
+
+		return '#unknown';
 	}
 
 	/**
@@ -616,6 +996,10 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * @access private
 	 */
 	public function next_token(): bool {
+		if ( $this->has_native_processor() ) {
+			return $this->native_next_token();
+		}
+
 		$this->current_element = null;
 
 		if ( isset( $this->last_error ) ) {
@@ -689,6 +1073,14 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * @since 6.6.0 Subclassed for HTML Processor.
 	 */
 	public function is_tag_closer(): bool {
+		if ( $this->has_native_processor() ) {
+			if ( null !== $this->native_token_type ) {
+				return $this->native_token_is_closer;
+			}
+
+			return $this->native_processor->is_tag_closer();
+		}
+
 		return $this->is_virtual()
 			? ( WP_HTML_Stack_Event::POP === $this->current_element->operation && '#tag' === $this->get_token_type() )
 			: parent::is_tag_closer();
@@ -702,6 +1094,10 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * @since 6.6.0
 	 */
 	public function is_virtual(): bool {
+		if ( $this->has_native_processor() ) {
+			return false;
+		}
+
 		return (
 			isset( $this->current_element->provenance ) &&
 			'virtual' === $this->current_element->provenance
@@ -746,8 +1142,9 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 			return false;
 		}
 
-		for ( $i = count( $this->breadcrumbs ) - 1; $i >= 0; $i-- ) {
-			$node  = $this->breadcrumbs[ $i ];
+		$current_breadcrumbs = $this->get_breadcrumbs();
+		for ( $i = count( $current_breadcrumbs ) - 1; $i >= 0; $i-- ) {
+			$node  = $current_breadcrumbs[ $i ];
 			$crumb = strtoupper( current( $breadcrumbs ) );
 
 			if ( '*' !== $crumb && $node !== $crumb ) {
@@ -999,6 +1396,14 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 *     $processor->get_breadcrumbs() === array( 'HTML', 'BODY', 'P', 'STRONG', 'EM', 'IMG' );
 	 */
 	public function get_breadcrumbs(): ?array {
+		if ( $this->has_native_processor() ) {
+			if ( null !== $this->native_token_breadcrumbs ) {
+				return $this->native_token_breadcrumbs;
+			}
+
+			return $this->native_processor->get_breadcrumbs();
+		}
+
 		return $this->breadcrumbs;
 	}
 
@@ -1027,6 +1432,14 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * @since 6.6.0
 	 */
 	public function get_current_depth(): int {
+		if ( $this->has_native_processor() ) {
+			if ( null !== $this->native_token_breadcrumbs ) {
+				return count( $this->native_token_breadcrumbs );
+			}
+
+			return $this->native_processor->get_current_depth();
+		}
+
 		return count( $this->breadcrumbs );
 	}
 
@@ -1118,6 +1531,10 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 			);
 
 			return null;
+		}
+
+		if ( $this->has_native_processor() ) {
+			$this->set_native_processor( null );
 		}
 
 		$html = '';
@@ -5058,6 +5475,14 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * @since 6.4.0
 	 */
 	public function get_tag(): ?string {
+		if ( $this->has_native_processor() ) {
+			$token_type = null !== $this->native_token_type ? $this->native_token_type : $this->native_processor->get_token_type();
+
+			return '#tag' === $token_type
+				? ( null !== $this->native_token_name ? $this->native_token_name : $this->native_processor->get_token_name() )
+				: null;
+		}
+
 		if ( null !== $this->last_error ) {
 			return null;
 		}
@@ -5118,6 +5543,14 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * @since 6.6.0 Subclassed for the HTML Processor.
 	 */
 	public function get_token_name(): ?string {
+		if ( $this->has_native_processor() ) {
+			if ( null !== $this->native_token_name ) {
+				return $this->native_token_name;
+			}
+
+			return $this->native_processor->get_token_name();
+		}
+
 		return $this->is_virtual()
 			? $this->current_element->token->node_name
 			: parent::get_token_name();
@@ -5145,6 +5578,14 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	 * @since 6.6.0 Subclassed for the HTML Processor.
 	 */
 	public function get_token_type(): ?string {
+		if ( $this->has_native_processor() ) {
+			if ( null !== $this->native_token_type ) {
+				return $this->native_token_type;
+			}
+
+			return $this->native_processor->get_token_type();
+		}
+
 		if ( $this->is_virtual() ) {
 			/*
 			 * This logic comes from the Tag Processor.
@@ -5393,6 +5834,35 @@ class WP_HTML_Processor extends WP_HTML_Tag_Processor {
 	public function seek( $bookmark_name ): bool {
 		// Flush any pending updates to the document before beginning.
 		$this->get_updated_html();
+
+		if ( $this->has_native_processor() ) {
+			$actual_bookmark_name = "_{$bookmark_name}";
+			if ( ! parent::has_bookmark( $actual_bookmark_name ) ) {
+				_doing_it_wrong(
+					__METHOD__,
+					__( 'Unknown bookmark name.' ),
+					'6.2.0'
+				);
+
+				return false;
+			}
+
+			if ( ! $this->native_processor->seek( $actual_bookmark_name ) ) {
+				return false;
+			}
+
+			$this->clear_native_token_metadata();
+			if (
+				method_exists( $this->native_processor, 'current_token_metadata' ) &&
+				$this->cache_native_token_metadata( $this->native_processor->current_token_metadata() )
+			) {
+				$this->parser_state = $this->native_parser_state_for_current_token();
+			} else {
+				$this->parser_state = $this->native_parser_state_for_current_token();
+			}
+
+			return true;
+		}
 
 		$actual_bookmark_name = "_{$bookmark_name}";
 		$processor_started_at = $this->state->current_token
