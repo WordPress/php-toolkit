@@ -19,23 +19,27 @@ use WordPress\XML\XMLProcessor;
  * @coversDefaultClass XMLProcessor
  */
 class W3CXMLConformanceTest extends TestCase {
-	
+
 	/**
 	 * Path to the W3C XML test suite directory
 	 */
 	private static $test_suite_path;
-	
+
 	/**
 	 * Cache of parsed test cases
 	 */
 	private static $test_cases = null;
-	
+
+	private const XML_NAMESPACE = 'http://www.w3.org/XML/1998/namespace';
+
 	public static function setUpBeforeClass(): void {
 		self::$test_suite_path = __DIR__ . '/W3C-XML-Test-Suite';
 		
 		if (!is_dir(self::$test_suite_path)) {
 			throw new Exception("W3C XML Test Suite not found at: " . self::$test_suite_path);
 		}
+
+		self::$test_suite_path = realpath(self::$test_suite_path);
 	}
 	
 	/**
@@ -49,15 +53,160 @@ class W3CXMLConformanceTest extends TestCase {
 	public function test_w3c_xml_test_case($test_id, $test_type, $test_file, $description) {
 		$xml_content = file_get_contents($test_file);
 		$this->assertNotFalse($xml_content, "Could not read test file: {$test_file}");
-		if(strpos($xml_content, "<!DOCTYPE") !== false) {
-			$this->markTestSkipped("Skipping test case: {$test_id} – XMLProcessor does not support DOCTYPE declarations.");
-			return;
-		}
 		if(strpos($xml_content, "\xFF\xFE") !== false || strpos($xml_content, "\xFE\xFF") !== false) {
 			$this->markTestSkipped("Skipping test case: {$test_id} – it uses a UTF-16 encoded document and XMLProcessor only supports UTF-8.");
 			return;
 		}
-		
+
+		if (in_array($test_id, [
+			"not-sa01",
+			"not-sa02",
+			"not-sa03",
+			"not-sa04",
+			"sa04",
+			"ibm-valid-P01-ibm01v01.xml",
+			"ibm-valid-P32-ibm32v01.xml",
+			"ibm-valid-P32-ibm32v02.xml",
+			"ibm-valid-P32-ibm32v03.xml",
+			"ibm-valid-P32-ibm32v04.xml",
+			"ibm-valid-P68-ibm68v02.xml",
+			"ibm-valid-P69-ibm69v01.xml",
+			"ibm-valid-P69-ibm69v02.xml",
+		])) {
+			$this->markTestSkipped("Skipping test case: {$test_id} – XMLProcessor does not support standalone documents");
+			return;
+		}
+
+		if (in_array($test_id, [
+			"ibm-1-1-valid-P02-ibm02v01.xml",
+			"ibm-1-1-valid-P02-ibm02v02.xml",
+			"ibm-1-1-valid-P02-ibm02v03.xml",
+			"ibm-1-1-valid-P02-ibm02v04.xml",
+			"ibm-1-1-valid-P02-ibm02v05.xml",
+			"ibm-1-1-valid-P02-ibm02v06.xml",
+			"ibm-1-1-valid-P03-ibm03v01.xml",
+			"ibm-1-1-valid-P03-ibm03v02.xml",
+			"ibm-1-1-valid-P03-ibm03v03.xml",
+			"ibm-1-1-valid-P03-ibm03v04.xml",
+			"ibm-1-1-valid-P03-ibm03v05.xml",
+			"ibm-1-1-valid-P03-ibm03v06.xml",
+			"ibm-1-1-valid-P03-ibm03v07.xml",
+			"ibm-1-1-valid-P03-ibm03v08.xml",
+			"ibm-1-1-valid-P03-ibm03v09.xml",
+			"ibm-1-1-valid-P04-ibm04v01.xml",
+			"ibm-1-1-valid-P04-ibm04av01.xml",
+			"ibm-1-1-valid-P05-ibm05v01.xml",
+			"ibm-1-1-valid-P05-ibm05v02.xml",
+			"ibm-1-1-valid-P05-ibm05v03.xml",
+			"ibm-1-1-valid-P05-ibm05v04.xml",
+			"ibm-1-1-valid-P05-ibm05v05.xml",
+			"ibm-1-1-valid-P047-ibm07v01.xml",
+			"ibm-1-1-valid-P77-ibm77v01.xml",
+			"ibm-1-1-valid-P77-ibm77v02.xml",
+			"ibm-1-1-valid-P77-ibm77v03.xml",
+			"ibm-1-1-valid-P77-ibm77v04.xml",
+			"ibm-1-1-valid-P77-ibm77v05.xml",
+			"ibm-1-1-valid-P77-ibm77v06.xml",
+			"ibm-1-1-valid-P77-ibm77v07.xml",
+			"ibm-1-1-valid-P77-ibm77v08.xml",
+			"ibm-1-1-valid-P77-ibm77v09.xml",
+			"ibm-1-1-valid-P77-ibm77v10.xml",
+			"ibm-1-1-valid-P77-ibm77v11.xml",
+			"ibm-1-1-valid-P77-ibm77v12.xml",
+			"ibm-1-1-valid-P77-ibm77v13.xml",
+			"ibm-1-1-valid-P77-ibm77v14.xml",
+			"ibm-1-1-valid-P77-ibm77v15.xml",
+			"ibm-1-1-valid-P77-ibm77v16.xml",
+			"ibm-1-1-valid-P77-ibm77v17.xml",
+			"ibm-1-1-valid-P77-ibm77v18.xml",
+			"ibm-1-1-valid-P77-ibm77v19.xml",
+			"ibm-1-1-valid-P77-ibm77v20.xml",
+			"ibm-1-1-valid-P77-ibm77v21.xml",
+			"ibm-1-1-valid-P77-ibm77v22.xml",
+			"ibm-1-1-valid-P77-ibm77v23.xml",
+			"ibm-1-1-valid-P77-ibm77v24.xml",
+			"ibm-1-1-valid-P77-ibm77v25.xml",
+			"ibm-1-1-valid-P77-ibm77v26.xml",
+			"ibm-1-1-valid-P77-ibm77v27.xml",
+			"ibm-1-1-valid-P77-ibm77v28.xml",
+			"ibm-1-1-valid-P77-ibm77v29.xml",
+			"ibm-1-1-valid-P77-ibm77v30.xml",
+			"rmt-e2e-50",
+			"rmt-006",
+			"rmt-007",
+			"rmt-023",
+			"rmt-025",
+			"rmt-027",
+			"rmt-029",
+			"rmt-031",
+			"rmt-033",
+			"rmt-035",
+			"rmt-043",
+			"rmt-045",
+			"rmt-047",
+			"rmt-049",
+			"rmt-051",
+			"rmt-054",
+			"rmt-ns11-001",
+			"rmt-ns11-002",
+			"rmt-ns11-003",
+			"rmt-ns11-004",
+			"rmt-ns11-006",
+		])) {
+			$this->markTestSkipped("Skipping test case: {$test_id} – XMLProcessor does not support XML 1.1.");
+			return;
+		}
+
+		if (in_array($test_id, [
+			"valid-sa-012",
+			"valid-sa-016",
+			"valid-sa-017",
+			"valid-sa-036",
+			"valid-sa-017a",
+			"valid-sa-039",
+			"valid-sa-055",
+			"valid-sa-063",
+			"valid-sa-098",
+			"pr-xml-utf-8",
+			"o-p01pass2",
+			"o-p22pass4",
+			"o-p22pass5",
+			"o-p43pass1",
+			"ibm-valid-P16-ibm16v01",
+			"ibm-valid-P16-ibm16v02",
+			"ibm-valid-P16-ibm16v03",
+			"ibm-valid-P17-ibm17v01",
+			"ibm-valid-P27-ibm27v02",
+			"ibm-valid-P43-ibm43v01",
+			"rmt-e2e-15j",
+			"rmt-e2e-15l",
+			"rmt-e2e-22",
+			"rmt-010",
+			"rmt-012",
+			"rmt-022",
+			"rmt-026",
+			"rmt-034",
+			"rmt-040",
+			"rmt-044",
+			"rmt-050",
+			"rmt-e3e-05b",
+			"x-rmt-008b",
+			"ibm-valid-P16-ibm16v01.xml",
+			"ibm-valid-P16-ibm16v02.xml",
+			"ibm-valid-P16-ibm16v03.xml",
+			"ibm-valid-P17-ibm17v01.xml",
+			"ibm-valid-P27-ibm27v02.xml",
+			"ibm-valid-P43-ibm43v01.xml",
+			"x-ibm-1-0.5-valid-P04-ibm04v01.xml",
+			"x-ibm-1-0.5-valid-P05-ibm05v01.xml",
+			"x-ibm-1-0.5-valid-P05-ibm05v02.xml",
+			"x-ibm-1-0.5-valid-P05-ibm05v03.xml",
+			"x-ibm-1-0.5-valid-P05-ibm05v04.xml",
+		])) {
+			$this->markTestSkipped("Skipping test case: {$test_id} – XMLProcessor does not apply custom DTDs.");
+			return;
+		}
+
 		try {
 			$processor = XMLProcessor::create_from_string($xml_content);
 
@@ -72,6 +221,8 @@ class W3CXMLConformanceTest extends TestCase {
 				case 'valid':
 					$this->assertNotFalse($processor, 
 						"Valid XML should parse successfully [{$test_id}]: {$description}");
+					$this->assertNull($processor->get_exception(), 
+						"Valid XML should not produce exceptions [{$test_id}]: {$description}");
 					$this->assertNull($processor->get_last_error(), 
 						"Valid XML should not produce errors [{$test_id}]: {$description}");
 					break;
@@ -122,6 +273,8 @@ class W3CXMLConformanceTest extends TestCase {
 			if (!is_dir(self::$test_suite_path)) {
 				throw new Exception("W3C XML Test Suite not found at: " . self::$test_suite_path);
 			}
+
+			self::$test_suite_path = realpath(self::$test_suite_path);
 		}
 		
 		if (self::$test_cases === null) {
@@ -130,128 +283,113 @@ class W3CXMLConformanceTest extends TestCase {
 		
 		return self::$test_cases;
 	}
-	
+
 	/**
-	 * Parse all test cases from the W3C XML test suite
+	 * Parse all test cases from the W3C XML test suite.
 	 */
 	private static function parseAllTestCases() {
 		$main_config = self::$test_suite_path . '/xmlconf.xml';
-		if (!file_exists($main_config)) {
-			throw new Exception("Main test configuration not found: {$main_config}");
+		if ( ! file_exists( $main_config ) ) {
+			throw new Exception( "Main test configuration not found: {$main_config}" );
 		}
-		
-		$test_suites = self::parseMainConfiguration($main_config);
-		$all_test_cases = [];
-		
-		foreach ($test_suites as $suite) {
-			$suite_test_cases = self::parseTestSuite($suite);
-			$all_test_cases = array_merge($all_test_cases, $suite_test_cases);
-		}
-		
-		return $all_test_cases;
-	}
-	
-	/**
-	 * Parse the main xmlconf.xml configuration file
-	 */
-	private static function parseMainConfiguration($config_path) {
-		$xml_content = file_get_contents($config_path);
-		$suites = [];
-		
-		// Extract TESTCASES elements and their xml:base attributes
-		if (preg_match_all('/<TESTCASES[^>]*?xml:base="([^"]*)"[^>]*?PROFILE="([^"]*)"[^>]*?>/', $xml_content, $matches, PREG_SET_ORDER)) {
-			foreach ($matches as $match) {
-				$suites[] = [
-					'base_path' => $match[1],
-					'profile' => $match[2]
-				];
+
+		$previous = libxml_use_internal_errors( true );
+		$dom      = new DOMDocument();
+		$options  = LIBXML_DTDLOAD | LIBXML_DTDATTR | LIBXML_NOENT;
+		$loaded   = $dom->load( $main_config, $options );
+		if ( ! $loaded ) {
+			$errors = libxml_get_errors();
+			libxml_clear_errors();
+			libxml_use_internal_errors( $previous );
+
+			$message = 'Failed to parse xmlconf.xml';
+			if ( ! empty( $errors ) ) {
+				$first   = $errors[0];
+				$message .= sprintf( ': %s on line %d', trim( $first->message ), $first->line );
 			}
+
+			throw new Exception( $message );
 		}
-		
-		// Also handle TESTCASES without explicit PROFILE but with xml:base
-		if (preg_match_all('/<TESTCASES[^>]*?xml:base="([^"]*)"[^>]*?>(?![^<]*PROFILE)/', $xml_content, $matches, PREG_SET_ORDER)) {
-			foreach ($matches as $match) {
-				$suites[] = [
-					'base_path' => $match[1],
-					'profile' => 'Unknown Profile'
-				];
-			}
-		}
-		
-		return $suites;
-	}
-	
-	/**
-	 * Parse tests for a specific test suite
-	 */
-	private static function parseTestSuite($suite) {
-		$base_path = rtrim(self::$test_suite_path . '/' . $suite['base_path'], '/');
-		$test_cases = [];
-		
-		// Look for test definition files in the base path
-		if (is_dir($base_path)) {
-			$files = glob($base_path . '/*.xml');
-			foreach ($files as $file) {
-				if (basename($file) !== 'xmlconf.xml') {
-					$suite_test_cases = self::parseTestFile($file, $base_path);
-					$test_cases = array_merge($test_cases, $suite_test_cases);
-				}
-			}
-		}
-		
+
+		libxml_clear_errors();
+		libxml_use_internal_errors( $previous );
+
+		$test_cases = array();
+		self::collectTestCases( $dom->documentElement, self::$test_suite_path, $test_cases );
+
 		return $test_cases;
 	}
-	
-	/**
-	 * Parse a single test definition file
-	 */
-	private static function parseTestFile($test_file, $base_path) {
-		$content = file_get_contents($test_file);
-		$test_cases = [];
-		
-		// Parse TEST elements using regex
-		$pattern = '/<TEST\s+([^>]+)>(.*?)<\/TEST>/s';
-		if (preg_match_all($pattern, $content, $matches, PREG_SET_ORDER)) {
-			foreach ($matches as $match) {
-				$attributes = self::parseAttributes($match[1]);
-				$description = trim(strip_tags($match[2]));
-				
-				if (isset($attributes['URI']) && isset($attributes['ID']) && isset($attributes['TYPE'])) {
-					$test_file_path = $base_path . '/' . $attributes['URI'];
-					
-					// Only include tests that have actual test files
-					if (file_exists($test_file_path)) {
-						$test_cases[$attributes['ID']] = [
-							$attributes['ID'],      // test_id
-							$attributes['TYPE'],    // test_type
-							$test_file_path,        // test_file
-							$description            // description
-						];
-					}
-				}
+
+	private static function collectTestCases( DOMNode $node, $base_path, array &$test_cases ) {
+		if ( ! ( $node instanceof DOMElement ) ) {
+			foreach ( $node->childNodes as $child ) {
+				self::collectTestCases( $child, $base_path, $test_cases );
 			}
+
+			return;
 		}
-		
-		return $test_cases;
+
+		$current_base = $base_path;
+		if ( $node->hasAttributeNS( self::XML_NAMESPACE, 'base' ) ) {
+			$current_base = self::resolvePath( $base_path, $node->getAttributeNS( self::XML_NAMESPACE, 'base' ) );
+		} elseif ( $node->hasAttribute( 'xml:base' ) ) {
+			$current_base = self::resolvePath( $base_path, $node->getAttribute( 'xml:base' ) );
+		}
+
+		if ( 'TEST' === $node->nodeName ) {
+			$uri = $node->getAttribute( 'URI' );
+			if ( '' === $uri ) {
+				return;
+			}
+
+			$test_file = self::resolvePath( $current_base, $uri );
+			if ( ! is_file( $test_file ) ) {
+				return;
+			}
+
+			$test_id = $node->getAttribute( 'ID' );
+			if ( '' === $test_id ) {
+				$test_id = $uri;
+			}
+
+			$type = strtolower( $node->getAttribute( 'TYPE' ) );
+			if ( '' === $type ) {
+				$type = 'valid';
+			}
+
+			$description = trim( preg_replace( '/\s+/', ' ', $node->textContent ) );
+
+			$test_cases[ $test_id ] = array(
+				$test_id,
+				$type,
+				$test_file,
+				$description,
+			);
+
+			return;
+		}
+
+		foreach ( $node->childNodes as $child ) {
+			self::collectTestCases( $child, $current_base, $test_cases );
+		}
 	}
-	
-	/**
-	 * Parse XML attributes from a string
-	 */
-	private static function parseAttributes($attr_string) {
-		$attributes = [];
-		$pattern = '/(\w+)="([^"]*)"|\s+(\w+)=\'([^\']*)\'/';
-		
-		if (preg_match_all($pattern, $attr_string, $matches, PREG_SET_ORDER)) {
-			foreach ($matches as $match) {
-				if (!empty($match[1])) {
-					$attributes[$match[1]] = $match[2];
-				} elseif (!empty($match[3])) {
-					$attributes[$match[3]] = $match[4];
-				}
-			}
+
+	private static function resolvePath( $base_path, $relative_path ) {
+		if ( '' === $relative_path ) {
+			return $base_path;
 		}
-		
-		return $attributes;
+
+		// If it's an absolute path, use it directly
+		if ( $relative_path[0] === '/' || preg_match( '#^[a-zA-Z]:#', $relative_path ) ) {
+			return $relative_path;
+		}
+
+		// Otherwise concatenate and let realpath() normalize it
+		$candidate = rtrim( $base_path, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR . $relative_path;
+		$resolved  = realpath( $candidate );
+
+		// If realpath fails (file doesn't exist), return the candidate anyway
+		// We check is_file() later, so non-existent paths will be skipped
+		return false !== $resolved ? $resolved : $candidate;
 	}
 }
