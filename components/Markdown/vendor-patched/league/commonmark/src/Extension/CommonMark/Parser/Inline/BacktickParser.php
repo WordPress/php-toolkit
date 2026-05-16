@@ -32,7 +32,7 @@ final class BacktickParser implements InlineParserInterface
      */
     private const MAX_BACKTICKS = 1000;
 
-    /** @var \WeakReference<Cursor>|null */
+    /** @var \WeakReference<Cursor>|Cursor|null */
     private $lastCursor;
     /**
      * @var bool
@@ -98,9 +98,9 @@ final class BacktickParser implements InlineParserInterface
     private function findMatchingTicks(int $openTickLength, Cursor $cursor): bool
     {
         // Reset the seenBackticks cache if this is a new cursor
-        if ($this->lastCursor === null || $this->lastCursor->get() !== $cursor) {
+        if (! $this->isSameCursor($cursor)) {
             $this->seenBackticks     = [];
-            $this->lastCursor        = \WeakReference::create($cursor);
+            $this->lastCursor        = $this->createCursorReference($cursor);
             $this->lastCursorScanned = false;
         }
 
@@ -131,5 +131,30 @@ final class BacktickParser implements InlineParserInterface
         $this->lastCursorScanned = true;
 
         return false;
+    }
+
+    /**
+     * @return \WeakReference<Cursor>|Cursor
+     */
+    private function createCursorReference(Cursor $cursor)
+    {
+        if (\class_exists('WeakReference')) {
+            return \WeakReference::create($cursor);
+        }
+
+        return $cursor;
+    }
+
+    private function isSameCursor(Cursor $cursor): bool
+    {
+        if ($this->lastCursor === null) {
+            return false;
+        }
+
+        if ($this->lastCursor instanceof Cursor) {
+            return $this->lastCursor === $cursor;
+        }
+
+        return $this->lastCursor->get() === $cursor;
     }
 }

@@ -131,7 +131,7 @@ final class LinkParserHelper
         return $destination;
     }
 
-    /** @var \WeakReference<Cursor>|null */
+    /** @var \WeakReference<Cursor>|Cursor|null */
     private static $lastCursor;
     /**
      * @var bool
@@ -144,12 +144,12 @@ final class LinkParserHelper
         // that no closing brace exists, so we can skip the regex entirely. This helps avoid
         // certain pathological cases where the regex engine can take a very long time to
         // determine that no match exists.
-        if (self::$lastCursor !== null && self::$lastCursor->get() === $cursor) {
+        if (self::isSameCursor($cursor)) {
             if (self::$lastCursorLacksClosingBrace) {
                 return null;
             }
         } else {
-            self::$lastCursor = \WeakReference::create($cursor);
+            self::$lastCursor = self::createCursorReference($cursor);
         }
 
         if ($res = $cursor->match(RegexHelper::REGEX_LINK_DESTINATION_BRACES)) {
@@ -164,5 +164,30 @@ final class LinkParserHelper
         self::$lastCursorLacksClosingBrace = true;
 
         return null;
+    }
+
+    /**
+     * @return \WeakReference<Cursor>|Cursor
+     */
+    private static function createCursorReference(Cursor $cursor)
+    {
+        if (\class_exists('WeakReference')) {
+            return \WeakReference::create($cursor);
+        }
+
+        return $cursor;
+    }
+
+    private static function isSameCursor(Cursor $cursor): bool
+    {
+        if (self::$lastCursor === null) {
+            return false;
+        }
+
+        if (self::$lastCursor instanceof Cursor) {
+            return self::$lastCursor === $cursor;
+        }
+
+        return self::$lastCursor->get() === $cursor;
     }
 }
