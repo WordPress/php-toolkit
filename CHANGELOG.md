@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 - Placeholder section for upcoming changes. Entries are appended automatically by the release workflow.
+- Added a PHP.wasm build path and Playground CLI load verification for the native API extension.
 - Added a native `WordPress\DataLiberation\URL\NativeURLInTextProcessor` candidate scanner for URL-in-text detection.
 - Added public `URLInTextProcessor` support for native ASCII candidate scanning while preserving WHATWG validation.
 - Added a `--component=url` URL-in-text benchmark row for public and direct native scanner measurements.

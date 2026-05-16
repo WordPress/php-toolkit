@@ -7,7 +7,7 @@ use std::rc::Rc;
 #[cfg(feature = "php-extension")]
 use ext_php_rs::prelude::*;
 #[cfg(feature = "php-extension")]
-use ext_php_rs::types::Zval;
+use ext_php_rs::types::{ZendLong, Zval};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct XmlToken {
@@ -8891,7 +8891,7 @@ fn xml_zval_bool(value: bool) -> Zval {
 #[cfg(feature = "php-extension")]
 fn xml_zval_i64(value: i64) -> Zval {
     let mut zval = Zval::new();
-    zval.set_long(value);
+    zval.set_long(value as ZendLong);
     zval
 }
 

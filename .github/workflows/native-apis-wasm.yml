@@ -1,0 +1,47 @@
+name: Native API PHP.wasm Extension
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/native-apis-wasm.yml'
+      - 'extensions/native-apis/**'
+  push:
+    branches: [ trunk ]
+    paths:
+      - '.github/workflows/native-apis-wasm.yml'
+      - 'extensions/native-apis/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Cache PHP.wasm Docker assets
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/php-wasm/compile-extension/docker-assets
+          key: php-wasm-compile-extension-3.1.33
+
+      - name: Build PHP.wasm native API extension
+        env:
+          PHP_WASM_VERSION: '8.3'
+          PHP_WASM_COMPILE_EXTENSION_PACKAGE: '@php-wasm/compile-extension@3.1.33'
+        run: bash extensions/native-apis/build-wasm-extension.sh
+
+      - name: Verify extension loads in Playground CLI
+        run: |
+          npx --yes @wp-playground/cli@3.1.33 php \
+            --php=8.3 \
+            --php-extension=extensions/native-apis/dist/wasm/manifest.json \
+            --wordpress-install-mode=do-not-attempt-installing \
+            --skip-sqlite-setup \
+            --mount="${PWD}/extensions/native-apis/tests:/tmp/native-api-tests" \
+            -- /tmp/native-api-tests/verify-playground-wasm.php

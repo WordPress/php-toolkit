@@ -90,6 +90,42 @@ The Rust parser kernels can be checked without PHP development headers:
 cargo test
 ```
 
+## PHP.wasm Build
+
+The PHP.wasm build uses `@php-wasm/compile-extension` to compile a phpize
+wrapper around the Rust static library. It requires Docker, Node.js, and a Rust
+toolchain inside the prepared PHP.wasm build image.
+
+PHP.wasm targets `wasm32-unknown-emscripten`, but `compile-extension` builds
+PHP with 64-bit `zend_long` flags. The helper exports those same flags for the
+Rust and bindgen build, opts Rust into Emscripten's WebAssembly exception ABI,
+and temporarily patches the downloaded `ext-php-rs` source for remaining
+wasm32 helper assumptions until upstream carries this support directly.
+
+```bash
+PHP_WASM_VERSION=8.3 \
+PHP_WASM_COMPILE_EXTENSION_PACKAGE=@php-wasm/compile-extension@3.1.33 \
+bash extensions/native-apis/build-wasm-extension.sh
+```
+
+The generated manifest is written to:
+
+```text
+extensions/native-apis/dist/wasm/manifest.json
+```
+
+Load the generated extension in Playground CLI with:
+
+```bash
+npx --yes @wp-playground/cli@3.1.33 php \
+	--php=8.3 \
+	--php-extension=extensions/native-apis/dist/wasm/manifest.json \
+	--wordpress-install-mode=do-not-attempt-installing \
+	--skip-sqlite-setup \
+	--mount="$(pwd)/extensions/native-apis/tests:/tmp/native-api-tests" \
+	-- /tmp/native-api-tests/verify-playground-wasm.php
+```
+
 ## Benchmarking
 
 The repository benchmark harness defaults to PHP userland rows so existing

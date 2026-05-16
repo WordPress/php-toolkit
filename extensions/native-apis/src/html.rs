@@ -8,7 +8,7 @@ use ext_php_rs::prelude::*;
 #[cfg(feature = "php-extension")]
 use ext_php_rs::{
     boxed::ZBox,
-    types::{ZendCallable, ZendHashTable, Zval},
+    types::{ZendCallable, ZendHashTable, ZendLong, Zval},
     zend::Function,
 };
 
@@ -3143,7 +3143,7 @@ fn html_zval_bool(value: bool) -> Zval {
 #[cfg(feature = "php-extension")]
 fn html_zval_i64(value: i64) -> Zval {
     let mut zval = Zval::new();
-    zval.set_long(value);
+    zval.set_long(value as ZendLong);
     zval
 }
 
