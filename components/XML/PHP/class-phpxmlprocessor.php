@@ -341,7 +341,7 @@ use function WordPress\Encoding\utf8_ord;
  *
  * @since WP_VERSION
  */
-class XMLProcessor {
+class PHPXMLProcessor {
 	/**
 	 * The maximum number of bookmarks allowed to exist at
 	 * any given time.

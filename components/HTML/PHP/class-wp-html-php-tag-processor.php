@@ -408,7 +408,7 @@
  *              Introduces "special" elements which act like void elements, e.g. TITLE, STYLE.
  *              Allows scanning through all tokens and processing modifiable text, where applicable.
  */
-class WP_HTML_Tag_Processor {
+class WP_HTML_PHP_Tag_Processor {
 	/**
 	 * The maximum number of bookmarks allowed to exist at
 	 * any given time.
