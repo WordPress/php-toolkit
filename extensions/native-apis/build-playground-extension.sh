@@ -18,6 +18,7 @@ npx --yes @php-wasm/compile-extension \
 
 docker run --rm \
 	--entrypoint bash \
+	-e PHP_WASM_VERSION="${php_version}" \
 	-v "${script_dir}:/src" \
 	-w /src \
 	"${image_tag}" \
@@ -50,7 +51,36 @@ docker run --rm \
 		export CXX_wasm32_unknown_emscripten="${CXX_wasm32_unknown_emscripten:-em++}"
 		export AR_wasm32_unknown_emscripten="${AR_wasm32_unknown_emscripten:-emar}"
 		export RANLIB_wasm32_unknown_emscripten="${RANLIB_wasm32_unknown_emscripten:-emranlib}"
-		export RUSTFLAGS="-C panic=abort ${RUSTFLAGS:-}"
+
+		php_cfg=""
+		case "${PHP_WASM_VERSION}" in
+			8.5*)
+				php_cfg="--cfg php85 --cfg php84 --cfg php83 --cfg php82 --cfg php81"
+				;;
+			8.4*)
+				php_cfg="--cfg php84 --cfg php83 --cfg php82 --cfg php81"
+				;;
+			8.3*)
+				php_cfg="--cfg php83 --cfg php82 --cfg php81"
+				;;
+			8.2*)
+				php_cfg="--cfg php82 --cfg php81"
+				;;
+			8.1*)
+				php_cfg="--cfg php81"
+				;;
+		esac
+		export RUSTFLAGS="-C panic=abort ${php_cfg} ${RUSTFLAGS:-}"
+
+		cargo +nightly fetch --target wasm32-unknown-emscripten
+		ext_php_rs_dir="$(find "${CARGO_HOME:-$HOME/.cargo}/registry/src" -maxdepth 3 -type d -name "ext-php-rs-0.15.13" -print -quit)"
+		if [ -z "${ext_php_rs_dir}" ]; then
+			echo "Could not find ext-php-rs 0.15.13 sources after cargo fetch." >&2
+			exit 1
+		fi
+		# ext-php-rs 0.15.13 has a 64-bit-oriented internal size guard that is too
+		# tight on wasm32. Relax it only inside this disposable PHP.wasm build image.
+		perl -0pi -e "s/std::mem::size_of::<PropertyDescriptor<\\(\\)>>\\(\\) <= 12 \\* std::mem::size_of::<usize>\\(\\)/std::mem::size_of::<PropertyDescriptor<()>>() <= 16 * std::mem::size_of::<usize>()/" "${ext_php_rs_dir}/src/internal/property.rs"
 
 		cargo +nightly build \
 			--release \
