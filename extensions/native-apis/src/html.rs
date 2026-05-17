@@ -8,7 +8,7 @@ use ext_php_rs::prelude::*;
 #[cfg(feature = "php-extension")]
 use ext_php_rs::{
     boxed::ZBox,
-    types::{ZendCallable, ZendHashTable, Zval},
+    types::{ZendHashTable, Zval},
     zend::Function,
 };
 
@@ -2554,7 +2554,7 @@ impl WpHtmlNativeProcessor {
     }
 
     pub fn normalize(html: String) -> Option<String> {
-        html_normalize_via_php(&html)
+        html_serialize_native_fragment(&html)
     }
 
     pub fn serialize(&mut self) -> Option<String> {
@@ -2562,7 +2562,7 @@ impl WpHtmlNativeProcessor {
             return None;
         }
 
-        let serialized = html_normalize_via_php(&self.inner.html)?;
+        let serialized = html_serialize_native_fragment(&self.inner.html)?;
         self.inner.offset = self.inner.html.len();
         Some(serialized)
     }
@@ -3246,6 +3246,78 @@ fn html_breadcrumbs_match(current: &[String], breadcrumbs: &[String]) -> bool {
 }
 
 #[cfg(feature = "php-extension")]
+fn html_serialize_native_fragment(html: &str) -> Option<String> {
+    let mut processor = WpHtmlNativeProcessor::create_fragment(
+        html.to_string(),
+        Some("<body>".to_string()),
+        Some("UTF-8".to_string()),
+    )?;
+    let mut serialized = String::with_capacity(html.len());
+
+    while processor.next_token() {
+        let Some(tag) = processor.inner.current_tag() else {
+            continue;
+        };
+
+        serialized.push_str(&html_serialize_token(html, tag));
+    }
+
+    Some(serialized)
+}
+
+fn html_serialize_token(html: &str, tag: &HtmlTag) -> String {
+    match tag.token_type.as_str() {
+        "#tag" if tag.closing => format!("</{}>", tag.name),
+        "#tag" => html_serialize_opening_tag(html, tag),
+        "#comment" => format!("<!--{}-->", tag.text),
+        "#text" => html_escape_text(&tag.text),
+        _ => String::new(),
+    }
+}
+
+fn html_serialize_opening_tag(html: &str, tag: &HtmlTag) -> String {
+    let mut output = String::new();
+    output.push('<');
+    output.push_str(&tag.name);
+
+    let mut seen = Vec::new();
+    for attribute_name in &tag.attribute_order {
+        if seen
+            .iter()
+            .any(|seen_name: &String| seen_name == attribute_name)
+        {
+            continue;
+        }
+        seen.push(attribute_name.clone());
+
+        output.push(' ');
+        output.push_str(attribute_name);
+
+        if find_html_attribute_has_value(
+            html.as_bytes(),
+            tag.source_start,
+            tag.source_end,
+            attribute_name,
+        ) == Some(false)
+        {
+            continue;
+        }
+
+        let value = tag
+            .attributes
+            .get(attribute_name)
+            .cloned()
+            .unwrap_or_default();
+        output.push_str("=\"");
+        output.push_str(&html_escape_attribute_value(&value));
+        output.push('"');
+    }
+
+    output.push('>');
+    output
+}
+
+#[cfg(feature = "php-extension")]
 fn html_tag_public_summary_row(tag: &HtmlTag) -> Vec<(String, Zval)> {
     vec![
         (
@@ -3427,13 +3499,6 @@ fn html_doctype_info_zval(html: &str, tag: &HtmlTag) -> Option<Zval> {
     } else {
         Some(value)
     }
-}
-
-#[cfg(feature = "php-extension")]
-fn html_normalize_via_php(html: &str) -> Option<String> {
-    let callable = ZendCallable::try_from_name("WP_HTML_Processor::normalize").ok()?;
-    let value = callable.try_call(vec![&html]).ok()?;
-    value.string()
 }
 
 fn html_token_compact_summary(tag: &HtmlTag) -> String {
