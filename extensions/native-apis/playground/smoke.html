@@ -105,40 +105,42 @@ echo "WordPress\\\\DataLiberation\\\\URL\\\\NativeURLInTextProcessor: ok\\n";
 echo "PASS: Native API extension classes are available.\\n";
 `;
 
-		try {
-			if ( typeof WebAssembly.Suspending === 'undefined' ) {
-				throw new Error(
-					'This browser runtime does not expose WebAssembly JSPI. Custom PHP.wasm extensions require a JSPI-capable browser.'
-				);
-			}
+		(async () => {
+			try {
+				if ( typeof WebAssembly.Suspending === 'undefined' ) {
+					throw new Error(
+						'This browser runtime does not expose WebAssembly JSPI. Custom PHP.wasm extensions require a JSPI-capable browser.'
+					);
+				}
 
-			const [
-				{ PHP },
-				{ loadWebRuntime },
-			] = await Promise.all( [
-				import( 'https://cdn.jsdelivr.net/npm/@php-wasm/universal@3.1.33/+esm' ),
-				import( 'https://cdn.jsdelivr.net/npm/@php-wasm/web@3.1.33/+esm' ),
-			] );
+				const [
+					{ PHP },
+					{ loadWebRuntime },
+				] = await Promise.all( [
+					import( 'https://cdn.jsdelivr.net/npm/@php-wasm/universal@3.1.33/+esm' ),
+					import( 'https://cdn.jsdelivr.net/npm/@php-wasm/web@3.1.33/+esm' ),
+				] );
 
-			write( `Loading wp_native_apis from ${ manifestUrl }...` );
-			const runtimeId = await loadWebRuntime( '8.4', {
-				extensions: [
-					{
-						source: {
-							format: 'manifest',
-							manifestUrl,
+				write( `Loading wp_native_apis from ${ manifestUrl }...` );
+				const runtimeId = await loadWebRuntime( '8.4', {
+					extensions: [
+						{
+							source: {
+								format: 'manifest',
+								manifestUrl,
+							},
 						},
-					},
-				],
-			} );
+					],
+				} );
 
-			const php = new PHP( runtimeId );
-			const result = await php.run( { code: smokeTest } );
-			const text = result.text || result.errors || 'No output.';
-			write( text, result.exitCode === 0 ? 'pass' : 'fail' );
-		} catch ( error ) {
-			write( `FAIL: ${ error && error.stack ? error.stack : error }`, 'fail' );
-		}
+				const php = new PHP( runtimeId );
+				const result = await php.run( { code: smokeTest } );
+				const text = result.text || result.errors || 'No output.';
+				write( text, result.exitCode === 0 ? 'pass' : 'fail' );
+			} catch ( error ) {
+				write( `FAIL: ${ error && error.stack ? error.stack : error }`, 'fail' );
+			}
+		})();
 	</script>
 </body>
 </html>
