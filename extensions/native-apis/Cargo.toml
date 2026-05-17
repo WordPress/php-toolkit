@@ -13,7 +13,7 @@ default = []
 php-extension = ["dep:ext-php-rs"]
 
 [dependencies]
-ext-php-rs = { version = "=0.15.12", default-features = false, features = ["runtime"], optional = true }
+ext-php-rs = { version = "=0.15.13", default-features = false, features = ["runtime"], optional = true }
 
 [profile.release]
 lto = "thin"
