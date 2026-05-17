@@ -227,8 +227,28 @@ wp-native-apis-0.1.0-php-wasm/
 `-- wp_native_apis-php8.4-jspi.so
 ```
 
-Use the Blueprint smoke test to verify a Playground runtime that already ships
-with the native PHP.wasm extension bundle. This URL works after
+Use the Blueprint smoke test together with the Playground Query API
+`php-extension` parameter to verify a published PHP.wasm extension bundle.
+`php-extension` must be present in the initial Playground URL because PHP
+extensions load before PHP starts; the Blueprint only writes and runs the smoke
+test.
+
+After publishing the PHP.wasm `manifest.json`, open the main Playground URL with
+both the extension manifest and the Blueprint URL:
+
+```text
+https://playground.wordpress.net/?php=8.4&php-extension=<url-encoded-manifest-url>&blueprint-url=<url-encoded-blueprint-url>
+```
+
+For example, a release URL will look like:
+
+```text
+https://playground.wordpress.net/?php=8.4&php-extension=https%3A%2F%2Fgithub.com%2FWordPress%2Fphp-toolkit%2Freleases%2Fdownload%2Fnative-apis-v0.1.0%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json
+```
+
+The Blueprint URL itself is useful for previewing the smoke-test harness, but it
+will report missing native classes unless the Playground runtime was also
+started with `php-extension=<manifest-url>`. This `trunk` URL works after
 `extensions/native-apis/playground/blueprint.json` exists on `trunk`:
 
 ```text
@@ -259,9 +279,9 @@ https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.co
 ```
 
 If the smoke page reports missing classes, the selected Playground runtime does
-not include the `wp_native_apis` PHP.wasm extension, the bundle does not match
-the selected PHP version, or the extension was built for the host PHP ABI
-instead of the JSPI PHP.wasm ABI.
+not include the `wp_native_apis` PHP.wasm extension. Check that the URL includes
+`php-extension=<manifest-url>`, the bundle matches the selected PHP version, and
+the extension was built for the JSPI PHP.wasm ABI instead of the host PHP ABI.
 
 ## Benchmarking
 
