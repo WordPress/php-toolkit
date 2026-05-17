@@ -31,14 +31,11 @@
 	<h1>Native API PHP.wasm smoke test</h1>
 	<pre id="output">Loading PHP.wasm runtime...</pre>
 
-	<script type="module">
-		import { PHP } from 'https://cdn.jsdelivr.net/npm/@php-wasm/universal@3.1.33/+esm';
-		import { loadWebRuntime } from 'https://cdn.jsdelivr.net/npm/@php-wasm/web@3.1.33/+esm';
-
+	<script>
 		const output = document.getElementById( 'output' );
 		const manifestUrl = new URL(
 			'./dist/wp_native_apis/manifest.json',
-			window.location.href
+			document.baseURI
 		);
 
 		function write( text, className = '' ) {
@@ -114,6 +111,14 @@ echo "PASS: Native API extension classes are available.\\n";
 					'This browser runtime does not expose WebAssembly JSPI. Custom PHP.wasm extensions require a JSPI-capable browser.'
 				);
 			}
+
+			const [
+				{ PHP },
+				{ loadWebRuntime },
+			] = await Promise.all( [
+				import( 'https://cdn.jsdelivr.net/npm/@php-wasm/universal@3.1.33/+esm' ),
+				import( 'https://cdn.jsdelivr.net/npm/@php-wasm/web@3.1.33/+esm' ),
+			] );
 
 			write( `Loading wp_native_apis from ${ manifestUrl }...` );
 			const runtimeId = await loadWebRuntime( '8.4', {

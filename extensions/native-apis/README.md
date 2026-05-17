@@ -239,10 +239,11 @@ classes because PHP has already started without the extension.
 
 After publishing the PHP.wasm `manifest.json`, open a smoke page that loads the
 manifest through the Playground JavaScript API. This PR branch publishes a
-branch-local smoke page and PHP 8.4 JSPI extension bundle at:
+branch-local smoke page and PHP 8.4 JSPI extension bundle that can be previewed
+at:
 
 ```text
-https://raw.githack.com/WordPress/php-toolkit/codex-native-extension-docs/extensions/native-apis/playground/smoke.html
+https://htmlpreview.github.io/?https://github.com/WordPress/php-toolkit/blob/codex-native-extension-docs/extensions/native-apis/playground/smoke.html
 ```
 
 Expected output:
