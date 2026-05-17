@@ -202,24 +202,21 @@ a PHP 8.3 build for PHP 8.4 or PHP 8.5.
 ### Playground release checklist
 
 Browser Playground runs PHP as WebAssembly, so it cannot load the Linux shared
-object from `target/release/`. Publish a PHP.wasm extension bundle before
-claiming Playground support.
+object from `target/release/`. Publish the PHP.wasm extension bundle produced
+by `build-playground-extension.sh` before claiming Playground support:
 
-The current native extension uses `ext-php-rs`, so the PHP.wasm build needs a
-Rust-to-PHP side-module recipe rather than the host `cdylib` output. Follow the
-Playground extension docs when adding that packaging:
+```bash
+extensions/native-apis/build-playground-extension.sh
+```
 
-- Building PHP extensions:
-  https://wordpress.github.io/wordpress-playground/developers/apis/javascript-api/build-php-extensions/
-- Rust and dependency notes:
-  https://wordpress.github.io/wordpress-playground/developers/apis/javascript-api/php-extension-dependencies/
-- Blueprint data format:
-  https://wordpress.github.io/wordpress-playground/blueprints/data-format/
-- Blueprint steps:
-  https://wordpress.github.io/wordpress-playground/blueprints/steps/
+The host PHP extension is Rust-backed through `ext-php-rs`. The Playground
+bundle currently uses `native_apis_shim.c` instead, because Playground's
+PHP.wasm runtime only exports the PHP C ABI symbols needed by regular C
+extensions. The shim registers the native extension classes and verifies the
+Playground loading path while the full Rust-backed implementation remains the
+host PHP artifact.
 
-When the PHP.wasm bundle is published, attach the full output directory to a
-GitHub release:
+Attach the full output directory to a GitHub release:
 
 ```text
 wp-native-apis-0.1.0-php-wasm/
@@ -249,7 +246,7 @@ https://playground.wordpress.net/?php=8.4&php-extension=https%3A%2F%2Fgithub.com
 Expected output:
 
 ```text
-wp_native_apis extension version: 0.0.0
+wp_native_apis extension version: 0.1.0
 WP_HTML_Native_Tag_Processor: ok
 WP_HTML_Native_Processor: ok
 WordPress\XML\NativeXMLProcessor: ok
