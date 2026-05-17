@@ -110,11 +110,39 @@ jobs:
     if: github.ref == 'refs/heads/trunk' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
     runs-on: ubuntu-latest
     needs: build
-    timeout-minutes: 10
+    timeout-minutes: 30
     permissions:
       contents: write
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: true
 
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer
+          coverage: none
+
+      - name: Install docs dependencies
+        run: composer install --no-dev --optimize-autoloader --no-progress
+
+      - name: Build docs site
+        run: |
+          mkdir -p docs/assets
+          rm -f docs/assets/php-toolkit.zip
+          zip -qr docs/assets/php-toolkit.zip components vendor bootstrap.php composer.json \
+            -x "*/Tests/*" "*/tests/*" "*/.git/*" "*/.github/*" "*/node_modules/*"
+          php bin/build-reference.php
+
       - name: Download packaged extension
         uses: actions/download-artifact@v4
         with:
@@ -124,6 +152,7 @@ jobs:
       - name: Publish static extension bundle to gh-pages
         env:
           BUNDLE_DIR: build/wp_native_apis-wasm-extension
+          DOCS_DIR: docs
           EXTENSION_PATH: wp_native_apis-wasm-extension
           GITHUB_TOKEN: ${{ github.token }}
           SITE_BRANCH: gh-pages
@@ -140,7 +169,7 @@ jobs:
           git -C "$pages_dir" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           if git -C "$pages_dir" ls-remote --exit-code --heads origin "$SITE_BRANCH" >/dev/null 2>&1; then
-            git -C "$pages_dir" fetch --depth=1 origin "$SITE_BRANCH"
+            git -C "$pages_dir" fetch origin "$SITE_BRANCH"
             git -C "$pages_dir" checkout -B "$SITE_BRANCH" FETCH_HEAD
           else
             git -C "$pages_dir" checkout --orphan "$SITE_BRANCH"
@@ -153,16 +182,188 @@ jobs:
           cp -R "$BUNDLE_DIR"/. "$pages_dir/$EXTENSION_PATH/latest/"
           touch "$pages_dir/.nojekyll"
 
+          PAGES_DIR="$pages_dir" PUBLISHED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" node <<'NODE'
+          const childProcess = require('node:child_process');
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const pagesDir = process.env.PAGES_DIR;
+          const extensionPath = process.env.EXTENSION_PATH;
+          const versionPath = process.env.VERSION_PATH;
+          const repository = process.env.GITHUB_REPOSITORY;
+          const [owner, repo] = repository.split('/');
+          const root = path.join(pagesDir, extensionPath);
+          const rootUrl = `https://${owner.toLowerCase()}.github.io/${repo}/${extensionPath}`;
+          const releasesPath = path.join(root, 'releases.json');
+          const indexPath = path.join(root, 'index.html');
+
+          function readJson(filePath, fallback) {
+            try {
+              return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            } catch (error) {
+              return fallback;
+            }
+          }
+
+          function escapeHtml(value) {
+            return String(value)
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;');
+          }
+
+          function lastPublishedAt(relativeManifestPath) {
+            try {
+              return childProcess.execFileSync(
+                'git',
+                ['-C', pagesDir, 'log', '-1', '--format=%cI', '--', relativeManifestPath],
+                { encoding: 'utf8' }
+              ).trim();
+            } catch (error) {
+              return '';
+            }
+          }
+
+          const previousReleases = readJson(releasesPath, []);
+          const previousByVersion = new Map(
+            Array.isArray(previousReleases)
+              ? previousReleases.map((release) => [release.version, release])
+              : []
+          );
+
+          const releases = fs.readdirSync(root, { withFileTypes: true })
+            .filter((entry) => entry.isDirectory() && /^[0-9a-f]{40}$/.test(entry.name))
+            .map((entry) => {
+              const version = entry.name;
+              const existing = previousByVersion.get(version) || {};
+              const relativeManifestPath = path.join(extensionPath, version, 'manifest.json');
+              const manifestPath = path.join(root, version, 'manifest.json');
+              const manifest = readJson(manifestPath, {});
+
+              return {
+                version,
+                name: manifest.name || 'wp_native_apis',
+                phpVersions: Array.isArray(manifest.artifacts)
+                  ? manifest.artifacts.map((artifact) => artifact.phpVersion).filter(Boolean)
+                  : [],
+                publishedAt: version === versionPath
+                  ? process.env.PUBLISHED_AT
+                  : existing.publishedAt || lastPublishedAt(relativeManifestPath),
+                manifest: `${rootUrl}/${version}/manifest.json`,
+                checksums: `${rootUrl}/${version}/SHA256SUMS`,
+                commit: `https://github.com/${repository}/commit/${version}`,
+                workflowRun: version === versionPath
+                  ? `https://github.com/${repository}/actions/runs/${process.env.GITHUB_RUN_ID}`
+                  : existing.workflowRun || '',
+              };
+            })
+            .sort((a, b) => {
+              if (a.publishedAt && b.publishedAt) {
+                return b.publishedAt.localeCompare(a.publishedAt);
+              }
+              return b.version.localeCompare(a.version);
+            });
+
+          fs.writeFileSync(releasesPath, `${JSON.stringify(releases, null, 2)}\n`);
+
+          const rows = releases.map((release) => `
+            <tr>
+              <td><code>${escapeHtml(release.version.slice(0, 12))}</code></td>
+              <td>${escapeHtml(release.publishedAt || 'unknown')}</td>
+              <td>${escapeHtml(release.phpVersions.join(', ') || 'unknown')}</td>
+              <td><a href="${escapeHtml(release.manifest)}">manifest</a></td>
+              <td><a href="${escapeHtml(release.checksums)}">checksums</a></td>
+              <td><a href="${escapeHtml(release.commit)}">commit</a></td>
+            </tr>
+          `).join('');
+
+          fs.writeFileSync(indexPath, `<!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>wp_native_apis PHP.wasm Extension Releases</title>
+            <style>
+              :root {
+                color-scheme: light dark;
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+              }
+              body {
+                margin: 0;
+                padding: 2rem;
+                line-height: 1.5;
+              }
+              main {
+                max-width: 72rem;
+              }
+              table {
+                border-collapse: collapse;
+                width: 100%;
+              }
+              th,
+              td {
+                border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+                padding: 0.65rem 0.75rem;
+                text-align: left;
+                vertical-align: top;
+              }
+              th {
+                font-size: 0.85rem;
+              }
+              code {
+                font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+              }
+            </style>
+          </head>
+          <body>
+            <main>
+              <h1>wp_native_apis PHP.wasm Extension Releases</h1>
+              <p>The latest Playground manifest is <a href="${escapeHtml(rootUrl)}/latest/manifest.json"><code>latest/manifest.json</code></a>. Use immutable commit manifests below when a test or document needs a stable release.</p>
+              <p>Machine-readable release history is available as <a href="${escapeHtml(rootUrl)}/releases.json"><code>releases.json</code></a>.</p>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Version</th>
+                    <th>Published at (UTC)</th>
+                    <th>PHP versions</th>
+                    <th>Manifest</th>
+                    <th>SHA256</th>
+                    <th>Commit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rows || '<tr><td colspan="6">No releases published yet.</td></tr>'}
+                </tbody>
+              </table>
+            </main>
+          </body>
+          </html>
+          `);
+          NODE
+
           git -C "$pages_dir" add .nojekyll "$EXTENSION_PATH"
           if git -C "$pages_dir" diff --cached --quiet; then
             echo "No gh-pages changes to publish."
-            exit 0
+          else
+            git -C "$pages_dir" commit -m "Publish wp_native_apis WASM extension ${VERSION_PATH}"
+            git -C "$pages_dir" push origin "HEAD:$SITE_BRANCH"
           fi
-
-          git -C "$pages_dir" commit -m "Publish wp_native_apis WASM extension ${VERSION_PATH}"
-          git -C "$pages_dir" push origin "HEAD:$SITE_BRANCH"
 
           owner="${GITHUB_REPOSITORY_OWNER,,}"
           repo="${GITHUB_REPOSITORY#*/}"
+          echo "Published release index: https://${owner}.github.io/${repo}/${EXTENSION_PATH}/"
           echo "Published latest manifest: https://${owner}.github.io/${repo}/${EXTENSION_PATH}/latest/manifest.json"
           echo "Published immutable manifest: https://${owner}.github.io/${repo}/${EXTENSION_PATH}/${VERSION_PATH}/manifest.json"
+
+          rm -rf "$DOCS_DIR/$EXTENSION_PATH"
+          mkdir -p "$DOCS_DIR"
+          cp -R "$pages_dir/$EXTENSION_PATH" "$DOCS_DIR/$EXTENSION_PATH"
+          touch "$DOCS_DIR/.nojekyll"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
