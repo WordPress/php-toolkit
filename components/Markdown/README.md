@@ -81,6 +81,47 @@ echo $markdown;
 - three
 ```
 
+## Source-aware editing
+
+<p>Use <code>MarkdownSourceDocument</code> when the user edits block markup that originally came from a Markdown file. It keeps the original source slice for each top-level Markdown block and, on save, reuses unchanged slices verbatim. Only inserted or changed blocks are serialized with <code>MarkdownProducer</code>.</p>
+
+<!-- snippet:
+filename: source-aware-edit.php
+runnable: true
+-->
+```php
+<?php
+require '/php-toolkit/vendor/autoload.php';
+
+use WordPress\Markdown\MarkdownSourceDocument;
+
+$source = <<<MD
+# Title #
+
+Keep __bold__ syntax.
+
+Edit this sentence.
+MD;
+
+$document = MarkdownSourceDocument::from_markdown( $source );
+$blocks   = str_replace(
+	'<p>Edit this sentence.</p>',
+	'<p>Edit only this sentence.</p>',
+	$document->get_block_markup()
+);
+
+echo $document->patch_markdown( $blocks );
+```
+
+<!-- expected-output -->
+```
+# Title #
+
+Keep __bold__ syntax.
+
+Edit only this sentence.
+```
+
 ## Reading YAML frontmatter as post meta
 
 <p>Frontmatter keys come back as arrays so a single key can hold multiple values. Use <code>get_meta_value()</code> when you only want the first scalar.</p>
