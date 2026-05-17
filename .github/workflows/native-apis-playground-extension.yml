@@ -2,6 +2,9 @@ name: Native APIs Playground Extension
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - codex-native-extension-docs
 
 jobs:
   build:
