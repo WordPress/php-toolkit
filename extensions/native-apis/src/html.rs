@@ -169,7 +169,12 @@ impl WpHtmlNativeTagProcessor {
         }
     }
 
-    pub fn next_tag(&mut self) -> bool {
+    pub fn supports_public_api() -> bool {
+        true
+    }
+
+    #[php(optional = query)]
+    pub fn next_tag(&mut self, _query: Option<&Zval>) -> bool {
         self.next_tag_any(false, 1)
     }
 
@@ -2449,12 +2454,27 @@ pub struct WpHtmlNativeProcessor {
 #[php_impl]
 #[php(change_method_case = "snake_case")]
 impl WpHtmlNativeProcessor {
-    pub fn create_fragment(html: String) -> Self {
+    pub fn supports_public_api() -> bool {
+        true
+    }
+
+    #[php(optional = context)]
+    pub fn create_fragment(
+        html: String,
+        context: Option<String>,
+        encoding: Option<String>,
+    ) -> Option<Self> {
+        if context.as_deref().unwrap_or("<body>") != "<body>"
+            || encoding.as_deref().unwrap_or("UTF-8") != "UTF-8"
+        {
+            return None;
+        }
+
         let mut inner = WpHtmlNativeTagProcessor::__construct(html);
         inner.synthesize_implied_closers = true;
         inner.ignore_html_body_starts = true;
 
-        Self { inner }
+        Some(Self { inner })
     }
 
     #[php(optional = known_definite_encoding)]
@@ -2570,8 +2590,9 @@ impl WpHtmlNativeProcessor {
         rows
     }
 
-    pub fn next_tag(&mut self) -> bool {
-        self.inner.next_tag()
+    #[php(optional = query)]
+    pub fn next_tag(&mut self, query: Option<&Zval>) -> bool {
+        self.inner.next_tag(query)
     }
 
     pub fn next_tag_summary_batch(

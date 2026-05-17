@@ -289,7 +289,7 @@ pub struct NativeXmlProcessor {
 #[php_impl]
 #[php(change_method_case = "snake_case")]
 impl NativeXmlProcessor {
-    pub fn create_from_string(xml: String) -> Self {
+    fn new_from_string(xml: String) -> Self {
         Self {
             source: xml,
             document: None,
@@ -305,6 +305,27 @@ impl NativeXmlProcessor {
             pending_stream_error: None,
             bookmarks: HashMap::new(),
         }
+    }
+
+    pub fn supports_public_api() -> bool {
+        true
+    }
+
+    #[php(optional = cursor)]
+    pub fn create_from_string(
+        xml: String,
+        cursor: Option<String>,
+        known_definite_encoding: Option<String>,
+        document_namespaces: Option<&Zval>,
+    ) -> Option<Self> {
+        if cursor.is_some()
+            || known_definite_encoding.as_deref().unwrap_or("UTF-8") != "UTF-8"
+            || document_namespaces.is_some()
+        {
+            return None;
+        }
+
+        Some(Self::new_from_string(xml))
     }
 
     pub fn create_for_streaming(
@@ -329,7 +350,7 @@ impl NativeXmlProcessor {
             None
         };
 
-        let mut processor = Self::create_from_string(xml);
+        let mut processor = Self::new_from_string(xml);
         processor.stream_reentrancy_base_state =
             Some(stream.clone().unwrap_or_else(XmlStreamState::new));
         processor.stream = stream;
