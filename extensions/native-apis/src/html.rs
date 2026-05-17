@@ -3280,41 +3280,83 @@ fn html_serialize_opening_tag(html: &str, tag: &HtmlTag) -> String {
     output.push('<');
     output.push_str(&tag.name);
 
-    let mut seen = Vec::new();
-    for attribute_name in &tag.attribute_order {
-        if seen
-            .iter()
-            .any(|seen_name: &String| seen_name == attribute_name)
-        {
-            continue;
-        }
-        seen.push(attribute_name.clone());
-
+    for (attribute_name, value) in
+        html_source_attribute_items(html.as_bytes(), tag.source_start, tag.source_end)
+    {
         output.push(' ');
-        output.push_str(attribute_name);
+        output.push_str(&attribute_name);
 
-        if find_html_attribute_has_value(
-            html.as_bytes(),
-            tag.source_start,
-            tag.source_end,
-            attribute_name,
-        ) == Some(false)
-        {
-            continue;
+        if let Some(value) = value {
+            output.push_str("=\"");
+            output.push_str(&html_escape_attribute_value(&value));
+            output.push('"');
         }
-
-        let value = tag
-            .attributes
-            .get(attribute_name)
-            .cloned()
-            .unwrap_or_default();
-        output.push_str("=\"");
-        output.push_str(&html_escape_attribute_value(&value));
-        output.push('"');
     }
 
     output.push('>');
     output
+}
+
+fn html_source_attribute_items(
+    bytes: &[u8],
+    source_start: usize,
+    source_end: usize,
+) -> Vec<(String, Option<String>)> {
+    if source_start >= bytes.len() || source_end <= source_start {
+        return Vec::new();
+    }
+
+    let tag_end = source_end.saturating_sub(1).min(bytes.len());
+    let mut cursor = source_start.saturating_add(1);
+    if cursor < tag_end && bytes[cursor] == b'/' {
+        return Vec::new();
+    }
+
+    cursor = skip_ascii_whitespace(bytes, cursor);
+    cursor = span_name(bytes, cursor);
+
+    let mut items = Vec::new();
+    let mut seen = Vec::new();
+    while cursor < tag_end {
+        cursor = skip_ascii_whitespace(bytes, cursor);
+        if cursor >= tag_end || bytes[cursor] == b'>' {
+            break;
+        }
+        if bytes[cursor] == b'/' && cursor + 1 < bytes.len() && bytes[cursor + 1] == b'>' {
+            break;
+        }
+
+        let attr_start = cursor;
+        cursor = span_html_attribute_name(bytes, cursor);
+        if cursor == attr_start {
+            cursor += 1;
+            continue;
+        }
+
+        let attr_name = ascii_lower(&bytes[attr_start..cursor]);
+        cursor = skip_ascii_whitespace(bytes, cursor);
+
+        let mut value = None;
+        if cursor < tag_end && bytes[cursor] == b'=' {
+            cursor += 1;
+            cursor = skip_ascii_whitespace(bytes, cursor);
+            let parsed = parse_attribute_value(bytes, cursor);
+            value = Some(parsed.0);
+            cursor = parsed.1;
+        }
+
+        if seen
+            .iter()
+            .any(|seen_name: &String| seen_name == &attr_name)
+        {
+            continue;
+        }
+
+        seen.push(attr_name.clone());
+        items.push((attr_name, value));
+    }
+
+    items
 }
 
 #[cfg(feature = "php-extension")]
@@ -6200,9 +6242,10 @@ mod tests {
     use super::{
         apply_html_text_removals, find_html_attribute_names_with_prefix_count,
         find_html_attribute_names_with_prefix_string, find_html_attribute_removals,
-        find_html_attribute_removals_with_prefix, html_tag_has_self_closing_flag,
-        html_token_compact_summary, initial_html_breadcrumbs, parse_html_tags,
-        parse_next_html_token, parse_next_plain_html_tag_token, HtmlTextRemoval,
+        find_html_attribute_removals_with_prefix, html_serialize_opening_tag,
+        html_source_attribute_items, html_tag_has_self_closing_flag, html_token_compact_summary,
+        initial_html_breadcrumbs, parse_html_tags, parse_next_html_token,
+        parse_next_plain_html_tag_token, HtmlTextRemoval,
     };
 
     fn collect_processor_tokens(html: &str) -> Vec<(String, bool, String, String)> {
@@ -6277,6 +6320,25 @@ mod tests {
                 "data-x".to_string()
             ],
             tags[0].attribute_order
+        );
+    }
+
+    #[test]
+    fn serializes_opening_tag_attributes_from_source() {
+        let html = "<a href=#anchor v=5 href=\"/\" enabled>One</a>";
+        let tags = parse_html_tags(html);
+
+        assert_eq!(
+            vec![
+                ("href".to_string(), Some("#anchor".to_string())),
+                ("v".to_string(), Some("5".to_string())),
+                ("enabled".to_string(), None),
+            ],
+            html_source_attribute_items(html.as_bytes(), tags[0].source_start, tags[0].source_end)
+        );
+        assert_eq!(
+            "<a href=\"#anchor\" v=\"5\" enabled>",
+            html_serialize_opening_tag(html, &tags[0])
         );
     }
 
