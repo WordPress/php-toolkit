@@ -216,23 +216,55 @@ extensions. The shim registers the native extension classes and verifies the
 Playground loading path while the full Rust-backed implementation remains the
 host PHP artifact.
 
-The `Native APIs Playground Extension` workflow publishes the bundle to the
-repository's `gh-pages` branch after changes land on `trunk`. It writes both a
-stable `latest` URL and an immutable commit URL:
+The `Native APIs Playground Extension` workflow publishes the bundle after
+changes land on `trunk`. It stores the release history on the repository's
+`gh-pages` branch, copies that history into the generated docs site, and
+deploys the complete site through GitHub Pages. Each run writes both a stable
+`latest` URL and an immutable commit URL:
 
 ```text
+https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/
 https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/latest/manifest.json
 https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/<commit-sha>/manifest.json
 ```
 
-The published directory has this shape:
+Use `latest` when manually testing the newest build. Use an immutable
+`<commit-sha>` manifest when documenting a reproducible Playground URL, writing
+tests, or comparing behavior across releases.
+
+The release index page lists every published immutable bundle with its
+publication date, manifest URL, checksum file, and source commit. The same
+history is available to tooling as JSON:
+
+```text
+https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/index.html
+https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/releases.json
+```
+
+If a bundle needs an additional archive outside GitHub Pages, publish it as a
+GitHub prerelease using a `wp-native-apis-wasm-*` tag and attach the packaged
+manifest, checksum file, and PHP.wasm side module.
+
+The published directory has this shape in the GitHub Pages site:
 
 ```text
 wp_native_apis-wasm-extension/
-|-- manifest.json
-|-- SHA256SUMS
-`-- wp_native_apis-php8.4-jspi.so
+|-- index.html
+|-- releases.json
+|-- latest/
+|   |-- manifest.json
+|   |-- SHA256SUMS
+|   `-- wp_native_apis-php8.4-jspi.so
+`-- <commit-sha>/
+    |-- manifest.json
+    |-- SHA256SUMS
+    `-- wp_native_apis-php8.4-jspi.so
 ```
+
+When the workflow first sees older SHA-named directories in the release-history
+branch without an existing `releases.json` entry, it imports them into the
+release index and uses the `gh-pages` commit date for their publication date.
+Subsequent releases preserve their recorded publication timestamp.
 
 Use the Blueprint smoke test together with the Playground Query API
 `php-extension` parameter to verify a published PHP.wasm extension bundle.
