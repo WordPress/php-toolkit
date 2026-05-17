@@ -928,8 +928,18 @@ function wp_toolkit_native_api_benchmark_run( $name, $mode, $iterations, $class_
 	$start_cpu    = wp_toolkit_native_api_benchmark_cpu_time();
 	$operations   = 0;
 
-	for ( $i = 0; $i < $iterations; $i++ ) {
-		$operations += call_user_func( $callback );
+	try {
+		for ( $i = 0; $i < $iterations; $i++ ) {
+			$operations += call_user_func( $callback );
+		}
+	} catch ( Throwable $exception ) {
+		return array(
+			'name'           => $name,
+			'implementation' => $mode,
+			'class'          => $class_name,
+			'available'      => false,
+			'message'        => $exception->getMessage(),
+		);
 	}
 
 	$end_cpu = wp_toolkit_native_api_benchmark_cpu_time();
