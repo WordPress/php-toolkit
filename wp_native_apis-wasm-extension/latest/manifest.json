@@ -1,0 +1,11 @@
+{
+  "name": "wp_native_apis",
+  "version": "ff8361f4243eee771fec2571dd1195d44c90dbf6",
+  "artifacts": [
+    {
+      "phpVersion": "8.4",
+      "sourcePath": "wp_native_apis-php8.4-jspi.so"
+    }
+  ],
+  "mode": "php-extension"
+}
