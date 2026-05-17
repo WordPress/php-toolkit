@@ -216,11 +216,21 @@ extensions. The shim registers the native extension classes and verifies the
 Playground loading path while the full Rust-backed implementation remains the
 host PHP artifact.
 
-Attach the full output directory to a GitHub release:
+The `Native APIs Playground Extension` workflow publishes the bundle to the
+repository's `gh-pages` branch after changes land on `trunk`. It writes both a
+stable `latest` URL and an immutable commit URL:
 
 ```text
-wp-native-apis-0.1.0-php-wasm/
+https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/latest/manifest.json
+https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/<commit-sha>/manifest.json
+```
+
+The published directory has this shape:
+
+```text
+wp_native_apis-wasm-extension/
 |-- manifest.json
+|-- SHA256SUMS
 `-- wp_native_apis-php8.4-jspi.so
 ```
 
@@ -240,7 +250,7 @@ https://playground.wordpress.net/?php=8.4&php-extension=<url-encoded-manifest-ur
 For example, a release URL will look like:
 
 ```text
-https://playground.wordpress.net/?php=8.4&php-extension=https%3A%2F%2Fgithub.com%2FWordPress%2Fphp-toolkit%2Freleases%2Fdownload%2Fnative-apis-v0.1.0%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json
+https://playground.wordpress.net/?php=8.4&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json
 ```
 
 Expected output:

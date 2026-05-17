@@ -5,6 +5,7 @@ node_modules
 .cursor
 rest/
 dist/
+build/
 outdir/
 .idea/
 .my-notes-git/

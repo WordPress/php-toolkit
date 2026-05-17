@@ -1,16 +1,40 @@
 name: Native APIs Playground Extension
 
 on:
-  workflow_dispatch:
+  pull_request:
+    branches:
+      - trunk
+    paths:
+      - 'extensions/native-apis/**'
+      - '.github/workflows/native-apis-playground-extension.yml'
   push:
     branches:
-      - codex-native-extension-docs
+      - trunk
+    paths:
+      - 'extensions/native-apis/**'
+      - '.github/workflows/native-apis-playground-extension.yml'
+  workflow_dispatch:
+    inputs:
+      retention-days:
+        description: 'Actions artifact retention in days'
+        required: false
+        default: '30'
+
+# Disable permissions for all available scopes by default.
+# Any needed permissions should be configured at the job level.
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     name: Build PHP.wasm extension
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -21,10 +45,124 @@ jobs:
 
       - name: Build wp_native_apis PHP.wasm extension
         run: |
-          extensions/native-apis/build-playground-extension.sh
+          extensions/native-apis/build-playground-extension.sh build/wp_native_apis-wasm-extension
+
+      - name: Normalize Playground extension manifest
+        env:
+          EXTENSION_VERSION: ${{ github.sha }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const manifestPath = path.join('build', 'wp_native_apis-wasm-extension', 'manifest.json');
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+          manifest.version = process.env.EXTENSION_VERSION;
+          manifest.mode = 'php-extension';
+          fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+          NODE
+
+      - name: Verify published manifest shape
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const root = path.join('build', 'wp_native_apis-wasm-extension');
+          const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'));
+          if (manifest.name !== 'wp_native_apis') {
+            throw new Error(`Unexpected extension name: ${manifest.name}`);
+          }
+          if (manifest.mode !== 'php-extension') {
+            throw new Error(`Unexpected manifest mode: ${manifest.mode}`);
+          }
+          if (!Array.isArray(manifest.artifacts) || manifest.artifacts.length !== 1) {
+            throw new Error('Expected one PHP 8.4 artifact.');
+          }
+          for (const artifact of manifest.artifacts) {
+            if (artifact.phpVersion !== '8.4' || !artifact.sourcePath) {
+              throw new Error(`Invalid artifact entry: ${JSON.stringify(artifact)}`);
+            }
+            if ('file' in artifact || 'sha256' in artifact) {
+              throw new Error(`Manifest uses retired pre-PR-3580 fields: ${JSON.stringify(artifact)}`);
+            }
+            const artifactPath = path.join(root, artifact.sourcePath);
+            if (!fs.existsSync(artifactPath)) {
+              throw new Error(`Manifest references missing artifact: ${artifactPath}`);
+            }
+          }
+          NODE
+
+      - name: Write checksums
+        working-directory: build/wp_native_apis-wasm-extension
+        run: sha256sum *.so > SHA256SUMS
 
       - name: Upload Playground extension
         uses: actions/upload-artifact@v4
         with:
           name: wp-native-apis-playground-extension
-          path: extensions/native-apis/playground/dist/wp_native_apis
+          path: build/wp_native_apis-wasm-extension/
+          if-no-files-found: error
+          retention-days: ${{ github.event.inputs.retention-days || '30' }}
+
+  publish:
+    name: Publish static extension bundle to GitHub Pages
+    if: github.ref == 'refs/heads/trunk' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download packaged extension
+        uses: actions/download-artifact@v4
+        with:
+          name: wp-native-apis-playground-extension
+          path: build/wp_native_apis-wasm-extension
+
+      - name: Publish static extension bundle to gh-pages
+        env:
+          BUNDLE_DIR: build/wp_native_apis-wasm-extension
+          EXTENSION_PATH: wp_native_apis-wasm-extension
+          GITHUB_TOKEN: ${{ github.token }}
+          SITE_BRANCH: gh-pages
+          VERSION_PATH: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          pages_dir="$(mktemp -d)"
+          git init "$pages_dir"
+          git -C "$pages_dir" remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          auth_header="$(printf 'x-access-token:%s' "${GITHUB_TOKEN}" | base64 -w 0)"
+          git -C "$pages_dir" config http.https://github.com/.extraheader "AUTHORIZATION: basic ${auth_header}"
+          git -C "$pages_dir" config user.name "github-actions[bot]"
+          git -C "$pages_dir" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git -C "$pages_dir" ls-remote --exit-code --heads origin "$SITE_BRANCH" >/dev/null 2>&1; then
+            git -C "$pages_dir" fetch --depth=1 origin "$SITE_BRANCH"
+            git -C "$pages_dir" checkout -B "$SITE_BRANCH" FETCH_HEAD
+          else
+            git -C "$pages_dir" checkout --orphan "$SITE_BRANCH"
+          fi
+
+          mkdir -p "$pages_dir/$EXTENSION_PATH"
+          rm -rf "$pages_dir/$EXTENSION_PATH/$VERSION_PATH" "$pages_dir/$EXTENSION_PATH/latest"
+          mkdir -p "$pages_dir/$EXTENSION_PATH/$VERSION_PATH" "$pages_dir/$EXTENSION_PATH/latest"
+          cp -R "$BUNDLE_DIR"/. "$pages_dir/$EXTENSION_PATH/$VERSION_PATH/"
+          cp -R "$BUNDLE_DIR"/. "$pages_dir/$EXTENSION_PATH/latest/"
+          touch "$pages_dir/.nojekyll"
+
+          git -C "$pages_dir" add .nojekyll "$EXTENSION_PATH"
+          if git -C "$pages_dir" diff --cached --quiet; then
+            echo "No gh-pages changes to publish."
+            exit 0
+          fi
+
+          git -C "$pages_dir" commit -m "Publish wp_native_apis WASM extension ${VERSION_PATH}"
+          git -C "$pages_dir" push origin "HEAD:$SITE_BRANCH"
+
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          echo "Published latest manifest: https://${owner}.github.io/${repo}/${EXTENSION_PATH}/latest/manifest.json"
+          echo "Published immutable manifest: https://${owner}.github.io/${repo}/${EXTENSION_PATH}/${VERSION_PATH}/manifest.json"
