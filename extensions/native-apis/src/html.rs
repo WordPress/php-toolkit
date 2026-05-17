@@ -8,7 +8,7 @@ use ext_php_rs::prelude::*;
 #[cfg(feature = "php-extension")]
 use ext_php_rs::{
     boxed::ZBox,
-    types::{ZendCallable, ZendHashTable, Zval},
+    types::{ZendHashTable, Zval},
     zend::Function,
 };
 
@@ -80,6 +80,15 @@ type HtmlAttributePrefixRemovals = (i64, Vec<(usize, usize)>, Vec<String>);
 enum HtmlAttributeValue {
     Boolean,
     String(String),
+}
+
+#[derive(Default)]
+struct HtmlNextTagQuery {
+    tag_name: Option<String>,
+    class_name: Option<String>,
+    match_offset: i64,
+    visit_closers: bool,
+    breadcrumbs: Option<Vec<String>>,
 }
 
 #[cfg(feature = "php-extension")]
@@ -169,8 +178,27 @@ impl WpHtmlNativeTagProcessor {
         }
     }
 
-    pub fn next_tag(&mut self) -> bool {
-        self.next_tag_any(false, 1)
+    pub fn supports_public_api() -> bool {
+        true
+    }
+
+    #[php(optional = query)]
+    pub fn next_tag(&mut self, query: Option<&Zval>) -> bool {
+        let query = html_parse_tag_processor_next_tag_query(query);
+        let mut match_offset = query.match_offset.max(1);
+
+        while self.advance_to_next_tag_token() {
+            if !self.current_html_tag_matches_query(&query, false) {
+                continue;
+            }
+
+            match_offset -= 1;
+            if match_offset == 0 {
+                return true;
+            }
+        }
+
+        false
     }
 
     pub fn next_tag_any(&mut self, visit_closers: bool, mut match_offset: i64) -> bool {
@@ -2436,6 +2464,44 @@ impl WpHtmlNativeTagProcessor {
     fn current_tag(&self) -> Option<&HtmlTag> {
         self.current.as_ref()
     }
+
+    fn current_html_tag_matches_query(
+        &self,
+        query: &HtmlNextTagQuery,
+        use_breadcrumbs: bool,
+    ) -> bool {
+        let Some(tag) = self.current_tag() else {
+            return false;
+        };
+
+        if tag.token_type != "#tag" {
+            return false;
+        }
+
+        if tag.closing && (!query.visit_closers || use_breadcrumbs) {
+            return false;
+        }
+
+        if let Some(tag_name) = query.tag_name.as_ref() {
+            if !tag.name.eq_ignore_ascii_case(tag_name) {
+                return false;
+            }
+        }
+
+        if let Some(class_name) = query.class_name.as_ref() {
+            if self.has_class(class_name.clone()) != Some(true) {
+                return false;
+            }
+        }
+
+        if use_breadcrumbs {
+            if let Some(breadcrumbs) = query.breadcrumbs.as_ref() {
+                return html_breadcrumbs_match(&tag.breadcrumbs, breadcrumbs);
+            }
+        }
+
+        true
+    }
 }
 
 #[cfg(feature = "php-extension")]
@@ -2449,12 +2515,27 @@ pub struct WpHtmlNativeProcessor {
 #[php_impl]
 #[php(change_method_case = "snake_case")]
 impl WpHtmlNativeProcessor {
-    pub fn create_fragment(html: String) -> Self {
+    pub fn supports_public_api() -> bool {
+        true
+    }
+
+    #[php(optional = context)]
+    pub fn create_fragment(
+        html: String,
+        context: Option<String>,
+        encoding: Option<String>,
+    ) -> Option<Self> {
+        if context.as_deref().unwrap_or("<body>") != "<body>"
+            || encoding.as_deref().unwrap_or("UTF-8") != "UTF-8"
+        {
+            return None;
+        }
+
         let mut inner = WpHtmlNativeTagProcessor::__construct(html);
         inner.synthesize_implied_closers = true;
         inner.ignore_html_body_starts = true;
 
-        Self { inner }
+        Some(Self { inner })
     }
 
     #[php(optional = known_definite_encoding)]
@@ -2473,7 +2554,7 @@ impl WpHtmlNativeProcessor {
     }
 
     pub fn normalize(html: String) -> Option<String> {
-        html_normalize_via_php(&html)
+        html_serialize_native_fragment(&html)
     }
 
     pub fn serialize(&mut self) -> Option<String> {
@@ -2481,7 +2562,7 @@ impl WpHtmlNativeProcessor {
             return None;
         }
 
-        let serialized = html_normalize_via_php(&self.inner.html)?;
+        let serialized = html_serialize_native_fragment(&self.inner.html)?;
         self.inner.offset = self.inner.html.len();
         Some(serialized)
     }
@@ -2570,8 +2651,29 @@ impl WpHtmlNativeProcessor {
         rows
     }
 
-    pub fn next_tag(&mut self) -> bool {
-        self.inner.next_tag()
+    #[php(optional = query)]
+    pub fn next_tag(&mut self, query: Option<&Zval>) -> bool {
+        let Some(query) = html_parse_processor_next_tag_query(query) else {
+            return false;
+        };
+        let use_breadcrumbs = query.breadcrumbs.is_some();
+        let mut match_offset = query.match_offset.max(1);
+
+        while self.next_token() {
+            if !self
+                .inner
+                .current_html_tag_matches_query(&query, use_breadcrumbs)
+            {
+                continue;
+            }
+
+            match_offset -= 1;
+            if match_offset == 0 {
+                return true;
+            }
+        }
+
+        false
     }
 
     pub fn next_tag_summary_batch(
@@ -3021,6 +3123,243 @@ fn token_metadata(tag: &HtmlTag) -> String {
 }
 
 #[cfg(feature = "php-extension")]
+fn html_parse_tag_processor_next_tag_query(query: Option<&Zval>) -> HtmlNextTagQuery {
+    let mut parsed = HtmlNextTagQuery {
+        match_offset: 1,
+        ..Default::default()
+    };
+
+    let Some(query) = query else {
+        return parsed;
+    };
+
+    if let Some(tag_name) = query.str() {
+        parsed.tag_name = Some(tag_name.to_string());
+        return parsed;
+    }
+
+    let Some(query) = query.array() else {
+        return parsed;
+    };
+
+    if let Some(tag_name) = html_array_string(query, "tag_name") {
+        parsed.tag_name = Some(tag_name);
+    }
+
+    if let Some(class_name) = html_array_string(query, "class_name") {
+        parsed.class_name = Some(class_name);
+    }
+
+    if let Some(match_offset) = html_array_positive_i64(query, "match_offset") {
+        parsed.match_offset = match_offset;
+    }
+
+    parsed.visit_closers = html_array_string(query, "tag_closers").as_deref() == Some("visit");
+
+    parsed
+}
+
+#[cfg(feature = "php-extension")]
+fn html_parse_processor_next_tag_query(query: Option<&Zval>) -> Option<HtmlNextTagQuery> {
+    let mut parsed = HtmlNextTagQuery {
+        match_offset: 1,
+        ..Default::default()
+    };
+
+    let Some(query) = query else {
+        return Some(parsed);
+    };
+
+    if let Some(tag_name) = query.str() {
+        parsed.breadcrumbs = Some(vec![tag_name.to_string()]);
+        return Some(parsed);
+    }
+
+    let query = query.array()?;
+
+    if let Some(tag_name) = html_array_string(query, "tag_name") {
+        parsed.tag_name = Some(tag_name);
+    }
+
+    if let Some(class_name) = html_array_string(query, "class_name") {
+        parsed.class_name = Some(class_name);
+    }
+
+    if let Some(match_offset) = html_array_positive_i64(query, "match_offset") {
+        parsed.match_offset = match_offset;
+    }
+
+    parsed.visit_closers = html_array_string(query, "tag_closers").as_deref() == Some("visit");
+    parsed.breadcrumbs = html_array_string_breadcrumbs(query, "breadcrumbs");
+
+    Some(parsed)
+}
+
+#[cfg(feature = "php-extension")]
+fn html_array_string(query: &ZendHashTable, key: &str) -> Option<String> {
+    query
+        .get(key)
+        .and_then(|value| value.str())
+        .map(str::to_string)
+}
+
+#[cfg(feature = "php-extension")]
+fn html_array_positive_i64(query: &ZendHashTable, key: &str) -> Option<i64> {
+    query
+        .get(key)
+        .and_then(|value| value.long())
+        .filter(|value| *value > 0)
+        .map(|value| value as i64)
+}
+
+#[cfg(feature = "php-extension")]
+fn html_array_string_breadcrumbs(query: &ZendHashTable, key: &str) -> Option<Vec<String>> {
+    let breadcrumbs = query.get(key)?.array()?;
+    let mut parsed = Vec::with_capacity(breadcrumbs.len());
+
+    for value in breadcrumbs.iter().map(|(_, value)| value) {
+        parsed.push(value.str()?.to_string());
+    }
+
+    Some(parsed)
+}
+
+fn html_breadcrumbs_match(current: &[String], breadcrumbs: &[String]) -> bool {
+    if breadcrumbs.is_empty() {
+        return true;
+    }
+
+    if breadcrumbs.len() > current.len() {
+        return false;
+    }
+
+    let offset = current.len() - breadcrumbs.len();
+    for (index, breadcrumb) in breadcrumbs.iter().enumerate() {
+        let crumb = breadcrumb.to_ascii_uppercase();
+        let node = &current[offset + index];
+        if crumb != "*" && node != &crumb {
+            return false;
+        }
+    }
+
+    true
+}
+
+#[cfg(feature = "php-extension")]
+fn html_serialize_native_fragment(html: &str) -> Option<String> {
+    let mut processor = WpHtmlNativeProcessor::create_fragment(
+        html.to_string(),
+        Some("<body>".to_string()),
+        Some("UTF-8".to_string()),
+    )?;
+    let mut serialized = String::with_capacity(html.len());
+
+    while processor.next_token() {
+        let Some(tag) = processor.inner.current_tag() else {
+            continue;
+        };
+
+        serialized.push_str(&html_serialize_token(html, tag));
+    }
+
+    Some(serialized)
+}
+
+fn html_serialize_token(html: &str, tag: &HtmlTag) -> String {
+    match tag.token_type.as_str() {
+        "#tag" if tag.closing => format!("</{}>", tag.name),
+        "#tag" => html_serialize_opening_tag(html, tag),
+        "#comment" => format!("<!--{}-->", tag.text),
+        "#text" => html_escape_text(&tag.text),
+        _ => String::new(),
+    }
+}
+
+fn html_serialize_opening_tag(html: &str, tag: &HtmlTag) -> String {
+    let mut output = String::new();
+    output.push('<');
+    output.push_str(&tag.name);
+
+    for (attribute_name, value) in
+        html_source_attribute_items(html.as_bytes(), tag.source_start, tag.source_end)
+    {
+        output.push(' ');
+        output.push_str(&attribute_name);
+
+        if let Some(value) = value {
+            output.push_str("=\"");
+            output.push_str(&html_escape_attribute_value(&value));
+            output.push('"');
+        }
+    }
+
+    output.push('>');
+    output
+}
+
+fn html_source_attribute_items(
+    bytes: &[u8],
+    source_start: usize,
+    source_end: usize,
+) -> Vec<(String, Option<String>)> {
+    if source_start >= bytes.len() || source_end <= source_start {
+        return Vec::new();
+    }
+
+    let tag_end = source_end.saturating_sub(1).min(bytes.len());
+    let mut cursor = source_start.saturating_add(1);
+    if cursor < tag_end && bytes[cursor] == b'/' {
+        return Vec::new();
+    }
+
+    cursor = skip_ascii_whitespace(bytes, cursor);
+    cursor = span_name(bytes, cursor);
+
+    let mut items = Vec::new();
+    let mut seen = Vec::new();
+    while cursor < tag_end {
+        cursor = skip_ascii_whitespace(bytes, cursor);
+        if cursor >= tag_end || bytes[cursor] == b'>' {
+            break;
+        }
+        if bytes[cursor] == b'/' && cursor + 1 < bytes.len() && bytes[cursor + 1] == b'>' {
+            break;
+        }
+
+        let attr_start = cursor;
+        cursor = span_html_attribute_name(bytes, cursor);
+        if cursor == attr_start {
+            cursor += 1;
+            continue;
+        }
+
+        let attr_name = ascii_lower(&bytes[attr_start..cursor]);
+        cursor = skip_ascii_whitespace(bytes, cursor);
+
+        let mut value = None;
+        if cursor < tag_end && bytes[cursor] == b'=' {
+            cursor += 1;
+            cursor = skip_ascii_whitespace(bytes, cursor);
+            let parsed = parse_attribute_value(bytes, cursor);
+            value = Some(parsed.0);
+            cursor = parsed.1;
+        }
+
+        if seen
+            .iter()
+            .any(|seen_name: &String| seen_name == &attr_name)
+        {
+            continue;
+        }
+
+        seen.push(attr_name.clone());
+        items.push((attr_name, value));
+    }
+
+    items
+}
+
+#[cfg(feature = "php-extension")]
 fn html_tag_public_summary_row(tag: &HtmlTag) -> Vec<(String, Zval)> {
     vec![
         (
@@ -3202,13 +3541,6 @@ fn html_doctype_info_zval(html: &str, tag: &HtmlTag) -> Option<Zval> {
     } else {
         Some(value)
     }
-}
-
-#[cfg(feature = "php-extension")]
-fn html_normalize_via_php(html: &str) -> Option<String> {
-    let callable = ZendCallable::try_from_name("WP_HTML_Processor::normalize").ok()?;
-    let value = callable.try_call(vec![&html]).ok()?;
-    value.string()
 }
 
 fn html_token_compact_summary(tag: &HtmlTag) -> String {
@@ -5910,9 +6242,10 @@ mod tests {
     use super::{
         apply_html_text_removals, find_html_attribute_names_with_prefix_count,
         find_html_attribute_names_with_prefix_string, find_html_attribute_removals,
-        find_html_attribute_removals_with_prefix, html_tag_has_self_closing_flag,
-        html_token_compact_summary, initial_html_breadcrumbs, parse_html_tags,
-        parse_next_html_token, parse_next_plain_html_tag_token, HtmlTextRemoval,
+        find_html_attribute_removals_with_prefix, html_serialize_opening_tag,
+        html_source_attribute_items, html_tag_has_self_closing_flag, html_token_compact_summary,
+        initial_html_breadcrumbs, parse_html_tags, parse_next_html_token,
+        parse_next_plain_html_tag_token, HtmlTextRemoval,
     };
 
     fn collect_processor_tokens(html: &str) -> Vec<(String, bool, String, String)> {
@@ -5987,6 +6320,25 @@ mod tests {
                 "data-x".to_string()
             ],
             tags[0].attribute_order
+        );
+    }
+
+    #[test]
+    fn serializes_opening_tag_attributes_from_source() {
+        let html = "<a href=#anchor v=5 href=\"/\" enabled>One</a>";
+        let tags = parse_html_tags(html);
+
+        assert_eq!(
+            vec![
+                ("href".to_string(), Some("#anchor".to_string())),
+                ("v".to_string(), Some("5".to_string())),
+                ("enabled".to_string(), None),
+            ],
+            html_source_attribute_items(html.as_bytes(), tags[0].source_start, tags[0].source_end)
+        );
+        assert_eq!(
+            "<a href=\"#anchor\" v=\"5\" enabled>",
+            html_serialize_opening_tag(html, &tags[0])
         );
     }
 

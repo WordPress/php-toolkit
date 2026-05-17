@@ -1,14 +1,19 @@
 #![cfg_attr(not(feature = "php-extension"), allow(dead_code))]
 
 #[cfg(feature = "php-extension")]
-use ext_php_rs::prelude::*;
+use ext_php_rs::{
+    prelude::*,
+    types::{ZendCallable, Zval},
+};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct UrlTextCandidate {
     pub raw_url: String,
+    pub preprocessed_url: String,
     pub starts_at: usize,
     pub length: usize,
     pub had_protocol: bool,
+    pub did_prepend_protocol: bool,
 }
 
 #[cfg(feature = "php-extension")]
@@ -19,6 +24,9 @@ pub struct NativeUrlInTextProcessor {
     bytes_already_parsed: usize,
     current: Option<UrlTextCandidate>,
     replacements: Vec<UrlTextReplacement>,
+    validate_urls: bool,
+    base_url: Option<String>,
+    base_protocol: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -32,32 +40,87 @@ struct UrlTextReplacement {
 #[php_impl]
 #[php(change_method_case = "snake_case")]
 impl NativeUrlInTextProcessor {
-    pub fn __construct(text: String) -> Self {
+    #[php(optional = base_url)]
+    pub fn __construct(text: String, base_url: Option<String>) -> Self {
+        let base_protocol = base_url.as_deref().and_then(parse_url_scheme);
+
         Self {
             text,
             bytes_already_parsed: 0,
             current: None,
             replacements: Vec::new(),
+            validate_urls: true,
+            base_url,
+            base_protocol,
         }
+    }
+
+    pub fn supports_public_api() -> bool {
+        true
+    }
+
+    pub fn use_url_validation(&mut self) {
+        self.validate_urls = true;
+    }
+
+    pub fn set_base_url(&mut self, base_url: String) {
+        self.base_protocol = parse_url_scheme(&base_url);
+        self.base_url = Some(base_url);
     }
 
     pub fn next_url(&mut self) -> bool {
         self.current = None;
 
-        let Some(candidate) = find_next_url_text_candidate(&self.text, self.bytes_already_parsed)
-        else {
-            return false;
-        };
+        while let Some(mut candidate) =
+            find_next_url_text_candidate(&self.text, self.bytes_already_parsed)
+        {
+            self.bytes_already_parsed = candidate.starts_at + candidate.length;
 
-        self.bytes_already_parsed = candidate.starts_at + candidate.length;
-        self.current = Some(candidate);
-        true
+            if self.validate_urls
+                && !validate_url_text_candidate(&mut candidate, self.base_protocol.as_deref())
+            {
+                continue;
+            }
+
+            self.current = Some(candidate);
+            return true;
+        }
+
+        false
     }
 
     pub fn get_raw_url(&self) -> Option<String> {
         self.current
             .as_ref()
             .map(|candidate| candidate.raw_url.clone())
+    }
+
+    pub fn get_preprocessed_url(&self) -> Option<String> {
+        self.current
+            .as_ref()
+            .map(|candidate| candidate.preprocessed_url.clone())
+    }
+
+    pub fn get_parsed_url(&self) -> Zval {
+        let Some(candidate) = self.current.as_ref() else {
+            return url_zval_bool(false);
+        };
+
+        let Ok(callable) =
+            ZendCallable::try_from_name("WordPress\\DataLiberation\\URL\\WPURL::parse")
+        else {
+            return url_zval_bool(false);
+        };
+
+        let result = match self.base_url.as_ref() {
+            Some(base_url) => callable.try_call(vec![&candidate.preprocessed_url, base_url]),
+            None => callable.try_call(vec![&candidate.preprocessed_url]),
+        };
+
+        match result {
+            Ok(value) if !value.is_false() && !value.is_null() => value,
+            _ => url_zval_bool(false),
+        }
     }
 
     pub fn get_url_starts_at(&self) -> Option<i64> {
@@ -78,16 +141,31 @@ impl NativeUrlInTextProcessor {
             .map(|candidate| candidate.had_protocol)
     }
 
+    pub fn did_prepend_protocol(&self) -> Option<bool> {
+        self.current
+            .as_ref()
+            .map(|candidate| candidate.did_prepend_protocol)
+    }
+
     pub fn set_raw_url(&mut self, new_url: String) -> bool {
         let Some(candidate) = self.current.as_mut() else {
             return false;
         };
 
-        self.replacements.push(UrlTextReplacement {
-            start: candidate.starts_at,
-            length: candidate.length,
-            text: new_url.clone(),
-        });
+        if let Some(replacement) = self
+            .replacements
+            .iter_mut()
+            .find(|replacement| replacement.start == candidate.starts_at)
+        {
+            replacement.length = candidate.length;
+            replacement.text = new_url.clone();
+        } else {
+            self.replacements.push(UrlTextReplacement {
+                start: candidate.starts_at,
+                length: candidate.length,
+                text: new_url.clone(),
+            });
+        }
         candidate.raw_url = new_url;
         true
     }
@@ -208,10 +286,172 @@ fn parse_url_text_candidate_at(text: &str, start: usize) -> Option<UrlTextCandid
 
     Some(UrlTextCandidate {
         raw_url: text[start..display_end].to_string(),
+        preprocessed_url: text[start..display_end].to_string(),
         starts_at: start,
         length: display_end - start,
         had_protocol: had_protocol || start + 2 <= bytes.len() && &bytes[start..start + 2] == b"//",
+        did_prepend_protocol: false,
     })
+}
+
+fn validate_url_text_candidate(
+    candidate: &mut UrlTextCandidate,
+    base_protocol: Option<&str>,
+) -> bool {
+    let mut preprocessed_url = candidate.raw_url.clone();
+    if !candidate.had_protocol {
+        let Some(protocol) = base_protocol else {
+            return false;
+        };
+
+        if !is_http_or_https_scheme(protocol) {
+            return false;
+        }
+
+        preprocessed_url = format!("{protocol}://{}", candidate.raw_url);
+        candidate.did_prepend_protocol = true;
+    } else if preprocessed_url.starts_with("//") {
+        let Some(protocol) = base_protocol else {
+            return false;
+        };
+
+        if !is_http_or_https_scheme(protocol) {
+            return false;
+        }
+    } else if !starts_with_http_or_https_scheme(&preprocessed_url) {
+        return false;
+    }
+
+    if has_authority_auth_details(&preprocessed_url) {
+        return false;
+    }
+
+    if has_invalid_authority_port(&preprocessed_url) {
+        return false;
+    }
+
+    if !candidate.had_protocol {
+        let Some(hostname) = candidate_hostname(&candidate.raw_url) else {
+            return false;
+        };
+
+        let Some(last_dot) = hostname.rfind('.') else {
+            return false;
+        };
+
+        if !is_known_public_domain(&hostname[last_dot + 1..]) {
+            return false;
+        }
+    }
+
+    candidate.preprocessed_url = preprocessed_url;
+    true
+}
+
+#[cfg(feature = "php-extension")]
+fn url_zval_bool(value: bool) -> Zval {
+    let mut zval = Zval::new();
+    zval.set_bool(value);
+    zval
+}
+
+fn parse_url_scheme(url: &str) -> Option<String> {
+    let colon = url.find(':')?;
+    let first_delimiter = url
+        .find(|character| matches!(character, '/' | '?' | '#'))
+        .unwrap_or(url.len());
+    if colon > first_delimiter {
+        return None;
+    }
+
+    Some(url[..colon].to_ascii_lowercase())
+}
+
+fn is_http_or_https_scheme(scheme: &str) -> bool {
+    scheme.eq_ignore_ascii_case("http") || scheme.eq_ignore_ascii_case("https")
+}
+
+fn starts_with_http_or_https_scheme(url: &str) -> bool {
+    ascii_starts_with(url.as_bytes(), 0, b"http:")
+        || ascii_starts_with(url.as_bytes(), 0, b"https:")
+}
+
+fn authority_range(url: &str) -> Option<(usize, usize)> {
+    let bytes = url.as_bytes();
+    let authority_start = if bytes.starts_with(b"//") {
+        2
+    } else if ascii_starts_with(bytes, 0, b"http://") {
+        7
+    } else if ascii_starts_with(bytes, 0, b"https://") {
+        8
+    } else {
+        return None;
+    };
+
+    let authority_end = bytes[authority_start..]
+        .iter()
+        .position(|byte| matches!(*byte, b'/' | b'?' | b'#'))
+        .map(|offset| authority_start + offset)
+        .unwrap_or(bytes.len());
+
+    Some((authority_start, authority_end))
+}
+
+fn has_authority_auth_details(url: &str) -> bool {
+    let Some((start, end)) = authority_range(url) else {
+        return false;
+    };
+
+    url.as_bytes()[start..end].contains(&b'@')
+}
+
+fn has_invalid_authority_port(url: &str) -> bool {
+    let Some((start, end)) = authority_range(url) else {
+        return false;
+    };
+
+    let authority = &url[start..end];
+    if authority.starts_with('[') {
+        return authority.find(']').is_none();
+    }
+
+    let Some(colon) = authority.rfind(':') else {
+        return false;
+    };
+
+    let port = &authority[colon + 1..];
+    !port.is_empty()
+        && port.bytes().all(|byte| byte.is_ascii_digit())
+        && port.parse::<u16>().is_err()
+}
+
+fn candidate_hostname(raw_url: &str) -> Option<&str> {
+    let bytes = raw_url.as_bytes();
+    let mut start = 0;
+    if bytes.starts_with(b"//") {
+        start = 2;
+    } else if ascii_starts_with(bytes, 0, b"http:") {
+        start = 5;
+        while start < bytes.len() && bytes[start] == b'/' {
+            start += 1;
+        }
+    } else if ascii_starts_with(bytes, 0, b"https:") {
+        start = 6;
+        while start < bytes.len() && bytes[start] == b'/' {
+            start += 1;
+        }
+    }
+
+    let end = bytes[start..]
+        .iter()
+        .position(|byte| !is_hostish_byte(*byte))
+        .map(|offset| start + offset)
+        .unwrap_or(bytes.len());
+    if end <= start {
+        return None;
+    }
+
+    Some(&raw_url[start..end])
 }
 
 fn find_candidate_end(bytes: &[u8], mut cursor: usize) -> usize {
@@ -288,8 +528,27 @@ fn candidate_host_has_url_shape(host: &str) -> bool {
     let tld = &host[last_dot + 1..];
     tld.len() >= 2
         && tld.len() <= 63
-        && tld.bytes().all(|byte| byte.is_ascii_alphanumeric())
+        && tld
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
         && host.split('.').all(is_valid_hostname_label)
+}
+
+fn is_known_public_domain(tld: &str) -> bool {
+    if tld.eq_ignore_ascii_case("internal") {
+        return true;
+    }
+
+    if tld.is_empty()
+        || !tld
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+    {
+        return false;
+    }
+
+    let needle = format!("'{}'", tld.to_ascii_lowercase());
+    include_str!("../../../components/DataLiberation/URL/public-suffix-list.php").contains(&needle)
 }
 
 fn is_valid_hostname_label(label: &str) -> bool {
@@ -319,7 +578,7 @@ fn ascii_starts_with(bytes: &[u8], offset: usize, needle: &[u8]) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::find_next_url_text_candidate;
+    use super::{find_next_url_text_candidate, validate_url_text_candidate, UrlTextCandidate};
 
     #[test]
     fn finds_http_https_and_bare_domain_candidates() {
@@ -351,5 +610,45 @@ mod tests {
     #[test]
     fn ignores_embedded_protocol_fragments() {
         assert!(find_next_url_text_candidate("ahttp://example.com", 0).is_none());
+    }
+
+    #[test]
+    fn accepts_punycode_tlds() {
+        let text = "Visit http://xn--fsqu00a.xn--0zwm56d";
+        let candidate = find_next_url_text_candidate(text, 0).expect("URL");
+        assert_eq!("http://xn--fsqu00a.xn--0zwm56d", candidate.raw_url);
+    }
+
+    #[test]
+    fn validates_public_url_candidates_with_base_protocol() {
+        let mut candidate = find_next_url_text_candidate("Visit example.com/docs", 0).expect("URL");
+        assert!(validate_url_text_candidate(&mut candidate, Some("https")));
+        assert_eq!("https://example.com/docs", candidate.preprocessed_url);
+        assert!(candidate.did_prepend_protocol);
+    }
+
+    #[test]
+    fn rejects_filename_like_bare_domains_with_unknown_tlds() {
+        let mut candidate = find_next_url_text_candidate("Edit plugins.php", 0).expect("candidate");
+        assert!(!validate_url_text_candidate(&mut candidate, Some("https")));
+    }
+
+    #[test]
+    fn rejects_authority_credentials() {
+        let mut candidate = UrlTextCandidate {
+            raw_url: "https://user@example.com/path".to_string(),
+            preprocessed_url: "https://user@example.com/path".to_string(),
+            starts_at: 6,
+            length: 29,
+            had_protocol: true,
+            did_prepend_protocol: false,
+        };
+        assert!(!validate_url_text_candidate(&mut candidate, Some("https")));
+    }
+
+    #[test]
+    fn rejects_bare_domains_without_base_protocol() {
+        let mut candidate = find_next_url_text_candidate("Visit example.com", 0).expect("URL");
+        assert!(!validate_url_text_candidate(&mut candidate, None));
     }
 }

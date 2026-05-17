@@ -60,6 +60,12 @@ assert_same( "A\u{00a0}B\u{00a9}\u{00ae}\u{2026}\u{2014}\u{2209}", $tag_processo
 assert_same( false, $tag_processor->next_tag(), 'Expected HTML next_tag() to skip closing tags.' );
 assert_false( $tag_processor->paused_at_incomplete_token(), 'Expected native HTML tag processor not to pause at an incomplete token after complete input.' );
 
+$tag_query_processor = new WP_HTML_Native_Tag_Processor( '<main><p class="intro"></p><p class="target"></p></main>' );
+assert_true( $tag_query_processor->next_tag( array( 'tag_name' => 'p', 'class_name' => 'target' ) ), 'Expected native HTML tag processor to honor tag and class next_tag() queries.' );
+assert_same( 'P', $tag_query_processor->get_tag(), 'Expected native HTML tag query to stop on the matching paragraph.' );
+assert_true( $tag_query_processor->next_tag( array( 'tag_name' => 'p', 'tag_closers' => 'visit' ) ), 'Expected native HTML tag processor to honor tag_closers query mode.' );
+assert_true( $tag_query_processor->is_tag_closer(), 'Expected native HTML tag processor query to visit matching closers.' );
+
 $comment_qualified_name_processor = new WP_HTML_Native_Tag_Processor( '<!--note-->' );
 assert_true( $comment_qualified_name_processor->next_token(), 'Expected comment token before qualified name checks.' );
 assert_same( null, $comment_qualified_name_processor->get_qualified_tag_name(), 'Expected native HTML qualified tag name to return null on comments.' );
@@ -452,6 +458,10 @@ assert_true( $html_full_parser instanceof WP_HTML_Native_Processor, 'Expected na
 assert_true( $html_full_parser->next_tag(), 'Expected native HTML full parser to scan tags.' );
 assert_same( 'HTML', $html_full_parser->get_tag(), 'Expected native HTML full parser to start at the document HTML tag.' );
 assert_same( null, WP_HTML_Native_Processor::create_full_parser( '<html></html>', 'ISO-8859-1' ), 'Expected native HTML full parser factory to reject unsupported encodings.' );
+
+$html_processor_query = WP_HTML_Native_Processor::create_fragment( '<section><article><img class="hero"></article></section>' );
+assert_true( $html_processor_query->next_tag( array( 'breadcrumbs' => array( 'ARTICLE', 'IMG' ), 'class_name' => 'hero' ) ), 'Expected native HTML processor to honor breadcrumb and class next_tag() queries.' );
+assert_same( 'IMG', $html_processor_query->get_tag(), 'Expected native HTML processor query to stop on the matching image.' );
 
 $html_step_processor = WP_HTML_Native_Processor::create_fragment( '<section><p>Text</p></section>' );
 assert_true( $html_step_processor->step(), 'Expected native HTML processor step() to advance by default.' );
@@ -1120,6 +1130,12 @@ assert_same( $xml_class, get_class( $xml_streaming ), 'Expected native XML strea
 assert_true( $xml_streaming->next_tag(), 'Expected native XML streaming factory processor to expose the root tag.' );
 assert_same( 'root', $xml_streaming->get_token_name(), 'Expected native XML streaming factory root tag name.' );
 assert_same( null, $xml_class::create_for_streaming( '<root />', null, 'ISO-8859-1', array() ), 'Expected native XML streaming factory to reject unsupported encodings.' );
+
+$xml_query = $xml_class::create_from_string( '<root xmlns:wp="https://wordpress.org"><wp:item /><item /></root>' );
+assert_true( $xml_query->next_tag( array( 'breadcrumbs' => array( array( 'https://wordpress.org', 'item' ) ) ) ), 'Expected native XML processor to honor namespaced breadcrumb next_tag() queries.' );
+assert_same( 'https://wordpress.org', $xml_query->get_tag_namespace(), 'Expected native XML namespaced query to stop on the namespaced item.' );
+assert_true( $xml_query->next_tag( 'item' ), 'Expected native XML processor to honor local-name next_tag() queries.' );
+assert_same( '', $xml_query->get_tag_namespace(), 'Expected native XML local-name query to stop on the unnamespaced item.' );
 
 $xml_streaming_incomplete = $xml_class::create_for_streaming( '<root', null, 'UTF-8', array() );
 assert_false( $xml_streaming_incomplete->next_token(), 'Expected incomplete native XML streaming input to pause token scanning.' );
@@ -1872,11 +1888,15 @@ while ( $xml_processing_instruction->next_token() ) {
 assert_true( null !== $xml_processing_instruction->get_last_error(), 'Expected XML processing instruction parse error.' );
 
 $url_text_class     = 'WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor';
-$url_text_processor = new $url_text_class( 'Visit https://WordPress.org/plugins, then example.com/docs.' );
+$url_text_processor = new $url_text_class( 'Visit https://WordPress.org/plugins, then example.com/docs.', 'https://wordpress.org' );
 assert_true( $url_text_processor->next_url(), 'Expected native URL-in-text processor to find the first URL.' );
 assert_same( 'https://WordPress.org/plugins', $url_text_processor->get_raw_url(), 'Expected native URL-in-text processor to trim trailing punctuation.' );
 assert_same( 6, $url_text_processor->get_url_starts_at(), 'Expected native URL-in-text processor to expose byte offset.' );
 assert_true( $url_text_processor->had_protocol(), 'Expected native URL-in-text processor to mark explicit protocols.' );
+$url_text_parsed = $url_text_processor->get_parsed_url();
+assert_true( is_object( $url_text_parsed ), 'Expected native URL-in-text get_parsed_url() to expose the parsed URL object.' );
+assert_same( 'https:', $url_text_parsed->protocol, 'Expected native URL-in-text parsed URL protocol.' );
+assert_same( 'wordpress.org', $url_text_parsed->hostname, 'Expected native URL-in-text parsed URL hostname.' );
 assert_true( $url_text_processor->next_url(), 'Expected native URL-in-text processor to find the second URL.' );
 assert_same( 'example.com/docs', $url_text_processor->get_raw_url(), 'Expected native URL-in-text processor to find bare-domain URLs.' );
 assert_false( $url_text_processor->had_protocol(), 'Expected native URL-in-text processor to mark bare domains.' );
