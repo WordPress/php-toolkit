@@ -1,0 +1,30 @@
+name: Native APIs Playground Extension
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex-native-extension-docs
+
+jobs:
+  build:
+    name: Build PHP.wasm extension
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Build wp_native_apis PHP.wasm extension
+        run: |
+          extensions/native-apis/build-playground-extension.sh
+
+      - name: Upload Playground extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: wp-native-apis-playground-extension
+          path: extensions/native-apis/playground/dist/wp_native_apis
