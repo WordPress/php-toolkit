@@ -240,10 +240,10 @@ both the extension manifest and the Blueprint URL:
 https://playground.wordpress.net/?php=8.4&php-extension=<url-encoded-manifest-url>&blueprint-url=<url-encoded-blueprint-url>
 ```
 
-For example, this PR branch publishes a PHP 8.4 JSPI extension bundle and uses:
+For example, a release URL will look like:
 
 ```text
-https://playground.wordpress.net/?php=8.4&php-extension=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fcodex-native-extension-docs%2Fextensions%2Fnative-apis%2Fplayground%2Fdist%2Fwp_native_apis%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fcodex-native-extension-docs%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json
+https://playground.wordpress.net/?php=8.4&php-extension=https%3A%2F%2Fgithub.com%2FWordPress%2Fphp-toolkit%2Freleases%2Fdownload%2Fnative-apis-v0.1.0%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json
 ```
 
 Expected output:
