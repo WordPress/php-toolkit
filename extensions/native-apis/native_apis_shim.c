@@ -35,8 +35,8 @@ wp_native_smoke_from_object( zend_object *object ) {
 
 static zend_object *
 wp_native_smoke_create_object( zend_class_entry *class_entry ) {
-	wp_native_smoke_object *object = emalloc( sizeof( *object ) );
-	memset( object, 0, sizeof( *object ) );
+	wp_native_smoke_object *object = zend_object_alloc( sizeof( *object ), class_entry );
+	memset( object, 0, XtOffsetOf( wp_native_smoke_object, std ) );
 
 	zend_object_std_init( &object->std, class_entry );
 	object_properties_init( &object->std, class_entry );
