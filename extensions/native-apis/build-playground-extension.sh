@@ -6,7 +6,7 @@ repo_root="$(cd "${script_dir}/../.." && pwd)"
 
 php_versions="${PHP_WASM_VERSIONS:-8.4}"
 php_version="${php_versions%%,*}"
-out_dir="${1:-${script_dir}/playground/dist/wp_native_apis}"
+out_dir="${1:-${repo_root}/build/wp_native_apis-wasm-extension}"
 
 cd "${repo_root}"
 
