@@ -270,18 +270,20 @@ writes a small `native-api-smoke.php` file into Playground and navigates to it.
 The smoke page checks that the four native classes are registered, then runs one
 small HTML tag, HTML processor, XML processor, and URL-in-text operation.
 
-For a branch-local preview before this documentation lands on `trunk`, use a
-raw GitHub URL for the branch that contains the Blueprint file. For example,
-this PR branch uses:
+For a branch-local preview before this documentation lands on `trunk`, use raw
+GitHub URLs for both the extension manifest and the Blueprint file. For example,
+this PR branch publishes a PHP 8.4 JSPI extension bundle and uses:
 
 ```text
-https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/WordPress/php-toolkit/codex-native-extension-docs/extensions/native-apis/playground/blueprint.json
+https://playground.wordpress.net/?php=8.4&php-extension=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fcodex-native-extension-docs%2Fextensions%2Fnative-apis%2Fplayground%2Fdist%2Fwp_native_apis%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fcodex-native-extension-docs%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json
 ```
 
 If the smoke page reports missing classes, the selected Playground runtime does
 not include the `wp_native_apis` PHP.wasm extension. Check that the URL includes
 `php-extension=<manifest-url>`, the bundle matches the selected PHP version, and
 the extension was built for the JSPI PHP.wasm ABI instead of the host PHP ABI.
+Custom PHP.wasm extensions require a JSPI-capable Playground runtime and
+browser; non-JSPI runtimes cannot load these side modules.
 
 ## Benchmarking
 
