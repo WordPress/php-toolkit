@@ -35,7 +35,18 @@ docker run --rm \
 		source /root/emsdk/emsdk_env.sh
 
 		export PHP_CONFIG=/usr/local/bin/php-config
-		export LIBCLANG_PATH="${LIBCLANG_PATH:-/usr/lib/llvm-14/lib}"
+		if [ -z "${LIBCLANG_PATH:-}" ]; then
+			LIBCLANG_PATH="$(find /usr/lib -name "libclang.so*" -type f -print -quit)"
+			LIBCLANG_PATH="$(dirname "${LIBCLANG_PATH}")"
+			export LIBCLANG_PATH
+		fi
+		export BINDGEN_EXTRA_CLANG_ARGS="--target=wasm32-unknown-emscripten --sysroot=${EMSDK}/upstream/emscripten/cache/sysroot -DZEND_ENABLE_ZVAL_LONG64 -D__x86_64__ ${BINDGEN_EXTRA_CLANG_ARGS:-}"
+		export CFLAGS_wasm32_unknown_emscripten="-fPIC ${CFLAGS_wasm32_unknown_emscripten:-}"
+		export CXXFLAGS_wasm32_unknown_emscripten="-fPIC ${CXXFLAGS_wasm32_unknown_emscripten:-}"
+		export CC_wasm32_unknown_emscripten="${CC_wasm32_unknown_emscripten:-emcc}"
+		export CXX_wasm32_unknown_emscripten="${CXX_wasm32_unknown_emscripten:-em++}"
+		export AR_wasm32_unknown_emscripten="${AR_wasm32_unknown_emscripten:-emar}"
+		export RANLIB_wasm32_unknown_emscripten="${RANLIB_wasm32_unknown_emscripten:-emranlib}"
 		export RUSTFLAGS="-C panic=abort ${RUSTFLAGS:-}"
 
 		cargo +nightly build \
