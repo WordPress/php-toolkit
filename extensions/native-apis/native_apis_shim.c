@@ -5,10 +5,8 @@
 #include "php.h"
 #include "ext/standard/info.h"
 
-#include <ctype.h>
 #include <stddef.h>
 #include <string.h>
-#include <strings.h>
 
 typedef struct {
 	char        *source;
@@ -25,6 +23,76 @@ static zend_class_entry *wp_native_html_processor_ce;
 static zend_class_entry *wp_native_xml_processor_ce;
 static zend_class_entry *wp_native_url_processor_ce;
 static zend_object_handlers wp_native_smoke_object_handlers;
+
+static zend_bool
+wp_native_ascii_is_space( char c ) {
+	return ' ' == c || '\t' == c || '\n' == c || '\r' == c || '\f' == c;
+}
+
+static zend_bool
+wp_native_ascii_is_alnum( char c ) {
+	return ( 'a' <= c && 'z' >= c ) || ( 'A' <= c && 'Z' >= c ) || ( '0' <= c && '9' >= c );
+}
+
+static char
+wp_native_ascii_lower( char c ) {
+	if ( 'A' <= c && 'Z' >= c ) {
+		return c + ( 'a' - 'A' );
+	}
+	return c;
+}
+
+static char
+wp_native_ascii_upper( char c ) {
+	if ( 'a' <= c && 'z' >= c ) {
+		return c - ( 'a' - 'A' );
+	}
+	return c;
+}
+
+static const char *
+wp_native_find_char( const char *start, size_t length, char needle ) {
+	size_t i;
+
+	for ( i = 0; i < length; i++ ) {
+		if ( needle == start[ i ] ) {
+			return start + i;
+		}
+	}
+
+	return NULL;
+}
+
+static void
+wp_native_copy_bytes( char *target, const char *source, size_t length ) {
+	size_t i;
+
+	for ( i = 0; i < length; i++ ) {
+		target[ i ] = source[ i ];
+	}
+}
+
+static zend_bool
+wp_native_ascii_starts_with( const char *value, size_t value_len, const char *prefix, size_t prefix_len ) {
+	size_t i;
+
+	if ( value_len < prefix_len ) {
+		return 0;
+	}
+
+	for ( i = 0; i < prefix_len; i++ ) {
+		if ( wp_native_ascii_lower( value[ i ] ) != wp_native_ascii_lower( prefix[ i ] ) ) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static zend_bool
+wp_native_is_trailing_url_punctuation( char c ) {
+	return '.' == c || ',' == c || ';' == c || ':' == c || '!' == c || '?' == c || ')' == c || '"' == c || ']' == c || '}' == c;
+}
 
 static inline wp_native_smoke_object *
 wp_native_smoke_from_object( zend_object *object ) {
@@ -79,7 +147,7 @@ wp_native_ascii_ieq( const char *left, size_t left_len, const char *right, size_
 	}
 
 	for ( i = 0; i < left_len; i++ ) {
-		if ( tolower( (unsigned char) left[ i ] ) != tolower( (unsigned char) right[ i ] ) ) {
+		if ( wp_native_ascii_lower( left[ i ] ) != wp_native_ascii_lower( right[ i ] ) ) {
 			return 0;
 		}
 	}
@@ -101,7 +169,7 @@ wp_native_copy_upper_name( char *target, size_t target_len, const char *name, si
 	}
 
 	for ( i = 0; i < limit; i++ ) {
-		target[ i ] = (char) toupper( (unsigned char) name[ i ] );
+		target[ i ] = wp_native_ascii_upper( name[ i ] );
 	}
 	target[ limit ] = '\0';
 }
@@ -122,14 +190,14 @@ wp_native_tag_has_class( const char *tag_start, const char *tag_end, const char 
 			const char *value_end;
 
 			cursor += 5;
-			while ( cursor < tag_end && isspace( (unsigned char) *cursor ) ) {
+			while ( cursor < tag_end && wp_native_ascii_is_space( *cursor ) ) {
 				cursor++;
 			}
 			if ( cursor >= tag_end || '=' != *cursor ) {
 				continue;
 			}
 			cursor++;
-			while ( cursor < tag_end && isspace( (unsigned char) *cursor ) ) {
+			while ( cursor < tag_end && wp_native_ascii_is_space( *cursor ) ) {
 				cursor++;
 			}
 			if ( cursor >= tag_end || ( '"' != *cursor && '\'' != *cursor ) ) {
@@ -137,18 +205,18 @@ wp_native_tag_has_class( const char *tag_start, const char *tag_end, const char 
 			}
 
 			value     = ++cursor;
-			value_end = memchr( value, cursor[-1], tag_end - value );
+			value_end = wp_native_find_char( value, tag_end - value, cursor[-1] );
 			if ( NULL == value_end ) {
 				value_end = tag_end;
 			}
 
 			while ( value < value_end ) {
 				const char *part = value;
-				while ( part < value_end && isspace( (unsigned char) *part ) ) {
+				while ( part < value_end && wp_native_ascii_is_space( *part ) ) {
 					part++;
 				}
 				value = part;
-				while ( value < value_end && ! isspace( (unsigned char) *value ) ) {
+				while ( value < value_end && ! wp_native_ascii_is_space( *value ) ) {
 					value++;
 				}
 				if ( wp_native_ascii_ieq( part, value - part, class_name, class_name_len ) ) {
@@ -189,7 +257,7 @@ wp_native_html_next_tag( wp_native_smoke_object *object, zval *query ) {
 		const char *name;
 		size_t      name_len;
 
-		tag_start = memchr( object->source + object->cursor, '<', object->source_len - object->cursor );
+		tag_start = wp_native_find_char( object->source + object->cursor, object->source_len - object->cursor, '<' );
 		if ( NULL == tag_start ) {
 			object->cursor = object->source_len;
 			return 0;
@@ -203,14 +271,14 @@ wp_native_html_next_tag( wp_native_smoke_object *object, zval *query ) {
 		name = object->source + object->cursor;
 		while ( object->cursor < object->source_len ) {
 			char c = object->source[ object->cursor ];
-			if ( ! ( isalnum( (unsigned char) c ) || ':' == c || '-' == c ) ) {
+			if ( ! ( wp_native_ascii_is_alnum( c ) || ':' == c || '-' == c ) ) {
 				break;
 			}
 			object->cursor++;
 		}
 
 		name_len = object->source + object->cursor - name;
-		tag_end  = memchr( object->source + object->cursor, '>', object->source_len - object->cursor );
+		tag_end  = wp_native_find_char( object->source + object->cursor, object->source_len - object->cursor, '>' );
 		if ( NULL == tag_end ) {
 			tag_end = object->source + object->source_len;
 		}
@@ -311,7 +379,7 @@ wp_native_xml_next_tag( wp_native_smoke_object *object, const char *requested, s
 		size_t      name_len;
 		size_t      local_len;
 
-		tag_start = memchr( object->source + object->cursor, '<', object->source_len - object->cursor );
+		tag_start = wp_native_find_char( object->source + object->cursor, object->source_len - object->cursor, '<' );
 		if ( NULL == tag_start ) {
 			object->cursor = object->source_len;
 			return 0;
@@ -325,14 +393,14 @@ wp_native_xml_next_tag( wp_native_smoke_object *object, const char *requested, s
 		name = object->source + object->cursor;
 		while ( object->cursor < object->source_len ) {
 			char c = object->source[ object->cursor ];
-			if ( ! ( isalnum( (unsigned char) c ) || ':' == c || '-' == c || '_' == c ) ) {
+			if ( ! ( wp_native_ascii_is_alnum( c ) || ':' == c || '-' == c || '_' == c ) ) {
 				break;
 			}
 			object->cursor++;
 		}
 
 		name_len = object->source + object->cursor - name;
-		local = memchr( name, ':', name_len );
+		local = wp_native_find_char( name, name_len, ':' );
 		if ( NULL == local ) {
 			local = name;
 			local_len = name_len;
@@ -348,7 +416,7 @@ wp_native_xml_next_tag( wp_native_smoke_object *object, const char *requested, s
 		if ( local_len >= sizeof( object->current_name ) ) {
 			local_len = sizeof( object->current_name ) - 1;
 		}
-		memcpy( object->current_name, local, local_len );
+		wp_native_copy_bytes( object->current_name, local, local_len );
 		object->current_name[ local_len ] = '\0';
 		return 1;
 	}
@@ -400,12 +468,12 @@ wp_native_url_next( wp_native_smoke_object *object ) {
 		size_t end;
 		zend_bool had_protocol = 0;
 
-		while ( start < object->source_len && isspace( (unsigned char) object->source[ start ] ) ) {
+		while ( start < object->source_len && wp_native_ascii_is_space( object->source[ start ] ) ) {
 			start++;
 		}
 
 		end = start;
-		while ( end < object->source_len && ! isspace( (unsigned char) object->source[ end ] ) ) {
+		while ( end < object->source_len && ! wp_native_ascii_is_space( object->source[ end ] ) ) {
 			end++;
 		}
 		object->cursor = end + ( end < object->source_len ? 1 : 0 );
@@ -414,22 +482,22 @@ wp_native_url_next( wp_native_smoke_object *object ) {
 			continue;
 		}
 
-		while ( end > start && strchr( ".,;:!?)\"]}", object->source[ end - 1 ] ) ) {
+		while ( end > start && wp_native_is_trailing_url_punctuation( object->source[ end - 1 ] ) ) {
 			end--;
 		}
 
-		if ( end - start > 7 && 0 == strncasecmp( object->source + start, "http://", 7 ) ) {
+		if ( wp_native_ascii_starts_with( object->source + start, end - start, "http://", 7 ) ) {
 			had_protocol = 1;
-		} else if ( end - start > 8 && 0 == strncasecmp( object->source + start, "https://", 8 ) ) {
+		} else if ( wp_native_ascii_starts_with( object->source + start, end - start, "https://", 8 ) ) {
 			had_protocol = 1;
-		} else if ( NULL == memchr( object->source + start, '.', end - start ) ) {
+		} else if ( NULL == wp_native_find_char( object->source + start, end - start, '.' ) ) {
 			continue;
 		}
 
 		if ( end - start >= sizeof( object->current_url ) ) {
 			end = start + sizeof( object->current_url ) - 1;
 		}
-		memcpy( object->current_url, object->source + start, end - start );
+		wp_native_copy_bytes( object->current_url, object->source + start, end - start );
 		object->current_url[ end - start ] = '\0';
 		object->current_had_protocol = had_protocol;
 		return 1;
