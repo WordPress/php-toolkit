@@ -12,6 +12,77 @@ fallback behavior when it is unavailable or explicitly disabled.
 - `WordPress\XML\NativeXMLProcessor`
 - `WordPress\DataLiberation\URL\NativeURLInTextProcessor`
 
+## Quick Setup
+
+Use this path when you want to build, load, and verify the extension on a
+development machine.
+
+You need:
+
+- PHP CLI with matching development headers and `php-config`.
+- Rust and Cargo.
+- Clang and libclang for `bindgen`.
+- Composer dependencies from the repository root.
+
+On Ubuntu, the GitHub Actions job uses:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y clang libclang-dev
+composer install --prefer-dist --no-progress --no-suggest
+```
+
+Build and verify from the repository root:
+
+```bash
+extensions/native-apis/build-extension.sh
+
+php -d extension=extensions/native-apis/target/release/libwp_native_apis.so \
+	extensions/native-apis/tests/verify-native-apis.php
+```
+
+If `php-config` is not on `PATH`, pass it explicitly:
+
+```bash
+PHP_CONFIG=/path/to/php-config \
+LIBCLANG_PATH=/path/to/libclang/lib \
+extensions/native-apis/build-extension.sh
+```
+
+Check the Rust parser kernels without PHP development headers:
+
+```bash
+cd extensions/native-apis
+cargo test
+```
+
+Check that public PHP classes progressively resolve to native classes by loading
+the extension before the repository bootstrap:
+
+```bash
+php -d extension=extensions/native-apis/target/release/libwp_native_apis.so <<'PHP'
+<?php
+require __DIR__ . '/bootstrap.php';
+
+var_dump( is_subclass_of( 'WP_HTML_Tag_Processor', 'WP_HTML_Native_Tag_Processor' ) );
+var_dump( is_subclass_of( 'WordPress\\XML\\XMLProcessor', 'WordPress\\XML\\NativeXMLProcessor' ) );
+var_dump( is_subclass_of( 'WordPress\\DataLiberation\\URL\\URLInTextProcessor', 'WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor' ) );
+PHP
+```
+
+Force the PHP fallback path for comparison by defining
+`WP_NATIVE_APIS_DISABLE_DEFAULTS` before loading the bootstrap:
+
+```bash
+php -d extension=extensions/native-apis/target/release/libwp_native_apis.so <<'PHP'
+<?php
+define( 'WP_NATIVE_APIS_DISABLE_DEFAULTS', true );
+require __DIR__ . '/bootstrap.php';
+
+var_dump( is_subclass_of( 'WP_HTML_Tag_Processor', 'WP_HTML_Native_Tag_Processor' ) );
+PHP
+```
+
 ## Public Wrapper Defaults
 
 When the extension is loaded before the PHP components, public wrappers may use
@@ -31,7 +102,7 @@ candidate scanner. The public PHP class still validates candidates with the
 existing WHATWG parser and uses the PHP regular-expression scanner for non-ASCII
 text or when native defaults are disabled.
 
-## Build
+## Build Details
 
 The build requires Rust, PHP development headers, `php-config`, and libclang.
 The helper script checks those prerequisites before invoking Cargo. Depending on
@@ -79,6 +150,104 @@ The Rust parser kernels can be checked without PHP development headers:
 ```bash
 cargo test
 ```
+
+## Release Flow
+
+The native extension has two release targets:
+
+- host PHP builds, such as the Linux shared object produced by
+  `build-extension.sh`;
+- PHP.wasm builds for WordPress Playground.
+
+Treat every release as experimental until the extension has packaging,
+signing, and artifact retention policy in CI.
+
+### Host PHP release checklist
+
+1. Update the extension version in `extensions/native-apis/Cargo.toml`.
+2. Confirm that the public PHP wrappers still gate on
+   `supports_public_api()` and still fall back when the extension is absent.
+3. Run the native verifier on the exact PHP version used to build the shared
+   object:
+
+   ```bash
+   php -d extension=extensions/native-apis/target/release/libwp_native_apis.so \
+     extensions/native-apis/tests/verify-native-apis.php
+   ```
+
+4. Run benchmarks with native classes required:
+
+   ```bash
+   php -d extension=extensions/native-apis/target/release/libwp_native_apis.so \
+     bin/benchmark-native-apis.php \
+     --iterations=100 \
+     --mode=both \
+     --disable-native-defaults \
+     --require-native
+   ```
+
+5. Wait for the `Native APIs`, `PHP CodeSniffer`, docs snippet, and full
+   PHPUnit matrix checks to pass on the release PR.
+6. Attach the release artifact and the benchmark JSON to the GitHub release.
+   Name host artifacts with the target platform and PHP version, for example:
+
+   ```text
+   wp-native-apis-0.1.0-php8.3-linux-x86_64.so
+   wp-native-apis-0.1.0-benchmark.json
+   ```
+
+Host `.so` files are tied to the PHP ABI they were built against. Do not reuse
+a PHP 8.3 build for PHP 8.4 or PHP 8.5.
+
+### Playground release checklist
+
+Browser Playground runs PHP as WebAssembly, so it cannot load the Linux shared
+object from `target/release/`. Publish a PHP.wasm extension bundle before
+claiming Playground support.
+
+The Playground Query API supports `php-extension=<manifest-url>` for loading a
+custom PHP.wasm extension manifest before PHP starts. The manifest and side
+module must be served over HTTPS with CORS headers.
+
+The current native extension uses `ext-php-rs`, so the PHP.wasm build needs a
+Rust-to-PHP side-module recipe rather than the host `cdylib` output. Follow the
+Playground extension docs when adding that packaging:
+
+- Building PHP extensions:
+  https://wordpress.github.io/wordpress-playground/developers/apis/javascript-api/build-php-extensions/
+- Rust and dependency notes:
+  https://wordpress.github.io/wordpress-playground/developers/apis/javascript-api/php-extension-dependencies/
+- Query API `php-extension` parameter:
+  https://wordpress.github.io/wordpress-playground/developers/apis/query-api/
+
+When the PHP.wasm bundle is published, attach the full output directory to a
+GitHub release:
+
+```text
+wp-native-apis-0.1.0-php-wasm/
+|-- manifest.json
+`-- wp_native_apis-php8.4-jspi.so
+```
+
+Use this Playground smoke-test link after replacing the manifest URL with the
+released `manifest.json` URL:
+
+```text
+https://playground.wordpress.net/php-playground.html?php-extension=https%3A%2F%2Fgithub.com%2FWordPress%2Fphp-toolkit%2Freleases%2Fdownload%2Fnative-apis-v0.1.0%2Fmanifest.json#eyJjb2RlIjoiPD9waHBcbmZvcmVhY2ggKFxuICAgIGFycmF5KFxuICAgICAgICAnV1BfSFRNTF9OYXRpdmVfVGFnX1Byb2Nlc3NvcicsXG4gICAgICAgICdXUF9IVE1MX05hdGl2ZV9Qcm9jZXNzb3InLFxuICAgICAgICAnV29yZFByZXNzXFxcXFhNTFxcXFxOYXRpdmVYTUxQcm9jZXNzb3InLFxuICAgICAgICAnV29yZFByZXNzXFxcXERhdGFMaWJlcmF0aW9uXFxcXFVSTFxcXFxOYXRpdmVVUkxJblRleHRQcm9jZXNzb3InLFxuICAgICkgYXMgJGNsYXNzXG4pIHtcbiAgICBlY2hvICRjbGFzcyAuICc6ICcgLiAoIGNsYXNzX2V4aXN0cyggJGNsYXNzLCBmYWxzZSApID8gJ2xvYWRlZCcgOiAnbWlzc2luZycgKSAuIFBIUF9FT0w7XG59IiwicGhwIjoiOC40In0=
+```
+
+Expected output:
+
+```text
+WP_HTML_Native_Tag_Processor: loaded
+WP_HTML_Native_Processor: loaded
+WordPress\XML\NativeXMLProcessor: loaded
+WordPress\DataLiberation\URL\NativeURLInTextProcessor: loaded
+```
+
+If the link reports `missing`, the PHP.wasm manifest did not load, the artifact
+does not match the selected PHP version, or the extension was built for the host
+PHP ABI instead of the JSPI PHP.wasm ABI.
 
 ## Benchmarking
 
