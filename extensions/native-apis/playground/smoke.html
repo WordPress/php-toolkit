@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Native API PHP.wasm smoke test</title>
+	<style>
+		body {
+			margin: 2rem;
+			font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+			color: #1e1e1e;
+		}
+
+		pre {
+			padding: 1rem;
+			overflow: auto;
+			background: #f6f7f7;
+			border: 1px solid #dcdcde;
+		}
+
+		.pass {
+			color: #008a20;
+		}
+
+		.fail {
+			color: #cc1818;
+		}
+	</style>
+</head>
+<body>
+	<h1>Native API PHP.wasm smoke test</h1>
+	<pre id="output">Loading PHP.wasm runtime...</pre>
+
+	<script type="module">
+		import { PHP } from 'https://cdn.jsdelivr.net/npm/@php-wasm/universal@3.1.33/+esm';
+		import { loadWebRuntime } from 'https://cdn.jsdelivr.net/npm/@php-wasm/web@3.1.33/+esm';
+
+		const output = document.getElementById( 'output' );
+		const manifestUrl = new URL(
+			'./dist/wp_native_apis/manifest.json',
+			window.location.href
+		);
+
+		function write( text, className = '' ) {
+			output.textContent = text;
+			output.className = className;
+		}
+
+		const smokeTest = `<?php
+function fail_native_api_smoke_test( $message ) {
+	echo "FAIL: {$message}\\n";
+	exit( 1 );
+}
+
+$classes = array(
+	'WP_HTML_Native_Tag_Processor',
+	'WP_HTML_Native_Processor',
+	'WordPress\\\\XML\\\\NativeXMLProcessor',
+	'WordPress\\\\DataLiberation\\\\URL\\\\NativeURLInTextProcessor',
+);
+
+$missing = array();
+foreach ( $classes as $class_name ) {
+	if ( ! class_exists( $class_name, false ) ) {
+		$missing[] = $class_name;
+	}
+}
+
+if ( $missing ) {
+	fail_native_api_smoke_test(
+		'Native API extension classes are missing: ' . implode( ', ', $missing )
+	);
+}
+
+if ( function_exists( 'wp_native_apis_extension_version' ) ) {
+	echo 'wp_native_apis extension version: ' . wp_native_apis_extension_version() . "\\n";
+}
+
+$tag_processor = new WP_HTML_Native_Tag_Processor( '<main><p class="target">Text</p></main>' );
+if ( ! $tag_processor->next_tag( array( 'tag_name' => 'p', 'class_name' => 'target' ) ) || 'P' !== $tag_processor->get_tag() ) {
+	fail_native_api_smoke_test( 'WP_HTML_Native_Tag_Processor did not find the target paragraph.' );
+}
+
+echo "WP_HTML_Native_Tag_Processor: ok\\n";
+
+$html_processor = WP_HTML_Native_Processor::create_fragment( '<section><a href="/docs">Docs</a></section>' );
+if ( ! is_object( $html_processor ) || ! $html_processor->next_tag( array( 'tag_name' => 'a' ) ) || 'A' !== $html_processor->get_tag() ) {
+	fail_native_api_smoke_test( 'WP_HTML_Native_Processor did not find the link in a fragment.' );
+}
+
+echo "WP_HTML_Native_Processor: ok\\n";
+
+$xml_class     = 'WordPress\\\\XML\\\\NativeXMLProcessor';
+$xml_processor = $xml_class::create_from_string( '<root><item id="1" /></root>' );
+if ( ! is_object( $xml_processor ) || ! $xml_processor->next_tag( 'item' ) || 'item' !== $xml_processor->get_tag_local_name() ) {
+	fail_native_api_smoke_test( 'NativeXMLProcessor did not find the item element.' );
+}
+
+echo "WordPress\\\\XML\\\\NativeXMLProcessor: ok\\n";
+
+$url_class     = 'WordPress\\\\DataLiberation\\\\URL\\\\NativeURLInTextProcessor';
+$url_processor = new $url_class( 'Visit example.com/docs now.', 'https://wordpress.org' );
+if ( ! $url_processor->next_url() || 'example.com/docs' !== $url_processor->get_raw_url() || $url_processor->had_protocol() ) {
+	fail_native_api_smoke_test( 'NativeURLInTextProcessor did not find the bare-domain URL.' );
+}
+
+echo "WordPress\\\\DataLiberation\\\\URL\\\\NativeURLInTextProcessor: ok\\n";
+echo "PASS: Native API extension classes are available.\\n";
+`;
+
+		try {
+			if ( typeof WebAssembly.Suspending === 'undefined' ) {
+				throw new Error(
+					'This browser runtime does not expose WebAssembly JSPI. Custom PHP.wasm extensions require a JSPI-capable browser.'
+				);
+			}
+
+			write( `Loading wp_native_apis from ${ manifestUrl }...` );
+			const runtimeId = await loadWebRuntime( '8.4', {
+				extensions: [
+					{
+						source: {
+							format: 'manifest',
+							manifestUrl,
+						},
+					},
+				],
+			} );
+
+			const php = new PHP( runtimeId );
+			const result = await php.run( { code: smokeTest } );
+			const text = result.text || result.errors || 'No output.';
+			write( text, result.exitCode === 0 ? 'pass' : 'fail' );
+		} catch ( error ) {
+			write( `FAIL: ${ error && error.stack ? error.stack : error }`, 'fail' );
+		}
+	</script>
+</body>
+</html>

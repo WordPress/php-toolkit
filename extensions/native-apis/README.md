@@ -227,63 +227,50 @@ wp-native-apis-0.1.0-php-wasm/
 `-- wp_native_apis-php8.4-jspi.so
 ```
 
-Use the Blueprint smoke test together with the Playground Query API
-`php-extension` parameter to verify a published PHP.wasm extension bundle.
-`php-extension` must be present in the initial Playground URL because PHP
-extensions load before PHP starts; the Blueprint only writes and runs the smoke
-test.
+Use the JavaScript API smoke page to verify a published PHP.wasm extension
+bundle. It passes the extension manifest to `loadWebRuntime()` before creating
+the PHP runtime, which is required because PHP extensions load before PHP
+starts.
 
-After publishing the PHP.wasm `manifest.json`, open the main Playground URL with
-both the extension manifest and the Blueprint URL:
+The hosted `https://playground.wordpress.net/` shell currently does not preload
+this custom extension from a `php-extension` query parameter. A Blueprint-only
+URL can still load the smoke-test harness, but it will report missing native
+classes because PHP has already started without the extension.
 
-```text
-https://playground.wordpress.net/?php=8.4&php-extension=<url-encoded-manifest-url>&blueprint-url=<url-encoded-blueprint-url>
-```
-
-For example, a release URL will look like:
-
-```text
-https://playground.wordpress.net/?php=8.4&php-extension=https%3A%2F%2Fgithub.com%2FWordPress%2Fphp-toolkit%2Freleases%2Fdownload%2Fnative-apis-v0.1.0%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json
-```
-
-The Blueprint URL itself is useful for previewing the smoke-test harness, but it
-will report missing native classes unless the Playground runtime was also
-started with `php-extension=<manifest-url>`. This `trunk` URL works after
-`extensions/native-apis/playground/blueprint.json` exists on `trunk`:
+After publishing the PHP.wasm `manifest.json`, open a smoke page that loads the
+manifest through the Playground JavaScript API. This PR branch publishes a
+branch-local smoke page and PHP 8.4 JSPI extension bundle at:
 
 ```text
-https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/WordPress/php-toolkit/trunk/extensions/native-apis/playground/blueprint.json
+https://raw.githack.com/WordPress/php-toolkit/codex-native-extension-docs/extensions/native-apis/playground/smoke.html
 ```
 
 Expected output:
 
 ```text
+wp_native_apis extension version: 0.0.0
 WP_HTML_Native_Tag_Processor: ok
 WP_HTML_Native_Processor: ok
 WordPress\XML\NativeXMLProcessor: ok
 WordPress\DataLiberation\URL\NativeURLInTextProcessor: ok
-Native API Playground smoke test passed.
+PASS: Native API extension classes are available.
 ```
 
-The Blueprint lives at `extensions/native-apis/playground/blueprint.json`. It
-writes a small `native-api-smoke.php` file into Playground and navigates to it.
-The smoke page checks that the four native classes are registered, then runs one
-small HTML tag, HTML processor, XML processor, and URL-in-text operation.
+The smoke page lives at `extensions/native-apis/playground/smoke.html`. It loads
+`extensions/native-apis/playground/dist/wp_native_apis/manifest.json`, checks
+that the four native classes are registered, then runs one small HTML tag, HTML
+processor, XML processor, and URL-in-text operation.
 
-For a branch-local preview before this documentation lands on `trunk`, use raw
-GitHub URLs for both the extension manifest and the Blueprint file. For example,
-this PR branch publishes a PHP 8.4 JSPI extension bundle and uses:
-
-```text
-https://playground.wordpress.net/?php=8.4&php-extension=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fcodex-native-extension-docs%2Fextensions%2Fnative-apis%2Fplayground%2Fdist%2Fwp_native_apis%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fcodex-native-extension-docs%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json
-```
+The Blueprint lives at `extensions/native-apis/playground/blueprint.json`. It is
+kept as a WordPress Playground harness for environments that already preload the
+extension, but it cannot load the extension after PHP has booted.
 
 If the smoke page reports missing classes, the selected Playground runtime does
-not include the `wp_native_apis` PHP.wasm extension. Check that the URL includes
-`php-extension=<manifest-url>`, the bundle matches the selected PHP version, and
-the extension was built for the JSPI PHP.wasm ABI instead of the host PHP ABI.
-Custom PHP.wasm extensions require a JSPI-capable Playground runtime and
-browser; non-JSPI runtimes cannot load these side modules.
+not include the `wp_native_apis` PHP.wasm extension. Check that the smoke page
+loads the intended `manifest.json`, the bundle matches the selected PHP version,
+and the extension was built for the JSPI PHP.wasm ABI instead of the host PHP
+ABI. Custom PHP.wasm extensions require a JSPI-capable browser runtime;
+non-JSPI runtimes cannot load these side modules.
 
 ## Benchmarking
 
