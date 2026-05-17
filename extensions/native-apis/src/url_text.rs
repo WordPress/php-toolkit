@@ -1,7 +1,10 @@
 #![cfg_attr(not(feature = "php-extension"), allow(dead_code))]
 
 #[cfg(feature = "php-extension")]
-use ext_php_rs::prelude::*;
+use ext_php_rs::{
+    prelude::*,
+    types::{ZendCallable, Zval},
+};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct UrlTextCandidate {
@@ -22,6 +25,7 @@ pub struct NativeUrlInTextProcessor {
     current: Option<UrlTextCandidate>,
     replacements: Vec<UrlTextReplacement>,
     validate_urls: bool,
+    base_url: Option<String>,
     base_protocol: Option<String>,
 }
 
@@ -46,6 +50,7 @@ impl NativeUrlInTextProcessor {
             current: None,
             replacements: Vec::new(),
             validate_urls: true,
+            base_url,
             base_protocol,
         }
     }
@@ -60,6 +65,7 @@ impl NativeUrlInTextProcessor {
 
     pub fn set_base_url(&mut self, base_url: String) {
         self.base_protocol = parse_url_scheme(&base_url);
+        self.base_url = Some(base_url);
     }
 
     pub fn next_url(&mut self) -> bool {
@@ -95,8 +101,26 @@ impl NativeUrlInTextProcessor {
             .map(|candidate| candidate.preprocessed_url.clone())
     }
 
-    pub fn get_parsed_url(&self) -> Option<String> {
-        self.get_preprocessed_url()
+    pub fn get_parsed_url(&self) -> Zval {
+        let Some(candidate) = self.current.as_ref() else {
+            return url_zval_bool(false);
+        };
+
+        let Ok(callable) =
+            ZendCallable::try_from_name("WordPress\\DataLiberation\\URL\\WPURL::parse")
+        else {
+            return url_zval_bool(false);
+        };
+
+        let result = match self.base_url.as_ref() {
+            Some(base_url) => callable.try_call(vec![&candidate.preprocessed_url, base_url]),
+            None => callable.try_call(vec![&candidate.preprocessed_url]),
+        };
+
+        match result {
+            Ok(value) if !value.is_false() && !value.is_null() => value,
+            _ => url_zval_bool(false),
+        }
     }
 
     pub fn get_url_starts_at(&self) -> Option<i64> {
@@ -322,6 +346,13 @@ fn validate_url_text_candidate(
 
     candidate.preprocessed_url = preprocessed_url;
     true
+}
+
+#[cfg(feature = "php-extension")]
+fn url_zval_bool(value: bool) -> Zval {
+    let mut zval = Zval::new();
+    zval.set_bool(value);
+    zval
 }
 
 fn parse_url_scheme(url: &str) -> Option<String> {

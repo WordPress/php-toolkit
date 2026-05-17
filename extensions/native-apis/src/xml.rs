@@ -7,7 +7,7 @@ use std::rc::Rc;
 #[cfg(feature = "php-extension")]
 use ext_php_rs::prelude::*;
 #[cfg(feature = "php-extension")]
-use ext_php_rs::types::Zval;
+use ext_php_rs::types::{ZendHashTable, Zval};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct XmlToken {
@@ -79,6 +79,12 @@ struct XmlBookmark {
     paused_at_incomplete_input: bool,
     last_error: Option<String>,
     pending_stream_error: Option<String>,
+}
+
+#[derive(Default)]
+struct XmlNextTagQuery {
+    breadcrumbs: Option<Vec<(String, String)>>,
+    match_offset: i64,
 }
 
 #[cfg(feature = "php-extension")]
@@ -1494,9 +1500,35 @@ impl NativeXmlProcessor {
         xml_token_stream_summary(&summary)
     }
 
-    pub fn next_tag(&mut self) -> bool {
+    #[php(optional = query_or_ns)]
+    pub fn next_tag(
+        &mut self,
+        query_or_ns: Option<&Zval>,
+        null_or_local_name: Option<String>,
+    ) -> bool {
+        let Some(query) = xml_parse_next_tag_query(query_or_ns, null_or_local_name) else {
+            return false;
+        };
+
+        let mut match_offset = query.match_offset.max(1);
+
         while self.next_token() {
-            if self.get_token_type().as_deref() == Some("#tag") && !self.is_tag_closer() {
+            if self.get_token_type().as_deref() != Some("#tag") || self.is_tag_closer() {
+                continue;
+            }
+
+            if let Some(breadcrumbs) = query.breadcrumbs.as_ref() {
+                let Some(current_breadcrumbs) = self.current_token_breadcrumbs() else {
+                    continue;
+                };
+
+                if !xml_namespaced_breadcrumbs_match(&current_breadcrumbs, breadcrumbs) {
+                    continue;
+                }
+            }
+
+            match_offset -= 1;
+            if match_offset == 0 {
                 return true;
             }
         }
@@ -3352,6 +3384,114 @@ impl NativeXmlProcessor {
 
         Some((*extend_xml_namespaces(&current_namespaces, namespace_declarations)).clone())
     }
+}
+
+#[cfg(feature = "php-extension")]
+fn xml_parse_next_tag_query(
+    query_or_ns: Option<&Zval>,
+    null_or_local_name: Option<String>,
+) -> Option<XmlNextTagQuery> {
+    let mut parsed = XmlNextTagQuery {
+        match_offset: 1,
+        ..Default::default()
+    };
+
+    let Some(query_or_ns) = query_or_ns else {
+        return Some(parsed);
+    };
+
+    if let Some(namespace_or_local_name) = query_or_ns.str() {
+        parsed.breadcrumbs = Some(vec![match null_or_local_name {
+            Some(local_name) => (namespace_or_local_name.to_string(), local_name),
+            None => ("".to_string(), namespace_or_local_name.to_string()),
+        }]);
+        return Some(parsed);
+    }
+
+    let query = query_or_ns.array()?;
+
+    if query.get_index(0).and_then(|value| value.str()).is_some()
+        && query.get_index(1).and_then(|value| value.str()).is_some()
+    {
+        parsed.breadcrumbs = Some(vec![(
+            query.get_index(0)?.str()?.to_string(),
+            query.get_index(1)?.str()?.to_string(),
+        )]);
+        return Some(parsed);
+    }
+
+    if let Some(match_offset) = xml_array_positive_i64(query, "match_offset") {
+        parsed.match_offset = match_offset;
+    }
+
+    parsed.breadcrumbs = xml_array_namespaced_breadcrumbs(query, "breadcrumbs");
+
+    Some(parsed)
+}
+
+#[cfg(feature = "php-extension")]
+fn xml_array_positive_i64(query: &ZendHashTable, key: &str) -> Option<i64> {
+    query
+        .get(key)
+        .and_then(|value| value.long())
+        .filter(|value| *value > 0)
+        .map(|value| value as i64)
+}
+
+#[cfg(feature = "php-extension")]
+fn xml_array_namespaced_breadcrumbs(
+    query: &ZendHashTable,
+    key: &str,
+) -> Option<Vec<(String, String)>> {
+    let breadcrumbs = query.get(key)?.array()?;
+    let mut parsed = Vec::with_capacity(breadcrumbs.len());
+
+    for value in breadcrumbs.iter().map(|(_, value)| value) {
+        if let Some(local_name) = value.str() {
+            if local_name == "*" {
+                parsed.push(("*".to_string(), "*".to_string()));
+            } else {
+                parsed.push(("*".to_string(), local_name.to_string()));
+            }
+            continue;
+        }
+
+        let pair = value.array()?;
+        parsed.push((
+            pair.get_index(0)?.str()?.to_string(),
+            pair.get_index(1)?.str()?.to_string(),
+        ));
+    }
+
+    Some(parsed)
+}
+
+fn xml_namespaced_breadcrumbs_match(
+    current: &[(String, String)],
+    breadcrumbs: &[(String, String)],
+) -> bool {
+    if breadcrumbs.is_empty() {
+        return true;
+    }
+
+    if breadcrumbs.len() > current.len() {
+        return false;
+    }
+
+    let offset = current.len() - breadcrumbs.len();
+    for (index, (namespace, local_name)) in breadcrumbs.iter().enumerate() {
+        let (current_namespace, current_local_name) = &current[offset + index];
+
+        if local_name != "*" && local_name != current_local_name {
+            return false;
+        }
+
+        if namespace != "*" && namespace != current_namespace {
+            return false;
+        }
+    }
+
+    true
 }
 
 #[cfg(feature = "php-extension")]

@@ -82,6 +82,15 @@ enum HtmlAttributeValue {
     String(String),
 }
 
+#[derive(Default)]
+struct HtmlNextTagQuery {
+    tag_name: Option<String>,
+    class_name: Option<String>,
+    match_offset: i64,
+    visit_closers: bool,
+    breadcrumbs: Option<Vec<String>>,
+}
+
 #[cfg(feature = "php-extension")]
 impl WpHtmlNativeTagProcessor {
     fn get_attribute_value(&self, name: &str) -> Option<HtmlAttributeValue> {
@@ -174,8 +183,22 @@ impl WpHtmlNativeTagProcessor {
     }
 
     #[php(optional = query)]
-    pub fn next_tag(&mut self, _query: Option<&Zval>) -> bool {
-        self.next_tag_any(false, 1)
+    pub fn next_tag(&mut self, query: Option<&Zval>) -> bool {
+        let query = html_parse_tag_processor_next_tag_query(query);
+        let mut match_offset = query.match_offset.max(1);
+
+        while self.advance_to_next_tag_token() {
+            if !self.current_html_tag_matches_query(&query, false) {
+                continue;
+            }
+
+            match_offset -= 1;
+            if match_offset == 0 {
+                return true;
+            }
+        }
+
+        false
     }
 
     pub fn next_tag_any(&mut self, visit_closers: bool, mut match_offset: i64) -> bool {
@@ -2441,6 +2464,44 @@ impl WpHtmlNativeTagProcessor {
     fn current_tag(&self) -> Option<&HtmlTag> {
         self.current.as_ref()
     }
+
+    fn current_html_tag_matches_query(
+        &self,
+        query: &HtmlNextTagQuery,
+        use_breadcrumbs: bool,
+    ) -> bool {
+        let Some(tag) = self.current_tag() else {
+            return false;
+        };
+
+        if tag.token_type != "#tag" {
+            return false;
+        }
+
+        if tag.closing && (!query.visit_closers || use_breadcrumbs) {
+            return false;
+        }
+
+        if let Some(tag_name) = query.tag_name.as_ref() {
+            if !tag.name.eq_ignore_ascii_case(tag_name) {
+                return false;
+            }
+        }
+
+        if let Some(class_name) = query.class_name.as_ref() {
+            if self.has_class(class_name.clone()) != Some(true) {
+                return false;
+            }
+        }
+
+        if use_breadcrumbs {
+            if let Some(breadcrumbs) = query.breadcrumbs.as_ref() {
+                return html_breadcrumbs_match(&tag.breadcrumbs, breadcrumbs);
+            }
+        }
+
+        true
+    }
 }
 
 #[cfg(feature = "php-extension")]
@@ -2592,7 +2653,27 @@ impl WpHtmlNativeProcessor {
 
     #[php(optional = query)]
     pub fn next_tag(&mut self, query: Option<&Zval>) -> bool {
-        self.inner.next_tag(query)
+        let Some(query) = html_parse_processor_next_tag_query(query) else {
+            return false;
+        };
+        let use_breadcrumbs = query.breadcrumbs.is_some();
+        let mut match_offset = query.match_offset.max(1);
+
+        while self.next_token() {
+            if !self
+                .inner
+                .current_html_tag_matches_query(&query, use_breadcrumbs)
+            {
+                continue;
+            }
+
+            match_offset -= 1;
+            if match_offset == 0 {
+                return true;
+            }
+        }
+
+        false
     }
 
     pub fn next_tag_summary_batch(
@@ -3039,6 +3120,129 @@ fn token_metadata(tag: &HtmlTag) -> String {
     }
 
     metadata
+}
+
+#[cfg(feature = "php-extension")]
+fn html_parse_tag_processor_next_tag_query(query: Option<&Zval>) -> HtmlNextTagQuery {
+    let mut parsed = HtmlNextTagQuery {
+        match_offset: 1,
+        ..Default::default()
+    };
+
+    let Some(query) = query else {
+        return parsed;
+    };
+
+    if let Some(tag_name) = query.str() {
+        parsed.tag_name = Some(tag_name.to_string());
+        return parsed;
+    }
+
+    let Some(query) = query.array() else {
+        return parsed;
+    };
+
+    if let Some(tag_name) = html_array_string(query, "tag_name") {
+        parsed.tag_name = Some(tag_name);
+    }
+
+    if let Some(class_name) = html_array_string(query, "class_name") {
+        parsed.class_name = Some(class_name);
+    }
+
+    if let Some(match_offset) = html_array_positive_i64(query, "match_offset") {
+        parsed.match_offset = match_offset;
+    }
+
+    parsed.visit_closers = html_array_string(query, "tag_closers").as_deref() == Some("visit");
+
+    parsed
+}
+
+#[cfg(feature = "php-extension")]
+fn html_parse_processor_next_tag_query(query: Option<&Zval>) -> Option<HtmlNextTagQuery> {
+    let mut parsed = HtmlNextTagQuery {
+        match_offset: 1,
+        ..Default::default()
+    };
+
+    let Some(query) = query else {
+        return Some(parsed);
+    };
+
+    if let Some(tag_name) = query.str() {
+        parsed.breadcrumbs = Some(vec![tag_name.to_string()]);
+        return Some(parsed);
+    }
+
+    let query = query.array()?;
+
+    if let Some(tag_name) = html_array_string(query, "tag_name") {
+        parsed.tag_name = Some(tag_name);
+    }
+
+    if let Some(class_name) = html_array_string(query, "class_name") {
+        parsed.class_name = Some(class_name);
+    }
+
+    if let Some(match_offset) = html_array_positive_i64(query, "match_offset") {
+        parsed.match_offset = match_offset;
+    }
+
+    parsed.visit_closers = html_array_string(query, "tag_closers").as_deref() == Some("visit");
+    parsed.breadcrumbs = html_array_string_breadcrumbs(query, "breadcrumbs");
+
+    Some(parsed)
+}
+
+#[cfg(feature = "php-extension")]
+fn html_array_string(query: &ZendHashTable, key: &str) -> Option<String> {
+    query
+        .get(key)
+        .and_then(|value| value.str())
+        .map(str::to_string)
+}
+
+#[cfg(feature = "php-extension")]
+fn html_array_positive_i64(query: &ZendHashTable, key: &str) -> Option<i64> {
+    query
+        .get(key)
+        .and_then(|value| value.long())
+        .filter(|value| *value > 0)
+        .map(|value| value as i64)
+}
+
+#[cfg(feature = "php-extension")]
+fn html_array_string_breadcrumbs(query: &ZendHashTable, key: &str) -> Option<Vec<String>> {
+    let breadcrumbs = query.get(key)?.array()?;
+    let mut parsed = Vec::with_capacity(breadcrumbs.len());
+
+    for value in breadcrumbs.iter().map(|(_, value)| value) {
+        parsed.push(value.str()?.to_string());
+    }
+
+    Some(parsed)
+}
+
+fn html_breadcrumbs_match(current: &[String], breadcrumbs: &[String]) -> bool {
+    if breadcrumbs.is_empty() {
+        return true;
+    }
+
+    if breadcrumbs.len() > current.len() {
+        return false;
+    }
+
+    let offset = current.len() - breadcrumbs.len();
+    for (index, breadcrumb) in breadcrumbs.iter().enumerate() {
+        let crumb = breadcrumb.to_ascii_uppercase();
+        let node = &current[offset + index];
+        if crumb != "*" && node != &crumb {
+            return false;
+        }
+    }
+
+    true
 }
 
 #[cfg(feature = "php-extension")]
