@@ -19,8 +19,8 @@ npx --yes @php-wasm/compile-extension \
 docker run --rm \
 	--entrypoint bash \
 	-e PHP_WASM_VERSION="${php_version}" \
-	-v "${script_dir}:/src" \
-	-w /src \
+	-v "${repo_root}:/workspace" \
+	-w /workspace/extensions/native-apis \
 	"${image_tag}" \
 	-lc '
 		set -euo pipefail
