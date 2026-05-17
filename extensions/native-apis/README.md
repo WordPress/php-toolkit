@@ -228,7 +228,8 @@ wp-native-apis-0.1.0-php-wasm/
 ```
 
 Use the Blueprint smoke test to verify a Playground runtime that already ships
-with the native PHP.wasm extension bundle:
+with the native PHP.wasm extension bundle. This URL works after
+`extensions/native-apis/playground/blueprint.json` exists on `trunk`:
 
 ```text
 https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/WordPress/php-toolkit/trunk/extensions/native-apis/playground/blueprint.json
@@ -249,8 +250,9 @@ writes a small `native-api-smoke.php` file into Playground and navigates to it.
 The smoke page checks that the four native classes are registered, then runs one
 small HTML tag, HTML processor, XML processor, and URL-in-text operation.
 
-For a branch-local preview before this documentation lands on `trunk`, replace
-the `trunk` segment in the raw URL with the branch name:
+For a branch-local preview before this documentation lands on `trunk`, use a
+raw GitHub URL for the branch that contains the Blueprint file. For example,
+this PR branch uses:
 
 ```text
 https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/WordPress/php-toolkit/codex-native-extension-docs/extensions/native-apis/playground/blueprint.json
