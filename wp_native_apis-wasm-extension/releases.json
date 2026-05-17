@@ -1,0 +1,26 @@
+[
+  {
+    "version": "85b44445383779ecbc8ce23c0ad8f1db1e84f9ac",
+    "name": "wp_native_apis",
+    "phpVersions": [
+      "8.4"
+    ],
+    "publishedAt": "2026-05-17T23:39:07Z",
+    "manifest": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/85b44445383779ecbc8ce23c0ad8f1db1e84f9ac/manifest.json",
+    "checksums": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/85b44445383779ecbc8ce23c0ad8f1db1e84f9ac/SHA256SUMS",
+    "commit": "https://github.com/WordPress/php-toolkit/commit/85b44445383779ecbc8ce23c0ad8f1db1e84f9ac",
+    "workflowRun": "https://github.com/WordPress/php-toolkit/actions/runs/26005917092"
+  },
+  {
+    "version": "ff8361f4243eee771fec2571dd1195d44c90dbf6",
+    "name": "wp_native_apis",
+    "phpVersions": [
+      "8.4"
+    ],
+    "publishedAt": "2026-05-17T22:54:54Z",
+    "manifest": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/ff8361f4243eee771fec2571dd1195d44c90dbf6/manifest.json",
+    "checksums": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/ff8361f4243eee771fec2571dd1195d44c90dbf6/SHA256SUMS",
+    "commit": "https://github.com/WordPress/php-toolkit/commit/ff8361f4243eee771fec2571dd1195d44c90dbf6",
+    "workflowRun": ""
+  }
+]
