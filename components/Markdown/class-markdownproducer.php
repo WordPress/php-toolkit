@@ -158,7 +158,6 @@ class MarkdownProducer implements DataFormatProducer {
 					} elseif ( ( 'TH' === $tag || 'TD' === $tag ) && ! $is_closer ) {
 						$cell_content  = $processor->get_inner_html();
 						$current_row[] = $this->html_to_markdown( $cell_content );
-						$processor->skip_to_closer();
 					}
 				}
 
