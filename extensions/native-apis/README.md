@@ -205,10 +205,6 @@ Browser Playground runs PHP as WebAssembly, so it cannot load the Linux shared
 object from `target/release/`. Publish a PHP.wasm extension bundle before
 claiming Playground support.
 
-The Playground Query API supports `php-extension=<manifest-url>` for loading a
-custom PHP.wasm extension manifest before PHP starts. The manifest and side
-module must be served over HTTPS with CORS headers.
-
 The current native extension uses `ext-php-rs`, so the PHP.wasm build needs a
 Rust-to-PHP side-module recipe rather than the host `cdylib` output. Follow the
 Playground extension docs when adding that packaging:
@@ -217,8 +213,10 @@ Playground extension docs when adding that packaging:
   https://wordpress.github.io/wordpress-playground/developers/apis/javascript-api/build-php-extensions/
 - Rust and dependency notes:
   https://wordpress.github.io/wordpress-playground/developers/apis/javascript-api/php-extension-dependencies/
-- Query API `php-extension` parameter:
-  https://wordpress.github.io/wordpress-playground/developers/apis/query-api/
+- Blueprint data format:
+  https://wordpress.github.io/wordpress-playground/blueprints/data-format/
+- Blueprint steps:
+  https://wordpress.github.io/wordpress-playground/blueprints/steps/
 
 When the PHP.wasm bundle is published, attach the full output directory to a
 GitHub release:
@@ -229,25 +227,39 @@ wp-native-apis-0.1.0-php-wasm/
 `-- wp_native_apis-php8.4-jspi.so
 ```
 
-Use this Playground smoke-test link after replacing the manifest URL with the
-released `manifest.json` URL:
+Use the Blueprint smoke test to verify a Playground runtime that already ships
+with the native PHP.wasm extension bundle:
 
 ```text
-https://playground.wordpress.net/php-playground.html?php-extension=https%3A%2F%2Fgithub.com%2FWordPress%2Fphp-toolkit%2Freleases%2Fdownload%2Fnative-apis-v0.1.0%2Fmanifest.json#eyJjb2RlIjoiPD9waHBcbmZvcmVhY2ggKFxuICAgIGFycmF5KFxuICAgICAgICAnV1BfSFRNTF9OYXRpdmVfVGFnX1Byb2Nlc3NvcicsXG4gICAgICAgICdXUF9IVE1MX05hdGl2ZV9Qcm9jZXNzb3InLFxuICAgICAgICAnV29yZFByZXNzXFxcXFhNTFxcXFxOYXRpdmVYTUxQcm9jZXNzb3InLFxuICAgICAgICAnV29yZFByZXNzXFxcXERhdGFMaWJlcmF0aW9uXFxcXFVSTFxcXFxOYXRpdmVVUkxJblRleHRQcm9jZXNzb3InLFxuICAgICkgYXMgJGNsYXNzXG4pIHtcbiAgICBlY2hvICRjbGFzcyAuICc6ICcgLiAoIGNsYXNzX2V4aXN0cyggJGNsYXNzLCBmYWxzZSApID8gJ2xvYWRlZCcgOiAnbWlzc2luZycgKSAuIFBIUF9FT0w7XG59IiwicGhwIjoiOC40In0=
+https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/WordPress/php-toolkit/trunk/extensions/native-apis/playground/blueprint.json
 ```
 
 Expected output:
 
 ```text
-WP_HTML_Native_Tag_Processor: loaded
-WP_HTML_Native_Processor: loaded
-WordPress\XML\NativeXMLProcessor: loaded
-WordPress\DataLiberation\URL\NativeURLInTextProcessor: loaded
+WP_HTML_Native_Tag_Processor: ok
+WP_HTML_Native_Processor: ok
+WordPress\XML\NativeXMLProcessor: ok
+WordPress\DataLiberation\URL\NativeURLInTextProcessor: ok
+Native API Playground smoke test passed.
 ```
 
-If the link reports `missing`, the PHP.wasm manifest did not load, the artifact
-does not match the selected PHP version, or the extension was built for the host
-PHP ABI instead of the JSPI PHP.wasm ABI.
+The Blueprint lives at `extensions/native-apis/playground/blueprint.json`. It
+writes a small `native-api-smoke.php` file into Playground and navigates to it.
+The smoke page checks that the four native classes are registered, then runs one
+small HTML tag, HTML processor, XML processor, and URL-in-text operation.
+
+For a branch-local preview before this documentation lands on `trunk`, replace
+the `trunk` segment in the raw URL with the branch name:
+
+```text
+https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/WordPress/php-toolkit/codex-native-extension-docs/extensions/native-apis/playground/blueprint.json
+```
+
+If the smoke page reports missing classes, the selected Playground runtime does
+not include the `wp_native_apis` PHP.wasm extension, the bundle does not match
+the selected PHP version, or the extension was built for the host PHP ABI
+instead of the JSPI PHP.wasm ABI.
 
 ## Benchmarking
 
