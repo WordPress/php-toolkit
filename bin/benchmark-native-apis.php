@@ -2343,7 +2343,7 @@ function wp_toolkit_native_api_benchmark_url_in_text_processor() {
 function wp_toolkit_native_api_benchmark_native_url_in_text_processor() {
 	$text            = wp_toolkit_native_api_benchmark_url_in_text_document();
 	$native_class    = 'WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor';
-	$processor       = new $native_class( $text );
+	$processor       = new $native_class( $text, 'https://example.com' );
 	$count           = 0;
 	$total_url_bytes = 0;
 
