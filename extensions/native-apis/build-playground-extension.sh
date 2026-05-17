@@ -36,8 +36,11 @@ docker run --rm \
 
 		export PHP_CONFIG=/usr/local/bin/php-config
 		if [ -z "${LIBCLANG_PATH:-}" ]; then
-			LIBCLANG_PATH="$(find /usr/lib -name "libclang.so*" -type f -print -quit)"
-			LIBCLANG_PATH="$(dirname "${LIBCLANG_PATH}")"
+			LIBCLANG_PATH="$(find -L /usr/lib /usr/local/lib -name "libclang.so*" -print -quit)"
+			if [ -z "${LIBCLANG_PATH}" ]; then
+				echo "Could not find libclang.so after installing libclang-dev." >&2
+				exit 1
+			fi
 			export LIBCLANG_PATH
 		fi
 		export BINDGEN_EXTRA_CLANG_ARGS="--target=wasm32-unknown-emscripten --sysroot=${EMSDK}/upstream/emscripten/cache/sysroot -DZEND_ENABLE_ZVAL_LONG64 -D__x86_64__ ${BINDGEN_EXTRA_CLANG_ARGS:-}"
