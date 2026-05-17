@@ -117,8 +117,8 @@ echo "PASS: Native API extension classes are available.\\n";
 					{ PHP },
 					{ loadWebRuntime },
 				] = await Promise.all( [
-					import( 'https://cdn.jsdelivr.net/npm/@php-wasm/universal@3.1.33/+esm' ),
-					import( 'https://cdn.jsdelivr.net/npm/@php-wasm/web@3.1.33/+esm' ),
+					import( 'https://esm.sh/@php-wasm/universal@3.1.33' ),
+					import( 'https://esm.sh/@php-wasm/web@3.1.33' ),
 				] );
 
 				write( `Loading wp_native_apis from ${ manifestUrl }...` );
