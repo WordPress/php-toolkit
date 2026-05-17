@@ -25,7 +25,8 @@ if ! command -v clang >/dev/null 2>&1 && [ -z "${LIBCLANG_PATH:-}" ]; then
 	exit 1
 fi
 
-export PHP_CONFIG="${php_config}"
+PHP_CONFIG="$(command -v "${php_config}")"
+export PHP_CONFIG
 
 cargo build --release --features php-extension
 
