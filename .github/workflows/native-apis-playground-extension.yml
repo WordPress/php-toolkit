@@ -185,6 +185,7 @@ jobs:
           PAGES_DIR="$pages_dir" PUBLISHED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" node <<'NODE'
           const childProcess = require('node:child_process');
           const fs = require('node:fs');
+          const os = require('node:os');
           const path = require('node:path');
 
           const pagesDir = process.env.PAGES_DIR;
@@ -226,6 +227,87 @@ jobs:
           }
 
           const previousReleases = readJson(releasesPath, []);
+          const sanitizedRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'wp-native-apis-pages-'));
+
+          function isRegularFile(filePath) {
+            try {
+              return fs.lstatSync(filePath).isFile();
+            } catch (error) {
+              return false;
+            }
+          }
+
+          function isReleaseDirectoryName(name) {
+            return name === 'latest' || /^[0-9a-f]{40}$/.test(name);
+          }
+
+          function isArtifactSourcePath(sourcePath) {
+            return typeof sourcePath === 'string' && /^wp_native_apis-php[0-9.]+-jspi\.so$/.test(sourcePath);
+          }
+
+          /*
+           * Treat the gh-pages branch as an append-only release history, not
+           * as a trusted source tree. Only expected release directories and
+           * files are copied into the branch update and Pages artifact.
+           */
+          for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+            if (!entry.isDirectory() || !isReleaseDirectoryName(entry.name)) {
+              continue;
+            }
+
+            const releaseDirectory = path.join(root, entry.name);
+            const manifestPath = path.join(releaseDirectory, 'manifest.json');
+            const checksumPath = path.join(releaseDirectory, 'SHA256SUMS');
+            if (!isRegularFile(manifestPath) || !isRegularFile(checksumPath)) {
+              continue;
+            }
+
+            const manifest = readJson(manifestPath, null);
+            if (!manifest || manifest.name !== 'wp_native_apis' || manifest.mode !== 'php-extension') {
+              continue;
+            }
+
+            const artifacts = Array.isArray(manifest.artifacts)
+              ? manifest.artifacts.filter((artifact) => {
+                  if (
+                    !artifact ||
+                    typeof artifact.phpVersion !== 'string' ||
+                    !/^[0-9]+\.[0-9]+$/.test(artifact.phpVersion) ||
+                    !isArtifactSourcePath(artifact.sourcePath)
+                  ) {
+                    return false;
+                  }
+
+                  return isRegularFile(path.join(releaseDirectory, artifact.sourcePath));
+                })
+              : [];
+
+            if (artifacts.length === 0) {
+              continue;
+            }
+
+            const sanitizedDirectory = path.join(sanitizedRoot, entry.name);
+            fs.mkdirSync(sanitizedDirectory, { recursive: true });
+            fs.writeFileSync(
+              path.join(sanitizedDirectory, 'manifest.json'),
+              `${JSON.stringify({ ...manifest, artifacts }, null, 2)}\n`
+            );
+            fs.copyFileSync(checksumPath, path.join(sanitizedDirectory, 'SHA256SUMS'));
+
+            for (const artifact of artifacts) {
+              fs.copyFileSync(
+                path.join(releaseDirectory, artifact.sourcePath),
+                path.join(sanitizedDirectory, artifact.sourcePath)
+              );
+            }
+          }
+
+          fs.rmSync(root, { recursive: true, force: true });
+          fs.mkdirSync(root, { recursive: true });
+          for (const entry of fs.readdirSync(sanitizedRoot, { withFileTypes: true })) {
+            fs.cpSync(path.join(sanitizedRoot, entry.name), path.join(root, entry.name), { recursive: true });
+          }
+
           const previousByVersion = new Map(
             Array.isArray(previousReleases)
               ? previousReleases.map((release) => [release.version, release])
