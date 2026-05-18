@@ -25,8 +25,8 @@
     },
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/blockparser": "^0.8",
-        "wp-php-toolkit/html": "^0.8"
+        "wp-php-toolkit/blockparser": "^0.7.9",
+        "wp-php-toolkit/html": "^0.7.9"
     },
     "autoload": {
         "classmap": [
