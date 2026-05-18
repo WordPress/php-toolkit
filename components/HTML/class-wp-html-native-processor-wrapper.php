@@ -10,5 +10,7 @@
 if ( class_exists( 'WP_HTML_Native_Processor', false ) ) {
 	class WP_HTML_Native_Processor_Wrapper extends WP_HTML_Native_Processor {}
 } else {
-	class WP_HTML_Native_Processor_Wrapper {}
+	require_once __DIR__ . '/PHP/class-wp-html-php-processor.php';
+
+	class WP_HTML_Native_Processor_Wrapper extends WP_HTML_PHP_Processor {}
 }

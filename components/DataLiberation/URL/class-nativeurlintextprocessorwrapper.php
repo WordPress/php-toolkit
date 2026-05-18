@@ -6,5 +6,7 @@ namespace WordPress\DataLiberation\URL;
 if ( class_exists( 'WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor', false ) ) {
 	class NativeURLInTextProcessorWrapper extends NativeURLInTextProcessor {}
 } else {
-	class NativeURLInTextProcessorWrapper {}
+	require_once __DIR__ . '/PHP/class-phpurlintextprocessor.php';
+
+	class NativeURLInTextProcessorWrapper extends PHPURLInTextProcessor {}
 }

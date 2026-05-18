@@ -6,5 +6,7 @@ namespace WordPress\XML;
 if ( class_exists( 'WordPress\\XML\\NativeXMLProcessor', false ) ) {
 	class XMLNativeCursorProcessor extends NativeXMLProcessor {}
 } else {
-	class XMLNativeCursorProcessor {}
+	require_once __DIR__ . '/PHP/class-phpxmlprocessor.php';
+
+	class XMLNativeCursorProcessor extends PHPXMLProcessor {}
 }
