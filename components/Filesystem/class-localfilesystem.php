@@ -153,44 +153,11 @@ class LocalFilesystem implements Filesystem {
 	}
 
 	protected function rmdir_single( $path, $options = array() ) {
-		$attempts = '\\' === DIRECTORY_SEPARATOR ? 10 : 1;
-
-		for ( $attempt = 1; $attempt <= $attempts; $attempt++ ) {
-			if ( false !== @rmdir( $path ) ) {
-				return;
-			}
-
-			clearstatcache( true, $path );
-
-			if ( $attempt === $attempts || ! is_dir( $path ) || ! $this->is_empty_dir( $path ) ) {
-				break;
-			}
-
-			// Windows may briefly retain a directory handle after a subprocess exits.
-			usleep( 100000 );
+		if ( false === @rmdir( $path ) ) {
+			throw new FilesystemException(
+				sprintf( 'Failed to remove directory: %s', $path )
+			);
 		}
-
-		throw new FilesystemException(
-			sprintf( 'Failed to remove directory: %s', $path )
-		);
-	}
-
-	private function is_empty_dir( $path ) {
-		$handle = @opendir( $path );
-
-		if ( false === $handle ) {
-			return false;
-		}
-
-		while ( false !== ( $entry = readdir( $handle ) ) ) {
-			if ( '.' !== $entry && '..' !== $entry ) {
-				closedir( $handle );
-				return false;
-			}
-		}
-
-		closedir( $handle );
-		return true;
 	}
 
 	public function put_contents( $path, $data, $options = array() ) {
