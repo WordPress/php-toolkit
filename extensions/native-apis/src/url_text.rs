@@ -232,6 +232,48 @@ pub fn find_next_url_text_candidate(text: &str, offset: usize) -> Option<UrlText
     None
 }
 
+pub fn rewrite_text_url_bases(text: &str, base_url: Option<&str>, compact_mapping: &str) -> String {
+    let mappings = parse_rewrite_mappings(compact_mapping);
+    if mappings.is_empty() {
+        return text.to_string();
+    }
+
+    let base_protocol = base_url.and_then(parse_url_scheme);
+    let mut output = String::with_capacity(text.len());
+    let mut copied = 0;
+    let mut offset = 0;
+    let mut changed = false;
+
+    while let Some(mut candidate) = find_next_url_text_candidate(text, offset) {
+        offset = candidate.starts_at + candidate.length;
+        if !validate_url_text_candidate(&mut candidate, base_protocol.as_deref()) {
+            continue;
+        }
+
+        let Some(replacement) =
+            replacement_for_candidate(&candidate, base_protocol.as_deref(), &mappings)
+        else {
+            continue;
+        };
+
+        if replacement == candidate.raw_url {
+            continue;
+        }
+
+        output.push_str(&text[copied..candidate.starts_at]);
+        output.push_str(&replacement);
+        copied = candidate.starts_at + candidate.length;
+        changed = true;
+    }
+
+    if !changed {
+        return text.to_string();
+    }
+
+    output.push_str(&text[copied..]);
+    output
+}
+
 fn parse_url_text_candidate_at(text: &str, start: usize) -> Option<UrlTextCandidate> {
     let bytes = text.as_bytes();
     let mut had_protocol = false;
@@ -346,6 +388,157 @@ fn validate_url_text_candidate(
 
     candidate.preprocessed_url = preprocessed_url;
     true
+}
+
+#[derive(Clone, Debug)]
+struct RewriteMapping {
+    from: ParsedHttpUrl,
+    to: String,
+}
+
+#[derive(Clone, Debug)]
+struct ParsedHttpUrl {
+    original: String,
+    scheme: String,
+    authority: String,
+    path_start: usize,
+    path_end: usize,
+    path: String,
+}
+
+fn parse_rewrite_mappings(compact_mapping: &str) -> Vec<RewriteMapping> {
+    compact_mapping
+        .split('\x1e')
+        .filter_map(|row| {
+            let (from, to) = row.split_once('\x1f')?;
+            if from.is_empty() || to.is_empty() {
+                return None;
+            }
+
+            Some(RewriteMapping {
+                from: parse_absolute_http_url(from, None)?,
+                to: to.to_string(),
+            })
+        })
+        .collect()
+}
+
+fn replacement_for_candidate(
+    candidate: &UrlTextCandidate,
+    base_protocol: Option<&str>,
+    mappings: &[RewriteMapping],
+) -> Option<String> {
+    let parsed_candidate = parse_absolute_http_url(&candidate.preprocessed_url, base_protocol)?;
+    for mapping in mappings {
+        let Some(suffix) = child_url_suffix(&parsed_candidate, &mapping.from) else {
+            continue;
+        };
+
+        let replacement = join_base_and_suffix(&mapping.to, suffix);
+        if candidate.did_prepend_protocol {
+            if let Some(stripped) = strip_scheme_authority_prefix(&replacement) {
+                return Some(stripped.to_string());
+            }
+        }
+
+        if candidate.raw_url.starts_with("//") {
+            if let Some(colon) = replacement.find(':') {
+                return Some(replacement[colon + 1..].to_string());
+            }
+        }
+
+        return Some(replacement);
+    }
+
+    None
+}
+
+fn parse_absolute_http_url(url: &str, base_protocol: Option<&str>) -> Option<ParsedHttpUrl> {
+    let bytes = url.as_bytes();
+    let (scheme, authority_start) = if ascii_starts_with(bytes, 0, b"http://") {
+        ("http", 7)
+    } else if ascii_starts_with(bytes, 0, b"https://") {
+        ("https", 8)
+    } else if bytes.starts_with(b"//") {
+        let protocol = base_protocol?;
+        if !is_http_or_https_scheme(protocol) {
+            return None;
+        }
+        (protocol, 2)
+    } else {
+        return None;
+    };
+
+    let authority_end = bytes[authority_start..]
+        .iter()
+        .position(|byte| matches!(*byte, b'/' | b'?' | b'#'))
+        .map(|offset| authority_start + offset)
+        .unwrap_or(bytes.len());
+    if authority_end <= authority_start {
+        return None;
+    }
+
+    let path_start = authority_end;
+    let path_end = bytes[path_start..]
+        .iter()
+        .position(|byte| matches!(*byte, b'?' | b'#'))
+        .map(|offset| path_start + offset)
+        .unwrap_or(bytes.len());
+    let path = if path_end > path_start && bytes[path_start] == b'/' {
+        url[path_start..path_end].to_string()
+    } else {
+        "/".to_string()
+    };
+
+    Some(ParsedHttpUrl {
+        original: url.to_string(),
+        scheme: scheme.to_ascii_lowercase(),
+        authority: url[authority_start..authority_end].to_ascii_lowercase(),
+        path_start,
+        path_end,
+        path,
+    })
+}
+
+fn child_url_suffix<'a>(child: &'a ParsedHttpUrl, parent: &ParsedHttpUrl) -> Option<&'a str> {
+    if child.scheme != parent.scheme || child.authority != parent.authority {
+        return None;
+    }
+
+    let parent_path = parent.path.trim_end_matches('/');
+    if parent_path.is_empty() {
+        return Some(&child.original[child.path_start..]);
+    }
+
+    let child_path = child.path.trim_end_matches('/');
+    if child_path == parent_path {
+        return Some(&child.original[child.path_end..]);
+    }
+
+    if child.path.starts_with(parent_path)
+        && child.path.as_bytes().get(parent_path.len()) == Some(&b'/')
+    {
+        return Some(&child.original[child.path_start + parent_path.len()..]);
+    }
+
+    None
+}
+
+fn join_base_and_suffix(base: &str, suffix: &str) -> String {
+    if suffix.is_empty() {
+        return base.to_string();
+    }
+
+    if suffix.starts_with('/') || suffix.starts_with('?') || suffix.starts_with('#') {
+        format!("{}{}", base.trim_end_matches('/'), suffix)
+    } else {
+        format!("{base}{suffix}")
+    }
+}
+
+fn strip_scheme_authority_prefix(url: &str) -> Option<&str> {
+    let scheme_end = url.find("://")?;
+    Some(&url[scheme_end + 3..])
 }
 
 #[cfg(feature = "php-extension")]
@@ -578,7 +771,10 @@ fn ascii_starts_with(bytes: &[u8], offset: usize, needle: &[u8]) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{find_next_url_text_candidate, validate_url_text_candidate, UrlTextCandidate};
+    use super::{
+        find_next_url_text_candidate, rewrite_text_url_bases, validate_url_text_candidate,
+        UrlTextCandidate,
+    };
 
     #[test]
     fn finds_http_https_and_bare_domain_candidates() {
@@ -650,5 +846,57 @@ mod tests {
     fn rejects_bare_domains_without_base_protocol() {
         let mut candidate = find_next_url_text_candidate("Visit example.com", 0).expect("URL");
         assert!(!validate_url_text_candidate(&mut candidate, None));
+    }
+
+    #[test]
+    fn rewrites_absolute_url_bases_in_one_pass() {
+        let mapping = "http://old.example\x1fhttps://new.example/base";
+        assert_eq!(
+            "Visit https://new.example/base/posts/7?x=1.",
+            rewrite_text_url_bases(
+                "Visit http://old.example/posts/7?x=1.",
+                Some("http://old.example"),
+                mapping,
+            )
+        );
+    }
+
+    #[test]
+    fn rewrites_bare_domains_without_adding_protocol() {
+        let mapping = "https://example.com\x1fhttps://new.example";
+        assert_eq!(
+            "Visit new.example/docs.",
+            rewrite_text_url_bases(
+                "Visit example.com/docs.",
+                Some("https://example.com"),
+                mapping,
+            )
+        );
+    }
+
+    #[test]
+    fn preserves_protocol_relative_urls() {
+        let mapping = "https://example.com\x1fhttps://new.example";
+        assert_eq!(
+            "Visit //new.example/docs.",
+            rewrite_text_url_bases(
+                "Visit //example.com/docs.",
+                Some("https://example.com"),
+                mapping,
+            )
+        );
+    }
+
+    #[test]
+    fn leaves_sibling_paths_unchanged() {
+        let mapping = "https://example.com/base\x1fhttps://new.example/base";
+        assert_eq!(
+            "Visit https://example.com/baseball.",
+            rewrite_text_url_bases(
+                "Visit https://example.com/baseball.",
+                Some("https://example.com"),
+                mapping,
+            )
+        );
     }
 }

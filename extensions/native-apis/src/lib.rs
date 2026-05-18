@@ -18,7 +18,7 @@ extern "C" fn php_module_info(_module: *mut ModuleEntry) {
     info_table_row!("html", "registered");
     info_table_row!(
         "url_text",
-        "registered under WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor"
+        "registered under WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor; batch rewrite function registered"
     );
     info_table_row!("xml", "registered");
     info_table_end!();
@@ -31,6 +31,16 @@ pub fn wp_native_apis_extension_version() -> &'static str {
 }
 
 #[cfg(feature = "php-extension")]
+#[php_function]
+pub fn wp_native_apis_rewrite_text_url_bases(
+    text: String,
+    base_url: Option<String>,
+    compact_mapping: String,
+) -> String {
+    url_text::rewrite_text_url_bases(&text, base_url.as_deref(), &compact_mapping)
+}
+
+#[cfg(feature = "php-extension")]
 #[php_module]
 pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
     module
@@ -39,5 +49,6 @@ pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
         .class::<url_text::NativeUrlInTextProcessor>()
         .class::<xml::NativeXmlProcessor>()
         .function(wrap_function!(wp_native_apis_extension_version))
+        .function(wrap_function!(wp_native_apis_rewrite_text_url_bases))
         .info_function(php_module_info)
 }

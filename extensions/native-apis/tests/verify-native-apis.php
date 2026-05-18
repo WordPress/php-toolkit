@@ -38,6 +38,20 @@ if ( $missing ) {
 require_once dirname( __DIR__, 3 ) . '/vendor/autoload.php';
 class_exists( 'WP_HTML_Doctype_Info' );
 
+assert_true(
+	function_exists( 'wp_native_apis_rewrite_text_url_bases' ),
+	'Expected native batch text URL rewrite function to be registered.'
+);
+assert_same(
+	'Visit https://new.example/posts/7.',
+	wp_native_apis_rewrite_text_url_bases(
+		'Visit http://old.example/posts/7.',
+		'http://old.example',
+		"http://old.example\x1fhttps://new.example"
+	),
+	'Expected native batch text URL rewrite function to replace a URL base.'
+);
+
 $tag_processor = new WP_HTML_Native_Tag_Processor( '<main data-id="7"><a href="/x?one=1&amp;two=2" title="A&#x2F;B&#47;C" data-label="A&nbsp;B&copy;&reg;&hellip;&mdash;&notin;">Link</a></main>' );
 assert_false( $tag_processor->paused_at_incomplete_token(), 'Expected native HTML tag processor not to start paused at an incomplete token.' );
 assert_true( $tag_processor->next_tag(), 'Expected first HTML tag.' );
