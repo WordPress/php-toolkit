@@ -111,6 +111,40 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 		}
 	}
 
+	/**
+	 * Rewrites all supported URLs in the current text node through the native
+	 * batch URL base rewriter.
+	 *
+	 * This only handles ASCII text nodes. Non-ASCII text still falls through to
+	 * the structured PHP path to preserve the broader URL parsing behavior.
+	 */
+	public function rewrite_current_text_node_url_bases( $compact_mapping ) {
+		if (
+			'#text' !== $this->get_token_type() ||
+			! function_exists( 'wp_native_apis_rewrite_text_url_bases' ) ||
+			( defined( 'WP_NATIVE_APIS_DISABLE_DEFAULTS' ) && WP_NATIVE_APIS_DISABLE_DEFAULTS )
+		) {
+			return false;
+		}
+
+		$text = $this->get_modifiable_text();
+		if ( preg_match( '/[^\x00-\x7F]/', $text ) ) {
+			return false;
+		}
+
+		$updated_text = wp_native_apis_rewrite_text_url_bases(
+			$text,
+			$this->base_url_string,
+			$compact_mapping
+		);
+
+		if ( $updated_text === $text ) {
+			return false;
+		}
+
+		return $this->set_modifiable_text( $updated_text );
+	}
+
 	private function next_url_in_text_node() {
 		if ( '#text' !== $this->get_token_type() ) {
 			return false;
