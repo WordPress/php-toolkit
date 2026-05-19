@@ -5,6 +5,8 @@ namespace WordPress\DataLiberation\URL;
 
 use WP_HTML_Text_Replacement;
 
+require_once __DIR__ . '/class-urlrewritecache.php';
+
 /**
  * Public URLInTextProcessor adapter backed by the native candidate scanner.
  *
@@ -39,9 +41,7 @@ class NativeURLInTextProcessorWrapper {
 	private $fallback_processor;
 	private $lexical_updates = array();
 
-	private static $candidate_cache      = array();
-	private static $candidate_cache_ring = array();
-	private static $candidate_cache_next = 0;
+	private static $candidate_cache;
 
 	public function __construct( $text, $base_url = null ) {
 		$this->text          = $text;
@@ -86,7 +86,7 @@ class NativeURLInTextProcessorWrapper {
 				: WPURL::has_http_https_protocol( $this->matched_url );
 
 			$cache_key = $this->base_url . "\0" . ( $had_protocol ? '1' : '0' ) . "\0" . $this->matched_url;
-			$cached    = self::candidate_cache_get( $cache_key );
+			$cached    = self::candidate_cache()->get( $cache_key );
 			if ( null !== $cached ) {
 				if ( false === $cached ) {
 					continue;
@@ -99,11 +99,11 @@ class NativeURLInTextProcessorWrapper {
 
 			$parsed_url = $this->parse_and_validate_candidate( $had_protocol );
 			if ( false === $parsed_url ) {
-				self::candidate_cache_set( $cache_key, false );
+				self::candidate_cache()->set( $cache_key, false );
 				continue;
 			}
 
-			self::candidate_cache_set(
+			self::candidate_cache()->set(
 				$cache_key,
 				array(
 					'parsed_url'           => $parsed_url,
@@ -231,25 +231,11 @@ class NativeURLInTextProcessorWrapper {
 		$this->lexical_updates = array();
 	}
 
-	private static function candidate_cache_get( $key ) {
-		return array_key_exists( $key, self::$candidate_cache )
-			? self::$candidate_cache[ $key ]
-			: null;
-	}
-
-	private static function candidate_cache_set( $key, $value ) {
-		if ( ! array_key_exists( $key, self::$candidate_cache ) ) {
-			if ( count( self::$candidate_cache_ring ) < self::CANDIDATE_CACHE_MAX ) {
-				self::$candidate_cache_ring[] = $key;
-			} else {
-				$evicted_key = self::$candidate_cache_ring[ self::$candidate_cache_next ];
-				unset( self::$candidate_cache[ $evicted_key ] );
-				self::$candidate_cache_ring[ self::$candidate_cache_next ] = $key;
-			}
-
-			self::$candidate_cache_next = ( self::$candidate_cache_next + 1 ) % self::CANDIDATE_CACHE_MAX;
+	private static function candidate_cache() {
+		if ( null === self::$candidate_cache ) {
+			self::$candidate_cache = new URLRewriteCache( self::CANDIDATE_CACHE_MAX );
 		}
 
-		self::$candidate_cache[ $key ] = $value;
+		return self::$candidate_cache;
 	}
 }

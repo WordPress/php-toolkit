@@ -5,6 +5,7 @@ namespace WordPress\DataLiberation\URL;
 use Rowbot\URL\URL;
 use WordPress\DataLiberation\BlockMarkup\BlockMarkupUrlProcessor;
 
+require_once __DIR__ . '/class-urlrewritecache.php';
 
 /**
  * Migrate URLs in post content. See WPRewriteUrlsTests for
@@ -37,11 +38,26 @@ use WordPress\DataLiberation\BlockMarkup\BlockMarkupUrlProcessor;
  * to how the tag processor avoids changing parts of the tag it doesn't need to change.
  */
 function wp_rewrite_urls( $options ) {
-	static $rewrite_cache      = array();
-	static $rewrite_cache_ring = array();
-	static $rewrite_cache_next = 0;
+	static $rewrite_cache = null;
 
-	$rewrite_cache_max = 4096;
+	/*
+	 * The native extension does not expose this full public wrapper today. If
+	 * it does in the future, prefer it over the PHP implementation below so
+	 * scanning, parsing, rewrite decisions, and any native-side caching can be
+	 * handled in one place.
+	 */
+	$native_rewrite_urls = __NAMESPACE__ . '\\native_wp_rewrite_urls';
+	if (
+		function_exists( $native_rewrite_urls ) &&
+		( ! defined( 'WP_NATIVE_APIS_DISABLE_DEFAULTS' ) || ! WP_NATIVE_APIS_DISABLE_DEFAULTS )
+	) {
+		return $native_rewrite_urls( $options );
+	}
+
+	if ( null === $rewrite_cache ) {
+		$rewrite_cache = new URLRewriteCache();
+	}
+
 	if ( empty( $options['base_url'] ) ) {
 		// Use first from-url as base_url if not specified.
 		$from_urls           = array_keys( $options['url-mapping'] );
@@ -70,8 +86,8 @@ function wp_rewrite_urls( $options ) {
 		$raw_url    = $p->get_raw_url();
 		$cache_key  = $mapping_cache_key . "\0" . $token_type . "\0" . $raw_url;
 
-		if ( array_key_exists( $cache_key, $rewrite_cache ) ) {
-			$cached = $rewrite_cache[ $cache_key ];
+		$cached = $rewrite_cache->get( $cache_key );
+		if ( null !== $cached ) {
 			if ( false !== $cached ) {
 				$p->set_url( $cached['raw_url'], $cached['parsed_url'] );
 			}
@@ -107,18 +123,7 @@ function wp_rewrite_urls( $options ) {
 			$p->set_url( $cache_value['raw_url'], $cache_value['parsed_url'] );
 		}
 
-		if ( ! array_key_exists( $cache_key, $rewrite_cache ) ) {
-			if ( count( $rewrite_cache_ring ) < $rewrite_cache_max ) {
-				$rewrite_cache_ring[] = $cache_key;
-			} else {
-				$evicted_key = $rewrite_cache_ring[ $rewrite_cache_next ];
-				unset( $rewrite_cache[ $evicted_key ] );
-				$rewrite_cache_ring[ $rewrite_cache_next ] = $cache_key;
-			}
-
-			$rewrite_cache_next = ( $rewrite_cache_next + 1 ) % $rewrite_cache_max;
-		}
-		$rewrite_cache[ $cache_key ] = $cache_value;
+		$rewrite_cache->set( $cache_key, $cache_value );
 	}
 
 	return $p->get_updated_html();
