@@ -49,7 +49,7 @@ impl NativeUrlInTextProcessor {
             bytes_already_parsed: 0,
             current: None,
             replacements: Vec::new(),
-            validate_urls: true,
+            validate_urls: false,
             base_url,
             base_protocol,
         }
@@ -152,21 +152,30 @@ impl NativeUrlInTextProcessor {
             return false;
         };
 
+        let replacement_text = if candidate.did_prepend_protocol {
+            new_url
+                .find("://")
+                .map(|scheme_end| new_url[scheme_end + 3..].to_string())
+                .unwrap_or(new_url)
+        } else {
+            new_url
+        };
+
         if let Some(replacement) = self
             .replacements
             .iter_mut()
             .find(|replacement| replacement.start == candidate.starts_at)
         {
             replacement.length = candidate.length;
-            replacement.text = new_url.clone();
+            replacement.text = replacement_text.clone();
         } else {
             self.replacements.push(UrlTextReplacement {
                 start: candidate.starts_at,
                 length: candidate.length,
-                text: new_url.clone(),
+                text: replacement_text.clone(),
             });
         }
-        candidate.raw_url = new_url;
+        candidate.raw_url = replacement_text;
         true
     }
 
@@ -217,6 +226,11 @@ pub fn find_next_url_text_candidate(text: &str, offset: usize) -> Option<UrlText
     let mut cursor = offset.min(bytes.len());
 
     while cursor < bytes.len() {
+        if !text.is_char_boundary(cursor) {
+            cursor += 1;
+            continue;
+        }
+
         if !is_url_left_boundary(bytes, cursor) {
             cursor += 1;
             continue;
@@ -719,12 +733,14 @@ fn candidate_host_has_url_shape(host: &str) -> bool {
         return false;
     };
     let tld = &host[last_dot + 1..];
-    tld.len() >= 2
-        && tld.len() <= 63
-        && tld
+    if tld.len() < 2 || tld.len() > 63 || !host.split('.').all(is_valid_hostname_label) {
+        return false;
+    }
+
+    tld.bytes().any(|byte| byte >= 0x80)
+        || tld
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
-        && host.split('.').all(is_valid_hostname_label)
 }
 
 fn is_known_public_domain(tld: &str) -> bool {
@@ -750,9 +766,9 @@ fn is_valid_hostname_label(label: &str) -> bool {
         && bytes.len() <= 63
         && bytes[0] != b'-'
         && bytes[bytes.len() - 1] != b'-'
-        && bytes
-            .iter()
-            .all(|byte| byte.is_ascii_alphanumeric() || *byte == b'-' || *byte == b'%')
+        && bytes.iter().all(|byte| {
+            byte.is_ascii_alphanumeric() || *byte == b'-' || *byte == b'%' || *byte >= 0x80
+        })
 }
 
 fn is_hostish_byte(byte: u8) -> bool {
@@ -762,6 +778,7 @@ fn is_hostish_byte(byte: u8) -> bool {
         || byte == b'%'
         || byte == b'['
         || byte == b']'
+        || byte >= 0x80
 }
 
 fn ascii_starts_with(bytes: &[u8], offset: usize, needle: &[u8]) -> bool {
@@ -813,6 +830,17 @@ mod tests {
         let text = "Visit http://xn--fsqu00a.xn--0zwm56d";
         let candidate = find_next_url_text_candidate(text, 0).expect("URL");
         assert_eq!("http://xn--fsqu00a.xn--0zwm56d", candidate.raw_url);
+    }
+
+    #[test]
+    fn accepts_unicode_hosts() {
+        let text = "Visit http://例子.测试 and 例子.com/docs";
+        let first = find_next_url_text_candidate(text, 0).expect("first URL");
+        assert_eq!("http://例子.测试", first.raw_url);
+
+        let second =
+            find_next_url_text_candidate(text, first.starts_at + first.length).expect("second URL");
+        assert_eq!("例子.com/docs", second.raw_url);
     }
 
     #[test]
