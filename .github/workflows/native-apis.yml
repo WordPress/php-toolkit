@@ -50,3 +50,8 @@ jobs:
 
       - name: Verify native extension
         run: php -d extension=extensions/native-apis/target/release/libwp_native_apis.so extensions/native-apis/tests/verify-native-apis.php
+
+      - name: Run URL rewriting tests with native extension
+        run: |
+          php -d extension=extensions/native-apis/target/release/libwp_native_apis.so -r 'require "vendor/autoload.php"; if ( ! is_subclass_of( "WordPress\\DataLiberation\\URL\\URLInTextProcessor", "WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor" ) ) { fwrite( STDERR, "URLInTextProcessor is not using the native implementation.\n" ); exit( 1 ); }'
+          php -d extension=extensions/native-apis/target/release/libwp_native_apis.so vendor/bin/phpunit components/DataLiberation/Tests/URLInTextProcessorTest.php components/DataLiberation/Tests/BlockMarkupUrlProcessorTest.php components/DataLiberation/Tests/RewriteUrlsTest.php
