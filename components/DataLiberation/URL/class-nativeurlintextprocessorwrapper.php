@@ -8,10 +8,20 @@ use WP_HTML_Text_Replacement;
 /**
  * Public URLInTextProcessor adapter backed by the native candidate scanner.
  *
- * The native extension intentionally exposes a narrow scanner surface. This
- * wrapper keeps the public PHP API intact: native code finds candidate URL
- * strings, then PHP performs the same WHATWG validation and text replacement
- * bookkeeping as the fallback implementation.
+ * Starting point: a reprint-shaped benchmark over 5,000 post_content values
+ * measured wp_rewrite_urls() at about 90s with the PHP URL-in-text processor.
+ * Using the native scanner plus bounded PHP caches reduced that benchmark to
+ * about 3.6s with identical output. That result suggests the repeated
+ * PHP-side URL parsing and rewrite decisions were the largest proven cost.
+ *
+ * This wrapper is therefore a conservative first step. The native extension
+ * finds ASCII URL candidates, while PHP still performs the public API's WHATWG
+ * validation, replacement bookkeeping, and non-ASCII fallback behavior. Moving
+ * more of this wrapper into Rust may reduce PHP/native crossings and could
+ * plausibly improve the optimized path further, but that conclusion is still a
+ * hypothesis until measured. Porting WPURL::parse(), is_child_url_of(), and
+ * WPURL::replace_base_url() semantics into native code may provide larger
+ * gains, but would require separate parity work before it is safe to rely on.
  */
 class NativeURLInTextProcessorWrapper {
 	private const CANDIDATE_CACHE_MAX = 4096;
