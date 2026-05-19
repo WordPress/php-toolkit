@@ -40,20 +40,6 @@ require_once __DIR__ . '/class-urlrewritecache.php';
 function wp_rewrite_urls( $options ) {
 	static $rewrite_cache = null;
 
-	/*
-	 * The native extension does not expose this full public wrapper today. If
-	 * it does in the future, prefer it over the PHP implementation below so
-	 * scanning, parsing, rewrite decisions, and any native-side caching can be
-	 * handled in one place.
-	 */
-	$native_rewrite_urls = __NAMESPACE__ . '\\native_wp_rewrite_urls';
-	if (
-		function_exists( $native_rewrite_urls ) &&
-		( ! defined( 'WP_NATIVE_APIS_DISABLE_DEFAULTS' ) || ! WP_NATIVE_APIS_DISABLE_DEFAULTS )
-	) {
-		return $native_rewrite_urls( $options );
-	}
-
 	if ( null === $rewrite_cache ) {
 		$rewrite_cache = new URLRewriteCache();
 	}
