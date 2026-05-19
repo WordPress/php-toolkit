@@ -66,7 +66,8 @@ require __DIR__ . '/bootstrap.php';
 
 var_dump( is_subclass_of( 'WP_HTML_Tag_Processor', 'WP_HTML_Native_Tag_Processor' ) );
 var_dump( is_subclass_of( 'WordPress\\XML\\XMLProcessor', 'WordPress\\XML\\NativeXMLProcessor' ) );
-var_dump( is_subclass_of( 'WordPress\\DataLiberation\\URL\\URLInTextProcessor', 'WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor' ) );
+$p = new WordPress\DataLiberation\URL\URLInTextProcessor( 'Visit example.com/docs.', 'https://wordpress.org' );
+var_dump( get_parent_class( $p ) === 'WordPress\\DataLiberation\\URL\\NativeURLInTextProcessorWrapper' );
 PHP
 ```
 
