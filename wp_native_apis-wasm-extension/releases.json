@@ -1,5 +1,17 @@
 [
   {
+    "version": "cb3aa252c65f9c8a592ef45838948c9d11de79df",
+    "name": "wp_native_apis",
+    "phpVersions": [
+      "8.4"
+    ],
+    "publishedAt": "2026-05-19T20:01:42Z",
+    "manifest": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/cb3aa252c65f9c8a592ef45838948c9d11de79df/manifest.json",
+    "checksums": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/cb3aa252c65f9c8a592ef45838948c9d11de79df/SHA256SUMS",
+    "commit": "https://github.com/WordPress/php-toolkit/commit/cb3aa252c65f9c8a592ef45838948c9d11de79df",
+    "workflowRun": "https://github.com/WordPress/php-toolkit/actions/runs/26121538219"
+  },
+  {
     "version": "85b44445383779ecbc8ce23c0ad8f1db1e84f9ac",
     "name": "wp_native_apis",
     "phpVersions": [
