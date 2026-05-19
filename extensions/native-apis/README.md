@@ -213,9 +213,9 @@ extensions/native-apis/build-playground-extension.sh
 The host PHP extension is Rust-backed through `ext-php-rs`. The Playground
 bundle currently uses `native_apis_shim.c` instead, because Playground's
 PHP.wasm runtime only exports the PHP C ABI symbols needed by regular C
-extensions. The shim registers the native extension classes and verifies the
-Playground loading path while the full Rust-backed implementation remains the
-host PHP artifact.
+extensions. The shim registers the native extension classes and implements the
+batch text URL base rewrite primitive used by Reprint while the full
+Rust-backed implementation remains the host PHP artifact.
 
 The `Native APIs Playground Extension` workflow publishes the bundle after
 changes land on `trunk`. It stores the release history on the repository's
