@@ -25,9 +25,9 @@
     },
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/bytestream": "^0.8",
-        "wp-php-toolkit/filesystem": "^0.8",
-        "wp-php-toolkit/http-client": "^0.8"
+        "wp-php-toolkit/bytestream": "^0.9",
+        "wp-php-toolkit/filesystem": "^0.9",
+        "wp-php-toolkit/http-client": "^0.9"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5"
