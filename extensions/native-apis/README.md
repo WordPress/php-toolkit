@@ -103,6 +103,12 @@ candidate scanner. The public PHP class still validates candidates with the
 existing WHATWG parser and uses the PHP regular-expression scanner for non-ASCII
 text or when native defaults are disabled.
 
+`wp_native_apis_rewrite_plain_text_literal_urls()` is a narrower primitive for
+known plain text leaves. It accepts compact `source-origin\x1ftarget-prefix`
+mappings separated by `\x1e`, rewrites exact HTTP(S) source-origin matches, and
+returns `false` instead of guessing when the text contains structured-data
+delimiters or an origin match is not bounded as a URL origin.
+
 ## Build Details
 
 The build requires Rust, PHP development headers, `php-config`, and libclang.
@@ -378,6 +384,7 @@ caller-shaped workflow. The benchmark harness includes rows for these paths:
 - XML tag, prefix, and sanitizer summaries through direct source scans.
 - URL-in-text scans through a direct native plain-text URL candidate processor,
   with public `URLInTextProcessor` rows preserving WHATWG validation.
+- Plain text literal source-origin URL rewrites for parser-owned leaf text.
 The compact batch APIs return strings with `\x1f` field separators and `\x1e`
 record separators. They are intended for callers that need incremental
 processing but can aggregate without building one PHP array per tag or token.

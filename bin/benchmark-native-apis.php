@@ -748,6 +748,13 @@ if ( 'all' === $component || 'url' === $component ) {
 			URLInTextProcessor::class,
 			'wp_toolkit_native_api_benchmark_url_in_text_processor'
 		);
+		$results[] = wp_toolkit_native_api_benchmark_run(
+			'plain-text-literal-url-rewrite',
+			'php',
+			$iterations,
+			URLInTextProcessor::class,
+			'wp_toolkit_native_api_benchmark_php_plain_text_literal_url_rewrite'
+		);
 	}
 
 	if ( wp_toolkit_native_api_benchmark_should_run( $mode, 'native' ) ) {
@@ -757,6 +764,13 @@ if ( 'all' === $component || 'url' === $component ) {
 			$iterations,
 			'WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor',
 			'wp_toolkit_native_api_benchmark_native_url_in_text_processor'
+		);
+		$results[] = wp_toolkit_native_api_benchmark_run(
+			'plain-text-literal-url-rewrite',
+			'native',
+			$iterations,
+			'WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor',
+			'wp_toolkit_native_api_benchmark_native_plain_text_literal_url_rewrite'
 		);
 	}
 }
@@ -2363,6 +2377,179 @@ function wp_toolkit_native_api_benchmark_native_url_in_text_processor() {
 	}
 
 	return $count;
+}
+
+/**
+ * Benchmark the PHP plain text literal URL rewrite path.
+ *
+ * @return int Number of URLs rewritten.
+ */
+function wp_toolkit_native_api_benchmark_php_plain_text_literal_url_rewrite() {
+	static $mappings = null;
+
+	$text = wp_toolkit_native_api_benchmark_plain_text_literal_url_document();
+	if ( null === $mappings ) {
+		$mappings = wp_toolkit_native_api_benchmark_parse_plain_text_literal_mappings(
+			wp_toolkit_native_api_benchmark_plain_text_literal_url_mapping()
+		);
+	}
+
+	$rewritten = wp_toolkit_native_api_benchmark_php_rewrite_plain_text_literal_urls( $text, $mappings );
+	if ( false === $rewritten ) {
+		throw new RuntimeException( 'PHP plain text literal URL rewrite benchmark did not rewrite the fixture.' );
+	}
+
+	$count = substr_count( $rewritten, 'https://new.example/base/' );
+	if ( 360 !== $count ) {
+		throw new RuntimeException( "PHP plain text literal URL rewrite benchmark expected 360 URLs, rewrote {$count}." );
+	}
+
+	return $count;
+}
+
+/**
+ * Benchmark the native plain text literal URL rewrite path.
+ *
+ * @return int Number of URLs rewritten.
+ */
+function wp_toolkit_native_api_benchmark_native_plain_text_literal_url_rewrite() {
+	if ( ! function_exists( 'wp_native_apis_rewrite_plain_text_literal_urls' ) ) {
+		throw new RuntimeException( 'Function wp_native_apis_rewrite_plain_text_literal_urls is not available.' );
+	}
+
+	$rewritten = wp_native_apis_rewrite_plain_text_literal_urls(
+		wp_toolkit_native_api_benchmark_plain_text_literal_url_document(),
+		wp_toolkit_native_api_benchmark_plain_text_literal_url_mapping()
+	);
+	if ( false === $rewritten ) {
+		throw new RuntimeException( 'Native plain text literal URL rewrite benchmark did not rewrite the fixture.' );
+	}
+
+	$count = substr_count( $rewritten, 'https://new.example/base/' );
+	if ( 360 !== $count ) {
+		throw new RuntimeException( "Native plain text literal URL rewrite benchmark expected 360 URLs, rewrote {$count}." );
+	}
+
+	return $count;
+}
+
+/**
+ * Rewrite simple literal source-origin URLs in known plain text.
+ *
+ * @param string $text     Plain text fixture.
+ * @param array  $mappings Parsed source-origin to target-prefix mappings.
+ * @return false|string false when the generic parser path must handle it.
+ */
+function wp_toolkit_native_api_benchmark_php_rewrite_plain_text_literal_urls( $text, $mappings ) {
+	if ( array() === $mappings || false !== strpbrk( $text, "<>\"'\\{}[]()" ) ) {
+		return false;
+	}
+
+	$replacements = array();
+	foreach ( $mappings as $mapping ) {
+		$from        = $mapping['from'];
+		$from_length = strlen( $from );
+		$offset      = 0;
+
+		while ( true ) {
+			$position = strpos( $text, $from, $offset );
+			if ( false === $position ) {
+				break;
+			}
+
+			if (
+				! wp_toolkit_native_api_benchmark_literal_origin_has_valid_left_boundary( $text, $position ) ||
+				! wp_toolkit_native_api_benchmark_literal_origin_has_valid_right_boundary( $text, $position + $from_length )
+			) {
+				return false;
+			}
+
+			$replacements[] = array( $position, $from_length, $mapping['to'] );
+			$offset         = $position + $from_length;
+		}
+	}
+
+	if ( array() === $replacements ) {
+		return false;
+	}
+
+	usort(
+		$replacements,
+		function ( $a, $b ) {
+			return $a[0] <=> $b[0];
+		}
+	);
+
+	$rewritten = '';
+	$cursor    = 0;
+	foreach ( $replacements as $replacement ) {
+		$position = $replacement[0];
+		$length   = $replacement[1];
+		$to       = $replacement[2];
+		if ( $position < $cursor ) {
+			return false;
+		}
+
+		$rewritten .= substr( $text, $cursor, $position - $cursor );
+		$rewritten .= $to;
+		$cursor     = $position + $length;
+	}
+	$rewritten .= substr( $text, $cursor );
+
+	return $rewritten;
+}
+
+/**
+ * Parse compact benchmark mappings into plain text literal rewrite rows.
+ *
+ * @param string $compact_mapping Compact source-origin to target-prefix mappings.
+ * @return array<int,array{from:string,to:string}>
+ */
+function wp_toolkit_native_api_benchmark_parse_plain_text_literal_mappings( $compact_mapping ) {
+	$mappings = array();
+	foreach ( explode( "\x1e", $compact_mapping ) as $row ) {
+		$parts = explode( "\x1f", $row, 2 );
+		if ( 2 !== count( $parts ) ) {
+			continue;
+		}
+
+		$mappings[] = array(
+			'from' => $parts[0],
+			'to'   => $parts[1],
+		);
+	}
+
+	return $mappings;
+}
+
+/**
+ * Check the left boundary for a plain text literal source origin.
+ *
+ * @param string $text     Plain text fixture.
+ * @param int    $position Candidate position.
+ * @return bool
+ */
+function wp_toolkit_native_api_benchmark_literal_origin_has_valid_left_boundary( $text, $position ) {
+	if ( 0 === $position ) {
+		return true;
+	}
+
+	return ctype_space( $text[ $position - 1 ] );
+}
+
+/**
+ * Check the right boundary for a plain text literal source origin.
+ *
+ * @param string $text     Plain text fixture.
+ * @param int    $position Candidate end position.
+ * @return bool
+ */
+function wp_toolkit_native_api_benchmark_literal_origin_has_valid_right_boundary( $text, $position ) {
+	if ( $position >= strlen( $text ) ) {
+		return true;
+	}
+
+	return '/' === $text[ $position ] || '?' === $text[ $position ] || '#' === $text[ $position ];
 }
 
 /**
@@ -4264,6 +4451,32 @@ function wp_toolkit_native_api_benchmark_url_in_text_document() {
 	}
 
 	return implode( ' ', $items );
+}
+
+/**
+ * Build representative plain text for literal source-origin URL rewrites.
+ *
+ * @return string
+ */
+function wp_toolkit_native_api_benchmark_plain_text_literal_url_document() {
+	$items = array();
+	for ( $i = 0; $i < 120; $i++ ) {
+		$items[] = sprintf(
+			'Post %1$d references http://old.example/posts/%1$d, http://old.example/media/%1$d.jpg and http://old.example/meta/%1$d.',
+			$i
+		);
+	}
+
+	return implode( ' ', $items );
+}
+
+/**
+ * Build compact source-origin to target-prefix mappings for literal rewrites.
+ *
+ * @return string
+ */
+function wp_toolkit_native_api_benchmark_plain_text_literal_url_mapping() {
+	return "http://old.example\x1fhttps://new.example/base";
 }
 
 /**

@@ -232,6 +232,166 @@ pub fn find_next_url_text_candidate(text: &str, offset: usize) -> Option<UrlText
     None
 }
 
+#[derive(Clone, Debug)]
+struct PlainTextLiteralMapping {
+    from: String,
+    to: String,
+}
+
+#[derive(Clone, Debug)]
+struct PlainTextLiteralReplacement {
+    start: usize,
+    length: usize,
+    text: String,
+}
+
+pub fn rewrite_plain_text_literal_urls(text: &str, compact_mapping: &str) -> Option<String> {
+    if has_plain_text_literal_structural_delimiter(text.as_bytes()) {
+        return None;
+    }
+
+    let mappings = parse_plain_text_literal_mappings(compact_mapping);
+    if mappings.is_empty() {
+        return None;
+    }
+
+    let mut replacements = Vec::new();
+    for mapping in &mappings {
+        let mut offset = 0;
+        while offset + mapping.from.len() <= text.len() {
+            let Some(relative_position) =
+                ascii_find_case_insensitive(&text.as_bytes()[offset..], mapping.from.as_bytes())
+            else {
+                break;
+            };
+
+            let position = offset + relative_position;
+            if !plain_text_literal_origin_has_valid_left_boundary(text.as_bytes(), position)
+                || !plain_text_literal_origin_has_valid_right_boundary(
+                    text.as_bytes(),
+                    position + mapping.from.len(),
+                )
+            {
+                return None;
+            }
+
+            replacements.push(PlainTextLiteralReplacement {
+                start: position,
+                length: mapping.from.len(),
+                text: mapping.to.clone(),
+            });
+            offset = position + mapping.from.len();
+        }
+    }
+
+    if replacements.is_empty() {
+        return None;
+    }
+
+    replacements.sort_by(|left, right| left.start.cmp(&right.start));
+
+    let mut output = String::with_capacity(text.len());
+    let mut copied = 0;
+    for replacement in replacements {
+        if replacement.start < copied {
+            return None;
+        }
+
+        output.push_str(&text[copied..replacement.start]);
+        output.push_str(&replacement.text);
+        copied = replacement.start + replacement.length;
+    }
+    output.push_str(&text[copied..]);
+
+    Some(output)
+}
+
+fn parse_plain_text_literal_mappings(compact_mapping: &str) -> Vec<PlainTextLiteralMapping> {
+    compact_mapping
+        .split('\x1e')
+        .filter_map(|row| {
+            let (from, to) = row.split_once('\x1f')?;
+            if !is_valid_plain_text_literal_mapping(from, to) {
+                return None;
+            }
+
+            Some(PlainTextLiteralMapping {
+                from: from.to_string(),
+                to: to.to_string(),
+            })
+        })
+        .collect()
+}
+
+fn is_valid_plain_text_literal_mapping(from: &str, to: &str) -> bool {
+    if from.is_empty() || to.is_empty() || !from.is_ascii() || !to.is_ascii() {
+        return false;
+    }
+
+    let Some(from_origin_end) = plain_text_literal_http_origin_end(from) else {
+        return false;
+    };
+    if from_origin_end != from.len() {
+        return false;
+    }
+
+    let Some(to_origin_end) = plain_text_literal_http_origin_end(to) else {
+        return false;
+    };
+    if to[to_origin_end..].contains('?') || to[to_origin_end..].contains('#') {
+        return false;
+    }
+    to_origin_end == to.len() || to.as_bytes()[to_origin_end] == b'/'
+}
+
+fn plain_text_literal_http_origin_end(url: &str) -> Option<usize> {
+    let bytes = url.as_bytes();
+    let authority_start = if ascii_starts_with(bytes, 0, b"http://") {
+        7
+    } else if ascii_starts_with(bytes, 0, b"https://") {
+        8
+    } else {
+        return None;
+    };
+
+    let authority_end = bytes[authority_start..]
+        .iter()
+        .position(|byte| matches!(*byte, b'/' | b'?' | b'#'))
+        .map(|offset| authority_start + offset)
+        .unwrap_or(bytes.len());
+    if authority_end <= authority_start || bytes[authority_start..authority_end].contains(&b'@') {
+        return None;
+    }
+
+    Some(authority_end)
+}
+
+fn has_plain_text_literal_structural_delimiter(bytes: &[u8]) -> bool {
+    bytes.iter().any(|byte| {
+        matches!(
+            *byte,
+            b'<' | b'>' | b'"' | b'\'' | b'\\' | b'{' | b'}' | b'[' | b']' | b'(' | b')'
+        )
+    })
+}
+
+fn plain_text_literal_origin_has_valid_left_boundary(bytes: &[u8], position: usize) -> bool {
+    position == 0 || bytes[position - 1].is_ascii_whitespace()
+}
+
+fn plain_text_literal_origin_has_valid_right_boundary(bytes: &[u8], position: usize) -> bool {
+    position >= bytes.len() || matches!(bytes[position], b'/' | b'?' | b'#')
+}
+
+fn ascii_find_case_insensitive(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+    if needle.is_empty() || haystack.len() < needle.len() {
+        return None;
+    }
+
+    (0..=haystack.len() - needle.len())
+        .find(|offset| haystack[*offset..*offset + needle.len()].eq_ignore_ascii_case(needle))
+}
+
 fn parse_url_text_candidate_at(text: &str, start: usize) -> Option<UrlTextCandidate> {
     let bytes = text.as_bytes();
     let mut had_protocol = false;
@@ -578,7 +738,10 @@ fn ascii_starts_with(bytes: &[u8], offset: usize, needle: &[u8]) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{find_next_url_text_candidate, validate_url_text_candidate, UrlTextCandidate};
+    use super::{
+        find_next_url_text_candidate, rewrite_plain_text_literal_urls, validate_url_text_candidate,
+        UrlTextCandidate,
+    };
 
     #[test]
     fn finds_http_https_and_bare_domain_candidates() {
@@ -650,5 +813,69 @@ mod tests {
     fn rejects_bare_domains_without_base_protocol() {
         let mut candidate = find_next_url_text_candidate("Visit example.com", 0).expect("URL");
         assert!(!validate_url_text_candidate(&mut candidate, None));
+    }
+
+    #[test]
+    fn rewrites_plain_text_literal_url_origins() {
+        let mapping = "http://old.example\x1fhttps://new.example/base";
+        assert_eq!(
+            Some(
+                "See https://new.example/base/posts/7 and https://new.example/base/meta."
+                    .to_string()
+            ),
+            rewrite_plain_text_literal_urls(
+                "See http://old.example/posts/7 and http://old.example/meta.",
+                mapping,
+            )
+        );
+    }
+
+    #[test]
+    fn rewrites_plain_text_literal_origins_case_insensitively() {
+        let mapping = "http://old.example\x1fhttps://new.example";
+        assert_eq!(
+            Some("See https://new.example/posts/7.".to_string()),
+            rewrite_plain_text_literal_urls("See HTTP://OLD.EXAMPLE/posts/7.", mapping)
+        );
+    }
+
+    #[test]
+    fn refuses_structured_text_literal_url_rewrites() {
+        let mapping = "http://old.example\x1fhttps://new.example";
+        assert_eq!(
+            None,
+            rewrite_plain_text_literal_urls("{\"url\":\"http://old.example/posts/7\"}", mapping)
+        );
+    }
+
+    #[test]
+    fn refuses_plain_text_literal_embedded_hosts() {
+        let mapping = "http://old.example\x1fhttps://new.example";
+        assert_eq!(
+            None,
+            rewrite_plain_text_literal_urls("See http://old.example.com/posts/7.", mapping)
+        );
+        assert_eq!(
+            None,
+            rewrite_plain_text_literal_urls("See xhttp://old.example/posts/7.", mapping)
+        );
+    }
+
+    #[test]
+    fn refuses_non_origin_literal_mappings() {
+        assert_eq!(
+            None,
+            rewrite_plain_text_literal_urls(
+                "See http://old.example/posts/7.",
+                "http://old.example/posts\x1fhttps://new.example",
+            )
+        );
+        assert_eq!(
+            None,
+            rewrite_plain_text_literal_urls(
+                "See http://old.example/posts/7.",
+                "http://old.example\x1fhttps://new.example?query=1",
+            )
+        );
     }
 }
