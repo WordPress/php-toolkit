@@ -1903,6 +1903,30 @@ assert_false( $url_text_processor->had_protocol(), 'Expected native URL-in-text 
 assert_true( $url_text_processor->set_raw_url( 'example.org/handbook' ), 'Expected native URL-in-text processor to replace current URL.' );
 assert_same( 'Visit https://WordPress.org/plugins, then example.org/handbook.', $url_text_processor->get_updated_text(), 'Expected native URL-in-text replacement serialization.' );
 
+assert_true( function_exists( 'wp_native_apis_rewrite_plain_text_literal_urls' ), 'Expected native plain text literal URL rewrite function to exist.' );
+assert_same(
+	'Visit https://new.example/base/posts/7 and https://new.example/base/meta.',
+	wp_native_apis_rewrite_plain_text_literal_urls(
+		'Visit http://old.example/posts/7 and HTTP://OLD.EXAMPLE/meta.',
+		"http://old.example\x1fhttps://new.example/base"
+	),
+	'Expected native plain text literal URL rewrite function to rewrite source origins.'
+);
+assert_false(
+	wp_native_apis_rewrite_plain_text_literal_urls(
+		'{"url":"http://old.example/posts/7"}',
+		"http://old.example\x1fhttps://new.example"
+	),
+	'Expected native plain text literal URL rewrite function to refuse structured-looking text.'
+);
+assert_false(
+	wp_native_apis_rewrite_plain_text_literal_urls(
+		'Visit http://old.example.com/posts/7.',
+		"http://old.example\x1fhttps://new.example"
+	),
+	'Expected native plain text literal URL rewrite function to refuse embedded host matches.'
+);
+
 fwrite( STDOUT, "Native API extension verification passed.\n" );
 
 /**

@@ -3,6 +3,8 @@
 #[cfg(feature = "php-extension")]
 use ext_php_rs::prelude::*;
 #[cfg(feature = "php-extension")]
+use ext_php_rs::types::Zval;
+#[cfg(feature = "php-extension")]
 use ext_php_rs::zend::ModuleEntry;
 #[cfg(feature = "php-extension")]
 use ext_php_rs::{info_table_end, info_table_row, info_table_start};
@@ -31,6 +33,26 @@ pub fn wp_native_apis_extension_version() -> &'static str {
 }
 
 #[cfg(feature = "php-extension")]
+#[php_function]
+pub fn wp_native_apis_rewrite_plain_text_literal_urls(
+    text: String,
+    compact_mapping: String,
+) -> Zval {
+    match url_text::rewrite_plain_text_literal_urls(&text, &compact_mapping) {
+        Some(updated_text) => {
+            let mut zval = Zval::new();
+            let _ = zval.set_string(&updated_text, false);
+            zval
+        }
+        None => {
+            let mut zval = Zval::new();
+            zval.set_bool(false);
+            zval
+        }
+    }
+}
+
+#[cfg(feature = "php-extension")]
 #[php_module]
 pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
     module
@@ -39,5 +61,8 @@ pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
         .class::<url_text::NativeUrlInTextProcessor>()
         .class::<xml::NativeXmlProcessor>()
         .function(wrap_function!(wp_native_apis_extension_version))
+        .function(wrap_function!(
+            wp_native_apis_rewrite_plain_text_literal_urls
+        ))
         .info_function(php_module_info)
 }

@@ -6,6 +6,7 @@
 #include "ext/standard/info.h"
 
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef struct {
@@ -18,6 +19,25 @@ typedef struct {
 	zend_object std;
 } wp_native_smoke_object;
 
+typedef struct {
+	char   *value;
+	size_t  length;
+	size_t  capacity;
+} wp_native_string_buffer;
+
+typedef struct {
+	size_t      position;
+	size_t      length;
+	const char *replacement;
+	size_t      replacement_len;
+} wp_native_literal_replacement;
+
+typedef struct {
+	wp_native_literal_replacement *items;
+	size_t                         count;
+	size_t                         capacity;
+} wp_native_literal_replacement_list;
+
 static zend_class_entry *wp_native_html_tag_processor_ce;
 static zend_class_entry *wp_native_html_processor_ce;
 static zend_class_entry *wp_native_xml_processor_ce;
@@ -27,6 +47,11 @@ static zend_object_handlers wp_native_smoke_object_handlers;
 static zend_bool
 wp_native_ascii_is_space( char c ) {
 	return ' ' == c || '\t' == c || '\n' == c || '\r' == c || '\f' == c;
+}
+
+static zend_bool
+wp_native_ascii_is_php_space( char c ) {
+	return ' ' == c || '\t' == c || '\n' == c || '\r' == c || '\f' == c || '\v' == c;
 }
 
 static zend_bool
@@ -82,6 +107,220 @@ wp_native_ascii_starts_with( const char *value, size_t value_len, const char *pr
 
 	for ( i = 0; i < prefix_len; i++ ) {
 		if ( wp_native_ascii_lower( value[ i ] ) != wp_native_ascii_lower( prefix[ i ] ) ) {
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+static zend_bool
+wp_native_buffer_reserve( wp_native_string_buffer *buffer, size_t additional ) {
+	size_t required;
+	size_t capacity;
+	char *value;
+
+	if ( additional > ( (size_t) -1 ) - buffer->length ) {
+		return 0;
+	}
+
+	required = buffer->length + additional;
+	if ( required <= buffer->capacity ) {
+		return 1;
+	}
+
+	capacity = buffer->capacity ? buffer->capacity : 128;
+	while ( capacity < required ) {
+		if ( capacity > ( (size_t) -1 ) / 2 ) {
+			capacity = required;
+			break;
+		}
+		capacity *= 2;
+	}
+
+	value = safe_erealloc( buffer->value, capacity, sizeof( char ), 0 );
+	if ( NULL == value ) {
+		return 0;
+	}
+
+	buffer->value    = value;
+	buffer->capacity = capacity;
+	return 1;
+}
+
+static zend_bool
+wp_native_buffer_append( wp_native_string_buffer *buffer, const char *value, size_t length ) {
+	if ( 0 == length ) {
+		return 1;
+	}
+
+	if ( ! wp_native_buffer_reserve( buffer, length ) ) {
+		return 0;
+	}
+
+	memcpy( buffer->value + buffer->length, value, length );
+	buffer->length += length;
+	return 1;
+}
+
+static zend_bool
+wp_native_literal_replacements_append(
+	wp_native_literal_replacement_list *list,
+	size_t position,
+	size_t length,
+	const char *replacement,
+	size_t replacement_len
+) {
+	wp_native_literal_replacement *items;
+	size_t capacity;
+
+	if ( list->count == list->capacity ) {
+		capacity = list->capacity ? list->capacity * 2 : 4;
+		items    = safe_erealloc( list->items, capacity, sizeof( wp_native_literal_replacement ), 0 );
+		if ( NULL == items ) {
+			return 0;
+		}
+
+		list->items    = items;
+		list->capacity = capacity;
+	}
+
+	list->items[ list->count ].position        = position;
+	list->items[ list->count ].length          = length;
+	list->items[ list->count ].replacement     = replacement;
+	list->items[ list->count ].replacement_len = replacement_len;
+	list->count++;
+	return 1;
+}
+
+static int
+wp_native_compare_literal_replacements( const void *left, const void *right ) {
+	const wp_native_literal_replacement *left_replacement  = (const wp_native_literal_replacement *) left;
+	const wp_native_literal_replacement *right_replacement = (const wp_native_literal_replacement *) right;
+
+	if ( left_replacement->position < right_replacement->position ) {
+		return -1;
+	}
+	if ( left_replacement->position > right_replacement->position ) {
+		return 1;
+	}
+	return 0;
+}
+
+static const char *
+wp_native_ascii_find_case_insensitive( const char *haystack, size_t haystack_len, const char *needle, size_t needle_len ) {
+	size_t i;
+
+	if ( 0 == needle_len || haystack_len < needle_len ) {
+		return NULL;
+	}
+
+	for ( i = 0; i <= haystack_len - needle_len; i++ ) {
+		if ( wp_native_ascii_starts_with( haystack + i, haystack_len - i, needle, needle_len ) ) {
+			return haystack + i;
+		}
+	}
+
+	return NULL;
+}
+
+static zend_bool
+wp_native_has_plain_text_literal_structural_delimiter( const char *text, size_t text_len ) {
+	size_t i;
+
+	for ( i = 0; i < text_len; i++ ) {
+		switch ( text[ i ] ) {
+			case '<':
+			case '>':
+			case '"':
+			case '\'':
+			case '\\':
+			case '{':
+			case '}':
+			case '[':
+			case ']':
+			case '(':
+			case ')':
+				return 1;
+		}
+	}
+
+	return 0;
+}
+
+static zend_bool
+wp_native_plain_text_literal_origin_has_valid_left_boundary( const char *text, size_t position ) {
+	return 0 == position || wp_native_ascii_is_php_space( text[ position - 1 ] );
+}
+
+static zend_bool
+wp_native_plain_text_literal_origin_has_valid_right_boundary( const char *text, size_t text_len, size_t position ) {
+	return position >= text_len || '/' == text[ position ] || '?' == text[ position ] || '#' == text[ position ];
+}
+
+static size_t
+wp_native_plain_text_literal_http_origin_end( const char *url, size_t url_len ) {
+	size_t authority_start;
+	size_t authority_end;
+
+	if ( wp_native_ascii_starts_with( url, url_len, "http://", 7 ) ) {
+		authority_start = 7;
+	} else if ( wp_native_ascii_starts_with( url, url_len, "https://", 8 ) ) {
+		authority_start = 8;
+	} else {
+		return 0;
+	}
+
+	authority_end = authority_start;
+	while ( authority_end < url_len && '/' != url[ authority_end ] && '?' != url[ authority_end ] && '#' != url[ authority_end ] ) {
+		if ( '@' == url[ authority_end ] ) {
+			return 0;
+		}
+		authority_end++;
+	}
+
+	if ( authority_end == authority_start ) {
+		return 0;
+	}
+
+	return authority_end;
+}
+
+static zend_bool
+wp_native_is_valid_plain_text_literal_mapping( const char *from, size_t from_len, const char *to, size_t to_len ) {
+	size_t i;
+	size_t from_origin_end;
+	size_t to_origin_end;
+
+	if ( 0 == from_len || 0 == to_len ) {
+		return 0;
+	}
+
+	for ( i = 0; i < from_len; i++ ) {
+		if ( (unsigned char) from[ i ] > 0x7f ) {
+			return 0;
+		}
+	}
+	for ( i = 0; i < to_len; i++ ) {
+		if ( (unsigned char) to[ i ] > 0x7f ) {
+			return 0;
+		}
+	}
+
+	from_origin_end = wp_native_plain_text_literal_http_origin_end( from, from_len );
+	if ( 0 == from_origin_end || from_origin_end != from_len ) {
+		return 0;
+	}
+
+	to_origin_end = wp_native_plain_text_literal_http_origin_end( to, to_len );
+	if ( 0 == to_origin_end ) {
+		return 0;
+	}
+	if ( to_origin_end < to_len && '/' != to[ to_origin_end ] ) {
+		return 0;
+	}
+	for ( i = to_origin_end; i < to_len; i++ ) {
+		if ( '?' == to[ i ] || '#' == to[ i ] ) {
 			return 0;
 		}
 	}
@@ -461,6 +700,137 @@ PHP_METHOD( NativeXMLProcessor, get_tag_local_name ) {
 	RETURN_STRING( object->current_name );
 }
 
+PHP_FUNCTION( wp_native_apis_rewrite_plain_text_literal_urls ) {
+	char *text;
+	size_t text_len;
+	char *compact_mapping;
+	size_t compact_mapping_len;
+	size_t row_start = 0;
+	size_t copied_until = 0;
+	wp_native_literal_replacement_list replacements = { NULL, 0, 0 };
+	wp_native_string_buffer buffer = { NULL, 0, 0 };
+
+	ZEND_PARSE_PARAMETERS_START( 2, 2 )
+		Z_PARAM_STRING( text, text_len )
+		Z_PARAM_STRING( compact_mapping, compact_mapping_len )
+	ZEND_PARSE_PARAMETERS_END();
+
+	if ( wp_native_has_plain_text_literal_structural_delimiter( text, text_len ) ) {
+		RETURN_FALSE;
+	}
+
+	while ( row_start < compact_mapping_len ) {
+		size_t row_end = row_start;
+		size_t separator;
+		const char *from;
+		const char *to;
+		size_t from_len;
+		size_t to_len;
+		size_t offset = 0;
+
+		while ( row_end < compact_mapping_len && '\x1e' != compact_mapping[ row_end ] ) {
+			row_end++;
+		}
+
+		separator = row_start;
+		while ( separator < row_end && '\x1f' != compact_mapping[ separator ] ) {
+			separator++;
+		}
+
+		if ( separator == row_end ) {
+			row_start = row_end + ( row_end < compact_mapping_len ? 1 : 0 );
+			continue;
+		}
+
+		from     = compact_mapping + row_start;
+		from_len = separator - row_start;
+		to       = compact_mapping + separator + 1;
+		to_len   = row_end - separator - 1;
+
+		if ( ! wp_native_is_valid_plain_text_literal_mapping( from, from_len, to, to_len ) ) {
+			row_start = row_end + ( row_end < compact_mapping_len ? 1 : 0 );
+			continue;
+		}
+
+		while ( offset + from_len <= text_len ) {
+			const char *match = wp_native_ascii_find_case_insensitive( text + offset, text_len - offset, from, from_len );
+			size_t position;
+
+			if ( NULL == match ) {
+				break;
+			}
+
+			position = (size_t) ( match - text );
+			if (
+				! wp_native_plain_text_literal_origin_has_valid_left_boundary( text, position ) ||
+				! wp_native_plain_text_literal_origin_has_valid_right_boundary( text, text_len, position + from_len )
+			) {
+				if ( NULL != replacements.items ) {
+					efree( replacements.items );
+				}
+				RETURN_FALSE;
+			}
+
+			if ( ! wp_native_literal_replacements_append( &replacements, position, from_len, to, to_len ) ) {
+				if ( NULL != replacements.items ) {
+					efree( replacements.items );
+				}
+				php_error_docref( NULL, E_WARNING, "Unable to allocate literal URL rewrite replacements" );
+				RETURN_FALSE;
+			}
+
+			offset = position + from_len;
+		}
+
+		row_start = row_end + ( row_end < compact_mapping_len ? 1 : 0 );
+	}
+
+	if ( 0 == replacements.count ) {
+		RETURN_FALSE;
+	}
+
+	qsort( replacements.items, replacements.count, sizeof( wp_native_literal_replacement ), wp_native_compare_literal_replacements );
+
+	{
+		size_t i;
+		for ( i = 0; i < replacements.count; i++ ) {
+			wp_native_literal_replacement *replacement = &replacements.items[ i ];
+
+			if ( replacement->position < copied_until ) {
+				efree( replacements.items );
+				RETURN_FALSE;
+			}
+
+			if (
+				! wp_native_buffer_append( &buffer, text + copied_until, replacement->position - copied_until ) ||
+				! wp_native_buffer_append( &buffer, replacement->replacement, replacement->replacement_len )
+			) {
+				efree( replacements.items );
+				if ( NULL != buffer.value ) {
+					efree( buffer.value );
+				}
+				php_error_docref( NULL, E_WARNING, "Unable to allocate rewritten literal URL text" );
+				RETURN_FALSE;
+			}
+
+			copied_until = replacement->position + replacement->length;
+		}
+	}
+
+	if ( ! wp_native_buffer_append( &buffer, text + copied_until, text_len - copied_until ) ) {
+		efree( replacements.items );
+		if ( NULL != buffer.value ) {
+			efree( buffer.value );
+		}
+		php_error_docref( NULL, E_WARNING, "Unable to allocate rewritten literal URL text" );
+		RETURN_FALSE;
+	}
+
+	efree( replacements.items );
+	RETVAL_STRINGL( buffer.value, buffer.length );
+	efree( buffer.value );
+}
+
 static zend_bool
 wp_native_url_next( wp_native_smoke_object *object ) {
 	while ( object->cursor < object->source_len ) {
@@ -578,6 +948,11 @@ ZEND_BEGIN_ARG_INFO_EX( arginfo_wp_native_create_from_string, 0, 0, 1 )
 	ZEND_ARG_TYPE_INFO( 0, xml, IS_STRING, 0 )
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX( arginfo_wp_native_rewrite_plain_text_literal_urls, 0, 0, 2 )
+	ZEND_ARG_TYPE_INFO( 0, text, IS_STRING, 0 )
+	ZEND_ARG_TYPE_INFO( 0, compact_mapping, IS_STRING, 0 )
+ZEND_END_ARG_INFO()
+
 static const zend_function_entry wp_native_html_tag_processor_methods[] = {
 	PHP_ME( WP_HTML_Native_Tag_Processor, __construct, arginfo_wp_native_string_ctor, ZEND_ACC_PUBLIC )
 	PHP_ME( WP_HTML_Native_Tag_Processor, next_tag, arginfo_wp_native_next_tag, ZEND_ACC_PUBLIC )
@@ -609,6 +984,7 @@ static const zend_function_entry wp_native_url_processor_methods[] = {
 
 static const zend_function_entry wp_native_apis_functions[] = {
 	PHP_FE( wp_native_apis_extension_version, arginfo_wp_native_void )
+	PHP_FE( wp_native_apis_rewrite_plain_text_literal_urls, arginfo_wp_native_rewrite_plain_text_literal_urls )
 	PHP_FE_END
 };
 
