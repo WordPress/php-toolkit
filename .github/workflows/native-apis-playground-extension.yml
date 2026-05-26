@@ -471,46 +471,53 @@ jobs:
             return `${value.toFixed(2)} s`;
           }
 
-          function renderBenchmarkCards(release) {
+          function formatDate(value) {
+            if (!value) {
+              return 'unknown';
+            }
+            const parsed = new Date(value);
+            if (Number.isNaN(parsed.getTime())) {
+              return String(value).slice(0, 10);
+            }
+            return parsed.toISOString().slice(0, 10);
+          }
+
+          function renderBenchmarkSummary(release) {
             const items = Array.isArray(release.benchmarkSummary)
-              ? release.benchmarkSummary.slice(0, 6)
+              ? release.benchmarkSummary.slice(0, 3)
               : [];
             if (!items.length) {
-              return '<p class="muted">Benchmarks were not published for this release.</p>';
+              return '<span class="muted">No benchmark summary</span>';
             }
 
-            return `<div class="benchmark-grid">${items.map((item) => `
-              <article class="benchmark-card">
-                <strong>${escapeHtml(item.label || item.name)}</strong>
-                <span>${escapeHtml(item.component || 'Native APIs')}</span>
-                <b>${escapeHtml(item.speedup || 'n/a')}× faster</b>
+            return `<div class="benchmark-list">${items.map((item) => `
+              <span class="benchmark-chip">
+                <strong>${escapeHtml(item.speedup || 'n/a')}×</strong>
+                ${escapeHtml(item.label || item.name)}
                 <small>PHP ${escapeHtml(formatSeconds(item.phpWallSeconds))} · native ${escapeHtml(formatSeconds(item.nativeWallSeconds))}</small>
-              </article>
+              </span>
             `).join('')}</div>`;
           }
 
           function renderArtifactLinks(release) {
-            const artifactLinks = Array.isArray(release.artifacts)
-              ? release.artifacts.map((artifact) => `<a href="${escapeHtml(artifact.url)}">${escapeHtml(artifact.sourcePath)}</a>`)
-              : [];
             return [
-              `<a href="${escapeHtml(release.manifest)}">manifest</a>`,
+              `<a href="${escapeHtml(release.manifest)}">Manifest</a>`,
+              release.benchmarkSummaryUrl ? `<a href="${escapeHtml(release.benchmarkSummaryUrl)}">Benchmarks</a>` : '',
+              Array.isArray(release.artifacts) && release.artifacts[0]
+                ? `<a href="${escapeHtml(release.artifacts[0].url)}">Download .so</a>`
+                : '',
               `<a href="${escapeHtml(release.checksums)}">SHA256</a>`,
-              ...artifactLinks,
-              release.benchmark ? `<a href="${escapeHtml(release.benchmark)}">benchmark JSON</a>` : '',
-              release.benchmarkSummaryUrl ? `<a href="${escapeHtml(release.benchmarkSummaryUrl)}">benchmark summary</a>` : '',
             ].filter(Boolean).join(' · ');
           }
 
           const latestRelease = releases[0] || null;
-          const rows = releases.map((release) => `
-            <tr>
-              <td><code>${escapeHtml(release.version.slice(0, 12))}</code></td>
-              <td>${escapeHtml(release.publishedAt || 'unknown')}</td>
+          const rows = releases.map((release, index) => `
+            <tr class="${index === 0 ? 'latest-row' : ''}">
+              <td>${index === 0 ? '<span class="badge">Latest</span>' : 'Release'}<br><span class="muted">${escapeHtml(formatDate(release.publishedAt))}</span></td>
               <td>${escapeHtml(release.phpVersions.join(', ') || 'unknown')}</td>
               <td><a href="${escapeHtml(release.testInPlayground)}">Test in Playground</a></td>
+              <td>${renderBenchmarkSummary(release)}</td>
               <td>${renderArtifactLinks(release)}</td>
-              <td><a href="${escapeHtml(release.commit)}">commit</a>${release.workflowRun ? ` · <a href="${escapeHtml(release.workflowRun)}">workflow</a>` : ''}</td>
             </tr>
           `).join('');
 
@@ -536,7 +543,7 @@ jobs:
               header,
               main,
               footer {
-                max-width: 76rem;
+                max-width: 64rem;
                 margin: 0 auto;
                 padding: 1.25rem 1.5rem;
               }
@@ -550,18 +557,18 @@ jobs:
               header a { color: inherit; text-decoration: none; }
               header nav { display: flex; gap: 1rem; flex-wrap: wrap; }
               .hero {
-                padding: 3rem 1.5rem 2rem;
+                padding: 2rem 1.5rem 1rem;
               }
               h1 {
-                font-size: clamp(2rem, 6vw, 4rem);
-                line-height: 1;
-                letter-spacing: -0.04em;
+                font-size: clamp(2rem, 5vw, 3rem);
+                line-height: 1.05;
+                letter-spacing: -0.03em;
                 margin: 0 0 1rem;
               }
-              h2 { margin-top: 2.5rem; }
+              h2 { margin-top: 2rem; }
               .lede {
-                max-width: 54rem;
-                font-size: 1.15rem;
+                max-width: 48rem;
+                font-size: 1.05rem;
                 color: var(--muted);
               }
               .cta-row,
@@ -586,46 +593,40 @@ jobs:
                 color: white;
                 border-color: var(--accent);
               }
-              .notice,
-              .release-panel,
-              .benchmark-card {
+              .notice {
                 border: 1px solid var(--border);
                 border-radius: 14px;
                 background: var(--panel);
               }
-              .notice,
-              .release-panel {
-                padding: 1rem 1.1rem;
+              .notice { padding: 1rem 1.1rem; }
+              .benchmark-list {
+                display: flex;
+                flex-direction: column;
+                gap: 0.45rem;
               }
-              .release-panel {
-                display: grid;
-                grid-template-columns: minmax(0, 1fr) minmax(280px, 0.75fr);
-                gap: 1.25rem;
-                align-items: start;
-              }
-              .benchmark-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-                gap: 0.8rem;
-                margin: 1rem 0;
-              }
-              .benchmark-card {
-                padding: 0.9rem;
-              }
-              .benchmark-card strong,
-              .benchmark-card b,
-              .benchmark-card span,
-              .benchmark-card small {
+              .benchmark-chip {
                 display: block;
+                font-size: 0.92rem;
               }
-              .benchmark-card span,
-              .benchmark-card small,
-              .muted {
+              .benchmark-chip strong {
+                display: inline-block;
+                min-width: 3rem;
+              }
+              .benchmark-chip small {
+                display: block;
                 color: var(--muted);
               }
-              .benchmark-card b {
-                margin: 0.35rem 0;
-                font-size: 1.3rem;
+              .badge {
+                display: inline-block;
+                border-radius: 999px;
+                background: var(--accent);
+                color: white;
+                padding: 0.18rem 0.55rem;
+                font-size: 0.78rem;
+                font-weight: 700;
+              }
+              .muted {
+                color: var(--muted);
               }
               table {
                 border-collapse: collapse;
@@ -640,6 +641,9 @@ jobs:
                 vertical-align: top;
               }
               th { font-size: 0.85rem; }
+              .latest-row {
+                background: color-mix(in srgb, var(--accent) 8%, transparent);
+              }
               code {
                 font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
                 font-size: 0.92em;
@@ -647,7 +651,6 @@ jobs:
               a { color: var(--accent); }
               footer { color: var(--muted); }
               @media (max-width: 760px) {
-                .release-panel { grid-template-columns: 1fr; }
                 table { display: block; overflow-x: auto; }
               }
             </style>
@@ -663,58 +666,37 @@ jobs:
             <main>
               <section class="hero">
                 <p class="pill">Experimental PHP.wasm extension</p>
-                <h1>wp_native_apis releases</h1>
-                <p class="lede">Published manifests for testing the PHP Toolkit Native APIs extension in WordPress Playground. Use the latest link for quick manual testing, or an immutable commit manifest when a document, demo, or test needs a reproducible runtime.</p>
+                <h1>Test the Native APIs extension in Playground</h1>
+                <p class="lede">Open Playground to confirm the WASM extension loaded, run a small smoke test, and see quick browser-side timing numbers. Use the release rows below when you need a stable manifest URL.</p>
                 <div class="cta-row">
-                  ${latestRelease ? `<a class="button primary" href="${escapeHtml(latestRelease.testInPlayground)}">Test latest in Playground →</a>` : ''}
-                  <a class="button" href="${escapeHtml(rootUrl)}/latest/manifest.json">Latest manifest</a>
+                  ${latestRelease ? `<a class="button primary" href="${escapeHtml(latestRelease.testInPlayground)}">Test in Playground →</a>` : ''}
+                  <a class="button" href="../native-apis.html">Read the docs</a>
                   <a class="button" href="${escapeHtml(rootUrl)}/releases.json">releases.json</a>
                 </div>
               </section>
 
               <section class="notice">
-                <strong>Status:</strong> this is an experimental Playground extension release channel. Browser Playground loads the PHP.wasm side module with the <code>php-extension</code> query parameter before PHP starts. The host Rust-backed extension is benchmarked separately; the Playground bundle should not be treated as full host-extension parity.
-              </section>
-
-              ${latestRelease ? `<section class="release-panel">
-                <div>
-                  <h2>Latest release</h2>
-                  <p><code>${escapeHtml(latestRelease.version)}</code></p>
-                  <p class="muted">Published ${escapeHtml(latestRelease.publishedAt || 'at an unknown time')} · PHP ${escapeHtml(latestRelease.phpVersions.join(', ') || 'unknown')}</p>
-                  <div class="link-row">
-                    <a class="button primary" href="${escapeHtml(latestRelease.testInPlayground)}">Test in Playground</a>
-                    <a class="button" href="${escapeHtml(latestRelease.manifest)}">Manifest</a>
-                    <a class="button" href="${escapeHtml(latestRelease.checksums)}">Checksums</a>
-                    <a class="button" href="${escapeHtml(latestRelease.commit)}">Source commit</a>
-                  </div>
-                </div>
-                <div>
-                  <h2>Benchmark highlights</h2>
-                  ${renderBenchmarkCards(latestRelease)}
-                </div>
-              </section>` : ''}
-
-              <section>
-                <h2>How to choose a manifest</h2>
-                <p><strong><code>latest/manifest.json</code></strong> always points at the newest published bundle. It is convenient for manual testing, but it moves whenever <code>trunk</code> publishes a new extension.</p>
-                <p><strong>Commit manifests</strong> are immutable. Use the release-history links below for docs, bug reports, demos, and tests that need to keep loading the same bundle over time.</p>
+                <strong>What this is:</strong> an experimental PHP.wasm extension release channel. The Playground link loads <code>wp_native_apis</code> before PHP starts, then opens a landing page that reports whether the extension is available. CI host-extension benchmarks are shown as directional speed snapshots; browser timings are device-specific.
               </section>
 
               <section>
-                <h2>Release history</h2>
+                <h2>Releases</h2>
+                <p><strong>Use the highlighted row for today’s build.</strong> The <code>latest/manifest.json</code> URL moves whenever a new bundle is published; each release row also links to an immutable manifest for reproducible demos and bug reports.</p>
+              </section>
+
+              <section>
                 <table>
                   <thead>
                     <tr>
-                      <th>Version</th>
-                      <th>Published at (UTC)</th>
+                      <th>Release</th>
                       <th>PHP versions</th>
                       <th>Playground</th>
+                      <th>CI speed snapshot</th>
                       <th>Files</th>
-                      <th>Source</th>
                     </tr>
                   </thead>
                   <tbody>
-                    ${rows || '<tr><td colspan="6">No releases published yet.</td></tr>'}
+                    ${rows || '<tr><td colspan="5">No releases published yet.</td></tr>'}
                   </tbody>
                 </table>
               </section>
