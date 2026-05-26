@@ -13,8 +13,8 @@ The toolkit now publishes an experimental Native APIs extension for performance-
 
 - [Native APIs docs](https://wordpress.github.io/php-toolkit/native-apis.html) explain what is accelerated and how the fallback model works.
 - [Compile the host PHP extension](https://wordpress.github.io/php-toolkit/native-php-extension.html) when you want to benchmark the Rust-backed implementation locally.
-- [Test the latest PHP.wasm extension in WordPress Playground](https://playground.wordpress.net/?php=8.4&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json).
-- [Browse Playground extension releases](https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/) for manifests, checksums, immutable test links, and benchmark summaries.
+- [Test the latest PHP.wasm extension in WordPress Playground](https://playground.wordpress.net/?php=8.5&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json).
+- [Browse Playground extension releases](https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/) for manifests, checksums, PHP 8.0–8.5 test links, and benchmark summaries.
 - [Read the extension README](extensions/native-apis/README.md) for lower-level design notes and release checklists.
 
 ### Components

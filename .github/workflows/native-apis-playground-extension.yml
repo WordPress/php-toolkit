@@ -39,6 +39,8 @@ jobs:
     timeout-minutes: 90
     permissions:
       contents: read
+    env:
+      PHP_WASM_VERSIONS: '8.0,8.1,8.2,8.3,8.4,8.5'
 
     steps:
       - uses: actions/checkout@v4
@@ -80,19 +82,30 @@ jobs:
           if (manifest.mode !== 'php-extension') {
             throw new Error(`Unexpected manifest mode: ${manifest.mode}`);
           }
-          if (!Array.isArray(manifest.artifacts) || manifest.artifacts.length !== 1) {
-            throw new Error('Expected one PHP 8.4 artifact.');
+          const expectedPhpVersions = process.env.PHP_WASM_VERSIONS.split(',').map((version) => version.trim()).filter(Boolean);
+          if (!Array.isArray(manifest.artifacts) || manifest.artifacts.length !== expectedPhpVersions.length) {
+            throw new Error(`Expected PHP.wasm artifacts for ${expectedPhpVersions.join(', ')}.`);
           }
+          const seenPhpVersions = new Set();
           for (const artifact of manifest.artifacts) {
-            if (artifact.phpVersion !== '8.4' || !artifact.sourcePath) {
+            if (!artifact || typeof artifact.phpVersion !== 'string' || !expectedPhpVersions.includes(artifact.phpVersion) || !artifact.sourcePath) {
               throw new Error(`Invalid artifact entry: ${JSON.stringify(artifact)}`);
             }
+            if (seenPhpVersions.has(artifact.phpVersion)) {
+              throw new Error(`Duplicate artifact for PHP ${artifact.phpVersion}.`);
+            }
+            seenPhpVersions.add(artifact.phpVersion);
             if ('file' in artifact || 'sha256' in artifact) {
               throw new Error(`Manifest uses retired pre-PR-3580 fields: ${JSON.stringify(artifact)}`);
             }
             const artifactPath = path.join(root, artifact.sourcePath);
             if (!fs.existsSync(artifactPath)) {
               throw new Error(`Manifest references missing artifact: ${artifactPath}`);
+            }
+          }
+          for (const phpVersion of expectedPhpVersions) {
+            if (!seenPhpVersions.has(phpVersion)) {
+              throw new Error(`Missing artifact for PHP ${phpVersion}.`);
             }
           }
           NODE
@@ -290,6 +303,12 @@ jobs:
               .replace(/"/g, '&quot;');
           }
 
+          function comparePhpVersions(left, right) {
+            const leftParts = String(left).split('.').map((part) => Number.parseInt(part, 10) || 0);
+            const rightParts = String(right).split('.').map((part) => Number.parseInt(part, 10) || 0);
+            return (leftParts[0] - rightParts[0]) || (leftParts[1] - rightParts[1]);
+          }
+
           function lastPublishedAt(relativeManifestPath) {
             try {
               return childProcess.execFileSync(
@@ -413,16 +432,16 @@ jobs:
               const benchmarkSummaryPath = path.join(root, version, 'benchmarks', 'benchmark-summary.json');
               const benchmarkSummary = readJson(benchmarkSummaryPath, null);
               const blueprintUrl = `https://raw.githubusercontent.com/${repository}/${version}/extensions/native-apis/playground/blueprint.json`;
-              const phpVersion = Array.isArray(manifest.artifacts) && manifest.artifacts[0] && manifest.artifacts[0].phpVersion
-                ? manifest.artifacts[0].phpVersion
-                : '8.4';
+              const playgroundUrl = (phpVersion) => `https://playground.wordpress.net/?php=${encodeURIComponent(phpVersion)}&php-extension=${encodeURIComponent(manifestUrl)}&blueprint-url=${encodeURIComponent(blueprintUrl)}`;
               const artifacts = Array.isArray(manifest.artifacts)
                 ? manifest.artifacts.map((artifact) => ({
                     phpVersion: artifact.phpVersion,
                     sourcePath: artifact.sourcePath,
                     url: `${rootUrl}/${version}/${artifact.sourcePath}`,
-                  }))
+                    testInPlayground: playgroundUrl(artifact.phpVersion),
+                  })).sort((left, right) => comparePhpVersions(left.phpVersion, right.phpVersion))
                 : [];
+              const preferredArtifact = artifacts[artifacts.length - 1] || null;
 
               return {
                 version,
@@ -447,7 +466,7 @@ jobs:
                 benchmarkSummary: benchmarkSummary && Array.isArray(benchmarkSummary.top)
                   ? benchmarkSummary.top
                   : existing.benchmarkSummary || [],
-                testInPlayground: `https://playground.wordpress.net/?php=${encodeURIComponent(phpVersion)}&php-extension=${encodeURIComponent(manifestUrl)}&blueprint-url=${encodeURIComponent(blueprintUrl)}`,
+                testInPlayground: preferredArtifact ? preferredArtifact.testInPlayground : '',
               };
             })
             .sort((a, b) => {
@@ -501,11 +520,18 @@ jobs:
           }
 
           function renderArtifactLinks(release) {
+            const artifacts = Array.isArray(release.artifacts) ? release.artifacts : [];
+            const testLinks = artifacts.map((artifact) =>
+              `<a href="${escapeHtml(artifact.testInPlayground)}">PHP ${escapeHtml(artifact.phpVersion)}</a>`
+            ).join(', ');
+            const downloadLinks = artifacts.map((artifact) =>
+              `<a href="${escapeHtml(artifact.url)}">PHP ${escapeHtml(artifact.phpVersion)}</a>`
+            ).join(', ');
+
             return [
               `<a href="${escapeHtml(release.manifest)}">Manifest</a>`,
-              Array.isArray(release.artifacts) && release.artifacts[0]
-                ? `<a href="${escapeHtml(release.artifacts[0].url)}">Download .so</a>`
-                : '',
+              testLinks ? `Test: ${testLinks}` : '',
+              downloadLinks ? `Download: ${downloadLinks}` : '',
               `<a href="${escapeHtml(release.checksums)}">SHA256</a>`,
             ].filter(Boolean).join(' · ');
           }
@@ -516,7 +542,7 @@ jobs:
               <td><span>${escapeHtml(formatDate(release.publishedAt))}</span><br>${index === 0 ? '<span class="badge">Latest</span>' : ''}</td>
               <td>${escapeHtml(release.phpVersions.join(', ') || 'unknown')}</td>
               <td>${renderBenchmarkSummary(release)}</td>
-              <td><a href="${escapeHtml(release.testInPlayground)}">Test in Playground web</a> · ${renderArtifactLinks(release)}</td>
+              <td>${release.testInPlayground ? `<a href="${escapeHtml(release.testInPlayground)}">Test latest PHP</a> · ` : ''}${renderArtifactLinks(release)}</td>
             </tr>
           `).join('');
 
@@ -664,10 +690,10 @@ jobs:
             </header>
             <main>
               <section class="hero">
-                <h1>10x the php-toolkit speed</h1>
+                <h1>Native APIs Playground releases</h1>
                 <p>
-                  <strong>The <code>wp_native_apis</code> PHP extension implements the hot <code>php-toolkit</code> code paths in Rust.</strong>
-                  Install it and enjoy the native speed of <code>WP_HTML_Processor</code>, <code>XMLProcessor</code>, <code>URLInTextProcessor</code> and other classes!
+                  Published PHP.wasm builds of the experimental <code>wp_native_apis</code> extension for WordPress Playground.
+                  Use this page to test the latest build, pin an immutable manifest, or inspect release artifacts.
                 </p>
                 <div class="cta-row">
                   ${latestRelease ? `<a class="button primary" href="${escapeHtml(latestRelease.testInPlayground)}">Test in Playground →</a>` : ''}
@@ -676,7 +702,7 @@ jobs:
               </section>
 
               <section>
-                <h2>WASM Builds for Playground Web and CLI</h2>
+                <h2>PHP.wasm builds for Playground Web and CLI</h2>
               </section>
 
               <section>
@@ -684,7 +710,7 @@ jobs:
                   <thead>
                     <tr>
                       <th>Released on</th>
-                      <th>Supported PHP versions</th>
+                      <th>Playground PHP versions</th>
                       <th>CI speed snapshot</th>
                       <th>Links</th>
                     </tr>
