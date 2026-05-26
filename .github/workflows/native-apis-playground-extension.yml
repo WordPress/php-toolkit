@@ -502,7 +502,6 @@ jobs:
           function renderArtifactLinks(release) {
             return [
               `<a href="${escapeHtml(release.manifest)}">Manifest</a>`,
-              release.benchmarkSummaryUrl ? `<a href="${escapeHtml(release.benchmarkSummaryUrl)}">Benchmarks</a>` : '',
               Array.isArray(release.artifacts) && release.artifacts[0]
                 ? `<a href="${escapeHtml(release.artifacts[0].url)}">Download .so</a>`
                 : '',
@@ -513,11 +512,10 @@ jobs:
           const latestRelease = releases[0] || null;
           const rows = releases.map((release, index) => `
             <tr class="${index === 0 ? 'latest-row' : ''}">
-              <td>${index === 0 ? '<span class="badge">Latest</span>' : 'Release'}<br><span class="muted">${escapeHtml(formatDate(release.publishedAt))}</span></td>
+              <td>${index === 0 ? '<span class="badge">Latest</span>' : ''}<br><span>${escapeHtml(formatDate(release.publishedAt))}</span></td>
               <td>${escapeHtml(release.phpVersions.join(', ') || 'unknown')}</td>
-              <td><a href="${escapeHtml(release.testInPlayground)}">Test in Playground</a></td>
               <td>${renderBenchmarkSummary(release)}</td>
-              <td>${renderArtifactLinks(release)}</td>
+              <td><a href="${escapeHtml(release.testInPlayground)}">Test in Playground web</a> · ${renderArtifactLinks(release)}</td>
             </tr>
           `).join('');
 
@@ -557,7 +555,7 @@ jobs:
               header a { color: inherit; text-decoration: none; }
               header nav { display: flex; gap: 1rem; flex-wrap: wrap; }
               .hero {
-                padding: 2rem 1.5rem 1rem;
+                padding: 2rem 0;
               }
               h1 {
                 font-size: clamp(2rem, 5vw, 3rem);
@@ -665,40 +663,39 @@ jobs:
             </header>
             <main>
               <section class="hero">
-                <p class="pill">Experimental PHP.wasm extension</p>
-                <h1>Test the Native APIs extension in Playground</h1>
-                <p class="lede">Open Playground to confirm the WASM extension loaded, run a small smoke test, and see quick browser-side timing numbers. Use the release rows below when you need a stable manifest URL.</p>
+                <h1>10x the php-toolkit speed</h1>
+                <p>
+                  <strong>The <code>wp_native_apis</code> PHP extension implements the hot code paths in Rust.</strong>
+                  Enjoy the native speed of WP_HTML_Processor, XMLProcessor, URLInTextProcessor and other classes!
+                </p>
                 <div class="cta-row">
                   ${latestRelease ? `<a class="button primary" href="${escapeHtml(latestRelease.testInPlayground)}">Test in Playground →</a>` : ''}
                   <a class="button" href="../native-apis.html">Read the docs</a>
-                  <a class="button" href="${escapeHtml(rootUrl)}/releases.json">releases.json</a>
                 </div>
               </section>
 
-              <section class="notice">
-                <strong>What this is:</strong> an experimental PHP.wasm extension release channel. The Playground link loads <code>wp_native_apis</code> before PHP starts, then opens a landing page that reports whether the extension is available. CI host-extension benchmarks are shown as directional speed snapshots; browser timings are device-specific.
-              </section>
-
               <section>
-                <h2>Releases</h2>
-                <p><strong>Use the highlighted row for today’s build.</strong> The <code>latest/manifest.json</code> URL moves whenever a new bundle is published; each release row also links to an immutable manifest for reproducible demos and bug reports.</p>
+                <h2>WASM Builds for Playground Web and CLI</h2>
               </section>
 
               <section>
                 <table>
                   <thead>
                     <tr>
-                      <th>Release</th>
-                      <th>PHP versions</th>
-                      <th>Playground</th>
+                      <th>Released on</th>
+                      <th>Supported PHP versions</th>
                       <th>CI speed snapshot</th>
-                      <th>Files</th>
+                      <th>Links</th>
                     </tr>
                   </thead>
                   <tbody>
                     ${rows || '<tr><td colspan="5">No releases published yet.</td></tr>'}
                   </tbody>
                 </table>
+              </section>
+
+              <section>
+                <h2>Native PHP Extension Builds are coming soon</h2>
               </section>
             </main>
             <footer>
