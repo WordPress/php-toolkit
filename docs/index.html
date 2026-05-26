@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PHP Toolkit — PHP libraries for WordPress and the open web</title>
 <meta name="description" content="A PHP toolkit for parsing HTML, reading and writing ZIP archives, streaming bytes, importing content, and a dozen other jobs that PHP often outsources to extensions. Runs on PHP 7.2+ and inside the browser via WordPress Playground.">
-<link rel="stylesheet" href="assets/style.css?v=20260429-credits">
+<link rel="stylesheet" href="assets/style.css?v=20260526-native-apis">
 </head>
 <body>
 <header class="site">
@@ -13,6 +13,7 @@
 	<nav>
 		<a href="learn/">Learn</a>
 		<a href="reference/">Reference</a>
+		<a href="native-apis.html">Native APIs</a>
 		<a class="github" href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
@@ -45,6 +46,15 @@
 			<span>Eighteen component pages, each with a one-line definition, a minimal runnable example, refinements, the pitfalls people actually trip on, and links back to the tutorial chapters where the concept first appears.</span>
 			<em>Browse all components ↓</em>
 		</a>
+	</div>
+</section>
+
+<section class="native-promo">
+	<h2>Experimental native acceleration</h2>
+	<p>The toolkit stays dependency-free by default, but the experimental Native APIs extension explores faster HTML, XML, and URL-in-text workloads for environments that can load PHP extensions. Try the PHP.wasm smoke test in WordPress Playground, inspect published manifests, and compare CI benchmark snapshots.</p>
+	<div class="cta-row">
+		<a class="cta primary" href="native-apis.html">Explore Native APIs →</a>
+		<a class="cta" href="wp_native_apis-wasm-extension/">Release index</a>
 	</div>
 </section>
 
