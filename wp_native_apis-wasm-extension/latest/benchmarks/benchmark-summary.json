@@ -1,0 +1,105 @@
+{
+    "generatedAt": "2026-05-26T19:52:04+00:00",
+    "command": "php -d extension=extensions/native-apis/target/release/libwp_native_apis.so bin/benchmark-native-apis.php --iterations=50 --mode=both --disable-native-defaults --require-native",
+    "count": 4,
+    "top": [
+        {
+            "name": "url-in-text-processor",
+            "label": "URL-in-text scan",
+            "component": "URL-in-text",
+            "iterations": 50,
+            "operations": 18000,
+            "phpWallSeconds": 1.922052,
+            "nativeWallSeconds": 0.014062,
+            "speedup": 136.68,
+            "phpClass": "WordPress\\DataLiberation\\URL\\URLInTextProcessor",
+            "nativeClass": "WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor"
+        },
+        {
+            "name": "html-processor",
+            "label": "HTML fragment processor",
+            "component": "HTML",
+            "iterations": 50,
+            "operations": 72200,
+            "phpWallSeconds": 0.649519,
+            "nativeWallSeconds": 0.07818,
+            "speedup": 8.31,
+            "phpClass": "WP_HTML_Processor",
+            "nativeClass": "WP_HTML_Native_Processor"
+        },
+        {
+            "name": "html-tag-processor",
+            "label": "HTML tag scan",
+            "component": "HTML",
+            "iterations": 50,
+            "operations": 66200,
+            "phpWallSeconds": 0.101912,
+            "nativeWallSeconds": 0.017885,
+            "speedup": 5.7,
+            "phpClass": "WP_HTML_Tag_Processor",
+            "nativeClass": "WP_HTML_Native_Tag_Processor"
+        },
+        {
+            "name": "xml-processor",
+            "label": "XML processor scan",
+            "component": "XML",
+            "iterations": 50,
+            "operations": 48200,
+            "phpWallSeconds": 0.149457,
+            "nativeWallSeconds": 0.034095,
+            "speedup": 4.38,
+            "phpClass": "WordPress\\XML\\XMLProcessor",
+            "nativeClass": "WordPress\\XML\\NativeXMLProcessor"
+        }
+    ],
+    "comparisons": [
+        {
+            "name": "url-in-text-processor",
+            "label": "URL-in-text scan",
+            "component": "URL-in-text",
+            "iterations": 50,
+            "operations": 18000,
+            "phpWallSeconds": 1.922052,
+            "nativeWallSeconds": 0.014062,
+            "speedup": 136.68,
+            "phpClass": "WordPress\\DataLiberation\\URL\\URLInTextProcessor",
+            "nativeClass": "WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor"
+        },
+        {
+            "name": "html-processor",
+            "label": "HTML fragment processor",
+            "component": "HTML",
+            "iterations": 50,
+            "operations": 72200,
+            "phpWallSeconds": 0.649519,
+            "nativeWallSeconds": 0.07818,
+            "speedup": 8.31,
+            "phpClass": "WP_HTML_Processor",
+            "nativeClass": "WP_HTML_Native_Processor"
+        },
+        {
+            "name": "html-tag-processor",
+            "label": "HTML tag scan",
+            "component": "HTML",
+            "iterations": 50,
+            "operations": 66200,
+            "phpWallSeconds": 0.101912,
+            "nativeWallSeconds": 0.017885,
+            "speedup": 5.7,
+            "phpClass": "WP_HTML_Tag_Processor",
+            "nativeClass": "WP_HTML_Native_Tag_Processor"
+        },
+        {
+            "name": "xml-processor",
+            "label": "XML processor scan",
+            "component": "XML",
+            "iterations": 50,
+            "operations": 48200,
+            "phpWallSeconds": 0.149457,
+            "nativeWallSeconds": 0.034095,
+            "speedup": 4.38,
+            "phpClass": "WordPress\\XML\\XMLProcessor",
+            "nativeClass": "WordPress\\XML\\NativeXMLProcessor"
+        }
+    ]
+}

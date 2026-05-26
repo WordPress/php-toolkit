@@ -7,82 +7,268 @@
   <style>
     :root {
       color-scheme: light dark;
+      --accent: #2563eb;
+      --muted: #5f6673;
+      --border: color-mix(in srgb, currentColor 18%, transparent);
+      --panel: color-mix(in srgb, currentColor 5%, transparent);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     body {
       margin: 0;
-      padding: 2rem;
-      line-height: 1.5;
+      line-height: 1.55;
     }
-    main {
-      max-width: 72rem;
+    header,
+    main,
+    footer {
+      max-width: 76rem;
+      margin: 0 auto;
+      padding: 1.25rem 1.5rem;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    header a { color: inherit; text-decoration: none; }
+    header nav { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .hero {
+      padding: 3rem 1.5rem 2rem;
+    }
+    h1 {
+      font-size: clamp(2rem, 6vw, 4rem);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      margin: 0 0 1rem;
+    }
+    h2 { margin-top: 2.5rem; }
+    .lede {
+      max-width: 54rem;
+      font-size: 1.15rem;
+      color: var(--muted);
+    }
+    .cta-row,
+    .link-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin: 1.25rem 0;
+    }
+    .button,
+    .pill {
+      display: inline-block;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.62rem 1rem;
+      text-decoration: none;
+      color: inherit;
+      font-weight: 600;
+    }
+    .button.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .notice,
+    .release-panel,
+    .benchmark-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel);
+    }
+    .notice,
+    .release-panel {
+      padding: 1rem 1.1rem;
+    }
+    .release-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.75fr);
+      gap: 1.25rem;
+      align-items: start;
+    }
+    .benchmark-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.8rem;
+      margin: 1rem 0;
+    }
+    .benchmark-card {
+      padding: 0.9rem;
+    }
+    .benchmark-card strong,
+    .benchmark-card b,
+    .benchmark-card span,
+    .benchmark-card small {
+      display: block;
+    }
+    .benchmark-card span,
+    .benchmark-card small,
+    .muted {
+      color: var(--muted);
+    }
+    .benchmark-card b {
+      margin: 0.35rem 0;
+      font-size: 1.3rem;
     }
     table {
       border-collapse: collapse;
       width: 100%;
+      margin-top: 1rem;
     }
     th,
     td {
-      border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-      padding: 0.65rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem;
       text-align: left;
       vertical-align: top;
     }
-    th {
-      font-size: 0.85rem;
-    }
+    th { font-size: 0.85rem; }
     code {
       font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+    a { color: var(--accent); }
+    footer { color: var(--muted); }
+    @media (max-width: 760px) {
+      .release-panel { grid-template-columns: 1fr; }
+      table { display: block; overflow-x: auto; }
     }
   </style>
 </head>
 <body>
+  <header>
+    <a href="../"><strong>PHP Toolkit</strong></a>
+    <nav>
+      <a href="../native-apis.html">Native APIs docs</a>
+      <a href="https://github.com/WordPress/php-toolkit">GitHub</a>
+    </nav>
+  </header>
   <main>
-    <h1>wp_native_apis PHP.wasm Extension Releases</h1>
-    <p>The latest Playground manifest is <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/latest/manifest.json"><code>latest/manifest.json</code></a>. Use immutable commit manifests below when a test or document needs a stable release.</p>
-    <p>Machine-readable release history is available as <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/releases.json"><code>releases.json</code></a>.</p>
-    <table>
-      <thead>
-        <tr>
-          <th>Version</th>
-          <th>Published at (UTC)</th>
-          <th>PHP versions</th>
-          <th>Manifest</th>
-          <th>SHA256</th>
-          <th>Commit</th>
-        </tr>
-      </thead>
-      <tbody>
-        
+    <section class="hero">
+      <p class="pill">Experimental PHP.wasm extension</p>
+      <h1>wp_native_apis releases</h1>
+      <p class="lede">Published manifests for testing the PHP Toolkit Native APIs extension in WordPress Playground. Use the latest link for quick manual testing, or an immutable commit manifest when a document, demo, or test needs a reproducible runtime.</p>
+      <div class="cta-row">
+        <a class="button primary" href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2F07bab2cb446b4fd97dd10d697af95ec7683354bc%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2F07bab2cb446b4fd97dd10d697af95ec7683354bc%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test latest in Playground →</a>
+        <a class="button" href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/latest/manifest.json">Latest manifest</a>
+        <a class="button" href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/releases.json">releases.json</a>
+      </div>
+    </section>
+
+    <section class="notice">
+      <strong>Status:</strong> this is an experimental Playground extension release channel. Browser Playground loads the PHP.wasm side module with the <code>php-extension</code> query parameter before PHP starts. The host Rust-backed extension is benchmarked separately; the Playground bundle should not be treated as full host-extension parity.
+    </section>
+
+    <section class="release-panel">
+      <div>
+        <h2>Latest release</h2>
+        <p><code>07bab2cb446b4fd97dd10d697af95ec7683354bc</code></p>
+        <p class="muted">Published 2026-05-26T19:52:24Z · PHP 8.4</p>
+        <div class="link-row">
+          <a class="button primary" href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2F07bab2cb446b4fd97dd10d697af95ec7683354bc%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2F07bab2cb446b4fd97dd10d697af95ec7683354bc%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground</a>
+          <a class="button" href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/07bab2cb446b4fd97dd10d697af95ec7683354bc/manifest.json">Manifest</a>
+          <a class="button" href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/07bab2cb446b4fd97dd10d697af95ec7683354bc/SHA256SUMS">Checksums</a>
+          <a class="button" href="https://github.com/WordPress/php-toolkit/commit/07bab2cb446b4fd97dd10d697af95ec7683354bc">Source commit</a>
+        </div>
+      </div>
+      <div>
+        <h2>Benchmark highlights</h2>
+        <div class="benchmark-grid">
+    <article class="benchmark-card">
+      <strong>URL-in-text scan</strong>
+      <span>URL-in-text</span>
+      <b>136.68× faster</b>
+      <small>PHP 1.92 s · native 14.1 ms</small>
+    </article>
+  
+    <article class="benchmark-card">
+      <strong>HTML fragment processor</strong>
+      <span>HTML</span>
+      <b>8.31× faster</b>
+      <small>PHP 649.5 ms · native 78.2 ms</small>
+    </article>
+  
+    <article class="benchmark-card">
+      <strong>HTML tag scan</strong>
+      <span>HTML</span>
+      <b>5.7× faster</b>
+      <small>PHP 101.9 ms · native 17.9 ms</small>
+    </article>
+  
+    <article class="benchmark-card">
+      <strong>XML processor scan</strong>
+      <span>XML</span>
+      <b>4.38× faster</b>
+      <small>PHP 149.5 ms · native 34.1 ms</small>
+    </article>
+  </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>How to choose a manifest</h2>
+      <p><strong><code>latest/manifest.json</code></strong> always points at the newest published bundle. It is convenient for manual testing, but it moves whenever <code>trunk</code> publishes a new extension.</p>
+      <p><strong>Commit manifests</strong> are immutable. Use the release-history links below for docs, bug reports, demos, and tests that need to keep loading the same bundle over time.</p>
+    </section>
+
+    <section>
+      <h2>Release history</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Version</th>
+            <th>Published at (UTC)</th>
+            <th>PHP versions</th>
+            <th>Playground</th>
+            <th>Files</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+  <tr>
+    <td><code>07bab2cb446b</code></td>
+    <td>2026-05-26T19:52:24Z</td>
+    <td>8.4</td>
+    <td><a href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2F07bab2cb446b4fd97dd10d697af95ec7683354bc%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2F07bab2cb446b4fd97dd10d697af95ec7683354bc%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground</a></td>
+    <td><a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/07bab2cb446b4fd97dd10d697af95ec7683354bc/manifest.json">manifest</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/07bab2cb446b4fd97dd10d697af95ec7683354bc/SHA256SUMS">SHA256</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/07bab2cb446b4fd97dd10d697af95ec7683354bc/wp_native_apis-php8.4-jspi.so">wp_native_apis-php8.4-jspi.so</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/07bab2cb446b4fd97dd10d697af95ec7683354bc/benchmarks/benchmark.json">benchmark JSON</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/07bab2cb446b4fd97dd10d697af95ec7683354bc/benchmarks/benchmark-summary.json">benchmark summary</a></td>
+    <td><a href="https://github.com/WordPress/php-toolkit/commit/07bab2cb446b4fd97dd10d697af95ec7683354bc">commit</a> · <a href="https://github.com/WordPress/php-toolkit/actions/runs/26471079584">workflow</a></td>
+  </tr>
+
   <tr>
     <td><code>cb3aa252c65f</code></td>
     <td>2026-05-19T20:01:42Z</td>
     <td>8.4</td>
-    <td><a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/cb3aa252c65f9c8a592ef45838948c9d11de79df/manifest.json">manifest</a></td>
-    <td><a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/cb3aa252c65f9c8a592ef45838948c9d11de79df/SHA256SUMS">checksums</a></td>
-    <td><a href="https://github.com/WordPress/php-toolkit/commit/cb3aa252c65f9c8a592ef45838948c9d11de79df">commit</a></td>
+    <td><a href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Fcb3aa252c65f9c8a592ef45838948c9d11de79df%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fcb3aa252c65f9c8a592ef45838948c9d11de79df%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground</a></td>
+    <td><a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/cb3aa252c65f9c8a592ef45838948c9d11de79df/manifest.json">manifest</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/cb3aa252c65f9c8a592ef45838948c9d11de79df/SHA256SUMS">SHA256</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/cb3aa252c65f9c8a592ef45838948c9d11de79df/wp_native_apis-php8.4-jspi.so">wp_native_apis-php8.4-jspi.so</a></td>
+    <td><a href="https://github.com/WordPress/php-toolkit/commit/cb3aa252c65f9c8a592ef45838948c9d11de79df">commit</a> · <a href="https://github.com/WordPress/php-toolkit/actions/runs/26121538219">workflow</a></td>
   </tr>
 
   <tr>
     <td><code>85b444453837</code></td>
     <td>2026-05-17T23:39:07Z</td>
     <td>8.4</td>
-    <td><a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/85b44445383779ecbc8ce23c0ad8f1db1e84f9ac/manifest.json">manifest</a></td>
-    <td><a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/85b44445383779ecbc8ce23c0ad8f1db1e84f9ac/SHA256SUMS">checksums</a></td>
-    <td><a href="https://github.com/WordPress/php-toolkit/commit/85b44445383779ecbc8ce23c0ad8f1db1e84f9ac">commit</a></td>
+    <td><a href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2F85b44445383779ecbc8ce23c0ad8f1db1e84f9ac%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2F85b44445383779ecbc8ce23c0ad8f1db1e84f9ac%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground</a></td>
+    <td><a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/85b44445383779ecbc8ce23c0ad8f1db1e84f9ac/manifest.json">manifest</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/85b44445383779ecbc8ce23c0ad8f1db1e84f9ac/SHA256SUMS">SHA256</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/85b44445383779ecbc8ce23c0ad8f1db1e84f9ac/wp_native_apis-php8.4-jspi.so">wp_native_apis-php8.4-jspi.so</a></td>
+    <td><a href="https://github.com/WordPress/php-toolkit/commit/85b44445383779ecbc8ce23c0ad8f1db1e84f9ac">commit</a> · <a href="https://github.com/WordPress/php-toolkit/actions/runs/26005917092">workflow</a></td>
   </tr>
 
   <tr>
     <td><code>ff8361f4243e</code></td>
     <td>2026-05-17T22:54:54Z</td>
     <td>8.4</td>
-    <td><a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/ff8361f4243eee771fec2571dd1195d44c90dbf6/manifest.json">manifest</a></td>
-    <td><a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/ff8361f4243eee771fec2571dd1195d44c90dbf6/SHA256SUMS">checksums</a></td>
+    <td><a href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Fff8361f4243eee771fec2571dd1195d44c90dbf6%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fff8361f4243eee771fec2571dd1195d44c90dbf6%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground</a></td>
+    <td><a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/ff8361f4243eee771fec2571dd1195d44c90dbf6/manifest.json">manifest</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/ff8361f4243eee771fec2571dd1195d44c90dbf6/SHA256SUMS">SHA256</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/ff8361f4243eee771fec2571dd1195d44c90dbf6/wp_native_apis-php8.4-jspi.so">wp_native_apis-php8.4-jspi.so</a></td>
     <td><a href="https://github.com/WordPress/php-toolkit/commit/ff8361f4243eee771fec2571dd1195d44c90dbf6">commit</a></td>
   </tr>
 
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </section>
   </main>
+  <footer>
+    Machine-readable release history: <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/releases.json"><code>releases.json</code></a>.
+  </footer>
 </body>
 </html>
