@@ -144,11 +144,11 @@
     <section class="hero">
       <h1>10x the php-toolkit speed</h1>
       <p>
-        <strong>The <code>wp_native_apis</code> PHP extension implements the hot code paths in Rust.</strong>
-        Enjoy the native speed of WP_HTML_Processor, XMLProcessor, URLInTextProcessor and other classes!
+        <strong>The <code>wp_native_apis</code> PHP extension implements the hot <code>php-toolkit</code> code paths in Rust.</strong>
+        Install it and enjoy the native speed of <code>WP_HTML_Processor</code>, <code>XMLProcessor</code>, <code>URLInTextProcessor</code> and other classes!
       </p>
       <div class="cta-row">
-        <a class="button primary" href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Faf9dda154fa7d41f32430ce9c040d0eec3e3cfdd%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Faf9dda154fa7d41f32430ce9c040d0eec3e3cfdd%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground →</a>
+        <a class="button primary" href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Fd00b7c9fc836ba51c88428876b54b8983a933cfb%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fd00b7c9fc836ba51c88428876b54b8983a933cfb%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground →</a>
         <a class="button" href="../native-apis.html">Read the docs</a>
       </div>
     </section>
@@ -170,7 +170,32 @@
         <tbody>
           
   <tr class="latest-row">
-    <td><span class="badge">Latest</span><br><span>2026-05-26</span></td>
+    <td><span>2026-05-26</span><br><span class="badge">Latest</span></td>
+    <td>8.4</td>
+    <td><div class="benchmark-list">
+    <span class="benchmark-chip">
+      <strong>154.67×</strong>
+      URL-in-text scan
+      <small>PHP 2.43 s · native 15.7 ms</small>
+    </span>
+  
+    <span class="benchmark-chip">
+      <strong>10.34×</strong>
+      HTML fragment processor
+      <small>PHP 750.6 ms · native 72.6 ms</small>
+    </span>
+  
+    <span class="benchmark-chip">
+      <strong>6.45×</strong>
+      HTML tag scan
+      <small>PHP 123.0 ms · native 19.1 ms</small>
+    </span>
+  </div></td>
+    <td><a href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Fd00b7c9fc836ba51c88428876b54b8983a933cfb%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fd00b7c9fc836ba51c88428876b54b8983a933cfb%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground web</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/d00b7c9fc836ba51c88428876b54b8983a933cfb/manifest.json">Manifest</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/d00b7c9fc836ba51c88428876b54b8983a933cfb/wp_native_apis-php8.4-jspi.so">Download .so</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/d00b7c9fc836ba51c88428876b54b8983a933cfb/SHA256SUMS">SHA256</a></td>
+  </tr>
+
+  <tr class="">
+    <td><span>2026-05-26</span><br></td>
     <td>8.4</td>
     <td><div class="benchmark-list">
     <span class="benchmark-chip">
@@ -195,7 +220,7 @@
   </tr>
 
   <tr class="">
-    <td><br><span>2026-05-26</span></td>
+    <td><span>2026-05-26</span><br></td>
     <td>8.4</td>
     <td><div class="benchmark-list">
     <span class="benchmark-chip">
@@ -220,7 +245,7 @@
   </tr>
 
   <tr class="">
-    <td><br><span>2026-05-26</span></td>
+    <td><span>2026-05-26</span><br></td>
     <td>8.4</td>
     <td><div class="benchmark-list">
     <span class="benchmark-chip">
@@ -245,21 +270,21 @@
   </tr>
 
   <tr class="">
-    <td><br><span>2026-05-19</span></td>
+    <td><span>2026-05-19</span><br></td>
     <td>8.4</td>
     <td><span class="muted">No benchmark summary</span></td>
     <td><a href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Fcb3aa252c65f9c8a592ef45838948c9d11de79df%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fcb3aa252c65f9c8a592ef45838948c9d11de79df%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground web</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/cb3aa252c65f9c8a592ef45838948c9d11de79df/manifest.json">Manifest</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/cb3aa252c65f9c8a592ef45838948c9d11de79df/wp_native_apis-php8.4-jspi.so">Download .so</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/cb3aa252c65f9c8a592ef45838948c9d11de79df/SHA256SUMS">SHA256</a></td>
   </tr>
 
   <tr class="">
-    <td><br><span>2026-05-17</span></td>
+    <td><span>2026-05-17</span><br></td>
     <td>8.4</td>
     <td><span class="muted">No benchmark summary</span></td>
     <td><a href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2F85b44445383779ecbc8ce23c0ad8f1db1e84f9ac%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2F85b44445383779ecbc8ce23c0ad8f1db1e84f9ac%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground web</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/85b44445383779ecbc8ce23c0ad8f1db1e84f9ac/manifest.json">Manifest</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/85b44445383779ecbc8ce23c0ad8f1db1e84f9ac/wp_native_apis-php8.4-jspi.so">Download .so</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/85b44445383779ecbc8ce23c0ad8f1db1e84f9ac/SHA256SUMS">SHA256</a></td>
   </tr>
 
   <tr class="">
-    <td><br><span>2026-05-17</span></td>
+    <td><span>2026-05-17</span><br></td>
     <td>8.4</td>
     <td><span class="muted">No benchmark summary</span></td>
     <td><a href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Fff8361f4243eee771fec2571dd1195d44c90dbf6%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fff8361f4243eee771fec2571dd1195d44c90dbf6%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground web</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/ff8361f4243eee771fec2571dd1195d44c90dbf6/manifest.json">Manifest</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/ff8361f4243eee771fec2571dd1195d44c90dbf6/wp_native_apis-php8.4-jspi.so">Download .so</a> · <a href="https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/ff8361f4243eee771fec2571dd1195d44c90dbf6/SHA256SUMS">SHA256</a></td>
@@ -271,6 +296,7 @@
 
     <section>
       <h2>Native PHP Extension Builds are coming soon</h2>
+      <p>Want to build it today? Follow the <a href="https://wordpress.github.io/php-toolkit/native-php-extension.html">native PHP compilation guide</a>.</p>
     </section>
   </main>
   <footer>
