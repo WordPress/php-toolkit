@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compile the Native APIs extension for PHP — PHP Toolkit</title>
+<meta name="description" content="Build, load, verify, and benchmark the experimental wp_native_apis extension for host PHP.">
+<link rel="stylesheet" href="assets/style.css?v=20260526-native-apis">
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="./">PHP Toolkit</a>
+	<nav>
+		<a href="learn/">Learn</a>
+		<a href="reference/">Reference</a>
+		<a href="native-apis.html">Native APIs</a>
+		<a class="github" href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+
+<main class="native-page">
+
+<section class="native-hero">
+	<p class="eyebrow">Experimental native PHP build</p>
+	<h1>Compile <code>wp_native_apis</code> for host PHP.</h1>
+	<p class="lede">Use this guide when you want the Rust-backed Native APIs extension on a local PHP CLI or server. The build is tied to the PHP version and platform you compile against, so treat it as a development and benchmarking path until packaged host releases are published.</p>
+	<div class="cta-row">
+		<a class="cta primary" href="#build">Build it →</a>
+		<a class="cta" href="native-apis.html">Native APIs overview</a>
+		<a class="cta" href="wp_native_apis-wasm-extension/">Playground releases</a>
+	</div>
+</section>
+
+<section>
+	<h2>What you will build</h2>
+	<p>The host PHP extension is the Rust-backed implementation built with <code>ext-php-rs</code>. When it is loaded before the toolkit bootstrap, covered HTML, XML, and URL-in-text classes can delegate hot paths to native code. If the extension is absent, incompatible, or disabled, the public PHP APIs keep using their pure-PHP fallback implementations.</p>
+	<div class="callout warning">
+		<strong>Not the Playground build:</strong> WordPress Playground uses a PHP.wasm extension bundle. This page is for native host PHP, such as a local Linux PHP CLI with development headers.
+	</div>
+</section>
+
+<section>
+	<h2>Prerequisites</h2>
+	<ul>
+		<li>A checkout of <a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a>.</li>
+		<li>The PHP CLI you want to target, plus matching development headers and <code>php-config</code>.</li>
+		<li>Rust and Cargo.</li>
+		<li>Clang and libclang for Rust bindgen.</li>
+		<li>Composer dependencies installed from the repository root.</li>
+	</ul>
+	<p>On Ubuntu, the CI benchmark job installs the native build dependencies like this:</p>
+	<pre><code>sudo apt-get update
+sudo apt-get install -y clang libclang-dev
+composer install --prefer-dist --no-progress --no-suggest</code></pre>
+	<p>On other systems, install equivalent PHP development headers, Rust, Cargo, Clang, and libclang. If <code>php-config</code> or libclang are not discoverable, pass their paths explicitly in the build step.</p>
+</section>
+
+<section id="build">
+	<h2>Build the extension</h2>
+	<p>Run the helper script from the repository root:</p>
+	<pre><code>extensions/native-apis/build-extension.sh</code></pre>
+	<p>If your target PHP is not the first <code>php-config</code> on <code>PATH</code>, point the build at the exact one you want:</p>
+	<pre><code>PHP_CONFIG=/path/to/php-config \
+LIBCLANG_PATH=/path/to/libclang/lib \
+extensions/native-apis/build-extension.sh</code></pre>
+	<p>The documented Linux build writes the shared object here:</p>
+	<pre><code>extensions/native-apis/target/release/libwp_native_apis.so</code></pre>
+	<p>Use the same PHP binary at runtime that matches the <code>php-config</code> used at build time. Native PHP extensions are ABI-specific; do not reuse one shared object across PHP versions.</p>
+</section>
+
+<section>
+	<h2>Verify that PHP can load it</h2>
+	<p>Load the extension before running the native verifier:</p>
+	<pre><code>php -d extension=extensions/native-apis/target/release/libwp_native_apis.so \
+	extensions/native-apis/tests/verify-native-apis.php</code></pre>
+	<p>A successful run means PHP loaded the extension and the expected native classes are registered. If the script reports that the extension is unavailable, re-check the PHP version, <code>php-config</code> path, shared-object path, and libclang setup.</p>
+</section>
+
+<section>
+	<h2>Use it through the public toolkit classes</h2>
+	<p>Load the extension before the toolkit bootstrap. The public wrappers decide whether a native delegate is available and fall back to PHP when it is not.</p>
+	<pre><code>php -d extension=extensions/native-apis/target/release/libwp_native_apis.so &lt;&lt;'PHP'
+&lt;?php
+require __DIR__ . '/bootstrap.php';
+
+var_dump( is_subclass_of( 'WP_HTML_Tag_Processor', 'WP_HTML_Native_Tag_Processor' ) );
+var_dump( is_subclass_of( 'WordPress\\XML\\XMLProcessor', 'WordPress\\XML\\NativeXMLProcessor' ) );
+PHP</code></pre>
+	<p>To force the safe pure-PHP path for comparison, define <code>WP_NATIVE_APIS_DISABLE_DEFAULTS</code> before loading the toolkit:</p>
+	<pre><code>php -d extension=extensions/native-apis/target/release/libwp_native_apis.so &lt;&lt;'PHP'
+&lt;?php
+define( 'WP_NATIVE_APIS_DISABLE_DEFAULTS', true );
+require __DIR__ . '/bootstrap.php';
+
+var_dump( is_subclass_of( 'WP_HTML_Tag_Processor', 'WP_HTML_Native_Tag_Processor' ) );
+PHP</code></pre>
+</section>
+
+<section>
+	<h2>Run the benchmark</h2>
+	<p>The same benchmark command runs in CI for the release page. It requires the native classes, compares PHP and native modes, and disables native defaults so both paths are measured deliberately.</p>
+	<pre><code>php -d extension=extensions/native-apis/target/release/libwp_native_apis.so \
+	bin/benchmark-native-apis.php \
+	--iterations=50 \
+	--mode=both \
+	--disable-native-defaults \
+	--require-native</code></pre>
+	<p>Benchmark numbers are machine-specific. Use them to compare PHP and native behavior on the same machine, not as universal throughput guarantees.</p>
+</section>
+
+<section>
+	<h2>Troubleshooting</h2>
+	<div class="native-grid two">
+		<article>
+			<h3><code>php-config</code> was not found</h3>
+			<p>Install PHP development headers for the PHP version you want to target, or run the build with <code>PHP_CONFIG=/path/to/php-config</code>.</p>
+		</article>
+		<article>
+			<h3>PHP cannot load the shared object</h3>
+			<p>Confirm the shared object path is correct and that the runtime PHP binary matches the PHP ABI used for compilation.</p>
+		</article>
+		<article>
+			<h3>Clang or libclang is missing</h3>
+			<p>Install Clang and libclang, or set <code>LIBCLANG_PATH</code> to the directory containing the libclang library.</p>
+		</article>
+		<article>
+			<h3>You only want to test Rust parser kernels</h3>
+			<p>Run <code>cd extensions/native-apis &amp;&amp; cargo test</code>. This path does not require PHP development headers.</p>
+		</article>
+	</div>
+</section>
+
+</main>
+
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · <a href="native-apis.html">Native APIs</a>
+</footer>
+</body>
+</html>
