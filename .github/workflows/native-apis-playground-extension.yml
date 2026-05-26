@@ -269,6 +269,7 @@ jobs:
           const repository = process.env.GITHUB_REPOSITORY;
           const [owner, repo] = repository.split('/');
           const root = path.join(pagesDir, extensionPath);
+          const siteRootUrl = `https://${owner.toLowerCase()}.github.io/${repo}`;
           const rootUrl = `https://${owner.toLowerCase()}.github.io/${repo}/${extensionPath}`;
           const releasesPath = path.join(root, 'releases.json');
           const indexPath = path.join(root, 'index.html');
@@ -512,7 +513,7 @@ jobs:
           const latestRelease = releases[0] || null;
           const rows = releases.map((release, index) => `
             <tr class="${index === 0 ? 'latest-row' : ''}">
-              <td>${index === 0 ? '<span class="badge">Latest</span>' : ''}<br><span>${escapeHtml(formatDate(release.publishedAt))}</span></td>
+              <td><span>${escapeHtml(formatDate(release.publishedAt))}</span><br>${index === 0 ? '<span class="badge">Latest</span>' : ''}</td>
               <td>${escapeHtml(release.phpVersions.join(', ') || 'unknown')}</td>
               <td>${renderBenchmarkSummary(release)}</td>
               <td><a href="${escapeHtml(release.testInPlayground)}">Test in Playground web</a> · ${renderArtifactLinks(release)}</td>
@@ -665,8 +666,8 @@ jobs:
               <section class="hero">
                 <h1>10x the php-toolkit speed</h1>
                 <p>
-                  <strong>The <code>wp_native_apis</code> PHP extension implements the hot code paths in Rust.</strong>
-                  Enjoy the native speed of WP_HTML_Processor, XMLProcessor, URLInTextProcessor and other classes!
+                  <strong>The <code>wp_native_apis</code> PHP extension implements the hot <code>php-toolkit</code> code paths in Rust.</strong>
+                  Install it and enjoy the native speed of <code>WP_HTML_Processor</code>, <code>XMLProcessor</code>, <code>URLInTextProcessor</code> and other classes!
                 </p>
                 <div class="cta-row">
                   ${latestRelease ? `<a class="button primary" href="${escapeHtml(latestRelease.testInPlayground)}">Test in Playground →</a>` : ''}
@@ -696,6 +697,7 @@ jobs:
 
               <section>
                 <h2>Native PHP Extension Builds are coming soon</h2>
+                <p>Want to build it today? Follow the <a href="${escapeHtml(siteRootUrl)}/native-php-extension.html">native PHP compilation guide</a>.</p>
               </section>
             </main>
             <footer>
