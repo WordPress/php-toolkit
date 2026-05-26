@@ -78,13 +78,13 @@
 
 <section class="native-test">
 	<h2>Test the latest Playground build</h2>
-	<p>The smoke-test Blueprint writes a small PHP page into WordPress Playground and checks that the native classes are registered before running one HTML tag, HTML processor, XML, and URL-in-text operation.</p>
+	<p>The smoke-test Blueprint writes a small PHP landing page into WordPress Playground. It checks that the native classes were registered before PHP started, runs a few representative operations, and shows quick browser-side timing numbers.</p>
 	<ol>
 		<li>Open the Playground URL with <code>php=8.4</code> and the latest <code>wp_native_apis</code> manifest.</li>
-		<li>Wait for the Blueprint to create <code>/native-api-smoke.php</code>.</li>
-		<li>Confirm the page ends with <code>PASS: Native API extension classes are available.</code></li>
+		<li>Wait for the Blueprint to open <code>/native-api-smoke.php</code>.</li>
+		<li>Confirm the page says <code>wp_native_apis WASM extension loaded</code>, then review the timing cards.</li>
 	</ol>
-	<p><a class="cta primary" href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Run the smoke test in Playground →</a></p>
+	<p><a class="cta primary" href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground →</a></p>
 </section>
 
 <section class="native-benchmarks">
