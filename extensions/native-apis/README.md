@@ -5,6 +5,12 @@ native HTML, XML, and URL-in-text API work. It registers native classes that the
 PHP wrappers can use when the extension is loaded, while preserving PHP-only
 fallback behavior when it is unavailable or explicitly disabled.
 
+Public docs and releases:
+
+- User-facing overview: <https://wordpress.github.io/php-toolkit/native-apis.html>
+- Playground release index: <https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/>
+- Latest Playground smoke test: <https://playground.wordpress.net/?php=8.4&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json>
+
 ## Native Classes
 
 - `WP_HTML_Native_Tag_Processor`

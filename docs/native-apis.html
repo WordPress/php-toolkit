@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Native APIs — PHP Toolkit</title>
+<meta name="description" content="Experimental Native APIs extension for PHP Toolkit. Test the PHP.wasm extension in WordPress Playground, inspect releases, and compare native benchmark results.">
+<link rel="stylesheet" href="assets/style.css?v=20260526-native-apis">
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="./">PHP Toolkit</a>
+	<nav>
+		<a href="learn/">Learn</a>
+		<a href="reference/">Reference</a>
+		<a href="native-apis.html">Native APIs</a>
+		<a class="github" href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+
+<main class="native-page">
+
+<section class="native-hero">
+	<p class="eyebrow">Experimental performance preview</p>
+	<h1>Native APIs for the hottest toolkit paths.</h1>
+	<p class="lede">The Native APIs extension registers PHP extension classes for high-volume HTML, XML, and URL-in-text workloads. Public toolkit classes keep their PHP fallback behavior, so projects can try native acceleration without making the extension a hard dependency.</p>
+	<div class="cta-row">
+		<a class="cta primary" href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground →</a>
+		<a class="cta" href="wp_native_apis-wasm-extension/">Browse releases</a>
+		<a class="cta" href="https://github.com/WordPress/php-toolkit/tree/trunk/extensions/native-apis">Build locally</a>
+	</div>
+</section>
+
+<section class="native-status">
+	<h2>Status</h2>
+	<div class="callout warning">
+		<strong>Experimental:</strong> the extension is useful for testing and benchmarking, but the packaging, release cadence, and accelerated surface are still evolving. Use immutable release manifests for reproducible Playground links.
+	</div>
+	<p>When the extension is loaded before the toolkit, wrappers may delegate covered operations to native classes. If the extension is missing, incompatible, or disabled with <code>WP_NATIVE_APIS_DISABLE_DEFAULTS</code>, the same public APIs continue through pure PHP implementations.</p>
+</section>
+
+<section class="native-grid-section">
+	<h2>What it accelerates</h2>
+	<div class="native-grid">
+		<article>
+			<h3>HTML</h3>
+			<p>Fast tag scans, fragment parsing, batch queries, and aggregate audits for common <code>WP_HTML_Tag_Processor</code> and fragment-processor workloads.</p>
+			<a href="reference/html.html">HTML reference →</a>
+		</article>
+		<article>
+			<h3>XML</h3>
+			<p>Streaming XML token, tag, namespace, attribute, and inventory summaries for export-sized documents without building a DOM tree.</p>
+			<a href="reference/xml.html">XML reference →</a>
+		</article>
+		<article>
+			<h3>URL-in-text</h3>
+			<p>A native candidate scanner for plain-text URL detection, while public URL handling still validates candidates through the existing WHATWG parser path.</p>
+			<a href="reference/dataliberation.html">DataLiberation reference →</a>
+		</article>
+	</div>
+</section>
+
+<section class="native-grid-section">
+	<h2>Two release targets</h2>
+	<div class="native-grid two">
+		<article>
+			<h3>Host PHP extension</h3>
+			<p>The Rust-backed extension is built with <code>ext-php-rs</code> for a specific host PHP ABI. A Linux PHP 8.3 build cannot be reused for PHP 8.4 or PHP 8.5.</p>
+			<p><a href="https://github.com/WordPress/php-toolkit/tree/trunk/extensions/native-apis">Build and verify locally →</a></p>
+		</article>
+		<article>
+			<h3>PHP.wasm extension for Playground</h3>
+			<p>Browser Playground loads a PHP.wasm side module through the <code>php-extension</code> URL parameter before PHP starts. The current Playground bundle is a smoke-testable extension path and should not be described as full Rust-backed host parity.</p>
+			<p><a href="wp_native_apis-wasm-extension/">Open release index →</a></p>
+		</article>
+	</div>
+</section>
+
+<section class="native-test">
+	<h2>Test the latest Playground build</h2>
+	<p>The smoke-test Blueprint writes a small PHP page into WordPress Playground and checks that the native classes are registered before running one HTML tag, HTML processor, XML, and URL-in-text operation.</p>
+	<ol>
+		<li>Open the Playground URL with <code>php=8.4</code> and the latest <code>wp_native_apis</code> manifest.</li>
+		<li>Wait for the Blueprint to create <code>/native-api-smoke.php</code>.</li>
+		<li>Confirm the page ends with <code>PASS: Native API extension classes are available.</code></li>
+	</ol>
+	<p><a class="cta primary" href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Run the smoke test in Playground →</a></p>
+</section>
+
+<section class="native-benchmarks">
+	<h2>Benchmarks</h2>
+	<p>The release workflow also builds the host Rust-backed extension and runs the repository benchmark harness against the same workloads in PHP and native modes. The release page publishes raw JSON plus a summarized view with wall-clock speedups.</p>
+	<pre><code>php -d extension=extensions/native-apis/target/release/libwp_native_apis.so \
+	bin/benchmark-native-apis.php --iterations=50 --mode=both --disable-native-defaults --require-native</code></pre>
+	<p>Benchmark numbers are machine- and workflow-run-specific. Treat them as directional evidence for which workflows benefit from native batching, not as universal throughput guarantees.</p>
+</section>
+
+</main>
+
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a> · <a href="wp_native_apis-wasm-extension/">Native API releases</a>
+</footer>
+</body>
+</html>

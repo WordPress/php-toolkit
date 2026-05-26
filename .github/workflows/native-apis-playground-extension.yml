@@ -6,12 +6,16 @@ on:
       - trunk
     paths:
       - 'extensions/native-apis/**'
+      - 'bin/benchmark-native-apis.php'
+      - 'bin/summarize-native-api-benchmark.php'
       - '.github/workflows/native-apis-playground-extension.yml'
   push:
     branches:
       - trunk
     paths:
       - 'extensions/native-apis/**'
+      - 'bin/benchmark-native-apis.php'
+      - 'bin/summarize-native-api-benchmark.php'
       - '.github/workflows/native-apis-playground-extension.yml'
   workflow_dispatch:
     inputs:
@@ -105,11 +109,68 @@ jobs:
           if-no-files-found: error
           retention-days: ${{ github.event.inputs.retention-days || '30' }}
 
+  benchmark-host-extension:
+    name: Benchmark host PHP extension
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 90
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, json
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang libclang-dev
+          php-config --version
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Build native extension
+        run: extensions/native-apis/build-extension.sh
+
+      - name: Run native API benchmarks
+        run: |
+          mkdir -p build/native-api-benchmark
+          php -d extension=extensions/native-apis/target/release/libwp_native_apis.so \
+            bin/benchmark-native-apis.php \
+            --iterations=50 \
+            --mode=both \
+            --disable-native-defaults \
+            --require-native > build/native-api-benchmark/benchmark.json
+          php bin/summarize-native-api-benchmark.php \
+            build/native-api-benchmark/benchmark.json \
+            build/native-api-benchmark/benchmark-summary.json
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: wp-native-apis-host-benchmark
+          path: build/native-api-benchmark/
+          if-no-files-found: error
+          retention-days: ${{ github.event.inputs.retention-days || '30' }}
+
   publish:
     name: Publish static extension bundle to GitHub Pages
     if: github.ref == 'refs/heads/trunk' && (github.event_name == 'workflow_dispatch' || github.event_name == 'push')
     runs-on: ubuntu-latest
-    needs: build
+    needs:
+      - build
+      - benchmark-host-extension
     timeout-minutes: 30
     permissions:
       contents: write
@@ -149,9 +210,16 @@ jobs:
           name: wp-native-apis-playground-extension
           path: build/wp_native_apis-wasm-extension
 
+      - name: Download host benchmark results
+        uses: actions/download-artifact@v4
+        with:
+          name: wp-native-apis-host-benchmark
+          path: build/native-api-benchmark
+
       - name: Publish static extension bundle to gh-pages
         env:
           BUNDLE_DIR: build/wp_native_apis-wasm-extension
+          BENCHMARK_DIR: build/native-api-benchmark
           DOCS_DIR: docs
           EXTENSION_PATH: wp_native_apis-wasm-extension
           GITHUB_TOKEN: ${{ github.token }}
@@ -180,6 +248,13 @@ jobs:
           mkdir -p "$pages_dir/$EXTENSION_PATH/$VERSION_PATH" "$pages_dir/$EXTENSION_PATH/latest"
           cp -R "$BUNDLE_DIR"/. "$pages_dir/$EXTENSION_PATH/$VERSION_PATH/"
           cp -R "$BUNDLE_DIR"/. "$pages_dir/$EXTENSION_PATH/latest/"
+          if [ -d "$BENCHMARK_DIR" ]; then
+            mkdir -p "$pages_dir/$EXTENSION_PATH/$VERSION_PATH/benchmarks" "$pages_dir/$EXTENSION_PATH/latest/benchmarks"
+            cp "$BENCHMARK_DIR"/benchmark.json "$pages_dir/$EXTENSION_PATH/$VERSION_PATH/benchmarks/benchmark.json"
+            cp "$BENCHMARK_DIR"/benchmark-summary.json "$pages_dir/$EXTENSION_PATH/$VERSION_PATH/benchmarks/benchmark-summary.json"
+            cp "$BENCHMARK_DIR"/benchmark.json "$pages_dir/$EXTENSION_PATH/latest/benchmarks/benchmark.json"
+            cp "$BENCHMARK_DIR"/benchmark-summary.json "$pages_dir/$EXTENSION_PATH/latest/benchmarks/benchmark-summary.json"
+          fi
           touch "$pages_dir/.nojekyll"
 
           PAGES_DIR="$pages_dir" PUBLISHED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")" node <<'NODE'
@@ -300,6 +375,16 @@ jobs:
                 path.join(sanitizedDirectory, artifact.sourcePath)
               );
             }
+
+            const benchmarkDirectory = path.join(releaseDirectory, 'benchmarks');
+            const benchmarkJson = path.join(benchmarkDirectory, 'benchmark.json');
+            const benchmarkSummaryJson = path.join(benchmarkDirectory, 'benchmark-summary.json');
+            if (isRegularFile(benchmarkJson) && isRegularFile(benchmarkSummaryJson)) {
+              const sanitizedBenchmarkDirectory = path.join(sanitizedDirectory, 'benchmarks');
+              fs.mkdirSync(sanitizedBenchmarkDirectory, { recursive: true });
+              fs.copyFileSync(benchmarkJson, path.join(sanitizedBenchmarkDirectory, 'benchmark.json'));
+              fs.copyFileSync(benchmarkSummaryJson, path.join(sanitizedBenchmarkDirectory, 'benchmark-summary.json'));
+            }
           }
 
           fs.rmSync(root, { recursive: true, force: true });
@@ -322,22 +407,46 @@ jobs:
               const relativeManifestPath = path.join(extensionPath, version, 'manifest.json');
               const manifestPath = path.join(root, version, 'manifest.json');
               const manifest = readJson(manifestPath, {});
+              const manifestUrl = `${rootUrl}/${version}/manifest.json`;
+              const benchmarkPath = path.join(root, version, 'benchmarks', 'benchmark.json');
+              const benchmarkSummaryPath = path.join(root, version, 'benchmarks', 'benchmark-summary.json');
+              const benchmarkSummary = readJson(benchmarkSummaryPath, null);
+              const blueprintUrl = `https://raw.githubusercontent.com/${repository}/${version}/extensions/native-apis/playground/blueprint.json`;
+              const phpVersion = Array.isArray(manifest.artifacts) && manifest.artifacts[0] && manifest.artifacts[0].phpVersion
+                ? manifest.artifacts[0].phpVersion
+                : '8.4';
+              const artifacts = Array.isArray(manifest.artifacts)
+                ? manifest.artifacts.map((artifact) => ({
+                    phpVersion: artifact.phpVersion,
+                    sourcePath: artifact.sourcePath,
+                    url: `${rootUrl}/${version}/${artifact.sourcePath}`,
+                  }))
+                : [];
 
               return {
                 version,
                 name: manifest.name || 'wp_native_apis',
-                phpVersions: Array.isArray(manifest.artifacts)
-                  ? manifest.artifacts.map((artifact) => artifact.phpVersion).filter(Boolean)
-                  : [],
+                phpVersions: artifacts.map((artifact) => artifact.phpVersion).filter(Boolean),
+                artifacts,
                 publishedAt: version === versionPath
                   ? process.env.PUBLISHED_AT
                   : existing.publishedAt || lastPublishedAt(relativeManifestPath),
-                manifest: `${rootUrl}/${version}/manifest.json`,
+                manifest: manifestUrl,
                 checksums: `${rootUrl}/${version}/SHA256SUMS`,
                 commit: `https://github.com/${repository}/commit/${version}`,
                 workflowRun: version === versionPath
                   ? `https://github.com/${repository}/actions/runs/${process.env.GITHUB_RUN_ID}`
                   : existing.workflowRun || '',
+                benchmark: isRegularFile(benchmarkPath)
+                  ? `${rootUrl}/${version}/benchmarks/benchmark.json`
+                  : existing.benchmark || '',
+                benchmarkSummaryUrl: isRegularFile(benchmarkSummaryPath)
+                  ? `${rootUrl}/${version}/benchmarks/benchmark-summary.json`
+                  : existing.benchmarkSummaryUrl || '',
+                benchmarkSummary: benchmarkSummary && Array.isArray(benchmarkSummary.top)
+                  ? benchmarkSummary.top
+                  : existing.benchmarkSummary || [],
+                testInPlayground: `https://playground.wordpress.net/?php=${encodeURIComponent(phpVersion)}&php-extension=${encodeURIComponent(manifestUrl)}&blueprint-url=${encodeURIComponent(blueprintUrl)}`,
               };
             })
             .sort((a, b) => {
@@ -349,14 +458,59 @@ jobs:
 
           fs.writeFileSync(releasesPath, `${JSON.stringify(releases, null, 2)}\n`);
 
+          function formatSeconds(value) {
+            if (typeof value !== 'number' || !Number.isFinite(value)) {
+              return 'n/a';
+            }
+            if (value < 0.001) {
+              return `${(value * 1000000).toFixed(0)} µs`;
+            }
+            if (value < 1) {
+              return `${(value * 1000).toFixed(1)} ms`;
+            }
+            return `${value.toFixed(2)} s`;
+          }
+
+          function renderBenchmarkCards(release) {
+            const items = Array.isArray(release.benchmarkSummary)
+              ? release.benchmarkSummary.slice(0, 6)
+              : [];
+            if (!items.length) {
+              return '<p class="muted">Benchmarks were not published for this release.</p>';
+            }
+
+            return `<div class="benchmark-grid">${items.map((item) => `
+              <article class="benchmark-card">
+                <strong>${escapeHtml(item.label || item.name)}</strong>
+                <span>${escapeHtml(item.component || 'Native APIs')}</span>
+                <b>${escapeHtml(item.speedup || 'n/a')}× faster</b>
+                <small>PHP ${escapeHtml(formatSeconds(item.phpWallSeconds))} · native ${escapeHtml(formatSeconds(item.nativeWallSeconds))}</small>
+              </article>
+            `).join('')}</div>`;
+          }
+
+          function renderArtifactLinks(release) {
+            const artifactLinks = Array.isArray(release.artifacts)
+              ? release.artifacts.map((artifact) => `<a href="${escapeHtml(artifact.url)}">${escapeHtml(artifact.sourcePath)}</a>`)
+              : [];
+            return [
+              `<a href="${escapeHtml(release.manifest)}">manifest</a>`,
+              `<a href="${escapeHtml(release.checksums)}">SHA256</a>`,
+              ...artifactLinks,
+              release.benchmark ? `<a href="${escapeHtml(release.benchmark)}">benchmark JSON</a>` : '',
+              release.benchmarkSummaryUrl ? `<a href="${escapeHtml(release.benchmarkSummaryUrl)}">benchmark summary</a>` : '',
+            ].filter(Boolean).join(' · ');
+          }
+
+          const latestRelease = releases[0] || null;
           const rows = releases.map((release) => `
             <tr>
               <td><code>${escapeHtml(release.version.slice(0, 12))}</code></td>
               <td>${escapeHtml(release.publishedAt || 'unknown')}</td>
               <td>${escapeHtml(release.phpVersions.join(', ') || 'unknown')}</td>
-              <td><a href="${escapeHtml(release.manifest)}">manifest</a></td>
-              <td><a href="${escapeHtml(release.checksums)}">checksums</a></td>
-              <td><a href="${escapeHtml(release.commit)}">commit</a></td>
+              <td><a href="${escapeHtml(release.testInPlayground)}">Test in Playground</a></td>
+              <td>${renderArtifactLinks(release)}</td>
+              <td><a href="${escapeHtml(release.commit)}">commit</a>${release.workflowRun ? ` · <a href="${escapeHtml(release.workflowRun)}">workflow</a>` : ''}</td>
             </tr>
           `).join('');
 
@@ -369,56 +523,205 @@ jobs:
             <style>
               :root {
                 color-scheme: light dark;
+                --accent: #2563eb;
+                --muted: #5f6673;
+                --border: color-mix(in srgb, currentColor 18%, transparent);
+                --panel: color-mix(in srgb, currentColor 5%, transparent);
                 font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
               }
               body {
                 margin: 0;
-                padding: 2rem;
-                line-height: 1.5;
+                line-height: 1.55;
               }
-              main {
-                max-width: 72rem;
+              header,
+              main,
+              footer {
+                max-width: 76rem;
+                margin: 0 auto;
+                padding: 1.25rem 1.5rem;
+              }
+              header {
+                display: flex;
+                justify-content: space-between;
+                gap: 1rem;
+                align-items: center;
+                border-bottom: 1px solid var(--border);
+              }
+              header a { color: inherit; text-decoration: none; }
+              header nav { display: flex; gap: 1rem; flex-wrap: wrap; }
+              .hero {
+                padding: 3rem 1.5rem 2rem;
+              }
+              h1 {
+                font-size: clamp(2rem, 6vw, 4rem);
+                line-height: 1;
+                letter-spacing: -0.04em;
+                margin: 0 0 1rem;
+              }
+              h2 { margin-top: 2.5rem; }
+              .lede {
+                max-width: 54rem;
+                font-size: 1.15rem;
+                color: var(--muted);
+              }
+              .cta-row,
+              .link-row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                margin: 1.25rem 0;
+              }
+              .button,
+              .pill {
+                display: inline-block;
+                border: 1px solid var(--border);
+                border-radius: 999px;
+                padding: 0.62rem 1rem;
+                text-decoration: none;
+                color: inherit;
+                font-weight: 600;
+              }
+              .button.primary {
+                background: var(--accent);
+                color: white;
+                border-color: var(--accent);
+              }
+              .notice,
+              .release-panel,
+              .benchmark-card {
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                background: var(--panel);
+              }
+              .notice,
+              .release-panel {
+                padding: 1rem 1.1rem;
+              }
+              .release-panel {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) minmax(280px, 0.75fr);
+                gap: 1.25rem;
+                align-items: start;
+              }
+              .benchmark-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+                gap: 0.8rem;
+                margin: 1rem 0;
+              }
+              .benchmark-card {
+                padding: 0.9rem;
+              }
+              .benchmark-card strong,
+              .benchmark-card b,
+              .benchmark-card span,
+              .benchmark-card small {
+                display: block;
+              }
+              .benchmark-card span,
+              .benchmark-card small,
+              .muted {
+                color: var(--muted);
+              }
+              .benchmark-card b {
+                margin: 0.35rem 0;
+                font-size: 1.3rem;
               }
               table {
                 border-collapse: collapse;
                 width: 100%;
+                margin-top: 1rem;
               }
               th,
               td {
-                border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-                padding: 0.65rem 0.75rem;
+                border-bottom: 1px solid var(--border);
+                padding: 0.75rem;
                 text-align: left;
                 vertical-align: top;
               }
-              th {
-                font-size: 0.85rem;
-              }
+              th { font-size: 0.85rem; }
               code {
                 font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+                font-size: 0.92em;
+              }
+              a { color: var(--accent); }
+              footer { color: var(--muted); }
+              @media (max-width: 760px) {
+                .release-panel { grid-template-columns: 1fr; }
+                table { display: block; overflow-x: auto; }
               }
             </style>
           </head>
           <body>
+            <header>
+              <a href="../"><strong>PHP Toolkit</strong></a>
+              <nav>
+                <a href="../native-apis.html">Native APIs docs</a>
+                <a href="https://github.com/${escapeHtml(repository)}">GitHub</a>
+              </nav>
+            </header>
             <main>
-              <h1>wp_native_apis PHP.wasm Extension Releases</h1>
-              <p>The latest Playground manifest is <a href="${escapeHtml(rootUrl)}/latest/manifest.json"><code>latest/manifest.json</code></a>. Use immutable commit manifests below when a test or document needs a stable release.</p>
-              <p>Machine-readable release history is available as <a href="${escapeHtml(rootUrl)}/releases.json"><code>releases.json</code></a>.</p>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Version</th>
-                    <th>Published at (UTC)</th>
-                    <th>PHP versions</th>
-                    <th>Manifest</th>
-                    <th>SHA256</th>
-                    <th>Commit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${rows || '<tr><td colspan="6">No releases published yet.</td></tr>'}
-                </tbody>
-              </table>
+              <section class="hero">
+                <p class="pill">Experimental PHP.wasm extension</p>
+                <h1>wp_native_apis releases</h1>
+                <p class="lede">Published manifests for testing the PHP Toolkit Native APIs extension in WordPress Playground. Use the latest link for quick manual testing, or an immutable commit manifest when a document, demo, or test needs a reproducible runtime.</p>
+                <div class="cta-row">
+                  ${latestRelease ? `<a class="button primary" href="${escapeHtml(latestRelease.testInPlayground)}">Test latest in Playground →</a>` : ''}
+                  <a class="button" href="${escapeHtml(rootUrl)}/latest/manifest.json">Latest manifest</a>
+                  <a class="button" href="${escapeHtml(rootUrl)}/releases.json">releases.json</a>
+                </div>
+              </section>
+
+              <section class="notice">
+                <strong>Status:</strong> this is an experimental Playground extension release channel. Browser Playground loads the PHP.wasm side module with the <code>php-extension</code> query parameter before PHP starts. The host Rust-backed extension is benchmarked separately; the Playground bundle should not be treated as full host-extension parity.
+              </section>
+
+              ${latestRelease ? `<section class="release-panel">
+                <div>
+                  <h2>Latest release</h2>
+                  <p><code>${escapeHtml(latestRelease.version)}</code></p>
+                  <p class="muted">Published ${escapeHtml(latestRelease.publishedAt || 'at an unknown time')} · PHP ${escapeHtml(latestRelease.phpVersions.join(', ') || 'unknown')}</p>
+                  <div class="link-row">
+                    <a class="button primary" href="${escapeHtml(latestRelease.testInPlayground)}">Test in Playground</a>
+                    <a class="button" href="${escapeHtml(latestRelease.manifest)}">Manifest</a>
+                    <a class="button" href="${escapeHtml(latestRelease.checksums)}">Checksums</a>
+                    <a class="button" href="${escapeHtml(latestRelease.commit)}">Source commit</a>
+                  </div>
+                </div>
+                <div>
+                  <h2>Benchmark highlights</h2>
+                  ${renderBenchmarkCards(latestRelease)}
+                </div>
+              </section>` : ''}
+
+              <section>
+                <h2>How to choose a manifest</h2>
+                <p><strong><code>latest/manifest.json</code></strong> always points at the newest published bundle. It is convenient for manual testing, but it moves whenever <code>trunk</code> publishes a new extension.</p>
+                <p><strong>Commit manifests</strong> are immutable. Use the release-history links below for docs, bug reports, demos, and tests that need to keep loading the same bundle over time.</p>
+              </section>
+
+              <section>
+                <h2>Release history</h2>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Version</th>
+                      <th>Published at (UTC)</th>
+                      <th>PHP versions</th>
+                      <th>Playground</th>
+                      <th>Files</th>
+                      <th>Source</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${rows || '<tr><td colspan="6">No releases published yet.</td></tr>'}
+                  </tbody>
+                </table>
+              </section>
             </main>
+            <footer>
+              Machine-readable release history: <a href="${escapeHtml(rootUrl)}/releases.json"><code>releases.json</code></a>.
+            </footer>
           </body>
           </html>
           `);

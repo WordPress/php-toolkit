@@ -36,7 +36,7 @@ if ( ! is_file( __DIR__ . '/../vendor/autoload.php' ) ) {
 }
 require __DIR__ . '/../vendor/autoload.php';
 
-const ASSET_VERSION = '20260504-php-rewrite';
+const ASSET_VERSION = '20260526-native-apis';
 const ROOT          = __DIR__ . '/..';
 const COMPONENTS    = ROOT . '/components';
 const DOCS          = ROOT . '/docs/reference';
@@ -81,6 +81,7 @@ const PAGE_HEAD = '<!doctype html>
 	<nav>
 		<a href="../learn/">Learn</a>
 		<a href="./">Reference</a>
+		<a href="../native-apis.html">Native APIs</a>
 		<a href="https://github.com/WordPress/php-toolkit">GitHub</a>
 	</nav>
 </header>
