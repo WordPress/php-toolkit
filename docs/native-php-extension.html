@@ -27,13 +27,13 @@
 	<div class="cta-row">
 		<a class="cta primary" href="#build">Build it →</a>
 		<a class="cta" href="native-apis.html">Native APIs overview</a>
-		<a class="cta" href="wp_native_apis-wasm-extension/">Playground releases</a>
+		<a class="cta" href="wp_native_apis-wasm-extension/">WASM releases for Playground</a>
 	</div>
 </section>
 
 <section>
 	<h2>What you will build</h2>
-	<p>The host PHP extension is the Rust-backed implementation built with <code>ext-php-rs</code>. When it is loaded before the toolkit bootstrap, covered HTML, XML, and URL-in-text classes can delegate hot paths to native code. If the extension is absent, incompatible, or disabled, the public PHP APIs keep using their pure-PHP fallback implementations.</p>
+	<p>The host PHP extension is the Rust-backed implementation built with <code>ext-php-rs</code>. When it is loaded before the toolkit bootstrap, covered <code>WP_HTML_Tag_Processor</code>, <code>XMLProcessor</code>, and <code>URLInTextProcessor</code> classes can delegate hot paths to native code. If the extension is absent, incompatible, or disabled, the public PHP APIs keep using their pure-PHP fallback implementations.</p>
 	<div class="callout warning">
 		<strong>Not the Playground build:</strong> WordPress Playground uses a PHP.wasm extension bundle. This page is for native host PHP, such as a local Linux PHP CLI with development headers.
 	</div>
