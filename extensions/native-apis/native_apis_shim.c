@@ -24,6 +24,7 @@ static zend_class_entry *wp_native_xml_processor_ce;
 static zend_class_entry *wp_native_url_processor_ce;
 static zend_object_handlers wp_native_smoke_object_handlers;
 
+
 static zend_bool
 wp_native_ascii_is_space( char c ) {
 	return ' ' == c || '\t' == c || '\n' == c || '\r' == c || '\f' == c;
@@ -621,19 +622,19 @@ PHP_MINIT_FUNCTION( wp_native_apis ) {
 	wp_native_smoke_object_handlers.clone_obj = NULL;
 
 	INIT_CLASS_ENTRY( class_entry, "WP_HTML_Native_Tag_Processor", wp_native_html_tag_processor_methods );
-	wp_native_html_tag_processor_ce                = zend_register_internal_class_with_flags( &class_entry, NULL, 0 );
+	wp_native_html_tag_processor_ce                = zend_register_internal_class_ex( &class_entry, NULL );
 	wp_native_html_tag_processor_ce->create_object = wp_native_smoke_create_object;
 
 	INIT_CLASS_ENTRY( class_entry, "WP_HTML_Native_Processor", wp_native_html_processor_methods );
-	wp_native_html_processor_ce                = zend_register_internal_class_with_flags( &class_entry, NULL, 0 );
+	wp_native_html_processor_ce                = zend_register_internal_class_ex( &class_entry, NULL );
 	wp_native_html_processor_ce->create_object = wp_native_smoke_create_object;
 
 	INIT_NS_CLASS_ENTRY( class_entry, "WordPress\\XML", "NativeXMLProcessor", wp_native_xml_processor_methods );
-	wp_native_xml_processor_ce                = zend_register_internal_class_with_flags( &class_entry, NULL, 0 );
+	wp_native_xml_processor_ce                = zend_register_internal_class_ex( &class_entry, NULL );
 	wp_native_xml_processor_ce->create_object = wp_native_smoke_create_object;
 
 	INIT_NS_CLASS_ENTRY( class_entry, "WordPress\\DataLiberation\\URL", "NativeURLInTextProcessor", wp_native_url_processor_methods );
-	wp_native_url_processor_ce                = zend_register_internal_class_with_flags( &class_entry, NULL, 0 );
+	wp_native_url_processor_ce                = zend_register_internal_class_ex( &class_entry, NULL );
 	wp_native_url_processor_ce->create_object = wp_native_smoke_create_object;
 
 	return SUCCESS;

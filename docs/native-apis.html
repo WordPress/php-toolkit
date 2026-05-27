@@ -22,77 +22,79 @@
 
 <section class="native-hero">
 	<p class="eyebrow">Experimental performance preview</p>
-	<h1>Native APIs for the hottest toolkit paths.</h1>
-	<p class="lede">The Native APIs extension registers PHP extension classes for high-volume HTML, XML, and URL-in-text workloads. Public toolkit classes keep their PHP fallback behavior, so projects can try native acceleration without making the extension a hard dependency.</p>
-	<div class="cta-row">
-		<a class="cta primary" href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground →</a>
-		<a class="cta" href="wp_native_apis-wasm-extension/">Browse releases</a>
-		<a class="cta" href="native-php-extension.html">Compile for native PHP</a>
-	</div>
+	<h1>10x the php-toolkit speed</h1>
+	<p class="lede">Try the experimental <code>wp_native_apis</code> extension in WordPress Playground first. It loads before PHP starts, confirms the WASM extension was registered, and shows quick browser-side timing numbers for hot HTML, XML, and URL-in-text paths.</p>
 </section>
 
-<section class="native-status">
-	<h2>Status</h2>
-	<div class="callout warning">
-		<strong>Experimental:</strong> the extension is useful for testing and benchmarking, but the packaging, release cadence, and accelerated surface are still evolving. Use immutable release manifests for reproducible Playground links.
+<section class="native-quick-start">
+	<h2>Quick start</h2>
+	<div class="native-grid two">
+		<article class="quick-card primary-card">
+			<h3>Try in Playground web</h3>
+			<p>Open a ready-made Playground that loads the latest PHP.wasm manifest with <code>php-extension</code>, installs the smoke-test Blueprint, and lands on <code>/native-api-smoke.php</code>.</p>
+			<p><a class="cta primary" href="https://playground.wordpress.net/?php=8.5&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground →</a></p>
+		</article>
+		<article class="quick-card">
+			<h3>Try in Playground CLI</h3>
+			<p>Use the same manifest locally. The extension flag must be passed before PHP starts.</p>
+			<pre><code>npx @wp-playground/cli@latest server \
+  --php=8.5 \
+  --php-extension=https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/latest/manifest.json \
+  --blueprint=https://raw.githubusercontent.com/WordPress/php-toolkit/trunk/extensions/native-apis/playground/blueprint.json</code></pre>
+		</article>
 	</div>
-	<p>When the extension is loaded before the toolkit, wrappers may delegate covered operations to native classes. If the extension is missing, incompatible, or disabled with <code>WP_NATIVE_APIS_DISABLE_DEFAULTS</code>, the same public APIs continue through pure PHP implementations.</p>
+	<div class="callout success">
+		<strong>What you should see:</strong> the Playground page says <code>wp_native_apis WASM extension loaded</code>, then shows whether native classes are available and a few quick timing cards.
+	</div>
 </section>
 
 <section class="native-grid-section">
-	<h2>What it accelerates</h2>
+	<h2>What this accelerates</h2>
 	<div class="native-grid">
 		<article>
 			<h3>HTML</h3>
-			<p>Fast tag scans, fragment parsing, batch queries, and aggregate audits for common <code>WP_HTML_Tag_Processor</code> and fragment-processor workloads.</p>
+			<p>Fast scans and aggregate checks for common <code>WP_HTML_Tag_Processor</code> and fragment-processor workloads.</p>
 			<a href="reference/html.html">HTML reference →</a>
 		</article>
 		<article>
 			<h3>XML</h3>
-			<p>Streaming XML token, tag, namespace, attribute, and inventory summaries for export-sized documents without building a DOM tree.</p>
+			<p>Streaming XML token, tag, namespace, attribute, and inventory summaries without building a DOM tree.</p>
 			<a href="reference/xml.html">XML reference →</a>
 		</article>
 		<article>
 			<h3>URL-in-text</h3>
-			<p>A native candidate scanner for plain-text URL detection, while public URL handling still validates candidates through the existing WHATWG parser path.</p>
+			<p>A native candidate scanner for plain-text URL detection, with public URL handling still validating through the existing parser path.</p>
 			<a href="reference/dataliberation.html">DataLiberation reference →</a>
 		</article>
 	</div>
 </section>
 
-<section class="native-grid-section">
-	<h2>Two release targets</h2>
-	<div class="native-grid two">
-		<article>
-			<h3>Host PHP extension</h3>
-			<p>The Rust-backed extension is built with <code>ext-php-rs</code> for a specific host PHP ABI. A Linux PHP 8.3 build cannot be reused for PHP 8.4 or PHP 8.5.</p>
-			<p><a href="native-php-extension.html">Build and verify locally →</a></p>
-		</article>
-		<article>
-			<h3>PHP.wasm extension for Playground</h3>
-			<p>Browser Playground loads a PHP.wasm side module through the <code>php-extension</code> URL parameter before PHP starts. The current Playground bundle is a smoke-testable extension path and should not be described as full Rust-backed host parity.</p>
-			<p><a href="wp_native_apis-wasm-extension/">Open release index →</a></p>
-		</article>
+<section class="native-status">
+	<h2>Status and fallback behavior</h2>
+	<div class="callout warning">
+		<strong>Experimental:</strong> the packaging, release cadence, and accelerated surface are still evolving. The PHP Toolkit APIs remain safe to use without the extension.
 	</div>
+	<p>When <code>wp_native_apis</code> is loaded before the toolkit, wrappers may delegate covered operations to native classes. If the extension is missing, incompatible, or disabled with <code>WP_NATIVE_APIS_DISABLE_DEFAULTS</code>, the same public APIs continue through pure-PHP implementations.</p>
 </section>
 
-<section class="native-test">
-	<h2>Test the latest Playground build</h2>
-	<p>The smoke-test Blueprint writes a small PHP landing page into WordPress Playground. It checks that the native classes were registered before PHP started, runs a few representative operations, and shows quick browser-side timing numbers.</p>
-	<ol>
-		<li>Open the Playground URL with <code>php=8.4</code> and the latest <code>wp_native_apis</code> manifest.</li>
-		<li>Wait for the Blueprint to open <code>/native-api-smoke.php</code>.</li>
-		<li>Confirm the page says <code>wp_native_apis WASM extension loaded</code>, then review the timing cards.</li>
-	</ol>
-	<p><a class="cta primary" href="https://playground.wordpress.net/?php=8.4&amp;php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&amp;blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json">Test in Playground →</a></p>
+<section class="native-releases">
+	<h2>Playground releases</h2>
+	<p>The release index is for pinned manifests, checksums, and exact Playground links. Use <code>latest</code> for a quick trial; use a commit-specific manifest when you need a reproducible demo.</p>
+	<p><a class="cta" href="wp_native_apis-wasm-extension/">Browse Playground releases →</a></p>
 </section>
 
 <section class="native-benchmarks">
 	<h2>Benchmarks</h2>
-	<p>The release workflow also builds the host Rust-backed extension and runs the repository benchmark harness against the same workloads in PHP and native modes. The release page publishes raw JSON plus a summarized view with wall-clock speedups.</p>
+	<p>The 10x claim comes from CI benchmark snapshots for the host Rust-backed extension. Playground is the easiest way to see that the extension loads and to get quick browser-side timing numbers; host PHP benchmarks are the better signal for Rust-backed throughput.</p>
 	<pre><code>php -d extension=extensions/native-apis/target/release/libwp_native_apis.so \
 	bin/benchmark-native-apis.php --iterations=50 --mode=both --disable-native-defaults --require-native</code></pre>
 	<p>Benchmark numbers are machine- and workflow-run-specific. Treat them as directional evidence for which workflows benefit from native batching, not as universal throughput guarantees.</p>
+</section>
+
+<section class="native-build-secondary">
+	<h2>Compile for native PHP</h2>
+	<p>After trying Playground, build the Rust-backed extension for your local host PHP ABI when you want the real native implementation and benchmark numbers. A build made for one PHP ABI cannot be reused for another.</p>
+	<p><a class="cta" href="native-php-extension.html">Build the native PHP extension →</a></p>
 </section>
 
 </main>
