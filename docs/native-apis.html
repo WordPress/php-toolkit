@@ -23,7 +23,7 @@
 <section class="native-hero">
 	<p class="eyebrow">Experimental performance preview</p>
 	<h1>10x the php-toolkit speed</h1>
-	<p class="lede">Try the experimental <code>wp_native_apis</code> extension in WordPress Playground first. It loads before PHP starts, confirms the WASM extension was registered, and shows quick browser-side timing numbers for hot HTML, XML, and URL-in-text paths.</p>
+	<p class="lede">Try the experimental <code>wp_native_apis</code> extension in WordPress Playground first. It loads before PHP starts, confirms the WASM extension was registered, and shows quick browser-side timing numbers for hot <code>WP_HTML_Tag_Processor</code>, <code>XMLProcessor</code>, and <code>URLInTextProcessor</code> paths.</p>
 </section>
 
 <section class="native-quick-start">
@@ -52,19 +52,19 @@
 	<h2>What this accelerates</h2>
 	<div class="native-grid">
 		<article>
-			<h3>HTML</h3>
-			<p>Fast scans and aggregate checks for common <code>WP_HTML_Tag_Processor</code> and fragment-processor workloads.</p>
-			<a href="reference/html.html">HTML reference →</a>
+			<h3><code>WP_HTML_Tag_Processor</code></h3>
+			<p>Fast scans and aggregate checks for common tag-processor and fragment-processor workloads.</p>
+			<a href="reference/html.html">Reference →</a>
 		</article>
 		<article>
-			<h3>XML</h3>
-			<p>Streaming XML token, tag, namespace, attribute, and inventory summaries without building a DOM tree.</p>
-			<a href="reference/xml.html">XML reference →</a>
+			<h3><code>XMLProcessor</code></h3>
+			<p>Streaming token, tag, namespace, attribute, and inventory summaries without building a DOM tree.</p>
+			<a href="reference/xml.html">Reference →</a>
 		</article>
 		<article>
-			<h3>URL-in-text</h3>
-			<p>A native candidate scanner for plain-text URL detection, with public URL handling still validating through the existing parser path.</p>
-			<a href="reference/dataliberation.html">DataLiberation reference →</a>
+			<h3><code>URLInTextProcessor</code></h3>
+			<p>A native candidate scanner for plain-text URL detection, with public handling still validating through the existing parser path.</p>
+			<a href="reference/dataliberation.html">Reference →</a>
 		</article>
 	</div>
 </section>
