@@ -1,5 +1,113 @@
 [
   {
+    "version": "a2b3657a888eb1455df8eed2f56520d72261da8e",
+    "name": "wp_native_apis",
+    "phpVersions": [
+      "8.0",
+      "8.1",
+      "8.2",
+      "8.3",
+      "8.4",
+      "8.5"
+    ],
+    "artifacts": [
+      {
+        "phpVersion": "8.0",
+        "sourcePath": "wp_native_apis-php8.0-jspi.so",
+        "url": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/a2b3657a888eb1455df8eed2f56520d72261da8e/wp_native_apis-php8.0-jspi.so",
+        "testInPlayground": "https://playground.wordpress.net/?php=8.0&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Fa2b3657a888eb1455df8eed2f56520d72261da8e%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fa2b3657a888eb1455df8eed2f56520d72261da8e%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json"
+      },
+      {
+        "phpVersion": "8.1",
+        "sourcePath": "wp_native_apis-php8.1-jspi.so",
+        "url": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/a2b3657a888eb1455df8eed2f56520d72261da8e/wp_native_apis-php8.1-jspi.so",
+        "testInPlayground": "https://playground.wordpress.net/?php=8.1&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Fa2b3657a888eb1455df8eed2f56520d72261da8e%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fa2b3657a888eb1455df8eed2f56520d72261da8e%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json"
+      },
+      {
+        "phpVersion": "8.2",
+        "sourcePath": "wp_native_apis-php8.2-jspi.so",
+        "url": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/a2b3657a888eb1455df8eed2f56520d72261da8e/wp_native_apis-php8.2-jspi.so",
+        "testInPlayground": "https://playground.wordpress.net/?php=8.2&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Fa2b3657a888eb1455df8eed2f56520d72261da8e%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fa2b3657a888eb1455df8eed2f56520d72261da8e%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json"
+      },
+      {
+        "phpVersion": "8.3",
+        "sourcePath": "wp_native_apis-php8.3-jspi.so",
+        "url": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/a2b3657a888eb1455df8eed2f56520d72261da8e/wp_native_apis-php8.3-jspi.so",
+        "testInPlayground": "https://playground.wordpress.net/?php=8.3&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Fa2b3657a888eb1455df8eed2f56520d72261da8e%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fa2b3657a888eb1455df8eed2f56520d72261da8e%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json"
+      },
+      {
+        "phpVersion": "8.4",
+        "sourcePath": "wp_native_apis-php8.4-jspi.so",
+        "url": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/a2b3657a888eb1455df8eed2f56520d72261da8e/wp_native_apis-php8.4-jspi.so",
+        "testInPlayground": "https://playground.wordpress.net/?php=8.4&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Fa2b3657a888eb1455df8eed2f56520d72261da8e%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fa2b3657a888eb1455df8eed2f56520d72261da8e%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json"
+      },
+      {
+        "phpVersion": "8.5",
+        "sourcePath": "wp_native_apis-php8.5-jspi.so",
+        "url": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/a2b3657a888eb1455df8eed2f56520d72261da8e/wp_native_apis-php8.5-jspi.so",
+        "testInPlayground": "https://playground.wordpress.net/?php=8.5&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Fa2b3657a888eb1455df8eed2f56520d72261da8e%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fa2b3657a888eb1455df8eed2f56520d72261da8e%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json"
+      }
+    ],
+    "publishedAt": "2026-05-27T18:10:58Z",
+    "manifest": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/a2b3657a888eb1455df8eed2f56520d72261da8e/manifest.json",
+    "checksums": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/a2b3657a888eb1455df8eed2f56520d72261da8e/SHA256SUMS",
+    "commit": "https://github.com/WordPress/php-toolkit/commit/a2b3657a888eb1455df8eed2f56520d72261da8e",
+    "workflowRun": "https://github.com/WordPress/php-toolkit/actions/runs/26527578258",
+    "benchmark": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/a2b3657a888eb1455df8eed2f56520d72261da8e/benchmarks/benchmark.json",
+    "benchmarkSummaryUrl": "https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/a2b3657a888eb1455df8eed2f56520d72261da8e/benchmarks/benchmark-summary.json",
+    "benchmarkSummary": [
+      {
+        "name": "url-in-text-processor",
+        "label": "URL-in-text scan",
+        "component": "URL-in-text",
+        "iterations": 50,
+        "operations": 18000,
+        "phpWallSeconds": 2.028902,
+        "nativeWallSeconds": 0.015688,
+        "speedup": 129.33,
+        "phpClass": "WordPress\\DataLiberation\\URL\\URLInTextProcessor",
+        "nativeClass": "WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor"
+      },
+      {
+        "name": "html-processor",
+        "label": "HTML fragment processor",
+        "component": "HTML",
+        "iterations": 50,
+        "operations": 72200,
+        "phpWallSeconds": 0.55515,
+        "nativeWallSeconds": 0.068029,
+        "speedup": 8.16,
+        "phpClass": "WP_HTML_Processor",
+        "nativeClass": "WP_HTML_Native_Processor"
+      },
+      {
+        "name": "html-tag-processor",
+        "label": "HTML tag scan",
+        "component": "HTML",
+        "iterations": 50,
+        "operations": 66200,
+        "phpWallSeconds": 0.121857,
+        "nativeWallSeconds": 0.017487,
+        "speedup": 6.97,
+        "phpClass": "WP_HTML_Tag_Processor",
+        "nativeClass": "WP_HTML_Native_Tag_Processor"
+      },
+      {
+        "name": "xml-processor",
+        "label": "XML processor scan",
+        "component": "XML",
+        "iterations": 50,
+        "operations": 48200,
+        "phpWallSeconds": 0.166939,
+        "nativeWallSeconds": 0.032342,
+        "speedup": 5.16,
+        "phpClass": "WordPress\\XML\\XMLProcessor",
+        "nativeClass": "WordPress\\XML\\NativeXMLProcessor"
+      }
+    ],
+    "testInPlayground": "https://playground.wordpress.net/?php=8.5&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Fa2b3657a888eb1455df8eed2f56520d72261da8e%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Fa2b3657a888eb1455df8eed2f56520d72261da8e%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json"
+  },
+  {
     "version": "a4af05eb035355095bf3171c53539d8723eeb932",
     "name": "wp_native_apis",
     "phpVersions": [
