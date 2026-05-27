@@ -690,7 +690,7 @@ jobs:
             </header>
             <main>
               <section class="hero">
-                <h1>Native APIs Playground releases</h1>
+                <h1>Native APIs WASM releases for Playground</h1>
                 <p>
                   Published PHP.wasm builds of the experimental <code>wp_native_apis</code> extension for WordPress Playground.
                   Use this page to test the latest build, pin an immutable manifest, or inspect release artifacts.
