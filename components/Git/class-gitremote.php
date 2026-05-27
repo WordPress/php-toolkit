@@ -72,12 +72,12 @@ class GitRemote {
 		while ( $protocol->next_token() ) {
 			switch ( $protocol->get_token_type() ) {
 				case '#packet-footer':
-					$ref_line                 = $protocol->get_packet_body();
-					$ref                      = $this->parse_ref_line( $ref_line );
-					$refs[ $ref['ref_name'] ] = $ref['hash'];
+					$ref_line = $protocol->get_packet_body();
+					$ref      = $this->parse_ref_line( $ref_line );
 					if ( false === $ref ) {
 						continue 2;
 					}
+					$refs[ $ref['ref_name'] ] = $ref['hash'];
 
 					if ( 0 === strncmp( $ref['ref_name'], 'refs/heads/', strlen( 'refs/heads/' ) ) ) {
 						$branch_name = substr( $ref['ref_name'], strlen( 'refs/heads/' ) );
@@ -110,9 +110,20 @@ class GitRemote {
 		}
 		$hash     = substr( $ref_line, 0, $space_pos );
 		$ref_name = substr( $ref_line, $space_pos + 1 );
+		$attrs    = '';
 
-		// Check for peeled hash at end.
-		if ( preg_match( '/^(.+) peeled:([a-f0-9]{40})$/', $ref_name, $matches ) ) {
+		// Git may append NUL-separated attributes after the ref name, e.g. "HEAD\0symref=...".
+		$attributes_pos = strpos( $ref_name, "\0" );
+		if ( false !== $attributes_pos ) {
+			$attrs    = substr( $ref_name, $attributes_pos + 1 );
+			$ref_name = substr( $ref_name, 0, $attributes_pos );
+		}
+
+		// Protocol v2 advertises peeled tag hashes as NUL-separated attributes: "ref\0peeled:<hash>".
+		if ( preg_match( '/(?:^| )peeled:([a-f0-9]{40})(?: |$)/', $attrs, $matches ) ) {
+			$hash = $matches[1];
+		} elseif ( preg_match( '/^(.+) peeled:([a-f0-9]{40})$/', $ref_name, $matches ) ) {
+			// Keep compatibility with responses that append peeled hashes after the ref name: "ref peeled:<hash>".
 			$ref_name = $matches[1];
 			$hash     = $matches[2];
 		}
@@ -291,8 +302,16 @@ class GitRemote {
 		}
 
 		if ( isset( $options['force'] ) && $options['force'] ) {
-			$nice_branch_name = $this->localize_ref_name( $full_branch_name );
-			$this->repository->set_branch_tip( 'refs/heads/' . $nice_branch_name, $remote_head );
+			/**
+			 * HEAD is a special ref, not a branch name. Store it directly instead
+			 * of rewriting it to refs/heads/HEAD, which would create a fake branch.
+			 */
+			if ( 'HEAD' === $full_branch_name ) {
+				$this->repository->set_branch_tip( 'HEAD', $remote_head );
+			} else {
+				$nice_branch_name = $this->localize_ref_name( $full_branch_name );
+				$this->repository->set_branch_tip( 'refs/heads/' . $nice_branch_name, $remote_head );
+			}
 
 			return $remote_head;
 		}
@@ -333,7 +352,9 @@ class GitRemote {
 			$last_fetched_head_ref = Commit::NULL_HASH;
 		}
 
-		$remote_head = $this->get_remote_head( 'refs/heads/' . $branch_name );
+		// Remote HEAD is advertised as "HEAD"; regular branch names are advertised under refs/heads/.
+		$remote_branch_name = 'HEAD' === $full_branch_name ? 'HEAD' : 'refs/heads/' . $branch_name;
+		$remote_head        = $this->get_remote_head( $remote_branch_name );
 		try {
 			if ( $remote_head === $last_fetched_head_ref ) {
 				return $remote_head;
