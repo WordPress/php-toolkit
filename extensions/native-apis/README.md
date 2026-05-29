@@ -5,6 +5,12 @@ native HTML, XML, and URL-in-text API work. It registers native classes that the
 PHP wrappers can use when the extension is loaded, while preserving PHP-only
 fallback behavior when it is unavailable or explicitly disabled.
 
+Public docs and releases:
+
+- User-facing overview: <https://wordpress.github.io/php-toolkit/native-apis.html>
+- Playground release index: <https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/>
+- Latest Playground smoke test: <https://playground.wordpress.net/?php=8.5&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json>
+
 ## Native Classes
 
 - `WP_HTML_Native_Tag_Processor`
@@ -66,7 +72,8 @@ require __DIR__ . '/bootstrap.php';
 
 var_dump( is_subclass_of( 'WP_HTML_Tag_Processor', 'WP_HTML_Native_Tag_Processor' ) );
 var_dump( is_subclass_of( 'WordPress\\XML\\XMLProcessor', 'WordPress\\XML\\NativeXMLProcessor' ) );
-var_dump( is_subclass_of( 'WordPress\\DataLiberation\\URL\\URLInTextProcessor', 'WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor' ) );
+$p = new WordPress\DataLiberation\URL\URLInTextProcessor( 'Visit example.com/docs.', 'https://wordpress.org' );
+var_dump( get_parent_class( $p ) === 'WordPress\\DataLiberation\\URL\\NativeURLInTextProcessorWrapper' );
 PHP
 ```
 
@@ -209,6 +216,14 @@ by `build-playground-extension.sh` before claiming Playground support:
 extensions/native-apis/build-playground-extension.sh
 ```
 
+By default this builds one side module per Playground PHP 8.x runtime from
+PHP 8.0 through PHP 8.5. To build a smaller local matrix, pass a comma-separated
+list:
+
+```bash
+PHP_WASM_VERSIONS=8.3,8.4 extensions/native-apis/build-playground-extension.sh
+```
+
 The host PHP extension is Rust-backed through `ext-php-rs`. The Playground
 bundle currently uses `native_apis_shim.c` instead, because Playground's
 PHP.wasm runtime only exports the PHP C ABI symbols needed by regular C
@@ -254,11 +269,15 @@ wp_native_apis-wasm-extension/
 |-- latest/
 |   |-- manifest.json
 |   |-- SHA256SUMS
-|   `-- wp_native_apis-php8.4-jspi.so
+|   |-- wp_native_apis-php8.0-jspi.so
+|   |-- ...
+|   `-- wp_native_apis-php8.5-jspi.so
 `-- <commit-sha>/
     |-- manifest.json
     |-- SHA256SUMS
-    `-- wp_native_apis-php8.4-jspi.so
+    |-- wp_native_apis-php8.0-jspi.so
+    |-- ...
+    `-- wp_native_apis-php8.5-jspi.so
 ```
 
 When the workflow first sees older SHA-named directories in the release-history
@@ -272,17 +291,18 @@ Use the Blueprint smoke test together with the Playground Query API
 extensions load before PHP starts; the Blueprint only writes and runs the smoke
 test.
 
-After publishing the PHP.wasm `manifest.json`, open the main Playground URL with
-both the extension manifest and the Blueprint URL:
+After publishing the PHP.wasm `manifest.json`, open the main Playground URL
+with a PHP version included in the manifest, the extension manifest, and the
+Blueprint URL:
 
 ```text
-https://playground.wordpress.net/?php=8.4&php-extension=<url-encoded-manifest-url>&blueprint-url=<url-encoded-blueprint-url>
+https://playground.wordpress.net/?php=8.5&php-extension=<url-encoded-manifest-url>&blueprint-url=<url-encoded-blueprint-url>
 ```
 
 For example, a release URL will look like:
 
 ```text
-https://playground.wordpress.net/?php=8.4&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json
+https://playground.wordpress.net/?php=8.5&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json
 ```
 
 Expected output:

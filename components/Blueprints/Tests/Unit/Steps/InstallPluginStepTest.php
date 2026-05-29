@@ -95,6 +95,7 @@ PHP
 			<<<'PHP'
 <?php
 require_once getenv('WP_CORE_DIR') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-admin/includes/plugin.php';
 
 // Get all installed plugins
 $all_plugins = get_plugins();

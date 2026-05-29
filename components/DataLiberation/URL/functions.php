@@ -5,6 +5,7 @@ namespace WordPress\DataLiberation\URL;
 use Rowbot\URL\URL;
 use WordPress\DataLiberation\BlockMarkup\BlockMarkupUrlProcessor;
 
+require_once __DIR__ . '/class-urlrewritecache.php';
 
 /**
  * Migrate URLs in post content. See WPRewriteUrlsTests for
@@ -37,29 +38,78 @@ use WordPress\DataLiberation\BlockMarkup\BlockMarkupUrlProcessor;
  * to how the tag processor avoids changing parts of the tag it doesn't need to change.
  */
 function wp_rewrite_urls( $options ) {
+	static $rewrite_cache = null;
+
+	if ( null === $rewrite_cache ) {
+		$rewrite_cache = new URLRewriteCache();
+	}
+
 	if ( empty( $options['base_url'] ) ) {
 		// Use first from-url as base_url if not specified.
 		$from_urls           = array_keys( $options['url-mapping'] );
 		$options['base_url'] = $from_urls[0];
 	}
 
-	$url_mapping = array();
+	$base_url_object = WPURL::parse( $options['base_url'] );
+	if ( false === $base_url_object ) {
+		return $options['block_markup'];
+	}
+
+	$url_mapping       = array();
+	$mapping_key_parts = array( 'base=' . $options['base_url'] );
 	foreach ( $options['url-mapping'] as $from_url_string => $to_url_string ) {
-		$url_mapping[] = array(
+		$url_mapping[]       = array(
 			'from_url' => WPURL::parse( $from_url_string ),
 			'to_url'   => WPURL::parse( $to_url_string ),
 		);
+		$mapping_key_parts[] = $from_url_string . '=>' . $to_url_string;
 	}
+	$mapping_cache_key = sha1( implode( "\0", $mapping_key_parts ) );
 
 	$p = new BlockMarkupUrlProcessor( $options['block_markup'], $options['base_url'] );
 	while ( $p->next_url() ) {
+		$token_type = $p->get_token_type();
+		$raw_url    = $p->get_raw_url();
+		$cache_key  = $mapping_cache_key . "\0" . $token_type . "\0" . $raw_url;
+
+		$cached = $rewrite_cache->get( $cache_key );
+		if ( null !== $cached ) {
+			if ( false !== $cached ) {
+				$p->set_url( $cached['raw_url'], $cached['parsed_url'] );
+			}
+			continue;
+		}
+
 		$parsed_url = $p->get_parsed_url();
+		$converted  = false;
 		foreach ( $url_mapping as $mapping ) {
 			if ( is_child_url_of( $parsed_url, $mapping['from_url'] ) ) {
-				$p->replace_base_url( $mapping['to_url'] );
+				$converted = WPURL::replace_base_url(
+					$parsed_url,
+					array(
+						'old_base_url' => $base_url_object,
+						'new_base_url' => $mapping['to_url'],
+						'raw_url'      => $raw_url,
+						'is_relative'  => (
+							'#text' !== $token_type &&
+							! WPURL::can_parse( $raw_url )
+						),
+					)
+				);
 				break;
 			}
 		}
+
+		$cache_value = false;
+		if ( false !== $converted ) {
+			$cache_value = array(
+				'raw_url'    => (string) $converted,
+				'parsed_url' => $converted->new_url,
+			);
+			$p->set_url( $cache_value['raw_url'], $cache_value['parsed_url'] );
+		}
+
+		$rewrite_cache->set( $cache_key, $cache_value );
 	}
 
 	return $p->get_updated_html();

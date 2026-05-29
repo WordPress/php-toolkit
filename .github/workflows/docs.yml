@@ -46,6 +46,20 @@ jobs:
             -x "*/Tests/*" "*/tests/*" "*/.git/*" "*/.github/*" "*/node_modules/*"
           php bin/build-reference.php
 
+      - name: Preserve Native APIs Playground release history
+        env:
+          EXTENSION_PATH: wp_native_apis-wasm-extension
+        run: |
+          set -euo pipefail
+          pages_dir="$(mktemp -d)"
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git clone --depth=1 --branch gh-pages "https://github.com/${GITHUB_REPOSITORY}.git" "$pages_dir"
+            if [ -d "$pages_dir/$EXTENSION_PATH" ]; then
+              rm -rf "docs/$EXTENSION_PATH"
+              cp -R "$pages_dir/$EXTENSION_PATH" "docs/$EXTENSION_PATH"
+            fi
+          fi
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./docs

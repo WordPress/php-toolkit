@@ -608,7 +608,7 @@ main.landing .lede {
 
 .cta.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: white; }
 
-.origins, .insight, .two-doors, .proofs, .how-runnable, .prereqs, .path, .canonical-artifact, .next, .ref-group {
+.origins, .insight, .two-doors, .native-promo, .proofs, .how-runnable, .prereqs, .path, .canonical-artifact, .next, .ref-group {
 	margin: 2.5rem 0;
 }
 
@@ -833,4 +833,117 @@ ol.chapters span { display: block; color: var(--muted); font-size: 0.93rem; }
 .callout.credit {
 	border-left-color: #8b5cf6;
 	background: linear-gradient(to right, rgba(139, 92, 246, 0.06), transparent);
+}
+
+/* ---------- Native APIs page ---------- */
+
+.native-page {
+	max-width: 960px;
+	margin: 0 auto;
+	padding: 4rem 1.5rem 3rem;
+}
+
+.native-hero {
+	padding: 0 0 0.5rem;
+}
+
+.native-hero .lede {
+	font-size: 1.18rem;
+	line-height: 1.55;
+	max-width: 62rem;
+}
+
+.eyebrow {
+	margin: 0 0 0.5rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	font-size: 0.78rem;
+	font-weight: 700;
+	color: var(--accent);
+}
+
+.native-page h1 {
+	font-size: 2.6rem;
+	line-height: 1.08;
+	letter-spacing: -0.03em;
+	margin: 0 0 1rem;
+}
+
+.native-page h2 {
+	font-size: 1.35rem;
+	margin: 3rem 0 1rem;
+	letter-spacing: -0.01em;
+}
+
+.native-page h3 {
+	margin: 0 0 0.35rem;
+}
+
+.native-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1rem;
+	margin-top: 1rem;
+}
+
+.native-grid.two {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.native-grid article,
+.callout {
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	padding: 1rem 1.1rem;
+	background: color-mix(in srgb, var(--code-bg) 55%, transparent);
+}
+
+.native-quick-start .quick-card {
+	padding: clamp(1.1rem, 2.5vw, 1.6rem);
+}
+
+.native-quick-start .primary-card {
+	border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+	background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+}
+
+.native-quick-start pre,
+.native-benchmarks pre {
+	overflow-x: auto;
+	background: var(--code-bg);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 1rem;
+}
+
+.native-quick-start pre code,
+.native-benchmarks pre code {
+	white-space: pre;
+}
+
+.native-grid article p {
+	margin: 0.4rem 0 0.7rem;
+	color: var(--muted);
+}
+
+.callout.warning {
+	border-color: color-mix(in srgb, #f59e0b 45%, var(--border));
+	background: color-mix(in srgb, #f59e0b 10%, var(--bg));
+}
+
+.callout.success {
+	margin-top: 1rem;
+	border-color: color-mix(in srgb, #10b981 40%, var(--border));
+	background: color-mix(in srgb, #10b981 8%, var(--bg));
+}
+
+@media (max-width: 760px) {
+	.native-grid,
+	.native-grid.two {
+		grid-template-columns: 1fr;
+	}
+
+	.native-page h1 {
+		font-size: 2rem;
+	}
 }

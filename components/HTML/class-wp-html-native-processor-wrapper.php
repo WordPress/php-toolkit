@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable Generic.Classes.DuplicateClassName.Found,Generic.Files.OneObjectStructurePerFile.MultipleFound
 /**
  * Public HTML Processor native adapter.
  *
@@ -6,4 +7,10 @@
  * @subpackage HTML-API
  */
 
-class WP_HTML_Native_Processor_Wrapper extends WP_HTML_Native_Processor {}
+if ( class_exists( 'WP_HTML_Native_Processor', false ) ) {
+	class WP_HTML_Native_Processor_Wrapper extends WP_HTML_Native_Processor {}
+} else {
+	require_once __DIR__ . '/PHP/class-wp-html-php-processor.php';
+
+	class WP_HTML_Native_Processor_Wrapper extends WP_HTML_PHP_Processor {}
+}
