@@ -60,6 +60,23 @@ class EntityImporter {
 		)!ix';
 
 	/**
+	 * Post meta keys that the importer writes itself and should not be copied
+	 * verbatim from the source data.
+	 *
+	 * - `_wp_attached_file` and `_wp_attachment_metadata` are written by the
+	 *   importer process, reflecting the locally downloaded file. Copying the
+	 *   source values would break the media URLs.
+	 * - `_edit_lock` is transient editor state and never meaningful to import.
+	 *
+	 * Mirrors the canonical WP_Import skip list (is_valid_meta_key()).
+	 */
+	const SKIPPED_POST_META_KEYS = array(
+		'_wp_attached_file',
+		'_wp_attachment_metadata',
+		'_edit_lock',
+	);
+
+	/**
 	 * Information to import from WXR file.
 	 *
 	 * @var array
@@ -895,6 +912,10 @@ class EntityImporter {
 	 */
 	public function import_post_meta( $meta_item, $post_id ) {
 		if ( empty( $meta_item ) ) {
+			return true;
+		}
+
+		if ( in_array( $meta_item['meta_key'], self::SKIPPED_POST_META_KEYS, true ) ) {
 			return true;
 		}
 
