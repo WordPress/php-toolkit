@@ -32,7 +32,7 @@ class ImportContentStepTest extends TestCase {
 		$importer_script = file_get_contents( __DIR__ . '/../../../Steps/scripts/import-content.php' );
 		$appended_code   = substr( $runtime->captured_code, strlen( $importer_script ) );
 
-		$this->assertSame( 0, strpos( $appended_code, "\nrun_content_import([" ) );
+		$this->assertSame( 0, strpos( ltrim( $appended_code ), 'run_content_import([' ) );
 		$this->assertStringNotContainsString( '<?php', $appended_code );
 		$this->assertStringNotContainsString( '?>', $appended_code );
 	}

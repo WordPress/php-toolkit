@@ -67,7 +67,6 @@ class ImportContentStep implements StepInterface {
 		$import_process  = $runtime->create_php_sub_process(
 			$importer_script .
 			<<<'PHP'
-
 run_content_import([
 	'mode' => 'wxr',
 	'execution_context_root' => getenv('EXECUTION_CONTEXT') ? getenv('EXECUTION_CONTEXT') : null,
