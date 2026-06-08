@@ -297,7 +297,13 @@ class Runner {
 					)
 				);
 			} catch ( FilesystemException $exception ) {
-				// Do not fail or mask Blueprint execution because temporary cleanup failed.
+				$this->configuration->get_logger()->warning(
+					sprintf(
+						'Failed to remove temporary Blueprint workspace %s: %s',
+						$temp_root,
+						$exception->getMessage()
+					)
+				);
 			}
 		}
 	}
