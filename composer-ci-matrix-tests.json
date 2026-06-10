@@ -45,6 +45,7 @@
 			"components/Merge/vendor-patched",
 			"components/ByteStream/",
 			"components/Polyfill/",
+			"components/Svn/",
 			"components/XML/",
 			"components/Zip/"
 		],
@@ -59,7 +60,8 @@
 			"components/Polyfill/wordpress.php",
 			"components/Polyfill/mbstring.php",
 			"components/Polyfill/php-functions.php",
-			"components/Git/functions.php"
+			"components/Git/functions.php",
+			"components/Svn/functions.php"
 		],
 		"psr-4": {
 			"Rowbot\\": "components/DataLiberation/vendor-patched/",
