@@ -103,7 +103,7 @@ class WordPressOrgTest extends TestCase {
 		$this->assertGreaterThan( 62000, $result['revision'] );
 		$this->assertFileExists( "$path/wp-config-sample.php" );
 		$this->assertFileExists( "$path/package.json" );
-		$this->assertFileDoesNotExist( "$path/src" );
+		$this->assertFalse( file_exists( "$path/src" ) );
 
 		// wp-config-sample.php carries svn:eol-style CRLF.
 		$this->assertStringContainsString( "\r\n", file_get_contents( "$path/wp-config-sample.php" ) );

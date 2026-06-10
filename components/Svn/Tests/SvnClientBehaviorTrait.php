@@ -152,7 +152,7 @@ trait SvnClientBehaviorTrait {
 		$this->assertSame( "a change from the test suite\n", file_get_contents( "$verify_path/hello.txt" ) );
 		$this->assertSame( "<?php // new\n", file_get_contents( "$verify_path/lib/nested/util.php" ) );
 		$this->assertSame( "standalone\n", file_get_contents( "$verify_path/standalone.txt" ) );
-		$this->assertFileDoesNotExist( "$verify_path/sub/deep/nested.txt" );
+		$this->assertFalse( file_exists( "$verify_path/sub/deep/nested.txt" ) );
 	}
 
 	public function test_commit_does_not_rewrite_eol_styled_files() {
@@ -193,7 +193,7 @@ trait SvnClientBehaviorTrait {
 		$this->assertContains( 'multi.txt', $result['deleted'] );
 		$this->assertSame( "updated upstream\n", file_get_contents( "$reader/hello.txt" ) );
 		$this->assertSame( "fresh\n", file_get_contents( "$reader/fresh.txt" ) );
-		$this->assertFileDoesNotExist( "$reader/multi.txt" );
+		$this->assertFalse( file_exists( "$reader/multi.txt" ) );
 		$this->assertSame( array(), $client->status( $reader ) );
 	}
 
@@ -244,7 +244,7 @@ trait SvnClientBehaviorTrait {
 		}
 
 		$client->resolved( $reader, 'hello.txt' );
-		$this->assertFileDoesNotExist( $incoming );
+		$this->assertFalse( file_exists( $incoming ) );
 		$resolution = $client->commit( $reader, 'the reader wins' );
 		$this->assertGreaterThan( $committed['revision'], $resolution['revision'] );
 	}
@@ -282,7 +282,7 @@ trait SvnClientBehaviorTrait {
 		$this->assertFileExists( "$path/hello.txt" );
 
 		$client->delete( $path, 'hello.txt', array( 'force' => true ) );
-		$this->assertFileDoesNotExist( "$path/hello.txt" );
+		$this->assertFalse( file_exists( "$path/hello.txt" ) );
 		$this->assertSame( 'deleted', $client->status( $path )['hello.txt'] );
 	}
 
@@ -363,7 +363,7 @@ trait SvnClientBehaviorTrait {
 		// ignore_externals skips the nested checkout entirely.
 		$bare_path = $this->make_temp_path();
 		$client->checkout( $this->repo() . '/trunk', $bare_path, array( 'ignore_externals' => true ) );
-		$this->assertFileDoesNotExist( "$bare_path/vendor/sub-external" );
+		$this->assertFalse( file_exists( "$bare_path/vendor/sub-external" ) );
 	}
 
 	public function test_checkout_with_limited_depth() {
@@ -373,7 +373,7 @@ trait SvnClientBehaviorTrait {
 
 		$this->assertFileExists( "$path/hello.txt" );
 		$this->assertFileExists( "$path/multi.txt" );
-		$this->assertFileDoesNotExist( "$path/sub" );
+		$this->assertFalse( file_exists( "$path/sub" ) );
 	}
 
 	public function test_out_of_date_commit_is_rejected() {
