@@ -5,6 +5,7 @@ use PHPUnit\Framework\TestCase;
 use WordPress\Filesystem\InMemoryFilesystem;
 use WordPress\Svn\SvnException;
 use WordPress\Svn\SvnWorkingCopy;
+use WordPress\Svn\WorkingCopyEditor;
 
 class SvnWorkingCopyTest extends TestCase {
 	private function make_working_copy() {
@@ -70,6 +71,42 @@ class SvnWorkingCopyTest extends TestCase {
 		$reopened = SvnWorkingCopy::open( $filesystem, '/wc' );
 		$this->assertSame( 'file', $reopened->get_entry( 'a.txt' )['kind'] );
 		$this->assertNull( $reopened->get_entry( 'missing.txt' ) );
+	}
+
+	/**
+	 * @dataProvider unsafe_path_provider
+	 *
+	 * @param string $path  Path that must not be accepted as a working-copy path.
+	 */
+	public function test_disk_paths_must_stay_inside_the_working_copy( $path ) {
+		list( $working_copy ) = $this->make_working_copy();
+
+		$this->expectException( SvnException::class );
+		$working_copy->get_disk_path( $path );
+	}
+
+	public function unsafe_path_provider() {
+		return array(
+			array( '../escape' ),
+			array( 'nested/../escape' ),
+			array( 'nested/./file.txt' ),
+			array( 'nested//file.txt' ),
+			array( '/absolute' ),
+			array( 'nested\\file.txt' ),
+		);
+	}
+
+	public function test_editor_rejects_server_paths_that_escape_the_working_copy() {
+		list( $working_copy, $filesystem ) = $this->make_working_copy();
+		$editor                           = new WorkingCopyEditor( $working_copy );
+		$editor->set_target_revision( 8 );
+
+		try {
+			$editor->add_directory( '../escape' );
+			$this->fail( 'Server-driven editor paths must not escape the working copy.' );
+		} catch ( SvnException $exception ) {
+			$this->assertFalse( $filesystem->is_dir( '/escape' ) );
+		}
 	}
 
 	public function test_status_reports_each_state() {

@@ -76,6 +76,7 @@ class WorkingCopyEditor implements SvnEditor {
 	}
 
 	public function add_directory( $path ) {
+		$path       = svn_normalize_relative_path( $path, false );
 		$filesystem = $this->working_copy->get_filesystem();
 		$disk_path  = $this->working_copy->get_disk_path( $path );
 		if ( $filesystem->is_file( $disk_path ) ) {
@@ -95,10 +96,12 @@ class WorkingCopyEditor implements SvnEditor {
 	}
 
 	public function open_directory( $path ) {
+		svn_normalize_relative_path( $path, false );
 		// Nothing to do – changes arrive through dedicated calls.
 	}
 
 	public function change_directory_property( $path, $name, $value ) {
+		$path  = svn_normalize_relative_path( $path );
 		$entry = $this->working_copy->get_entry( $path );
 		if ( null === $entry ) {
 			return;
@@ -118,10 +121,13 @@ class WorkingCopyEditor implements SvnEditor {
 	}
 
 	public function close_directory( $path ) {
+		svn_normalize_relative_path( $path );
 		// Nothing to do.
 	}
 
 	public function add_file( $path ) {
+		$path = svn_normalize_relative_path( $path, false );
+
 		$this->file_states[ $path ] = array(
 			'is_add'       => true,
 			'had_delta'    => false,
@@ -131,6 +137,7 @@ class WorkingCopyEditor implements SvnEditor {
 	}
 
 	public function open_file( $path ) {
+		$path = svn_normalize_relative_path( $path, false );
 		if ( null === $this->working_copy->get_entry( $path ) ) {
 			throw new SvnException( "The server changed '{$path}' which is not part of this working copy." );
 		}
@@ -143,10 +150,12 @@ class WorkingCopyEditor implements SvnEditor {
 	}
 
 	public function change_file_property( $path, $name, $value ) {
+		$path = svn_normalize_relative_path( $path, false );
 		$this->file_states[ $path ]['prop_changes'][ $name ] = $value;
 	}
 
 	public function apply_textdelta( $path, $base_checksum ) {
+		$path  = svn_normalize_relative_path( $path, false );
 		$state = &$this->file_states[ $path ];
 		$base  = '';
 		if ( ! $state['is_add'] ) {
@@ -163,14 +172,17 @@ class WorkingCopyEditor implements SvnEditor {
 	}
 
 	public function write_textdelta_chunk( $path, $svndiff_bytes ) {
+		$path = svn_normalize_relative_path( $path, false );
 		$this->file_states[ $path ]['applier']->append_bytes( $svndiff_bytes );
 	}
 
 	public function textdelta_end( $path ) {
+		$path = svn_normalize_relative_path( $path, false );
 		$this->file_states[ $path ]['applier']->finish();
 	}
 
 	public function close_file( $path, $text_checksum ) {
+		$path  = svn_normalize_relative_path( $path, false );
 		$state = $this->file_states[ $path ];
 		unset( $this->file_states[ $path ] );
 
@@ -267,6 +279,7 @@ class WorkingCopyEditor implements SvnEditor {
 	}
 
 	public function delete_entry( $path ) {
+		$path         = svn_normalize_relative_path( $path, false );
 		$working_copy = $this->working_copy;
 		$filesystem   = $working_copy->get_filesystem();
 		$entry        = $working_copy->get_entry( $path );

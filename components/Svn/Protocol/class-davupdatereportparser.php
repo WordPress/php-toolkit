@@ -6,6 +6,8 @@ use WordPress\Svn\SvnEditor;
 use WordPress\Svn\SvnException;
 use WordPress\XML\XMLProcessor;
 
+use function WordPress\Svn\svn_normalize_relative_path;
+
 /**
  * Streaming parser for mod_dav_svn's update-report response.
  *
@@ -383,6 +385,9 @@ class DavUpdateReportParser {
 	private function child_path( $name ) {
 		$parent = end( $this->directory_stack );
 
-		return '' === $parent || false === $parent ? $name : $parent . '/' . $name;
+		return svn_normalize_relative_path(
+			'' === $parent || false === $parent ? $name : $parent . '/' . $name,
+			false
+		);
 	}
 }

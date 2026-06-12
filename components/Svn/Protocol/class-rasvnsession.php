@@ -7,6 +7,8 @@ use WordPress\Svn\SvnEditor;
 use WordPress\Svn\SvnException;
 use WordPress\Svn\SvnSession;
 
+use function WordPress\Svn\svn_normalize_relative_path;
+
 /**
  * Subversion repository access over the svn:// protocol (ra_svn).
  *
@@ -512,13 +514,21 @@ class RaSvnSession implements SvnSession {
 					break;
 
 				case 'add-dir':
-					$path                                        = $params[0]->get_string();
+					$path = svn_normalize_relative_path(
+						$params[0]->get_string(),
+						false
+					);
+
 					$directory_paths[ $params[2]->get_string() ] = $path;
 					$editor->add_directory( $path );
 					break;
 
 				case 'open-dir':
-					$path                                        = $params[0]->get_string();
+					$path = svn_normalize_relative_path(
+						$params[0]->get_string(),
+						false
+					);
+
 					$directory_paths[ $params[2]->get_string() ] = $path;
 					$editor->open_directory( $path );
 					break;
@@ -542,13 +552,21 @@ class RaSvnSession implements SvnSession {
 					break;
 
 				case 'add-file':
-					$path                                   = $params[0]->get_string();
+					$path = svn_normalize_relative_path(
+						$params[0]->get_string(),
+						false
+					);
+
 					$file_paths[ $params[2]->get_string() ] = $path;
 					$editor->add_file( $path );
 					break;
 
 				case 'open-file':
-					$path                                   = $params[0]->get_string();
+					$path = svn_normalize_relative_path(
+						$params[0]->get_string(),
+						false
+					);
+
 					$file_paths[ $params[2]->get_string() ] = $path;
 					$editor->open_file( $path );
 					break;
@@ -595,7 +613,12 @@ class RaSvnSession implements SvnSession {
 					break;
 
 				case 'delete-entry':
-					$editor->delete_entry( $params[0]->get_string() );
+					$editor->delete_entry(
+						svn_normalize_relative_path(
+							$params[0]->get_string(),
+							false
+						)
+					);
 					break;
 
 				case 'absent-dir':

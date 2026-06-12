@@ -41,6 +41,11 @@ class SvnExternalsTest extends TestCase {
 		$this->assertSame( 42, $externals[0]['revision'] );
 	}
 
+	public function test_head_operative_revision_is_unpinned() {
+		$externals = svn_parse_externals( '-r HEAD https://other.example.com/lib@99 lib', self::DIR_URL, self::ROOT_URL );
+		$this->assertNull( $externals[0]['revision'] );
+	}
+
 	public function test_historical_format_with_revision() {
 		$externals = svn_parse_externals( 'lib -r 7 https://other.example.com/lib', self::DIR_URL, self::ROOT_URL );
 		$this->assertSame( 7, $externals[0]['revision'] );
@@ -94,6 +99,21 @@ class SvnExternalsTest extends TestCase {
 	public function test_rejects_target_escaping_the_directory() {
 		$this->expectException( SvnException::class );
 		svn_parse_externals( 'https://other.example.com/lib ../../etc', self::DIR_URL, self::ROOT_URL );
+	}
+
+	public function test_rejects_target_with_parent_segment_at_the_end() {
+		$this->expectException( SvnException::class );
+		svn_parse_externals( 'https://other.example.com/lib vendor/..', self::DIR_URL, self::ROOT_URL );
+	}
+
+	public function test_rejects_target_with_windows_separator() {
+		$this->expectException( SvnException::class );
+		svn_parse_externals( 'https://other.example.com/lib vendor\\lib', self::DIR_URL, self::ROOT_URL );
+	}
+
+	public function test_rejects_invalid_operative_revision() {
+		$this->expectException( SvnException::class );
+		svn_parse_externals( '-r 12x https://other.example.com/lib lib', self::DIR_URL, self::ROOT_URL );
 	}
 
 	public function test_rejects_line_without_url() {

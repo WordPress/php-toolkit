@@ -84,6 +84,22 @@ class DavUpdateReportParserTest extends TestCase {
 		$this->assertSame( array( 'svn:ignore' => '*.tmp', 'custom:flag' => null ), $editor->properties['sub'] );
 	}
 
+	public function test_rejects_update_paths_that_escape_the_working_copy() {
+		$this->expectException( SvnException::class );
+
+		$xml = '<?xml version="1.0" encoding="utf-8"?>' .
+			'<S:update-report xmlns:S="svn:" send-all="true">' .
+			'<S:target-revision rev="1"/>' .
+			'<S:open-directory rev="1">' .
+			'<S:add-directory name="../escape"/>' .
+			'</S:open-directory>' .
+			'</S:update-report>';
+
+		$parser = new DavUpdateReportParser( new RecordingEditor() );
+		$parser->append_bytes( $xml );
+		$parser->finish();
+	}
+
 	public function test_decodes_base64_encoded_property_values() {
 		$xml = '<?xml version="1.0" encoding="utf-8"?>' .
 			'<S:update-report xmlns:S="svn:" xmlns:V="http://subversion.tigris.org/xmlns/dav/" send-all="true">' .

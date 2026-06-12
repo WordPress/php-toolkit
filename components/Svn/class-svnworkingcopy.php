@@ -176,11 +176,20 @@ class SvnWorkingCopy {
 	 *               copy root) => array{url, revision}.
 	 */
 	public function get_externals() {
-		return isset( $this->data['externals'] ) ? $this->data['externals'] : array();
+		$externals = array();
+		foreach ( isset( $this->data['externals'] ) ? $this->data['externals'] : array() as $path => $external ) {
+			$externals[ svn_normalize_relative_path( $path, false ) ] = $external;
+		}
+
+		return $externals;
 	}
 
 	public function set_externals( $externals ) {
-		$this->data['externals'] = $externals;
+		$normalized = array();
+		foreach ( $externals as $path => $external ) {
+			$normalized[ svn_normalize_relative_path( $path, false ) ] = $external;
+		}
+		$this->data['externals'] = $normalized;
 	}
 
 	/**
@@ -188,14 +197,19 @@ class SvnWorkingCopy {
 	 * @return array|null The entry, or null when the path is not versioned.
 	 */
 	public function get_entry( $path ) {
+		$path = svn_normalize_relative_path( $path );
+
 		return isset( $this->data['entries'][ $path ] ) ? $this->data['entries'][ $path ] : null;
 	}
 
 	public function set_entry( $path, $entry ) {
+		$path = svn_normalize_relative_path( $path );
+
 		$this->data['entries'][ $path ] = $entry;
 	}
 
 	public function remove_entry( $path ) {
+		$path = svn_normalize_relative_path( $path );
 		unset( $this->data['entries'][ $path ] );
 	}
 
@@ -203,7 +217,12 @@ class SvnWorkingCopy {
 	 * @return array All entries, keyed by relative path.
 	 */
 	public function get_entries() {
-		return $this->data['entries'];
+		$entries = array();
+		foreach ( $this->data['entries'] as $path => $entry ) {
+			$entries[ svn_normalize_relative_path( $path ) ] = $entry;
+		}
+
+		return $entries;
 	}
 
 	/**
@@ -211,9 +230,10 @@ class SvnWorkingCopy {
 	 * @return string[] Paths of all entries strictly below $path.
 	 */
 	public function get_entry_paths_under( $path ) {
+		$path   = svn_normalize_relative_path( $path );
 		$prefix = '' === $path ? '' : $path . '/';
 		$found  = array();
-		foreach ( $this->data['entries'] as $entry_path => $entry ) {
+		foreach ( $this->get_entries() as $entry_path => $entry ) {
 			if ( '' !== $entry_path && ( '' === $prefix || 0 === strpos( $entry_path, $prefix ) ) ) {
 				$found[] = $entry_path;
 			}
@@ -227,6 +247,8 @@ class SvnWorkingCopy {
 	 * @return string The absolute path within the filesystem.
 	 */
 	public function get_disk_path( $relative_path ) {
+		$relative_path = svn_normalize_relative_path( $relative_path );
+
 		return '' === $relative_path ? $this->root : $this->root . '/' . $relative_path;
 	}
 
@@ -385,7 +407,7 @@ class SvnWorkingCopy {
 		// Conflict artifacts (the `<name>.r<revision>` files) are part of
 		// the conflict bookkeeping, not unversioned files.
 		$conflict_files = array();
-		foreach ( $this->data['entries'] as $entry ) {
+		foreach ( $this->get_entries() as $entry ) {
 			if ( isset( $entry['conflict_file'] ) ) {
 				$conflict_files[ $entry['conflict_file'] ] = true;
 			}

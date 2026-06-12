@@ -49,16 +49,19 @@ function svn_parse_externals( $property_value, $directory_url, $repository_root 
 		}
 
 		// Extract the optional -r REV / -rREV operative revision.
-		$revision    = null;
-		$token_count = count( $tokens );
+		$revision     = null;
+		$has_revision = false;
+		$token_count  = count( $tokens );
 		for ( $i = 0; $i < $token_count; $i++ ) {
 			if ( '-r' === $tokens[ $i ] && isset( $tokens[ $i + 1 ] ) ) {
-				$revision = (int) $tokens[ $i + 1 ];
+				$revision     = svn_parse_externals_revision( $tokens[ $i + 1 ], $line );
+				$has_revision = true;
 				array_splice( $tokens, $i, 2 );
 				break;
 			}
 			if ( 0 === strpos( $tokens[ $i ], '-r' ) && strlen( $tokens[ $i ] ) > 2 ) {
-				$revision = (int) substr( $tokens[ $i ], 2 );
+				$revision     = svn_parse_externals_revision( substr( $tokens[ $i ], 2 ), $line );
+				$has_revision = true;
 				array_splice( $tokens, $i, 1 );
 				break;
 			}
@@ -84,17 +87,17 @@ function svn_parse_externals( $property_value, $directory_url, $repository_root 
 		if ( false !== $at_position && false === strpos( substr( $url, $at_position ), '/' ) ) {
 			$peg = substr( $url, $at_position + 1 );
 			$url = substr( $url, 0, $at_position );
-			if ( preg_match( '/^\d+$/', $peg ) ) {
-				if ( null === $revision ) {
-					$revision = (int) $peg;
+			if ( '' !== $peg ) {
+				$peg_revision = svn_parse_externals_revision( $peg, $line );
+				if ( ! $has_revision ) {
+					$revision = $peg_revision;
 				}
-			} elseif ( 'HEAD' !== $peg && '' !== $peg ) {
-				throw new SvnException( "Unsupported peg revision '{$peg}' in svn:externals line: '{$line}'." );
 			}
 		}
 
-		$target = trim( $target, '/' );
-		if ( '' === $target || '..' === $target || 0 === strpos( $target, '../' ) || false !== strpos( $target, '/../' ) ) {
+		try {
+			$target = svn_normalize_relative_path( trim( $target, '/' ), false );
+		} catch ( SvnException $exception ) {
 			throw new SvnException( "svn:externals target must be a relative path below the directory: '{$line}'." );
 		}
 
@@ -106,6 +109,44 @@ function svn_parse_externals( $property_value, $directory_url, $repository_root 
 	}
 
 	return $externals;
+}
+
+/**
+ * Normalizes an SVN path that must stay below a containing root.
+ *
+ * @param  string $path        Forward-slash path relative to a root.
+ * @param  bool   $allow_root  Whether the empty root path is allowed.
+ * @return string The normalized path.
+ * @throws SvnException When the path is absolute, empty, or contains unsafe segments.
+ */
+function svn_normalize_relative_path( $path, $allow_root = true ) {
+	if ( ! is_string( $path ) ) {
+		throw new SvnException( 'SVN paths must be strings.' );
+	}
+	if ( '' === $path ) {
+		if ( $allow_root ) {
+			return '';
+		}
+		throw new SvnException( 'SVN path must not be empty.' );
+	}
+	if ( 0 === strpos( $path, '/' ) ) {
+		throw new SvnException( "SVN path '{$path}' must be relative." );
+	}
+	if ( false !== strpos( $path, '\\' ) ) {
+		throw new SvnException( "SVN path '{$path}' must use forward slashes." );
+	}
+	if ( false !== strpos( $path, "\0" ) || preg_match( '/[\x01-\x1f\x7f]/', $path ) ) {
+		throw new SvnException( "SVN path '{$path}' contains control characters." );
+	}
+
+	$segments = explode( '/', $path );
+	foreach ( $segments as $segment ) {
+		if ( '' === $segment || '.' === $segment || '..' === $segment ) {
+			throw new SvnException( "SVN path '{$path}' must not contain empty, '.', or '..' segments." );
+		}
+	}
+
+	return implode( '/', $segments );
 }
 
 /**
@@ -182,4 +223,21 @@ function svn_join_url( $base_url, $relative ) {
 	}
 
 	return $authority . ( count( $segments ) > 0 ? '/' . implode( '/', $segments ) : '' );
+}
+
+/**
+ * @param  string $revision  Revision token from an svn:externals definition.
+ * @param  string $line      The full externals line, for error messages.
+ * @return int|null Numeric revision, or null for HEAD.
+ * @throws SvnException When the revision token is unsupported.
+ */
+function svn_parse_externals_revision( $revision, $line ) {
+	if ( preg_match( '/^\d+$/', $revision ) ) {
+		return (int) $revision;
+	}
+	if ( 'HEAD' === strtoupper( $revision ) ) {
+		return null;
+	}
+
+	throw new SvnException( "Unsupported revision '{$revision}' in svn:externals line: '{$line}'." );
 }
