@@ -131,6 +131,14 @@ class CSSProcessor {
 	public const TOKEN_FUNCTION      = 'function-token';
 
 	/**
+	 * Hash-token type flags.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-hash-token
+	 */
+	public const HASH_TOKEN_ID           = 'id';
+	public const HASH_TOKEN_UNRESTRICTED = 'unrestricted';
+
+	/**
 	 * URL tokens represent unquoted URLs in url() notation.
 	 *
 	 * Valid: url(image.jpg), url(https://example.com)
@@ -214,6 +222,13 @@ class CSSProcessor {
 	 * @var string|null
 	 */
 	private $token_type = null;
+
+	/**
+	 * The type flag of the current token, if the token carries one.
+	 *
+	 * @var string|null
+	 */
+	private $token_type_flag = null;
 
 	/**
 	 * The byte offset at which the current token starts.
@@ -414,9 +429,9 @@ class CSSProcessor {
 					// Create a <hash-token>.
 					++$this->at;
 
-					// We skip this check as we don't track the type flag:
-					// > If the next 3 input code points would start an ident sequence,
-					// > set the <hash-token>'s type flag to "id".
+					$this->token_type_flag = $this->check_if_3_code_points_start_an_ident_sequence( $this->at )
+						? self::HASH_TOKEN_ID
+						: self::HASH_TOKEN_UNRESTRICTED;
 
 					// Consume an ident sequence, and set the <hash-token>'s value to the returned string.
 					$this->consume_ident_sequence();
@@ -612,6 +627,17 @@ class CSSProcessor {
 	 */
 	public function get_token_type(): ?string {
 		return $this->token_type;
+	}
+
+	/**
+	 * Gets the current token type flag.
+	 *
+	 * Only hash tokens carry a type flag. Other token types return null.
+	 *
+	 * @return string|null
+	 */
+	public function get_token_type_flag(): ?string {
+		return $this->token_type_flag;
 	}
 
 	/**
@@ -986,6 +1012,7 @@ class CSSProcessor {
 	 */
 	private function after_token(): void {
 		$this->token_type            = null;
+		$this->token_type_flag       = null;
 		$this->token_starts_at       = null;
 		$this->token_length          = null;
 		$this->token_value           = null;

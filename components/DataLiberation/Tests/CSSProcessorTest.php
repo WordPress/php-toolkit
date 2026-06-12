@@ -68,6 +68,38 @@ class CSSProcessorTest extends TestCase {
 		return $tokens;
 	}
 
+	public function test_hash_tokens_expose_type_flags(): void {
+		$processor = CSSProcessor::create( '#id #1id .' );
+
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_HASH, $processor->get_token_type() );
+		$this->assertSame( '#id', $processor->get_unnormalized_token() );
+		$this->assertSame( CSSProcessor::HASH_TOKEN_ID, $processor->get_token_type_flag() );
+
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $processor->get_token_type() );
+		$this->assertSame( ' ', $processor->get_unnormalized_token() );
+		$this->assertNull( $processor->get_token_type_flag() );
+
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_HASH, $processor->get_token_type() );
+		$this->assertSame( '#1id', $processor->get_unnormalized_token() );
+		$this->assertSame( CSSProcessor::HASH_TOKEN_UNRESTRICTED, $processor->get_token_type_flag() );
+
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $processor->get_token_type() );
+		$this->assertSame( ' ', $processor->get_unnormalized_token() );
+		$this->assertNull( $processor->get_token_type_flag() );
+
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_DELIM, $processor->get_token_type() );
+		$this->assertSame( '.', $processor->get_unnormalized_token() );
+		$this->assertNull( $processor->get_token_type_flag() );
+
+		$this->assertFalse( $processor->next_token() );
+		$this->assertNull( $processor->get_token_type_flag() );
+	}
+
 	/**
 	 * Tests handling of non-UTF-8 byte sequences in identifiers.
 	 *
