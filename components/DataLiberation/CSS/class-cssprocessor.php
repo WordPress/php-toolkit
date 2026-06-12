@@ -266,15 +266,15 @@ class CSSProcessor {
 	private $token_value_length = null;
 
 	/**
-	 * The string value of the current token.
+	 * A cache for the decoded and normalized token value.
 	 *
-	 * For numbers, this is a float.
-	 * For identifiers/functions/strings/URLs with escapes, this is a decoded string.
-	 * Otherwise, it's null and the value is computed from token indices.
+	 * - `false` indicates the has not been computed.
+	 * - `null` is used for token types without an associated value will have `null`: whitespace, bad-url, comment, punctuation, etc.
+	 * - `string` is used for token types with an associated value: ident, string, function, url, etc.
 	 *
-	 * @var string|float|null
+	 * @var string|null|false
 	 */
-	private $token_value = null;
+	private $token_value = false;
 
 	/**
 	 * The unit of the current token, e.g. "px", "em", "deg", etc.
@@ -672,8 +672,8 @@ class CSSProcessor {
 	 * @see https://www.w3.org/TR/css-syntax-3/#tokenization
 	 * @return string|null
 	 */
-	public function get_token_value() {
-		if ( null === $this->token_value ) {
+	public function get_token_value(): ?string {
+		if ( false === $this->token_value ) {
 			if ( null === $this->token_starts_at || null === $this->token_length ) {
 				return null;
 			}
@@ -988,7 +988,7 @@ class CSSProcessor {
 		$this->token_type            = null;
 		$this->token_starts_at       = null;
 		$this->token_length          = null;
-		$this->token_value           = null;
+		$this->token_value           = false;
 		$this->token_unit            = null;
 		$this->token_value_starts_at = null;
 		$this->token_value_length    = null;
