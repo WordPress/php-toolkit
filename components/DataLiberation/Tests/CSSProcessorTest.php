@@ -1577,10 +1577,11 @@ CSS;
 	 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
 	 */
 	public function test_string_backslash_eof(): void {
-		$processor = CSSProcessor::create( "'string\\" );
+		$processor = CSSProcessor::create( '"b\\' );
 		$this->assertTrue( $processor->next_token() );
 		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
-		$this->assertSame( 'string', $processor->get_token_value() );
+		$this->assertSame( 'b', $processor->get_token_value() );
+		$this->assertFalse( $processor->next_token() );
 	}
 
 	/**
