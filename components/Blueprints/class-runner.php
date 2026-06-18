@@ -49,6 +49,7 @@ use WordPress\Blueprints\VersionStrings\VersionConstraint;
 use WordPress\Blueprints\VersionStrings\WordPressVersion;
 use WordPress\ByteStream\ReadStream\FileReadStream;
 use WordPress\Filesystem\Filesystem;
+use WordPress\Filesystem\FilesystemException;
 use WordPress\Filesystem\InMemoryFilesystem;
 use WordPress\Filesystem\LocalFilesystem;
 use WordPress\HttpClient\ByteStream\RequestReadStream;
@@ -288,12 +289,22 @@ class Runner {
 			$progress->finish();
 		} finally {
 			// TODO: Optionally preserve workspace in case of error? Support resuming after error?
-			LocalFilesystem::create( $temp_root )->rmdir(
-				'/',
-				array(
-					'recursive' => true,
-				)
-			);
+			try {
+				LocalFilesystem::create( $temp_root )->rmdir(
+					'/',
+					array(
+						'recursive' => true,
+					)
+				);
+			} catch ( FilesystemException $exception ) {
+				$this->configuration->get_logger()->warning(
+					sprintf(
+						'Failed to remove temporary Blueprint workspace %s: %s',
+						$temp_root,
+						$exception->getMessage()
+					)
+				);
+			}
 		}
 	}
 
