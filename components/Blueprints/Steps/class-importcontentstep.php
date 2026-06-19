@@ -84,27 +84,31 @@ PHP
 		$import_process->start();
 
 		$output = $import_process->getOutputStream( Process::OUTPUT_FILE );
-		foreach ( $this->output_lines( $output ) as $line ) {
-			$data = @json_decode( $line, true );
-			if ( ! is_array( $data ) ) {
-				// Non-JSON output is treated as a crash. We use a dedicated file pipe
-				// for communication and it should never contain a non-JSON line.
-				$import_process->stop();
-				throw new ProcessFailedException( $import_process );
+		try {
+			foreach ( $this->output_lines( $output ) as $line ) {
+				$data = @json_decode( $line, true );
+				if ( ! is_array( $data ) ) {
+					// Non-JSON output is treated as a crash. We use a dedicated file pipe
+					// for communication and it should never contain a non-JSON line.
+					$import_process->stop();
+					throw new ProcessFailedException( $import_process );
+				}
+				// Report progress, errors, etc.
+				switch ( $data['type'] ?? '**MISSING**' ) {
+					case 'progress':
+						$progress->set( $data['progress'], 'Importing WXR file: ' . $data['caption'] );
+						break;
+					case 'error':
+						throw new BlueprintExecutionException( $data['message'] );
+					case 'completion':
+						$progress->finish();
+						break;
+					default:
+						throw new BlueprintExecutionException( 'Unknown message type: ' . $data['type'] );
+				}
 			}
-			// Report progress, errors, etc.
-			switch ( $data['type'] ?? '**MISSING**' ) {
-				case 'progress':
-					$progress->set( $data['progress'], 'Importing WXR file: ' . $data['caption'] );
-					break;
-				case 'error':
-					throw new BlueprintExecutionException( $data['message'] );
-				case 'completion':
-					$progress->finish();
-					break;
-				default:
-					throw new BlueprintExecutionException( 'Unknown message type: ' . $data['type'] );
-			}
+		} finally {
+			$output->close_reading();
 		}
 
 		if ( 0 !== $import_process->getExitCode() ) {
