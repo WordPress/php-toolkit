@@ -727,7 +727,7 @@ class GitRepository {
 		// Create a new commit object.
 		$commit_options         = $options['commit'] ?? array();
 		$commit_options['tree'] = $root_tree_oid;
-		if ( ! isset( $commit_options['parents'] ) && $this->get_branch_tip( 'HEAD' ) ) {
+		if ( ! isset( $commit_options['parents'] ) && ! Commit::is_null_hash( $head ) ) {
 			$commit_options['parents'] = array( $head );
 		}
 
@@ -919,8 +919,8 @@ class GitRepository {
 					continue;
 				}
 				$visited[ $current_oid ] = true;
-				$commits[] = $current_oid;
-				$commit = $this->read_object( $current_oid )->as_commit();
+				$commits[]               = $current_oid;
+				$commit                  = $this->read_object( $current_oid )->as_commit();
 				foreach ( $commit->parents as $parent_hash ) {
 					$queue[] = $parent_hash;
 				}

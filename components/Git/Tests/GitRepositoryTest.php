@@ -173,6 +173,22 @@ COMMIT
 		$this->assertEquals( $commit_oid, $repo->get_branch_tip() );
 	}
 
+	public function test_initial_commit_has_no_null_parent() {
+		$repo = new GitRepository( InMemoryFilesystem::create() );
+		$repo->set_branch_tip( 'refs/heads/trunk', Commit::NULL_HASH );
+		$repo->set_branch_tip( 'HEAD', 'ref: refs/heads/trunk' );
+
+		$commit_oid = $repo->commit(
+			array(
+				'updates' => array(
+					'README.md' => 'Hello, world!',
+				),
+			)
+		);
+
+		$this->assertSame( array(), $repo->read_object( $commit_oid )->as_commit()->parents );
+	}
+
 	public function test_find_path_descendants() {
 		$repo = new GitRepository( InMemoryFilesystem::create() );
 		$repo->set_branch_tip( 'refs/heads/trunk', Commit::NULL_HASH );
