@@ -69,6 +69,110 @@ class CSSProcessorTest extends TestCase {
 	}
 
 	/**
+	 * Tests that hash tokens expose the proper type flag.
+	 *
+	 * @dataProvider data_hash_tokens_expose_type_flags
+	 */
+	public function test_hash_tokens_expose_type_flags( string $css, array $expected_tokens ): void {
+		$processor = CSSProcessor::create( $css );
+
+		foreach ( $expected_tokens as $expected_token ) {
+			$this->assertTrue( $processor->next_token() );
+			$this->assertSame( $expected_token['type'], $processor->get_token_type() );
+			$this->assertSame( $expected_token['raw'], $processor->get_unnormalized_token() );
+			$this->assertSame( $expected_token['type_flag'], $processor->get_token_type_flag() );
+		}
+
+		$this->assertFalse( $processor->next_token() );
+		$this->assertNull( $processor->get_token_type_flag() );
+	}
+
+	public static function data_hash_tokens_expose_type_flags(): array {
+		return array(
+			'id hash'                            => array(
+				'#id',
+				array(
+					array(
+						'type'      => CSSProcessor::TOKEN_HASH,
+						'raw'       => '#id',
+						'type_flag' => 'id',
+					),
+				),
+			),
+			'unrestricted hash starting digit'   => array(
+				'#1id',
+				array(
+					array(
+						'type'      => CSSProcessor::TOKEN_HASH,
+						'raw'       => '#1id',
+						'type_flag' => 'unrestricted',
+					),
+				),
+			),
+			'id hash starting hyphen ident'      => array(
+				'#-id',
+				array(
+					array(
+						'type'      => CSSProcessor::TOKEN_HASH,
+						'raw'       => '#-id',
+						'type_flag' => 'id',
+					),
+				),
+			),
+			'unrestricted hash starting hyphen'  => array(
+				'#-1id',
+				array(
+					array(
+						'type'      => CSSProcessor::TOKEN_HASH,
+						'raw'       => '#-1id',
+						'type_flag' => 'unrestricted',
+					),
+				),
+			),
+			'id hash starting escape'            => array(
+				'#\\@special',
+				array(
+					array(
+						'type'      => CSSProcessor::TOKEN_HASH,
+						'raw'       => '#\\@special',
+						'type_flag' => 'id',
+					),
+				),
+			),
+			'hash delimiter has no type flag'    => array(
+				'#',
+				array(
+					array(
+						'type'      => CSSProcessor::TOKEN_DELIM,
+						'raw'       => '#',
+						'type_flag' => null,
+					),
+				),
+			),
+			'following token clears type flag'   => array(
+				'#id .',
+				array(
+					array(
+						'type'      => CSSProcessor::TOKEN_HASH,
+						'raw'       => '#id',
+						'type_flag' => 'id',
+					),
+					array(
+						'type'      => CSSProcessor::TOKEN_WHITESPACE,
+						'raw'       => ' ',
+						'type_flag' => null,
+					),
+					array(
+						'type'      => CSSProcessor::TOKEN_DELIM,
+						'raw'       => '.',
+						'type_flag' => null,
+					),
+				),
+			),
+		);
+	}
+
+	/**
 	 * Tests handling of non-UTF-8 byte sequences in identifiers.
 	 *
 	 * Invalid UTF-8 sequences should be replaced with U+FFFD replacement characters
