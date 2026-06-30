@@ -68,36 +68,108 @@ class CSSProcessorTest extends TestCase {
 		return $tokens;
 	}
 
-	public function test_hash_tokens_expose_type_flags(): void {
-		$processor = CSSProcessor::create( '#id #1id .' );
+	/**
+	 * Tests that hash tokens expose the proper type flag.
+	 *
+	 * @dataProvider data_hash_tokens_expose_type_flags
+	 */
+	public function test_hash_tokens_expose_type_flags( string $css, array $expected_tokens ): void {
+		$processor = CSSProcessor::create( $css );
 
-		$this->assertTrue( $processor->next_token() );
-		$this->assertSame( CSSProcessor::TOKEN_HASH, $processor->get_token_type() );
-		$this->assertSame( '#id', $processor->get_unnormalized_token() );
-		$this->assertSame( CSSProcessor::HASH_TOKEN_ID, $processor->get_token_type_flag() );
-
-		$this->assertTrue( $processor->next_token() );
-		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $processor->get_token_type() );
-		$this->assertSame( ' ', $processor->get_unnormalized_token() );
-		$this->assertNull( $processor->get_token_type_flag() );
-
-		$this->assertTrue( $processor->next_token() );
-		$this->assertSame( CSSProcessor::TOKEN_HASH, $processor->get_token_type() );
-		$this->assertSame( '#1id', $processor->get_unnormalized_token() );
-		$this->assertSame( CSSProcessor::HASH_TOKEN_UNRESTRICTED, $processor->get_token_type_flag() );
-
-		$this->assertTrue( $processor->next_token() );
-		$this->assertSame( CSSProcessor::TOKEN_WHITESPACE, $processor->get_token_type() );
-		$this->assertSame( ' ', $processor->get_unnormalized_token() );
-		$this->assertNull( $processor->get_token_type_flag() );
-
-		$this->assertTrue( $processor->next_token() );
-		$this->assertSame( CSSProcessor::TOKEN_DELIM, $processor->get_token_type() );
-		$this->assertSame( '.', $processor->get_unnormalized_token() );
-		$this->assertNull( $processor->get_token_type_flag() );
+		foreach ( $expected_tokens as $expected_token ) {
+			$this->assertTrue( $processor->next_token() );
+			$this->assertSame( $expected_token['type'], $processor->get_token_type() );
+			$this->assertSame( $expected_token['raw'], $processor->get_unnormalized_token() );
+			$this->assertSame( $expected_token['type_flag'], $processor->get_token_type_flag() );
+		}
 
 		$this->assertFalse( $processor->next_token() );
 		$this->assertNull( $processor->get_token_type_flag() );
+	}
+
+	public static function data_hash_tokens_expose_type_flags(): array {
+		return array(
+			'id hash'                            => array(
+				'#id',
+				array(
+					array(
+						'type'      => CSSProcessor::TOKEN_HASH,
+						'raw'       => '#id',
+						'type_flag' => CSSProcessor::HASH_TOKEN_ID,
+					),
+				),
+			),
+			'unrestricted hash starting digit'   => array(
+				'#1id',
+				array(
+					array(
+						'type'      => CSSProcessor::TOKEN_HASH,
+						'raw'       => '#1id',
+						'type_flag' => CSSProcessor::HASH_TOKEN_UNRESTRICTED,
+					),
+				),
+			),
+			'id hash starting hyphen ident'      => array(
+				'#-id',
+				array(
+					array(
+						'type'      => CSSProcessor::TOKEN_HASH,
+						'raw'       => '#-id',
+						'type_flag' => CSSProcessor::HASH_TOKEN_ID,
+					),
+				),
+			),
+			'unrestricted hash starting hyphen'  => array(
+				'#-1id',
+				array(
+					array(
+						'type'      => CSSProcessor::TOKEN_HASH,
+						'raw'       => '#-1id',
+						'type_flag' => CSSProcessor::HASH_TOKEN_UNRESTRICTED,
+					),
+				),
+			),
+			'id hash starting escape'            => array(
+				'#\\@special',
+				array(
+					array(
+						'type'      => CSSProcessor::TOKEN_HASH,
+						'raw'       => '#\\@special',
+						'type_flag' => CSSProcessor::HASH_TOKEN_ID,
+					),
+				),
+			),
+			'hash delimiter has no type flag'    => array(
+				'#',
+				array(
+					array(
+						'type'      => CSSProcessor::TOKEN_DELIM,
+						'raw'       => '#',
+						'type_flag' => null,
+					),
+				),
+			),
+			'following token clears type flag'   => array(
+				'#id .',
+				array(
+					array(
+						'type'      => CSSProcessor::TOKEN_HASH,
+						'raw'       => '#id',
+						'type_flag' => CSSProcessor::HASH_TOKEN_ID,
+					),
+					array(
+						'type'      => CSSProcessor::TOKEN_WHITESPACE,
+						'raw'       => ' ',
+						'type_flag' => null,
+					),
+					array(
+						'type'      => CSSProcessor::TOKEN_DELIM,
+						'raw'       => '.',
+						'type_flag' => null,
+					),
+				),
+			),
+		);
 	}
 
 	/**
