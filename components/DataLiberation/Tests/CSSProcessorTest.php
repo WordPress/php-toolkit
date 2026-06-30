@@ -57,6 +57,9 @@ class CSSProcessorTest extends TestCase {
 			if ( null !== $processor->get_token_unit() ) {
 				$token['unit'] = $processor->get_token_unit();
 			}
+			if ( null !== $processor->get_token_type_flag() ) {
+				$token['numberType'] = $processor->get_token_type_flag();
+			}
 
 			if ( null !== $keys ) {
 				$token = array_intersect_key( $token, array_flip( $keys ) );
@@ -1016,6 +1019,40 @@ CSS;
 		$processor = CSSProcessor::create( $css );
 		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value', 'unit'] );
 		$this->assertSame( $expected, $actual_tokens );
+	}
+
+	/**
+	 * Tests token_type_flag for different token types.
+	 *
+	 * @dataProvider data_token_type_flag
+	 */
+	public function test_token_type_flag( string $css, ?string $expected_type ): void {
+		$processor = CSSProcessor::create( $css );
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( $expected_type, $processor->get_token_type_flag() );
+	}
+
+	public static function data_token_type_flag(): array {
+		return array(
+			'integer'                   => array( '42', 'integer' ),
+			'positive integer'          => array( '+42', 'integer' ),
+			'negative integer'          => array( '-42', 'integer' ),
+			'zero'                      => array( '0', 'integer' ),
+			'decimal'                   => array( '42.0', 'number' ),
+			'decimal with fraction'     => array( '42.5', 'number' ),
+			'leading decimal point'     => array( '.5', 'number' ),
+			'exponent lowercase'        => array( '1e2', 'number' ),
+			'exponent uppercase'        => array( '1E2', 'number' ),
+			'exponent with plus'        => array( '1E+2', 'number' ),
+			'exponent with minus'       => array( '1e-2', 'number' ),
+			'dimension integer'         => array( '10px', 'integer' ),
+			'dimension decimal'         => array( '10.5px', 'number' ),
+			'dimension exponent'        => array( '1e2px', 'number' ),
+			'percentage integer'        => array( '20%', null ),
+			'percentage decimal'        => array( '20.0%', null ),
+			'ident token'               => array( 'red', null ),
+			'string token'              => array( '"hello"', null ),
+		);
 	}
 
 	/**
