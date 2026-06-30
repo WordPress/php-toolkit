@@ -1583,13 +1583,11 @@ class CSSProcessor {
 		$end     = $start + $length;
 
 		while ( $at < $end ) {
-			// Find next special character.
-			$normal_len = strcspn( $this->css, $special_chars, $at );
+			// Find next special character within the token boundary.
+			$normal_len = strcspn( $this->css, $special_chars, $at, $end - $at );
 			if ( $normal_len > 0 ) {
-				// Clamp to not exceed the end boundary.
-				$normal_len = min( $normal_len, $end - $at );
-				$decoded   .= wp_scrub_utf8( substr( $this->css, $at, $normal_len ) );
-				$at        += $normal_len;
+				$decoded .= wp_scrub_utf8( substr( $this->css, $at, $normal_len ) );
+				$at      += $normal_len;
 			}
 
 			if ( $at >= $end ) {
@@ -1700,11 +1698,9 @@ class CSSProcessor {
 			return "\u{FFFD}";
 		}
 
-		// Hex digits.
-		$hex_len = strspn( $this->css, '0123456789ABCDEFabcdef', $at );
+		// Hex digits (CSS spec allows at most 6).
+		$hex_len = strspn( $this->css, '0123456789ABCDEFabcdef', $at, 6 );
 		if ( $hex_len > 0 ) {
-			// Consume up to 6 hex digits.
-			$hex_len = min( $hex_len, 6 );
 			$hex     = substr( $this->css, $at, $hex_len );
 			$at     += $hex_len;
 
