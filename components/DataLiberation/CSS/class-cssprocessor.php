@@ -1588,7 +1588,7 @@ class CSSProcessor {
 			if ( $normal_len > 0 ) {
 				// Clamp to not exceed the end boundary.
 				$normal_len = min( $normal_len, $end - $at );
-				$decoded   .= substr( $this->css, $at, $normal_len );
+				$decoded   .= wp_scrub_utf8( substr( $this->css, $at, $normal_len ) );
 				$at        += $normal_len;
 			}
 
@@ -1738,21 +1738,14 @@ class CSSProcessor {
 		$new_at         = $at;
 		$invalid_length = 0;
 		if ( 1 !== _wp_scan_utf8( $this->css, $new_at, $invalid_length, null, 1 ) ) {
-			/**
-			 * Trouble ahead!
-			 * Bytes at $at are not a valid UTF-8 sequence.
-			 *
-			 * We'll move forward by $invalid_length bytes and continue processing.
-			 * Later on, during the string decoding, we'll replace the invalid bytes with U+FFFD
-			 * via maximal subpart”replacement.
-			 */
-			$matched_bytes = $invalid_length;
-		} else {
-			$matched_bytes = $new_at - $at;
+			// Bytes at $at are not a valid UTF-8 sequence. Consume the maximal
+			// invalid subpart and return U+FFFD per the CSS spec.
+			$bytes_consumed = $invalid_length;
+			return "\u{FFFD}";
 		}
 
-		$bytes_consumed = $matched_bytes;
-		return substr( $this->css, $at, $matched_bytes );
+		$bytes_consumed = $new_at - $at;
+		return substr( $this->css, $at, $bytes_consumed );
 	}
 
 	/**

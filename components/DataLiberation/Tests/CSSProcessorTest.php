@@ -149,6 +149,68 @@ class CSSProcessorTest extends TestCase {
 	}
 
 	/**
+	 * In the slow path of decode_string_or_url() (triggered by a backslash escape), normal
+	 * text segments must still have invalid UTF-8 bytes replaced with U+FFFD, just
+	 * as the fast path does via wp_scrub_utf8().
+	 */
+	public function test_invalid_utf8_in_normal_segment_combined_with_escape(): void {
+		// The ident token contains an invalid UTF-8 byte (0xF1) in the "normal"
+		// segment before a CSS hex escape (\41 = U+0041 = 'A'). The backslash
+		// triggers the slow path, which previously skipped wp_scrub_utf8() on the
+		// normal segment.
+		$css = ".test\xF1\\41name";
+
+		$expected = array(
+			array(
+				'type'  => CSSProcessor::TOKEN_DELIM,
+				'raw'   => '.',
+				'value' => '.',
+			),
+			array(
+				'type'  => CSSProcessor::TOKEN_IDENT,
+				// raw contains the original bytes.
+				'raw'   => "test\xF1\\41name",
+				// value must have 0xF1 replaced with U+FFFD and \41 decoded to 'A'.
+				'value' => "test\u{FFFD}Aname",
+			),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, array( 'type', 'raw', 'value' ) );
+		$this->assertSame( $expected, $actual_tokens );
+	}
+
+	/**
+	 * When an invalid UTF-8 byte is the character directly after a backslash
+	 * (i.e. it is the escaped character itself), decode_escape_at() must replace
+	 * the invalid byte with U+FFFD.
+	 */
+	public function test_invalid_utf8_as_escaped_character(): void {
+		// The CSS `.\xF1` is a delim + ident containing a lone invalid byte.
+		// Adding a backslash before the invalid byte makes it an escape sequence:
+		// `.\\\xF1` => delim + ident whose value is the escaped 0xF1 byte.
+		$css = ".a\\\xF1b";
+
+		$expected = array(
+			array(
+				'type'  => CSSProcessor::TOKEN_DELIM,
+				'raw'   => '.',
+				'value' => '.',
+			),
+			array(
+				'type'  => CSSProcessor::TOKEN_IDENT,
+				'raw'   => "a\\\xF1b",
+				// The escaped 0xF1 must be replaced with U+FFFD.
+				'value' => "a\u{FFFD}b",
+			),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, array( 'type', 'raw', 'value' ) );
+		$this->assertSame( $expected, $actual_tokens );
+	}
+
+	/**
 	 * Legacy test to ensure basic tokenization still works.
 	 */
 	public function test_tokenize_labels_core_tokens(): void {
