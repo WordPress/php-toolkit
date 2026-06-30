@@ -95,7 +95,7 @@ class CSSProcessorTest extends TestCase {
 					array(
 						'type'      => CSSProcessor::TOKEN_HASH,
 						'raw'       => '#id',
-						'type_flag' => CSSProcessor::HASH_TOKEN_ID,
+						'type_flag' => 'id',
 					),
 				),
 			),
@@ -105,7 +105,7 @@ class CSSProcessorTest extends TestCase {
 					array(
 						'type'      => CSSProcessor::TOKEN_HASH,
 						'raw'       => '#1id',
-						'type_flag' => CSSProcessor::HASH_TOKEN_UNRESTRICTED,
+						'type_flag' => 'unrestricted',
 					),
 				),
 			),
@@ -115,7 +115,7 @@ class CSSProcessorTest extends TestCase {
 					array(
 						'type'      => CSSProcessor::TOKEN_HASH,
 						'raw'       => '#-id',
-						'type_flag' => CSSProcessor::HASH_TOKEN_ID,
+						'type_flag' => 'id',
 					),
 				),
 			),
@@ -125,7 +125,7 @@ class CSSProcessorTest extends TestCase {
 					array(
 						'type'      => CSSProcessor::TOKEN_HASH,
 						'raw'       => '#-1id',
-						'type_flag' => CSSProcessor::HASH_TOKEN_UNRESTRICTED,
+						'type_flag' => 'unrestricted',
 					),
 				),
 			),
@@ -135,7 +135,7 @@ class CSSProcessorTest extends TestCase {
 					array(
 						'type'      => CSSProcessor::TOKEN_HASH,
 						'raw'       => '#\\@special',
-						'type_flag' => CSSProcessor::HASH_TOKEN_ID,
+						'type_flag' => 'id',
 					),
 				),
 			),
@@ -155,7 +155,7 @@ class CSSProcessorTest extends TestCase {
 					array(
 						'type'      => CSSProcessor::TOKEN_HASH,
 						'raw'       => '#id',
-						'type_flag' => CSSProcessor::HASH_TOKEN_ID,
+						'type_flag' => 'id',
 					),
 					array(
 						'type'      => CSSProcessor::TOKEN_WHITESPACE,

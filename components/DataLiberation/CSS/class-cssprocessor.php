@@ -131,14 +131,6 @@ class CSSProcessor {
 	public const TOKEN_FUNCTION      = 'function-token';
 
 	/**
-	 * Hash-token type flags.
-	 *
-	 * @see https://www.w3.org/TR/css-syntax-3/#typedef-hash-token
-	 */
-	public const HASH_TOKEN_ID           = 'id';
-	public const HASH_TOKEN_UNRESTRICTED = 'unrestricted';
-
-	/**
 	 * URL tokens represent unquoted URLs in url() notation.
 	 *
 	 * Valid: url(image.jpg), url(https://example.com)
@@ -430,8 +422,8 @@ class CSSProcessor {
 					++$this->at;
 
 					$this->token_type_flag = $this->check_if_3_code_points_start_an_ident_sequence( $this->at )
-						? self::HASH_TOKEN_ID
-						: self::HASH_TOKEN_UNRESTRICTED;
+						? 'id'
+						: 'unrestricted';
 
 					// Consume an ident sequence, and set the <hash-token>'s value to the returned string.
 					$this->consume_ident_sequence();
@@ -632,9 +624,8 @@ class CSSProcessor {
 	/**
 	 * Gets the current token type flag.
 	 *
-	 * Only hash tokens carry a type flag. Other token types return null.
-	 *
 	 * @return string|null
+	 * @phpstan-return 'id'|'unrestricted'|null
 	 */
 	public function get_token_type_flag(): ?string {
 		return $this->token_type_flag;
