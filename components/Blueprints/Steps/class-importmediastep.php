@@ -66,7 +66,7 @@ class ImportMediaStep implements StepInterface {
 		$fs             = $runtime->get_target_filesystem();
 		$wp_upload_dir  = $runtime->eval_php_code_in_subprocess(
 			'<?php
-			require_once(getenv("DOCROOT") . "/wp-load.php");
+			require_once(getenv("WP_CORE_DIR") . "/wp-load.php");
 			$upload_dir = wp_upload_dir();
 			append_output( json_encode($upload_dir) );
 			'
@@ -130,8 +130,8 @@ class ImportMediaStep implements StepInterface {
 				$attachment_id = $runtime->eval_php_code_in_subprocess(
 					<<<'CODE'
 <?php
-require_once(getenv("DOCROOT") . "/wp-load.php");
-require_once(getenv("DOCROOT") . "/wp-admin/includes/image.php");
+require_once(getenv("WP_CORE_DIR") . "/wp-load.php");
+require_once(getenv("WP_CORE_DIR") . "/wp-admin/includes/image.php");
 
 $file_path = getenv("MEDIA_FILE_PATH");
 $attachment_meta = json_decode(getenv("ATTACHMENT_META"), true);

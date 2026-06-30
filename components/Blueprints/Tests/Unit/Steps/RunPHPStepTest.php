@@ -80,7 +80,7 @@ PHP
 					'filename' => 'script.php',
 					'content' => <<<PHP
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 
 // Create a test option
 update_option('test_option', 'test_value');
@@ -102,7 +102,7 @@ PHP
 		$option_value = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 append_output( get_option('test_option') );
 PHP
 

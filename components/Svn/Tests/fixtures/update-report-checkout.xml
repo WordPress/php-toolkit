@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<S:update-report xmlns:S="svn:" xmlns:V="http://subversion.tigris.org/xmlns/dav/" xmlns:D="DAV:" send-all="true" inline-props="true">
+<S:target-revision rev="2"/>
+<S:open-directory rev="2">
+<D:checked-in><D:href>/repos/repo1/!svn/rvr/2/trunk</D:href></D:checked-in>
+<S:set-prop name="svn:entry:committed-rev">2</S:set-prop>
+<S:set-prop name="svn:entry:committed-date">2026-06-10T10:44:26.052108Z</S:set-prop>
+<S:set-prop name="svn:entry:last-author">fixture</S:set-prop>
+<S:set-prop name="svn:entry:uuid">99c65cdb-4f48-4f56-a481-b20bcf5ce199</S:set-prop>
+<S:add-file name="hello.txt" sha1-checksum="22596363b3de40b06f981fb85d82312e8c0ed511">
+<D:checked-in><D:href>/repos/repo1/!svn/rvr/1/trunk/hello.txt</D:href></D:checked-in>
+<S:set-prop name="svn:entry:committed-rev">1</S:set-prop>
+<S:set-prop name="svn:entry:committed-date">2026-06-10T10:44:26.015930Z</S:set-prop>
+<S:set-prop name="svn:entry:last-author">fixture</S:set-prop>
+<S:set-prop name="svn:entry:uuid">99c65cdb-4f48-4f56-a481-b20bcf5ce199</S:set-prop>
+<S:txdelta>U1ZOAAAADAEMjGhlbGxvIHdvcmxkCg==</S:txdelta><S:prop><V:md5-checksum>6f5902ac237024bdd0c176cb93063dc4</V:md5-checksum></S:prop></S:add-file>
+<S:add-file name="multi.txt" sha1-checksum="08874e7ad960b0733c54db76451542b0b571f24d">
+<D:checked-in><D:href>/repos/repo1/!svn/rvr/2/trunk/multi.txt</D:href></D:checked-in>
+<S:set-prop name="svn:entry:committed-rev">2</S:set-prop>
+<S:set-prop name="svn:entry:committed-date">2026-06-10T10:44:26.052108Z</S:set-prop>
+<S:set-prop name="svn:entry:last-author">fixture</S:set-prop>
+<S:set-prop name="svn:entry:uuid">99c65cdb-4f48-4f56-a481-b20bcf5ce199</S:set-prop>
+<S:set-prop name="svn:eol-style">CRLF</S:set-prop>
+<S:txdelta>U1ZOAAAAFQEVlWxpbmUxDQpsaW5lMg0KbGluZTMNCg==</S:txdelta><S:prop><V:md5-checksum>4eddda61f5e53754d0b028ab69a17be9</V:md5-checksum></S:prop></S:add-file>
+<S:add-directory name="sub" bc-url="/repos/repo1/!svn/bc/1/trunk/sub">
+<D:checked-in><D:href>/repos/repo1/!svn/rvr/1/trunk/sub</D:href></D:checked-in>
+<S:set-prop name="svn:entry:committed-rev">1</S:set-prop>
+<S:set-prop name="svn:entry:committed-date">2026-06-10T10:44:26.015930Z</S:set-prop>
+<S:set-prop name="svn:entry:last-author">fixture</S:set-prop>
+<S:set-prop name="svn:entry:uuid">99c65cdb-4f48-4f56-a481-b20bcf5ce199</S:set-prop>
+<S:add-directory name="deep" bc-url="/repos/repo1/!svn/bc/1/trunk/sub/deep">
+<D:checked-in><D:href>/repos/repo1/!svn/rvr/1/trunk/sub/deep</D:href></D:checked-in>
+<S:set-prop name="svn:entry:committed-rev">1</S:set-prop>
+<S:set-prop name="svn:entry:committed-date">2026-06-10T10:44:26.015930Z</S:set-prop>
+<S:set-prop name="svn:entry:last-author">fixture</S:set-prop>
+<S:set-prop name="svn:entry:uuid">99c65cdb-4f48-4f56-a481-b20bcf5ce199</S:set-prop>
+<S:add-file name="nested.txt" sha1-checksum="6897bc5b50ceac27200cda28f6d09319a1633114">
+<D:checked-in><D:href>/repos/repo1/!svn/rvr/1/trunk/sub/deep/nested.txt</D:href></D:checked-in>
+<S:set-prop name="svn:entry:committed-rev">1</S:set-prop>
+<S:set-prop name="svn:entry:committed-date">2026-06-10T10:44:26.015930Z</S:set-prop>
+<S:set-prop name="svn:entry:last-author">fixture</S:set-prop>
+<S:set-prop name="svn:entry:uuid">99c65cdb-4f48-4f56-a481-b20bcf5ce199</S:set-prop>
+<S:txdelta>U1ZOAAAADAEMjG5lc3RlZCBmaWxlCg==</S:txdelta><S:prop><V:md5-checksum>a47170636e9c528995092e14a81000ab</V:md5-checksum></S:prop></S:add-file>
+</S:add-directory>
+</S:add-directory>
+</S:open-directory>
+</S:update-report>

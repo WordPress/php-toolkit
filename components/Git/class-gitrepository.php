@@ -234,7 +234,7 @@ class GitRepository {
 
 	public function find_objects_added_in( $new_commit_hash, $options = array() ) {
 		$new_commit  = $this->read_object( $new_commit_hash )->as_commit();
-		$parent_hash = $new_commit->get_first_parent_hash();
+		$parent_hash = empty( $new_commit->parents ) ? Commit::NULL_HASH : $new_commit->get_first_parent_hash();
 
 		return $this->find_objects_added_since( $new_commit_hash, $parent_hash, $options );
 	}
@@ -908,6 +908,27 @@ class GitRepository {
 	}
 
 	public function get_commits_range( string $head_oid, string $last_ancestor_oid, $options = array() ) {
+		// When walking back to the root (NULL_HASH ancestor), return all commits.
+		if ( Commit::is_null_hash( $last_ancestor_oid ) ) {
+			$commits = array();
+			$queue   = array( $head_oid );
+			$visited = array();
+			while ( ! empty( $queue ) ) {
+				$current_oid = array_shift( $queue );
+				if ( isset( $visited[ $current_oid ] ) || Commit::is_null_hash( $current_oid ) ) {
+					continue;
+				}
+				$visited[ $current_oid ] = true;
+				$commits[] = $current_oid;
+				$commit = $this->read_object( $current_oid )->as_commit();
+				foreach ( $commit->parents as $parent_hash ) {
+					$queue[] = $parent_hash;
+				}
+			}
+			$include_ancestor = $options['include_ancestor'] ?? true;
+			return $commits;
+		}
+
 		$commits = array();
 		$queue   = array( array( $head_oid ) );
 		$visited = array();

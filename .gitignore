@@ -5,6 +5,7 @@ node_modules
 .cursor
 rest/
 dist/
+build/
 outdir/
 .idea/
 .my-notes-git/
@@ -32,3 +33,29 @@ components/DataLiberation/Tests/test-output-md
 blueprint-dev.json
 examples/create-wp-site/data-liberation.zip
 untracked
+bin/__pycache__/
+
+# Build artifacts of bin/build-reference.py — regenerated from
+# bin/_docs_components/*.md on every deploy by .github/workflows/docs.yml.
+docs/reference/blockparser.html
+docs/reference/blueprints.html
+docs/reference/bytestream.html
+docs/reference/cli.html
+docs/reference/coding-standards.html
+docs/reference/corsproxy.html
+docs/reference/dataliberation.html
+docs/reference/encoding.html
+docs/reference/filesystem.html
+docs/reference/git.html
+docs/reference/html.html
+docs/reference/httpclient.html
+docs/reference/httpserver.html
+docs/reference/markdown.html
+docs/reference/merge.html
+docs/reference/polyfill.html
+docs/reference/xml.html
+docs/reference/zip.html
+
+# Bundled toolkit source for WordPress Playground — regenerated on every deploy.
+docs/assets/php-toolkit.zip
+docs-changes.md

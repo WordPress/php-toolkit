@@ -29,6 +29,15 @@ class RunnerConfiguration {
 	 */
 	private $root_dir = '';
 	/**
+	 * The path to the WordPress core directory, containing wp-load.php,
+	 * wp-admin/, and wp-includes/. On standard installs this is the same
+	 * as the site root. Some hosting setups place the core in a subdirectory
+	 * while wp-content/ stays in the web root.
+	 *
+	 * @var string|null
+	 */
+	private $wordpress_core_dir = null;
+	/**
 	 * @var string
 	 */
 	private $site_url = '';
@@ -115,6 +124,25 @@ class RunnerConfiguration {
 
 	public function get_target_site_root(): string {
 		return $this->root_dir;
+	}
+
+	/**
+	 * Sets the WordPress core directory path. This is where wp-load.php,
+	 * wp-admin/, and wp-includes/ live. When null, it defaults to the
+	 * target site root.
+	 */
+	public function set_wordpress_core_dir( ?string $d ): self {
+		$this->wordpress_core_dir = $d;
+
+		return $this;
+	}
+
+	/**
+	 * Gets the WordPress core directory path. Falls back to the target
+	 * site root when not explicitly set.
+	 */
+	public function get_wordpress_core_dir(): string {
+		return $this->wordpress_core_dir ?? $this->root_dir;
 	}
 
 	public function set_target_site_url( string $u ): self {

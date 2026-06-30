@@ -1,17 +1,46 @@
 ## PHP Toolkit
 
-Standalone PHP libraries for use in WordPress plugins and standalone PHP projects:
+<!-- docs-site-banner -->
+> 📚 **Live, runnable docs:** **<https://wordpress.github.io/php-toolkit/>**
+> Every component has a reference page with snippets that execute in WordPress Playground — edit code in your browser, click *Run*, see real output. There's also a short [learning path](https://wordpress.github.io/php-toolkit/learn/).
+<!-- /docs-site-banner -->
 
--   XMLProcessor – stream-parse XML files on any PHP installation (no libxml2 required).
--   Git – a pure PHP implementation of Git client and server.
--   HttpClient – a streaming, non-blocking, concurrent HTTP client library with no curl dependency.
--   Zip – stream-parse and stream-write ZIP files with no libzip dependency.
--   Data Liberation – generic streaming data importers to WordPress. Supports WXR, zipped markdown, remote git repos, rewriting URLs, and more.
--   ByteStream – composable byte streaming utilities – readers, writers, filters.
--   Markdown – convert between markdown and block markup with no dependencies.
--   Filesystem – single API for working with local files, Git, Google drive, memory, etc.
+Standalone, dependency-free PHP libraries for use in WordPress plugins and standalone PHP projects.
 
-This fork consolidates a few earlier projects and explorations into a single composer package.
+### Experimental Native APIs extension
+
+The toolkit now publishes an experimental Native APIs extension for performance-sensitive `WP_HTML_Tag_Processor`, `XMLProcessor`, and `URLInTextProcessor` workloads. Public PHP APIs keep their pure-PHP fallback behavior when the extension is absent, incompatible, or disabled with `WP_NATIVE_APIS_DISABLE_DEFAULTS`.
+
+- [Native APIs docs](https://wordpress.github.io/php-toolkit/native-apis.html) explain which APIs are accelerated and how the fallback model works.
+- [Compile the host PHP extension](https://wordpress.github.io/php-toolkit/native-php-extension.html) when you want to benchmark the Rust-backed implementation locally.
+- [Test the latest PHP.wasm extension in WordPress Playground](https://playground.wordpress.net/?php=8.5&php-extension=https%3A%2F%2Fwordpress.github.io%2Fphp-toolkit%2Fwp_native_apis-wasm-extension%2Flatest%2Fmanifest.json&blueprint-url=https%3A%2F%2Fraw.githubusercontent.com%2FWordPress%2Fphp-toolkit%2Ftrunk%2Fextensions%2Fnative-apis%2Fplayground%2Fblueprint.json).
+- [Browse WASM releases for Playground](https://wordpress.github.io/php-toolkit/wp_native_apis-wasm-extension/) for manifests, checksums, PHP 8.0–8.5 test links, and benchmark summaries.
+- [Read the extension README](extensions/native-apis/README.md) for lower-level design notes and release checklists.
+
+### Components
+
+| Component | What it does | Live docs |
+| --- | --- | --- |
+| [HTML](components/HTML/README.md) | Stream-modify real-world HTML without `libxml2` (mirrors `WP_HTML_Tag_Processor` / `WP_HTML_Processor`). | [reference/html](https://wordpress.github.io/php-toolkit/reference/html.html) |
+| [XML](components/XML/README.md) | Stream-parse XML files on any PHP installation — no `libxml2` required. | [reference/xml](https://wordpress.github.io/php-toolkit/reference/xml.html) |
+| [Zip](components/Zip/README.md) | Stream-read and stream-write ZIP archives with no `libzip` dependency. | [reference/zip](https://wordpress.github.io/php-toolkit/reference/zip.html) |
+| [Markdown](components/Markdown/README.md) | Convert between Markdown and WordPress block markup. | [reference/markdown](https://wordpress.github.io/php-toolkit/reference/markdown.html) |
+| [BlockParser](components/BlockParser/README.md) | Parse and serialize WordPress block markup. | [reference/blockparser](https://wordpress.github.io/php-toolkit/reference/blockparser.html) |
+| [HttpClient](components/HttpClient/README.md) | Streaming, non-blocking, concurrent HTTP client — no `curl` extension. | [reference/httpclient](https://wordpress.github.io/php-toolkit/reference/httpclient.html) |
+| [HttpServer](components/HttpServer/README.md) | Minimal pure-PHP HTTP server primitives. | [reference/httpserver](https://wordpress.github.io/php-toolkit/reference/httpserver.html) |
+| [CORSProxy](components/CORSProxy/README.md) | A small CORS proxy for arbitrary HTTP traffic. | [reference/corsproxy](https://wordpress.github.io/php-toolkit/reference/corsproxy.html) |
+| [Git](components/Git/README.md) | Pure-PHP Git client and server. | [reference/git](https://wordpress.github.io/php-toolkit/reference/git.html) |
+| [Filesystem](components/Filesystem/README.md) | Single API across local files, ZIP, Git, in-memory, etc. | [reference/filesystem](https://wordpress.github.io/php-toolkit/reference/filesystem.html) |
+| [ByteStream](components/ByteStream/README.md) | Composable byte streaming utilities — readers, writers, filters. | [reference/bytestream](https://wordpress.github.io/php-toolkit/reference/bytestream.html) |
+| [DataLiberation](components/DataLiberation/README.md) | Streaming data importers for WordPress (WXR, zipped Markdown, remote git, URL rewriting…). | [reference/dataliberation](https://wordpress.github.io/php-toolkit/reference/dataliberation.html) |
+| [Encoding](components/Encoding/README.md) | Encoding-detection and conversion helpers. | [reference/encoding](https://wordpress.github.io/php-toolkit/reference/encoding.html) |
+| [Merge](components/Merge/README.md) | Three-way text and structural merge primitives. | [reference/merge](https://wordpress.github.io/php-toolkit/reference/merge.html) |
+| [Polyfill](components/Polyfill/README.md) | PHP 8.0 string functions and minimal WordPress stubs (hooks, escaping, `WP_Error`). | [reference/polyfill](https://wordpress.github.io/php-toolkit/reference/polyfill.html) |
+| [CLI](components/CLI/README.md) | Helpers for building friendly PHP command-line tools. | [reference/cli](https://wordpress.github.io/php-toolkit/reference/cli.html) |
+| [Blueprints](components/Blueprints/README.md) | Reproducible WordPress environment setup (the runtime behind `blueprints.phar`). | [reference/blueprints](https://wordpress.github.io/php-toolkit/reference/blueprints.html) |
+| [ToolkitCodingStandards](components/ToolkitCodingStandards/README.md) | Shared PHPCS ruleset used across the toolkit. | [reference/coding-standards](https://wordpress.github.io/php-toolkit/reference/coding-standards.html) |
+
+> **Looking for code samples?** Prefer the [live docs](https://wordpress.github.io/php-toolkit/) — every snippet there is executable in-browser and is verified against `trunk` in CI on every PR.
 
 ### Using the Blueprints v2 runner
 
@@ -30,16 +59,16 @@ how the runner is implemented.
 
 ### Using the components
 
-The individual components are now distributed via Composer at [https://packagist.org/packages/wp-php-toolkit](https://packagist.org/packages/wp-php-toolkit). You can install specific components you need rather than the entire toolkit.
-
-To install a specific component, use composer:
+Each component is independently published on Packagist under [`wp-php-toolkit/*`](https://packagist.org/packages/wp-php-toolkit/). Install only the pieces you need:
 
 ```bash
 composer require wp-php-toolkit/http-client
 composer require wp-php-toolkit/data-liberation
 composer require wp-php-toolkit/git
-# ... and so on for other components
+# ...
 ```
+
+Each Packagist page links back to its component's reference page so you can browse runnable examples without leaving the package listing.
 
 #### PHAR distribution
 
@@ -112,17 +141,16 @@ To fix the linting errors, run:
 composer lint-fix
 ```
 
-#### Composer
+#### Building the docs site
 
-The root composer.json file is an amalgamation of composer.base.json all
-component composer.json files. To regenerate it, run:
+The docs site under `docs/` is generated from each `components/<Name>/README.md`. To rebuild and preview locally:
 
 ```sh
-bin/regenerate_composer.json.php
+bash bin/build-docs-bundle.sh    # bundles toolkit + regenerates HTML
+php bin/serve-docs.php           # opens http://localhost:8787
 ```
 
-This will merge all the package-specific dependencies and the autoload rules into
-the root composer.json file.
+Snippets in the markdown sources run in CI on every PR (see `.github/workflows/snippet-tests.yml`) and in WordPress Playground from the live site.
 
 ### Windows compatibility
 

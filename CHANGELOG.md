@@ -5,5 +5,190 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 - Placeholder section for upcoming changes. Entries are appended automatically by the release workflow.
-
-
+- Added a native `WordPress\DataLiberation\URL\NativeURLInTextProcessor` candidate scanner for URL-in-text detection.
+- Split public HTML, XML, and URL-in-text classes into small loaders plus PHP/native implementation sidecars so native defaults are isolated from pure PHP implementations.
+- Added public `URLInTextProcessor` support for native ASCII candidate scanning while preserving WHATWG validation.
+- Added a `--component=url` URL-in-text benchmark row for public and direct native scanner measurements.
+- Added native-default conformance coverage keeping `WP_HTML_Processor::create_full_parser()` on PHP fallback until native full-document semantics match public parser behavior.
+- Fixed native HTML pending attribute insertion serialization so multiple newly-added attributes, replaced pending attributes, and removed pending attributes match PHP fallback output.
+- Kept `DataLiberationHTMLProcessor` on PHP-backed HTML parsing because it depends on parser bookmarks and byte offsets that native delegates intentionally hide.
+- Fixed Markdown table production after cell extraction so row iteration does not skip remaining cells.
+- Documented native default controls for HTML and XML wrappers.
+- Added a `--disable-native-defaults` benchmark flag for forcing PHP fallback rows after the native extension is loaded.
+- Fixed native HTML class mutation composition when a fully removed class attribute is followed by adding a different class.
+- Fixed public native-backed XML bookmark seeks so later mutations replay PHP fallback state to the bookmarked token.
+- Fixed public native-backed XML bookmark spans so bookmarks beyond a mutation handoff remain seekable after native delegates fall back to PHP state.
+- Fixed public native-backed XML read-only scans so token iteration exposes the final `#complete` token like PHP fallback.
+- Increased public native-backed XML compact token batches to reduce native boundary crossings in large read-only token scans.
+- Optimized public native-backed XML compact token parsing by lazily decoding tag flags, depth, and cached attributes only when accessors need them.
+- Optimized public native-backed XML hot token rows by avoiding redundant lazy metadata resets during compact batch scans.
+- Optimized public native-backed XML hot token rows by avoiding unused flag and depth offset resets during compact batch scans.
+- Optimized native XML hot compact summary row construction for public native-backed token scans.
+- Optimized direct native XML token scans by lazily decoding text payloads only when text accessors need them.
+- Optimized direct native XML token scans by lazily materializing breadcrumbs only when breadcrumb accessors need them.
+- Optimized public native-backed XML token scans with a lightweight native cursor for safe complete-document reads.
+- Optimized public native-backed XML lightweight cursor row parsing by reusing queued compact batches locally.
+- Optimized public native-backed XML lightweight cursor accessors by using token metadata as the active-state sentinel.
+- Optimized public native-backed XML lightweight cursor batches by using cursor-specific native rows and inlined active-token checks.
+- Fixed direct native XML attribute reads so `get_attribute()` accepts the public namespace/local-name argument shape while preserving direct one-argument lookups.
+- Added direct native XML support for simple unprefixed current-tag attribute insertion, replacement, removal, and updated serialization.
+- Added direct native XML support for current-tag attribute insertion, replacement, and removal through in-scope namespace prefixes.
+- Added direct native XML support for current text, comment, and CDATA mutation with updated serialization.
+- Optimized public native-backed XML hot token row parsing by splitting the common tag-token path before non-tag token kind mapping.
+- Optimized public native-backed XML hot token row parsing by deriving non-tag token names from cached token types.
+- Optimized public native-backed XML hot token rows by lazily parsing non-tag compact-row fields and eagerly caching hot `id` attributes for tag rows.
+- Fixed public native-backed HTML class checks on closing tags so `has_class()` returns false like PHP fallback.
+- Enabled public native-backed HTML fragments for covered table tree-builder cases while keeping full-document parsing on PHP fallback.
+- Optimized native HTML tag-only scans by skipping discarded text and comment token construction in low-level tag processor paths.
+- Optimized low-level native HTML tag-only scans by skipping breadcrumb tracking when tree-builder state is not exposed.
+- Optimized public native-backed XML token batch parsing by avoiding per-token compact-row string copies.
+- Fixed native XML streaming reentrancy cursors so sliced resumes preserve child/sibling context while rejecting the pre-cursor parent closer like PHP fallback.
+- Added an HTML heading inventory summary API with a native Rust-backed fused path for heading-level outline audits.
+- Added an HTML ID inventory summary API with a native Rust-backed fused path for unique and duplicate ID audits.
+- Added an HTML attribute inventory summary API with a native Rust-backed fused path for attribute-name and decoded-value audits.
+- Added an HTML data-attribute inventory summary API with a native Rust-backed fused path for `data-*` usage audits.
+- Added an HTML ARIA attribute inventory summary API with a native Rust-backed fused path for `aria-*` accessibility audits.
+- Added an HTML class inventory summary API with a native Rust-backed fused path for class-attribute and unique-class audits.
+- Added an HTML resource inventory summary API with a native Rust-backed fused path for common link and media attribute audits.
+- Added an HTML image inventory summary API with a native Rust-backed fused path for image source, alt-text, and dimension audits.
+- Added an HTML script inventory summary API with a native Rust-backed fused path for script source, module, async/defer, and inline byte audits.
+- Added an XML ID inventory summary API with a native Rust-backed fused path for unique and duplicate ID audits.
+- Added an HTML form inventory summary API with a native Rust-backed fused path for form/control name audits.
+- Fixed public native-backed XML tag-token modifiable text after `next_tag()` so it matches PHP fallback semantics before mutating or serializing.
+- Fixed public native-backed HTML tag processor bookmarks to delegate bookmark lifecycle operations to the native processor.
+- Fixed public native-backed HTML processor bookmark seeking to delegate to the native processor.
+- Fixed public native-backed XML processor bookmarks to delegate bookmark lifecycle operations to the native processor.
+- Added an HTML tag inventory summary API with a native Rust-backed fused path for tag, closer, attribute, and unique-name audits.
+- Added an HTML prefix count batch API with a native Rust-backed incremental path for chunked tag and prefixed-attribute counting.
+- Optimized public HTML native-wrapper generic tag scans for unrestricted `next_tag()` queries.
+- Reduced public HTML native-wrapper dispatch overhead for unrestricted generic tag and prefixed-attribute cursor scans.
+- Added no-argument native HTML compact tag cursor entrypoints for common unrestricted scan modes.
+- Fixed public HTML native-default `next_tag()` query parsing for non-integer `match_offset` and invalid query types to match PHP fallback behavior.
+- Fixed public HTML native-default `next_tag()` query parsing so `tag_name` filters are honored when `tag_closers` is set to `visit`.
+- Fixed native HTML processing-instruction-looking comment parsing so valid targets expose `get_tag()` and invalid `<?...>` comments match PHP fallback metadata.
+- Fixed native HTML invalid closing tag and abruptly closed comment parsing to match PHP fallback token metadata.
+- Fixed native HTML CDATA-looking comments, whitespace-prefixed invalid closers, and dash-abrupt comments to match PHP fallback token metadata.
+- Fixed native HTML DOCTYPE token names so malformed and non-HTML doctypes expose the same `html` token name as PHP fallback.
+- Fixed native HTML invalid opening tags so non-alpha tag-name starts remain text tokens like PHP fallback.
+- Fixed native HTML invalid opening tag text boundaries, incomplete tag-like endings, and text-token character reference decoding to match PHP fallback.
+- Kept public HTML fragment processors on PHP fallback for tree-builder-sensitive list/table/omitted-tag fragments until native breadcrumbs model implied elements and closers.
+- Fixed native HTML processor breadcrumbs for table bodies/cells, table captions, colgroups, select option/optgroup groups, description lists, ruby text/parentheses, and repeated list item and paragraph starts by synthesizing selected implied tokens like PHP fallback.
+- Fixed native HTML processor EOF breadcrumbs so ordinary unclosed non-void elements synthesize closing tokens like PHP fallback.
+- Fixed native HTML processor paragraph breadcrumbs so block starts synthesize an implied `</p>` while inline starts remain inside the paragraph.
+- Fixed native HTML processor heading breadcrumbs so heading starts close an open heading instead of nesting inside it.
+- Fixed native HTML processor button breadcrumbs so nested button starts and explicit button closers synthesize intervening closing tokens like PHP fallback.
+- Fixed native HTML processor summary breadcrumbs so `</details>` synthesizes pending `</summary>` closers like PHP fallback.
+- Fixed native HTML processor form breadcrumbs so duplicate form starts are ignored like PHP fallback.
+- Fixed native HTML processor nobr breadcrumbs so nested starts and explicit closers synthesize intervening closing tokens like PHP fallback.
+- Fixed native HTML processor select breadcrumbs so input starts close open option/select ancestors like PHP fallback.
+- Fixed native HTML processor select breadcrumbs so hr starts close open option ancestors like PHP fallback.
+- Fixed native HTML processor select breadcrumbs so textarea starts close open option/select ancestors like PHP fallback.
+- Fixed native HTML processor fragment breadcrumbs so explicit html/body starts are ignored like PHP fallback.
+- Fixed native HTML processor table-form breadcrumbs so table child starts and text close pending forms, while explicit `</form>` stops table parsing like PHP fallback.
+- Fixed native HTML processor table breadcrumbs so selected unsupported child starts abort table parsing like PHP fallback, while comments and script-like children after table forms remain outside the form.
+- Fixed native HTML processor table section breadcrumbs so repeated sections and captions after rows or colgroups close intervening table ancestors like PHP fallback.
+- Fixed native HTML processor table breadcrumbs so stray closing tags are ignored instead of clearing open table ancestry.
+- Fixed native HTML processor table breadcrumbs so unsupported stray closing tags abort table parsing like PHP fallback.
+- Fixed native HTML processor text tokens so raw null bytes are omitted, line breaks are normalized, leading raw or character-reference whitespace is subdivided, and unsupported non-whitespace table text stops parsing like PHP fallback.
+- Enabled public native-backed HTML fragments for omitted-paragraph cases while keeping table fragments and full-document parsing on PHP fallback.
+- Enabled public native-backed HTML fragments for list, description-list, select/option/optgroup, and ruby implied-token cases while keeping tables, omitted paragraphs, and full-document parsing on PHP fallback.
+- Fixed native HTML invalid closing tags so underscore and colon starts expose funky-comment metadata like PHP fallback.
+- Fixed native HTML unusual attribute names so punctuation starts such as `.x` and `@x` are preserved like PHP fallback.
+- Fixed native HTML equals-start attribute names so malformed attributes such as `=b` and `a/=c` are preserved like PHP fallback.
+- Fixed native HTML boolean attribute removals so serialization preserves surrounding spacing like PHP fallback.
+- Fixed native HTML comment closing so `--!>` closes comments and unclosed comments do not expose tokens, matching PHP fallback.
+- Fixed public native-backed XML parse exceptions so `get_exception()` reports native syntax errors like PHP fallback.
+- Fixed native XML streaming processors so incomplete input can pause, accept appended bytes, and resume token scanning.
+- Fixed native XML processors so documents without a document element report a syntax error after token scanning.
+- Fixed native XML processors so leading whitespace outside the document element is skipped like PHP fallback.
+- Fixed native XML processors so opening tag `get_modifiable_text()` exposes decoded inner source like PHP fallback.
+- Optimized native HTML prefixed-attribute name scanners to avoid lowercase string allocations when deduplicating matches.
+- Added native HTML tag processor string-cast support for direct native processor instances.
+- Added native HTML self-closing flag accessors for direct native tag and processor instances.
+- Added native HTML namespace accessors for direct native tag and processor instances.
+- Added native HTML qualified-name accessors for direct native tag processor instances.
+- Added native HTML processor qualified-name accessors for direct native processor instances.
+- Added native HTML class-list and class-membership accessors for direct native tag and processor instances.
+- Added native HTML complete-input pause status for direct native tag processor instances.
+- Added native HTML processor complete-input pause status for direct native processor instances.
+- Added native HTML processor prefixed-attribute count access for direct native processor instances.
+- Added native HTML processor prefixed-attribute aggregate summaries for direct native processor instances.
+- Added native HTML processor tag-prefix summary batches for direct native processor instances.
+- Added native HTML processor compact tag-prefix summary batch aliases for direct native processor instances.
+- Added native HTML processor compact tag-prefix count batches for direct native processor instances.
+- Added native HTML processor tag-inventory aggregate summaries for direct native processor instances.
+- Added native HTML processor prefixed-attribute removal support for direct native processor instances.
+- Added native HTML processor document-level prefixed-attribute removal support for direct native processor instances.
+- Added native HTML processor updated HTML serialization for direct native processor instances.
+- Added native HTML processor string-cast serialization for direct native processor instances.
+- Added native HTML processor normalization/serialization through the PHP fragment serializer, text subdivision, modifiable text mutation, DOCTYPE info access, and processor full-parser/stepping support for direct native HTML instances.
+- Added native-default HTML conformance coverage proving public normalization and serialization keep PHP serializer semantics when the native extension is loaded.
+- Added native-default HTML conformance coverage proving inherited public processor aggregate scans complete after native remaining-document summaries.
+- Added native-default HTML conformance coverage proving inherited public processor tag batches complete after final short native batches.
+- Added native-default HTML conformance coverage proving direct compact tag batches complete after final short native batches.
+- Added native-default HTML and XML conformance coverage proving partially advanced document-level prefixed-attribute removals finish public processors.
+- Added native-default HTML conformance coverage proving partially advanced remaining-document aggregate summaries finish public tag and inherited processor wrappers.
+- Fixed public HTML native-default parser state after native token and token-summary advancement so started processors still reject serialization.
+- Fixed public HTML processor native-default token-summary batches so full and final short native batches leave public processors complete, matching PHP fallback exhaustion.
+- Fixed public HTML tag-processor native-default state and text-edit delegation after native token/tag advancement.
+- Fixed public HTML tag summary batch native-default state so current-tag helpers remain available after batch advancement.
+- Fixed public HTML tag-prefix count batch native-default state so current-tag helpers remain available after count-only batch advancement.
+- Fixed public HTML tag-processor native-default batches so final short native tag, tag-prefix, matching-tag, and count batches leave public processors complete, matching PHP fallback exhaustion.
+- Fixed public HTML tag aggregate native-default state so remaining-document summaries leave processors complete.
+- Added native HTML processor public token-summary batch rows for direct native processor instances.
+- Added native HTML processor public tag-summary batch rows for direct native processor instances.
+- Added native HTML processor compact tag-summary batch alias support for direct native processor instances.
+- Added native HTML processor compact matching-tag summary batch alias support for direct native processor instances.
+- Added native HTML processor compact matching-tag attribute summary batch alias support for direct native processor instances.
+- Added native HTML processor compact matching-tag multi-attribute summary batch alias support for direct native processor instances.
+- Added native HTML processor public matching-tag summary batch rows for direct native processor instances.
+- Added native HTML processor public matching-tag attribute summary batch rows for direct native processor instances.
+- Added native HTML processor public matching-tag multi-attribute summary batch rows for direct native processor instances.
+- Added native HTML processor matching-tag attribute aggregate summaries for direct native processor instances.
+- Added native XML streaming factory support for direct native processor instances.
+- Added native XML reentrancy cursor support for direct native processor instances.
+- Fixed public XML native-default content and import inventory summaries so remaining-document native scans leave processors finished.
+- Fixed public XML native-default structural inventory summaries so remaining-document native scans leave processors finished.
+- Fixed public XML native-default metadata and payload inventory summaries so remaining-document native scans leave processors finished.
+- Fixed public XML native-default token, tag, matching-tag, prefixed-attribute, and document-removal aggregate summaries so remaining-document native scans leave processors finished.
+- Fixed public XML native-default token, tag, matching-tag, and count batches so exhausted native scans leave processors finished.
+- Added public XML native-default compact batch conformance coverage for token, tag, count, matching-tag, and matching-tag count exhaustion.
+- Added native HTML public tag-summary batch rows for direct native tag processor instances.
+- Added native HTML public matching-tag summary batch rows for direct native tag processor instances.
+- Added native HTML public matching-tag attribute summary batch rows for direct native tag processor instances.
+- Added native HTML public matching-tag multi-attribute summary batch rows for direct native tag processor instances.
+- Added native HTML compact tag-prefix summary batch alias support for direct native tag processor instances.
+- Added native HTML processor tag-name access for direct native processor instances.
+- Added native HTML processor prefixed-attribute name access for direct native processor instances.
+- Added native HTML processor attribute-removal support for direct native processor instances.
+- Added native HTML processor virtual-token status support for direct native processor instances.
+- Added native HTML processor last-error diagnostics for direct native processor instances.
+- Added native HTML processor unsupported-exception diagnostics for direct native processor instances.
+- Added native HTML processor closer-expectation status for direct native processor instances.
+- Added native HTML processor static void-element checks for direct native processor instances.
+- Added native HTML processor static special-category checks for direct native processor instances.
+- Added native HTML processor breadcrumb matching for direct native processor instances.
+- Added native HTML bookmark lifecycle support for direct native tag and processor instances.
+- Added native XML read-only serialization methods for `get_updated_xml()` and string casts on direct native processor instances.
+- Added native XML `is_finished()` support for direct native processor exhaustion checks.
+- Added native XML `get_exception()` support for direct native processor diagnostics.
+- Added native XML complete-input status methods for direct native processor instances.
+- Added native XML complete-input append rejection for direct native processor instances.
+- Added native XML tag-opener and closer-expectation status methods for direct native processor instances.
+- Added native XML token byte-offset support for direct native processor instances.
+- Added native XML public token-summary batch rows for direct native processor instances.
+- Added native XML public tag-summary batch rows for direct native processor instances.
+- Added native XML public matching-tag summary batch rows for direct native processor instances.
+- Added native XML breadcrumb matching support for direct native processor instances.
+- Added native XML bookmark lifecycle support for direct native processor instances.
+- Added native XML compact tag-count batch aliases for direct native processor instances.
+- Added native XML DOCTYPE name support for direct native processor instances.
+- Added native XML DOCTYPE SYSTEM and PUBLIC literal support for direct native processor instances.
+- Added explicit read-only mutation method results for direct native XML processor instances.
+- Added an XML content inventory summary API with a native Rust-backed source-scan path for combined attribute-value and payload-byte audits.
+- Added an XML import inventory summary API with a native Rust-backed source-scan path for combined structure, attribute, and payload audits.
+- Fixed native-backed public HTML processors so attribute and class mutations are applied by the native delegate before serialization.
+- Fixed native HTML attribute mutation composition so removing a newly-added attribute cancels the pending insertion.
+- Fixed native HTML class mutation composition so read-after-remove and remove-then-add behavior matches PHP fallback semantics.
+- Fixed native HTML boolean attribute reads so parsed and newly-set boolean attributes return `true`.
+- Fixed native XML prefixed namespace declarations with empty values so they reject before exposing a token like the PHP fallback.

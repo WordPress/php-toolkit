@@ -209,9 +209,20 @@ class WP_HTML_Decoder {
 		/**
 		 * Mappings for HTML5 named character references.
 		 *
+		 * Loaded lazily on first call to avoid declaring WP_Token_Map at
+		 * Composer bootstrap. Eager loading via autoload.files breaks
+		 * consumers that also load WordPress core, since both shipments
+		 * declare the same WP_* classes and PHP fatals on the second
+		 * declaration. WordPress sets this global itself, so in a WP
+		 * context we never include our copy.
+		 *
 		 * @var WP_Token_Map $html5_named_character_references
 		 */
 		global $html5_named_character_references;
+
+		if ( ! isset( $html5_named_character_references ) ) {
+			require_once __DIR__ . '/html5-named-character-references.php';
+		}
 
 		$length = strlen( $text );
 		if ( $at + 1 >= $length ) {

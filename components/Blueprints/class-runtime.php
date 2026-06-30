@@ -177,7 +177,10 @@ class Runtime {
 	 *
 	 * * append_output( $output ): A function that appends a given string to the output file. Useful for
 	 *                             separating the returned structured data from PHP warnings and echos.
-	 * * DOCROOT environment variable: The path to the WordPress root directory.
+	 * * DOCROOT environment variable: The path to the web root directory (document root).
+	 * * WP_CORE_DIR environment variable: The path to the WordPress core directory (where wp-load.php lives).
+	 *                                      On standard installs this equals DOCROOT. Some hosts place
+	 *                                      the core in a subdirectory separate from the web root.
 	 * * OUTPUT_FILE environment variable: The path to a file where the output of the code will be appended.
 	 *
 	 * @TODO: Useful error messages on process failure. Right now we get this mouthful error message:
@@ -216,7 +219,13 @@ class Runtime {
 		$process = $this->create_php_sub_process( $code, $env, $input, $timeout );
 		$process->mustRun();
 
-		$output = $process->getOutputStream( Process::OUTPUT_FILE )->consume_all();
+		$output_stream = $process->getOutputStream( Process::OUTPUT_FILE );
+		try {
+			$output = $output_stream->consume_all();
+		} finally {
+			$output_stream->close_reading();
+		}
+
 		return new EvalResult(
 			$output,
 			$process
@@ -255,6 +264,9 @@ class Runtime {
 					$php_binary = 'php';
 				}
 
+				// Inherit the parent process's environment so that
+				// hosting-injected variables (e.g. DB_HOST, DB_NAME on
+				// WP Cloud) remain available to WordPress in the subprocess.
 				return $this->start_shell_command(
 					array(
 						$php_binary,
@@ -262,8 +274,10 @@ class Runtime {
 					),
 					$this->configuration->get_target_site_root(),
 					array_merge(
+						getenv(),
 						array(
 							'DOCROOT'     => $this->configuration->get_target_site_root(),
+							'WP_CORE_DIR' => $this->configuration->get_wordpress_core_dir(),
 							'OUTPUT_FILE' => $output_path,
 						),
 						$env ?? array()

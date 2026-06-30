@@ -99,16 +99,16 @@ class InstallThemeStep implements StepInterface {
 					<<<'PHP'
 <?php
 
-require_once getenv( 'DOCROOT' ) . '/wp-load.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-load.php';
 
 define( 'WP_ADMIN', true );
 
 // Load required WordPress files
-require_once getenv( 'DOCROOT' ) . '/wp-load.php';
-require_once getenv( 'DOCROOT' ) . '/wp-admin/includes/file.php';
-require_once getenv( 'DOCROOT' ) . '/wp-admin/includes/theme.php';
-require_once getenv( 'DOCROOT' ) . '/wp-admin/includes/class-wp-upgrader.php';
-require_once getenv( 'DOCROOT' ) . '/wp-admin/includes/misc.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-load.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-admin/includes/file.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-admin/includes/theme.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-admin/includes/class-wp-upgrader.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-admin/includes/misc.php';
 
 // Define show_message function if it doesn't exist (fallback)
 if ( ! function_exists( 'show_message' ) ) {

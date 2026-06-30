@@ -24,17 +24,26 @@ class ExistingSiteResolver {
 
 		// 1. Verify it's a valid WordPress installation.
 		$progress['verify_installation']->setCaption( 'Verifying WordPress installation' );
+
+		// Auto-detect the WordPress core directory. Some hosting setups place
+		// the WordPress core files (wp-load.php, wp-admin, wp-includes) in a
+		// subdirectory while wp-content stays in the web root.
 		if ( ! $target_fs->exists( 'wp-load.php' ) ) {
-			throw new BlueprintExecutionException(
-				'The target site does not appear to be a valid WordPress installation (wp-load.php not found)'
-			);
+			$detected_core_dir = self::detect_wordpress_core_dir( $config->get_target_site_root() );
+			if ( null !== $detected_core_dir ) {
+				$config->set_wordpress_core_dir( $detected_core_dir );
+			} else {
+				throw new BlueprintExecutionException(
+					'The target site does not appear to be a valid WordPress installation (wp-load.php not found)'
+				);
+			}
 		}
 
 		// Additional check to ensure we can actually load WordPress.
 		try {
 			$result = $runtime->eval_php_code_in_subprocess(
 				'<?php
-				require_once(getenv("DOCROOT") . "/wp-load.php");
+				require_once(getenv("WP_CORE_DIR") . "/wp-load.php");
 				$is_installed = function_exists("is_blog_installed") && is_blog_installed() ? "true" : "false";
 				append_output("WordPress is installed: " . $is_installed);
 				'
@@ -61,7 +70,7 @@ class ExistingSiteResolver {
 				trim(
 					$runtime->eval_php_code_in_subprocess(
 						'<?php
-						require_once(getenv("DOCROOT") . "/wp-includes/version.php");
+						require_once(getenv("WP_CORE_DIR") . "/wp-includes/version.php");
 						append_output( $wp_version );
 						'
 					)->output_file_content
@@ -92,7 +101,7 @@ class ExistingSiteResolver {
 		if ( 'sqlite' === $required_engine ) {
 			$sqlite_active = $runtime->eval_php_code_in_subprocess(
 				'<?php
-				require_once(getenv("DOCROOT") . "/wp-load.php");
+				require_once(getenv("WP_CORE_DIR") . "/wp-load.php");
 				
 				// Check if SQLite integration is active
 				$sqlite_plugin = WP_CONTENT_DIR . "/plugins/sqlite-database-integration/load.php";
@@ -113,7 +122,7 @@ class ExistingSiteResolver {
 			// For MySQL, verify it's not using SQLite.
 			$using_mysql = $runtime->eval_php_code_in_subprocess(
 				'<?php
-				require_once(getenv("DOCROOT") . "/wp-load.php");
+				require_once(getenv("WP_CORE_DIR") . "/wp-load.php");
 				
 				// Check if SQLite integration is NOT active
 				$active_plugins = get_option("active_plugins");
@@ -138,5 +147,53 @@ class ExistingSiteResolver {
 
 		$progress['verify_database']->finish();
 		$progress->finish();
+	}
+
+	/**
+	 * Scans the web root for a WordPress core directory. Some hosting
+	 * setups place the core files in a subdirectory while wp-content/
+	 * stays in the web root.
+	 *
+	 * @param  string $web_root Absolute path to the web root.
+	 *
+	 * @return string|null Absolute path to the WordPress core directory, or
+	 *                     null when wp-load.php cannot be found anywhere.
+	 */
+	public static function detect_wordpress_core_dir( string $web_root ): ?string {
+		// Standard layout: wp-load.php is in the web root itself.
+		if ( file_exists( $web_root . '/wp-load.php' ) ) {
+			// If wp-load.php is a symlink pointing into a subdirectory,
+			// resolve it to find the real core directory. Some hosting
+			// setups (e.g. WP Cloud) place a symlink at the web root
+			// while the actual core files live in a subdirectory like
+			// __wp__/.
+			if ( is_link( $web_root . '/wp-load.php' ) ) {
+				$real_path = realpath( $web_root . '/wp-load.php' );
+				if ( false !== $real_path ) {
+					return dirname( $real_path );
+				}
+			}
+			return $web_root;
+		}
+
+		// Scan immediate subdirectories for wp-load.php. This covers the
+		// Check immediate subdirectories for any single-level split layout.
+		$entries = @scandir( $web_root );
+		if ( false === $entries ) {
+			return null;
+		}
+
+		foreach ( $entries as $entry ) {
+			if ( '.' === $entry || '..' === $entry ) {
+				continue;
+			}
+
+			$candidate = $web_root . '/' . $entry;
+			if ( is_dir( $candidate ) && file_exists( $candidate . '/wp-load.php' ) ) {
+				return $candidate;
+			}
+		}
+
+		return null;
 	}
 }

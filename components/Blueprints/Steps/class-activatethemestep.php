@@ -16,7 +16,7 @@ class ActivateThemeStep implements StepInterface {
 <?php
 
 define( 'WP_ADMIN', true );
-require_once getenv( 'DOCROOT' ) . '/wp-load.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-load.php';
 
 // Set current user to admin
 set_current_user( get_users( array( 'role' => 'Administrator' ) )[0] );

@@ -307,7 +307,7 @@ class GitEndpoint {
 				}
 
 				$parsed_commit = $reader->as_commit();
-				if ( ! isset( $parsed_commit->parents ) ) {
+				if ( empty( $parsed_commit->parents ) ) {
 					$common_parent_hash = Commit::NULL_HASH;
 					break;
 				}
@@ -321,7 +321,7 @@ class GitEndpoint {
 			}
 
 			// For each wanted commit, find objects not present in any of the have commits.
-			$new_objects = $this->repository->find_objects_added_in(
+			$new_objects = $this->repository->find_objects_added_since(
 				$want_hash,
 				$common_parent_hash
 			);
