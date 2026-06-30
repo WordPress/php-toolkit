@@ -57,8 +57,8 @@ class CSSProcessorTest extends TestCase {
 			if ( null !== $processor->get_token_unit() ) {
 				$token['unit'] = $processor->get_token_unit();
 			}
-			if ( null !== $processor->get_token_number_type() ) {
-				$token['numberType'] = $processor->get_token_number_type();
+			if ( null !== $processor->get_token_type_flag() ) {
+				$token['numberType'] = $processor->get_token_type_flag();
 			}
 
 			if ( null !== $keys ) {
@@ -1022,20 +1022,17 @@ CSS;
 	}
 
 	/**
-	 * Tests the numeric type flag for number, dimension, and percentage tokens.
+	 * Tests token_type_flag for different token types.
 	 *
-	 * Per CSS Syntax Level 3, <number-token> and <dimension-token> have a type
-	 * flag of "integer" or "number". <percentage-token> does not have a type flag.
-	 *
-	 * @dataProvider data_token_number_type
+	 * @dataProvider data_token_type_flag
 	 */
-	public function test_token_number_type( string $css, ?string $expected_type ): void {
+	public function test_token_type_flag( string $css, ?string $expected_type ): void {
 		$processor = CSSProcessor::create( $css );
 		$this->assertTrue( $processor->next_token() );
-		$this->assertSame( $expected_type, $processor->get_token_number_type() );
+		$this->assertSame( $expected_type, $processor->get_token_type_flag() );
 	}
 
-	public static function data_token_number_type(): array {
+	public static function data_token_type_flag(): array {
 		return array(
 			'integer'                   => array( '42', 'integer' ),
 			'positive integer'          => array( '+42', 'integer' ),
