@@ -17,7 +17,7 @@ class EnableMultisiteStepTest extends StepTestCase {
 		$this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 update_option( 'siteurl', 'http://localhost' );
 update_option( 'home', 'http://localhost' );
 PHP
@@ -35,7 +35,7 @@ PHP
 <?php
 
 // Load WordPress environment
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 
 // Verify multisite setup
 append_output(
@@ -103,7 +103,7 @@ $_SERVER['HTTP_HOST'] = 'http://unknown';
 $_SERVER['REQUEST_URI'] = '/';
 
 // Load WordPress environment
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 append_output( 'not_redirected' );
 
 PHP
@@ -118,7 +118,7 @@ PHP
 		$this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 update_option( 'siteurl', 'http://localhost:8080' );
 PHP
 		);
@@ -144,7 +144,7 @@ PHP
 		$this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 delete_option( 'siteurl' );
 PHP
 		);

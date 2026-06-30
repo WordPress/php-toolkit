@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reference — PHP Toolkit</title>
+<meta name="description" content="Per-component reference pages for PHP Toolkit. Each page has a one-line definition, a minimal runnable example, refinements, and pitfalls.">
+<link rel="stylesheet" href="../assets/style.css?v=20260526-native-apis">
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="../learn/">Learn</a>
+		<a href="./">Reference</a>
+		<a href="../native-apis.html">Native APIs</a>
+		<a class="github" href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+
+<main class="reference-landing">
+
+<h1>Reference</h1>
+
+<p class="lede">One concept guide per component. Each page assumes you know what HTML is, what a ZIP file is, what a stream is — and explains how this particular component models that thing in PHP. If a concept appears for the first time in <a href="../learn/">the tutorial</a>, the reference page links back.</p>
+
+<section class="ref-group">
+	<h2>Content and migration</h2>
+	<ul class="ref-grid">
+		<li><a href="html.html"><strong>HTML</strong><span>WordPress core HTML parser and tag rewriter. Cursor model, byte-for-byte edits, breadcrumb queries.</span></a></li>
+		<li><a href="blockparser.html"><strong>BlockParser</strong><span>Parse WordPress block markup into the array shape WordPress core returns. No <code>block.json</code>, no rendering.</span></a></li>
+		<li><a href="markdown.html"><strong>Markdown</strong><span>Convert between Markdown and WordPress block markup, with frontmatter for metadata.</span></a></li>
+		<li><a href="xml.html"><strong>XML</strong><span>A cursor-based XML processor that reads, edits, and emits export-sized files without building a tree.</span></a></li>
+		<li><a href="encoding.html"><strong>Encoding</strong><span>Validate, classify, and repair UTF-8 bytes before they reach a strict parser.</span></a></li>
+		<li><a href="dataliberation.html"><strong>DataLiberation</strong><span>Stream WordPress-shaped entities between sites. URL rewriting, attachment frontloading, cursor-aware imports.</span></a></li>
+	</ul>
+</section>
+
+<section class="ref-group">
+	<h2>Streams and storage</h2>
+	<ul class="ref-grid">
+		<li><a href="bytestream.html"><strong>ByteStream</strong><span>Pull / peek / consume read streams and chunked write streams. Composable filters: gzip, hash, limit, window.</span></a></li>
+		<li><a href="filesystem.html"><strong>Filesystem</strong><span>One filesystem interface, multiple backends: local disk, memory, SQLite, ZIP-backed reads.</span></a></li>
+		<li><a href="zip.html"><strong>Zip</strong><span>Read and write ZIP archives one entry at a time without ZipArchive. EPUB, .docx, plugin bundles.</span></a></li>
+		<li><a href="git.html"><strong>Git</strong><span>Read and write Git objects, refs, and trees in memory. Mount a commit as a filesystem.</span></a></li>
+		<li><a href="merge.html"><strong>Merge</strong><span>Three-way diffs and merges with explicit conflict records.</span></a></li>
+	</ul>
+</section>
+
+<section class="ref-group">
+	<h2>Networked tools</h2>
+	<ul class="ref-grid">
+		<li><a href="httpclient.html"><strong>HttpClient</strong><span>HTTP requests with redirects, ranged resumable downloads, an event loop for progress, and pluggable transports.</span></a></li>
+		<li><a href="httpserver.html"><strong>HttpServer</strong><span>Bind to a local port and answer one request. OAuth callbacks, fixture servers, status pages.</span></a></li>
+		<li><a href="corsproxy.html"><strong>CORSProxy</strong><span>Server-side fetch for browser apps that can't bypass the same-origin policy.</span></a></li>
+		<li><a href="cli.html"><strong>CLI</strong><span>Parse <code>argv</code> against a declared command-line contract. No console framework.</span></a></li>
+	</ul>
+</section>
+
+<section class="ref-group">
+	<h2>WordPress runtime support</h2>
+	<ul class="ref-grid">
+		<li><a href="polyfill.html"><strong>Polyfill</strong><span>WordPress-shaped helpers (<code>esc_html</code>, filters, translation stubs) for code that runs outside WordPress.</span></a></li>
+		<li><a href="blueprints.html"><strong>Blueprints</strong><span>Versioned recipes for spinning up a WordPress site with a known plugin set, content, and config.</span></a></li>
+		<li><a href="coding-standards.html"><strong>ToolkitCodingStandards</strong><span>PHPCS sniffs that encode the project's review feedback as enforceable rules.</span></a></li>
+	</ul>
+</section>
+
+<section class="ref-group native-promo">
+	<h2>Experimental Native APIs</h2>
+	<p>Testing the native extension? The Native APIs page explains the accelerated <code>WP_HTML_Tag_Processor</code>, <code>XMLProcessor</code>, and <code>URLInTextProcessor</code> paths, links to WASM releases for Playground, and shows benchmark summaries from CI.</p>
+	<p><a class="cta" href="../native-apis.html">Open Native APIs docs →</a></p>
+</section>
+
+</main>
+
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a>
+</footer>
+</body>
+</html>

@@ -153,7 +153,7 @@ class NewSiteResolver {
 		$install_check = $runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-		$wp_load = getenv('DOCROOT') . '/wp-load.php';
+		$wp_load = getenv('WP_CORE_DIR') . '/wp-load.php';
 		if (!file_exists($wp_load)) {
 			append_output('0');
 			exit;
@@ -164,7 +164,8 @@ class NewSiteResolver {
 PHP
 			,
 			array(
-				'DOCROOT' => $runtime->get_configuration()->get_target_site_root(),
+				'DOCROOT'     => $runtime->get_configuration()->get_target_site_root(),
+				'WP_CORE_DIR' => $runtime->get_configuration()->get_wordpress_core_dir(),
 			),
 			null,
 			5

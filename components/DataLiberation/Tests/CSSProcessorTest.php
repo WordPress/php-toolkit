@@ -5,6 +5,8 @@ use WordPress\DataLiberation\CSS\CSSProcessor;
 
 /**
  * Comprehensive CSS processor tests based on the CSS Syntax Level 3 specification.
+ *
+ * @group css
  */
 class CSSProcessorTest extends TestCase {
 
@@ -25,7 +27,7 @@ class CSSProcessorTest extends TestCase {
 	 * @see https://github.com/romainmenke/css-processor-tests/
 	 * @return array
 	 */
-	static public function corpus_provider(): array {
+	public static function corpus_provider(): array {
 		return json_decode(file_get_contents(__DIR__ . '/css-test-cases.json'), true);
 	}
 
@@ -35,7 +37,7 @@ class CSSProcessorTest extends TestCase {
 	 * @param CSSProcessor $processor The CSS processor.
 	 * @return array Array of tokens with type, raw, startIndex, endIndex, structured.
 	 */
-	static public function collect_tokens( CSSProcessor $processor, $keys = null ): array {
+	public static function collect_tokens( CSSProcessor $processor, $keys = null ): array {
 		$tokens = array();
 
 		while ( $processor->next_token() ) {
@@ -143,6 +145,68 @@ class CSSProcessorTest extends TestCase {
 
 		$processor = CSSProcessor::create( $css );
 		$actual_tokens = $this->collect_tokens( $processor, ['type', 'raw', 'normalized', 'value'] );
+		$this->assertSame( $expected, $actual_tokens );
+	}
+
+	/**
+	 * In the slow path of decode_string_or_url() (triggered by a backslash escape), normal
+	 * text segments must still have invalid UTF-8 bytes replaced with U+FFFD, just
+	 * as the fast path does via wp_scrub_utf8().
+	 */
+	public function test_invalid_utf8_in_normal_segment_combined_with_escape(): void {
+		// The ident token contains an invalid UTF-8 byte (0xF1) in the "normal"
+		// segment before a CSS hex escape (\41 = U+0041 = 'A'). The backslash
+		// triggers the slow path, which previously skipped wp_scrub_utf8() on the
+		// normal segment.
+		$css = ".test\xF1\\41name";
+
+		$expected = array(
+			array(
+				'type'  => CSSProcessor::TOKEN_DELIM,
+				'raw'   => '.',
+				'value' => '.',
+			),
+			array(
+				'type'  => CSSProcessor::TOKEN_IDENT,
+				// raw contains the original bytes.
+				'raw'   => "test\xF1\\41name",
+				// value must have 0xF1 replaced with U+FFFD and \41 decoded to 'A'.
+				'value' => "test\u{FFFD}Aname",
+			),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, array( 'type', 'raw', 'value' ) );
+		$this->assertSame( $expected, $actual_tokens );
+	}
+
+	/**
+	 * When an invalid UTF-8 byte is the character directly after a backslash
+	 * (i.e. it is the escaped character itself), decode_escape_at() must replace
+	 * the invalid byte with U+FFFD.
+	 */
+	public function test_invalid_utf8_as_escaped_character(): void {
+		// The CSS `.\xF1` is a delim + ident containing a lone invalid byte.
+		// Adding a backslash before the invalid byte makes it an escape sequence:
+		// `.\\\xF1` => delim + ident whose value is the escaped 0xF1 byte.
+		$css = ".a\\\xF1b";
+
+		$expected = array(
+			array(
+				'type'  => CSSProcessor::TOKEN_DELIM,
+				'raw'   => '.',
+				'value' => '.',
+			),
+			array(
+				'type'  => CSSProcessor::TOKEN_IDENT,
+				'raw'   => "a\\\xF1b",
+				// The escaped 0xF1 must be replaced with U+FFFD.
+				'value' => "a\u{FFFD}b",
+			),
+		);
+
+		$processor = CSSProcessor::create( $css );
+		$actual_tokens = $this->collect_tokens( $processor, array( 'type', 'raw', 'value' ) );
 		$this->assertSame( $expected, $actual_tokens );
 	}
 
@@ -1540,6 +1604,134 @@ CSS;
 			array( 'type' => CSSProcessor::TOKEN_DELIM, 'raw' => '-' ),
 		);
 		$this->assertSame( $expected_tokens, $actual_tokens );
+	}
+
+	/**
+	 * Tests that backslash-newline in a string token contributes nothing to the value.
+	 *
+	 * The backslash and newline are both consumed and produce no value.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
+	 *
+	 * @dataProvider data_string_backslash_newline
+	 */
+	public function test_string_backslash_newline( string $css, string $expected_value ): void {
+		$processor = CSSProcessor::create( $css );
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( $expected_value, $processor->get_token_value() );
+	}
+
+	public static function data_string_backslash_newline(): array {
+		return array(
+			'backslash-LF'   => array( "'str\\\ning'", 'string' ),
+			'backslash-FF'   => array( "'str\\\fing'", 'string' ),
+			'backslash-CR'   => array( "'str\\\ring'", 'string' ),
+			'backslash-CRLF' => array( "'str\\\r\ning'", 'string' ),
+		);
+	}
+
+	/**
+	 * Tests that backslash-EOF in a string token contributes nothing to the value.
+	 *
+	 * The trailing backslash is consumed and produces no value.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-string-token
+	 */
+	public function test_string_backslash_eof(): void {
+		$processor = CSSProcessor::create( "'string\\" );
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_STRING, $processor->get_token_type() );
+		$this->assertSame( 'string', $processor->get_token_value() );
+	}
+
+	/**
+	 * Tests that backslash-newline in an unquoted URL produces a bad-url token.
+	 *
+	 * In unquoted URLs, the backslash-newline check goes through is_valid_escape()
+	 * which returns false for newlines, triggering consume_remnants_of_bad_url().
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-url-token
+	 *
+	 * @dataProvider data_url_backslash_newline
+	 */
+	public function test_url_backslash_newline( string $css ): void {
+		$processor = CSSProcessor::create( $css );
+
+		$found_bad_url = false;
+		while ( $processor->next_token() ) {
+			if ( CSSProcessor::TOKEN_BAD_URL === $processor->get_token_type() ) {
+				$found_bad_url = true;
+				break;
+			}
+		}
+
+		$this->assertTrue( $found_bad_url, 'Expected a BAD_URL token but none was found.' );
+	}
+
+	public static function data_url_backslash_newline(): array {
+		return array(
+			'backslash-LF'   => array( "url(ab\\\ncd)" ),
+			'backslash-FF'   => array( "url(ab\\\fcd)" ),
+			'backslash-CR'   => array( "url(ab\\\rcd)" ),
+			'backslash-CRLF' => array( "url(ab\\\r\ncd)" ),
+		);
+	}
+
+	/**
+	 * Tests that backslash-EOF in an unquoted URL produces U+FFFD in the value.
+	 *
+	 * In unquoted URLs, is_valid_escape() returns true for backslash-EOF,
+	 * and consuming the escaped code point at EOF produces U+FFFD per spec.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-url-token
+	 */
+	public function test_url_backslash_eof(): void {
+		$processor = CSSProcessor::create( "url(string\\" );
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_URL, $processor->get_token_type() );
+		$this->assertSame( "string\u{FFFD}", $processor->get_token_value() );
+	}
+
+	/**
+	 * Tests that backslash-newline stops an ident sequence.
+	 *
+	 * In idents, is_valid_escape() returns false for backslash-newline,
+	 * so the ident stops before the backslash.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-name
+	 *
+	 * @dataProvider data_ident_backslash_newline
+	 */
+	public function test_ident_backslash_newline( string $css ): void {
+		$processor = CSSProcessor::create( $css );
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $processor->get_token_type() );
+		$this->assertSame( 'abc', $processor->get_token_value() );
+	}
+
+	public static function data_ident_backslash_newline(): array {
+		return array(
+			'backslash-LF'   => array( "abc\\\n" ),
+			'backslash-FF'   => array( "abc\\\f" ),
+			'backslash-CR'   => array( "abc\\\r" ),
+			'backslash-CRLF' => array( "abc\\\r\n" ),
+		);
+	}
+
+	/**
+	 * Tests that backslash-EOF in an ident produces U+FFFD in the value.
+	 *
+	 * In idents, is_valid_escape() returns true for backslash-EOF,
+	 * and consuming the escaped code point at EOF produces U+FFFD per spec.
+	 *
+	 * @see https://www.w3.org/TR/css-syntax-3/#consume-name
+	 */
+	public function test_ident_backslash_eof(): void {
+		$processor = CSSProcessor::create( "abc\\" );
+		$this->assertTrue( $processor->next_token() );
+		$this->assertSame( CSSProcessor::TOKEN_IDENT, $processor->get_token_type() );
+		$this->assertSame( "abc\u{FFFD}", $processor->get_token_value() );
 	}
 
 	/**

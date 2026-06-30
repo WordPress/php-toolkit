@@ -38,7 +38,15 @@ create_repo_if_needed() {
   else
     echo "Creating repo: ${org}/${name}"
     local visflag="--${VISIBILITY}"
-    gh repo create "${org}/${name}" ${visflag} --disable-wiki >/dev/null
+    local create_output
+    if ! create_output="$(gh repo create "${org}/${name}" ${visflag} --disable-wiki 2>&1)"; then
+      if echo "$create_output" | grep -qi "name already exists"; then
+        echo "Repo exists: ${org}/${name}"
+      else
+        echo "$create_output" >&2
+        exit 1
+      fi
+    fi
     if [[ -n "$desc" ]]; then gh repo edit "${org}/${name}" --description "$desc" >/dev/null; fi
     if [[ -n "$homepage" ]]; then gh repo edit "${org}/${name}" --homepage "$homepage" >/dev/null; fi
     # Topics

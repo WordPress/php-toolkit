@@ -245,7 +245,7 @@ PHP
 			<<<'PHP'
 <?php
 // Load WordPress environment
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 
 // Check if constants are defined
 $results = [];

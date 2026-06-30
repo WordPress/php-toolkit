@@ -64,9 +64,14 @@ class StepTestCase extends TestCase {
 			;
 		}
 
+		$blueprint = array( 'version' => 2 );
+		if ( PHP_VERSION_ID < 70400 ) {
+			$blueprint['wordpressVersion'] = '6.6.2';
+		}
+
 		file_put_contents(
 			wp_join_unix_paths( $this->execution_context_path, 'blueprint.json' ),
-			json_encode( [ "version" => 2 ] )
+			json_encode( $blueprint )
 		);
 
 		$config

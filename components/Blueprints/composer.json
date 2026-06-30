@@ -3,6 +3,11 @@
     "description": "Blueprints component for WordPress.",
     "type": "library",
     "license": "GPL-2.0-or-later",
+    "keywords": [
+        "wordpress",
+        "php-toolkit"
+    ],
+    "homepage": "https://wordpress.github.io/php-toolkit/reference/blueprints.html",
     "authors": [
         {
             "name": "Adam Zielinski",
@@ -13,27 +18,29 @@
             "email": "wordpress@wordpress.org"
         }
     ],
+    "support": {
+        "issues": "https://github.com/WordPress/php-toolkit/issues",
+        "source": "https://github.com/WordPress/php-toolkit",
+        "docs": "https://wordpress.github.io/php-toolkit/reference/blueprints.html"
+    },
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/bytestream": "^0.6",
-        "wp-php-toolkit/filesystem": "^0.6",
-        "wp-php-toolkit/http-client": "^0.6",
-        "wp-php-toolkit/xml": "^0.6",
-        "wp-php-toolkit/zip": "^0.6"
+        "wp-php-toolkit/bytestream": "^0.9",
+        "wp-php-toolkit/filesystem": "^0.9",
+        "wp-php-toolkit/http-client": "^0.9",
+        "wp-php-toolkit/xml": "^0.9",
+        "wp-php-toolkit/zip": "^0.9"
     },
     "autoload": {
         "classmap": [
             "./"
         ],
         "exclude-from-classmap": [
-            "/Tests/"
-        ]
-    },
-    "archive": {
-        "exclude": [
-            "**/.github/",
-            "**/Tests/",
-            "**/bin/"
+            "/Tests/",
+            "/bin/",
+            "/Steps/scripts/",
+            "/vendor-patched/symfony/event-dispatcher/DependencyInjection/",
+            "/vendor-patched/symfony/event-dispatcher/ContainerAwareEventDispatcher.php"
         ]
     }
 }

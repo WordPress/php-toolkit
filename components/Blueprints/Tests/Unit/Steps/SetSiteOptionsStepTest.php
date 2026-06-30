@@ -16,7 +16,7 @@ class SetSiteOptionsStepTest extends StepTestCase {
 		$result = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 
 $options = json_decode(getenv('OPTIONS'), true);
 $result = [];
@@ -108,7 +108,7 @@ PHP
 		$this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 update_option('users_can_register', 0);
 update_option('default_role', 'subscriber');
 PHP

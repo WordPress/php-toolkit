@@ -25,7 +25,7 @@ class RunSQLStepTest extends StepTestCase {
 		$table_exists = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 global $wpdb;
 $table_name = 'test_table';
 $result = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
@@ -57,7 +57,7 @@ SQL;
 		$result = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 global $wpdb;
 $count = $wpdb->get_var("SELECT COUNT(*) FROM test_table");
 $rows = $wpdb->get_results("SELECT * FROM test_table ORDER BY id", ARRAY_A);
@@ -94,7 +94,7 @@ SQL;
 		$option_value = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 append_output( get_option('sql_test_option') );
 PHP
 
@@ -123,7 +123,7 @@ SQL;
 		$result = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 global $wpdb;
 
 $table1_data = $wpdb->get_var("SELECT value FROM test_table_1 LIMIT 1");
@@ -157,7 +157,7 @@ PHP
 		$table_exists = $this->runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 global $wpdb;
 $table_name = 'test_table';
 $result = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");

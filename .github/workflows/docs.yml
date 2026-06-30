@@ -1,0 +1,75 @@
+name: Deploy docs to GitHub Pages
+
+on:
+  push:
+    branches: [trunk]
+    paths:
+      - 'components/**'
+      - 'docs/**'
+      - 'bin/build-docs-bundle.sh'
+      - 'bin/build-reference.php'
+      - 'composer.json'
+      - 'composer.lock'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-dev --optimize-autoloader --no-progress
+
+      - name: Bundle toolkit and regenerate reference pages from markdown
+        run: |
+          mkdir -p docs/assets
+          rm -f docs/assets/php-toolkit.zip
+          zip -qr docs/assets/php-toolkit.zip components vendor bootstrap.php composer.json \
+            -x "*/Tests/*" "*/tests/*" "*/.git/*" "*/.github/*" "*/node_modules/*"
+          php bin/build-reference.php
+
+      - name: Preserve Native APIs Playground release history
+        env:
+          EXTENSION_PATH: wp_native_apis-wasm-extension
+        run: |
+          set -euo pipefail
+          pages_dir="$(mktemp -d)"
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git clone --depth=1 --branch gh-pages "https://github.com/${GITHUB_REPOSITORY}.git" "$pages_dir"
+            if [ -d "$pages_dir/$EXTENSION_PATH" ]; then
+              rm -rf "docs/$EXTENSION_PATH"
+              cp -R "$pages_dir/$EXTENSION_PATH" "docs/$EXTENSION_PATH"
+            fi
+          fi
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

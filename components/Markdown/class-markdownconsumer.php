@@ -7,6 +7,7 @@ use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
 use League\CommonMark\Extension\CommonMark\Node\Block as ExtensionBlock;
 use League\CommonMark\Extension\CommonMark\Node\Inline as ExtensionInline;
 use League\CommonMark\Extension\GithubFlavoredMarkdownExtension;
+use League\CommonMark\Extension\Strikethrough\Strikethrough;
 use League\CommonMark\Extension\Table\Table;
 use League\CommonMark\Extension\Table\TableCell;
 use League\CommonMark\Extension\Table\TableRow;
@@ -234,6 +235,10 @@ class MarkdownConsumer implements DataFormatConsumer {
 						$this->append_content( '<em>' );
 						break;
 
+					case Strikethrough::class:
+						$this->append_content( '<del>' );
+						break;
+
 					case ExtensionInline\HtmlInline::class:
 						$this->append_content( htmlspecialchars( $node->getLiteral() ) );
 						break;
@@ -322,6 +327,9 @@ BLOCK;
 						break;
 					case ExtensionInline\Emphasis::class:
 						$this->append_content( '</em>' );
+						break;
+					case Strikethrough::class:
+						$this->append_content( '</del>' );
 						break;
 					case ExtensionInline\Link::class:
 						$this->append_content( '</a>' );

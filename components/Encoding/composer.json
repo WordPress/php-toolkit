@@ -3,6 +3,11 @@
     "description": "Encoding component for WordPress.",
     "type": "library",
     "license": "GPL-2.0-or-later",
+    "keywords": [
+        "wordpress",
+        "php-toolkit"
+    ],
+    "homepage": "https://wordpress.github.io/php-toolkit/reference/encoding.html",
     "authors": [
         {
             "name": "Adam Zielinski",
@@ -13,6 +18,11 @@
             "email": "wordpress@wordpress.org"
         }
     ],
+    "support": {
+        "issues": "https://github.com/WordPress/php-toolkit/issues",
+        "source": "https://github.com/WordPress/php-toolkit",
+        "docs": "https://wordpress.github.io/php-toolkit/reference/encoding.html"
+    },
     "require": {
         "php": ">=7.2"
     },
@@ -24,13 +34,6 @@
         ],
         "exclude-from-classmap": [
             "/Tests/"
-        ]
-    },
-    "archive": {
-        "exclude": [
-            "**/.github/",
-            "**/Tests/",
-            "**/bin/"
         ]
     }
 }

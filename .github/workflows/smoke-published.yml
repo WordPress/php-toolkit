@@ -1,0 +1,49 @@
+name: Smoke-test published Packagist packages
+
+# Continuous health check for the published wp-php-toolkit/* packages.
+# Runs nightly against the latest release tag and on demand. Catches drift
+# between the monorepo (where every component is autoloaded by the root
+# composer.json) and the per-component split repos that consumers actually
+# install.
+
+on:
+  schedule:
+    # 04:17 UTC daily — late enough that any release dispatched during the
+    # working day has had time to propagate through Packagist.
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to smoke-test (e.g. 0.7.2). Leave blank for latest tag.'
+        required: false
+        type: string
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Determine version to test
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "value=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git fetch --tags --prune --quiet || true
+          latest="$(git tag --list 'v[0-9]*' --sort=-version:refname | head -n 1)"
+          if [ -z "$latest" ]; then echo "No version tags found" >&2; exit 1; fi
+          echo "value=${latest#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke-test
+        run: bash bin/smoke-published-packages.sh "${{ steps.version.outputs.value }}"

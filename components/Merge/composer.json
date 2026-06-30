@@ -3,21 +3,25 @@
     "description": "Merge component for WordPress with configurable diffing and merging strategies.",
     "type": "library",
     "license": "GPL-2.0-or-later",
-    "autoload": {
-        "psr-4": {
-            "WordPress\\Merge\\": ""
-        }
-    },
+    "keywords": [
+        "wordpress",
+        "php-toolkit"
+    ],
+    "homepage": "https://wordpress.github.io/php-toolkit/reference/merge.html",
     "authors": [
         {
             "name": "WordPress Contributors"
         }
     ],
+    "support": {
+        "issues": "https://github.com/WordPress/php-toolkit/issues",
+        "source": "https://github.com/WordPress/php-toolkit",
+        "docs": "https://wordpress.github.io/php-toolkit/reference/merge.html"
+    },
     "require": {
-        "php": ">=7.4",
-        "yetanotherape/diff-match-patch": "^1.0",
-        "wordpress/data-liberation": "dev-trunk",
-        "ext-mbstring": "*"
+        "php": ">=7.2",
+        "ext-mbstring": "*",
+        "wp-php-toolkit/data-liberation": "^0.9"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5",
@@ -25,19 +29,17 @@
         "wp-coding-standards/wpcs": "^2.3",
         "phpstan/phpstan": "^1.0"
     },
-    "scripts": {
-        "test": "phpunit",
-        "cs": "phpcs",
-        "cs-fix": "phpcbf"
+    "autoload": {
+        "classmap": [
+            "./"
+        ]
     },
     "config": {
         "sort-packages": true
     },
-    "archive": {
-        "exclude": [
-            "**/.github/",
-            "**/Tests/",
-            "**/bin/"
-        ]
+    "scripts": {
+        "test": "phpunit",
+        "cs": "phpcs",
+        "cs-fix": "phpcbf"
     }
 }

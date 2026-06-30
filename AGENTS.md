@@ -9,6 +9,9 @@ into WordPress plugins under `plugins/`.
 
 Upstream: https://github.com/WordPress/php-toolkit
 Branch: `trunk` (not `main`)
+Docs site: https://wordpress.github.io/php-toolkit/ — runnable examples per
+component, sourced from `bin/_docs_components/<slug>.md`. Edit those files
+to change the snippets that ship and the captured output that CI verifies.
 
 ## Commands
 

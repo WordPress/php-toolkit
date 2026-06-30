@@ -6,22 +6,54 @@ use Rowbot\URL\URL;
 
 /**
  * An abstraction to make swapping the URL parser easier later on.
- * We do not need it in the long run. It adds extra overhead of the
- * function call – let's remove it once the URL parser is decided.
+ *
+ * On PHP 8.5+ (where Uri\WhatWg\Url is available), parsing is delegated to the
+ * native WHATWG URL parser via WPWhatwgUrl. On older PHP versions it falls back
+ * to the bundled Rowbot\URL\URL implementation. Both code paths produce
+ * objects with the same property surface (protocol/hostname/port/pathname/
+ * search/hash/etc.), so the rest of the DataLiberation component does not
+ * need to know which parser is in use.
  */
 class WPURL {
 
+	/**
+	 * Returns true if PHP's native WHATWG URL parser is available.
+	 */
+	public static function has_native_parser(): bool {
+		static $available = null;
+		if ( null === $available ) {
+			$available = class_exists( '\\Uri\\WhatWg\\Url' );
+		}
+		return $available;
+	}
+
 	public static function parse( $url, $base = null ) {
-		if ( is_string( $url ) ) {
-			return URL::parse( $url, $base ) ?? false;
-		} elseif ( is_a( $url, 'Rowbot\URL\URL' ) ) {
+		if ( is_object( $url ) && ( $url instanceof URL || $url instanceof WPWhatwgUrl ) ) {
 			return $url;
 		}
+		if ( ! is_string( $url ) ) {
+			return false;
+		}
 
-		return false;
+		if ( self::has_native_parser() ) {
+			$base_for_native = $base;
+			if ( $base_for_native instanceof URL ) {
+				$base_for_native = $base_for_native->toString();
+			}
+			return WPWhatwgUrl::parse( $url, $base_for_native ) ?? false;
+		}
+
+		return URL::parse( $url, $base ) ?? false;
 	}
 
 	public static function can_parse( $url, $base = null ) {
+		if ( self::has_native_parser() ) {
+			$base_for_native = $base;
+			if ( $base_for_native instanceof URL ) {
+				$base_for_native = $base_for_native->toString();
+			}
+			return WPWhatwgUrl::canParse( (string) $url, $base_for_native );
+		}
 		return URL::canParse( $url, $base );
 	}
 
