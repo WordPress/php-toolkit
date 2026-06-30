@@ -67,7 +67,6 @@ class ImportContentStep implements StepInterface {
 		$import_process  = $runtime->create_php_sub_process(
 			$importer_script .
 			<<<'PHP'
-<?php
 run_content_import([
 	'mode' => 'wxr',
 	'execution_context_root' => getenv('EXECUTION_CONTEXT') ? getenv('EXECUTION_CONTEXT') : null,
@@ -75,7 +74,6 @@ run_content_import([
 	// @TODO: Support arbitrary media URLs to enable fetching assets during import.
 	// 'media_url' => 'https://pd.w.org/'
 ]);
-?>
 PHP
 			,
 			array(
@@ -151,7 +149,7 @@ PHP
 		$runtime->eval_php_code_in_subprocess(
 			<<<'PHP'
 <?php
-require_once getenv('DOCROOT') . '/wp-load.php';
+require_once getenv('WP_CORE_DIR') . '/wp-load.php';
 foreach (json_decode(getenv('POSTS'), true) as $post) {
 	$result = wp_insert_post(wp_slash($post));
 	if (is_wp_error($result)) {

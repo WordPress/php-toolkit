@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 4 — Talking to the network · PHP Toolkit</title>
+<meta name="description" content="Frontload images, run a sliding window of concurrent downloads, and stream-unzip a remote archive — all without a mandatory curl dependency. Chapter 4 of the importer tutorial.">
+<link rel="stylesheet" href="../assets/style.css?v=20260526-native-apis">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="./">Learn</a>
+		<a href="../reference/">Reference</a>
+		<a href="../native-apis.html">Native APIs</a>
+		<a class="github" href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+
+<div class="layout">
+
+<aside class="sidebar" aria-label="Tutorial navigation">
+	<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<details class="components-nav" open>
+		<summary>The path</summary>
+		<ol>
+			<li><a href="quickstart.html">Quickstart</a></li>
+			<li><a href="01-rewriting-html.html">1. Rewriting HTML</a></li>
+			<li><a href="02-streaming-archives.html">2. Streaming archives</a></li>
+			<li><a href="03-importing-content.html">3. Markdown to WXR</a></li>
+			<li class="current"><a href="04-talking-to-the-network.html">4. Talking to the network</a></li>
+			<li><a href="recap.html">Recap</a></li>
+		</ol>
+	</details>
+</aside>
+
+<article class="content">
+
+<p class="breadcrumb">Chapter 4 of 4</p>
+<h1>Talking to the network</h1>
+
+<p class="lede">By the end of chapter 3 the importer produces a WXR-style export stream from a folder of Markdown. There's one loose thread: when a post references <code>![](https://cdn.example.com/bread.jpg)</code>, the destination site has no <code>bread.jpg</code> in its media library. The WordPress importer plugin downloads files for attachment entities, but it does not scan arbitrary post content and import every remote image URL for you. The robust answer is to fetch the images <em>before</em> the import and stage them locally so the import can reference local paths. This chapter covers the fetch side of that work using HttpClient. We'll also see how the same client mounts a remote ZIP for streaming, which means in some workflows you don't need chapter 2's local archive at all.</p>
+
+<aside class="callout you-will-learn">
+	<strong>You will learn to:</strong>
+	<ul>
+		<li>Fetch a single URL and read the response as a byte stream.</li>
+		<li>Drive the event loop manually for progress reporting and concurrent downloads.</li>
+		<li>Maintain a sliding window of N concurrent requests, refilling as each completes.</li>
+		<li>Resume a partial download with the <code>Range</code> header.</li>
+		<li>Mount a remote ZIP through HttpClient and stream its entries with the same code from chapter 2.</li>
+	</ul>
+</aside>
+
+<h2 id="why-not-curl">Why a new HTTP client</h2>
+
+<p>The instinct is <code>file_get_contents( $url )</code> or <code>curl_exec()</code>. Both work — until they don't. <code>file_get_contents</code> on a URL needs <code>allow_url_fopen</code>, which security-conscious hosts disable. <code>curl_exec</code> needs the curl extension, which WebAssembly builds of PHP don't ship. And the simplest forms of both — no <code>CURLOPT_FILE</code>, no chunked stream wrapper — buffer the whole response into one PHP string, which is fatal for a 50 MB media file on a host with a 64 MB memory limit.</p>
+
+<p>HttpClient gives you the same request/response shape regardless of host capabilities: an event loop, response objects with status codes and headers, response bodies as <code>ByteReadStream</code>s you can pipe somewhere instead of buffering. Under the hood it picks curl when available and PHP stream sockets otherwise. The public API stays the same, though low-level transport errors and edge-case protocol behavior can still differ.</p>
+
+<h2 id="fetch-one">Fetch one URL</h2>
+
+<p>The smallest possible request: create a <code>Request</code>, hand it to <code>Client::fetch()</code>, wait for the response, read the body. The result of <code>fetch()</code> is a stream — the response headers arrive at <code>await_response()</code>, and the body bytes come through <code>consume_all()</code> or chunk-by-chunk via <code>pull()</code>/<code>consume()</code>:</p>
+
+<php-snippet blueprint="toolkit-setup" wp="none" name="fetch-one.php" runnable="false">
+<script type="application/x-php">
+<?php
+// Snippets that talk to the open internet are static here because the in-page
+// runtime can't always reach external hosts. Run locally.
+require '/php-toolkit/vendor/autoload.php';
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$client  = new Client();
+$stream  = $client->fetch( new Request( 'https://example.com/' ) );
+$response = $stream->await_response();
+
+echo "status: " . $response->status_code . "\n";
+echo "type:   " . $response->get_header( 'content-type' ) . "\n";
+echo "body:   " . strlen( $stream->consume_all() ) . " bytes\n";
+</script>
+</php-snippet>
+
+<p>Read the lifecycle. <code>fetch()</code> returns immediately with a stream object — the request is queued, not yet executed. <code>await_response()</code> blocks until the response headers have arrived, then returns the <code>Response</code> object. <code>consume_all()</code> reads the body to completion. Splitting "headers" from "body" matters because for some workflows (progress reporting, redirect logging, content-type sniffing) you act on the headers before deciding what to do with the body.</p>
+
+<h2 id="frontload-one">Download an image to the stage</h2>
+
+<p>The importer's job in this chapter is to take an image URL, fetch it, and place the bytes into the staging filesystem under a deterministic local path. We'll write the bytes incrementally so the response never has to fit into memory:</p>
+
+<php-snippet blueprint="toolkit-setup" wp="none" name="frontload-one.php" runnable="false">
+<script type="application/x-php">
+<?php
+require '/php-toolkit/vendor/autoload.php';
+
+use WordPress\Filesystem\Filesystem;
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+function frontload_attachment( Filesystem $stage, Client $client, $url, $local_path ) {
+	$stream   = $client->fetch( new Request( $url ) );
+	$response = $stream->await_response();
+	if ( ! $response->ok() ) {
+		fwrite( STDERR, "skip {$url}: HTTP {$response->status_code}\n" );
+		return false;
+	}
+	// Write a single string for simplicity; for very large files you'd write
+	// chunks via the event loop (next section).
+	$stage->put_contents( $local_path, $stream->consume_all() );
+	return true;
+}
+
+$stage  = InMemoryFilesystem::create();
+$stage->mkdir( '/uploads', array( 'recursive' => true ) );
+$client = new Client();
+
+frontload_attachment( $stage, $client, 'https://example.com/hero.jpg', '/uploads/hero.jpg' );
+echo "staged: " . implode( ', ', $stage->ls( '/uploads' ) ) . "\n";
+</script>
+</php-snippet>
+
+<p>Notice the function signature. It takes a <code>Filesystem</code>, not a directory path; it takes a <code>Client</code>, not a URL string transformed into one. That keeps it testable — you can pass an <code>InMemoryFilesystem</code> and a mock client and the function doesn't know the difference. It also keeps the HTTP and storage decisions out of the caller, so when you later swap the in-memory stage for <code>LocalFilesystem</code>, the function is unchanged.</p>
+
+<h2 id="event-loop">The event loop, with progress</h2>
+
+<p>For files small enough that you don't care about memory, <code>consume_all()</code> is fine. For big ones, you want to know how the download is going and write bytes as they arrive. Drop down a layer: <code>Client::enqueue()</code> + <code>await_next_event()</code> exposes every stage of the request as an event you can react to:</p>
+
+<php-snippet blueprint="toolkit-setup" wp="none" name="progress.php" runnable="false">
+<script type="application/x-php">
+<?php
+require '/php-toolkit/vendor/autoload.php';
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$client = new Client();
+$client->enqueue( array( new Request( 'https://example.com/big-file.zip' ) ) );
+
+$dest       = sys_get_temp_dir() . '/big-file.zip';
+@unlink( $dest );
+$downloaded = 0;
+$last_step  = -1;
+
+while ( $client->await_next_event() ) {
+	$event   = $client->get_event();
+	$request = $client->get_request();
+
+	if ( Client::EVENT_GOT_HEADERS === $event ) {
+		$total = $request->response->total_bytes;
+		echo "starting download (" . ( $total ?: 'unknown' ) . " bytes)\n";
+		continue;
+	}
+
+	if ( Client::EVENT_BODY_CHUNK_AVAILABLE === $event ) {
+		$chunk       = $client->get_response_body_chunk();
+		$downloaded += strlen( $chunk );
+		file_put_contents( $dest, $chunk, FILE_APPEND );
+
+		$total = $request->response->total_bytes;
+		if ( $total ) {
+			$step = (int) ( $downloaded / $total * 100 );
+			if ( $step >= $last_step + 10 ) {
+				echo "  {$step}% ({$downloaded}/{$total})\n";
+				$last_step = $step;
+			}
+		}
+		continue;
+	}
+
+	if ( Client::EVENT_FINISHED === $event ) {
+		echo "done: {$dest}\n";
+	} elseif ( Client::EVENT_FAILED === $event ) {
+		echo "failed: " . $request->error->message . "\n";
+	}
+}
+</script>
+</php-snippet>
+
+<p>Read the event flow. <code>EVENT_GOT_HEADERS</code> fires once when headers come in — useful for sniffing <code>Content-Length</code> or rejecting based on status. <code>EVENT_BODY_CHUNK_AVAILABLE</code> fires repeatedly as the body comes in — that's where you write to disk, update progress, or compute a hash. <code>EVENT_FINISHED</code> or <code>EVENT_FAILED</code> ends the request. Memory used is one chunk at a time; the importer can stream a 500 MB file under any memory limit large enough to hold the chunk size.</p>
+
+<h2 id="sliding-window">A sliding window of ten concurrent downloads</h2>
+
+<p>The importer might reference dozens of images. Doing them one at a time would be unnecessarily slow; firing all of them at once would hammer the upstream and risk being rate-limited. The polite move is a fixed-size window: keep ten requests in flight, and as each one finishes, enqueue the next:</p>
+
+<php-snippet blueprint="toolkit-setup" wp="none" name="sliding-window.php" runnable="false">
+<script type="application/x-php">
+<?php
+require '/php-toolkit/vendor/autoload.php';
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+$urls = array();
+for ( $i = 1; $i <= 25; $i++ ) {
+	$urls[] = 'https://example.com/image-' . $i . '.jpg';
+}
+
+$client  = new Client( array( 'concurrency' => 10 ) );
+$pending = $urls;
+$active  = array();
+$done    = 0;
+
+$enqueue_next = function () use ( &$pending, &$active, $client ) {
+	if ( ! $pending ) return;
+	$url     = array_shift( $pending );
+	$request = new Request( $url );
+	$active[ $request->id ] = $request;
+	$client->enqueue( array( $request ) );
+};
+
+for ( $i = 0; $i < 10; $i++ ) $enqueue_next();
+
+while ( $active && $client->await_next_event() ) {
+	$request = $client->get_request();
+	$event   = $client->get_event();
+	if ( Client::EVENT_FINISHED === $event || Client::EVENT_FAILED === $event ) {
+		unset( $active[ $request->id ] );
+		$done++;
+		echo "finished {$done}/25 (active=" . count( $active ) . ")\n";
+		$enqueue_next();
+	}
+}
+</script>
+</php-snippet>
+
+<p>The sliding window is a small piece of bookkeeping — a pending queue, an active set, an "enqueue next" callback — wrapped around the same event loop you saw above. Real importers do exactly this for media frontloading. The <code>concurrency</code> option in the <code>Client</code> constructor is the upper bound; the bookkeeping enforces a moving window so you don't enqueue more work than the window holds.</p>
+
+<aside class="callout pitfall">
+	<strong>Pitfall — concurrency is not parallelism.</strong> HttpClient runs in a single PHP process; "concurrent" here means multiple requests in flight, not multiple PHP threads executing user code. Headers and body chunks for ten different requests interleave through one event loop. CPU-bound work in your handler still serializes — if you're doing image processing on each chunk, ten-way concurrency won't speed up the CPU work.
+</aside>
+
+<h2 id="resume">Resume a partial download</h2>
+
+<p>Long downloads fail. Sometimes the network drops, sometimes the host runs out of execution time. The importer should be able to resume rather than redownload. HTTP's contract for that is <code>Range: bytes=N-</code>. Sending it to a cooperating server returns a <code>206 Partial Content</code> response with the missing bytes:</p>
+
+<php-snippet blueprint="toolkit-setup" wp="none" name="resume.php" runnable="false">
+<script type="application/x-php">
+<?php
+require '/php-toolkit/vendor/autoload.php';
+
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\Request;
+
+function resumable_download( Client $client, $url, $dest ) {
+	$existing = file_exists( $dest ) ? filesize( $dest ) : 0;
+	$headers  = $existing > 0 ? array( 'range' => "bytes={$existing}-" ) : array();
+
+	$stream   = $client->fetch( new Request( $url, array( 'headers' => $headers ) ) );
+	$response = $stream->await_response();
+
+	if ( $existing > 0 && 206 !== $response->status_code ) {
+		// Server didn't honor the Range request; restart from byte 0.
+		@unlink( $dest );
+		return resumable_download( $client, $url, $dest );
+	}
+
+	$flag = $existing > 0 ? FILE_APPEND : 0;
+	while ( ! $stream->reached_end_of_data() ) {
+		$n = $stream->pull( 8192 );
+		if ( 0 === $n ) break;
+		file_put_contents( $dest, $stream->consume( $n ), $flag );
+		$flag = FILE_APPEND;
+	}
+	return filesize( $dest );
+}
+
+$client = new Client();
+$bytes  = resumable_download( $client, 'https://example.com/big.zip', '/tmp/big.zip' );
+echo "saved {$bytes} bytes\n";
+</script>
+</php-snippet>
+
+<p>The defensive check matters: not every server respects <code>Range</code>, especially when sitting behind a CDN with caching that doesn't know how to pass the header upstream. If you ask for a partial response and the server hands you a fresh 200 instead, your existing bytes don't match what's coming and you have to start over. That's the recursion in <code>resumable_download()</code> — it's a one-line fallback rather than a separate retry path.</p>
+
+<h2 id="mount-remote-zip">Stream a remote ZIP through ZipFilesystem</h2>
+
+<p>The importer's input is a ZIP — chapter 2 read it from disk. But what if the ZIP lives on a URL? Downloading it whole, opening it with <code>ZipFilesystem</code>, then deleting the file afterwards works, but it asks you to coordinate a temp path the toolkit could manage for you. <code>SeekableRequestReadStream</code> wraps a <code>Request</code> as a seekable byte stream that <code>ZipFilesystem</code> can read directly: bytes are downloaded sequentially as the consumer reads, the class caches them in an internal temp file (cleaned up when you call <code>close_reading()</code>), and seeks back into already-downloaded ranges hit the cache instead of re-fetching:</p>
+
+<php-snippet blueprint="toolkit-setup" wp="none" name="remote-zip.php" runnable="false">
+<script type="application/x-php">
+<?php
+require '/php-toolkit/vendor/autoload.php';
+
+use WordPress\Filesystem\InMemoryFilesystem;
+use WordPress\HttpClient\Client;
+use WordPress\HttpClient\ByteStream\SeekableRequestReadStream;
+use WordPress\HttpClient\Request;
+use WordPress\Zip\ZipFilesystem;
+use function WordPress\Filesystem\copy_between_filesystems;
+
+$client = new Client();
+$reader = new SeekableRequestReadStream(
+	new Request( 'https://example.com/posts.zip' ),
+	array( 'client' => $client )
+);
+
+$response = $reader->await_response();
+if ( ! $response->ok() ) {
+	echo "HTTP " . $response->status_code . "\n";
+	exit;
+}
+
+// $reader behaves like a seekable byte stream over the remote URL.
+$zip   = ZipFilesystem::create( $reader );
+$stage = InMemoryFilesystem::create();
+
+copy_between_filesystems( array(
+	'source_filesystem' => $zip,
+	'source_path'       => '/',
+	'target_filesystem' => $stage,
+	'target_path'       => '/',
+) );
+
+echo "imported " . count( $stage->ls( '/' ) ) . " top-level entries\n";
+
+// Clean up the temp-file cache the seekable reader created.
+$reader->close_reading();
+</script>
+</php-snippet>
+
+<p>That's the entire chapter-2 setup with a remote URL substituted for the local file. <code>SeekableRequestReadStream</code> downloads the response body once, lazily, into a temporary file as ZipFilesystem asks for bytes — so reads work the way they would on a local file (including the seeks that ZipFilesystem performs to find the central directory at the end of the archive). The temp file caches what's been seen, so seeking backwards doesn't re-fetch.</p>
+
+<aside class="callout note">
+	<strong>Note — when this is the right tool.</strong> <code>SeekableRequestReadStream</code> is the right wrapper when the consumer needs random-access reads on the response (a ZIP central directory, an offset table, a large binary index). For workflows that read the body straight through, <code>$client-&gt;fetch($req)-&gt;consume_all()</code> or the event-loop pattern from earlier in this chapter is simpler.
+</aside>
+
+<h2 id="end-to-end">End-to-end: the importer, finally complete</h2>
+
+<p>The importer now spans four chapters' worth of components. The full shape:</p>
+
+<ol>
+	<li>Open the input ZIP — locally with <code>ZipFilesystem</code>, or remotely with <code>SeekableRequestReadStream</code>.</li>
+	<li>Stage its contents in an <code>InMemoryFilesystem</code> with <code>copy_between_filesystems()</code>.</li>
+	<li>For each Markdown file in the stage, run <code>MarkdownConsumer</code>, then <code>clean_post_html()</code> on the produced block markup.</li>
+	<li>For each image URL referenced from the cleaned content, fetch it with HttpClient through a sliding-window concurrency loop and stage the bytes alongside the WXR.</li>
+	<li>Stream the whole thing into a WXR document with <code>WXRWriter</code>, with the cleaned post markup as <code>content</code> and rewritten image references pointing at the local paths under the staged uploads tree.</li>
+</ol>
+
+<p>The full importer is roughly a hundred lines of PHP. It avoids <code>libxml2</code>, <code>libzip</code>, and a mandatory <code>curl</code> dependency. It runs in browser-side WebAssembly and on PHP 7.2+ when the features you choose have their optional platform extensions available. That's the toolkit's whole pitch — PHP libraries that handle much of the work the platform usually outsources to extensions.</p>
+
+<h2 id="recap">Recap</h2>
+
+<p>You can now:</p>
+
+<ul>
+	<li>Fetch a URL with <code>Client::fetch()</code> and read the body either whole (<code>consume_all()</code>) or in chunks (<code>pull()</code>/<code>consume()</code>).</li>
+	<li>Drive the event loop with <code>enqueue()</code> + <code>await_next_event()</code> for progress reporting and per-chunk processing.</li>
+	<li>Maintain a sliding window of N concurrent requests by tracking active and pending sets.</li>
+	<li>Resume a partial download with the <code>Range</code> header, and fall back to a full download when the server doesn't honor it.</li>
+	<li>Mount a remote ZIP through <code>SeekableRequestReadStream</code> so <code>ZipFilesystem</code> can seek over the response — bytes are downloaded lazily into a temp-file cache as they're read.</li>
+</ul>
+
+<nav class="chapter-nav">
+	<a class="prev" href="03-importing-content.html">← Previous: Markdown to WXR</a>
+	<a class="next" href="recap.html">Next: Recap →</a>
+</nav>
+
+<p class="next-preview">The recap page summarizes what the four chapters built, what's still in the toolkit beyond what we used, and where to look in the reference for the components we didn't visit (Git for snapshots, Merge for sync, HttpServer for OAuth callbacks, Blueprints for site setup).</p>
+
+</article>
+</div>
+
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a>
+</footer>
+</body>
+</html>

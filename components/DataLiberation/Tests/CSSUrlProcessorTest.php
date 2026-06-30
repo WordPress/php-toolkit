@@ -3,6 +3,9 @@
 use PHPUnit\Framework\TestCase;
 use WordPress\DataLiberation\URL\CSSURLProcessor;
 
+/**
+ * @group css
+ */
 class CSSURLProcessorTest extends TestCase {
 
 	/**

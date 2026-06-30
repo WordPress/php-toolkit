@@ -105,13 +105,13 @@ class InstallPluginStep implements StepInterface {
 					<<<'PHP'
 <?php
 
-require_once getenv( 'DOCROOT' ) . '/wp-load.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-load.php';
 
 define( 'WP_ADMIN', true );
 
 // Define a dummy skin for the upgrader.
 if ( ! class_exists( '\WP_Upgrader_Skin', false ) ) {
-	require_once getenv( 'DOCROOT' ) . '/wp-admin/includes/class-wp-upgrader.php';
+	require_once getenv( 'WP_CORE_DIR' ) . '/wp-admin/includes/class-wp-upgrader.php';
 
 	class Blueprint_WP_Upgrader_Skin extends WP_Upgrader_Skin {
 		public $destination;
@@ -186,11 +186,11 @@ if ( ! class_exists( '\WP_Upgrader_Skin', false ) ) {
 	}
 }
 
-require_once getenv( 'DOCROOT' ) . '/wp-load.php';
-require_once getenv( 'DOCROOT' ) . '/wp-admin/includes/plugin.php';
-require_once getenv( 'DOCROOT' ) . '/wp-admin/includes/file.php';
-require_once getenv( 'DOCROOT' ) . '/wp-admin/includes/plugin-install.php';
-require_once getenv( 'DOCROOT' ) . '/wp-admin/includes/class-wp-upgrader.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-load.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-admin/includes/plugin.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-admin/includes/file.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-admin/includes/plugin-install.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-admin/includes/class-wp-upgrader.php';
 
 // Ensure filesystem access is properly set up
 WP_Filesystem();

@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 1 — Rewriting HTML safely · PHP Toolkit</title>
+<meta name="description" content="Rewrite real-world HTML — lazy-load images, fix relative URLs, neutralize scripts and inline event handlers — using WP_HTML_Tag_Processor's cursor model. Chapter 1 of a tutorial that builds a content importer.">
+<link rel="stylesheet" href="../assets/style.css?v=20260526-native-apis">
+<script type="module" src="https://playground.wordpress.net/php-code-snippet.js"></script>
+<script id="toolkit-setup" type="application/json"></script>
+<script src="../assets/page.js?v=20260429-rewrite" defer></script>
+</head>
+<body>
+<header class="site">
+	<a class="brand" href="../">PHP Toolkit</a>
+	<nav>
+		<a href="./">Learn</a>
+		<a href="../reference/">Reference</a>
+		<a href="../native-apis.html">Native APIs</a>
+		<a class="github" href="https://github.com/WordPress/php-toolkit">GitHub</a>
+	</nav>
+</header>
+
+<div class="layout">
+
+<aside class="sidebar" aria-label="Tutorial navigation">
+	<button class="sidebar-toggle" type="button" aria-expanded="false">On this page ▾</button>
+	<nav class="toc" aria-label="Table of contents"></nav>
+	<details class="components-nav" open>
+		<summary>The path</summary>
+		<ol>
+			<li><a href="quickstart.html">Quickstart</a></li>
+			<li class="current"><a href="01-rewriting-html.html">1. Rewriting HTML</a></li>
+			<li><a href="02-streaming-archives.html">2. Streaming archives</a></li>
+			<li><a href="03-importing-content.html">3. Markdown to WXR</a></li>
+			<li><a href="04-talking-to-the-network.html">4. Talking to the network</a></li>
+			<li><a href="recap.html">Recap</a></li>
+		</ol>
+	</details>
+</aside>
+
+<article class="content">
+
+<p class="breadcrumb">Chapter 1 of 4</p>
+<h1>Rewriting HTML safely</h1>
+
+<p class="lede">In the quickstart you added a single attribute to a single tag. In this chapter we'll do the work the importer actually needs to do on real-world post content: add lazy loading to every image, rewrite relative links to absolute URLs, and neutralize script tags and inline event handlers that creep into pasted HTML. By the end you'll have a <code>clean_post_html()</code> function the next chapter will plug into the importer.</p>
+
+<aside class="callout you-will-learn">
+	<strong>You will learn to:</strong>
+	<ul>
+		<li>Walk every tag of a given name with <code>next_tag()</code>, and every tag and text node with <code>next_token()</code>.</li>
+		<li>Add, replace, and remove attributes without disturbing the surrounding bytes.</li>
+		<li>Use <code>get_attribute_names_with_prefix()</code> to remove every <code>on*</code> handler in one pass.</li>
+		<li>Recognize when the tag-level cursor is the right tool, and when to reach for <code>WP_HTML_Processor</code> instead.</li>
+	</ul>
+</aside>
+
+<h2 id="the-input">The input we're cleaning</h2>
+
+<p>The importer's job is to read a folder of Markdown posts. Each post has frontmatter, prose, and inline HTML that survived from a previous CMS — a mix of helpful markup, sloppy markup, and the occasional <code>&lt;script&gt;</code> tag someone pasted from Stack Overflow. Here's a representative example:</p>
+
+<php-snippet blueprint="toolkit-setup" wp="none" name="raw-post.php" runnable="false">
+<script type="application/x-php">
+<?php
+// Slightly abridged. Real posts can be 5–10 KB of HTML.
+$post_html = <<<HTML
+<p>A weeknight pasta that takes 20 minutes start to finish.
+See <a href="/recipes/sauces">our sauce primer</a> for context,
+or <a href="https://example.com/elsewhere">skip to the canonical version</a>.</p>
+
+<figure>
+	<img src="/uploads/2024/pasta-hero.jpg" alt="Plated pasta">
+	<figcaption onmouseover="trackHover()">Photo: ours.</figcaption>
+</figure>
+
+<p>Watch the <a href="video.html">technique video</a>
+or <a href="https://other.test/x">jump to the discussion</a>.</p>
+
+<script>trackPageview('/recipes/weeknight-pasta');</script>
+HTML;
+</script>
+</php-snippet>
+
+<p>Three things need fixing before this HTML belongs in a database:</p>
+
+<ol>
+	<li>The <code>&lt;img&gt;</code> has no <code>loading</code> hint, so it'll fetch eagerly even when it's far below the fold.</li>
+	<li>Two of the four <code>&lt;a&gt;</code> tags use relative URLs. They were correct on the source site; on the destination site they'll point to nothing.</li>
+	<li>There's a <code>&lt;script&gt;</code> tag and an <code>onmouseover</code> handler. They have to be neutralized.</li>
+</ol>
+
+<p>Each of the next three sections fixes one of these. They all use the same component — <code>WP_HTML_Tag_Processor</code> — and the same shape: open a processor over the HTML, walk it, ask the cursor to make edits, then call <code>get_updated_html()</code> for the result.</p>
+
+<h2 id="lazy-load">Lazy-load every image</h2>
+
+<p>Start with the most ergonomic fix: add <code>loading="lazy"</code> to every image that doesn't already have a <code>loading</code> attribute. The processor's filter argument lets us skip everything that isn't an <code>&lt;img&gt;</code>:</p>
+
+<php-snippet blueprint="toolkit-setup" wp="none" name="lazy-images.php">
+<script type="application/x-php">
+<?php
+require '/php-toolkit/vendor/autoload.php';
+
+$post_html = <<<HTML
+<figure>
+	<img src="/uploads/2024/pasta-hero.jpg" alt="Plated pasta">
+	<figcaption>Photo: ours.</figcaption>
+</figure>
+<p>Body copy with an inline <img src="emoji.png" alt="" loading="eager"> image.</p>
+HTML;
+
+$tags = new WP_HTML_Tag_Processor( $post_html );
+while ( $tags->next_tag( 'img' ) ) {
+	if ( null === $tags->get_attribute( 'loading' ) ) {
+		$tags->set_attribute( 'loading', 'lazy' );
+	}
+	$tags->set_attribute( 'decoding', 'async' );
+}
+
+echo $tags->get_updated_html();
+</script>
+<script type="text/expected-output">
+<figure>
+	<img src="/uploads/2024/pasta-hero.jpg" alt="Plated pasta" loading="lazy" decoding="async">
+	<figcaption>Photo: ours.</figcaption>
+</figure>
+<p>Body copy with an inline <img src="emoji.png" alt="" loading="eager" decoding="async"> image.</p>
+</script>
+</php-snippet>
+
+<p>Notice three things in the output. The first <code>&lt;img&gt;</code> gained both <code>loading="lazy"</code> and <code>decoding="async"</code>. The second <code>&lt;img&gt;</code> kept its author-provided <code>loading="eager"</code> — the <code>null === get_attribute( 'loading' )</code> guard saw it and skipped the lazy line — but still gained <code>decoding="async"</code>, because that's an unconditional <code>set_attribute()</code> call. And every byte that wasn't an image attribute came through untouched: the <code>&lt;figure&gt;</code>, the whitespace, the <code>&lt;figcaption&gt;</code>, the <code>&lt;p&gt;</code>, even the prose inside it.</p>
+
+<aside class="callout try">
+	<strong>Try this:</strong> change the second image to also lack a <code>loading</code> attribute, then add a third <code>&lt;img&gt;</code> wrapped in <code>&lt;picture&gt;&lt;source&gt;&lt;img&gt;&lt;/picture&gt;</code>. Run again. The processor walks all of them.
+</aside>
+
+<aside class="callout pitfall">
+	<strong>Pitfall — mutations are buffered.</strong> If you read <code>get_attribute('loading')</code> after a <code>set_attribute('loading', 'lazy')</code> on the same tag, you'll see <code>'lazy'</code>. But if a different bit of code reads the original <code>$post_html</code> string, it sees the unmodified HTML — the edits only land in the string when you call <code>get_updated_html()</code>. This trips people up when they pass the source HTML to a logger or a hash function and wonder why the output doesn't match.
+</aside>
+
+<h2 id="absolute-urls">Rewrite relative URLs to absolute</h2>
+
+<p>The importer needs every link in a post to be addressable from the destination site. <code>/recipes/sauces</code> meant something on the source site; on the destination it points to nothing. We'll resolve every relative <code>href</code> against a base URL — and leave protocol-relative URLs, fragments, and absolute URLs alone.</p>
+
+<php-snippet blueprint="toolkit-setup" wp="none" name="absolute-urls.php">
+<script type="application/x-php">
+<?php
+require '/php-toolkit/vendor/autoload.php';
+
+$post_html = '<p>See <a href="/recipes/sauces">our sauce primer</a>, '
+	. 'or <a href="https://other.test/x">the canonical version</a>, '
+	. 'or <a href="video.html">the video</a>, '
+	. 'or <a href="#footnote-1">footnote 1</a>.</p>';
+
+$base = 'https://recipes.example.com/';
+
+$tags = new WP_HTML_Tag_Processor( $post_html );
+while ( $tags->next_tag( 'a' ) ) {
+	$href = $tags->get_attribute( 'href' );
+	if ( null === $href || '' === $href ) {
+		continue;
+	}
+	// Already a scheme (https:, mailto:, javascript:), or scheme-relative,
+	// or a same-page fragment? Leave it alone.
+	if ( preg_match( '#^[a-z][a-z0-9+.\-]*:#i', $href )
+		|| 0 === strpos( $href, '//' )
+		|| 0 === strpos( $href, '#' ) ) {
+		continue;
+	}
+	$tags->set_attribute( 'href', rtrim( $base, '/' ) . '/' . ltrim( $href, '/' ) );
+}
+
+echo $tags->get_updated_html();
+</script>
+<script type="text/expected-output">
+<p>See <a href="https://recipes.example.com/recipes/sauces">our sauce primer</a>, or <a href="https://other.test/x">the canonical version</a>, or <a href="https://recipes.example.com/video.html">the video</a>, or <a href="#footnote-1">footnote 1</a>.</p>
+</script>
+</php-snippet>
+
+<p>The pattern in the body of the loop is a small URL classifier: scheme-bearing URLs and scheme-relative ones (<code>//other.test/...</code>) are already absolute; fragments stay on the current document; everything else gets the base URL prepended. The classifier itself is forgettable boilerplate — what matters is that the processor lets us write it once and apply it to every <code>&lt;a&gt;</code> in the document with five lines of loop scaffolding.</p>
+
+<aside class="callout try">
+	<strong>Try this:</strong> add a <code>mailto:cooks@example.com</code> link and a <code>javascript:void(0)</code> link to the input. Run. The mailto stays intact (good); the javascript link also stays intact (less good — sanitization is the next section's problem, not this one's).
+</aside>
+
+<aside class="callout note">
+	<strong>Note.</strong> Real-world URL resolution has corners (relative paths with <code>..</code>, query-string-only URLs like <code>?page=2</code>, base elements). The toolkit ships a focused URL handling utility under DataLiberation that does the full job. We'll meet it in chapter 3. For now the simple classifier is good enough for the inputs the importer actually sees.
+</aside>
+
+<h2 id="strip-scripts">Neutralize scripts and inline event handlers</h2>
+
+<p>This is the security-shaped fix. A user pasted some HTML, and an <code>onmouseover</code> handler came along with it. Maybe a <code>&lt;script&gt;</code> tag too. The importer needs to neutralize both before the content lands in a database that will later be rendered into someone else's browser.</p>
+
+<p>For inline event handlers, <code>get_attribute_names_with_prefix( 'on' )</code> returns every attribute on the current tag whose name starts with <code>on</code> — that's <code>onclick</code>, <code>onmouseover</code>, <code>onerror</code>, every variant. We loop over the returned names and remove each.</p>
+
+<p>For <code>&lt;script&gt;</code> tags, <code>set_modifiable_text('')</code> blanks the script's body without disturbing the surrounding markup. Combined with stripping its attributes, the result is an inert <code>&lt;script&gt;&lt;/script&gt;</code> shell — readable, valid HTML, but executable as a no-op.</p>
+
+<php-snippet blueprint="toolkit-setup" wp="none" name="strip-scripts.php">
+<script type="application/x-php">
+<?php
+require '/php-toolkit/vendor/autoload.php';
+
+$untrusted = '<p>Hi <b onclick="steal()">friend</b>!</p>'
+	. '<figure><img src="x" onerror="boom()">'
+	. '<figcaption onmouseover="trackHover()">Photo</figcaption></figure>'
+	. '<script>alert("xss")</script>'
+	. '<script src="https://evil.test/x.js"></script>';
+
+$tags = new WP_HTML_Tag_Processor( $untrusted );
+while ( $tags->next_tag() ) {
+	$tag = $tags->get_tag();
+
+	// 1. Neutralize script bodies and remove their attributes.
+	if ( 'SCRIPT' === $tag && ! $tags->is_tag_closer() ) {
+		$tags->set_modifiable_text( '' );
+		foreach ( $tags->get_attribute_names_with_prefix( '' ) as $attr ) {
+			$tags->remove_attribute( $attr );
+		}
+		continue;
+	}
+
+	// 2. Remove every on* handler on every other tag.
+	foreach ( $tags->get_attribute_names_with_prefix( 'on' ) as $handler ) {
+		$tags->remove_attribute( $handler );
+	}
+}
+
+echo $tags->get_updated_html();
+</script>
+<script type="text/expected-output">
+<p>Hi <b>friend</b>!</p><figure><img src="x"><figcaption>Photo</figcaption></figure><script></script><script></script>
+</script>
+</php-snippet>
+
+<p>Read the output carefully. The <code>onclick</code>, <code>onerror</code>, and <code>onmouseover</code> attributes are gone. Both <code>&lt;script&gt;</code> tags survive structurally — empty, no <code>src</code>, no body — but they're inert. The surrounding <code>&lt;p&gt;</code>, <code>&lt;figure&gt;</code>, and <code>&lt;figcaption&gt;</code> markup is unchanged.</p>
+
+<aside class="callout pitfall">
+	<strong>Pitfall — script tag pairs.</strong> An HTML processor sees <code>&lt;script&gt;</code> twice: once as the opener, once as the closer. The <code>! $tags-&gt;is_tag_closer()</code> guard makes sure we only blank the body when we're sitting on the opener; calling <code>set_modifiable_text()</code> on a closer is a no-op but the attribute-stripping loop would emit nothing useful. The same shape applies to <code>&lt;style&gt;</code>, <code>&lt;textarea&gt;</code>, and other elements with raw text content.
+</aside>
+
+<aside class="callout warning">
+	<strong>Warning — this is not a complete sanitizer.</strong> Stripping <code>on*</code> handlers and emptying <code>&lt;script&gt;</code> tags closes the most common pasted-HTML vectors. It does not close <code>javascript:</code> URLs in <code>href</code> and <code>src</code>, CSS expressions in <code>style</code>, or SVG-borne event handlers. If you're accepting untrusted HTML from end users (not just migrating known-author content like our importer is), use WordPress's <code>wp_kses_post()</code> after this pass, or build an explicit allowlist of tags and attributes. The Tag Processor gives you the surgical tool; a full sanitizer is a policy decision on top.
+</aside>
+
+<h2 id="combine">Combine the three into one function</h2>
+
+<p>Each of the three rewrites above used its own <code>WP_HTML_Tag_Processor</code> instance. That's fine for a tutorial, but the importer is going to call this on every post — twelve, then a hundred, then a thousand — and each instance allocates a little state. We'll fold all three into a single pass over a single processor.</p>
+
+<p>This is also the function chapter 2 will import and reuse. Save the shape:</p>
+
+<php-snippet blueprint="toolkit-setup" wp="none" name="clean-post-html.php">
+<script type="application/x-php">
+<?php
+require '/php-toolkit/vendor/autoload.php';
+
+function clean_post_html( $html, $base_url ) {
+	$tags = new WP_HTML_Tag_Processor( $html );
+	while ( $tags->next_tag() ) {
+		$tag = $tags->get_tag();
+
+		// Inert script tags.
+		if ( 'SCRIPT' === $tag && ! $tags->is_tag_closer() ) {
+			$tags->set_modifiable_text( '' );
+			foreach ( $tags->get_attribute_names_with_prefix( '' ) as $attr ) {
+				$tags->remove_attribute( $attr );
+			}
+			continue;
+		}
+
+		// Strip on* handlers everywhere else.
+		foreach ( $tags->get_attribute_names_with_prefix( 'on' ) as $handler ) {
+			$tags->remove_attribute( $handler );
+		}
+
+		// Lazy-load images.
+		if ( 'IMG' === $tag && ! $tags->is_tag_closer() ) {
+			if ( null === $tags->get_attribute( 'loading' ) ) {
+				$tags->set_attribute( 'loading', 'lazy' );
+			}
+			$tags->set_attribute( 'decoding', 'async' );
+		}
+
+		// Resolve relative anchor hrefs.
+		if ( 'A' === $tag && ! $tags->is_tag_closer() ) {
+			$href = $tags->get_attribute( 'href' );
+			if ( is_string( $href ) && '' !== $href
+				&& ! preg_match( '#^[a-z][a-z0-9+.\-]*:#i', $href )
+				&& 0 !== strpos( $href, '//' )
+				&& 0 !== strpos( $href, '#' ) ) {
+				$tags->set_attribute(
+					'href',
+					rtrim( $base_url, '/' ) . '/' . ltrim( $href, '/' )
+				);
+			}
+		}
+	}
+	return $tags->get_updated_html();
+}
+
+$post_html = <<<HTML
+<p>A weeknight pasta. See <a href="/recipes/sauces">our sauce primer</a>.</p>
+<figure>
+	<img src="/uploads/pasta.jpg" alt="Plated pasta">
+	<figcaption onmouseover="trackHover()">Photo: ours.</figcaption>
+</figure>
+<script>trackPageview('/recipes/weeknight-pasta');</script>
+HTML;
+
+echo clean_post_html( $post_html, 'https://recipes.example.com/' );
+</script>
+<script type="text/expected-output">
+<p>A weeknight pasta. See <a href="https://recipes.example.com/recipes/sauces">our sauce primer</a>.</p>
+<figure>
+	<img src="/uploads/pasta.jpg" alt="Plated pasta" loading="lazy" decoding="async">
+	<figcaption>Photo: ours.</figcaption>
+</figure>
+<script></script>
+</script>
+</php-snippet>
+
+<p>One processor instance, one walk, one allocation of update state. Real importers run this on the body of every post they ingest — call it ten thousand times in a long export and the difference between one allocation per post and four is measurable.</p>
+
+<aside class="callout try">
+	<strong>Try this:</strong> add a <code>&lt;style&gt;</code> tag with a body to the input, then extend <code>clean_post_html()</code> to blank <code>&lt;style&gt;</code> bodies the same way it blanks <code>&lt;script&gt;</code> bodies. Run. CSS-borne attacks are rare in author-supplied content but they exist; the same surgical fix applies.
+</aside>
+
+<h2 id="when-tag-is-wrong">When the tag-level cursor is the wrong tool</h2>
+
+<p>Everything above used <code>WP_HTML_Tag_Processor</code>, which walks tags as a flat sequence. It doesn't know that <code>&lt;img&gt;</code> is inside <code>&lt;figure&gt;</code>; it just sees them in document order. For attribute rewriting that's perfect — fast, allocation-light, byte-honest.</p>
+
+<p>It's the wrong tool when ancestry matters. If you need "every <code>&lt;img&gt;</code> directly inside a <code>&lt;figure&gt;</code>, but not images in paragraphs," or "the <code>&lt;h1&gt;</code> at the top of the article body, ignoring <code>&lt;h1&gt;</code>s nested inside <code>&lt;blockquote&gt;</code>," reach for <code>WP_HTML_Processor</code> — the same component, one class up. It implements HTML5 tree construction, so you can query by ancestry (<code>breadcrumbs</code>) and trust that <code>&lt;p&gt;one&lt;p&gt;two</code> parses as two paragraphs the way a browser sees it.</p>
+
+<p>The reference page for the HTML component (<a href="../reference/html.html">reference/html.html</a>) shows both processors side by side with worked examples. We won't need the full processor in the importer.</p>
+
+<h2 id="recap">Recap</h2>
+
+<p>You can now:</p>
+
+<ul>
+	<li>Open a <code>WP_HTML_Tag_Processor</code> over an HTML string and walk it with <code>next_tag()</code>.</li>
+	<li>Add, replace, and remove attributes — and read the result with <code>get_updated_html()</code> — without disturbing untouched bytes.</li>
+	<li>Use <code>get_attribute_names_with_prefix()</code> to find and remove every <code>on*</code> handler in a single pass.</li>
+	<li>Blank the body of a special-content tag (<code>&lt;script&gt;</code>, <code>&lt;style&gt;</code>) with <code>set_modifiable_text('')</code>.</li>
+	<li>Combine multiple rewrites into a single processor walk for performance and clarity.</li>
+	<li>Recognize when the cursor model is the right tool and when ancestry-aware <code>WP_HTML_Processor</code> is.</li>
+</ul>
+
+<p>The <code>clean_post_html()</code> function is the importer's first real piece. We'll use it again in chapter 3.</p>
+
+<nav class="chapter-nav">
+	<a class="prev" href="quickstart.html">← Previous: Quickstart</a>
+	<a class="next" href="02-streaming-archives.html">Next: Chapter 2 — Streaming archives →</a>
+</nav>
+
+<p class="next-preview">In chapter 2 the importer's input becomes a real ZIP file: a thousand Markdown posts in a 40 MB archive that you can't afford to extract to disk on a memory-constrained host. We'll wrap the archive as a <code>Filesystem</code>, read entries one at a time, and pipe them into a memory-backed staging filesystem the next chapter will read from.</p>
+
+</article>
+</div>
+
+<footer class="site">
+	<a href="https://github.com/WordPress/php-toolkit">WordPress/php-toolkit</a>
+</footer>
+</body>
+</html>

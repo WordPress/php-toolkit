@@ -3,6 +3,11 @@
     "description": "CLI component for WordPress.",
     "type": "library",
     "license": "GPL-2.0-or-later",
+    "keywords": [
+        "wordpress",
+        "php-toolkit"
+    ],
+    "homepage": "https://wordpress.github.io/php-toolkit/reference/cli.html",
     "authors": [
         {
             "name": "Adam Zielinski",
@@ -13,22 +18,20 @@
             "email": "wordpress@wordpress.org"
         }
     ],
+    "support": {
+        "issues": "https://github.com/WordPress/php-toolkit/issues",
+        "source": "https://github.com/WordPress/php-toolkit",
+        "docs": "https://wordpress.github.io/php-toolkit/reference/cli.html"
+    },
     "require": {
         "php": ">=7.2"
     },
     "autoload": {
-        "psr-4": {
-            "WordPress\\CLI\\": ""
-        },
+        "classmap": [
+            "./"
+        ],
         "exclude-from-classmap": [
             "/Tests/"
-        ]
-    },
-    "archive": {
-        "exclude": [
-            "**/.github/",
-            "**/Tests/",
-            "**/bin/"
         ]
     }
 }

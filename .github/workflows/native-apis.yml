@@ -1,0 +1,52 @@
+name: Native APIs
+
+on:
+  push:
+    branches:
+      - trunk
+  pull_request:
+    paths:
+      - '.github/workflows/native-apis.yml'
+      - 'components/DataLiberation/URL/**'
+      - 'components/HTML/**'
+      - 'components/XML/**'
+      - 'extensions/native-apis/**'
+
+jobs:
+  build-and-verify:
+    name: Build and verify PHP extension
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, json
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang libclang-dev
+          php-config --version
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Run Rust tests
+        working-directory: extensions/native-apis
+        run: cargo test
+
+      - name: Build native extension
+        run: extensions/native-apis/build-extension.sh
+
+      - name: Verify native extension
+        run: php -d extension=extensions/native-apis/target/release/libwp_native_apis.so extensions/native-apis/tests/verify-native-apis.php

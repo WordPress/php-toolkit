@@ -1,12 +1,18 @@
 {
 	"name": "wp-php-toolkit/php-toolkit",
 	"type": "library",
-	"description": "WordPress Components",
+	"description": "Standalone, dependency-free PHP libraries for WordPress and PHP projects — XML, ZIP, Git, HTTP, Markdown, Filesystem, and more. Browse runnable examples at https://wordpress.github.io/php-toolkit/",
 	"keywords": [
 		"wordpress",
+		"php-toolkit",
 		"components"
 	],
-	"homepage": "https://wordpress.org",
+	"homepage": "https://wordpress.github.io/php-toolkit/",
+	"support": {
+		"issues": "https://github.com/WordPress/php-toolkit/issues",
+		"source": "https://github.com/WordPress/php-toolkit",
+		"docs": "https://wordpress.github.io/php-toolkit/"
+	},
 	"license": "GPL-2.0-or-later",
 	"authors": [
 		{
@@ -42,6 +48,7 @@
 			"components/Blueprints/",
 			"components/Blueprints/vendor-patched/",
 			"components/CLI/",
+			"components/CORSProxy/",
 			"components/DataLiberation/",
 			"components/DataLiberation/vendor-patched/",
 			"components/Filesystem/",
@@ -54,11 +61,14 @@
 			"components/Merge/",
 			"components/Merge/vendor-patched",
 			"components/ByteStream/",
+			"components/Polyfill/",
+			"components/Svn/",
 			"components/ToolkitCodingStandards/",
 			"components/XML/",
 			"components/Zip/"
 		],
 		"files": [
+			"components/CORSProxy/cors-proxy-functions.php",
 			"components/DataLiberation/URL/functions.php",
 			"components/Encoding/utf8.php",
 			"components/Encoding/compat-utf8.php",
@@ -68,12 +78,12 @@
 			"components/Polyfill/wordpress.php",
 			"components/Polyfill/mbstring.php",
 			"components/Polyfill/php-functions.php",
-			"components/Git/functions.php"
+			"components/Git/functions.php",
+			"components/Svn/functions.php"
 		],
 		"psr-4": {
 			"Rowbot\\": "components/DataLiberation/vendor-patched/",
-			"Brick\\": "components/DataLiberation/vendor-patched/",
-			"WordPress\\CORSProxy\\": "components/CORSProxy/"
+			"Brick\\": "components/DataLiberation/vendor-patched/"
 		}
 	},
 	"scripts": {

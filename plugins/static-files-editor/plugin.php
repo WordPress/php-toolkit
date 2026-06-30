@@ -63,15 +63,6 @@ if ( ! defined( 'WP_STATIC_FILES_EDITOR_IMAGE_MAX_DIMENSION' ) ) {
 	define( 'WP_STATIC_FILES_EDITOR_IMAGE_MAX_DIMENSION', 1280 );
 }
 
-if ( isset( $_GET['dump'] ) ) {
-	add_action(
-		'init',
-		function () {
-			WP_Static_Files_Editor_Plugin::import_static_pages();
-		}
-	);
-}
-
 require_once __DIR__ . '/data-source-page.php';
 require_once __DIR__ . '/DataSource.php';
 

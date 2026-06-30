@@ -22,7 +22,7 @@ use WordPress\Zip\ZipFilesystem;
 
 use function WordPress\Filesystem\wp_join_unix_paths;
 
-require_once getenv( 'DOCROOT' ) . '/wp-load.php';
+require_once getenv( 'WP_CORE_DIR' ) . '/wp-load.php';
 require_once getenv( 'DOCROOT' ) . '/php-toolkit.phar';
 
 // Progress reporting interfaces and implementations.

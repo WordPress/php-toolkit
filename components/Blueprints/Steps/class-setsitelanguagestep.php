@@ -57,7 +57,7 @@ class SetSiteLanguageStep implements StepInterface {
 		$wp_version = trim(
 			$runtime->eval_php_code_in_subprocess(
 				'<?php
-            require getenv("DOCROOT") . "/wp-includes/version.php";
+            require getenv("WP_CORE_DIR") . "/wp-includes/version.php";
             append_output( $wp_version );
             '
 			)->output_file_content
@@ -67,8 +67,8 @@ class SetSiteLanguageStep implements StepInterface {
 		$plugins_data = json_decode(
 			$runtime->eval_php_code_in_subprocess(
 				"<?php
-            require_once(getenv('DOCROOT') . '/wp-load.php');
-            require_once(getenv('DOCROOT') . '/wp-admin/includes/plugin.php');
+            require_once(getenv('WP_CORE_DIR') . '/wp-load.php');
+            require_once(getenv('WP_CORE_DIR') . '/wp-admin/includes/plugin.php');
             append_output(
 				json_encode(
 					array_values(
@@ -97,8 +97,8 @@ class SetSiteLanguageStep implements StepInterface {
 		$themes_data = json_decode(
 			$runtime->eval_php_code_in_subprocess(
 				"<?php
-            require_once(getenv('DOCROOT') . '/wp-load.php');
-            require_once(getenv('DOCROOT') . '/wp-admin/includes/theme.php');
+            require_once(getenv('WP_CORE_DIR') . '/wp-load.php');
+            require_once(getenv('WP_CORE_DIR') . '/wp-admin/includes/theme.php');
             append_output(
 				json_encode(
 					array_values(

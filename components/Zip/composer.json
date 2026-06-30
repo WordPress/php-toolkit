@@ -3,6 +3,11 @@
     "description": "Zip component for WordPress.",
     "type": "library",
     "license": "GPL-2.0-or-later",
+    "keywords": [
+        "wordpress",
+        "php-toolkit"
+    ],
+    "homepage": "https://wordpress.github.io/php-toolkit/reference/zip.html",
     "authors": [
         {
             "name": "Adam Zielinski",
@@ -13,31 +18,29 @@
             "email": "wordpress@wordpress.org"
         }
     ],
+    "support": {
+        "issues": "https://github.com/WordPress/php-toolkit/issues",
+        "source": "https://github.com/WordPress/php-toolkit",
+        "docs": "https://wordpress.github.io/php-toolkit/reference/zip.html"
+    },
     "require": {
         "php": ">=7.2",
-        "wp-php-toolkit/bytestream": "^0.6",
-        "wp-php-toolkit/filesystem": "^0.6",
-        "wp-php-toolkit/http-client": "^0.6"
-    },
-    "autoload": {
-        "psr-4": {
-            "WordPress\\Zip\\": ""
-        },
-        "files": [
-            "src/functions.php"
-        ],
-        "exclude-from-classmap": [
-            "/Tests/"
-        ]
+        "wp-php-toolkit/bytestream": "^0.9",
+        "wp-php-toolkit/filesystem": "^0.9",
+        "wp-php-toolkit/http-client": "^0.9"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5"
     },
-    "archive": {
-        "exclude": [
-            "**/.github/",
-            "**/Tests/",
-            "**/bin/"
+    "autoload": {
+        "classmap": [
+            "./"
+        ],
+        "files": [
+            "functions.php"
+        ],
+        "exclude-from-classmap": [
+            "/Tests/"
         ]
     }
 }

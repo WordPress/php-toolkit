@@ -5,6 +5,28 @@ use WordPress\DataLiberation\URL\URLInTextProcessor;
 
 class URLInTextProcessorTest extends TestCase {
 
+	public function test_direct_native_processor_finds_url_candidates_when_loaded() {
+		$native_class = 'WordPress\\DataLiberation\\URL\\NativeURLInTextProcessor';
+		if ( ! class_exists( $native_class, false ) ) {
+			$this->markTestSkipped( 'Native URL-in-text processor is not loaded.' );
+		}
+
+		$p = new $native_class( 'Visit https://wordpress.org/plugins, then example.com/docs.' );
+		$this->assertTrue( $p->next_url() );
+		$this->assertSame( 'https://wordpress.org/plugins', $p->get_raw_url() );
+		$this->assertSame( 6, $p->get_url_starts_at() );
+		$this->assertTrue( $p->had_protocol() );
+
+		$this->assertTrue( $p->next_url() );
+		$this->assertSame( 'example.com/docs', $p->get_raw_url() );
+		$this->assertFalse( $p->had_protocol() );
+		$this->assertTrue( $p->set_raw_url( 'example.org/handbook' ) );
+		$this->assertSame(
+			'Visit https://wordpress.org/plugins, then example.org/handbook.',
+			$p->get_updated_text()
+		);
+	}
+
 	/**
 	 * @dataProvider provider_test_finds_next_url_when_base_url_is_used
 	 */

@@ -393,7 +393,7 @@ class BlockMarkupUrlProcessor extends BlockMarkupProcessor {
 	 *        relative URLs in text nodes. On the other hand, the detection is performed
 	 *        by this WPURL_In_Text_Processor class so maybe the two do go hand in hand?
 	 */
-	public function replace_base_url( URL $to_url, ?URL $base_url = null ) {
+	public function replace_base_url( $to_url, $base_url = null ) {
 		$base_url = $base_url ?? $this->base_url_object;
 		if ( ! $base_url ) {
 			return false;

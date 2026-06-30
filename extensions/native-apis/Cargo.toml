@@ -1,0 +1,20 @@
+[package]
+name = "wp_native_apis"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-2.0-or-later"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib", "staticlib"]
+
+[features]
+default = []
+php-extension = ["dep:ext-php-rs"]
+
+[dependencies]
+ext-php-rs = { version = "=0.15.13", default-features = false, features = ["runtime"], optional = true }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
