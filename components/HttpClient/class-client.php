@@ -139,8 +139,16 @@ class Client {
 				throw new HttpClientException( sprintf( 'Request %s is not in the created state.', esc_html( $request->id ) ) );
 			}
 
-			$this->middleware->enqueue( $request );
+			$filtered_request = apply_filters( 'wp_http_client_request_before_enqueue', $request );
 
+			$this->middleware->enqueue( $filtered_request ? $filtered_request : $request );
+
+			if ( false === $filtered_request ) {
+				$this->state->set_request_error( $request, new HttpError( sprintf( 'Request %s was rejected by a filter and not enqueued.', esc_html( $request->id ) ) ) );
+				continue;
+			}
+
+			$request = $filtered_request;
 			$parsed = WPURL::parse( $request->url );
 			if ( false === $parsed ) {
 				$this->state->set_request_error( $request, new HttpError( sprintf( 'Invalid URL: %s', $request->url ) ) );

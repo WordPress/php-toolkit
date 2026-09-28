@@ -4,11 +4,8 @@ namespace WordPress\HttpClient\Middleware;
 
 use WordPress\HttpClient\Client;
 use WordPress\HttpClient\ClientState;
-use WordPress\HttpClient\HttpClientException;
 use WordPress\HttpClient\Request;
 use WordPress\HttpClient\Connection;
-use WordPress\HttpClient\Transport\CurlTransport;
-use WordPress\HttpClient\Transport\SocketTransport;
 use WordPress\HttpClient\Transport\TransportInterface;
 
 class HttpMiddleware implements MiddlewareInterface {
@@ -42,7 +39,7 @@ class HttpMiddleware implements MiddlewareInterface {
 	 */
 	public function enqueue( Request $request ) {
 		$request->state                           = Request::STATE_ENQUEUED;
-		$this->state->requests[]                  = apply_filters( 'wp_http_client_request', $request );
+		$this->state->requests[]                  = $request;
 		$this->state->events[ $request->id ]      = array();
 		$this->state->connections[ $request->id ] = new Connection( $request );
 	}
