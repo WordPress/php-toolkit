@@ -213,6 +213,30 @@ MARKUP
 				'https://🚀-science.com/science',
 				'https://science.wordpress.org',
 			),
+			'Fragment-only reference in an HTML attribute is left alone' => array(
+				'<a href="#section">Jump</a>',
+				'<a href="#section">Jump</a>',
+				'https://legacy-blog.com',
+				'https://modern-webstore.org',
+			),
+			'Bare hash in an HTML attribute is left alone' => array(
+				'<a href="#">Placeholder</a>',
+				'<a href="#">Placeholder</a>',
+				'https://legacy-blog.com',
+				'https://modern-webstore.org',
+			),
+			'Fragment-only reference in a block attribute is left alone' => array(
+				'<!-- wp:button {"url":"#login"} -->',
+				'<!-- wp:button {"url":"#login"} -->',
+				'https://legacy-blog.com',
+				'https://modern-webstore.org',
+			),
+			'Absolute URL carrying a fragment is still rewritten and keeps its fragment' => array(
+				'<a href="https://legacy-blog.com/page#section">Deep link</a>',
+				'<a href="https://modern-webstore.org/page#section">Deep link</a>',
+				'https://legacy-blog.com',
+				'https://modern-webstore.org',
+			),
 		);
 	}
 

@@ -70,7 +70,20 @@ function wp_rewrite_urls( $options ) {
 	while ( $p->next_url() ) {
 		$token_type = $p->get_token_type();
 		$raw_url    = $p->get_raw_url();
-		$cache_key  = $mapping_cache_key . "\0" . $token_type . "\0" . $raw_url;
+
+		/*
+		 * Leave fragment-only references alone. A URL like `#section` points
+		 * within the document that contains it, so there is no origin to
+		 * migrate. Resolving it against the base URL makes it look like a
+		 * child of the site being imported from, and rewriting it then turns
+		 * an in-page anchor into a link somewhere else entirely:
+		 * `#section` becomes `/#section`, and a bare `#` becomes `/`.
+		 */
+		if ( is_string( $raw_url ) && 0 === strpos( $raw_url, '#' ) ) {
+			continue;
+		}
+
+		$cache_key = $mapping_cache_key . "\0" . $token_type . "\0" . $raw_url;
 
 		$cached = $rewrite_cache->get( $cache_key );
 		if ( null !== $cached ) {
