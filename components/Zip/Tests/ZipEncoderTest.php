@@ -89,6 +89,40 @@ class ZipEncoderTest extends TestCase {
 		$zip->close();
 	}
 
+	/**
+	 * The ZIP format stores the CRC32 of the uncompressed data. Stricter readers
+	 * (e.g. ZipArchive on PHP 8.4.26+ and 8.5.11+) reject entries where it doesn't match.
+	 *
+	 * @dataProvider shouldDeflateProvider
+	 */
+	public function testStoresCrcOfUncompressedData( $should_deflate ) {
+		// Spans several read chunks so the checksum covers more than one pull.
+		$content           = str_repeat( 'The quick brown fox jumps over the lazy dog. ', 1000 );
+		$this->tempZipPath = tempnam( $this->tempDir, 'testzip' );
+
+		$pipe      = FileWriteStream::from_path( $this->tempZipPath, 'truncate' );
+		$zipWriter = new ZipEncoder( $pipe );
+		$zipWriter->append_file(
+			new FileEntry(
+				array(
+					'compression_method' => $should_deflate ? ZipDecoder::COMPRESSION_DEFLATE : ZipDecoder::COMPRESSION_NONE,
+					'path'              => 'file.txt',
+					'body_reader'       => new MemoryPipe( $content ),
+				)
+			)
+		);
+		$zipWriter->close();
+		$pipe->close_writing();
+
+		$zip = new ZipArchive();
+		$zip->open( $this->tempZipPath );
+		$stat = $zip->statName( 'file.txt' );
+		$this->assertSame( crc32( $content ), $stat['crc'] );
+		$this->assertSame( strlen( $content ), $stat['size'] );
+		$this->assertSame( $content, $zip->getFromName( 'file.txt' ) );
+		$zip->close();
+	}
+
 	public static function shouldDeflateProvider() {
 		return array(
 			array( true ),

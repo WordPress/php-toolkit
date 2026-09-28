@@ -78,33 +78,27 @@ class ZipEncoder {
 	 */
 	private function compute_file_hash_and_size( FileEntry $entry ) {
 		// Pass 1: Calculate the CRC32, uncompressed size, and compressed size.
-		if ( ZipDecoder::COMPRESSION_DEFLATE === $entry->compression_method ) {
-			$reader = new DeflateReadStream( $entry->body_reader, ZLIB_ENCODING_RAW, 9 );
-		} else {
-			$reader = $entry->body_reader;
-		}
-		$stream = new TransformedReadStream(
-			$reader,
+		// The ZIP format requires the CRC32 of the uncompressed data, so the
+		// checksum is taken before the bytes are deflated.
+		$checksummed = new TransformedReadStream(
+			$entry->body_reader,
 			array(
 				'checksum' => new ChecksumTransformer( 'crc32b' ),
 			)
 		);
-
-		while ( true ) {
-			$n = $stream->pull( 10 );
-			if ( 0 === $n ) {
-				break;
-			}
-			$stream->consume( $n );
+		if ( ZipDecoder::COMPRESSION_DEFLATE === $entry->compression_method ) {
+			$reader = new DeflateReadStream( $checksummed, ZLIB_ENCODING_RAW );
+		} else {
+			$reader = $checksummed;
 		}
 
-		if ( ZipDecoder::COMPRESSION_DEFLATE === $entry->compression_method ) {
-			$reader->close_reading();
+		while ( ! $reader->reached_end_of_data() ) {
+			$reader->consume( $reader->pull( 8192 ) );
 		}
 
 		$entry->compressed_size   = $reader->tell();
 		$entry->uncompressed_size = $entry->body_reader->length();
-		$entry->crc               = hexdec( $stream['checksum']->get_hash() );
+		$entry->crc               = hexdec( $checksummed['checksum']->get_hash() );
 
 		// Reset the reader to the beginning of the file.
 		$entry->body_reader->seek( 0 );
