@@ -89,8 +89,9 @@ class CurlTransportTest extends ClientTestBase {
     public function test_missing_last_chunk() {
         $body = "5\r\nHELLO\r\n";           // no terminating 0-chunk
         $this->withRawResponse("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n$body", function (string $base) {
+            // On Windows the server's close isn't always seen before the timeout fires.
             $this->expectClientError(new Request("$base/"), 300, [
-                'message' => 'cURL error'
+                'message' => ['cURL error', 'Request timed out']
             ]);
         });
     }
