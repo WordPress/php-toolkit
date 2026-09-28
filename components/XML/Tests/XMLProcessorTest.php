@@ -480,7 +480,9 @@ class XMLProcessorTest extends TestCase {
 	 * @covers XMLProcessor::get_updated_xml
 	 */
 	public function test_get_updated_xml_applies_the_updates_so_far_and_keeps_the_processor_on_the_current_tag() {
-		$processor = XMLProcessor::create_from_string( '<line id="remove" /><content enabled="yes" post-type="test">Test</content><text id="span-id"></text>' );
+		$processor = XMLProcessor::create_from_string( '<doc><line id="remove" /><content enabled="yes" post-type="test">Test</content><text id="span-id"></text></doc>' );
+		$processor->next_tag();
+
 		$processor->next_tag();
 		$processor->remove_attribute( '', 'id' );
 
@@ -488,7 +490,7 @@ class XMLProcessorTest extends TestCase {
 		$processor->set_attribute( '', 'id', 'content-id-1' );
 
 		$this->assertSame(
-			'<line  /><content id="content-id-1" enabled="yes" post-type="test">Test</content><text id="span-id"></text>',
+			'<doc><line  /><content id="content-id-1" enabled="yes" post-type="test">Test</content><text id="span-id"></text></doc>',
 			$processor->get_updated_xml(),
 			'Calling get_updated_xml after updating the attributes of the second tag returned different XML than expected'
 		);
@@ -496,7 +498,7 @@ class XMLProcessorTest extends TestCase {
 		$processor->set_attribute( '', 'id', 'content-id-2' );
 
 		$this->assertSame(
-			'<line  /><content id="content-id-2" enabled="yes" post-type="test">Test</content><text id="span-id"></text>',
+			'<doc><line  /><content id="content-id-2" enabled="yes" post-type="test">Test</content><text id="span-id"></text></doc>',
 			$processor->get_updated_xml(),
 			'Calling get_updated_xml after updating the attributes of the second tag for the second time returned different XML than expected'
 		);
@@ -505,7 +507,7 @@ class XMLProcessorTest extends TestCase {
 		$processor->remove_attribute( '', 'id' );
 
 		$this->assertSame(
-			'<line  /><content id="content-id-2" enabled="yes" post-type="test">Test</content><text ></text>',
+			'<doc><line  /><content id="content-id-2" enabled="yes" post-type="test">Test</content><text ></text></doc>',
 			$processor->get_updated_xml(),
 			'Calling get_updated_xml after removing the id attribute of the third tag returned different XML than expected'
 		);
@@ -1243,7 +1245,67 @@ class XMLProcessorTest extends TestCase {
 			'Incomplete CDATA'                            => array( '<root xmlns:wp="w.org"><![CDATA[something inside of here needs to get out' ),
 			'Partial CDATA'                               => array( '<root xmlns:wp="w.org"><![CDA' ),
 			'Partially closed CDATA]'                     => array( '<root xmlns:wp="w.org"><![CDATA[cannot escape]' ),
+			'Incomplete PI start only' => array( '<root xmlns:wp="w.org"><?' ),
+			'Incomplete PI just target' => array( '<root xmlns:wp="w.org"><?xml' ),
+			'Incomplete PI (missing end)' => array( '<root xmlns:wp="w.org"><?xml mode="WordPress"' ),
+			'Incomplete PI with whitespace' => array( "<root xmlns:wp=\"w.org\"><?xml    " ),
+			'Incomplete PI with part of closing' => array( '<root xmlns:wp="w.org"><?xml something?'),
+			'Incomplete PI with one closing ?' => array( '<root xmlns:wp="w.org"><?xml something?' ),
+			'Incomplete PI with partial closer' => array( '<root xmlns:wp="w.org"><?xml something? ' ),
+			'Incomplete DOCTYPE start' => array( '<!DOC' ),
+			'Incomplete DOCTYPE declaration w/ bracket not closed' => array( '<!DOCTYPE animal [' ),
+			'Incomplete DOCTYPE with PUBLIC and missing literal' => array( '<!DOCTYPE animal PUBLIC "' ),
+			'Incomplete DOCTYPE with partial SYSTEM' => array( '<!DOCTYPE animal SY' ),
+			'Incomplete DOCTYPE with SYSTEM and missing literal' => array( '<!DOCTYPE animal SYSTEM' ),
+			'Incomplete DOCTYPE with SYSTEM literal, no closing' => array( '<!DOCTYPE animal SYSTEM "' ),
+			'Incomplete ELEMENT declaration – partial ELEMEN' => array( '<!ELEMEN' ),
+			'Incomplete ELEMENT declaration' => array( '<!ELEMENT' ),
+			'Incomplete ELEMENT declaration, missing end' => array( '<!ELEMENT animal ANY' ),
+			'Incomplete ELEMENT declaration, missing close paren' => array( '<!ELEMENT animal (cat|' ),
+			'Incomplete INCLUDE' => array( '<!DOCTYPE root [ <![INC' ),
+			'Incomplete conditional section, brackets' => array( '<!DOCTYPE root [ <![INCLUDE[' ),
+			'Incomplete IGNORE' => array( '<!DOCTYPE root [ <![IG' ),
+			'Incomplete IGNORE, brackets' => array( '<!DOCTYPE root [ <![IGNORE[' ),
+			'Incomplete conditional section, partway' => array( '<!DOCTYPE root [ <![IGNORE[' ),
+			'Incomplete conditional section, open but not closed' => array( '<!DOCTYPE root [ <![INCLUDE[ <data>text' ),
 		);
+	}
+
+	public function test_stream_parsing_of_incomplete_doctypes() {
+		$XML = '<!DOCTYPE root [
+		<![INCLUDE[ <data>text</data>]]>
+		<![IGNORE[ <data>text</data>]]>
+
+		<!ELEMENT html (head, body)>
+		<!ATTLIST html lang CDATA "en-US">
+		<!ENTITY % draft "INCLUDE" >
+		<!ENTITY % final "IGNORE" >
+		<!ENTITY close "]]>">
+		<!NOTATION icon SYSTEM "image/svg+xml">
+		<![ %draft; [
+			<!ELEMENT head (title)>
+			<!ELEMENT body (p*)>
+		]]>
+		<![ %final; [
+			<!ELEMENT body ANY>
+		]]>
+		]>
+		';
+		$processor = XMLProcessor::create_for_streaming( '' );
+
+		// Append one byte at a time, keep trying to advance, and confirm the
+		// parser does not emit an error at any point.
+		for($i = 0; $i < strlen($XML); $i++) {
+			$processor->append_bytes( $XML[$i] );
+			$processor->next_token();
+			$this->assertNull( $processor->get_exception() );
+			$this->assertNull( $processor->get_last_error() );
+		}
+		$processor->append_bytes( '<root />' );
+		$this->assertTrue( $processor->next_tag(), 'Did not find the root node.' );
+		$this->assertEquals( 'root', $processor->get_tag_local_name(), 'Did not find text node.' );
+		$this->assertFalse( $processor->next_token(), 'Found text node when there was none.' );
+		$this->assertNull( $processor->get_exception() );
 	}
 
 	/**
@@ -1716,6 +1778,27 @@ XML
 		);
 		$this->assertFalse( $processor->next_tag(), 'Found an element when there was none.' );
 		$this->assertTrue( $processor->is_paused_at_incomplete_input(), 'Did not indicate that the XML input was incomplete.' );
+	}
+	
+	/**
+	 *
+	 * @covers XMLProcessor::next_tag
+	 */
+	public function test_tolerates_illegal_extender_in_pi_target() {
+		$processor = XMLProcessor::create_from_string(
+			'<!DOCTYPE animal [
+<!ELEMENT animal ANY>
+<?_˒ an illegal extender #x2d2 in PITarget ?>
+]>
+<animal/>
+'
+		);
+		$this->assertTrue( $processor->next_tag(), 'Found an element when there was none.' );
+		$this->assertEquals( 'animal', $processor->get_tag_local_name(), 'Did not find the expected tag.' );
+		$this->assertTrue( $processor->next_token(), 'Found an element when there was none.' );
+		$this->assertFalse( $processor->next_token(), 'Found an element when there was none.' );
+		$this->assertNull( $processor->get_last_error(), 'Did not find the expected error.' );
+		$this->assertNull( $processor->get_exception(), 'Did not find the expected error.' );
 	}
 
 	/**
@@ -2615,22 +2698,54 @@ XML;
 		);
 	}
 
-	public function test_preserves_whitespace_with_xml_space_attribute() {
+	public function test_skips_over_doctypes_atts_and_conditional_sections() {
 		$xml = <<<XML
-<root xml:space="preserve">
-  line1
-  <child>  line2  </child>
-</root>
+		<!DOCTYPE html [
+			<!ELEMENT html (head, body)>
+			<!ATTLIST html lang CDATA "en-US">
+			<!ENTITY % draft "INCLUDE" >
+			<!ENTITY % final "IGNORE" >
+			<!ENTITY close "]]>">
+			<!NOTATION icon SYSTEM "image/svg+xml">
+			<![ %draft; [
+				<!ELEMENT head (title)>
+				<!ELEMENT body (p*)>
+			]]>
+			<![ %final; [
+				<!ELEMENT body ANY>
+			]]>
+		]>
+		<html>
+			<head>
+				<title>Test</title>
+			</head>
+			<body>
+				<p>Example</p>
+			</body>
+		</html>
 XML;
 		$processor = XMLProcessor::create_from_string( $xml );
-		$processor->next_tag( 'root' );
+		$this->assertTrue( $processor->next_token(), 'Did not find DOCTYPE node.' );
+		$this->assertEquals( '#doctype', $processor->get_token_type(), 'Did not find DOCTYPE node.' );
+		$this->assertEquals( 'html', $processor->get_doctype_name(), 'Did not find DOCTYPEName.' );
 
-		$this->assertTrue( $processor->next_token(), 'Did not find first text node.' );
-		$this->assertEquals( "\n  line1\n  ", $processor->get_modifiable_text() );
+		$this->assertTrue( $processor->next_token(), 'Did not find root tag.' );
+		$this->assertEquals( 'html', $processor->get_tag_local_name(), 'Did not find root tag.' );
 
-		$processor->next_tag( 'child' );
-		$this->assertTrue( $processor->next_token(), 'Did not find second text node.' );
-		$this->assertEquals( '  line2  ', $processor->get_modifiable_text() );
+		$this->assertTrue( $processor->next_tag(), 'Did not find head tag.' );
+		$this->assertEquals( 'head', $processor->get_tag_local_name(), 'Did not find head tag.' );
+
+		$this->assertTrue( $processor->next_tag(), 'Did not find title tag.' );
+		$this->assertEquals( 'title', $processor->get_tag_local_name(), 'Did not find title tag.' );
+
+		$this->assertTrue( $processor->next_tag(), 'Did not find body tag.' );
+		$this->assertEquals( 'body', $processor->get_tag_local_name(), 'Did not find body tag.' );
+
+		$this->assertTrue( $processor->next_tag(), 'Did not find p tag.' );
+		$this->assertEquals( 'p', $processor->get_tag_local_name(), 'Did not find p tag.' );
+
+		$this->assertTrue( $processor->next_token(), 'Did not find example text.' );
+		$this->assertEquals( 'Example', $processor->get_modifiable_text(), 'Did not find example text.' );
 	}
 
 	public function test_handles_various_whitespace_between_attributes() {
