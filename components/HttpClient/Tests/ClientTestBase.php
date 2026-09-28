@@ -364,6 +364,22 @@ PHP
         }, 'stream' );
     }
 
+    /**
+     * timeout_ms limits inactivity, not the total transfer time.
+     * stream/slow takes ~3s in total but never pauses for more than 600ms.
+     */
+    public function test_slow_response_outlasting_timeout_completes_while_data_flows() {
+        $this->withServer( function ( $url ) {
+            $client  = $this->createClient( [ 'timeout_ms' => 1500 ] );
+            $request = new Request( "$url/stream/slow" );
+            $started = microtime( true );
+            $body    = $this->consume_entire_body( $client, $request );
+
+            $this->assertGreaterThan( 1.5, microtime( true ) - $started );
+            $this->assertSame( 'sssss', $body );
+        }, 'stream' );
+    }
+
     public function streamingProvider() {
         return [
 			// This should take multiple polls and return at least 5 chunks.

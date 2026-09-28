@@ -56,7 +56,15 @@ class ClientState {
 	public $event               = null;
 	public $request             = null;
 	public $response_body_chunk = null;
-	public $request_timeout_ms  = null;
+	/**
+	 * How long a request may go without sending or receiving any bytes
+	 * before it fails. This is an inactivity timeout, not a cap on the
+	 * total transfer time, so large downloads on slow connections still
+	 * complete as long as data keeps flowing.
+	 *
+	 * @var int
+	 */
+	public $request_timeout_ms = null;
 
 	public function __construct( $options = array() ) {
 		$this->concurrency        = $options['concurrency'] ?? 10;

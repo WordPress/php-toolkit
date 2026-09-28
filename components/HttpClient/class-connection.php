@@ -9,6 +9,7 @@ class Connection {
 	public $response_buffer         = '';
 	public $decoded_response_stream = null;
 	public $started_at              = null;
+	public $last_activity_at        = null;
 
 	public function __construct( Request $request ) {
 		$this->request = $request;
@@ -22,6 +23,22 @@ class Connection {
 		$this->response_buffer = substr( $this->response_buffer, $length );
 
 		return $buffer;
+	}
+
+	public function mark_activity() {
+		$this->last_activity_at = microtime( true );
+	}
+
+	/**
+	 * Milliseconds since the connection last sent or received bytes,
+	 * or since it was opened if no bytes have moved yet.
+	 */
+	public function idle_time_ms() {
+		$since = null !== $this->last_activity_at ? $this->last_activity_at : $this->started_at;
+		if ( null === $since ) {
+			return 0;
+		}
+		return ( microtime( true ) - $since ) * 1000;
 	}
 
 	public function time_elapsed_ms() {

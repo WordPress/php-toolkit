@@ -34,8 +34,9 @@ class CurlTransportTest extends ClientTestBase {
     public function test_ssl_handshake_failure() {
         $this->withServer(function (string $base) {
             $url = str_replace('http://', 'https://', $base).'/body/small';
+            // The handshake stalls against a plain-HTTP server, so either timeout may fire first.
             $this->expectClientError(new Request($url), 250, [
-                'message' => 'cURL error'
+                'message' => ['cURL error', 'Request timed out']
             ]);
         }, 'body');
     }
@@ -139,8 +140,8 @@ class CurlTransportTest extends ClientTestBase {
         return [
             'Broken Connection' => [ 'broken-connection', ['Connection closed while reading response headers.', 'cURL error', 'Request timed out' ]],
             'Invalid Response' => [ 'invalid-response', 'cURL error 1: Received HTTP/0.9 when not allowed' ],
-            'Timeout' => [ 'timeout', 'cURL error' ],
-            'Timeout Read Body' => [ 'timeout-read-body', 'cURL error' ],
+            'Timeout' => [ 'timeout', 'Request timed out' ],
+            'Timeout Read Body' => [ 'timeout-read-body', 'Request timed out' ],
 
 			// cURL ignores unsupported transfer encodings
             // 'Unsupported Transfer Encoding' => [ 'unsupported-encoding', 'Unsupported transfer encoding received from the server: unsupported' ],
