@@ -69,6 +69,9 @@ class CurlTransport implements TransportInterface {
 		}
 
 		$this->poll_active_curl_requests();
+		// Checked after polling so data that arrived while the caller was busy
+		// counts as activity instead of tripping the timeout.
+		$this->fail_idle_requests();
 
 		foreach ( $this->state->get_active_requests( array( Request::STATE_RECEIVED ) ) as $request ) {
 			$this->mark_finished( $request );
@@ -92,7 +95,24 @@ class CurlTransport implements TransportInterface {
 				continue;
 			}
 			$this->state->connections[ $request->id ]->http_socket = $ch;
+			$this->state->connections[ $request->id ]->started_at  = microtime( true );
 			$this->handle_map[ (int) $ch ]                         = $request->id;
+		}
+	}
+
+	private function fail_idle_requests() {
+		if ( ! $this->state->idle_timeout_ms ) {
+			return;
+		}
+		foreach ( $this->handle_map as $request_id ) {
+			$request = $this->state->get_request_by_id( $request_id );
+			if ( ! $request || Request::STATE_FAILED === $request->state || Request::STATE_FINISHED === $request->state ) {
+				continue;
+			}
+			$idle_time_ms = $this->state->connections[ $request_id ]->idle_time_ms();
+			if ( $idle_time_ms > $this->state->idle_timeout_ms ) {
+				$this->set_error( $request, new HttpError( sprintf( 'Request timed out after %d ms without network activity.', (int) $idle_time_ms ) ) );
+			}
 		}
 	}
 
@@ -166,6 +186,7 @@ class CurlTransport implements TransportInterface {
 					while ( ! $stream->reached_end_of_data() ) {
 						$got_bytes = $stream->pull( $length );
 						if ( $got_bytes > 0 ) {
+							$this->state->connections[ $request->id ]->mark_activity();
 							return $stream->consume( $got_bytes );
 						}
 					}
@@ -220,6 +241,7 @@ class CurlTransport implements TransportInterface {
 			throw new HttpClientException( 'Received header data for an unknown request ' . ( $ch ? (int) $ch : 'unknown' ) );
 		}
 		$connection = $this->state->connections[ $request->id ];
+		$connection->mark_activity();
 		if ( 0 === strlen( $connection->response_buffer ) ) {
 			$request->state = Request::STATE_RECEIVING_HEADERS;
 		}
@@ -258,7 +280,8 @@ class CurlTransport implements TransportInterface {
 		if ( null === $request ) {
 			throw new HttpClientException( 'Received body data for an unknown request ' . ( $ch ? (int) $ch : 'unknown' ) );
 		}
-		$this->state->connections[ $request->id ]->response_buffer                .= $data;
+		$this->state->connections[ $request->id ]->response_buffer .= $data;
+		$this->state->connections[ $request->id ]->mark_activity();
 		$this->state->events[ $request->id ][ Client::EVENT_BODY_CHUNK_AVAILABLE ] = true;
 
 		return strlen( $data );

@@ -56,7 +56,7 @@ class SocketTransport implements TransportInterface {
 			)
 		) as $request ) {
 			$time_elapsed_ms = $this->state->connections[ $request->id ]->time_elapsed_ms();
-			if ( $time_elapsed_ms > $this->state->request_timeout_ms ) {
+			if ( $this->state->request_timeout_ms && $time_elapsed_ms > $this->state->request_timeout_ms ) {
 				$this->set_error( $request, new HttpError( sprintf( 'Request timed out after %d ms.', (int) $time_elapsed_ms ) ) );
 			}
 		}
@@ -109,7 +109,43 @@ class SocketTransport implements TransportInterface {
 			$this->state->get_active_requests( Request::STATE_RECEIVING_BODY )
 		);
 
+		// Checked after reading so data that arrived while the caller was busy
+		// counts as activity instead of tripping the timeout.
+		$this->fail_idle_requests();
+
 		return true;
+	}
+
+	private function connect_timeout_seconds() {
+		if ( $this->state->request_timeout_ms ) {
+			return $this->state->request_timeout_ms / 1000;
+		}
+		if ( $this->state->idle_timeout_ms ) {
+			return $this->state->idle_timeout_ms / 1000;
+		}
+		return (float) ini_get( 'default_socket_timeout' );
+	}
+
+	private function fail_idle_requests() {
+		if ( ! $this->state->idle_timeout_ms ) {
+			return;
+		}
+		foreach ( $this->state->get_active_requests(
+			array(
+				Request::STATE_WILL_ENABLE_CRYPTO,
+				Request::STATE_WILL_SEND_HEADERS,
+				Request::STATE_WILL_SEND_BODY,
+				Request::STATE_SENT,
+				Request::STATE_RECEIVING_HEADERS,
+				Request::STATE_RECEIVING_BODY,
+				Request::STATE_RECEIVED,
+			)
+		) as $request ) {
+			$idle_time_ms = $this->state->connections[ $request->id ]->idle_time_ms();
+			if ( $idle_time_ms > $this->state->idle_timeout_ms ) {
+				$this->set_error( $request, new HttpError( sprintf( 'Request timed out after %d ms without network activity.', (int) $idle_time_ms ) ) );
+			}
+		}
 	}
 
 	/**
@@ -158,7 +194,7 @@ class SocketTransport implements TransportInterface {
 				'tcp://' . $host . ':' . $port,
 				$errno,
 				$errstr,
-				$this->state->request_timeout_ms / 1000,
+				$this->connect_timeout_seconds(),
 				STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT,
 				$context
 			);
@@ -295,6 +331,7 @@ class SocketTransport implements TransportInterface {
 				);
 				continue;
 			}
+			$this->state->connections[ $request->id ]->mark_activity();
 
 			if ( $request->upload_body_stream ) {
 				$request->state = Request::STATE_WILL_SEND_BODY;
@@ -341,6 +378,7 @@ class SocketTransport implements TransportInterface {
 				$this->set_error( $request, new HttpError( 'Failed to write request bytes: ' . $last_error_message ) );
 				continue;
 			}
+			$this->state->connections[ $request->id ]->mark_activity();
 		}
 	}
 
@@ -387,6 +425,7 @@ class SocketTransport implements TransportInterface {
 					break;
 				}
 				$connection->response_buffer .= $header_byte;
+				$connection->mark_activity();
 
 				$buffer_size = strlen( $connection->response_buffer );
 				if (
@@ -444,7 +483,8 @@ class SocketTransport implements TransportInterface {
 				if ( $available_bytes > 0 ) {
 					$body_chunk                         = $stream->consume( $available_bytes );
 					$request->response->received_bytes += $available_bytes;
-					$this->state->connections[ $request->id ]->response_buffer                .= $body_chunk;
+					$this->state->connections[ $request->id ]->response_buffer .= $body_chunk;
+					$this->state->connections[ $request->id ]->mark_activity();
 					$this->state->events[ $request->id ][ Client::EVENT_BODY_CHUNK_AVAILABLE ] = true;
 					break; // Process one chunk per loop iteration.
 				} elseif ( $stream->reached_end_of_data() ) {
