@@ -44,6 +44,23 @@ class SocketTransport implements TransportInterface {
 			return false;
 		}
 
+		foreach ( $this->state->get_active_requests(
+			array(
+				Request::STATE_WILL_ENABLE_CRYPTO,
+				Request::STATE_WILL_SEND_HEADERS,
+				Request::STATE_WILL_SEND_BODY,
+				Request::STATE_SENT,
+				Request::STATE_RECEIVING_HEADERS,
+				Request::STATE_RECEIVING_BODY,
+				Request::STATE_RECEIVED,
+			)
+		) as $request ) {
+			$time_elapsed_ms = $this->state->connections[ $request->id ]->time_elapsed_ms();
+			if ( $this->state->request_timeout_ms && $time_elapsed_ms > $this->state->request_timeout_ms ) {
+				$this->set_error( $request, new HttpError( sprintf( 'Request timed out after %d ms.', (int) $time_elapsed_ms ) ) );
+			}
+		}
+
 		$this->open_nonblocking_http_sockets(
 			$this->state->get_active_requests( Request::STATE_ENQUEUED )
 		);
@@ -99,7 +116,20 @@ class SocketTransport implements TransportInterface {
 		return true;
 	}
 
+	private function connect_timeout_seconds() {
+		if ( $this->state->request_timeout_ms ) {
+			return $this->state->request_timeout_ms / 1000;
+		}
+		if ( $this->state->idle_timeout_ms ) {
+			return $this->state->idle_timeout_ms / 1000;
+		}
+		return (float) ini_get( 'default_socket_timeout' );
+	}
+
 	private function fail_idle_requests() {
+		if ( ! $this->state->idle_timeout_ms ) {
+			return;
+		}
 		foreach ( $this->state->get_active_requests(
 			array(
 				Request::STATE_WILL_ENABLE_CRYPTO,
@@ -112,7 +142,7 @@ class SocketTransport implements TransportInterface {
 			)
 		) as $request ) {
 			$idle_time_ms = $this->state->connections[ $request->id ]->idle_time_ms();
-			if ( $idle_time_ms > $this->state->request_timeout_ms ) {
+			if ( $idle_time_ms > $this->state->idle_timeout_ms ) {
 				$this->set_error( $request, new HttpError( sprintf( 'Request timed out after %d ms without network activity.', (int) $idle_time_ms ) ) );
 			}
 		}
@@ -164,7 +194,7 @@ class SocketTransport implements TransportInterface {
 				'tcp://' . $host . ':' . $port,
 				$errno,
 				$errstr,
-				$this->state->request_timeout_ms / 1000,
+				$this->connect_timeout_seconds(),
 				STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT,
 				$context
 			);

@@ -57,18 +57,24 @@ class ClientState {
 	public $request             = null;
 	public $response_body_chunk = null;
 	/**
-	 * How long a request may go without sending or receiving any bytes
-	 * before it fails. This is an inactivity timeout, not a cap on the
-	 * total transfer time, so large downloads on slow connections still
-	 * complete as long as data keeps flowing.
+	 * Maximum total time a request may take, in milliseconds. 0 disables it.
 	 *
 	 * @var int
 	 */
 	public $request_timeout_ms = null;
+	/**
+	 * Maximum time a request may go without sending or receiving any bytes,
+	 * in milliseconds. Unlike $request_timeout_ms, it lets slow transfers finish
+	 * as long as data keeps flowing. 0 (the default) disables it.
+	 *
+	 * @var int
+	 */
+	public $idle_timeout_ms = null;
 
 	public function __construct( $options = array() ) {
 		$this->concurrency        = $options['concurrency'] ?? 10;
 		$this->request_timeout_ms = $options['timeout_ms'] ?? 30000;
+		$this->idle_timeout_ms    = $options['idle_timeout_ms'] ?? 0;
 	}
 
 	public function has_pending_event( $request, $event_type ) {

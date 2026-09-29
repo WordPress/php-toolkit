@@ -365,12 +365,11 @@ PHP
     }
 
     /**
-     * timeout_ms limits inactivity, not the total transfer time.
      * stream/slow takes ~3s in total but never pauses for more than 600ms.
      */
-    public function test_slow_response_outlasting_timeout_completes_while_data_flows() {
+    public function test_idle_timeout_lets_a_slow_response_complete_while_data_flows() {
         $this->withServer( function ( $url ) {
-            $client  = $this->createClient( [ 'timeout_ms' => 1500 ] );
+            $client  = $this->createClient( [ 'timeout_ms' => 0, 'idle_timeout_ms' => 1500 ] );
             $request = new Request( "$url/stream/slow" );
             $started = microtime( true );
             $body    = $this->consume_entire_body( $client, $request );
@@ -378,6 +377,31 @@ PHP
             $this->assertGreaterThan( 1.5, microtime( true ) - $started );
             $this->assertSame( 'sssss', $body );
         }, 'stream' );
+    }
+
+    public function test_total_timeout_still_applies_alongside_idle_timeout() {
+        $this->withServer( function ( $url ) {
+            $request = new Request( "$url/stream/slow" );
+            $this->expectClientError( $request, 1500, [
+                'idle_timeout_ms' => 1500,
+                'message'         => [ 'Request timed out', 'cURL error' ],
+            ] );
+        }, 'stream' );
+    }
+
+    /**
+     * error/timeout-read-body sends part of the body, then stalls for 5s.
+     */
+    public function test_idle_timeout_fails_a_stalled_response() {
+        $this->withServer( function ( $url ) {
+            $request = new Request( "$url/error/timeout-read-body" );
+            $started = microtime( true );
+            $this->expectClientError( $request, 0, [
+                'idle_timeout_ms' => 500,
+                'message'         => 'without network activity',
+            ] );
+            $this->assertLessThan( 4, microtime( true ) - $started );
+        }, 'error' );
     }
 
     public function streamingProvider() {

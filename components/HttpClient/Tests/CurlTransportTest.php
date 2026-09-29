@@ -34,9 +34,8 @@ class CurlTransportTest extends ClientTestBase {
     public function test_ssl_handshake_failure() {
         $this->withServer(function (string $base) {
             $url = str_replace('http://', 'https://', $base).'/body/small';
-            // The handshake stalls against a plain-HTTP server, so either timeout may fire first.
             $this->expectClientError(new Request($url), 250, [
-                'message' => ['cURL error', 'Request timed out']
+                'message' => 'cURL error'
             ]);
         }, 'body');
     }
@@ -89,9 +88,8 @@ class CurlTransportTest extends ClientTestBase {
     public function test_missing_last_chunk() {
         $body = "5\r\nHELLO\r\n";           // no terminating 0-chunk
         $this->withRawResponse("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n$body", function (string $base) {
-            // On Windows the server's close isn't always seen before the timeout fires.
             $this->expectClientError(new Request("$base/"), 300, [
-                'message' => ['cURL error', 'Request timed out']
+                'message' => 'cURL error'
             ]);
         });
     }
@@ -141,8 +139,8 @@ class CurlTransportTest extends ClientTestBase {
         return [
             'Broken Connection' => [ 'broken-connection', ['Connection closed while reading response headers.', 'cURL error', 'Request timed out' ]],
             'Invalid Response' => [ 'invalid-response', 'cURL error 1: Received HTTP/0.9 when not allowed' ],
-            'Timeout' => [ 'timeout', 'Request timed out' ],
-            'Timeout Read Body' => [ 'timeout-read-body', 'Request timed out' ],
+            'Timeout' => [ 'timeout', 'cURL error' ],
+            'Timeout Read Body' => [ 'timeout-read-body', 'cURL error' ],
 
 			// cURL ignores unsupported transfer encodings
             // 'Unsupported Transfer Encoding' => [ 'unsupported-encoding', 'Unsupported transfer encoding received from the server: unsupported' ],

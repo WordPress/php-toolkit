@@ -101,13 +101,16 @@ class CurlTransport implements TransportInterface {
 	}
 
 	private function fail_idle_requests() {
+		if ( ! $this->state->idle_timeout_ms ) {
+			return;
+		}
 		foreach ( $this->handle_map as $request_id ) {
 			$request = $this->state->get_request_by_id( $request_id );
 			if ( ! $request || Request::STATE_FAILED === $request->state || Request::STATE_FINISHED === $request->state ) {
 				continue;
 			}
 			$idle_time_ms = $this->state->connections[ $request_id ]->idle_time_ms();
-			if ( $idle_time_ms > $this->state->request_timeout_ms ) {
+			if ( $idle_time_ms > $this->state->idle_timeout_ms ) {
 				$this->set_error( $request, new HttpError( sprintf( 'Request timed out after %d ms without network activity.', (int) $idle_time_ms ) ) );
 			}
 		}
@@ -165,9 +168,7 @@ class CurlTransport implements TransportInterface {
 		curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, false );
 		// Redirects are handled in the Client.
 		curl_setopt( $ch, CURLOPT_MAXREDIRS, 0 );
-		// No CURLOPT_TIMEOUT_MS: it caps the whole transfer, which fails large downloads
-		// on slow connections. fail_idle_requests() enforces an inactivity timeout instead.
-		curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT_MS, $this->state->request_timeout_ms );
+		curl_setopt( $ch, CURLOPT_TIMEOUT_MS, $this->state->request_timeout_ms );
 		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, false ); // use callbacks for data.
 		curl_setopt( $ch, CURLOPT_HEADER, false );         // headers via callback.
 		curl_setopt( $ch, CURLOPT_ENCODING, '' );
