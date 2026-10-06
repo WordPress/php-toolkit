@@ -225,6 +225,12 @@ MARKUP
 				'https://legacy-blog.com',
 				'https://modern-webstore.org',
 			),
+			'Fragment-only reference with leading whitespace is left alone' => array(
+				'<a href=" #section">Jump</a>',
+				'<a href=" #section">Jump</a>',
+				'https://legacy-blog.com',
+				'https://modern-webstore.org',
+			),
 			'Fragment-only reference in a block attribute is left alone' => array(
 				'<!-- wp:button {"url":"#login"} -->',
 				'<!-- wp:button {"url":"#login"} -->',

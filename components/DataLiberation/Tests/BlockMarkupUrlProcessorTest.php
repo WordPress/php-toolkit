@@ -467,4 +467,26 @@ HTML
 		$expected = '<img src="https://new.com/replaced.png" style="border-image: url(&quot;https://new.com/replaced.png&quot;);">';
 		$this->assertEquals( $expected, $p->get_updated_html() );
 	}
+
+	/**
+	 *
+	 * @dataProvider provider_test_is_fragment_only_reference
+	 */
+	public function test_is_fragment_only_reference( $markup, $expected ) {
+		$p = new BlockMarkupUrlProcessor( $markup, 'https://example.com' );
+		$this->assertTrue( $p->next_url(), 'Failed to find the URL in the markup.' );
+		$this->assertSame( $expected, $p->is_fragment_only_reference() );
+	}
+
+	public static function provider_test_is_fragment_only_reference() {
+		return array(
+			'Named fragment'                => array( '<a href="#section">Jump</a>', true ),
+			'Bare hash'                     => array( '<a href="#">Top</a>', true ),
+			'Leading space'                 => array( '<a href=" #section">Jump</a>', true ),
+			'Leading tab and newline'       => array( "<a href=\"\t\n#section\">Jump</a>", true ),
+			'Fragment in a block attribute' => array( '<!-- wp:button {"url":"#login"} -->', true ),
+			'Absolute URL with a fragment'  => array( '<a href="https://example.com/page#section">Deep link</a>', false ),
+			'Relative path with a fragment' => array( '<a href="/page#section">Page</a>', false ),
+		);
+	}
 }
