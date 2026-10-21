@@ -212,12 +212,30 @@ class RequestReadStream extends BaseByteReadStream {
 
 	protected function internal_close_reading(): void {
 		$latest_redirect = $this->request->latest_redirect();
-		if (
-			$latest_redirect &&
-			Request::STATE_FINISHED !== $latest_redirect->state &&
-			Request::STATE_FAILED !== $latest_redirect->state
-		) {
+		if ( ! $latest_redirect ) {
+			return;
+		}
+
+		/*
+		 * The transport can hand over the last body chunk a tick before it
+		 * marks the request as finished. Once the whole body was consumed,
+		 * wait for that tick rather than treating the close as a cancellation.
+		 */
+		if ( null !== $this->remote_file_length && $this->tell() >= $this->remote_file_length ) {
+			while (
+				! $this->is_settled( $latest_redirect ) &&
+				$this->client->await_next_event( array( 'requests' => array( $latest_redirect ) ) )
+			) {
+				continue;
+			}
+		}
+
+		if ( ! $this->is_settled( $latest_redirect ) ) {
 			throw new ByteStreamException( 'Cancelling the request is not implemented yet' );
 		}
+	}
+
+	private function is_settled( Request $request ): bool {
+		return Request::STATE_FINISHED === $request->state || Request::STATE_FAILED === $request->state;
 	}
 }
