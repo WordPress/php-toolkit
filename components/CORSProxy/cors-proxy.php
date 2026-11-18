@@ -272,8 +272,10 @@ if ( ! curl_exec( $ch ) ) {
 } else {
 	@$relay_http_code_and_initial_headers_if_not_already_sent();
 }
-// Close cURL session.
-curl_close( $ch );
+// curl_close() does nothing since PHP 8.0 and is deprecated since PHP 8.5.
+if ( PHP_VERSION_ID < 80000 ) {
+	curl_close( $ch ); // phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- Only runs before PHP 8.0.
+}
 
 // Only send chunked transfer encoding footer if we're using chunked encoding.
 // We need to manually send the footer when running in the PHP built-in server.

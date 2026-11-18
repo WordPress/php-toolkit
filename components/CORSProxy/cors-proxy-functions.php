@@ -125,8 +125,12 @@ function set_curl_destination( $ch, $resolved ) {
 	}
 }
 
-function is_private_ip( $ip ) {
-	return IpUtils::isPrivateIp( $ip );
+// A router script loaded before the proxy may replace this check. The
+// end-to-end tests do so to allow their local upstream server.
+if ( ! function_exists( 'is_private_ip' ) ) {
+	function is_private_ip( $ip ) {
+		return IpUtils::isPrivateIp( $ip );
+	}
 }
 
 class IpUtils {
