@@ -124,7 +124,7 @@ PHP
 		$this->assertNotEquals( 'test-theme', trim( $active_theme ) );
 	}
 
-	public function testInstallThemeFromZipWithDotRootPreservesExistingThemes() {
+	public function test_install_theme_from_zip_with_dot_root_preserves_existing_themes() {
 		$target_filesystem = $this->runtime->get_target_filesystem();
 		$target_filesystem->mkdir(
 			'wp-content/themes/existing-theme', [ 'recursive' => true ]
@@ -153,6 +153,16 @@ PHP
 		$tracker = new Tracker();
 		$step->run( $this->runtime, $tracker );
 
+		$target_filesystem->put_contents( 'wp-content/themes/dot-root-theme/obsolete.txt', 'old package content' );
+		$this->execution_context->mkdir( 'reinstall' );
+		$this->execution_context->copy( 'dot-root-theme.zip', 'reinstall/dot-root-theme.zip' );
+		$reinstall = new InstallThemeStep(
+			DataReference::create( './reinstall/dot-root-theme.zip', [ ExecutionContextPath::class ] ),
+			true
+		);
+		$reinstall->run( $this->runtime, new Tracker() );
+
+		$this->assertFalse( $target_filesystem->exists( 'wp-content/themes/dot-root-theme/obsolete.txt' ) );
 		$this->assertTrue( $target_filesystem->exists( 'wp-content/themes/existing-theme/style.css' ) );
 		$this->assertTrue( $target_filesystem->exists( 'wp-content/themes/dot-root-theme' ) );
 		$this->assertTrue( $target_filesystem->exists( 'wp-content/themes/dot-root-theme/style.css' ) );

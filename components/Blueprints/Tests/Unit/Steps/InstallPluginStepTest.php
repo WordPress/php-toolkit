@@ -198,7 +198,7 @@ PHP
 		$this->assertContains( 'subfolder-name/test-plugin.php', $active_plugins );
 	}
 
-	public function testInstallPluginFromZipWithDotRootPreservesExistingPlugins() {
+	public function test_install_plugin_from_zip_with_dot_root_preserves_existing_plugins() {
 		$target_filesystem = $this->runtime->get_target_filesystem();
 		$target_filesystem->put_contents(
 			'wp-content/plugins/existing-plugin.php',
@@ -223,6 +223,16 @@ PHP
 		$tracker = new Tracker();
 		$step->run( $this->runtime, $tracker );
 
+		$target_filesystem->put_contents( 'wp-content/plugins/dot-root-plugin/obsolete.txt', 'old package content' );
+		$this->execution_context->mkdir( 'reinstall' );
+		$this->execution_context->copy( 'dot-root-plugin.zip', 'reinstall/dot-root-plugin.zip' );
+		$reinstall = new InstallPluginStep(
+			DataReference::create( './reinstall/dot-root-plugin.zip', [ ExecutionContextPath::class ] ),
+			false
+		);
+		$reinstall->run( $this->runtime, new Tracker() );
+
+		$this->assertFalse( $target_filesystem->exists( 'wp-content/plugins/dot-root-plugin/obsolete.txt' ) );
 		$this->assertTrue( $target_filesystem->exists( 'wp-content/plugins/existing-plugin.php' ) );
 		$this->assertTrue( $target_filesystem->exists( 'wp-content/plugins/dot-root-plugin/test-plugin.php' ) );
 	}

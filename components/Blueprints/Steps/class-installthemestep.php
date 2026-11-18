@@ -162,6 +162,10 @@ if ( ! is_writable( $wp_theme_dir ) ) {
 
 // Use the Theme_Upgrader class to install the theme
 $upgrader = new Theme_Upgrader();
+$package_path = $theme_zip_path;
+PHP
+					. "\n" . InstallPackageSource::FILTER_SCRIPT . "\n" .
+					<<<'PHP'
 $result   = $upgrader->install( $theme_zip_path, array(
 	'overwrite_package' => true,
 ) );

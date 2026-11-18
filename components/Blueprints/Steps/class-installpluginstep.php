@@ -230,6 +230,10 @@ if ( ! is_writable( $wp_plugin_dir ) ) {
 $skin     = new Blueprint_WP_Upgrader_Skin();
 $upgrader = new Plugin_Upgrader( $skin );
 
+$package_path = $plugin_zip_path;
+PHP
+					. "\n" . InstallPackageSource::FILTER_SCRIPT . "\n" .
+					<<<'PHP'
 // Install the plugin
 $result = $upgrader->install( $plugin_zip_path, array(
 	'overwrite_package' => true,
