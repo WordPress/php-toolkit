@@ -93,9 +93,9 @@ class ProxyEndToEndTest extends TestCase {
 	}
 
 	/**
-	 * @dataProvider providerBlockedDestinations
+	 * @dataProvider provider_blocked_destinations
 	 */
-	public function testRejectsPrivateAndReservedDestinations( $host ) {
+	public function test_rejects_private_and_reserved_destinations( $host ) {
 		$response = self::request_through_proxy(
 			self::$proxy_port,
 			'http://' . $host . ':' . self::$upstream_port . '/'
@@ -105,7 +105,7 @@ class ProxyEndToEndTest extends TestCase {
 		$this->assertStringNotContainsString( '"served_by"', $response['body'] );
 	}
 
-	public static function providerBlockedDestinations() {
+	public static function provider_blocked_destinations() {
 		return array(
 			'localhost'      => array( 'localhost' ),
 			'loopback'       => array( '127.0.0.1' ),
@@ -120,7 +120,7 @@ class ProxyEndToEndTest extends TestCase {
 		);
 	}
 
-	public function testConnectsToTheValidatedAddressOnACustomPort() {
+	public function test_connects_to_the_validated_address_on_a_custom_port() {
 		if ( PHP_VERSION_ID < 80000 ) {
 			$this->markTestSkipped( 'Replacing gethostbynamel() in the proxy requires PHP 8.0+.' );
 		}
@@ -133,12 +133,13 @@ class ProxyEndToEndTest extends TestCase {
 
 		$this->assertSame( 200, $response['status'], $response['body'] );
 		$received = json_decode( $response['body'], true );
+		$this->assertIsArray( $received, "The upstream response was not relayed unchanged:\n" . $response['body'] );
 		$this->assertSame( 'upstream', $received['served_by'] );
 		$this->assertSame( '/custom-port', $received['request_uri'] );
 		$this->assertSame( 'proxy-target.test:' . self::$upstream_port, $received['host'] );
 	}
 
-	public function testIgnoresProxySettingsFromTheEnvironment() {
+	public function test_ignores_proxy_settings_from_the_environment() {
 		$response = self::request_through_proxy(
 			self::$loopback_proxy_port,
 			'http://localhost:' . self::$upstream_port . '/direct'
@@ -146,6 +147,7 @@ class ProxyEndToEndTest extends TestCase {
 
 		$this->assertSame( 200, $response['status'], $response['body'] );
 		$received = json_decode( $response['body'], true );
+		$this->assertIsArray( $received, "The upstream response was not relayed unchanged:\n" . $response['body'] );
 		$this->assertSame( 'upstream', $received['served_by'] );
 		$this->assertSame( '/direct', $received['request_uri'] );
 		$this->assertSame( 'localhost:' . self::$upstream_port, $received['host'] );

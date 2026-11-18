@@ -22,13 +22,13 @@ class ProxyFunctionsTest extends TestCase {
 
 	/**
 	 *
-	 * @dataProvider providerIps
+	 * @dataProvider provider_ips
 	 */
-	public function testIsPrivateIp( $ip, $is_private ) {
+	public function test_is_private_ip( $ip, $is_private ) {
 		$this->assertEquals( $is_private, is_private_ip( $ip ), "IP $ip was not detected as " . ( $is_private ? 'private' : 'public' ) );
 	}
 
-	public static function providerIps() {
+	public static function provider_ips() {
 		return array(
 			array( '127.0.0.1', true ),      // Loopback address
 			array( '192.168.1.1', true ),    // Private network
@@ -50,13 +50,13 @@ class ProxyFunctionsTest extends TestCase {
 
 	/**
 	 *
-	 * @dataProvider providerRewriteRelativeRedirect
+	 * @dataProvider provider_rewrite_relative_redirect
 	 */
-	public function testRewriteRelativeRedirect( $request_url, $redirect_location, $proxy_absolute_url, $expected ) {
+	public function test_rewrite_relative_redirect( $request_url, $redirect_location, $proxy_absolute_url, $expected ) {
 		$this->assertEquals( $expected, rewrite_relative_redirect( $request_url, $redirect_location, $proxy_absolute_url ) );
 	}
 
-	public static function providerRewriteRelativeRedirect() {
+	public static function provider_rewrite_relative_redirect() {
 		return array(
 			'Relative redirect to a trailing slash path'                       => array(
 				'https://w.org/hosting',
@@ -87,13 +87,13 @@ class ProxyFunctionsTest extends TestCase {
 
 	/**
 	 *
-	 * @dataProvider providerGetTargetUrl
+	 * @dataProvider provider_get_target_url
 	 */
-	public function testGetTargetUrl( $server_data, $expected_target_url ) {
+	public function test_get_target_url( $server_data, $expected_target_url ) {
 		$this->assertEquals( $expected_target_url, get_target_url( $server_data ) );
 	}
 
-	public static function providerGetTargetUrl() {
+	public static function provider_get_target_url() {
 		return array(
 			'Request with server-provided PATH_INFO'                        => array(
 				array(
@@ -140,17 +140,17 @@ class ProxyFunctionsTest extends TestCase {
 		);
 	}
 
-	public function testGetCurrentScriptUri() {
+	public function test_get_current_script_uri() {
 		$this->assertEquals( 'http://localhost/cors-proxy/',
 			get_current_script_uri( 'http://example.com', 'http://localhost/cors-proxy/http://example.com' ) );
 	}
 
-	public function testUrlValidateAndResolve() {
+	public function test_url_validate_and_resolve() {
 		$this->expectException( CorsProxyException::class );
 		url_validate_and_resolve( 'ftp://example.com' );
 	}
 
-	public function testUrlValidateAndResolveWithTargetSelf() {
+	public function test_url_validate_and_resolve_with_target_self() {
 		$this->expectException( CorsProxyException::class );
 		$_SERVER['HTTP_HOST'] = 'cors.playground.wordpress.net';
 		url_validate_and_resolve(
@@ -159,9 +159,9 @@ class ProxyFunctionsTest extends TestCase {
 	}
 
 	/**
-	 * @dataProvider providerTargetPorts
+	 * @dataProvider provider_target_ports
 	 */
-	public function testResolvesTheEffectiveTargetPort( $url, $port ) {
+	public function test_resolves_the_effective_target_port( $url, $port ) {
 		$lookups  = 0;
 		$test     = $this;
 		$resolved = url_validate_and_resolve(
@@ -177,7 +177,7 @@ class ProxyFunctionsTest extends TestCase {
 		$this->assertSame( 1, $lookups );
 	}
 
-	public static function providerTargetPorts() {
+	public static function provider_target_ports() {
 		return array(
 			'default HTTP port'                     => array( 'http://example.com/', 80 ),
 			'default HTTPS port'                    => array( 'https://example.com/', 443 ),
@@ -188,9 +188,10 @@ class ProxyFunctionsTest extends TestCase {
 		);
 	}
 
-	public function testRejectsPortZeroBeforeResolving() {
+	public function test_rejects_port_zero_before_resolving() {
+		// PHP 7.2's FILTER_VALIDATE_URL already rejects port zero as an
+		// invalid URL. Later versions accept it, so the port check must.
 		$this->expectException( CorsProxyException::class );
-		$this->expectExceptionMessage( 'Invalid port' );
 		$test = $this;
 		url_validate_and_resolve(
 			'http://example.com:0/',
@@ -201,9 +202,9 @@ class ProxyFunctionsTest extends TestCase {
 	}
 
 	/**
-	 * @dataProvider providerUnsafeResolutionResults
+	 * @dataProvider provider_unsafe_resolution_results
 	 */
-	public function testRejectsUnsafeResolutionResults( $ips ) {
+	public function test_rejects_unsafe_resolution_results( $ips ) {
 		$this->expectException( CorsProxyException::class );
 		url_validate_and_resolve(
 			'http://example.com:8080/',
@@ -213,7 +214,7 @@ class ProxyFunctionsTest extends TestCase {
 		);
 	}
 
-	public static function providerUnsafeResolutionResults() {
+	public static function provider_unsafe_resolution_results() {
 		return array(
 			'lookup failure'  => array( false ),
 			'empty answer'    => array( array() ),
@@ -223,9 +224,9 @@ class ProxyFunctionsTest extends TestCase {
 	}
 
 	/**
-	 * @dataProvider providerBlockedIpv4Destinations
+	 * @dataProvider provider_blocked_ipv4_destinations
 	 */
-	public function testRejectsPrivateAndReservedDestinations( $ips ) {
+	public function test_rejects_private_and_reserved_destinations( $ips ) {
 		$this->expectException( CorsProxyException::class );
 		$this->expectExceptionMessage( 'Private IPs are forbidden' );
 		url_validate_and_resolve(
@@ -236,7 +237,7 @@ class ProxyFunctionsTest extends TestCase {
 		);
 	}
 
-	public static function providerBlockedIpv4Destinations() {
+	public static function provider_blocked_ipv4_destinations() {
 		$blocked_ranges = array(
 			'private 10/8'             => array( '10.0.0.0', '10.255.255.255' ),
 			'private 172.16/12'        => array( '172.16.0.0', '172.31.255.255' ),
@@ -267,9 +268,9 @@ class ProxyFunctionsTest extends TestCase {
 	}
 
 	/**
-	 * @dataProvider providerTargetPorts
+	 * @dataProvider provider_target_ports
 	 */
-	public function testPinsTheEffectiveTargetPort( $url, $port ) {
+	public function test_pins_the_effective_target_port( $url, $port ) {
 		$resolved = url_validate_and_resolve(
 			$url,
 			function () {
@@ -282,7 +283,7 @@ class ProxyFunctionsTest extends TestCase {
 		$this->assertSame( '', $options[ CURLOPT_PROXY ] );
 	}
 
-	public function testFilterHeadersStrings() {
+	public function test_filter_headers_strings() {
 		$original_headers = array(
 			'Accept'       => 'application/json',
 			'Content-Type' => 'application/json',
@@ -312,7 +313,7 @@ class ProxyFunctionsTest extends TestCase {
 		);
 	}
 
-	public function testFilterHeaderStringsWithAdditionalAllowedHeaders() {
+	public function test_filter_header_strings_with_additional_allowed_headers() {
 		$original_headers = array(
 			'Accept'                               => 'application/json',
 			'Content-Type'                         => 'application/json',
