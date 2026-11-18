@@ -1,3 +1,3 @@
 #!/bin/bash
 
-phpunit ./tests/ProxyFunctionsTests.php
+phpunit --bootstrap ./Tests/bootstrap.php ./Tests/ProxyFunctionsTest.php

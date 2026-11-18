@@ -27,6 +27,12 @@ A small PHP CORS proxy intended for browser-side code that needs to reach server
 curl -s "http://127.0.0.1:5263/cors-proxy.php/https://api.github.com/repos/WordPress/php-toolkit" | head
 </code></pre>
 
+## Destination validation
+
+<p>Before forwarding a request, the proxy resolves the target hostname to IPv4 addresses and rejects the request if any of them is private, loopback, link-local, reserved, or not a valid IPv4 address. It then pins cURL to the validated address for the URL's effective port: the explicit port, or 80 for HTTP and 443 for HTTPS. cURL never resolves the hostname a second time, so a DNS rebinding answer cannot swap in an internal address between the check and the connection. Custom ports remain supported; empty DNS answers and port zero are rejected.</p>
+
+<p>cURL is restricted to IPv4, so IPv6-only targets are not supported. Environment HTTP/SOCKS proxy settings such as <code>http_proxy</code> are ignored, because a forward proxy would resolve the hostname itself and bypass the validation. The URL's hostname stays the HTTP <code>Host</code> and TLS identity. Redirects are relayed back through the proxy rather than followed, so each hop is validated again. Keep outbound network rules that deny private and metadata destinations as an independent layer of protection.</p>
+
 ## Production rate limiting
 
 <p>Drop a <code>cors-proxy-config.php</code> next to <code>cors-proxy.php</code>. If that file defines a <code>playground_cors_proxy_maybe_rate_limit()</code> function, the proxy calls it before forwarding any request — your one chance to reject early. Without that function the proxy relies only on its coarse built-in safeguards, so production deployments should provide their own rate limiting.</p>
