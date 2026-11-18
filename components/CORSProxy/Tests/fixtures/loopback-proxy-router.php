@@ -17,7 +17,7 @@ function is_private_ip( $ip ) {
 
 if ( ! function_exists( 'gethostbynamel' ) ) {
 	function gethostbynamel( $host ) {
-		if ( 'proxy-target.test' === $host || 'localhost' === $host ) {
+		if ( 'proxy-target.test' === $host ) {
 			return array( '127.0.0.1' );
 		}
 		return false;

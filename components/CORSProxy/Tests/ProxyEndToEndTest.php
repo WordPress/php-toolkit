@@ -24,9 +24,16 @@ class ProxyEndToEndTest extends TestCase {
 	private static $proxy_port;
 
 	/**
-	 * @var int The proxy with the loopback-proxy-router.php fixture.
+	 * @var int The proxy with the loopback-proxy-router.php fixture and
+	 *          proxy settings in its environment.
 	 */
 	private static $loopback_proxy_port;
+
+	/**
+	 * @var int|null The proxy with the loopback-proxy-router.php fixture
+	 *               and a fixed validation lookup, when supported.
+	 */
+	private static $fixed_lookup_proxy_port;
 
 	/**
 	 * @beforeClass
@@ -60,14 +67,8 @@ class ProxyEndToEndTest extends TestCase {
 			array( 'PLAYGROUND_CORS_PROXY_DISABLE_RATE_LIMIT' => '1' )
 		);
 
-		// PHP 8 removes disabled functions, so the router can declare its own
-		// gethostbynamel(). Earlier versions keep them and would fail.
-		$php_options = array();
-		if ( PHP_VERSION_ID >= 80000 ) {
-			$php_options = array( '-d', 'disable_functions=gethostbynamel' );
-		}
 		self::$loopback_proxy_port = self::start_php_server(
-			array_merge( $php_options, array( $fixtures . '/loopback-proxy-router.php' ) ),
+			array( $fixtures . '/loopback-proxy-router.php' ),
 			array(
 				'PLAYGROUND_CORS_PROXY_DISABLE_RATE_LIMIT' => '1',
 				'http_proxy'                               => $environment_proxy,
@@ -79,6 +80,30 @@ class ProxyEndToEndTest extends TestCase {
 			),
 			array( 'no_proxy' )
 		);
+
+		if ( null === self::fixed_lookup_unsupported_reason() ) {
+			self::$fixed_lookup_proxy_port = self::start_php_server(
+				array( '-d', 'disable_functions=gethostbynamel', $fixtures . '/loopback-proxy-router.php' ),
+				array( 'PLAYGROUND_CORS_PROXY_DISABLE_RATE_LIMIT' => '1' )
+			);
+		}
+	}
+
+	/**
+	 * The fixture replaces gethostbynamel() by starting PHP with it disabled
+	 * and declaring its own. Returns why that can't work here, or null.
+	 *
+	 * @return string|null
+	 */
+	private static function fixed_lookup_unsupported_reason() {
+		if ( PHP_VERSION_ID < 80000 ) {
+			return 'Before PHP 8.0, a disabled function cannot be declared again.';
+		}
+		if ( '\\' === DIRECTORY_SEPARATOR && PHP_VERSION_ID >= 80400 ) {
+			// Seen on GitHub's Windows runners with PHP 8.4 and 8.5.
+			return 'On Windows with PHP 8.4+, disable_functions breaks other built-in functions: filter_var() runs as filter_input_array().';
+		}
+		return null;
 	}
 
 	/**
@@ -121,13 +146,14 @@ class ProxyEndToEndTest extends TestCase {
 	}
 
 	public function test_connects_to_the_validated_address_on_a_custom_port() {
-		if ( PHP_VERSION_ID < 80000 ) {
-			$this->markTestSkipped( 'Replacing gethostbynamel() in the proxy requires PHP 8.0+.' );
+		$unsupported_reason = self::fixed_lookup_unsupported_reason();
+		if ( null !== $unsupported_reason ) {
+			$this->markTestSkipped( $unsupported_reason );
 		}
 
 		// Only the proxy's validation lookup knows proxy-target.test.
 		$response = self::request_through_proxy(
-			self::$loopback_proxy_port,
+			self::$fixed_lookup_proxy_port,
 			'http://proxy-target.test:' . self::$upstream_port . '/custom-port'
 		);
 
