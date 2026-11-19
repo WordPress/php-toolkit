@@ -47,6 +47,12 @@ function url_validate_and_resolve( $url, $resolve_function = 'gethostbynamel' ) 
 	}
 
 	$host = $parsed_url['host'];
+	$port = isset( $parsed_url['port'] )
+		? $parsed_url['port']
+		: ( 'https' === $parsed_url['scheme'] ? 443 : 80 );
+	if ( $port < 1 || $port > 65535 ) {
+		throw new CorsProxyException( 'Invalid port' );
+	}
 
 	if (
 		( isset( $_SERVER['HTTP_HOST'] ) &&
@@ -57,13 +63,19 @@ function url_validate_and_resolve( $url, $resolve_function = 'gethostbynamel' ) 
 		throw new CorsProxyException( 'URL cannot target the CORS proxy host.' );
 	}
 
-	// Ensure the hostname does not resolve to a private IP.
+	// Resolve IPv4 only. The connection must use this same address family
+	// and the validated IP, never a second DNS lookup (including AAAA).
 	$resolved_ips = $resolve_function( $host );
-	if ( false === $resolved_ips ) {
+	if ( empty( $resolved_ips ) ) {
 		throw new CorsProxyException( 'Hostname could not be resolved' );
 	}
 
+	// Reject the request if any returned address is unsafe. Only the first
+	// one is used, but a mixed answer is a sign of a rebinding attempt.
 	foreach ( $resolved_ips as $ip ) {
+		if ( ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+			throw new CorsProxyException( 'Invalid IPv4 address' );
+		}
 		if ( is_private_ip( $ip ) ) {
 			throw new CorsProxyException( 'Private IPs are forbidden' );
 		}
@@ -72,11 +84,53 @@ function url_validate_and_resolve( $url, $resolve_function = 'gethostbynamel' ) 
 	return array(
 		'host' => $host,
 		'ip'   => $resolved_ips[0],
+		'port' => $port,
 	);
 }
 
-function is_private_ip( $ip ) {
-	return IpUtils::isPrivateIp( $ip );
+/**
+ * Builds the cURL options that bind a connection to a validated destination.
+ *
+ * The URL's hostname stays the HTTP Host and TLS identity, but cURL must
+ * never resolve it again. A second lookup would let a DNS rebinding answer
+ * replace the address that passed validation.
+ *
+ * @param array $resolved The result of url_validate_and_resolve().
+ *
+ * @return array cURL options.
+ */
+function get_curl_destination_options( $resolved ) {
+	return array(
+		// Pin the exact host and port cURL will connect to. A pin for any
+		// other port does not apply and cURL would resolve the host again.
+		CURLOPT_RESOLVE   => array( "{$resolved['host']}:{$resolved['port']}:{$resolved['ip']}" ),
+		CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+		// An environment-configured HTTP/SOCKS proxy could resolve the
+		// target itself, bypassing the validated address entirely.
+		CURLOPT_PROXY     => '',
+	);
+}
+
+/**
+ * Binds a cURL handle to a validated destination.
+ *
+ * @param resource|CurlHandle $ch       The cURL handle.
+ * @param array               $resolved The result of url_validate_and_resolve().
+ *
+ * @throws CorsProxyException When the options cannot be set.
+ */
+function set_curl_destination( $ch, $resolved ) {
+	if ( ! curl_setopt_array( $ch, get_curl_destination_options( $resolved ) ) ) {
+		throw new CorsProxyException( 'Could not pin the target address' );
+	}
+}
+
+// A router script loaded before the proxy may replace this check. The
+// end-to-end tests do so to allow their local upstream server.
+if ( ! function_exists( 'is_private_ip' ) ) {
+	function is_private_ip( $ip ) {
+		return IpUtils::isPrivateIp( $ip );
+	}
 }
 
 class IpUtils {

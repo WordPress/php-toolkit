@@ -71,9 +71,6 @@ try {
 	exit;
 }
 
-$host        = $resolved['host'];
-$resolved_ip = $resolved['ip'];
-
 define(
 	'CURRENT_SCRIPT_URI',
 	get_current_script_uri( $target_url, $_SERVER['REQUEST_URI'] )
@@ -126,15 +123,14 @@ function should_send_as_chunked_response() {
 	return $is_chunked_response && 'cli-server' === php_sapi_name();
 }
 
-// Pin the hostname resolution to an IP we've resolved earlier.
-curl_setopt(
-	$ch,
-	CURLOPT_RESOLVE,
-	array(
-		"$host:80:$resolved_ip",
-		"$host:443:$resolved_ip",
-	)
-);
+// Pin the connection to the IP we've validated, on the URL's effective port.
+try {
+	set_curl_destination( $ch, $resolved );
+} catch ( CorsProxyException $e ) {
+	http_response_code( 500 );
+	echo "Internal Server Error\n\n" . $e->getMessage();
+	exit;
+}
 
 $strictly_disallowed_headers = array(
 	// Cookies represent a relationship between the proxy server.
@@ -158,22 +154,15 @@ $curl_headers                = kv_headers_to_curl_format(
 		$headers_requiring_opt_in
 	)
 );
-curl_setopt(
-	$ch,
-	CURLOPT_HTTPHEADER,
-	array_merge(
-		$curl_headers,
-		array(
-			"Host: $host",
-			// @TODO: Consider relaying client IP with the following reasoning:
-			// Let's not take full credit for the proxied request.
-			// This is a CORS proxy, not an IP anonymizer.
-			// NOTE: We cannot do this reliably based on X-Forwarded-For unless.
-			// we trust the reverse proxy, so it cannot be done unconditionally.
-			// in this script because we do not control where others deploy it.
-		)
-	)
-);
+// cURL generates the Host header from the target URL, including a custom
+// port, so the incoming Host header is dropped above and not replaced here.
+// @TODO: Consider relaying client IP with the following reasoning:
+// Let's not take full credit for the proxied request.
+// This is a CORS proxy, not an IP anonymizer.
+// NOTE: We cannot do this reliably based on X-Forwarded-For unless.
+// we trust the reverse proxy, so it cannot be done unconditionally.
+// in this script because we do not control where others deploy it.
+curl_setopt( $ch, CURLOPT_HTTPHEADER, $curl_headers );
 
 // Set options to stream data.
 curl_setopt( $ch, CURLOPT_RETURNTRANSFER, false );
@@ -283,8 +272,10 @@ if ( ! curl_exec( $ch ) ) {
 } else {
 	@$relay_http_code_and_initial_headers_if_not_already_sent();
 }
-// Close cURL session.
-curl_close( $ch );
+// curl_close() does nothing since PHP 8.0 and is deprecated since PHP 8.5.
+if ( PHP_VERSION_ID < 80000 ) {
+	curl_close( $ch ); // phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- Only runs before PHP 8.0.
+}
 
 // Only send chunked transfer encoding footer if we're using chunked encoding.
 // We need to manually send the footer when running in the PHP built-in server.
