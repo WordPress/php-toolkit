@@ -4,11 +4,9 @@ namespace WordPress\Blueprints\Tests\Unit\Steps;
 
 use PHPUnit\Framework\TestCase;
 use WordPress\Blueprints\DataReference\AbsoluteLocalPath;
-use WordPress\Blueprints\Progress\Tracker;
 use WordPress\Blueprints\Runner;
 use WordPress\Blueprints\RunnerConfiguration;
 use WordPress\Blueprints\Runtime;
-use WordPress\Blueprints\Steps\StepInterface;
 use WordPress\Filesystem\Filesystem;
 use WordPress\Filesystem\LocalFilesystem;
 
@@ -111,51 +109,6 @@ class StepTestCase extends TestCase {
 		}
 		if ( is_dir( $this->runtime->get_temp_root() ) ) {
 			$this->removeDirectory( $this->runtime->get_temp_root() );
-		}
-	}
-
-	protected function assert_install_stages_package_under_working_directory( StepInterface $step, $slug ) {
-		$filesystem = $this->runtime->get_target_filesystem();
-		$filesystem->mkdir( 'wp-content/mu-plugins', array( 'recursive' => true ) );
-		// Record the final source before WordPress moves the files and cleans up staging.
-		$filesystem->put_contents(
-			'wp-content/mu-plugins/record-upgrader-source.php',
-			<<<'PHP'
-<?php
-add_filter(
-	'upgrader_source_selection',
-	static function ( $source, $working_dir ) {
-		if ( ! is_wp_error( $source ) ) {
-			file_put_contents(
-				__DIR__ . '/upgrader-source.json',
-				json_encode( array( realpath( $source ), realpath( $working_dir ) ) )
-			);
-		}
-		return $source;
-	},
-	PHP_INT_MAX,
-	2
-);
-PHP
-		);
-
-		$step->run( $this->runtime, new Tracker() );
-
-		$record = 'wp-content/mu-plugins/upgrader-source.json';
-		$this->assertTrue( $filesystem->exists( $record ), 'WordPress should select a source for the package.' );
-		list( $source, $working_dir ) = json_decode( $filesystem->get_contents( $record ), true );
-
-		$this->assertIsString( $source, 'The selected package source should exist.' );
-		$this->assertIsString( $working_dir, 'The original working directory should still exist.' );
-
-		$source      = str_replace( '\\', '/', $source );
-		$working_dir = str_replace( '\\', '/', $working_dir );
-		$this->assertSame( $slug, basename( $source ) );
-		if ( $slug === basename( $working_dir ) ) {
-			// Older WordPress versions already use the package basename.
-			$this->assertSame( $working_dir, $source );
-		} else {
-			$this->assertStringStartsWith( $working_dir . '/', $source );
 		}
 	}
 
