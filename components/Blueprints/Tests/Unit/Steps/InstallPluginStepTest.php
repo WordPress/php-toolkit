@@ -223,6 +223,16 @@ PHP
 		$tracker = new Tracker();
 		$step->run( $this->runtime, $tracker );
 
+		$target_filesystem->put_contents( 'wp-content/plugins/dot-root-plugin/obsolete.txt', 'old package content' );
+		$this->execution_context->mkdir( 'reinstall' );
+		$this->execution_context->copy( 'dot-root-plugin.zip', 'reinstall/dot-root-plugin.zip' );
+		$reinstall = new InstallPluginStep(
+			DataReference::create( './reinstall/dot-root-plugin.zip', [ ExecutionContextPath::class ] ),
+			false
+		);
+		$reinstall->run( $this->runtime, new Tracker() );
+
+		$this->assertFalse( $target_filesystem->exists( 'wp-content/plugins/dot-root-plugin/obsolete.txt' ) );
 		$this->assertTrue( $target_filesystem->exists( 'wp-content/plugins/existing-plugin.php' ) );
 		$this->assertTrue( $target_filesystem->exists( 'wp-content/plugins/dot-root-plugin/test-plugin.php' ) );
 	}
@@ -264,5 +274,60 @@ PHP
 		$this->assertContains( 'plugin-directory/test-plugin.php', $active_plugins );
 	}
 
+	public function testFlatPluginPackageStaysInsideUpgraderWorkingDirectory() {
+		$slug     = 'staging-test-plugin';
+		$zip_name = $slug . '.zip';
+		$zip      = new ZipArchive();
+		$this->assertTrue( $zip->open( wp_join_unix_paths( $this->execution_context_path, $zip_name ), ZipArchive::CREATE ) );
+		$this->assertTrue( $zip->addFromString( 'test-plugin.php', self::PLUGIN_FILE_CONTENT ) );
+		$this->assertTrue( $zip->close() );
 
+		$step = new InstallPluginStep(
+			DataReference::create( './' . $zip_name, array( ExecutionContextPath::class ) ),
+			false
+		);
+
+		$filesystem = $this->runtime->get_target_filesystem();
+		$filesystem->mkdir( 'wp-content/mu-plugins', array( 'recursive' => true ) );
+		// Record the final source before WordPress moves the files and cleans up staging.
+		$filesystem->put_contents(
+			'wp-content/mu-plugins/record-upgrader-source.php',
+			<<<'PHP'
+<?php
+add_filter(
+	'upgrader_source_selection',
+	static function ( $source, $working_dir ) {
+		if ( ! is_wp_error( $source ) ) {
+			file_put_contents(
+				__DIR__ . '/upgrader-source.json',
+				json_encode( array( realpath( $source ), realpath( $working_dir ) ) )
+			);
+		}
+		return $source;
+	},
+	PHP_INT_MAX,
+	2
+);
+PHP
+		);
+
+		$step->run( $this->runtime, new Tracker() );
+
+		$record = 'wp-content/mu-plugins/upgrader-source.json';
+		$this->assertTrue( $filesystem->exists( $record ), 'WordPress should select a source for the package.' );
+		list( $source, $working_dir ) = json_decode( $filesystem->get_contents( $record ), true );
+
+		$this->assertIsString( $source, 'The selected package source should exist.' );
+		$this->assertIsString( $working_dir, 'The original working directory should still exist.' );
+
+		$source      = str_replace( '\\', '/', $source );
+		$working_dir = str_replace( '\\', '/', $working_dir );
+		$this->assertSame( $slug, basename( $source ) );
+		if ( $slug === basename( $working_dir ) ) {
+			// Older WordPress versions already use the package basename.
+			$this->assertSame( $working_dir, $source );
+		} else {
+			$this->assertStringStartsWith( $working_dir . '/', $source );
+		}
+	}
 }

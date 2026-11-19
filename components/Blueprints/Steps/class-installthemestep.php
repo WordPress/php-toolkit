@@ -162,6 +162,23 @@ if ( ! is_writable( $wp_theme_dir ) ) {
 
 // Use the Theme_Upgrader class to install the theme
 $upgrader = new Theme_Upgrader();
+
+require_once getenv( 'BLUEPRINT_PACKAGE_SOURCE_MODULE' );
+
+// Run after WordPress validates the unpacked package.
+add_filter(
+	'upgrader_source_selection',
+	static function ( $source, $working_dir, $current_upgrader ) use ( $upgrader, $theme_zip_path ) {
+		if ( $upgrader !== $current_upgrader ) {
+			return $source;
+		}
+
+		return \WordPress\Blueprints\Steps\stabilize_package_source( $source, $working_dir, $theme_zip_path );
+	},
+	20,
+	3
+);
+
 $result   = $upgrader->install( $theme_zip_path, array(
 	'overwrite_package' => true,
 ) );
@@ -204,7 +221,10 @@ if ( function_exists( 'append_output' ) ) {
 exit( 0 );
 PHP
 					,
-					array( 'THEME_ZIP_PATH' => $zip_absolute_path )
+					array(
+						'THEME_ZIP_PATH' => $zip_absolute_path,
+						'BLUEPRINT_PACKAGE_SOURCE_MODULE' => __DIR__ . '/install-package-source.php',
+					)
 				);
 
 				$theme_folder_name = trim( $output->output_file_content );

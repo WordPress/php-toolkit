@@ -230,6 +230,22 @@ if ( ! is_writable( $wp_plugin_dir ) ) {
 $skin     = new Blueprint_WP_Upgrader_Skin();
 $upgrader = new Plugin_Upgrader( $skin );
 
+require_once getenv( 'BLUEPRINT_PACKAGE_SOURCE_MODULE' );
+
+// Run after WordPress validates the unpacked package.
+add_filter(
+	'upgrader_source_selection',
+	static function ( $source, $working_dir, $current_upgrader ) use ( $upgrader, $plugin_zip_path ) {
+		if ( $upgrader !== $current_upgrader ) {
+			return $source;
+		}
+
+		return \WordPress\Blueprints\Steps\stabilize_package_source( $source, $working_dir, $plugin_zip_path );
+	},
+	20,
+	3
+);
+
 // Install the plugin
 $result = $upgrader->install( $plugin_zip_path, array(
 	'overwrite_package' => true,
@@ -288,7 +304,10 @@ if ( function_exists( 'append_output' ) ) {
 exit( 0 );
 PHP
 					,
-					array( 'PLUGIN_ZIP_PATH' => $zip_absolute_path )
+					array(
+						'PLUGIN_ZIP_PATH' => $zip_absolute_path,
+						'BLUEPRINT_PACKAGE_SOURCE_MODULE' => __DIR__ . '/install-package-source.php',
+					)
 				)->output_file_content;
 
 				if ( $this->active ) {
