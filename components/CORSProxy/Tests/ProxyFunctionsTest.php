@@ -348,4 +348,56 @@ class ProxyFunctionsTest extends TestCase {
 			)
 		);
 	}
+
+	/**
+	 * @dataProvider providerServerControlResponseHeaders
+	 */
+	public function testIsServerControlResponseHeader( $name, $expected ) {
+		$this->assertSame( $expected, is_server_control_response_header( $name ) );
+	}
+
+	public static function providerServerControlResponseHeaders() {
+		return array(
+			// Dropped.
+			'X-Accel-Redirect'                         => array( 'X-Accel-Redirect', true ),
+			'X-Accel-Redirect, lowercase'              => array( 'x-accel-redirect', true ),
+			'X-Accel-Redirect, uppercase'              => array( 'X-ACCEL-REDIRECT', true ),
+			'X-Accel-Redirect, trailing space'         => array( 'X-Accel-Redirect ', true ),
+			'Status, trailing space'                   => array( 'Status ', true ),
+			'X-Accel- prefix'                          => array( 'X-Accel-Buffering', true ),
+			'X-Accel- prefix, mixed case'              => array( 'x-AcCeL-eXpIrEs', true ),
+			'X-Sendfile'                               => array( 'X-Sendfile', true ),
+			'X-Sendfile, lowercase'                    => array( 'x-sendfile', true ),
+			'X-Sendfile2'                              => array( 'X-Sendfile2', true ),
+			'X-Sendfile-Temporary'                     => array( 'X-SENDFILE-TEMPORARY', true ),
+			'X-Lighttpd-Send-File'                     => array( 'X-Lighttpd-Send-File', true ),
+			'X-LiteSpeed- prefix'                      => array( 'X-LiteSpeed-Location', true ),
+			'X-LiteSpeed- prefix, lowercase'           => array( 'x-litespeed-cache-control', true ),
+			'Status'                                   => array( 'Status', true ),
+			'Status, uppercase'                        => array( 'STATUS', true ),
+			'CDN-Cache-Control'                        => array( 'CDN-Cache-Control', true ),
+			'CDN-Cache-Control, lowercase'             => array( 'cdn-cache-control', true ),
+			'CDN-specific CDN-Cache-Control'           => array( 'Cloudflare-CDN-Cache-Control', true ),
+			'CDN-specific CDN-Cache-Control, mixed'    => array( 'akamai-cdn-CACHE-control', true ),
+			'Surrogate-Control'                        => array( 'Surrogate-Control', true ),
+			'Edge-Control'                             => array( 'edge-control', true ),
+			'Strict-Transport-Security'                => array( 'Strict-Transport-Security', true ),
+			'Strict-Transport-Security, lowercase'     => array( 'strict-transport-security', true ),
+			'Upgrade-Insecure-Requests'                => array( 'Upgrade-Insecure-Requests', true ),
+			'Upgrade-Insecure-Requests, uppercase'     => array( 'UPGRADE-INSECURE-REQUESTS', true ),
+			// Relayed.
+			'Content-Type'                             => array( 'Content-Type', false ),
+			'X-Custom'                                 => array( 'X-Custom', false ),
+			'Cache-Control'                            => array( 'cache-control', false ),
+			'Similar name without the prefix hyphen'   => array( 'X-Accelerated-By', false ),
+			'Similar name with a suffix after X-Sendfile' => array( 'X-Sendfile-Foo', false ),
+			'Similar name containing the CDN suffix'   => array( 'CDN-Cache-Control-Extension', false ),
+			'Similar name ending in Cache-Control'     => array( 'X-CDNCache-Control', false ),
+			'Similar name ending in Status'            => array( 'X-Status', false ),
+			'Similar name starting with Status'        => array( 'Status-Code', false ),
+			'Similar name starting with LiteSpeed'     => array( 'X-LiteSpeedy', false ),
+			'Similar name containing the X-Accel- prefix' => array( 'X-Upstream-X-Accel-Redirect', false ),
+			'Similar name ending in CDN-Cache-Control' => array( 'MyCDN-Cache-Control', false ),
+		);
+	}
 }

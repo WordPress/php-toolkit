@@ -19,6 +19,12 @@ class ProxyEndToEndTest extends TestCase {
 	private static $upstream_port;
 
 	/**
+	 * @var int The upstream server that sends response headers the proxy
+	 *          must not relay.
+	 */
+	private static $response_headers_upstream_port;
+
+	/**
 	 * @var int The unmodified proxy.
 	 */
 	private static $proxy_port;
@@ -51,6 +57,11 @@ class ProxyEndToEndTest extends TestCase {
 		self::$upstream_port = self::start_php_server(
 			array( $fixtures . '/echo-server.php' ),
 			array( 'CORS_PROXY_TEST_SERVER_ROLE' => 'upstream' )
+		);
+
+		self::$response_headers_upstream_port = self::start_php_server(
+			array( $fixtures . '/response-headers-server.php' ),
+			array()
 		);
 
 		// A forward proxy set in the environment. cURL would send requests
@@ -179,10 +190,71 @@ class ProxyEndToEndTest extends TestCase {
 		$this->assertSame( 'localhost:' . self::$upstream_port, $received['host'] );
 	}
 
+	public function testDoesNotRelayServerControlResponseHeaders() {
+		$not_relayed = array(
+			'x-accel-redirect',
+			'x-accel-buffering',
+			'x-sendfile',
+			'x-sendfile2',
+			'x-sendfile-temporary',
+			'x-lighttpd-send-file',
+			'x-litespeed-location',
+			'status',
+			'cdn-cache-control',
+			'cloudflare-cdn-cache-control',
+			'surrogate-control',
+			'edge-control',
+			'strict-transport-security',
+			'upgrade-insecure-requests',
+		);
+		$target_url  = 'http://127.0.0.1:' . self::$response_headers_upstream_port . '/';
+
+		// Make sure the upstream server really sends every header.
+		$ch = curl_init( $target_url );
+		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+		curl_setopt( $ch, CURLOPT_HEADER, true );
+		$direct = curl_exec( $ch );
+		$this->assertIsString( $direct, curl_error( $ch ) );
+		$direct_names = self::header_names( $direct );
+		foreach ( $not_relayed as $name ) {
+			$this->assertContains( $name, $direct_names, "The fixture does not send {$name}." );
+		}
+
+		$response = self::request_through_proxy( self::$loopback_proxy_port, $target_url );
+
+		$this->assertSame( 200, $response['status'], $response['body'] );
+		$this->assertSame( 'body', $response['body'] );
+		$this->assertStringContainsString( "\r\nX-Custom: relayed\r\n", $response['headers'] . "\r\n" );
+		$relayed_names = self::header_names( $response['headers'] );
+		foreach ( $not_relayed as $name ) {
+			$this->assertNotContains( $name, $relayed_names, "The proxy relayed {$name}." );
+		}
+	}
+
+	/**
+	 * Lists the lowercase header names in a raw HTTP response head.
+	 *
+	 * @return string[]
+	 */
+	private static function header_names( $raw ) {
+		$head  = explode( "\r\n\r\n", $raw, 2 );
+		$lines = explode( "\r\n", $head[0] );
+		array_shift( $lines );
+		$names = array();
+		foreach ( $lines as $line ) {
+			$colon_pos = strpos( $line, ':' );
+			if ( false !== $colon_pos ) {
+				$names[] = strtolower( trim( substr( $line, 0, $colon_pos ) ) );
+			}
+		}
+
+		return $names;
+	}
+
 	/**
 	 * Sends a GET request for the target URL through a proxy server.
 	 *
-	 * @return array The status code and body.
+	 * @return array The status code, raw response head, and body.
 	 */
 	private static function request_through_proxy( $proxy_port, $target_url ) {
 		$socket = stream_socket_client( 'tcp://127.0.0.1:' . $proxy_port, $error_code, $error_message, 5 );
@@ -205,8 +277,9 @@ class ProxyEndToEndTest extends TestCase {
 		}
 
 		return array(
-			'status' => (int) $matches[1],
-			'body'   => isset( $parts[1] ) ? $parts[1] : '',
+			'status'  => (int) $matches[1],
+			'headers' => $parts[0],
+			'body'    => isset( $parts[1] ) ? $parts[1] : '',
 		);
 	}
 
