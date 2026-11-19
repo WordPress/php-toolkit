@@ -230,7 +230,7 @@ PHP
 			DataReference::create( './reinstall/dot-root-plugin.zip', [ ExecutionContextPath::class ] ),
 			false
 		);
-		$this->assert_install_stages_package_under_working_directory( $reinstall, 'dot-root-plugin' );
+		$reinstall->run( $this->runtime, new Tracker() );
 
 		$this->assertFalse( $target_filesystem->exists( 'wp-content/plugins/dot-root-plugin/obsolete.txt' ) );
 		$this->assertTrue( $target_filesystem->exists( 'wp-content/plugins/existing-plugin.php' ) );
@@ -274,7 +274,19 @@ PHP
 		$this->assertContains( 'plugin-directory/test-plugin.php', $active_plugins );
 	}
 
-	private function assert_install_stages_package_under_working_directory( InstallPluginStep $step, $slug ) {
+	public function test_flat_plugin_package_stays_inside_upgrader_working_directory() {
+		$slug     = 'staging-test-plugin';
+		$zip_name = $slug . '.zip';
+		$zip      = new ZipArchive();
+		$this->assertTrue( $zip->open( wp_join_unix_paths( $this->execution_context_path, $zip_name ), ZipArchive::CREATE ) );
+		$this->assertTrue( $zip->addFromString( 'test-plugin.php', self::PLUGIN_FILE_CONTENT ) );
+		$this->assertTrue( $zip->close() );
+
+		$step = new InstallPluginStep(
+			DataReference::create( './' . $zip_name, array( ExecutionContextPath::class ) ),
+			false
+		);
+
 		$filesystem = $this->runtime->get_target_filesystem();
 		$filesystem->mkdir( 'wp-content/mu-plugins', array( 'recursive' => true ) );
 		// Record the final source before WordPress moves the files and cleans up staging.

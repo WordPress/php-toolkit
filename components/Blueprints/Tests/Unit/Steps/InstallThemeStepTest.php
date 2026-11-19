@@ -160,7 +160,7 @@ PHP
 			DataReference::create( './reinstall/dot-root-theme.zip', [ ExecutionContextPath::class ] ),
 			true
 		);
-		$this->assert_install_stages_package_under_working_directory( $reinstall, 'dot-root-theme' );
+		$reinstall->run( $this->runtime, new Tracker() );
 
 		$this->assertFalse( $target_filesystem->exists( 'wp-content/themes/dot-root-theme/obsolete.txt' ) );
 		$this->assertTrue( $target_filesystem->exists( 'wp-content/themes/existing-theme/style.css' ) );
@@ -180,7 +180,20 @@ PHP
 		$this->assertEquals( 'dot-root-theme', trim( $active_theme ) );
 	}
 
-	private function assert_install_stages_package_under_working_directory( InstallThemeStep $step, $slug ) {
+	public function test_flat_theme_package_stays_inside_upgrader_working_directory() {
+		$slug     = 'staging-test-theme';
+		$zip_name = $slug . '.zip';
+		$zip      = new ZipArchive();
+		$this->assertTrue( $zip->open( wp_join_unix_paths( $this->execution_context_path, $zip_name ), ZipArchive::CREATE ) );
+		$this->assertTrue( $zip->addFromString( 'style.css', self::THEME_STYLE_CSS_CONTENT ) );
+		$this->assertTrue( $zip->addFromString( 'index.php', self::THEME_INDEX_PHP_CONTENT ) );
+		$this->assertTrue( $zip->close() );
+
+		$step = new InstallThemeStep(
+			DataReference::create( './' . $zip_name, array( ExecutionContextPath::class ) ),
+			false
+		);
+
 		$filesystem = $this->runtime->get_target_filesystem();
 		$filesystem->mkdir( 'wp-content/mu-plugins', array( 'recursive' => true ) );
 		// Record the final source before WordPress moves the files and cleans up staging.
