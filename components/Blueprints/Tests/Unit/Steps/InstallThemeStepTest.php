@@ -160,7 +160,7 @@ PHP
 			DataReference::create( './reinstall/dot-root-theme.zip', [ ExecutionContextPath::class ] ),
 			true
 		);
-		$reinstall->run( $this->runtime, new Tracker() );
+		$this->assert_install_stages_package_under_working_directory( $reinstall, 'dot-root-theme' );
 
 		$this->assertFalse( $target_filesystem->exists( 'wp-content/themes/dot-root-theme/obsolete.txt' ) );
 		$this->assertTrue( $target_filesystem->exists( 'wp-content/themes/existing-theme/style.css' ) );

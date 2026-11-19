@@ -230,7 +230,7 @@ PHP
 			DataReference::create( './reinstall/dot-root-plugin.zip', [ ExecutionContextPath::class ] ),
 			false
 		);
-		$reinstall->run( $this->runtime, new Tracker() );
+		$this->assert_install_stages_package_under_working_directory( $reinstall, 'dot-root-plugin' );
 
 		$this->assertFalse( $target_filesystem->exists( 'wp-content/plugins/dot-root-plugin/obsolete.txt' ) );
 		$this->assertTrue( $target_filesystem->exists( 'wp-content/plugins/existing-plugin.php' ) );
