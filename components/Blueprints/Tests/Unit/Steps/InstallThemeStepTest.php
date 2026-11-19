@@ -124,7 +124,7 @@ PHP
 		$this->assertNotEquals( 'test-theme', trim( $active_theme ) );
 	}
 
-	public function test_install_theme_from_zip_with_dot_root_preserves_existing_themes() {
+	public function testInstallThemeFromZipWithDotRootPreservesExistingThemes() {
 		$target_filesystem = $this->runtime->get_target_filesystem();
 		$target_filesystem->mkdir(
 			'wp-content/themes/existing-theme', [ 'recursive' => true ]

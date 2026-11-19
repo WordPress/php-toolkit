@@ -198,7 +198,7 @@ PHP
 		$this->assertContains( 'subfolder-name/test-plugin.php', $active_plugins );
 	}
 
-	public function test_install_plugin_from_zip_with_dot_root_preserves_existing_plugins() {
+	public function testInstallPluginFromZipWithDotRootPreservesExistingPlugins() {
 		$target_filesystem = $this->runtime->get_target_filesystem();
 		$target_filesystem->put_contents(
 			'wp-content/plugins/existing-plugin.php',
