@@ -180,7 +180,7 @@ PHP
 		$this->assertEquals( 'dot-root-theme', trim( $active_theme ) );
 	}
 
-	public function test_flat_theme_package_stays_inside_upgrader_working_directory() {
+	public function testFlatThemePackageStaysInsideUpgraderWorkingDirectory() {
 		$slug     = 'staging-test-theme';
 		$zip_name = $slug . '.zip';
 		$zip      = new ZipArchive();

@@ -274,7 +274,7 @@ PHP
 		$this->assertContains( 'plugin-directory/test-plugin.php', $active_plugins );
 	}
 
-	public function test_flat_plugin_package_stays_inside_upgrader_working_directory() {
+	public function testFlatPluginPackageStaysInsideUpgraderWorkingDirectory() {
 		$slug     = 'staging-test-plugin';
 		$zip_name = $slug . '.zip';
 		$zip      = new ZipArchive();
