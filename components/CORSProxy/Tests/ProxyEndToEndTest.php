@@ -118,9 +118,9 @@ class ProxyEndToEndTest extends TestCase {
 	}
 
 	/**
-	 * @dataProvider provider_blocked_destinations
+	 * @dataProvider providerBlockedDestinations
 	 */
-	public function test_rejects_private_and_reserved_destinations( $host ) {
+	public function testRejectsPrivateAndReservedDestinations( $host ) {
 		$response = self::request_through_proxy(
 			self::$proxy_port,
 			'http://' . $host . ':' . self::$upstream_port . '/'
@@ -130,7 +130,7 @@ class ProxyEndToEndTest extends TestCase {
 		$this->assertStringNotContainsString( '"served_by"', $response['body'] );
 	}
 
-	public static function provider_blocked_destinations() {
+	public static function providerBlockedDestinations() {
 		return array(
 			'localhost'      => array( 'localhost' ),
 			'loopback'       => array( '127.0.0.1' ),
@@ -145,7 +145,7 @@ class ProxyEndToEndTest extends TestCase {
 		);
 	}
 
-	public function test_connects_to_the_validated_address_on_a_custom_port() {
+	public function testConnectsToTheValidatedAddressOnACustomPort() {
 		$unsupported_reason = self::fixed_lookup_unsupported_reason();
 		if ( null !== $unsupported_reason ) {
 			$this->markTestSkipped( $unsupported_reason );
@@ -165,7 +165,7 @@ class ProxyEndToEndTest extends TestCase {
 		$this->assertSame( 'proxy-target.test:' . self::$upstream_port, $received['host'] );
 	}
 
-	public function test_ignores_proxy_settings_from_the_environment() {
+	public function testIgnoresProxySettingsFromTheEnvironment() {
 		$response = self::request_through_proxy(
 			self::$loopback_proxy_port,
 			'http://localhost:' . self::$upstream_port . '/direct'
