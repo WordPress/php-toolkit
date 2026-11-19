@@ -1,8 +1,11 @@
 <?php
 
-// Set error reporting.
+// Report every error to the log, but don't display it. A displayed error
+// would become part of the response body. Without a php.ini, PHP doesn't
+// log errors, so turn logging on explicitly.
 error_reporting( E_ALL );
-ini_set( 'display_errors', 1 );
+ini_set( 'display_errors', 0 );
+ini_set( 'log_errors', 1 ); // phpcs:ignore WordPress.PHP.IniSet.log_errors_Disallowed -- The proxy runs outside WordPress.
 
 define( 'MAX_REQUEST_SIZE', 1 * 1024 * 1024 ); // 1MB.
 define( 'MAX_RESPONSE_SIZE', 100 * 1024 * 1024 ); // 100MB.
@@ -34,7 +37,9 @@ if ( 'GET' !== $_SERVER['REQUEST_METHOD'] && 'POST' !== $_SERVER['REQUEST_METHOD
 	exit;
 }
 
-if ( 'GET' !== $_SERVER['REQUEST_METHOD'] && $_SERVER['CONTENT_LENGTH'] >= MAX_REQUEST_SIZE ) {
+// A request with a chunked body has no Content-Length.
+$request_content_length = isset( $_SERVER['CONTENT_LENGTH'] ) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
+if ( 'GET' !== $_SERVER['REQUEST_METHOD'] && $request_content_length >= MAX_REQUEST_SIZE ) {
 	http_response_code( 413 );
 	echo 'Request Entity Too Large';
 	exit;
@@ -79,20 +84,33 @@ define(
 $ch = curl_init( $target_url );
 
 $is_chunked_response = false;
-$http_code_sent      = false;
+// Whether the header callback is inside an interim 1xx response's headers.
+$in_interim_response = false;
 
-$relay_http_code_and_initial_headers_if_not_already_sent = function () use ( $ch, &$http_code_sent ) {
-	if ( ! $http_code_sent ) {
-		// Set the response code from the target server.
-		$http_code = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
-		http_response_code( $http_code );
+/**
+ * Replaces the target's response with an error response from the proxy.
+ *
+ * Call only before any output has started, while headers_sent() is false.
+ * The target's status and headers may be queued by then. The error response
+ * keeps only the headers queued before the target was contacted, which
+ * includes any set by cors-proxy-config.php or an auto_prepend_file.
+ *
+ * Every target header goes, not only the ones describing its body. An error
+ * from the proxy must not carry headers from the response it replaces.
+ */
+function replace_response_with_error( $status_code, $message ) {
+	global $is_chunked_response, $proxy_headers;
 
-		// For now, let's clearly avoid the possibility of stale, cached responses.
-		header( 'Cache-Control: no-cache' );
-
-		$http_code_sent = true;
+	header_remove();
+	foreach ( $proxy_headers as $header ) {
+		header( $header, false );
 	}
-};
+	// The target's Transfer-Encoding header is gone, so don't chunk the
+	// error message.
+	$is_chunked_response = false;
+	http_response_code( $status_code );
+	send_response_chunk( $message );
+}
 
 function send_response_chunk( $data ) {
 	if ( should_send_as_chunked_response() ) {
@@ -175,12 +193,38 @@ curl_setopt(
 		$header
 	) use (
 		$target_url,
-		$relay_http_code_and_initial_headers_if_not_already_sent,
+		&$in_interim_response,
 		&$is_chunked_response
 	) {
-		@$relay_http_code_and_initial_headers_if_not_already_sent();
+		$len = strlen( $header );
 
-		$len       = strlen( $header );
+		// cURL passes every response's status line and headers to this
+		// callback, including interim 1xx responses before the final one.
+		// A status line starts a new header block.
+		if ( 0 === stripos( $header, 'HTTP/' ) ) {
+			$status_code = preg_match( '#^HTTP/\S+\s+(\d{3})#', $header, $matches )
+				? (int) $matches[1]
+				: curl_getinfo( $curl, CURLINFO_HTTP_CODE );
+			if ( 101 === $status_code ) {
+				// The target switched to another protocol. A single HTTP
+				// response can't carry it, and cURL would deliver the other
+				// protocol's bytes as the response body.
+				replace_response_with_error( 502, 'Bad Gateway – the target switched protocols' );
+				exit;
+			}
+			// Skip other interim responses, such as 100 Continue or
+			// 103 Early Hints. Only the final response is relayed.
+			$in_interim_response = $status_code < 200;
+			if ( ! $in_interim_response ) {
+				http_response_code( $status_code );
+			}
+
+			return $len;
+		}
+		if ( $in_interim_response ) {
+			return $len;
+		}
+
 		$colon_pos = strpos( $header, ':' );
 
 		if ( false === $colon_pos ) {
@@ -193,8 +237,7 @@ curl_setopt(
 		if ( 'content-length' === $name ) {
 			$content_length = intval( $value );
 			if ( $content_length >= MAX_RESPONSE_SIZE ) {
-				http_response_code( 413 );
-				send_response_chunk( 'Response Too Large' );
+				replace_response_with_error( 413, 'Response Too Large' );
 				exit;
 			}
 
@@ -262,15 +305,29 @@ if ( 'GET' !== $request_method && 'HEAD' !== $request_method && 'OPTIONS' !== $r
 	$input = fopen( 'php://input', 'r' );
 	curl_setopt( $ch, CURLOPT_UPLOAD, true );
 	curl_setopt( $ch, CURLOPT_INFILE, $input );
-	curl_setopt( $ch, CURLOPT_INFILESIZE, $_SERVER['CONTENT_LENGTH'] );
+	curl_setopt( $ch, CURLOPT_INFILESIZE, $request_content_length );
 }
 
-// Execute cURL session.
-if ( ! curl_exec( $ch ) ) {
-	http_response_code( 502 );
-	send_response_chunk( 'Bad Gateway – curl_exec error: ' . curl_error( $ch ) );
-} else {
-	@$relay_http_code_and_initial_headers_if_not_already_sent();
+// Avoid stale, cached responses. This is set before the snapshot below, so
+// the proxy's own error responses keep it too.
+header( 'Cache-Control: no-cache' );
+
+// Everything queued so far belongs to the proxy's own response. The proxy
+// restores these headers when it replaces the target's response with an error.
+$proxy_headers = headers_list();
+
+// Execute cURL session. Check curl_errno() rather than the return value:
+// before PHP 7.4, curl_exec() returns true when a transfer ends early.
+curl_exec( $ch );
+if ( 0 !== curl_errno( $ch ) ) {
+	$error_message = 'Bad Gateway – curl_exec error: ' . curl_error( $ch );
+	if ( headers_sent() ) {
+		// Part of the target's response was already sent, so its status and
+		// headers can't be replaced anymore.
+		send_response_chunk( $error_message );
+	} else {
+		replace_response_with_error( 502, $error_message );
+	}
 }
 // curl_close() does nothing since PHP 8.0 and is deprecated since PHP 8.5.
 if ( PHP_VERSION_ID < 80000 ) {
