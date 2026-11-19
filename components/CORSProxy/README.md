@@ -114,6 +114,44 @@ function playground_cors_proxy_maybe_rate_limit() {
 echo "Allowlist config active.\n";
 ```
 
+## Allowed browser origins
+
+<p>The proxy sends credentialed CORS headers (<code>Access-Control-Allow-Origin</code> with <code>Access-Control-Allow-Credentials: true</code>) only to origins it allows. By default those are <code>https://playground.wordpress.net</code> (unless the proxy itself runs on that host) and any <code>localhost</code> or <code>127.0.0.1</code> origin on any port. That suits Playground and local development, but a deployment serving its own app should list that app's origins instead.</p>
+
+<p>Define <code>PLAYGROUND_CORS_PROXY_SUPPORTED_ORIGIN_RULES</code> in <code>cors-proxy-config.php</code> as an array of rules. Once it is defined, it replaces the defaults entirely — add <code>http://localhost:5400</code> or any other origin you still need. Two rule types are supported:</p>
+
+<ul>
+<li><code>match-exact</code> matches one origin, written the way browsers send it in the <code>Origin</code> header: scheme and host, plus the port only when it isn't the scheme's default, with no trailing slash.</li>
+<li><code>match-subdomain</code> matches origins exactly one hostname label beneath <code>host</code> that use the given <code>scheme</code> and <code>port</code> (<code>null</code> or omitted for no explicit port). <code>preview.example.com</code> matches <code>https://pr-12.preview.example.com</code>, but not <code>https://preview.example.com</code> or <code>https://a.pr-12.preview.example.com</code>.</li>
+</ul>
+
+<p>Invalid rules and unknown rule types are ignored. An empty array allows no origins.</p>
+
+<!-- snippet:
+filename: cors-proxy-config-origins.php
+runnable: false
+-->
+```php
+<?php
+// cors-proxy-config.php — combine with the examples above.
+
+define(
+	'PLAYGROUND_CORS_PROXY_SUPPORTED_ORIGIN_RULES',
+	array(
+		array(
+			'type'   => 'match-exact',
+			'origin' => 'https://app.example.com',
+		),
+		array(
+			'type'   => 'match-subdomain',
+			'scheme' => 'https',
+			'host'   => 'preview.example.com',
+			'port'   => null,
+		),
+	)
+);
+```
+
 ## Browser-side fetch through the proxy
 
 <p>Once deployed, the client side is just <code>fetch()</code> with the proxy URL. Drop this into any HTML page.</p>
