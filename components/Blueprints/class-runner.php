@@ -121,7 +121,17 @@ class Runner {
 		$this->configuration = $configuration;
 		$this->validate_configuration( $configuration );
 
-		$this->client       = apply_filters( 'blueprint.http_client', new Client() );
+		// Plugin and theme zips can take minutes to download on slow connections,
+		// so only fail downloads that stall rather than ones that take long.
+		$this->client       = apply_filters(
+			'blueprint.http_client',
+			new Client(
+				array(
+					'timeout_ms'      => 0,
+					'idle_timeout_ms' => 30000,
+				)
+			)
+		);
 		$this->main_tracker = new Tracker();
 
 		// Set up progress logging.

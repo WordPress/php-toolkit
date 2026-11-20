@@ -113,7 +113,10 @@ class HttpMiddleware implements MiddlewareInterface {
 		$this->state->response_body_chunk = null;
 
 		// Give the requests an opportunity to time out; 10% more, but at least 300ms.
-		$timeout_ms = $this->state->request_timeout_ms + max( 300, $this->state->request_timeout_ms * 0.1 );
+		// With both timeouts disabled, wait for the next event indefinitely.
+		$limits_ms  = array_filter( array( $this->state->request_timeout_ms, $this->state->idle_timeout_ms ) );
+		$limit_ms   = $limits_ms ? min( $limits_ms ) : 0;
+		$timeout_ms = $limit_ms ? $limit_ms + max( 300, $limit_ms * 0.1 ) : 0;
 		$start_time = microtime( true );
 
 		do {
