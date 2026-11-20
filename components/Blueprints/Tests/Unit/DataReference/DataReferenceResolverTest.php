@@ -108,6 +108,22 @@ class DataReferenceResolverTest extends TestCase {
 		$this->assertContains( 'publish.mjs', $result->filesystem->ls( '/' ) );
 	}
 
+	/**
+	 * Verifies issue #306: a short tag name resolves, not only HEAD and the default branch.
+	 *
+	 * @TODO: Don't rely on the Playground repository for this test, see testResolveGitPath().
+	 */
+	public function testResolveGitPathAtATag() {
+		$reference = new GitPath( [
+			'gitRepository' => 'https://github.com/WordPress/wordpress-playground.git',
+			'ref' => 'v3.1.65',
+			'path' => 'tools/scripts'
+		] );
+		$result    = $this->resolver->resolve( $reference );
+		$this->assertInstanceOf( Directory::class, $result );
+		$this->assertContains( 'publish.mjs', $result->filesystem->ls( '/' ) );
+	}
+
 	public function testResolveMissingExecutionContextFileThrows() {
 		$reference = new ExecutionContextPath( './missing.txt' );
 		$this->executionContext->method( 'exists' )->with( './missing.txt' )->willReturn( false );
