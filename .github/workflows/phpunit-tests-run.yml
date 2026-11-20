@@ -68,11 +68,6 @@ jobs:
       - name: Run PHPUnit tests
         # Explicitly use the composer-installed version of phpunit
         # because there have been conflicts with other versions during CI.
-        run: vendor/bin/phpunit -c phpunit.xml --log-junit test-results/phpunit-junit.xml
-
-      # The console output above only has a single total line. Print a
-      # per-component breakdown (and the names of skipped tests) as its own
-      # step so the PHPUnit output itself stays unchanged.
-      - name: Summarize PHPUnit results per component
-        if: always()
-        run: php bin/summarize-junit.php test-results/phpunit-junit.xml
+        # --testdox lists every test under its class, marked as passed (✔),
+        # failed (✘) or skipped (↩), so the log shows which tests ran.
+        run: vendor/bin/phpunit -c phpunit.xml --testdox
