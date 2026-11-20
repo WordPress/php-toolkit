@@ -35,7 +35,7 @@ curl -s "http://127.0.0.1:5263/cors-proxy.php/https://api.github.com/repos/WordP
 
 ## Production rate limiting
 
-<p>Drop a <code>cors-proxy-config.php</code> next to <code>cors-proxy.php</code>. If that file defines a <code>playground_cors_proxy_maybe_rate_limit()</code> function, the proxy calls it before forwarding any request — your one chance to reject early. Without that function the proxy relies only on its coarse built-in safeguards, so production deployments should provide their own rate limiting.</p>
+<p>Drop a <code>cors-proxy-config.php</code> next to <code>cors-proxy.php</code>. If that file defines a <code>playground_cors_proxy_maybe_rate_limit()</code> function, the proxy calls it before forwarding any request — your one chance to reject early. Without that function the proxy relies only on its coarse built-in safeguards, so production deployments should provide their own rate limiting. Keep that directory out of your web root so the file can't be downloaded; see "Deploy behind nginx" below.</p>
 
 <p>This example uses a per-IP token bucket stored on disk. Replace with Redis or memcached for multi-host deployments.</p>
 
@@ -140,19 +140,32 @@ console.log(repo.full_name, repo.stargazers_count);
 
 <p>The proxy is a single PHP script — any SAPI works. nginx + php-fpm is a common production setup. <code>PATH_INFO</code> is what the proxy reads to learn the target URL.</p>
 
+<p>Put <code>cors-proxy.php</code>, <code>cors-proxy-functions.php</code>, and <code>cors-proxy-config.php</code> in a directory that is not any server's web root, such as <code>/srv/cors-proxy</code>. php-fpm reads the scripts from disk, but nginx never serves files from that directory, so it can't return the config file — which may hold credentials — or the proxy's source as plain text. <code>cors-proxy.php</code> loads <code>cors-proxy-config.php</code> from its own directory, so the config has to sit next to it there.</p>
+
 <pre><code>server {
   listen 443 ssl http2;
   server_name cors.example.com;
 
-  root /var/www/cors-proxy;
-  index cors-proxy.php;
+  # Keep the "//" in target URLs such as https://example.com.
+  merge_slashes off;
 
+  # Only /cors-proxy.php and /cors-proxy.php/&lt;target URL&gt; reach PHP,
+  # and they always run this one script.
   location ~ ^/cors-proxy\.php(/.*)?$ {
     fastcgi_pass unix:/run/php/php8.1-fpm.sock;
-    fastcgi_split_path_info ^(.+\.php)(/.*)$;
-    fastcgi_param SCRIPT_FILENAME $document_root/cors-proxy.php;
+    fastcgi_split_path_info ^(/cors-proxy\.php)(/.*)$;
+    fastcgi_param SCRIPT_FILENAME /srv/cors-proxy/cors-proxy.php;
     fastcgi_param PATH_INFO $fastcgi_path_info;
     include fastcgi_params;
   }
+
+  # Nothing else is served: no static files, no other scripts.
+  location / {
+    return 404;
+  }
 }
 </code></pre>
+
+<p>To keep the config out of the proxy's directory entirely, load it with PHP's <a href="https://www.php.net/manual/en/ini.core.php#ini.auto-prepend-file"><code>auto_prepend_file</code></a> setting in a php-fpm pool that runs only the proxy, for example <code>php_admin_value[auto_prepend_file] = /etc/cors-proxy/config.php</code>. The setting applies to every script in the pool. Use one location or the other, not both: if two files define <code>playground_cors_proxy_maybe_rate_limit()</code>, PHP stops with a fatal error.</p>
+
+<p>Give the proxy its own origin that carries no cookies, such as a dedicated hostname like <code>cors.example.com</code>. The proxy relays responses from other sites under its own origin, so that origin shouldn't share cookies or other browser state with your applications. Don't serve it from an application's host, and don't set cookies with a <code>Domain</code> attribute that covers its hostname. A separate registrable domain is the simplest way to rule that out.</p>
