@@ -432,8 +432,15 @@ function rewrite_relative_redirect(
 	$redirect_location,
 	$proxy_absolute_url
 ) {
-	$target_hostname = parse_url( $request_url, PHP_URL_HOST );
+	$target_scheme = parse_url( $request_url, PHP_URL_SCHEME ) ?: 'https';
 	if ( ! parse_url( $redirect_location, PHP_URL_HOST ) ) {
+		// Keep the explicit port of the original request, if any.
+		$target_authority = parse_url( $request_url, PHP_URL_HOST );
+		$target_port      = parse_url( $request_url, PHP_URL_PORT );
+		if ( null !== $target_port ) {
+			$target_authority .= ':' . $target_port;
+		}
+
 		$redirect_path = parse_url( $redirect_location, PHP_URL_PATH );
 		if ( $redirect_path && '/' !== $redirect_path[0] ) {
 			$request_path        = parse_url( $request_url, PHP_URL_PATH );
@@ -441,12 +448,10 @@ function rewrite_relative_redirect(
 			$redirect_location   = $request_path_parent . '/' . $redirect_path;
 		}
 
-		$redirect_location = $target_hostname . $redirect_location;
-	}
-
-	if ( ! parse_url( $redirect_location, PHP_URL_SCHEME ) ) {
-		$target_scheme     = parse_url( $request_url, PHP_URL_SCHEME ) ?: 'https';
-		$redirect_location = "$target_scheme://$redirect_location";
+		$redirect_location = "$target_scheme://$target_authority$redirect_location";
+	} elseif ( ! parse_url( $redirect_location, PHP_URL_SCHEME ) ) {
+		// A scheme-relative location such as //example.com/path.
+		$redirect_location = "$target_scheme:$redirect_location";
 	}
 
 	$last_char = $proxy_absolute_url[ strlen( $proxy_absolute_url ) - 1 ];
@@ -459,10 +464,26 @@ function rewrite_relative_redirect(
 
 /**
  * Answers whether CORS is allowed for the specified origin.
+ *
+ * When PLAYGROUND_CORS_PROXY_SUPPORTED_ORIGIN_RULES is defined as an array,
+ * only origins matching those rules are allowed. See
+ * is_cors_proxy_origin_supported() for the rule format. Otherwise, the proxy
+ * allows https://playground.wordpress.net and any localhost or 127.0.0.1
+ * origin.
  */
 function should_respond_with_cors_headers( $host, $origin ) {
 	if ( empty( $origin ) ) {
 		return false;
+	}
+
+	if (
+		defined( 'PLAYGROUND_CORS_PROXY_SUPPORTED_ORIGIN_RULES' ) &&
+		is_array( PLAYGROUND_CORS_PROXY_SUPPORTED_ORIGIN_RULES )
+	) {
+		return is_cors_proxy_origin_supported(
+			$origin,
+			PLAYGROUND_CORS_PROXY_SUPPORTED_ORIGIN_RULES
+		);
 	}
 
 	$is_request_from_playground_web_app = 'https://playground.wordpress.net' === $origin;
@@ -482,4 +503,141 @@ function should_respond_with_cors_headers( $host, $origin ) {
 	);
 
 	return $is_local_origin;
+}
+
+/**
+ * Answers whether an origin matches one of the given origin rules.
+ *
+ * Each rule is an array with one of these types:
+ *
+ * - array( 'type' => 'match-exact', 'origin' => 'https://app.example.com' )
+ *   matches that exact origin.
+ * - array( 'type' => 'match-subdomain', 'scheme' => 'https',
+ *   'host' => 'example.com', 'port' => null ) matches origins with exactly one
+ *   hostname label beneath the host, such as https://app.example.com, using
+ *   that scheme and port. The port is optional; null or omitted means no
+ *   explicit port.
+ *
+ * Invalid rules and unknown rule types are ignored.
+ *
+ * @param string $origin                  The Origin request header.
+ * @param array  $supported_origin_rules  Origin rules.
+ *
+ * @return bool
+ */
+function is_cors_proxy_origin_supported( $origin, $supported_origin_rules ) {
+	$origin_parts = parse_cors_proxy_origin( $origin );
+	if ( false === $origin_parts ) {
+		return false;
+	}
+
+	foreach ( $supported_origin_rules as $rule ) {
+		if ( ! is_array( $rule ) ) {
+			continue;
+		}
+
+		$rule_type = $rule['type'] ?? null;
+		if ( 'match-exact' === $rule_type ) {
+			if ( isset( $rule['origin'] ) && $origin === $rule['origin'] ) {
+				return true;
+			}
+		} elseif ( 'match-subdomain' === $rule_type ) {
+			if ( cors_proxy_origin_matches_subdomain_rule( $origin, $origin_parts, $rule ) ) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/**
+ * Answers whether a parsed origin matches a match-subdomain origin rule.
+ *
+ * @param string $origin        The Origin request header.
+ * @param array  $origin_parts  The origin parsed by parse_cors_proxy_origin().
+ * @param array  $rule          A match-subdomain origin rule.
+ *
+ * @return bool
+ */
+function cors_proxy_origin_matches_subdomain_rule( $origin, $origin_parts, $rule ) {
+	$scheme = $rule['scheme'] ?? null;
+	if ( 'http' !== $scheme && 'https' !== $scheme ) {
+		return false;
+	}
+
+	$host = $rule['host'] ?? null;
+	if ( ! is_string( $host ) || '' === $host ) {
+		return false;
+	}
+
+	$port = $rule['port'] ?? null;
+	if ( null !== $port && ( ! is_int( $port ) || $port < 1 || $port > 65535 ) ) {
+		return false;
+	}
+
+	$first_dot = strpos( $origin_parts['host'], '.' );
+	if ( false === $first_dot || 0 === $first_dot ) {
+		return false;
+	}
+
+	$expected_origin = $scheme . '://' . substr( $origin_parts['host'], 0, $first_dot ) . '.' . $host;
+	if ( null !== $port ) {
+		$expected_origin .= ':' . $port;
+	}
+
+	return 0 === strcasecmp( $origin, $expected_origin );
+}
+
+/**
+ * Parses an Origin request header into its scheme, host, and port.
+ *
+ * @param string $origin  The Origin request header.
+ *
+ * @return array|false The origin parts, or false if it isn't an http or https origin.
+ */
+function parse_cors_proxy_origin( $origin ) {
+	if ( ! is_string( $origin ) || '' === $origin || false !== strpos( $origin, '*' ) ) {
+		return false;
+	}
+
+	if ( false === filter_var( $origin, FILTER_VALIDATE_URL ) ) {
+		return false;
+	}
+
+	$origin_parts = parse_url( $origin );
+	if ( false === $origin_parts ) {
+		return false;
+	}
+
+	$scheme = $origin_parts['scheme'] ?? null;
+	if ( 'http' !== $scheme && 'https' !== $scheme ) {
+		return false;
+	}
+
+	if ( ! isset( $origin_parts['host'] ) || '' === $origin_parts['host'] ) {
+		return false;
+	}
+
+	// An origin is only a scheme, a host, and an optional port.
+	if (
+		isset( $origin_parts['user'] ) ||
+		isset( $origin_parts['pass'] ) ||
+		isset( $origin_parts['path'] ) ||
+		isset( $origin_parts['query'] ) ||
+		isset( $origin_parts['fragment'] )
+	) {
+		return false;
+	}
+
+	$port = $origin_parts['port'] ?? null;
+	if ( null !== $port && ( $port < 1 || $port > 65535 ) ) {
+		return false;
+	}
+
+	return array(
+		'scheme' => $scheme,
+		'host'   => $origin_parts['host'],
+		'port'   => $port,
+	);
 }

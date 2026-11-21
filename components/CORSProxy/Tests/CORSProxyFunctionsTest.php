@@ -2,7 +2,10 @@
 
 use PHPUnit\Framework\TestCase;
 
-class ProxyFunctionsTest extends TestCase {
+/**
+ * @testdox CORS Proxy Functions
+ */
+class CORSProxyFunctionsTest extends TestCase {
 
 	private $original_server;
 
@@ -81,6 +84,30 @@ class ProxyFunctionsTest extends TestCase {
 				'https://w.net/hosting/?utm_source=wporg',
 				'https://cors.playground.wordpress.net/proxy.php',
 				'https://cors.playground.wordpress.net/proxy.php?https://w.net/hosting/?utm_source=wporg',
+			),
+			'Path-relative redirect keeps the request port'                    => array(
+				'https://example.com:8443/directory/one',
+				'two',
+				'https://proxy.example/cors-proxy.php?',
+				'https://proxy.example/cors-proxy.php?https://example.com:8443/directory/two',
+			),
+			'Root-relative redirect with a query keeps the request port'       => array(
+				'http://example.com:8080/one',
+				'/two?download=1',
+				'https://proxy.example/cors-proxy.php?',
+				'https://proxy.example/cors-proxy.php?http://example.com:8080/two?download=1',
+			),
+			'Absolute redirect keeps its own port'                             => array(
+				'https://example.com:8443/one',
+				'https://other.example:9443/two',
+				'https://proxy.example/cors-proxy.php?',
+				'https://proxy.example/cors-proxy.php?https://other.example:9443/two',
+			),
+			'Scheme-relative redirect uses the request scheme'                 => array(
+				'http://example.com:8080/one',
+				'//other.example:9090/two',
+				'https://proxy.example/cors-proxy.php?',
+				'https://proxy.example/cors-proxy.php?http://other.example:9090/two',
 			),
 		);
 	}
@@ -346,6 +373,160 @@ class ProxyFunctionsTest extends TestCase {
 				$strictly_disallowed_headers,
 				$headers_requiring_opt_in
 			)
+		);
+	}
+
+	/**
+	 *
+	 * @dataProvider providerShouldRespondWithCorsHeaders
+	 */
+	public function testShouldRespondWithCorsHeaders( $host, $origin, $expected ) {
+		$this->assertSame( $expected, should_respond_with_cors_headers( $host, $origin ) );
+	}
+
+	public static function providerShouldRespondWithCorsHeaders() {
+		return array(
+			'Playground origin on another proxy host'  => array( 'cors.example.com', 'https://playground.wordpress.net', true ),
+			'Playground origin on the Playground host' => array( 'playground.wordpress.net', 'https://playground.wordpress.net', false ),
+			'localhost origin with a port'             => array( 'cors.example.com', 'http://localhost:5400', true ),
+			'127.0.0.1 origin with a port'             => array( 'cors.example.com', 'http://127.0.0.1:8080', true ),
+			'Other origin'                             => array( 'cors.example.com', 'https://example.com', false ),
+			'Missing origin'                           => array( 'cors.example.com', '', false ),
+		);
+	}
+
+	/**
+	 * Runs in a separate process because it defines a constant.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function testShouldRespondWithCorsHeadersUsesConfiguredOriginRules() {
+		define(
+			'PLAYGROUND_CORS_PROXY_SUPPORTED_ORIGIN_RULES',
+			array(
+				array(
+					'type'   => 'match-exact',
+					'origin' => 'https://app.example.com',
+				),
+			)
+		);
+
+		$this->assertTrue( should_respond_with_cors_headers( 'cors.example.com', 'https://app.example.com' ) );
+		$this->assertFalse( should_respond_with_cors_headers( 'cors.example.com', 'https://playground.wordpress.net' ) );
+		$this->assertFalse( should_respond_with_cors_headers( 'cors.example.com', 'http://localhost:5400' ) );
+		$this->assertFalse( should_respond_with_cors_headers( 'cors.example.com', '' ) );
+	}
+
+	/**
+	 *
+	 * @dataProvider providerOriginRules
+	 */
+	public function testIsCorsProxyOriginSupported( $rules, $origin, $expected ) {
+		$this->assertSame( $expected, is_cors_proxy_origin_supported( $origin, $rules ) );
+	}
+
+	public static function providerOriginRules() {
+		$exact     = array(
+			array(
+				'type'   => 'match-exact',
+				'origin' => 'https://app.example.com',
+			),
+		);
+		$subdomain = array(
+			array(
+				'type'   => 'match-subdomain',
+				'scheme' => 'https',
+				'host'   => 'preview.example.com',
+				'port'   => null,
+			),
+		);
+		$with_port = array(
+			array(
+				'type'   => 'match-subdomain',
+				'scheme' => 'https',
+				'host'   => 'preview.example.com',
+				'port'   => 8443,
+			),
+		);
+
+		return array(
+			'Exact origin'                             => array( $exact, 'https://app.example.com', true ),
+			'Exact rule with another port'             => array( $exact, 'https://app.example.com:8443', false ),
+			'Exact rule with another scheme'           => array( $exact, 'http://app.example.com', false ),
+			'Exact rule with a subdomain'              => array( $exact, 'https://x.app.example.com', false ),
+			'Origin with a path'                       => array(
+				array(
+					array(
+						'type'   => 'match-exact',
+						'origin' => 'https://app.example.com/',
+					),
+				),
+				'https://app.example.com/',
+				false,
+			),
+			'Opaque origin'                            => array(
+				array(
+					array(
+						'type'   => 'match-exact',
+						'origin' => 'null',
+					),
+				),
+				'null',
+				false,
+			),
+			'Subdomain one level down'                 => array( $subdomain, 'https://pr123.preview.example.com', true ),
+			'Subdomain rule host case'                 => array( $subdomain, 'https://PR123.Preview.Example.com', true ),
+			'Subdomain rule apex host'                 => array( $subdomain, 'https://preview.example.com', false ),
+			'Subdomain rule nested subdomain'          => array( $subdomain, 'https://a.pr123.preview.example.com', false ),
+			'Subdomain rule host as a prefix'          => array( $subdomain, 'https://pr123.preview.example.com.other.test', false ),
+			'Subdomain rule with another scheme'       => array( $subdomain, 'http://pr123.preview.example.com', false ),
+			'Subdomain rule without a port'            => array( $subdomain, 'https://pr123.preview.example.com:8443', false ),
+			'Subdomain rule with a matching port'      => array( $with_port, 'https://pr123.preview.example.com:8443', true ),
+			'Subdomain rule with a missing port'       => array( $with_port, 'https://pr123.preview.example.com', false ),
+			'Subdomain rule with the port omitted'     => array(
+				array(
+					array(
+						'type'   => 'match-subdomain',
+						'scheme' => 'https',
+						'host'   => 'preview.example.com',
+					),
+				),
+				'https://pr123.preview.example.com',
+				true,
+			),
+			'Invalid rules are skipped'                => array(
+				array(
+					'https://app.example.com',
+					array(
+						'type'   => 'match-prefix',
+						'origin' => 'https://app.example.com',
+					),
+					array(
+						'type' => 'match-subdomain',
+						'host' => 'example.com',
+					),
+					array(
+						'type'   => 'match-exact',
+						'origin' => 'https://other.example.com',
+					),
+				),
+				'https://app.example.com',
+				false,
+			),
+			'Valid rule after invalid rules'           => array(
+				array(
+					'https://app.example.com',
+					array( 'type' => 'match-exact' ),
+					array(
+						'type'   => 'match-exact',
+						'origin' => 'https://app.example.com',
+					),
+				),
+				'https://app.example.com',
+				true,
+			),
+			'No rules'                                 => array( array(), 'https://app.example.com', false ),
 		);
 	}
 }
