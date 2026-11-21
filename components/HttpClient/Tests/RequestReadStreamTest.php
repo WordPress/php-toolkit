@@ -204,4 +204,30 @@ class RequestReadStreamTest extends TestCase {
 			$stream->pull( 10 );
 		});
 	}
+
+	public static function transportProvider() {
+		$transports = array( 'sockets' => array( 'sockets' ) );
+		if ( extension_loaded( 'curl' ) ) {
+			$transports['curl'] = array( 'curl' );
+		}
+		return $transports;
+	}
+
+	/**
+	 * Pulls more than the whole body at once, like pipe_stream() does, so the
+	 * last chunk can arrive before the transport marks the request finished.
+	 *
+	 * @dataProvider transportProvider
+	 */
+	public function testCloseReadingRightAfterTheLastChunk( $transport ) {
+		$this->withServer(function($url) use ( $transport ) {
+			$stream = new RequestReadStream( $url . $this->fixture, [ 'client' => new Client( [ 'transport' => $transport ] ) ] );
+			$body   = '';
+			while ( ! $stream->reached_end_of_data() ) {
+				$body .= $stream->consume( $stream->pull( 65536 ) );
+			}
+			$stream->close_reading();
+			$this->assertSame( file_get_contents( __DIR__ . '/fixtures' . $this->fixture ), $body );
+		});
+	}
 }
