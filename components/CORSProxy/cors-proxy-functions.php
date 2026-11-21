@@ -427,6 +427,70 @@ function kv_headers_to_curl_format( $headers ) {
 	return $curl_headers;
 }
 
+/**
+ * Answers whether a target's response header must not be relayed because
+ * it instructs the web server or CDN in front of PHP rather than the client,
+ * or sets a policy for the proxy's own domain.
+ *
+ * For example, nginx performs an internal redirect when PHP sends
+ * X-Accel-Redirect.
+ *
+ * @param string $name The header name, in any letter case.
+ *
+ * @return bool
+ */
+function is_server_control_response_header( $name ) {
+	$name = strtolower( trim( $name ) );
+
+	$prefixes = array(
+		// nginx: X-Accel-Redirect, X-Accel-Expires, X-Accel-Buffering, etc.
+		'x-accel-',
+		// LiteSpeed: X-LiteSpeed-Location, X-LiteSpeed-Cache-Control, etc.
+		'x-litespeed-',
+	);
+	foreach ( $prefixes as $prefix ) {
+		if ( 0 === strpos( $name, $prefix ) ) {
+			return true;
+		}
+	}
+
+	// CDN-targeted cache control. RFC 9213 defines CDN-Cache-Control and
+	// names CDN-specific variants the same way, e.g.
+	// Cloudflare-CDN-Cache-Control. A CDN obeys these over Cache-Control, so
+	// relaying one would override the proxy's Cache-Control: no-cache.
+	$cdn_suffix = '-cdn-cache-control';
+	if (
+		'cdn-cache-control' === $name ||
+		substr( $name, -strlen( $cdn_suffix ) ) === $cdn_suffix
+	) {
+		return true;
+	}
+
+	return in_array(
+		$name,
+		array(
+			// Apache mod_xsendfile. X-Sendfile-Temporary also deletes the
+			// file after sending it when the server allows that.
+			'x-sendfile',
+			'x-sendfile-temporary',
+			// lighttpd.
+			'x-sendfile2',
+			'x-lighttpd-send-file',
+			// Other cache directives aimed at CDNs rather than browsers.
+			'surrogate-control',
+			'edge-control',
+			// CGI and FastCGI servers take the response status from this
+			// header, overriding the status PHP would send.
+			'status',
+			// These apply to the whole proxy domain, so a target must not
+			// set them.
+			'strict-transport-security',
+			'upgrade-insecure-requests',
+		),
+		true
+	);
+}
+
 function rewrite_relative_redirect(
 	$request_url,
 	$redirect_location,
