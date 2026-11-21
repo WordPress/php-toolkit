@@ -36,6 +36,21 @@ class ProxyEndToEndTest extends TestCase {
 	private static $fixed_lookup_proxy_port;
 
 	/**
+	 * @var int A server sending responses PHP's built-in server can't send.
+	 */
+	private static $raw_upstream_port;
+
+	/**
+	 * @var int The proxy with the warning-proxy-router.php fixture.
+	 */
+	private static $warning_proxy_port;
+
+	/**
+	 * @var string The file that receives the warning proxy's error log.
+	 */
+	private static $warning_proxy_log;
+
+	/**
 	 * @beforeClass
 	 */
 	public static function start_servers() {
@@ -81,6 +96,24 @@ class ProxyEndToEndTest extends TestCase {
 			array( 'no_proxy' )
 		);
 
+		self::$raw_upstream_port = self::find_free_port();
+		self::start_process(
+			escapeshellarg( PHP_BINARY ) . ' ' .
+				escapeshellarg( $fixtures . '/raw-upstream-server.php' ) . ' ' .
+				self::$raw_upstream_port,
+			$fixtures,
+			getenv(),
+			self::$raw_upstream_port
+		);
+
+		self::$warning_proxy_log  = tempnam( sys_get_temp_dir(), 'cors-proxy-log' );
+		self::$warning_proxy_port = self::start_php_server(
+			array( $fixtures . '/warning-proxy-router.php' ),
+			array(),
+			array(),
+			self::$warning_proxy_log
+		);
+
 		if ( null === self::fixed_lookup_unsupported_reason() ) {
 			self::$fixed_lookup_proxy_port = self::start_php_server(
 				array( '-d', 'disable_functions=gethostbynamel', $fixtures . '/loopback-proxy-router.php' ),
@@ -115,6 +148,9 @@ class ProxyEndToEndTest extends TestCase {
 			proc_close( $process );
 		}
 		self::$processes = array();
+		if ( self::$warning_proxy_log && file_exists( self::$warning_proxy_log ) ) {
+			unlink( self::$warning_proxy_log );
+		}
 	}
 
 	/**
@@ -179,23 +215,113 @@ class ProxyEndToEndTest extends TestCase {
 		$this->assertSame( 'localhost:' . self::$upstream_port, $received['host'] );
 	}
 
+	public function testDoesNotDisplayErrorsForAChunkedRequestBody() {
+		$log_size = filesize( self::$warning_proxy_log );
+		clearstatcache();
+
+		// A chunked request body comes without a Content-Length. The
+		// upstream answers without reading the request body.
+		$response = self::request_through_proxy(
+			self::$warning_proxy_port,
+			'http://127.0.0.1:' . self::$raw_upstream_port . '/ok',
+			'POST',
+			array( 'Content-Type: text/plain', 'Transfer-Encoding: chunked' ),
+			"5\r\nhello\r\n0\r\n\r\n"
+		);
+
+		$this->assertSame( 200, $response['status'], $response['body'] );
+		$this->assertSame( 'ok', $response['body'] );
+
+		$log = (string) file_get_contents( self::$warning_proxy_log, false, null, $log_size );
+		$this->assertStringNotContainsString( 'CONTENT_LENGTH', $log );
+	}
+
+	public function testLogsErrorsInsteadOfDisplayingThem() {
+		$log_size = filesize( self::$warning_proxy_log );
+		clearstatcache();
+
+		$response = self::request_through_proxy(
+			self::$warning_proxy_port,
+			'http://127.0.0.1:' . self::$raw_upstream_port . '/ok'
+		);
+
+		$this->assertSame( 200, $response['status'], $response['body'] );
+		$this->assertSame( 'ok', $response['body'] );
+
+		$log = (string) file_get_contents( self::$warning_proxy_log, false, null, $log_size );
+		$this->assertStringContainsString( 'cors-proxy-test-warning', $log );
+	}
+
+	public function testRelaysOnlyTheFinalResponseAfterAnInterimResponse() {
+		$response = self::request_through_proxy(
+			self::$loopback_proxy_port,
+			'http://127.0.0.1:' . self::$raw_upstream_port . '/continue'
+		);
+
+		$this->assertSame( 200, $response['status'], $response['body'] );
+		$this->assertSame( 'hello', $response['body'] );
+		$this->assertNotContains( 'x-interim-header', $response['header_names'] );
+	}
+
+	public function testRejectsSwitchingProtocols() {
+		$response = self::request_through_proxy(
+			self::$loopback_proxy_port,
+			'http://127.0.0.1:' . self::$raw_upstream_port . '/switching-protocols'
+		);
+
+		$this->assertSame( 502, $response['status'], $response['body'] );
+		$this->assertStringNotContainsString( 'rawdata', $response['body'] );
+		$this->assertNotContains( 'x-target-header', $response['header_names'] );
+		$this->assertNotContains( 'upgrade', $response['header_names'] );
+	}
+
 	/**
-	 * Sends a GET request for the target URL through a proxy server.
-	 *
-	 * @return array The status code and body.
+	 * @dataProvider providerErrorsAfterTargetHeaders
 	 */
-	private static function request_through_proxy( $proxy_port, $target_url ) {
+	public function testErrorResponsesDoNotCarryTargetHeaders( $path, $status, $message ) {
+		$response = self::request_through_proxy(
+			self::$loopback_proxy_port,
+			'http://127.0.0.1:' . self::$raw_upstream_port . $path
+		);
+
+		$this->assertSame( $status, $response['status'], $response['body'] );
+		$this->assertStringStartsWith( $message, $response['body'] );
+		$this->assertNotContains( 'x-target-header', $response['header_names'] );
+		$this->assertNotContains( 'transfer-encoding', $response['header_names'] );
+		$this->assertContains( 'cache-control', $response['header_names'] );
+	}
+
+	public static function providerErrorsAfterTargetHeaders() {
+		return array(
+			'response too large'           => array( '/too-large', 413, 'Response Too Large' ),
+			'connection closed'            => array( '/no-body', 502, 'Bad Gateway' ),
+			'chunked, connection closed'   => array( '/chunked-no-body', 502, 'Bad Gateway' ),
+		);
+	}
+
+	/**
+	 * Sends a request for the target URL through a proxy server.
+	 *
+	 * @param int    $proxy_port The proxy server's port.
+	 * @param string $target_url The URL to request through the proxy.
+	 * @param string $method     The request method.
+	 * @param array  $headers    Extra request header lines.
+	 * @param string $body       The raw request body, sent as given.
+	 *
+	 * @return array The status code, lowercase response header names, and body.
+	 */
+	private static function request_through_proxy( $proxy_port, $target_url, $method = 'GET', $headers = array(), $body = '' ) {
 		$socket = stream_socket_client( 'tcp://127.0.0.1:' . $proxy_port, $error_code, $error_message, 5 );
 		if ( false === $socket ) {
 			throw new RuntimeException( "Could not connect to the proxy: {$error_message}" );
 		}
 		stream_set_timeout( $socket, 20 );
-		fwrite(
-			$socket,
-			"GET /cors-proxy.php?{$target_url} HTTP/1.1\r\n" .
-			"Host: 127.0.0.1:{$proxy_port}\r\n" .
-			"Connection: close\r\n\r\n"
-		);
+		$request = "{$method} /cors-proxy.php?{$target_url} HTTP/1.1\r\n" .
+			"Host: 127.0.0.1:{$proxy_port}\r\n";
+		foreach ( $headers as $header ) {
+			$request .= $header . "\r\n";
+		}
+		fwrite( $socket, $request . "Connection: close\r\n\r\n" . $body );
 		$raw = stream_get_contents( $socket );
 		fclose( $socket );
 
@@ -204,9 +330,15 @@ class ProxyEndToEndTest extends TestCase {
 			throw new RuntimeException( "Unexpected response from the proxy:\n{$raw}" );
 		}
 
+		$header_names = array();
+		foreach ( array_slice( explode( "\r\n", $parts[0] ), 1 ) as $line ) {
+			$header_names[] = strtolower( trim( strstr( $line, ':', true ) ) );
+		}
+
 		return array(
-			'status' => (int) $matches[1],
-			'body'   => isset( $parts[1] ) ? $parts[1] : '',
+			'status'       => (int) $matches[1],
+			'header_names' => $header_names,
+			'body'         => isset( $parts[1] ) ? $parts[1] : '',
 		);
 	}
 
@@ -216,10 +348,11 @@ class ProxyEndToEndTest extends TestCase {
 	 * @param array $arguments    PHP options followed by the router script.
 	 * @param array $environment  Variables to set for the server.
 	 * @param array $remove       Variables to remove, matched case-insensitively.
+	 * @param string|null $log_file A file that receives the server's error output.
 	 *
 	 * @return int The port.
 	 */
-	private static function start_php_server( $arguments, $environment, $remove = array() ) {
+	private static function start_php_server( $arguments, $environment, $remove = array(), $log_file = null ) {
 		$port     = self::find_free_port();
 		$router   = array_pop( $arguments );
 		$command  = escapeshellarg( PHP_BINARY );
@@ -227,12 +360,6 @@ class ProxyEndToEndTest extends TestCase {
 			$command .= ' ' . escapeshellarg( $argument );
 		}
 		$command .= ' -S ' . escapeshellarg( '127.0.0.1:' . $port ) . ' ' . escapeshellarg( $router );
-
-		$is_windows = '\\' === DIRECTORY_SEPARATOR;
-		if ( ! $is_windows ) {
-			// Replace the shell, so stopping the process stops the server.
-			$command = 'exec ' . $command;
-		}
 
 		$env = getenv();
 		foreach ( array_keys( $env ) as $name ) {
@@ -242,16 +369,37 @@ class ProxyEndToEndTest extends TestCase {
 		}
 		$env = array_merge( $env, $environment );
 
+		return self::start_process( $command, dirname( $router ), $env, $port, $log_file );
+	}
+
+	/**
+	 * Starts a server process and waits until it listens on the port.
+	 *
+	 * @param string      $command  The command to run.
+	 * @param string      $cwd      The working directory.
+	 * @param array       $env      The environment.
+	 * @param int         $port     The port the server listens on.
+	 * @param string|null $log_file A file that receives the server's error output.
+	 *
+	 * @return int The port.
+	 */
+	private static function start_process( $command, $cwd, $env, $port, $log_file = null ) {
+		$is_windows = '\\' === DIRECTORY_SEPARATOR;
+		if ( ! $is_windows ) {
+			// Replace the shell, so stopping the process stops the server.
+			$command = 'exec ' . $command;
+		}
+
 		$null_device = $is_windows ? 'NUL' : '/dev/null';
 		$process     = proc_open(
 			$command,
 			array(
 				0 => array( 'file', $null_device, 'r' ),
 				1 => array( 'file', $null_device, 'w' ),
-				2 => array( 'file', $null_device, 'w' ),
+				2 => null === $log_file ? array( 'file', $null_device, 'w' ) : array( 'file', $log_file, 'a' ),
 			),
 			$pipes,
-			dirname( $router ),
+			$cwd,
 			$env,
 			array( 'bypass_shell' => true )
 		);
