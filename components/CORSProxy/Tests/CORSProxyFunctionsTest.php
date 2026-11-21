@@ -2,7 +2,10 @@
 
 use PHPUnit\Framework\TestCase;
 
-class ProxyFunctionsTest extends TestCase {
+/**
+ * @testdox CORS Proxy Functions
+ */
+class CORSProxyFunctionsTest extends TestCase {
 
 	private $original_server;
 
