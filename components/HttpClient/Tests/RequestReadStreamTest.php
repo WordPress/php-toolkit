@@ -221,13 +221,36 @@ class RequestReadStreamTest extends TestCase {
 	 */
 	public function testCloseReadingRightAfterTheLastChunk( $transport ) {
 		$this->withServer(function($url) use ( $transport ) {
-			$stream = new RequestReadStream( $url . $this->fixture, [ 'client' => new Client( [ 'transport' => $transport ] ) ] );
+			$client = new Client( [ 'transport' => $transport ] );
+			$stream = new RequestReadStream( $url . $this->fixture, [ 'client' => $client ] );
 			$body   = '';
 			while ( ! $stream->reached_end_of_data() ) {
 				$body .= $stream->consume( $stream->pull( 65536 ) );
 			}
 			$stream->close_reading();
+			$request = $stream->get_request()->latest_redirect();
+			$this->assertSame( Request::STATE_FINISHED, $request->state );
+			$this->assertFalse( $client->has_pending_event( $request, Client::EVENT_FINISHED ) );
 			$this->assertSame( file_get_contents( __DIR__ . '/fixtures' . $this->fixture ), $body );
 		});
+	}
+
+	/**
+	 * @dataProvider transportProvider
+	 */
+	public function testCloseReadingWhenTheServerKeepsTheConnectionOpen( $transport ) {
+		$this->withServer(function($url) use ( $transport ) {
+			$client = new Client( [ 'transport' => $transport, 'timeout_ms' => 5000 ] );
+			$stream = new RequestReadStream( $url . '/body/keep-alive', [ 'client' => $client ] );
+			$body   = '';
+			while ( ! $stream->reached_end_of_data() ) {
+				$body .= $stream->consume( $stream->pull( 65536 ) );
+			}
+			$stream->close_reading();
+			$request = $stream->get_request()->latest_redirect();
+			$this->assertSame( Request::STATE_FINISHED, $request->state );
+			$this->assertFalse( $client->has_pending_event( $request, Client::EVENT_FINISHED ) );
+			$this->assertSame( str_repeat( 'k', 10000 ), $body );
+		}, 'body');
 	}
 }

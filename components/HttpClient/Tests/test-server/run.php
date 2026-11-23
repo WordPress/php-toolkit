@@ -235,6 +235,11 @@ $server->set_handler( function ( IncomingRequest $request, TcpResponseWriteStrea
 			} elseif ( $type === 'large' ) {
 				$response->send_http_code( 200 );
 				$response->append_bytes( str_repeat( 'x', 10000 ) );
+			} elseif ( $type === 'keep-alive' ) {
+				$response->send_http_code( 200 );
+				$response->send_header( 'Content-Length', '10000' );
+				$response->append_bytes( str_repeat( 'k', 10000 ) );
+				sleep( 10 ); // Keep the connection open after the body.
 			} elseif ( $type === 'binary' ) {
 				$response->send_http_code( 200 );
 				$response->send_header( 'Content-Type', 'application/octet-stream' );

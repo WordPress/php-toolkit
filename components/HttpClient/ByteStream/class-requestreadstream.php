@@ -218,12 +218,19 @@ class RequestReadStream extends BaseByteReadStream {
 
 		/*
 		 * The transport can hand over the last body chunk a tick before it
-		 * marks the request as finished. Once the whole body was consumed,
+		 * marks the request as finished. Once the whole body was received,
 		 * wait for that tick rather than treating the close as a cancellation.
+		 * Also consume the pending EVENT_FINISHED or EVENT_FAILED, which
+		 * releases the connection and lets the cache middleware store the response.
 		 */
-		if ( null !== $this->remote_file_length && $this->tell() >= $this->remote_file_length ) {
+		$received_whole_body = null !== $this->remote_file_length && $this->bytes_already_forgotten + strlen( $this->buffer ) >= $this->remote_file_length;
+		if ( $received_whole_body || $this->is_settled( $latest_redirect ) ) {
 			while (
-				! $this->is_settled( $latest_redirect ) &&
+				(
+					! $this->is_settled( $latest_redirect ) ||
+					$this->client->has_pending_event( $latest_redirect, Client::EVENT_FINISHED ) ||
+					$this->client->has_pending_event( $latest_redirect, Client::EVENT_FAILED )
+				) &&
 				$this->client->await_next_event( array( 'requests' => array( $latest_redirect ) ) )
 			) {
 				continue;

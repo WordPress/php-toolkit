@@ -308,6 +308,14 @@ PHP
         }, 'error' ); // Using 'error' scenario to simulate a server sending large headers
     }
 
+    public function test_connection_closed_before_the_whole_body() {
+        $this->withServer( function ( $url ) {
+            $this->expectClientError( new Request( "$url/error/early-eof-body" ), 5000, [
+                'message' => [ 'Connection closed before the whole response body was received', 'cURL error 18' ],
+            ] );
+        }, 'error' );
+    }
+
 
     /**
      * @dataProvider bodyProvider
