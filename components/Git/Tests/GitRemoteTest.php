@@ -8,6 +8,7 @@ use WordPress\Filesystem\InMemoryFilesystem;
 use WordPress\Git\GitEndpoint;
 use WordPress\Git\GitFilesystem;
 use WordPress\Git\GitRemote;
+use WordPress\Git\GitRemoteException;
 use WordPress\Git\GitRepository;
 use WordPress\Git\Protocol\GitProtocolEncoderPipe;
 use WordPress\HttpClient\Response;
@@ -52,6 +53,112 @@ class GitRemoteTest extends TestCase {
 
 		// The fetched commit's tree should be available for Blueprint git:directory use.
 		$this->assertSame( 'Hello from HEAD', GitFilesystem::create( $local_repository )->get_contents( '/README.md' ) );
+	}
+
+	/**
+	 * Verifies issue #306: branches, tags, and commit hashes resolve on the
+	 * remote, not only HEAD.
+	 *
+	 * @dataProvider provide_refs_other_than_head
+	 */
+	public function test_pull_resolves_refs_other_than_head( $ref, $expected_commit, $expected_local_ref ) {
+		$remote_repository = new GitRepository(
+			InMemoryFilesystem::create(),
+			array(
+				'default_branch' => 'main',
+			)
+		);
+		$commits           = array(
+			'first'  => $remote_repository->commit( array( 'updates' => array( 'README.md' => 'first' ) ) ),
+			'second' => $remote_repository->commit( array( 'updates' => array( 'README.md' => 'second' ) ) ),
+		);
+		$remote_repository->set_branch_tip( 'refs/heads/dist/main', $commits['first'] );
+		$remote_repository->get_object_storage_filesystem()->mkdir( 'refs/tags' );
+		$remote_repository->get_object_storage_filesystem()->put_contents( 'refs/tags/v1.0', $commits['first'] );
+
+		$local_repository = new GitRepository( InMemoryFilesystem::create() );
+		$local_repository->add_remote( 'origin', 'https://example.com/repo.git' );
+		$remote = new GitRemote(
+			$local_repository,
+			'origin',
+			array(
+				'http_client' => new GitRemoteTestClient( new GitEndpoint( $remote_repository ) ),
+			)
+		);
+
+		$ref           = str_replace( array( '{first}', '{second}' ), $commits, $ref );
+		$pulled_commit = $remote->pull( $ref );
+
+		$this->assertSame( $commits[ $expected_commit ], $pulled_commit );
+		$this->assertSame( $commits[ $expected_commit ], $local_repository->get_branch_tip( $expected_local_ref ) );
+
+		$local_repository->checkout( $pulled_commit );
+		$this->assertSame( $expected_commit, GitFilesystem::create( $local_repository )->get_contents( '/README.md' ) );
+	}
+
+	public static function provide_refs_other_than_head() {
+		return array(
+			'short branch name'        => array( 'main', 'second', 'refs/heads/main' ),
+			'short name with a slash'  => array( 'dist/main', 'first', 'refs/heads/dist/main' ),
+			'full branch name'         => array( 'refs/heads/dist/main', 'first', 'refs/heads/dist/main' ),
+			'short tag name'           => array( 'v1.0', 'first', 'HEAD' ),
+			'full tag name'            => array( 'refs/tags/v1.0', 'first', 'HEAD' ),
+			'commit hash below a tip'  => array( '{first}', 'first', 'HEAD' ),
+		);
+	}
+
+	/**
+	 * Verifies a fetched branch updates its remote-tracking ref, and a tag does not create one.
+	 */
+	public function test_fetch_updates_the_tracking_ref_only_for_branches() {
+		$remote_repository = new GitRepository(
+			InMemoryFilesystem::create(),
+			array(
+				'default_branch' => 'main',
+			)
+		);
+		$commit            = $remote_repository->commit( array( 'updates' => array( 'README.md' => 'first' ) ) );
+		$remote_repository->get_object_storage_filesystem()->mkdir( 'refs/tags' );
+		$remote_repository->get_object_storage_filesystem()->put_contents( 'refs/tags/v1.0', $commit );
+
+		$local_repository = new GitRepository( InMemoryFilesystem::create() );
+		$local_repository->add_remote( 'origin', 'https://example.com/repo.git' );
+		$remote = new GitRemote(
+			$local_repository,
+			'origin',
+			array(
+				'http_client' => new GitRemoteTestClient( new GitEndpoint( $remote_repository ) ),
+			)
+		);
+
+		$this->assertSame( $commit, $remote->fetch( 'v1.0' ) );
+		$this->assertFalse( $local_repository->branch_exists( 'refs/remotes/origin/v1.0' ) );
+		$this->assertFalse( $local_repository->branch_exists( 'refs/heads/v1.0' ) );
+
+		$this->assertSame( $commit, $remote->fetch( 'main' ) );
+		$this->assertSame( $commit, $local_repository->get_branch_tip( 'refs/remotes/origin/main' ) );
+	}
+
+	/**
+	 * Verifies a ref that is neither a branch nor a tag on the remote is reported by name.
+	 */
+	public function test_pull_reports_a_missing_ref() {
+		$remote_repository = new GitRepository( InMemoryFilesystem::create() );
+		$remote_repository->commit( array( 'updates' => array( 'README.md' => 'first' ) ) );
+
+		$local_repository = new GitRepository( InMemoryFilesystem::create() );
+		$local_repository->add_remote( 'origin', 'https://example.com/repo.git' );
+		$remote = new GitRemote(
+			$local_repository,
+			'origin',
+			array(
+				'http_client' => new GitRemoteTestClient( new GitEndpoint( $remote_repository ) ),
+			)
+		);
+
+		$this->expectException( GitRemoteException::class );
+		$this->expectExceptionMessage( 'Ref "missing" not found on remote origin' );
+		$remote->pull( 'missing' );
 	}
 
 	/**

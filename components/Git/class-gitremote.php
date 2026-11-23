@@ -3,14 +3,9 @@
 namespace WordPress\Git;
 
 /**
- * @TODO: Support different ref formats:
- * – nice branch names like "trunk"
- * – full branch names like "refs/heads/trunk"
- * – tags
- * – commit hashes
- * - ... what else? ...
- *
- * Currently, we only support full branch names.
+ * The fetch() and pull() methods accept `HEAD`, short branch or tag names like
+ * "trunk", full ref names like "refs/heads/trunk" or "refs/tags/v1.0", and
+ * 40-character commit hashes. push() only supports branches.
  *
  * This comment is below the namespace so PHPCS doesn't complain.
  */
@@ -101,6 +96,61 @@ class GitRemote {
 		}
 
 		return $remote_refs[ $full_branch_name ];
+	}
+
+	/**
+	 * Resolves a ref to the commit it points to on the remote.
+	 *
+	 * Accepts `HEAD`, a full ref name such as `refs/tags/v1.0`, a 40-character
+	 * commit hash, or a short branch or tag name. A short name is looked up as
+	 * a branch first, then as a tag, as the JavaScript Blueprints runtime does.
+	 * A commit hash is used as is, without asking the remote.
+	 *
+	 * @param string $ref_name Ref to resolve.
+	 * @return array {
+	 *     The resolved remote ref.
+	 *
+	 *     @type string      $hash        Commit hash. Annotated tags resolve to their commit.
+	 *     @type string|null $branch_name Short branch name, `HEAD`, or null for a tag or commit hash.
+	 * }
+	 */
+	private function resolve_remote_ref( $ref_name ) {
+		$ref_name = trim( $ref_name );
+		if ( self::is_commit_hash( $ref_name ) ) {
+			return array(
+				'hash'        => strtolower( $ref_name ),
+				'branch_name' => null,
+			);
+		}
+		if ( 'HEAD' === $ref_name ) {
+			return array(
+				'hash'        => $this->get_remote_head( 'HEAD' ),
+				'branch_name' => 'HEAD',
+			);
+		}
+
+		$candidates = 0 === strncmp( $ref_name, 'refs/', strlen( 'refs/' ) )
+			? array( $ref_name )
+			: array( 'refs/heads/' . $ref_name, 'refs/tags/' . $ref_name );
+		foreach ( $candidates as $candidate ) {
+			$remote_refs = $this->ls_refs( $candidate );
+			if ( isset( $remote_refs[ $candidate ] ) ) {
+				return array(
+					'hash'        => $remote_refs[ $candidate ],
+					'branch_name' => $this->is_branch_ref( $candidate ) ? substr( $candidate, strlen( 'refs/heads/' ) ) : null,
+				);
+			}
+		}
+
+		throw new GitRemoteException( 'Ref "' . $ref_name . '" not found on remote ' . $this->remote_name );
+	}
+
+	private function is_branch_ref( $ref_name ) {
+		return 0 === strncmp( $ref_name, 'refs/heads/', strlen( 'refs/heads/' ) );
+	}
+
+	private static function is_commit_hash( $ref_name ) {
+		return 1 === preg_match( '/^[0-9a-f]{40}$/i', $ref_name );
 	}
 
 	private function parse_ref_line( $ref_line ) {
@@ -282,7 +332,7 @@ class GitRemote {
 		$full_branch_name = $full_branch_name ?? $this->repository->get_current_branch_name();
 		if ( isset( $options['path'] ) && $options['path'] ) {
 			// Sparse pull.
-			$remote_head = $this->fetch(
+			$remote_ref = $this->fetch_ref(
 				$full_branch_name,
 				array(
 					'path'    => $options['path'],
@@ -291,10 +341,18 @@ class GitRemote {
 			);
 		} else {
 			// Full pull.
-			$remote_head = $this->fetch( $full_branch_name, array() );
+			$remote_ref = $this->fetch_ref( $full_branch_name, array() );
 		}
+		$remote_head = $remote_ref['hash'];
 
-		$local_head = $this->repository->get_branch_tip( $full_branch_name );
+		// Tags and commit hashes have no local branch, so they move HEAD itself.
+		$local_ref = null === $remote_ref['branch_name'] || 'HEAD' === $remote_ref['branch_name']
+			? 'HEAD'
+			: 'refs/heads/' . $remote_ref['branch_name'];
+
+		$local_head = $this->repository->branch_exists( $local_ref )
+			? $this->repository->get_branch_tip( $local_ref )
+			: Commit::NULL_HASH;
 		if ( Commit::is_null_hash( $local_head ) ) {
 			// If the local head is an unborn branch, there's nothing to merge.
 			// We just pull and point the head to the remote head.
@@ -302,16 +360,7 @@ class GitRemote {
 		}
 
 		if ( isset( $options['force'] ) && $options['force'] ) {
-			/**
-			 * HEAD is a special ref, not a branch name. Store it directly instead
-			 * of rewriting it to refs/heads/HEAD, which would create a fake branch.
-			 */
-			if ( 'HEAD' === $full_branch_name ) {
-				$this->repository->set_branch_tip( 'HEAD', $remote_head );
-			} else {
-				$nice_branch_name = $this->localize_ref_name( $full_branch_name );
-				$this->repository->set_branch_tip( 'refs/heads/' . $nice_branch_name, $remote_head );
-			}
+			$this->repository->set_branch_tip( $local_ref, $remote_head );
 
 			return $remote_head;
 		}
@@ -341,23 +390,49 @@ class GitRemote {
 		return $this->repository->merge( $remote_head, $options['merge_options'] ?? array() );
 	}
 
+	/**
+	 * Fetches the commit a ref points to on the remote.
+	 *
+	 * @param string $full_branch_name Ref to fetch. See resolve_remote_ref() for the accepted forms.
+	 * @param array  $options          Fetch options.
+	 * @return string Fetched commit hash.
+	 */
 	public function fetch( $full_branch_name, $options = array() ) {
-		$branch_name = $this->localize_ref_name( $full_branch_name );
-		try {
-			$last_fetched_head_ref = $this->repository->get_branch_tip( 'refs/remotes/' . $this->remote_name . '/' . $branch_name );
-		} catch ( GitException $e ) {
-			$last_fetched_head_ref = Commit::NULL_HASH;
-		}
-		if ( ! $this->repository->has_object( $last_fetched_head_ref ) ) {
-			$last_fetched_head_ref = Commit::NULL_HASH;
+		return $this->fetch_ref( $full_branch_name, $options )['hash'];
+	}
+
+	/**
+	 * Fetches the commit a ref points to and returns what the ref resolved to.
+	 *
+	 * @param string $ref_name Ref to fetch. See resolve_remote_ref() for the accepted forms.
+	 * @param array  $options  Fetch options.
+	 * @return array {
+	 *     The resolved remote ref.
+	 *
+	 *     @type string      $hash        Fetched commit hash.
+	 *     @type string|null $branch_name Short branch name, `HEAD`, or null for a tag or commit hash.
+	 * }
+	 */
+	private function fetch_ref( $ref_name, $options = array() ) {
+		// Read the tracking ref before ls-refs, which overwrites it with the remote tip.
+		$branch_name           = $this->localize_ref_name( $ref_name );
+		$last_fetched_head_ref = Commit::NULL_HASH;
+		if ( ! self::is_commit_hash( $branch_name ) && 0 !== strncmp( $branch_name, 'refs/', strlen( 'refs/' ) ) ) {
+			try {
+				$last_fetched_head_ref = $this->repository->get_branch_tip( 'refs/remotes/' . $this->remote_name . '/' . $branch_name );
+			} catch ( GitException $e ) {
+				$last_fetched_head_ref = Commit::NULL_HASH;
+			}
 		}
 
-		// Remote HEAD is advertised as "HEAD"; regular branch names are advertised under refs/heads/.
-		$remote_branch_name = 'HEAD' === $full_branch_name ? 'HEAD' : 'refs/heads/' . $branch_name;
-		$remote_head        = $this->get_remote_head( $remote_branch_name );
+		$remote_ref  = $this->resolve_remote_ref( $ref_name );
+		$remote_head = $remote_ref['hash'];
+		if ( null === $remote_ref['branch_name'] || ! $this->repository->has_object( $last_fetched_head_ref ) ) {
+			$last_fetched_head_ref = Commit::NULL_HASH;
+		}
 		try {
 			if ( $remote_head === $last_fetched_head_ref ) {
-				return $remote_head;
+				return $remote_ref;
 			}
 			if ( isset( $options['path'] ) && $options['path'] ) {
 				if ( ! isset( $options['shallow'] ) || true !== $options['shallow'] ) {
@@ -382,9 +457,11 @@ class GitRemote {
 					)
 				)->consume_stream();
 			}
-			$this->repository->set_branch_tip( "refs/remotes/{$this->remote_name}/{$branch_name}", $remote_head );
+			if ( null !== $remote_ref['branch_name'] ) {
+				$this->repository->set_branch_tip( "refs/remotes/{$this->remote_name}/{$remote_ref['branch_name']}", $remote_head );
+			}
 
-			return $remote_head;
+			return $remote_ref;
 		} finally {
 			// Make double sure we have all the relevant objects from the remote commit.
 			// @TODO: investigate why sometimes the root tree is missing and address the.

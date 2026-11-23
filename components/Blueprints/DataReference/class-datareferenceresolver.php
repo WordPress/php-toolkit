@@ -173,8 +173,8 @@ class DataReferenceResolver {
 
 			$repo = new GitRepository( LocalFilesystem::create( $tmp_dir ) );
 			$repo->add_remote( 'origin', $reference->get_git_repository() );
-			$client = $repo->get_remote_client( 'origin' );
-			$client->pull(
+			$client      = $repo->get_remote_client( 'origin' );
+			$commit_hash = $client->pull(
 				$reference->get_ref(),
 				// Sparse checkout.
 				array(
@@ -182,6 +182,8 @@ class DataReferenceResolver {
 					'shallow' => true,
 				)
 			);
+			// GitFilesystem reads HEAD, which a pulled branch or tag does not move.
+			$repo->checkout( $commit_hash );
 
 			return new Directory(
 				new ChrootLayer( GitFilesystem::create( $repo ), $reference->get_path() ),
