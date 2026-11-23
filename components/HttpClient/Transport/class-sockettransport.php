@@ -205,8 +205,24 @@ class SocketTransport implements TransportInterface {
 			$transfer_encodings[] = $content_encoding;
 		}
 
+		/*
+		 * The server can keep the connection open after the body, so a body
+		 * with a Content-Length ends after that many bytes rather than at EOF.
+		 * Chunked bodies mark their own end, and RFC 7230 says to ignore
+		 * Content-Length for them. In HEAD, 204 and 304 responses, it doesn't
+		 * describe a body sent in this response.
+		 */
+		$body_length = $request->response->total_bytes;
+		if (
+			in_array( 'chunked', $transfer_encodings, true ) ||
+			'HEAD' === strtoupper( $request->method ) ||
+			in_array( $request->response->status_code, array( 204, 304 ), true )
+		) {
+			$body_length = null;
+		}
 		$body_stream = FileReadStream::from_resource(
-			$this->state->connections[ $request->id ]->http_socket
+			$this->state->connections[ $request->id ]->http_socket,
+			$body_length
 		);
 
 		$transformers = array();
@@ -432,10 +448,8 @@ class SocketTransport implements TransportInterface {
 	 * @param  array $requests  An array of requests.
 	 */
 	protected function receive_response_body( $requests ) {
-		// @TODO: Assume body is fully received when either.
-		// * Content-Length is reached.
-		// * The last chunk in Transfer-Encoding: chunked is received.
-		// * The connection is closed.
+		// @TODO: Assume body is fully received when the last chunk in
+		// Transfer-Encoding: chunked is received.
 		foreach ( $this->stream_select( $requests, static::STREAM_SELECT_READ ) as $request ) {
 			$stream = $this->state->connections[ $request->id ]->decoded_response_stream;
 
@@ -446,9 +460,16 @@ class SocketTransport implements TransportInterface {
 					$request->response->received_bytes += $available_bytes;
 					$this->state->connections[ $request->id ]->response_buffer                .= $body_chunk;
 					$this->state->events[ $request->id ][ Client::EVENT_BODY_CHUNK_AVAILABLE ] = true;
-					break; // Process one chunk per loop iteration.
+					// Once the raw body is in, the socket may never become readable
+					// again, so flush the decoders now instead of on the next select.
+					if ( ! $stream->get_upstream_reader()->reached_end_of_data() ) {
+						break; // Process one chunk per loop iteration.
+					}
 				} elseif ( $stream->reached_end_of_data() ) {
 					$request->state = Request::STATE_RECEIVED;
+					break;
+				} elseif ( feof( $this->state->connections[ $request->id ]->http_socket ) ) {
+					$this->set_error( $request, new HttpError( 'Connection closed before the whole response body was received.' ) );
 					break;
 				}
 			}
