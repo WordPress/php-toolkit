@@ -15,6 +15,42 @@ class MarkdownProducerTest extends TestCase {
 		$this->assertEquals( trim( $expected, "\n" ), trim( $producer->produce(), "\n" ) );
 	}
 
+	/**
+	 * Lists and quotes saved without inner blocks, with the items or paragraphs
+	 * written directly in the block HTML, should produce the same Markdown as
+	 * the equivalent markup with inner blocks.
+	 *
+	 * @dataProvider provider_test_blocks_without_inner_blocks
+	 */
+	public function test_blocks_without_inner_blocks_match_inner_blocks( $without_inner_blocks, $with_inner_blocks ) {
+		$expected = ( new MarkdownProducer( new BlocksWithMetadata( $with_inner_blocks, array() ) ) )->produce();
+		$actual   = ( new MarkdownProducer( new BlocksWithMetadata( $without_inner_blocks, array() ) ) )->produce();
+
+		$this->assertNotSame( '', trim( $expected ) );
+		$this->assertSame( $expected, $actual );
+	}
+
+	public static function provider_test_blocks_without_inner_blocks() {
+		return array(
+			'An ordered list' => array(
+				'without_inner_blocks' => '<!-- wp:list {"ordered":true} --><ol class="wp-block-list"><li>One</li><li>Two</li></ol><!-- /wp:list -->',
+				'with_inner_blocks' => '<!-- wp:list {"ordered":true} --><ol class="wp-block-list"><!-- wp:list-item --><li>One</li><!-- /wp:list-item --><!-- wp:list-item --><li>Two</li><!-- /wp:list-item --></ol><!-- /wp:list -->',
+			),
+			'A list with formatted items' => array(
+				'without_inner_blocks' => '<!-- wp:list --><ul class="wp-block-list"><li><strong>Bold</strong> and <a href="https://wordpress.org">a link</a></li><li><em>Italic</em></li></ul><!-- /wp:list -->',
+				'with_inner_blocks' => '<!-- wp:list --><ul class="wp-block-list"><!-- wp:list-item --><li><strong>Bold</strong> and <a href="https://wordpress.org">a link</a></li><!-- /wp:list-item --><!-- wp:list-item --><li><em>Italic</em></li><!-- /wp:list-item --></ul><!-- /wp:list -->',
+			),
+			'A list item with a nested ordered list' => array(
+				'without_inner_blocks' => '<!-- wp:list --><ul class="wp-block-list"><li>Before<ol><li>Nested</li></ol></li><li>Last</li></ul><!-- /wp:list -->',
+				'with_inner_blocks' => '<!-- wp:list --><ul class="wp-block-list"><!-- wp:list-item --><li>Before<!-- wp:list {"ordered":true} --><ol class="wp-block-list"><!-- wp:list-item --><li>Nested</li><!-- /wp:list-item --></ol><!-- /wp:list --></li><!-- /wp:list-item --><!-- wp:list-item --><li>Last</li><!-- /wp:list-item --></ul><!-- /wp:list -->',
+			),
+			'A quote with several paragraphs' => array(
+				'without_inner_blocks' => '<!-- wp:quote --><blockquote class="wp-block-quote"><p>First <em>paragraph</em>.</p><p>Second paragraph.</p></blockquote><!-- /wp:quote -->',
+				'with_inner_blocks' => '<!-- wp:quote --><blockquote class="wp-block-quote"><!-- wp:paragraph --><p>First <em>paragraph</em>.</p><!-- /wp:paragraph --><!-- wp:paragraph --><p>Second paragraph.</p><!-- /wp:paragraph --></blockquote><!-- /wp:quote -->',
+			),
+		);
+	}
+
 	public static function provider_test_conversion() {
 		return array(
 			/*
@@ -134,6 +170,26 @@ HTML
 			'A blockquote' => array(
 				'blocks' => '<!-- wp:quote --><blockquote class="wp-block-quote"><!-- wp:paragraph --><p>A simple blockquote</p><!-- /wp:paragraph --></blockquote><!-- /wp:quote -->',
 				'expected' => "> A simple blockquote\n> \n> \n\n",
+			),
+			'A list without inner blocks' => array(
+				'blocks' => '<!-- wp:list --><ul class="wp-block-list"><li>Track #: 2</li><li>Duration: 5</li></ul><!-- /wp:list -->',
+				'expected' => "- Track #: 2\n- Duration: 5\n\n",
+			),
+			'A nested list without inner blocks' => array(
+				'blocks' => '<!-- wp:list --><ul class="wp-block-list"><li>Item 1<ul><li>Item 1.1</li><li>Item 1.2</li></ul></li><li>Item 2</li></ul><!-- /wp:list -->',
+				'expected' => "- Item 1\n  - Item 1.1\n  - Item 1.2\n- Item 2\n\n",
+			),
+			'A list without inner blocks or closing tags' => array(
+				'blocks' => '<!-- wp:list --><ul><li>One<li>Two<li>Three</ul><!-- /wp:list -->',
+				'expected' => "- One\n- Two\n- Three\n\n",
+			),
+			'A blockquote without inner blocks or paragraphs' => array(
+				'blocks' => '<!-- wp:quote --><blockquote class="wp-block-quote">Just text</blockquote><!-- /wp:quote -->',
+				'expected' => "> Just text\n> \n> \n\n",
+			),
+			'A blockquote without inner blocks' => array(
+				'blocks' => '<!-- wp:quote --><blockquote class="wp-block-quote"><p>String drama and seismic drums.</p></blockquote><!-- /wp:quote -->',
+				'expected' => "> String drama and seismic drums.\n> \n> \n\n",
 			),
 			'A table' => array(
 				'blocks' => <<<HTML
