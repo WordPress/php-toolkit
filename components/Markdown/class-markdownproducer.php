@@ -75,6 +75,9 @@ class MarkdownProducer implements DataFormatProducer {
 				return $this->html_to_markdown( $inner_html ) . "\n\n";
 
 			case 'core/quote':
+				if ( empty( $inner_blocks ) ) {
+					$inner_blocks = $this->quote_paragraphs_from_html( $inner_html );
+				}
 				$content = $this->blocks_to_markdown( $inner_blocks );
 				$lines   = explode( "\n", $content );
 				return implode(
@@ -207,6 +210,9 @@ class MarkdownProducer implements DataFormatProducer {
 				return $markdown . "\n";
 
 			case 'core/list':
+				if ( empty( $inner_blocks ) ) {
+					$inner_blocks = $this->list_items_from_html( $inner_html );
+				}
 				array_push(
 					$this->state['listStyle'],
 					array(
@@ -287,6 +293,179 @@ class MarkdownProducer implements DataFormatProducer {
 				$markdown[] = '';
 				return implode( "\n", $markdown );
 		}
+	}
+
+	/**
+	 * Builds core/paragraph blocks from a core/quote block saved in the older
+	 * format, with the paragraphs written directly in its HTML instead of as
+	 * inner blocks.
+	 *
+	 * @param string $html The quote block's inner HTML.
+	 * @return array[] Paragraph blocks, in the shape parse_blocks() returns.
+	 */
+	private function quote_paragraphs_from_html( $html ) {
+		$paragraphs = array();
+		foreach ( $this->get_child_elements_inner_html( $html, array( 'BLOCKQUOTE' ), 'P' ) as $paragraph_html ) {
+			$paragraphs[] = self::create_block( 'core/paragraph', '<p>' . $paragraph_html . '</p>' );
+		}
+
+		// A quote whose text isn't wrapped in <p> elements becomes a single paragraph.
+		if ( empty( $paragraphs ) && '' !== trim( $this->html_to_markdown( $html ) ) ) {
+			$paragraphs[] = self::create_block( 'core/paragraph', $html );
+		}
+
+		return $paragraphs;
+	}
+
+	/**
+	 * Builds core/list-item blocks from a core/list block saved in the older
+	 * format, with the items written directly in its HTML instead of as
+	 * inner blocks.
+	 *
+	 * @param string $html The list block's inner HTML.
+	 * @return array[] List item blocks, in the shape parse_blocks() returns.
+	 */
+	private function list_items_from_html( $html ) {
+		$items = array();
+		foreach ( $this->get_child_elements_inner_html( $html, array( 'UL', 'OL' ), 'LI' ) as $item_html ) {
+			$items[] = $this->list_item_from_html( $item_html );
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Builds a core/list-item block from the inner HTML of an <li> element.
+	 *
+	 * Nested <ul> and <ol> elements become core/list inner blocks, and the
+	 * rest of the HTML becomes the item's own content.
+	 *
+	 * @param string $html The <li> element's inner HTML.
+	 * @return array A list item block, in the shape parse_blocks() returns.
+	 */
+	private function list_item_from_html( $html ) {
+		$processor    = DataLiberationHTMLProcessor::create_fragment( $html );
+		$item_html    = '';
+		$nested_lists = array();
+		// End of the last real (non-virtual) token, as a byte offset in $html.
+		$last_end = 0;
+
+		while ( $processor && $processor->next_token() ) {
+			if ( $processor->is_virtual() ) {
+				continue;
+			}
+
+			$tag = '#tag' === $processor->get_token_type() ? $processor->get_tag() : null;
+			if ( ( 'UL' === $tag || 'OL' === $tag ) && ! $processor->is_tag_closer() ) {
+				$attributes = array( 'ordered' => 'OL' === $tag );
+				$start      = $processor->get_attribute( 'start' );
+				if ( is_numeric( $start ) ) {
+					$attributes['start'] = (int) $start;
+				}
+
+				$list_start = $last_end;
+				if ( $processor->skip_to_closer() && ! $processor->is_virtual() ) {
+					$last_end = $processor->get_string_index_after_current_token();
+				} else {
+					// The list isn't closed, so it runs to the end of the item.
+					$last_end = strlen( $html );
+				}
+
+				$nested_lists[] = self::create_block(
+					'core/list',
+					'',
+					$attributes,
+					$this->list_items_from_html( substr( $html, $list_start, $last_end - $list_start ) )
+				);
+				continue;
+			}
+
+			$end        = $processor->get_string_index_after_current_token();
+			$item_html .= substr( $html, $last_end, $end - $last_end );
+			$last_end   = $end;
+		}
+
+		return self::create_block( 'core/list-item', '<li>' . $item_html . '</li>', array(), $nested_lists );
+	}
+
+	/**
+	 * Returns the inner HTML of each $child_tag element that is a direct
+	 * child of the first element named in $parent_tags.
+	 *
+	 * Scans forward only and slices the input by byte offsets, so elements
+	 * with an implied closing tag, such as `<li>One<li>Two`, work too.
+	 *
+	 * @param string   $html        HTML to search.
+	 * @param string[] $parent_tags Upper-case tag names the parent may have.
+	 * @param string   $child_tag   Upper-case tag name of the children.
+	 * @return string[] Inner HTML of each child element.
+	 */
+	private function get_child_elements_inner_html( $html, $parent_tags, $child_tag ) {
+		$processor = DataLiberationHTMLProcessor::create_fragment( $html );
+		if ( ! $processor ) {
+			return array();
+		}
+
+		$child_depth = null;
+		while ( $processor->next_tag() ) {
+			if ( in_array( $processor->get_tag(), $parent_tags, true ) ) {
+				$child_depth = $processor->get_current_depth() + 1;
+				break;
+			}
+		}
+		if ( null === $child_depth ) {
+			return array();
+		}
+
+		$children      = array();
+		$content_start = null;
+		// End of the last real (non-virtual) token, as a byte offset in $html.
+		$last_end = $processor->get_string_index_after_current_token();
+
+		while ( $processor->next_token() ) {
+			$is_child = '#tag' === $processor->get_token_type() && $child_tag === $processor->get_tag();
+			$depth    = $processor->get_current_depth();
+
+			if ( $is_child && ! $processor->is_tag_closer() && $child_depth === $depth ) {
+				$content_start = $processor->is_virtual() ? $last_end : $processor->get_string_index_after_current_token();
+			} elseif ( $is_child && $processor->is_tag_closer() && $child_depth - 1 === $depth && null !== $content_start ) {
+				// The closer may be virtual, so the content ends where the last real token did.
+				$children[]    = substr( $html, $content_start, $last_end - $content_start );
+				$content_start = null;
+			} elseif ( $processor->is_tag_closer() && $depth < $child_depth - 1 ) {
+				// The parent element was closed.
+				break;
+			}
+
+			if ( ! $processor->is_virtual() ) {
+				$last_end = $processor->get_string_index_after_current_token();
+			}
+		}
+
+		if ( null !== $content_start ) {
+			$children[] = substr( $html, $content_start, $last_end - $content_start );
+		}
+
+		return $children;
+	}
+
+	/**
+	 * Creates a block array in the shape parse_blocks() returns.
+	 *
+	 * @param string  $name         Block name.
+	 * @param string  $inner_html   The block's own HTML, without inner blocks.
+	 * @param array   $attributes   Block attributes.
+	 * @param array[] $inner_blocks Inner blocks.
+	 * @return array The block.
+	 */
+	private static function create_block( $name, $inner_html, $attributes = array(), $inner_blocks = array() ) {
+		return array(
+			'blockName'    => $name,
+			'attrs'        => $attributes,
+			'innerBlocks'  => $inner_blocks,
+			'innerHTML'    => $inner_html,
+			'innerContent' => array( $inner_html ),
+		);
 	}
 
 	private function html_to_markdown( $html, $parents = array() ) {
